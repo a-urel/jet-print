@@ -1,0 +1,30 @@
+# Shared, strict static-analysis configuration for the entire jet_print workspace.
+#
+# Goal (Constitution §VI / FR-009 / SC-003): a clean checkout reports ZERO
+# analyzer warnings — not merely zero errors. We therefore promote a set of
+# hygiene/correctness lints to `error` so they fail `flutter analyze` and CI
+# instead of silently accumulating.
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    # Hygiene lints promoted to errors so warnings cannot accumulate unnoticed.
+    unused_import: error
+    unused_local_variable: error
+    unused_element: error
+    unused_field: error
+    dead_code: error
+    # TODOs stay informational rather than failing the gate.
+    todo: ignore
+
+linter:
+  rules:
+    # Inside lib/ the library uses relative imports for its own internals; this
+    # keeps the public/private boundary unambiguous and the architecture test
+    # simple to reason about.
+    - prefer_relative_imports
+    - directives_ordering

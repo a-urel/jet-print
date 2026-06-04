@@ -1,0 +1,29 @@
+name: jet_print
+description: >-
+  A layered, theme-aware Flutter widget library scaffold for building WYSIWYG
+  report designers, integrating the shadcn_ui design system. This is the
+  publishable product; the tester app consumes it exactly as an external
+  consumer would.
+version: 0.1.0
+
+# This package is a member of the jet_print workspace; resolution is performed
+# once at the workspace root, producing a single shared pubspec.lock.
+resolution: workspace
+
+environment:
+  sdk: ^3.6.0
+  flutter: ">=3.6.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # shadcn_ui constraint below was written by `flutter pub add` so it records the
+  # real resolved range (not a placeholder), satisfying FR-012.
+  shadcn_ui: ^0.54.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
