@@ -116,7 +116,7 @@ test asserting the placeholder component renders.
 - **FR-006a**: The repository MUST be organized as a Dart pub workspace in which the widget library and the tester app are separate sibling packages sharing a single lockfile, so the tester app resolves the library the same way an external consumer would.
 - **FR-007**: Dependencies between layers MUST point inward toward the domain model; the domain layer MUST NOT depend on rendering or UI layers, and this rule MUST be verifiable.
 - **FR-008**: The scaffold MUST include automated tests covering the library's public API, each layer seam, and the placeholder component, and these tests MUST pass on a clean checkout.
-- **FR-009**: The scaffold MUST include static analysis configuration, and a clean checkout MUST report no analysis errors.
+- **FR-009**: The scaffold MUST include static analysis configuration, and a clean checkout MUST report no analysis errors or warnings (per Constitution §VI, which mandates zero analyzer warnings).
 - **FR-010**: The repository MUST document how to install dependencies, run the tester app, and run the test suite, such that a new contributor can reproduce all of the above from the documentation alone.
 - **FR-011**: The widget library MUST be self-contained and MUST NOT depend on tester-app code, host-application code, or app-specific global state.
 - **FR-012**: The scaffold MUST declare an initial library version and dependency version constraints (including shadcn UI and the framework) explicitly, establishing the baseline for future semantic-versioned releases.
@@ -135,7 +135,7 @@ test asserting the placeholder component renders.
 
 - **SC-001**: A developer can add the library as a dependency and render the placeholder component in a separate app by importing only the public entry point, with zero references to the library's internal source.
 - **SC-002**: A new contributor can go from a fresh clone to a running tester app showing the shadcn-themed placeholder component in under 10 minutes using only the documented steps.
-- **SC-003**: 100% of the scaffold's automated tests pass and static analysis reports zero errors on a clean checkout.
+- **SC-003**: 100% of the scaffold's automated tests pass and static analysis reports zero errors or warnings on a clean checkout.
 - **SC-004**: The test suite includes at least one passing test for the public API and at least one passing test per architectural layer seam (minimum three seams).
 - **SC-005**: An attempt to import a layer in violation of the inward-dependency rule (e.g., domain importing UI) is detected by the project's automated checks rather than passing silently.
 - **SC-006**: Switching the shadcn theme in the tester app visibly changes the placeholder component's appearance, confirming the theming pipeline is wired end to end.
