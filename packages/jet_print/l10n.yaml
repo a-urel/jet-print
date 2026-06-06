@@ -1,0 +1,19 @@
+# gen-l10n configuration for the jet_print library (FR-016–FR-018).
+#
+# ARB sources live inside the designer seam. Modern gen-l10n always writes the
+# output as real source (the old `synthetic-package` flag is gone), so the
+# generated JetPrintLocalizations lands next to the ARB files and can be
+# re-exported through the single public entry point (Constitution §I, research D6).
+arb-dir: lib/src/designer/l10n
+output-dir: lib/src/designer/l10n
+template-arb-file: jet_print_en.arb
+output-localization-file: jet_print_localizations.dart
+output-class: JetPrintLocalizations
+# English must be the FIRST supported locale so an unsupported active locale (or
+# a missing key) resolves to English rather than to whichever locale sorts first
+# alphabetically — the fallback guarantee in FR-017.
+preferred-supported-locales:
+  - en
+# Non-nullable `of(context)` getter — consumers always wire the delegate, and the
+# library reads strings unconditionally, so a nullable getter would be noise.
+nullable-getter: false

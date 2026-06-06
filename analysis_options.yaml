@@ -7,6 +7,12 @@
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
+  exclude:
+    # Generated localization output (gen-l10n). It is real, exported source
+    # (synthetic-package:false) but machine-generated; excluding it keeps the
+    # zero-warning gate over hand-written code without editing generated files to
+    # satisfy strict lints such as `directives_ordering` (research D6 / T004).
+    - "**/l10n/jet_print_localizations*.dart"
   language:
     strict-casts: true
     strict-inference: true

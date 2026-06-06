@@ -30,11 +30,11 @@ description: "Task list for Report Designer Main Layout"
 
 **Purpose**: Add localization dependencies and tooling config so the gen-l10n pipeline can run.
 
-- [ ] T001 [P] Add `flutter_localizations` (SDK) + `intl` dependencies and set `flutter: generate: true` in `packages/jet_print/pubspec.yaml`
-- [ ] T002 [P] Add `flutter_localizations` (SDK) dependency in `apps/jet_print_tester/pubspec.yaml` (consumer needs `GlobalMaterial/Widgets/Cupertino` delegates)
-- [ ] T003 [P] Create `packages/jet_print/l10n.yaml` with `arb-dir: lib/src/designer/l10n`, `template-arb-file: jet_print_en.arb`, `output-localization-file: jet_print_localizations.dart`, `output-class: JetPrintLocalizations`, `synthetic-package: false`
-- [ ] T004 [P] Add `analyzer: exclude:` entry for `**/l10n/jet_print_localizations*.dart` in `analysis_options.yaml` (keep the zero-warning gate over generated output)
-- [ ] T005 Run `flutter pub get` at the workspace root to resolve the new dependencies (depends on T001–T004)
+- [X] T001 [P] Add `flutter_localizations` (SDK) + `intl` dependencies and set `flutter: generate: true` in `packages/jet_print/pubspec.yaml`
+- [X] T002 [P] Add `flutter_localizations` (SDK) dependency in `apps/jet_print_tester/pubspec.yaml` (consumer needs `GlobalMaterial/Widgets/Cupertino` delegates)
+- [X] T003 [P] Create `packages/jet_print/l10n.yaml` with `arb-dir: lib/src/designer/l10n`, `template-arb-file: jet_print_en.arb`, `output-localization-file: jet_print_localizations.dart`, `output-class: JetPrintLocalizations`, `synthetic-package: false`
+- [X] T004 [P] Add `analyzer: exclude:` entry for `**/l10n/jet_print_localizations*.dart` in `analysis_options.yaml` (keep the zero-warning gate over generated output)
+- [X] T005 Run `flutter pub get` at the workspace root to resolve the new dependencies (depends on T001–T004)
 
 ---
 
@@ -44,9 +44,9 @@ description: "Task list for Report Designer Main Layout"
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T006 Create the English ARB template `packages/jet_print/lib/src/designer/l10n/jet_print_en.arb` with all designer-chrome keys (default/fallback): `reportTitlePlaceholder`; `actionPreview`/`actionSave`/`actionExport` (+ tooltip keys); `tabDataSource`/`tabOutline`/`tabProperties`; `toolboxLabel` + element entries (`toolboxLabelEntry`/`toolboxTextEntry`/`toolboxTableEntry`/`toolboxImageEntry`); `panelDataSourceHint`/`panelOutlineHint`/`panelPropertiesHint`/`surfaceEmptyHint` (per data-model.md)
-- [ ] T007 Generate `JetPrintLocalizations` by running `flutter gen-l10n` (or `flutter pub get`) and verify `packages/jet_print/lib/src/designer/l10n/jet_print_localizations.dart` is produced as real source (depends on T006)
-- [ ] T008 Export `JetPrintLocalizations` (class + static `delegate` + `supportedLocales`) from `packages/jet_print/lib/jet_print.dart`, preserving existing `JetPrintPlaceholder`/`jetPrintVersion` exports (depends on T007)
+- [X] T006 Create the English ARB template `packages/jet_print/lib/src/designer/l10n/jet_print_en.arb` with all designer-chrome keys (default/fallback): `reportTitlePlaceholder`; `actionPreview`/`actionSave`/`actionExport` (+ tooltip keys); `tabDataSource`/`tabOutline`/`tabProperties`; `toolboxLabel` + element entries (`toolboxLabelEntry`/`toolboxTextEntry`/`toolboxTableEntry`/`toolboxImageEntry`); `panelDataSourceHint`/`panelOutlineHint`/`panelPropertiesHint`/`surfaceEmptyHint` (per data-model.md)
+- [X] T007 Generate `JetPrintLocalizations` by running `flutter gen-l10n` (or `flutter pub get`) and verify `packages/jet_print/lib/src/designer/l10n/jet_print_localizations.dart` is produced as real source (depends on T006)
+- [X] T008 Export `JetPrintLocalizations` (class + static `delegate` + `supportedLocales`) from `packages/jet_print/lib/jet_print.dart`, preserving existing `JetPrintPlaceholder`/`jetPrintVersion` exports (depends on T007)
 
 **Checkpoint**: The localization delegate is generated and exported. Region widgets can now read localized chrome strings; all user stories may begin.
 
@@ -60,22 +60,22 @@ description: "Task list for Report Designer Main Layout"
 
 ### Tests for User Story 1 (write FIRST, must FAIL before implementation) ⚠️
 
-- [ ] T009 [P] [US1] Extend the public-API import test in `packages/jet_print/test/public_api_test.dart` to reference `JetReportDesigner` through `package:jet_print/jet_print.dart` (proves the exported surface is sufficient)
-- [ ] T010 [P] [US1] Region-presence widget test in `packages/jet_print/test/designer/jet_report_designer_test.dart`: pump `JetReportDesigner` in a `ShadApp` at desktop width and assert top bar, toolbox, design surface, and right panel are all found, with the surface occupying the largest horizontal share and the full layout fitting the default desktop width with no horizontal overflow/scrolling (FR-001/002/003, SC-004, US1 Acceptance 1–2)
-- [ ] T011 [P] [US1] Responsive-collapse widget test in `packages/jet_print/test/designer/responsive_collapse_test.dart`: pump below the 1024px breakpoint and assert both side regions collapse to icon rails with a visible expand affordance, and that expanding restores the panel (FR-011/FR-014, SC-004)
-- [ ] T011a [US1] Splitter-resize widget test in `packages/jet_print/test/designer/responsive_collapse_test.dart` (same file as T011 — author together, not parallel): at desktop width, drag the toolbox↔surface and surface↔right-panel splitters and assert each side region stops at its enforced minimum width while the surface absorbs the remaining space (FR-013, SC-004)
-- [ ] T012 [P] [US1] Light/dark golden test in `packages/jet_print/test/designer/goldens/jet_report_designer_light_dark_test.dart`: capture the shell in both theme variants, extending the WYSIWYG harness pattern from `jet_print_placeholder_test.dart` (SC-003)
+- [X] T009 [P] [US1] Extend the public-API import test in `packages/jet_print/test/public_api_test.dart` to reference `JetReportDesigner` through `package:jet_print/jet_print.dart` (proves the exported surface is sufficient)
+- [X] T010 [P] [US1] Region-presence widget test in `packages/jet_print/test/designer/jet_report_designer_test.dart`: pump `JetReportDesigner` in a `ShadApp` at desktop width and assert top bar, toolbox, design surface, and right panel are all found, with the surface occupying the largest horizontal share and the full layout fitting the default desktop width with no horizontal overflow/scrolling (FR-001/002/003, SC-004, US1 Acceptance 1–2)
+- [X] T011 [P] [US1] Responsive-collapse widget test in `packages/jet_print/test/designer/responsive_collapse_test.dart`: pump below the 1024px breakpoint and assert both side regions collapse to icon rails with a visible expand affordance, and that expanding restores the panel (FR-011/FR-014, SC-004)
+- [X] T011a [US1] Splitter-resize widget test in `packages/jet_print/test/designer/responsive_collapse_test.dart` (same file as T011 — author together, not parallel): at desktop width, drag the toolbox↔surface and surface↔right-panel splitters and assert each side region stops at its enforced minimum width while the surface absorbs the remaining space (FR-013, SC-004)
+- [X] T012 [P] [US1] Light/dark golden test in `packages/jet_print/test/designer/goldens/jet_report_designer_light_dark_test.dart`: capture the shell in both theme variants, extending the WYSIWYG harness pattern from `jet_print_placeholder_test.dart` (SC-003)
 
 ### Implementation for User Story 1
 
-- [ ] T013 [P] [US1] Create `DesignerTopBar` (private) in `packages/jet_print/lib/src/designer/layout/designer_top_bar.dart`: horizontal strip with localized report-title placeholder + ≥1 `ShadButton.ghost` action (non-functional `onPressed`), all captions/tooltips from `JetPrintLocalizations` (FR-001/FR-015/FR-016)
-- [ ] T014 [P] [US1] Create `DesignerToolbox` (private) in `packages/jet_print/lib/src/designer/layout/designer_toolbox.dart`: left-docked, independently scrollable palette container shell with a localized header (FR-002/FR-010); sample entries added in US3
-- [ ] T015 [P] [US1] Create `DesignerSurface` (private) in `packages/jet_print/lib/src/designer/layout/designer_surface.dart`: center primary area showing a bounded page/canvas placeholder distinct from chrome, independently scrollable, never a blank void (FR-003/FR-010)
-- [ ] T016 [P] [US1] Create `DesignerRightPanel` (private) in `packages/jet_print/lib/src/designer/layout/designer_right_panel.dart`: `ShadTabs<String>` container with three localized captions in order Data Source / Outline / Properties (tab bodies stubbed; switching wired in US2) (FR-004/FR-016)
-- [ ] T017 [US1] Create the shell `JetReportDesigner` (public `StatefulWidget`, no required params) in `packages/jet_print/lib/src/designer/jet_report_designer.dart`: compose the four regions in a frame using `ShadResizablePanelGroup` (horizontal) inside a `LayoutBuilder`; ≥1024px → three resizable panels honoring min widths with the surface absorbing the remainder (FR-013); <1024px → icon rails + overlay expand per side, holding collapse + active-tab state (FR-011/FR-014); read `ShadTheme` (FR-008/009); add dartdoc noting layout-only scope (Principle VI) (depends on T013–T016; verified by T010, T011, T011a)
-- [ ] T018 [US1] Export `JetReportDesigner` from `packages/jet_print/lib/jet_print.dart` (depends on T017)
-- [ ] T019 [US1] Render `JetReportDesigner` as `home` in `apps/jet_print_tester/lib/main.dart`, wiring `localizationsDelegates: [JetPrintLocalizations.delegate, GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate]` and `supportedLocales: JetPrintLocalizations.supportedLocales`; keep the existing theme toggle (depends on T018)
-- [ ] T020 [US1] Update `apps/jet_print_tester/test/app_consumes_library_test.dart` to assert the app root renders exactly one `JetReportDesigner` inside a `ShadApp` (depends on T019)
+- [X] T013 [P] [US1] Create `DesignerTopBar` (private) in `packages/jet_print/lib/src/designer/layout/designer_top_bar.dart`: horizontal strip with localized report-title placeholder + ≥1 `ShadButton.ghost` action (non-functional `onPressed`), all captions/tooltips from `JetPrintLocalizations` (FR-001/FR-015/FR-016)
+- [X] T014 [P] [US1] Create `DesignerToolbox` (private) in `packages/jet_print/lib/src/designer/layout/designer_toolbox.dart`: left-docked, independently scrollable palette container shell with a localized header (FR-002/FR-010); sample entries added in US3
+- [X] T015 [P] [US1] Create `DesignerSurface` (private) in `packages/jet_print/lib/src/designer/layout/designer_surface.dart`: center primary area showing a bounded page/canvas placeholder distinct from chrome, independently scrollable, never a blank void (FR-003/FR-010)
+- [X] T016 [P] [US1] Create `DesignerRightPanel` (private) in `packages/jet_print/lib/src/designer/layout/designer_right_panel.dart`: `ShadTabs<String>` container with three localized captions in order Data Source / Outline / Properties (tab bodies stubbed; switching wired in US2) (FR-004/FR-016)
+- [X] T017 [US1] Create the shell `JetReportDesigner` (public `StatefulWidget`, no required params) in `packages/jet_print/lib/src/designer/jet_report_designer.dart`: compose the four regions in a frame using `ShadResizablePanelGroup` (horizontal) inside a `LayoutBuilder`; ≥1024px → three resizable panels honoring min widths with the surface absorbing the remainder (FR-013); <1024px → icon rails + overlay expand per side, holding collapse + active-tab state (FR-011/FR-014); read `ShadTheme` (FR-008/009); add dartdoc noting layout-only scope (Principle VI) (depends on T013–T016; verified by T010, T011, T011a)
+- [X] T018 [US1] Export `JetReportDesigner` from `packages/jet_print/lib/jet_print.dart` (depends on T017)
+- [X] T019 [US1] Render `JetReportDesigner` as `home` in `apps/jet_print_tester/lib/main.dart`, wiring `localizationsDelegates: [JetPrintLocalizations.delegate, GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate]` and `supportedLocales: JetPrintLocalizations.supportedLocales`; keep the existing theme toggle (depends on T018)
+- [X] T020 [US1] Update `apps/jet_print_tester/test/app_consumes_library_test.dart` to assert the app root renders exactly one `JetReportDesigner` inside a `ShadApp` (depends on T019)
 
 **Checkpoint**: The full designer layout renders at desktop width in light and dark, resizes via splitters, and collapses/expands below the breakpoint. US1 is independently demoable as the MVP.
 
@@ -89,14 +89,14 @@ description: "Task list for Report Designer Main Layout"
 
 ### Tests for User Story 2 (write FIRST, must FAIL before implementation) ⚠️
 
-- [ ] T021 [P] [US2] Tab-switching widget test in `packages/jet_print/test/designer/right_panel_tabs_test.dart`: assert Data Source is active by default and its body is shown; tapping Outline then Properties swaps the visible body, hides the others, and marks the new tab active; exactly one body visible at all times; and each panel body scrolls independently when its content overflows, without displacing sibling regions (FR-004/005/006, FR-010, US2 Acceptance 1–3)
+- [X] T021 [P] [US2] Tab-switching widget test in `packages/jet_print/test/designer/right_panel_tabs_test.dart`: assert Data Source is active by default and its body is shown; tapping Outline then Properties swaps the visible body, hides the others, and marks the new tab active; exactly one body visible at all times; and each panel body scrolls independently when its content overflows, without displacing sibling regions (FR-004/005/006, FR-010, US2 Acceptance 1–3)
 
 ### Implementation for User Story 2
 
-- [ ] T022 [P] [US2] Create `DataSourcePanel` (private) stub body in `packages/jet_print/lib/src/designer/layout/panels/data_source_panel.dart` (localized placeholder hint; independently scrollable; sample field rows added in US3)
-- [ ] T023 [P] [US2] Create `OutlinePanel` (private) stub body in `packages/jet_print/lib/src/designer/layout/panels/outline_panel.dart` (localized placeholder hint; independently scrollable; sample tree added in US3)
-- [ ] T024 [P] [US2] Create `PropertiesPanel` (private) stub body in `packages/jet_print/lib/src/designer/layout/panels/properties_panel.dart` (localized placeholder hint; independently scrollable; sample rows added in US3)
-- [ ] T025 [US2] Wire the three panels as `ShadTab` bodies in `packages/jet_print/lib/src/designer/layout/designer_right_panel.dart` with Data Source default-active and show/hide handled by `ShadTabs` (FR-005/006) (depends on T022–T024)
+- [X] T022 [P] [US2] Create `DataSourcePanel` (private) stub body in `packages/jet_print/lib/src/designer/layout/panels/data_source_panel.dart` (localized placeholder hint; independently scrollable; sample field rows added in US3)
+- [X] T023 [P] [US2] Create `OutlinePanel` (private) stub body in `packages/jet_print/lib/src/designer/layout/panels/outline_panel.dart` (localized placeholder hint; independently scrollable; sample tree added in US3)
+- [X] T024 [P] [US2] Create `PropertiesPanel` (private) stub body in `packages/jet_print/lib/src/designer/layout/panels/properties_panel.dart` (localized placeholder hint; independently scrollable; sample rows added in US3)
+- [X] T025 [US2] Wire the three panels as `ShadTab` bodies in `packages/jet_print/lib/src/designer/layout/designer_right_panel.dart` with Data Source default-active and show/hide handled by `ShadTabs` (FR-005/006) (depends on T022–T024)
 
 **Checkpoint**: All three right-side tabs are reachable; switching shows the selected body and hides the others. US1 + US2 both work independently.
 
@@ -110,15 +110,15 @@ description: "Task list for Report Designer Main Layout"
 
 ### Tests for User Story 3 (write FIRST, must FAIL before implementation) ⚠️
 
-- [ ] T026 [US3] Add representative-placeholder-content assertions in `packages/jet_print/test/designer/jet_report_designer_test.dart` (toolbox lists multiple element entries — Label/Text/Table/Image; surface shows a bounded empty-page placeholder) and in `packages/jet_print/test/designer/right_panel_tabs_test.dart` (each panel body shows content shaped like a field list / element tree / property rows) (FR-007, US3 Acceptance 1–3)
+- [X] T026 [US3] Add representative-placeholder-content assertions in `packages/jet_print/test/designer/jet_report_designer_test.dart` (toolbox lists multiple element entries — Label/Text/Table/Image; surface shows a bounded empty-page placeholder) and in `packages/jet_print/test/designer/right_panel_tabs_test.dart` (each panel body shows content shaped like a field list / element tree / property rows) (FR-007, US3 Acceptance 1–3)
 
 ### Implementation for User Story 3
 
-- [ ] T027 [US3] Populate `DesignerToolbox` with a vertical palette of localized sample element entries (Label, Text, Table, Image, …) as placeholder rows in `packages/jet_print/lib/src/designer/layout/designer_toolbox.dart` (FR-002/FR-007)
-- [ ] T028 [P] [US3] Populate `DataSourcePanel` with sample field-list rows in `packages/jet_print/lib/src/designer/layout/panels/data_source_panel.dart` (sample data values illustrative, not translated) (FR-007)
-- [ ] T029 [P] [US3] Populate `OutlinePanel` with a sample hierarchical element tree (bands/sections/elements) in `packages/jet_print/lib/src/designer/layout/panels/outline_panel.dart` (FR-007)
-- [ ] T030 [P] [US3] Populate `PropertiesPanel` with sample property rows (name/value pairs) in `packages/jet_print/lib/src/designer/layout/panels/properties_panel.dart` (FR-007)
-- [ ] T031 [US3] Refine `DesignerSurface` into a clearly bounded empty-page mock distinct from surrounding chrome in `packages/jet_print/lib/src/designer/layout/designer_surface.dart` (FR-003/FR-007, empty-surface edge case)
+- [X] T027 [US3] Populate `DesignerToolbox` with a vertical palette of localized sample element entries (Label, Text, Table, Image, …) as placeholder rows in `packages/jet_print/lib/src/designer/layout/designer_toolbox.dart` (FR-002/FR-007)
+- [X] T028 [P] [US3] Populate `DataSourcePanel` with sample field-list rows in `packages/jet_print/lib/src/designer/layout/panels/data_source_panel.dart` (sample data values illustrative, not translated) (FR-007)
+- [X] T029 [P] [US3] Populate `OutlinePanel` with a sample hierarchical element tree (bands/sections/elements) in `packages/jet_print/lib/src/designer/layout/panels/outline_panel.dart` (FR-007)
+- [X] T030 [P] [US3] Populate `PropertiesPanel` with sample property rows (name/value pairs) in `packages/jet_print/lib/src/designer/layout/panels/properties_panel.dart` (FR-007)
+- [X] T031 [US3] Refine `DesignerSurface` into a clearly bounded empty-page mock distinct from surrounding chrome in `packages/jet_print/lib/src/designer/layout/designer_surface.dart` (FR-003/FR-007, empty-surface edge case)
 
 **Checkpoint**: Every region is self-explanatory placeholder content. US1 + US2 + US3 independently functional.
 
@@ -132,14 +132,14 @@ description: "Task list for Report Designer Main Layout"
 
 ### Tests for User Story 4 (write FIRST, must FAIL before implementation) ⚠️
 
-- [ ] T032 [P] [US4] Localization widget test in `packages/jet_print/test/designer/localization_test.dart`: render `JetReportDesigner` under `en`/`de`/`tr` and assert chrome captions match each language; render under an unsupported locale and with a deliberately missing key and assert English fallback (no blank, no raw key) (FR-016/017, SC-007, US4 Acceptance 1–3)
+- [X] T032 [P] [US4] Localization widget test in `packages/jet_print/test/designer/localization_test.dart`: render `JetReportDesigner` under `en`/`de`/`tr` and assert chrome captions match each language; render under an unsupported locale and with a deliberately missing key and assert English fallback (no blank, no raw key) (FR-016/017, SC-007, US4 Acceptance 1–3)
 
 ### Implementation for User Story 4
 
-- [ ] T033 [P] [US4] Create the German ARB `packages/jet_print/lib/src/designer/l10n/jet_print_de.arb` translating every key in the en template
-- [ ] T034 [P] [US4] Create the Turkish ARB `packages/jet_print/lib/src/designer/l10n/jet_print_tr.arb` translating every key in the en template
-- [ ] T035 [US4] Regenerate `JetPrintLocalizations` via `flutter gen-l10n` (or `flutter pub get`) so de + tr are compiled into the delegate (depends on T033–T034)
-- [ ] T036 [US4] Add a runtime language toggle (cycles en → de → tr) to `apps/jet_print_tester/lib/main.dart` that holds a `Locale` in state and drives `ShadApp.locale` via `setState`, analogous to the existing theme toggle (FR-018, SC-007) (depends on T035)
+- [X] T033 [P] [US4] Create the German ARB `packages/jet_print/lib/src/designer/l10n/jet_print_de.arb` translating every key in the en template
+- [X] T034 [P] [US4] Create the Turkish ARB `packages/jet_print/lib/src/designer/l10n/jet_print_tr.arb` translating every key in the en template
+- [X] T035 [US4] Regenerate `JetPrintLocalizations` via `flutter gen-l10n` (or `flutter pub get`) so de + tr are compiled into the delegate (depends on T033–T034)
+- [X] T036 [US4] Add a runtime language toggle (cycles en → de → tr) to `apps/jet_print_tester/lib/main.dart` that holds a `Locale` in state and drives `ShadApp.locale` via `setState`, analogous to the existing theme toggle (FR-018, SC-007) (depends on T035)
 
 **Checkpoint**: Designer renders in all three languages with live switching and English fallback. All four user stories independently functional.
 
@@ -149,12 +149,12 @@ description: "Task list for Report Designer Main Layout"
 
 **Purpose**: Documentation, longer-text resilience, and the full verification gate across all stories.
 
-- [ ] T037 [P] Verify the layout accommodates longer translated captions (e.g. German) via wrap/ellipsize without clipping adjacent controls across `designer_top_bar.dart`, `designer_right_panel.dart`, and `designer_toolbox.dart` (longer-text edge case)
-- [ ] T038 [P] Ensure dartdoc on all new public symbols (`JetReportDesigner`, `JetPrintLocalizations` export notes) describing purpose, usage, and layout-only scope (Principle VI)
-- [ ] T039 [P] Update `packages/jet_print/CHANGELOG.md` with the report designer shell + en/de/tr localization delegate
-- [ ] T040 Run `flutter analyze` and confirm zero warnings (generated l10n excluded per T004) (FR-009)
-- [ ] T041 Run `dart format --output=none --set-exit-if-changed .` and confirm no formatting drift
-- [ ] T042 Run `flutter test` from the workspace root — all green, no skips; regenerate goldens with `flutter test --update-goldens` only for intentional visual changes (Principle III/IV)
+- [X] T037 [P] Verify the layout accommodates longer translated captions (e.g. German) via wrap/ellipsize without clipping adjacent controls across `designer_top_bar.dart`, `designer_right_panel.dart`, and `designer_toolbox.dart` (longer-text edge case)
+- [X] T038 [P] Ensure dartdoc on all new public symbols (`JetReportDesigner`, `JetPrintLocalizations` export notes) describing purpose, usage, and layout-only scope (Principle VI)
+- [X] T039 [P] Update `packages/jet_print/CHANGELOG.md` with the report designer shell + en/de/tr localization delegate
+- [X] T040 Run `flutter analyze` and confirm zero warnings (generated l10n excluded per T004) (FR-009)
+- [X] T041 Run `dart format --output=none --set-exit-if-changed .` and confirm no formatting drift
+- [X] T042 Run `flutter test` from the workspace root — all green, no skips; regenerate goldens with `flutter test --update-goldens` only for intentional visual changes (Principle III/IV)
 - [ ] T043 Execute `quickstart.md` validation: run the tester app on macOS and manually confirm tab switch, splitter resize, narrow-window collapse/expand, light/dark theme, and en/de/tr language switch
 
 ---

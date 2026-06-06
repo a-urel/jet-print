@@ -1,0 +1,120 @@
+{
+  "@@locale": "en",
+
+  "reportTitlePlaceholder": "Untitled report",
+  "@reportTitlePlaceholder": {
+    "description": "Placeholder report name shown in the designer top bar before a report is named."
+  },
+
+  "actionPreview": "Preview",
+  "@actionPreview": {
+    "description": "Top-bar action: open a print preview of the report. Non-functional placeholder this iteration."
+  },
+  "actionPreviewTooltip": "Preview the report",
+  "@actionPreviewTooltip": {
+    "description": "Tooltip for the Preview top-bar action."
+  },
+
+  "actionSave": "Save",
+  "@actionSave": {
+    "description": "Top-bar action: save the report. Non-functional placeholder this iteration."
+  },
+  "actionSaveTooltip": "Save the report",
+  "@actionSaveTooltip": {
+    "description": "Tooltip for the Save top-bar action."
+  },
+
+  "actionExport": "Export",
+  "@actionExport": {
+    "description": "Top-bar action: export the report. Non-functional placeholder this iteration."
+  },
+  "actionExportTooltip": "Export the report",
+  "@actionExportTooltip": {
+    "description": "Tooltip for the Export top-bar action."
+  },
+
+  "actionUndoTooltip": "Undo",
+  "@actionUndoTooltip": {
+    "description": "Tooltip for the Undo top-bar icon button (history group)."
+  },
+  "actionRedoTooltip": "Redo",
+  "@actionRedoTooltip": {
+    "description": "Tooltip for the Redo top-bar icon button (history group)."
+  },
+  "actionZoomInTooltip": "Zoom in",
+  "@actionZoomInTooltip": {
+    "description": "Tooltip for the Zoom in top-bar icon button (zoom group)."
+  },
+  "actionZoomOutTooltip": "Zoom out",
+  "@actionZoomOutTooltip": {
+    "description": "Tooltip for the Zoom out top-bar icon button (zoom group)."
+  },
+  "toggleGridTooltip": "Show grid",
+  "@toggleGridTooltip": {
+    "description": "Tooltip for the grid view-toggle in the top bar."
+  },
+  "toggleRulerTooltip": "Show rulers",
+  "@toggleRulerTooltip": {
+    "description": "Tooltip for the rulers view-toggle in the top bar."
+  },
+  "toggleSnapTooltip": "Snap to grid",
+  "@toggleSnapTooltip": {
+    "description": "Tooltip for the snap-to-grid view-toggle in the top bar."
+  },
+
+  "tabDataSource": "Data Source",
+  "@tabDataSource": {
+    "description": "Right-panel tab caption for the data source / fields panel (default-active tab)."
+  },
+  "tabOutline": "Outline",
+  "@tabOutline": {
+    "description": "Right-panel tab caption for the report outline / element tree panel."
+  },
+  "tabProperties": "Properties",
+  "@tabProperties": {
+    "description": "Right-panel tab caption for the properties panel."
+  },
+
+  "toolboxTextEntry": "Text",
+  "@toolboxTextEntry": {
+    "description": "Toolbox element: a static or data-bound text element. Shown as an icon-button tooltip."
+  },
+  "toolboxTableEntry": "Table",
+  "@toolboxTableEntry": {
+    "description": "Toolbox element: a tabular layout element."
+  },
+  "toolboxImageEntry": "Image",
+  "@toolboxImageEntry": {
+    "description": "Toolbox element: a picture / logo element."
+  },
+  "toolboxChartEntry": "Chart",
+  "@toolboxChartEntry": {
+    "description": "Toolbox element: a chart / graph element."
+  },
+  "toolboxBarcodeEntry": "Barcode",
+  "@toolboxBarcodeEntry": {
+    "description": "Toolbox element: a barcode / QR element."
+  },
+
+  "surfaceEmptyHint": "Drag elements from the toolbox onto the page to begin.",
+  "@surfaceEmptyHint": {
+    "description": "Hint shown on the empty design surface page so it never reads as a blank void."
+  },
+
+  "expandToolboxTooltip": "Expand toolbox",
+  "@expandToolboxTooltip": {
+    "description": "Tooltip on the collapsed toolbox rail's expand button (narrow window)."
+  },
+  "collapseToolboxTooltip": "Collapse toolbox",
+  "@collapseToolboxTooltip": {
+    "description": "Tooltip on the expanded toolbox overlay's collapse button (narrow window)."
+  },
+  "expandPanelTooltip": "Expand panel",
+  "@expandPanelTooltip": {
+    "description": "Tooltip on the collapsed right-panel rail's expand button (narrow window)."
+  },
+  "collapsePanelTooltip": "Collapse panel",
+  "@collapsePanelTooltip": {
+    "description": "Tooltip on the expanded right-panel overlay's collapse button (narrow window)."
+  }
+}

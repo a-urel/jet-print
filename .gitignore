@@ -50,3 +50,6 @@ app.*.map.json
 **/macos/Flutter/Flutter-Generated.xcconfig
 **/Pods/
 **/.symlinks/
+
+# Flutter golden-test failure artifacts (diff/master/test images)
+**/test/**/failures/
