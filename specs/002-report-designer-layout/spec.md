@@ -20,6 +20,14 @@ no property editing, and no persistence are in scope.
 > the shortest unambiguous label and avoids collision with the separate *Data Source* panel.
 > See Assumptions if the team prefers a different label — it changes one tab caption only.
 
+## Clarifications
+
+### Session 2026-06-06
+
+- Q: Should the toolbox and right tabbed panel be user-resizable, or fixed width? → A: Resizable — draggable splitters between toolbox / surface / right panel, each side region honoring a minimum width.
+- Q: Should the designer frame include a top header / toolbar strip? → A: Yes — include a placeholder top bar (report title + non-functional placeholder action buttons).
+- Q: How should the layout behave when the desktop window gets small? → A: Collapsible side panels — below a defined width breakpoint the side panels collapse (to an icon rail / toggle) so the design surface stays usable.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - See the full designer workspace at a glance (Priority: P1)
@@ -94,7 +102,7 @@ misrepresent the region's role.
 
 ### Edge Cases
 
-- **Narrow window**: When the window is resized narrower than the comfortable minimum, the layout MUST keep all three regions reachable (e.g., side panels retain a minimum width and the center surface scrolls or shrinks) rather than clipping a region out of view.
+- **Narrow window**: When the window is resized below the defined width breakpoint, the side regions MUST collapse (icon rail / toggle) so the design surface stays usable, rather than clipping a region out of view; the user MUST be able to expand a collapsed region again.
 - **Very tall content**: When a panel's placeholder list is longer than its height, that panel MUST scroll independently without pushing other regions off-screen.
 - **Theme with no explicit selection**: When the app starts without a user theme choice, the designer MUST render with a sensible default theme (matching the tester app's default) rather than an unstyled fallback.
 - **Empty design surface**: The design surface with no report content MUST still render its page/canvas placeholder, not a blank void.
@@ -103,7 +111,7 @@ misrepresent the region's role.
 
 ### Functional Requirements
 
-- **FR-001**: The designer MUST present a single screen composed of four visual regions: a left **toolbox**, a center **design surface**, a right **tabbed panel**, and an enclosing layout frame that positions them.
+- **FR-001**: The designer MUST present a single screen composed of these visual regions: a **top bar**, a left **toolbox**, a center **design surface**, a right **tabbed panel**, and an enclosing layout frame that positions them.
 - **FR-002**: The left toolbox region MUST be docked to the left edge and display a vertical palette of placeholder report-element entries.
 - **FR-003**: The center design surface MUST occupy the primary (largest) area between the toolbox and the right panel and display a bounded page/canvas placeholder.
 - **FR-004**: The right region MUST present a tab strip with exactly three tabs in this order: **Data Source**, **Outline**, **Properties**.
@@ -113,12 +121,16 @@ misrepresent the region's role.
 - **FR-008**: All visible controls MUST be rendered using the project's shadcn-based component library and MUST respect the active shadcn theme.
 - **FR-009**: The layout MUST adopt both light and dark theme variants correctly, with no region falling back to an unthemed default appearance.
 - **FR-010**: Each panel and the design surface MUST scroll independently when their content exceeds the available space, without displacing sibling regions.
-- **FR-011**: The layout MUST keep all four regions present and reachable across a reasonable range of desktop window sizes, honoring sensible minimum widths for the side regions.
-- **FR-012**: Except for switching the active right-side tab, the controls MUST be non-functional placeholders (no data binding, element creation, property editing, or persistence) in this iteration.
+- **FR-011**: The layout MUST keep all regions present and reachable across a reasonable range of desktop window sizes; at or above the width breakpoint the side regions honor minimum widths, and below it they collapse per FR-014.
+- **FR-012**: The interactive behaviors in this iteration are limited to: switching the active right-side tab (FR-005), resizing side regions (FR-013), and collapsing/expanding side regions (FR-014). All other controls MUST be non-functional placeholders (no data binding, element creation, property editing, or persistence).
+- **FR-013**: The toolbox and the right tabbed panel MUST be horizontally resizable via draggable splitters between them and the center design surface; each side region MUST enforce a minimum width and the center surface MUST absorb the remaining space.
+- **FR-014**: Below a defined width breakpoint, the side regions (toolbox and right panel) MUST be collapsible — reduced to an icon rail or otherwise toggled out of the way — so the design surface remains usable, and MUST be expandable again via a visible affordance.
+- **FR-015**: The top bar MUST display a placeholder report title and one or more placeholder action controls; these actions MUST be visible and themed but non-functional this iteration.
 
 ### Key Entities *(layout regions — visual only, no data model)*
 
-- **Designer Frame**: The enclosing arrangement that positions the three working regions; owns overall spacing, dividers, and theme application.
+- **Designer Frame**: The enclosing arrangement that positions the top bar and the three working regions; owns overall spacing, resizable splitters, the collapse breakpoint, and theme application.
+- **Top Bar**: A horizontal strip across the top of the frame holding a placeholder report title and non-functional placeholder action controls.
 - **Toolbox**: Left-docked palette listing report-element types as placeholder entries.
 - **Design Surface**: Central canvas region showing an empty report page placeholder; the primary work area.
 - **Right Panel (tabbed)**: A three-tab container hosting the Data Source, Outline, and Properties placeholder panels, of which one is visible at a time.
@@ -130,10 +142,10 @@ misrepresent the region's role.
 
 ### Measurable Outcomes
 
-- **SC-001**: A first-time reviewer can identify all four regions (toolbox, design surface, right tabbed panel, frame) and correctly state each region's purpose within 15 seconds of seeing the screen, without guidance.
+- **SC-001**: A first-time reviewer can identify the primary regions (top bar, toolbox, design surface, right tabbed panel) and correctly state each region's purpose within 15 seconds of seeing the screen, without guidance.
 - **SC-002**: All three right-side tabs are reachable, and switching to any tab shows its placeholder and hides the others in 100% of attempts.
 - **SC-003**: The layout renders correctly with no unthemed or visually broken regions in both light and dark themes (2 of 2 theme variants pass visual review).
-- **SC-004**: The full layout is visible without horizontal scrolling at the tester app's default desktop window size, and remains usable (all regions reachable) when the window is resized down to a defined minimum.
+- **SC-004**: The full layout is visible without horizontal scrolling at the tester app's default desktop window size; side regions resize via splitters down to their minimum widths, and below the defined width breakpoint they collapse so the design surface stays usable — with every region re-expandable in 100% of attempts.
 - **SC-005**: 100% of visible controls are shadcn-based components themed consistently — zero default-styled or platform-native-looking controls appear in review.
 - **SC-006**: Stakeholders can approve the workspace arrangement from the layout alone (no functional features required), confirming the shell is ready for subsequent feature work.
 
@@ -142,7 +154,8 @@ misrepresent the region's role.
 - **shadcn = Flutter `shadcn_ui`**: "shadcn widgets" refers to the project's adopted `shadcn_ui` Flutter component library (per the established scaffold), not the React/TypeScript shadcn/ui. Components such as the tabbed panel, cards, list rows, and resizable dividers come from that library.
 - **Tab label "Outline"**: The "report explorer" panel is labeled **Outline**. If the team prefers *Report Tree*, *Structure*, or the original *Report Explorer*, it is a single caption change with no structural impact.
 - **Desktop-first**: The designer targets the macOS desktop tester app (per the current scaffold). Touch/mobile layouts are out of scope this iteration.
-- **Optional header strip**: A thin top region (title / placeholder action bar) MAY be included as part of the enclosing frame for visual completeness, but no toolbar actions are functional. The four named regions remain the focus.
+- **Top bar is included**: A top strip with a placeholder report title and placeholder action controls is part of the enclosing frame (clarified 2026-06-06). The actions are non-functional this iteration.
 - **Default tab**: The Data Source tab is the default-active right-side tab on load (any single default is acceptable for review).
+- **Width breakpoint / minimums are a sensible default**: The exact collapse breakpoint and minimum side-region widths (e.g., ~1024 px wide / ~200 px panels) are chosen during planning as reasonable desktop defaults; the spec fixes the *behavior*, not the pixel values.
 - **Placeholder content is illustrative**: Sample entries (element types, fields, properties) are static and chosen to communicate intent; they are not wired to any real report model.
-- **Non-functional by design**: Drag-and-drop, selection, editing, and saving are explicitly deferred; only tab switching is interactive.
+- **Non-functional by design**: Drag-and-drop, selection, editing, and saving are explicitly deferred. The only interactive behaviors are tab switching, side-region resizing, and side-region collapse/expand.
