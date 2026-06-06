@@ -43,13 +43,13 @@ correctly arranged, nothing else can be demonstrated. It is independently valuab
 visual skeleton the team and stakeholders review and sign off on.
 
 **Independent Test**: Launch the tester app, open the designer screen, and visually confirm
-all four regions (left toolbox, center design surface, right tabbed panel, and an enclosing
-frame) are present, correctly positioned, and styled with the shadcn theme in both light and
-dark mode. Delivers value as a reviewable, demoable workspace skeleton.
+all five regions (top bar, left toolbox, center design surface, right tabbed panel, and an
+enclosing frame) are present, correctly positioned, and styled with the shadcn theme in both
+light and dark mode. Delivers value as a reviewable, demoable workspace skeleton.
 
 **Acceptance Scenarios**:
 
-1. **Given** the tester app is running, **When** the report designer screen is shown, **Then** a left toolbox region, a center design surface, and a right panel region are all visible simultaneously without scrolling on a standard desktop window.
+1. **Given** the tester app is running, **When** the report designer screen is shown, **Then** a top bar, a left toolbox region, a center design surface, and a right panel region are all visible simultaneously without horizontal scrolling on a standard desktop window.
 2. **Given** the designer is shown, **When** the user observes the layout, **Then** the center design surface occupies the largest share of horizontal space, with the toolbox and right panel flanking it.
 3. **Given** the active theme is toggled between light and dark, **When** the designer re-renders, **Then** every region adopts the corresponding shadcn theme colors with no unstyled or default-look elements.
 
