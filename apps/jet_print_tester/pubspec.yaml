@@ -35,6 +35,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # The consumer wires the GlobalMaterial/Widgets/Cupertino delegates alongside
+  # JetPrintLocalizations.delegate so the designer chrome localizes (FR-018).
+  flutter_localizations:
+    sdk: flutter
 
   # The library under test. No version constraint: it resolves to the local
   # workspace member, so the tester always consumes the in-repo jet_print

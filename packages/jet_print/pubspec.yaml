@@ -17,6 +17,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # First-party localization support: flutter_localizations provides the Global*
+  # delegates and locale-resolution machinery; intl backs the gen-l10n output.
+  # Required by FR-016–FR-018 (the library ships its own en/de/tr chrome strings).
+  flutter_localizations:
+    sdk: flutter
+  intl: any
   # shadcn_ui constraint below was written by `flutter pub add` so it records the
   # real resolved range (not a placeholder), satisfying FR-012.
   shadcn_ui: ^0.54.0
@@ -27,3 +33,8 @@ dev_dependencies:
   flutter_lints: ^5.0.0
 
 flutter:
+  # Enables the gen-l10n pipeline (driven by l10n.yaml) so `flutter pub get`
+  # regenerates JetPrintLocalizations from the ARB files under
+  # lib/src/designer/l10n/. With synthetic-package:false the output is real,
+  # exportable source — see l10n.yaml.
+  generate: true

@@ -1,0 +1,38 @@
+{
+  "@@locale": "tr",
+
+  "reportTitlePlaceholder": "Adsız rapor",
+
+  "actionPreview": "Önizleme",
+  "actionPreviewTooltip": "Raporu önizle",
+  "actionSave": "Kaydet",
+  "actionSaveTooltip": "Raporu kaydet",
+  "actionExport": "Dışa Aktar",
+  "actionExportTooltip": "Raporu dışa aktar",
+
+  "actionUndoTooltip": "Geri al",
+  "actionRedoTooltip": "Yinele",
+  "actionZoomInTooltip": "Yakınlaştır",
+  "actionZoomOutTooltip": "Uzaklaştır",
+  "toggleGridTooltip": "Izgarayı göster",
+  "toggleRulerTooltip": "Cetvelleri göster",
+  "toggleSnapTooltip": "Izgaraya hizala",
+
+  "tabDataSource": "Veri Kaynağı",
+  "tabOutline": "Anahat",
+  "tabProperties": "Özellikler",
+
+  "toolboxTextEntry": "Metin",
+  "toolboxTableEntry": "Tablo",
+  "toolboxImageEntry": "Resim",
+  "toolboxChartEntry": "Grafik",
+  "toolboxBarcodeEntry": "Barkod",
+
+
+  "surfaceEmptyHint": "Başlamak için araç kutusundan öğeleri sayfaya sürükleyin.",
+
+  "expandToolboxTooltip": "Araç kutusunu genişlet",
+  "collapseToolboxTooltip": "Araç kutusunu daralt",
+  "expandPanelTooltip": "Paneli genişlet",
+  "collapsePanelTooltip": "Paneli daralt"
+}

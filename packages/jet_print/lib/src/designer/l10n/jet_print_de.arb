@@ -1,0 +1,38 @@
+{
+  "@@locale": "de",
+
+  "reportTitlePlaceholder": "Unbenannter Bericht",
+
+  "actionPreview": "Vorschau",
+  "actionPreviewTooltip": "Bericht in der Vorschau anzeigen",
+  "actionSave": "Speichern",
+  "actionSaveTooltip": "Bericht speichern",
+  "actionExport": "Exportieren",
+  "actionExportTooltip": "Bericht exportieren",
+
+  "actionUndoTooltip": "Rückgängig",
+  "actionRedoTooltip": "Wiederholen",
+  "actionZoomInTooltip": "Vergrößern",
+  "actionZoomOutTooltip": "Verkleinern",
+  "toggleGridTooltip": "Raster anzeigen",
+  "toggleRulerTooltip": "Lineale anzeigen",
+  "toggleSnapTooltip": "Am Raster ausrichten",
+
+  "tabDataSource": "Datenquelle",
+  "tabOutline": "Gliederung",
+  "tabProperties": "Eigenschaften",
+
+  "toolboxTextEntry": "Text",
+  "toolboxTableEntry": "Tabelle",
+  "toolboxImageEntry": "Bild",
+  "toolboxChartEntry": "Diagramm",
+  "toolboxBarcodeEntry": "Barcode",
+
+
+  "surfaceEmptyHint": "Ziehen Sie Elemente aus dem Werkzeugkasten auf die Seite, um zu beginnen.",
+
+  "expandToolboxTooltip": "Werkzeugkasten einblenden",
+  "collapseToolboxTooltip": "Werkzeugkasten ausblenden",
+  "expandPanelTooltip": "Bereich einblenden",
+  "collapsePanelTooltip": "Bereich ausblenden"
+}
