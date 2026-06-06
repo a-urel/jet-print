@@ -46,6 +46,11 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
   /// (FR-011). The left toolbox is already a compact icon strip and stays put.
   static const double _breakpoint = 1024;
 
+  /// The shell's minimum usable width. Below it the whole shell is laid out at
+  /// this width and scrolls horizontally instead of squeezing its fixed chrome
+  /// (toolbox + rail + the dense top bar) past the point where it overflows.
+  static const double _minShellWidth = 600;
+
   // Right-panel sizing in logical pixels; converted to the panel group's
   // fractional sizes against the live width so the minimum holds as the window
   // grows or shrinks (research D3).
@@ -62,6 +67,25 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final Widget shell = _buildShell(context);
+        if (constraints.maxWidth >= _minShellWidth) return shell;
+        // Too narrow: lay the shell out at its minimum width and let the user
+        // reach the off-screen edge by scrolling, rather than overflowing.
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SizedBox(
+            width: _minShellWidth,
+            height: constraints.maxHeight,
+            child: shell,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildShell(BuildContext context) {
     final ShadColorScheme colors = ShadTheme.of(context).colorScheme;
 
     return ColoredBox(

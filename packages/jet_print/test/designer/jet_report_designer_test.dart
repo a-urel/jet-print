@@ -5,6 +5,7 @@
 // full layout fits the default desktop width with no horizontal overflow.
 //
 // US3 representative-placeholder-content assertions are appended here (T026).
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
@@ -65,6 +66,34 @@ void main() {
       final double windowRight =
           tester.getBottomRight(find.byKey(kTopBarKey)).dx;
       expect(windowRight, lessThanOrEqualTo(kDesktopSize.width + 0.5));
+    });
+  });
+
+  group('JetReportDesigner minimum width', () {
+    // Mirrors _JetReportDesignerState._minShellWidth.
+    const double minShellWidth = 600;
+
+    testWidgets('clamps to a minimum width and scrolls when very narrow', (
+      WidgetTester tester,
+    ) async {
+      await pumpDesigner(tester, size: const Size(320, 760));
+
+      // No overflow at an extreme width…
+      expect(tester.takeException(), isNull);
+      // …because the shell is laid out at its minimum width (wider than the
+      // viewport, reached by horizontal scrolling) rather than squeezed.
+      final double topBarWidth = tester.getSize(find.byKey(kTopBarKey)).width;
+      expect(topBarWidth, greaterThan(320));
+      expect(topBarWidth, closeTo(minShellWidth, 0.5));
+    });
+
+    testWidgets('fills the viewport at or above the minimum width', (
+      WidgetTester tester,
+    ) async {
+      await pumpDesigner(tester);
+
+      final double topBarWidth = tester.getSize(find.byKey(kTopBarKey)).width;
+      expect(topBarWidth, closeTo(kDesktopSize.width, 0.5));
     });
   });
 
