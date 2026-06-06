@@ -100,12 +100,38 @@ misrepresent the region's role.
 
 ---
 
+### User Story 4 - Use the designer in my own language (Priority: P3)
+
+A report author working in English, German, or Turkish sees every label in the designer
+chrome — top bar title and actions, the three tab captions, toolbox entries, and panel
+placeholder labels — in their selected language. Switching the language updates all visible
+designer text without restarting.
+
+**Why this priority**: Localization is a cross-cutting requirement that every later designer
+feature must respect, so establishing the localized-string seam now (while the surface area is
+just placeholders) is cheap and prevents costly retrofitting. It is P3 because it does not
+change the layout arrangement (US1) — it changes the words inside it.
+
+**Independent Test**: With the designer shown, switch the active language among English,
+German, and Turkish and confirm all visible designer labels change to the chosen language,
+with no blank or untranslated captions.
+
+**Acceptance Scenarios**:
+
+1. **Given** the active language is English, **When** the designer is shown, **Then** all visible designer labels (top bar, tab captions, toolbox entries, panel placeholder labels) render in English.
+2. **Given** the designer is shown, **When** the user switches the language to German or Turkish, **Then** every visible designer label updates to that language without an app restart.
+3. **Given** the host locale is unsupported or a translation is missing for a label, **When** the designer renders, **Then** that label falls back to English rather than showing a blank or a raw key.
+
+---
+
 ### Edge Cases
 
 - **Narrow window**: When the window is resized below the defined width breakpoint, the side regions MUST collapse (icon rail / toggle) so the design surface stays usable, rather than clipping a region out of view; the user MUST be able to expand a collapsed region again.
 - **Very tall content**: When a panel's placeholder list is longer than its height, that panel MUST scroll independently without pushing other regions off-screen.
 - **Theme with no explicit selection**: When the app starts without a user theme choice, the designer MUST render with a sensible default theme (matching the tester app's default) rather than an unstyled fallback.
 - **Empty design surface**: The design surface with no report content MUST still render its page/canvas placeholder, not a blank void.
+- **Missing translation / unsupported locale**: When a label has no translation for the active language, or the host locale is outside the supported set (en, de, tr), the designer MUST fall back to English rather than showing a blank label or a raw key.
+- **Language with longer text**: When a translated label (e.g., a German caption) is longer than its English equivalent, the region MUST accommodate it (wrap, ellipsize, or expand) without breaking the layout or clipping adjacent controls.
 
 ## Requirements *(mandatory)*
 
@@ -126,6 +152,9 @@ misrepresent the region's role.
 - **FR-013**: The toolbox and the right tabbed panel MUST be horizontally resizable via draggable splitters between them and the center design surface; each side region MUST enforce a minimum width and the center surface MUST absorb the remaining space.
 - **FR-014**: Below a defined width breakpoint, the side regions (toolbox and right panel) MUST be collapsible — reduced to an icon rail or otherwise toggled out of the way — so the design surface remains usable, and MUST be expandable again via a visible affordance.
 - **FR-015**: The top bar MUST display a placeholder report title and one or more placeholder action controls; these actions MUST be visible and themed but non-functional this iteration.
+- **FR-016**: All user-visible text in the designer chrome (top bar title and action labels/tooltips, the three tab captions, toolbox entries, and panel placeholder labels) MUST be sourced from localized string resources rather than hard-coded literals, with translations provided for English (en), German (de), and Turkish (tr).
+- **FR-017**: The designer MUST render its UI text in the active application locale when that locale is one of the supported languages (en, de, tr); when the active locale is unsupported or an individual translation is missing, it MUST fall back to English (the default language) and MUST NOT display a blank label or a raw resource key.
+- **FR-018**: The tester app MUST provide a runtime control to switch the active language among English, German, and Turkish (analogous to the existing light/dark theme toggle), and switching MUST update all visible designer labels without an app restart.
 
 ### Key Entities *(layout regions — visual only, no data model)*
 
@@ -137,6 +166,7 @@ misrepresent the region's role.
 - **Data Source Panel**: Placeholder field-list view (one of the three tabs).
 - **Outline Panel**: Placeholder hierarchical element-tree view of the report (renamed from "report explorer"; one of the three tabs).
 - **Properties Panel**: Placeholder property-row view (one of the three tabs).
+- **Localized Strings**: The set of translatable UI captions for the designer chrome, keyed by string identity and resolved per active language (en, de, tr) with English as the default/fallback. Not a persisted data entity — a presentation resource.
 
 ## Success Criteria *(mandatory)*
 
@@ -148,6 +178,7 @@ misrepresent the region's role.
 - **SC-004**: The full layout is visible without horizontal scrolling at the tester app's default desktop window size; side regions resize via splitters down to their minimum widths, and below the defined width breakpoint they collapse so the design surface stays usable — with every region re-expandable in 100% of attempts.
 - **SC-005**: 100% of visible controls are shadcn-based components themed consistently — zero default-styled or platform-native-looking controls appear in review.
 - **SC-006**: Stakeholders can approve the workspace arrangement from the layout alone (no functional features required), confirming the shell is ready for subsequent feature work.
+- **SC-007**: In each of the three supported languages (en, de, tr), 100% of visible designer labels render in that language with zero blank, untranslated, or raw-key captions, and switching language updates all labels without an app restart.
 
 ## Assumptions
 
@@ -158,4 +189,5 @@ misrepresent the region's role.
 - **Default tab**: The Data Source tab is the default-active right-side tab on load (any single default is acceptable for review).
 - **Width breakpoint / minimums are a sensible default**: The exact collapse breakpoint and minimum side-region widths (e.g., ~1024 px wide / ~200 px panels) are chosen during planning as reasonable desktop defaults; the spec fixes the *behavior*, not the pixel values.
 - **Placeholder content is illustrative**: Sample entries (element types, fields, properties) are static and chosen to communicate intent; they are not wired to any real report model.
-- **Non-functional by design**: Drag-and-drop, selection, editing, and saving are explicitly deferred. The only interactive behaviors are tab switching, side-region resizing, and side-region collapse/expand.
+- **Non-functional by design**: Drag-and-drop, selection, editing, and saving are explicitly deferred. The only interactive behaviors are tab switching, side-region resizing, side-region collapse/expand, and language switching (in the tester app).
+- **Localization scope & default**: English (en) is the default and fallback language; German (de) and Turkish (tr) are the additional supported languages. Localization covers the designer's own *chrome and labels* (top bar, tab captions, toolbox entries, panel placeholder labels). Illustrative *sample data values* in placeholders (e.g., mock field or element names) represent future report data, not UI chrome, and need not be translated this iteration. Right-to-left layouts are out of scope (all three supported languages are left-to-right).
