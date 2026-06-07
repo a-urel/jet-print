@@ -36,13 +36,16 @@ Iterable<String> _directiveUris(File file) => _directive
     .map((Match m) => m.group(1)!);
 
 /// White-box seam tests legitimately import the library's own internals to
-/// exercise the un-exported `domain`/`rendering` types in isolation (SC-004).
+/// exercise the un-exported `domain`/`data`/`rendering` types in isolation
+/// (SC-004).
 /// They are the package's OWN tests, not external consumers, so the `src` ban
 /// (which protects external consumers per SC-007) does not apply to them. The
 /// allowlist is intentionally narrow: every other test stays default-deny.
 bool _isWhiteBoxSeamTest(File file) {
   final String path = file.path.replaceAll(r'\', '/');
-  return path.contains('/test/domain/') || path.contains('/test/rendering/');
+  return path.contains('/test/domain/') ||
+      path.contains('/test/data/') ||
+      path.contains('/test/rendering/');
 }
 
 void main() {
