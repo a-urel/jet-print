@@ -64,7 +64,15 @@ class ElementCodecRegistry {
         rawJson: _deepCopyJsonMap(json),
       );
     }
-    return codec.fromJson(json);
+    try {
+      return codec.fromJson(json);
+    } on ReportFormatException {
+      rethrow;
+    } catch (error) {
+      throw ReportFormatException(
+        'Malformed "$typeKey" element: $error',
+      );
+    }
   }
 }
 

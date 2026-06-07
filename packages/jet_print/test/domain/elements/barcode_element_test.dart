@@ -24,6 +24,18 @@ void main() {
       expect(e.color, JetColor.black);
     });
 
+    test('default (black) color is omitted from JSON and reads back black', () {
+      final ElementCodecRegistry registry = _registry();
+      const BarcodeElement e = BarcodeElement(
+        id: 'qr',
+        bounds: JetRect(x: 0, y: 0, width: 40, height: 40),
+        symbology: BarcodeSymbology.qrCode,
+        data: 'x',
+      );
+      expect(registry.encode(e).containsKey('color'), isFalse);
+      expect(registry.decode(registry.encode(e)), e);
+    });
+
     test('round-trips each symbology', () {
       final ElementCodecRegistry registry = _registry();
       for (final BarcodeSymbology symbology in BarcodeSymbology.values) {

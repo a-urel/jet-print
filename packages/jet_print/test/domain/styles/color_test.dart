@@ -26,5 +26,10 @@ void main() {
       expect(const JetColor(0x80FF0000), const JetColor(0x80FF0000));
       expect(const JetColor(0x80FF0000) == const JetColor(0xFF00FF00), isFalse);
     });
+
+    test('throws FormatException on malformed hex', () {
+      expect(() => JetColor.fromJson('#12'), throwsFormatException);
+      expect(() => JetColor.fromJson('#GGGGGG'), throwsFormatException);
+    });
   });
 }
