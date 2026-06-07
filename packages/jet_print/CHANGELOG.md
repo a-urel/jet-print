@@ -60,6 +60,19 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   inner groups). `JetFieldType` moved to the `domain` seam (re-exported from
   `data`) so parameters and fields share one value-type taxonomy. Page/column
   reset scopes are deferred to 008 (pagination).
+- Frame, text-metrics & paint backends (spec 006): the rendering display-list
+  and first paint backend. `PageFrame` + `FrameBuilder` build a flat list of
+  positioned `FramePrimitive`s (text run / image / line / rect / path, each
+  tagged with its originating element id). A headless text seam — an in-house
+  TTF/OTF **metrics** parser (`parseTtfMetrics`), a byte-keyed `FontRegistry`
+  with a bundled Latin default font (Noto Sans, OFL), and a line-level
+  `TextMeasurer` (`MetricsTextMeasurer`) that owns word-wrapping — guarantees
+  **deterministic line breaks** across backends. A `ReportPainter` abstraction
+  (with async `prepare`) and the backend-agnostic `paintFrame` walk drive
+  `CanvasPainter` (`dart:ui`). The architecture test now enforces that only
+  `CanvasPainter` may import `dart:ui`; `frame/` and `text/` stay headless.
+  Cross-backend pixel parity arrives with the PDF/PNG backends in 009. Replaces
+  the `ReportDocument`/`ReportLayout` scaffold placeholders.
 
 ## 0.1.0
 

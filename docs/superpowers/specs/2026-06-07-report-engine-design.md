@@ -1,6 +1,6 @@
 # Report Engine — Architecture Design
 
-**Date**: 2026-06-07 (rev. 3 — incorporates two rounds of external design review; see §15)
+**Date**: 2026-06-07 (rev. 4 — two rounds of external design review plus a spec-006 implementation refinement; see §15)
 **Status**: Approved blueprint (reference design; implementation split into specs 003–009)
 **Topic**: The `jet_print` report engine — the functional core that turns a report model + data into laid-out, printable output across screen, PDF, and print.
 **Relates to**: Constitution v1.0.0 (Principles I–VI); builds on 001 (scaffold) and 002 (designer layout shell).
@@ -59,7 +59,10 @@ not a re-architecture.
   supports. **v1 supported text scope: Latin and simple left-to-right scripts** (no bidi,
   ligature, or combining-mark shaping). The cross-backend guarantee is scoped to that set;
   complex-script shaping (§14) extends the *same* mechanism to more scripts later. Within scope,
-  parity is a property of shared metrics, not an aspiration.
+  parity is a property of shared metrics, not an aspiration. **v1 implementation (spec 006,
+  §15.6)**: 006 ships the **line-break slice** of this contract — a *line-level* IR with shared
+  metrics that guarantees deterministic line breaks; glyph-exact positioned runs are a later
+  additive tightening (same IR, no re-architecture).
 - **Extensible without core edits (Principle II)**: four extension points (element *types* =
   codec + renderer, expression functions, data sources, paint backends) absorb new capability.
   An element *type* is a registered bundle so it is both *persistable* and *renderable* with
@@ -141,7 +144,9 @@ Domain / Report Model  src/domain/          template · bands · element defs (+
    measurement. `FontRegistry` holds the embedded font bytes. The layout stage measures text
    through this seam (as a positioned glyph run); **every paint backend draws those same
    positions with the same `FontRegistry`**, which is what makes cross-backend line breaks and
-   heights identical within the **v1 Latin/LTR text scope** (§1, §3).
+   heights identical within the **v1 Latin/LTR text scope** (§1, §3). *(v1 per spec 006 / §15.6: a
+   **line-level IR** — laid-out lines with shared metrics, not per-glyph positions — guaranteeing
+   deterministic line breaks; glyph-exact positioning deferred as an additive tightening.)*
 7. **Fill stage** (`rendering/fill/`) — single data pass: routes rows to band instances,
    evaluates element expressions, feeds the variable calculator → `FilledReport`.
 8. **Layout / paginate** (`rendering/layout/`) — measures band instances (delegating element
@@ -332,7 +337,7 @@ fixtures) and de-risk the visual path before Layout exists.
 | **003** | Report Model & Serialization | `domain/` | — | Full model + pure-Dart geometry value types + versioned JSON + migration + **`ElementCodecRegistry`** + **`UnknownElement`**; replaces `ReportDocument` stub. Tests: invariants, round-trip, migration, unknown-element round-trip |
 | **004** | Data Layer | `data/` | 003 | `JetDataSource`/`DataSet`/`DataRow` + in-memory impls. Tests: iteration, field access |
 | **005** | Expression Engine | `expression/` | 003, 004 | Lexer/parser/AST/evaluator + function registry + aggregate calculator. Tests: parse/eval tables, aggregates |
-| **006** | Frame, Text-metrics & Paint backends | `rendering/frame`, `text/`, `paint/` | 003 | `PageFrame` + `FrameBuilder` + **`TextMeasurer`/`FontRegistry`** (default TTF parser) + `ReportPainter` + `CanvasPainter` (shared fonts). Tests: measurer metrics correctness, paint fixture frame → golden, text-parity golden |
+| **006** | Frame, Text-metrics & Paint backends | `rendering/frame`, `text/`, `paint/` | 003 | `PageFrame` + `FrameBuilder` + **`TextMeasurer`/`FontRegistry`** (in-house TTF metrics parser; **line-level IR** — §15.6) + `ReportPainter` + `CanvasPainter` (shared fonts). Tests: measurer metrics correctness, **line-break-determinism data golden** + Canvas paint-fixture smoke golden. Cross-backend pixel/text-parity golden needs a 2nd backend → **009** |
 | **007** | Element Types + Fill | `rendering/elements`, `fill/` | 003,004,005,006 | `ElementRenderer` + `registerElementType` (codec+renderer) + built-ins; Fill → `FilledReport`. Tests: measure/emit, fill snapshots, **persisted-extension test** (round-trip + render, zero core edits) |
 | **008** | Layout & Pagination | `rendering/layout/` | 006, 007 | Band arrange/grow, page breaks, repeating headers, **fixed-bounds late substitution** of page-scoped exprs → `List<PageFrame>`. Tests: pagination snapshots, late-bound safety, determinism |
 | **009** | Engine Facade + Export + Invoice (**MVP**) | `jet_print.dart`, `paint/` | 003–008 | `JetReportEngine` + PdfPainter/ImagePainter/printing (shared `FontRegistry`) + invoice end-to-end. Tests: cross-backend WYSIWYG parity |
@@ -434,3 +439,25 @@ measure→layout→frame path stays platform-agnostic and every dependency is sw
    text (§1 text-scope, §3, §10), and state the exact mechanism (backends paint the measurer's
    positioned glyph run, no re-shape). Complex-script shaping (§14) extends the same mechanism
    and broadens the guarantee later — additive, not a re-architecture.
+
+### Round 3 (rev. 4) — spec-006 implementation refinement (line-level text IR)
+
+6. **Line-level text IR adopted for v1 — refines the positioned-glyph-run contract** *(accepted
+   deviation, recorded here so the blueprint stays the source of truth)*. The blueprint specifies a
+   **glyph-level** positioned-glyph-run contract (§3, §4 #6): the measurer emits which glyphs at
+   which advances and backends paint exactly those positions. During spec-006 design the v1 text
+   seam adopts a **line-level IR** instead — the headless `TextMeasurer` owns line-breaking and
+   emits laid-out **lines** (literal text + width + top + baseline), and each backend draws a line
+   as one native run without re-wrapping. **Rationale**: line breaks are what drive band height and
+   pagination, so owning them headlessly is what makes cross-backend *layout* parity hold; `dart:ui`
+   has no clean glyph-by-glyph draw path (`ui.Paragraph` re-shapes); v1 scope is Latin / simple LTR.
+   **Guarantee (scoped)**: 006 guarantees **deterministic line-breaking** (asserted by a data
+   golden), *not* glyph-exact within-line positioning — backends rasterize the same registered font
+   (visually consistent) but are not guaranteed glyph-exact under kerning/hinting the hmtx-only
+   metrics ignore. **Forward path**: the line IR is additive — `TextLine` can later carry per-glyph
+   advances/positions to tighten toward the full positioned-glyph-run contract (and broaden parity)
+   with no re-architecture, exactly as §14 frames complex-script support. **Consequence for tests**:
+   cross-backend pixel/text-parity goldens require a second, structurally-different backend and so
+   move to **009** (§11); 006 proves the parity *mechanism* via the line-break-determinism data
+   golden plus a single Canvas smoke golden. The 006 row (§11) and the §3 / §4 #6 contract notes are
+   annotated accordingly. Detailed design: `docs/superpowers/specs/2026-06-07-frame-text-paint-design.md`.
