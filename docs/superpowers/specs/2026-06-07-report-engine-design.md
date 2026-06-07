@@ -1,6 +1,6 @@
 # Report Engine — Architecture Design
 
-**Date**: 2026-06-07 (rev. 2 — incorporates external design-review findings; see §15)
+**Date**: 2026-06-07 (rev. 3 — incorporates two rounds of external design review; see §15)
 **Status**: Approved blueprint (reference design; implementation split into specs 003–009)
 **Topic**: The `jet_print` report engine — the functional core that turns a report model + data into laid-out, printable output across screen, PDF, and print.
 **Relates to**: Constitution v1.0.0 (Principles I–VI); builds on 001 (scaffold) and 002 (designer layout shell).
@@ -22,7 +22,14 @@ error/diagnostics, versioning, public API, and testing strategy.
 **Out of scope (this blueprint)**: the full designer UI behavior (canvas editing,
 property editors, drag-drop) — a separate track that *consumes* the engine after 009; async/
 streaming data sources; built-in SQL/REST connectors; charts/cross-tabs/subreports (the
-extension points are designed to admit them later without core changes).
+extension points are designed to admit them later without core changes); **complex-script
+text shaping** (bidi, ligatures, combining marks) — see the text-scope note below.
+
+**v1 text scope (affects the WYSIWYG guarantee)**: text handling targets **Latin and simple
+left-to-right scripts**. The cross-backend parity guarantee (§3) and its golden tests (§10) are
+scoped to that set. Complex-script shaping is deferred (§14) and extends the same `TextMeasurer`
+mechanism without redesign. If a future milestone needs RTL/CJK, it is an additive enhancement,
+not a re-architecture.
 
 ## 2. Decisions (the constraints this design satisfies)
 
@@ -45,24 +52,37 @@ extension points are designed to admit them later without core changes).
   layer-boundary test enforces this.
 - **Single shared layout, many outputs (Principle IV / WYSIWYG)**: one headless layout pass
   produces a `PageFrame` display list; every paint backend renders the *same* frame, so
-  canvas, PDF, PNG, and print cannot diverge. Critically, the **same registered fonts and the
-  same `TextMeasurer`** (§4 / the text-metrics seam) produce both the measurements used during
-  layout *and* the glyphs drawn by every backend — so line breaks, wrapping, and band heights
-  are identical on screen, in PDF, and in PNG. Cross-backend parity is a property of shared
-  metrics, not an aspiration.
+  canvas, PDF, PNG, and print cannot diverge. For text, the mechanism is precise: the
+  **`TextMeasurer`** emits a *positioned glyph run* (which glyphs, at which advances) using the
+  **registered fonts**, and backends **paint exactly those positions rather than re-shaping** —
+  so wrapping and band heights match exactly across screen/PDF/PNG for whatever the measurer
+  supports. **v1 supported text scope: Latin and simple left-to-right scripts** (no bidi,
+  ligature, or combining-mark shaping). The cross-backend guarantee is scoped to that set;
+  complex-script shaping (§14) extends the *same* mechanism to more scripts later. Within scope,
+  parity is a property of shared metrics, not an aspiration.
 - **Extensible without core edits (Principle II)**: four extension points (element *types* =
   codec + renderer, expression functions, data sources, paint backends) absorb new capability.
   An element *type* is a registered bundle so it is both *persistable* and *renderable* with
   zero core edits (see §6, §8).
 - **Test-first & deterministic (Principle III)**: the two intermediate representations are
   also the test seams — most of the engine is verified as pure data transforms.
-- **Platform-agnostic core**: `domain`, `data`, `expression`, and the `fill`/`layout`/`frame`
-  parts of `rendering` are pure Dart and reach anything platform-bound only through
-  **interfaces**. Text measurement goes through a pure-Dart `TextMeasurer` seam backed by
-  deterministic TTF/OTF glyph-metric parsing — **not** Flutter's `TextPainter` — so layout
-  stays headless and reproducible (the core uses the domain's own geometry value types, never
-  `dart:ui`'s `Size`/`Rect`/`Offset` or Flutter's `BoxConstraints`). Only the paint backends
-  import Flutter (`dart:ui`) or third-party libs (`pdf`, `printing`, `barcode`).
+- **Platform-agnostic, headless core** — two distinct dependency boundaries, not one:
+  - **(a) Flutter / `dart:ui` is confined to `CanvasPainter`** (the on-screen paint backend) —
+    the boundary that actually matters for headlessness. `domain`, `data`, `expression`, and the
+    `fill`/`layout`/`frame`/`text` parts of `rendering` never import Flutter; they use the
+    domain's own geometry value types, never `dart:ui`'s `Size`/`Rect`/`Offset` or Flutter's
+    `BoxConstraints`. So the measure→layout→frame path runs headless (server/CI/test) with no
+    Flutter binding.
+  - **(b) Pure-Dart third-party libs may live in rendering *infrastructure***, because they are
+    themselves headless and deterministic: the `pdf`/`printing` backends (paint), the `barcode`
+    package inside the **barcode renderer** (`rendering/elements/`), and the TTF/OTF parser
+    behind the default `TextMeasurer` (`rendering/text/`). None pull in Flutter, so they don't
+    compromise (a). The `domain`/`data`/`expression` seams take **no** rendering third-party
+    deps at all (`intl` for formatting aside).
+
+  (Barcode generation stays in its renderer, not "behind paint," on purpose: paint backends are
+  element-agnostic — they know only primitives — so a barcode emits rect/image primitives like
+  any other element. Pushing it into paint would re-couple backends to element types.)
 
 ## 4. Seam Map & Component Inventory
 
@@ -72,12 +92,12 @@ Designer UI            src/designer/        (exists; consumer; out of scope here
 Public Facade          lib/jet_print.dart   JetReportEngine + minimal exports (single entry point)
   ▼
 Rendering pipeline     src/rendering/
-  • elements/   ElementRendererRegistry + ElementRenderer + built-ins (text/field, image, line/rect, barcode)   ★ extension point
-  • text/       TextMeasurer + FontRegistry (pure-Dart glyph metrics via TTF/OTF parsing)   ◆ injected seam
+  • elements/   ElementRendererRegistry + ElementRenderer + built-ins (text/field, image, line/rect, barcode⊕)   ★ extension point
+  • text/       TextMeasurer + FontRegistry (pure-Dart glyph metrics via TTF/OTF parsing⊕)   ◆ injected seam
   • fill/       Fill stage → FilledReport
   • layout/     Layout & pagination (measures via TextMeasurer) → List<PageFrame>
   • frame/      PageFrame primitive display list + FrameBuilder   (WYSIWYG contract; pure-Dart geometry types)
-  • paint/      ReportPainter + CanvasPainter, PdfPainter, ImagePainter (paint with the same FontRegistry)   ★ extension point · 🔌 Flutter/3rd-party
+  • paint/      ReportPainter + CanvasPainter🔌, PdfPainter⊕, ImagePainter (paint with the same FontRegistry)   ★ extension point
   ▼
 Expression engine      src/expression/      lexer · parser · AST · evaluator + function registry ★ · variable/aggregate calculator
   ▼
@@ -88,7 +108,7 @@ Domain / Report Model  src/domain/          template · bands · element defs (+
                                             serialization/ (versioned JSON + migration + ElementCodecRegistry ★)
 ```
 
-★ = extension point   ◆ = injected infrastructure seam (default impl shipped)   🔌 = only place importing Flutter / third-party libraries
+★ = extension point   ◆ = injected infrastructure seam (default impl shipped)   🔌 = imports Flutter / `dart:ui` (CanvasPainter only — the headless boundary)   ⊕ = uses a pure-Dart third-party lib (headless, no Flutter)
 
 **Component responsibilities**
 
@@ -119,8 +139,9 @@ Domain / Report Model  src/domain/          template · bands · element defs (+
    computing glyph advances, line breaking, ascent/descent, and wrapped-block size; default
    implementation parses TTF/OTF glyph metrics for **deterministic, platform-independent**
    measurement. `FontRegistry` holds the embedded font bytes. The layout stage measures text
-   through this seam; **every paint backend draws with the same `FontRegistry`**, which is what
-   makes cross-backend line breaks and heights identical (the WYSIWYG guarantee for text).
+   through this seam (as a positioned glyph run); **every paint backend draws those same
+   positions with the same `FontRegistry`**, which is what makes cross-backend line breaks and
+   heights identical within the **v1 Latin/LTR text scope** (§1, §3).
 7. **Fill stage** (`rendering/fill/`) — single data pass: routes rows to band instances,
    evaluates element expressions, feeds the variable calculator → `FilledReport`.
 8. **Layout / paginate** (`rendering/layout/`) — measures band instances (delegating element
@@ -289,8 +310,10 @@ registry; `JetDataSource` + in-memory implementations; `FontRegistry` (register 
   goldens"): fast, deterministic, the bulk of engine coverage.
 - **Pixel goldens (top)** — the *same* model + data painted to Canvas / PDF / PNG asserted for
   **parity**; the data-aware **invoice** is the flagship golden. A dedicated **text-fidelity
-  parity** golden uses prose long enough to wrap, asserting identical line breaks across
-  backends — the direct check that the shared-metrics design holds.
+  parity** golden uses **Latin/LTR (v1-scope)** prose long enough to wrap, asserting identical
+  line breaks across backends — the direct check that the shared-metrics design holds.
+  Complex-script parity is explicitly **not** covered in v1 (out of scope, §1); a failing
+  placeholder/skipped test documents the boundary rather than implying coverage.
 - **Contract / architecture** — extend the layer-boundary test (domain pure; `layout/`, `fill/`,
   `frame/`, `text/` have **no `dart:ui` / Flutter import**); a **persisted-extension test** adds
   a custom element type (`{codec, renderer}`) + custom function + custom data source entirely
@@ -321,13 +344,19 @@ live `PageFrame`s, property editors mutate the model, drag-drop element creation
 
 - **`pdf`** — `PdfPainter` backend (PDF document generation). Maintained, permissive license.
 - **`printing`** — native/OS printing built on the PDF output. Same ecosystem.
-- **`barcode`** — barcode/QR generation for the barcode element renderer (emits primitives or
-  an image). Permissive.
+- **`barcode`** — barcode/QR geometry for the barcode element **renderer** (`rendering/elements/`,
+  emits primitives or an image). Pure Dart (no Flutter), permissive. Lives in the renderer, not
+  paint, so backends stay element-agnostic (§3 boundary b).
+- **TTF/OTF metric parser** — behind the default `TextMeasurer` (`rendering/text/`). Pure Dart
+  (no Flutter); may reuse the `pdf` package's font parser or a small dedicated reader.
 - **`intl`** — already present; reused for number/date `FORMAT` functions.
 - PNG export uses `dart:ui` (`Picture.toImage`) from the Canvas path; no extra dependency.
 
-Each is isolated behind the relevant backend/renderer abstraction so the engine core stays
-platform-agnostic and the dependencies are swappable.
+**Dependency boundary (precise):** Flutter / `dart:ui` is confined to `CanvasPainter` (§3
+boundary a). The pure-Dart third-party libs above (`pdf`, `printing`, `barcode`, the TTF parser)
+are headless and isolated behind their backend/renderer/measurer abstractions, so the
+measure→layout→frame path stays platform-agnostic and every dependency is swappable. The
+`domain`/`data`/`expression` seams carry no rendering third-party deps.
 
 ## 13. Constitution Alignment
 
@@ -358,13 +387,14 @@ platform-agnostic and the dependencies are swappable.
   `PageFrame` primitive carries its originating element id (§4 #9), so the designer track can
   map a canvas point to a model element without a parallel structure. The interaction layer
   itself is built in the designer track.
-- **CJK / complex-script shaping**: the default `TextMeasurer` targets Latin metrics first;
-  full shaping (bidi, ligatures, combining marks) is a later enhancement behind the same seam.
+- **CJK / complex-script shaping**: v1 is scoped to Latin / simple LTR text (§1 text-scope, §3
+  parity guarantee). Full shaping (bidi, ligatures, combining marks, CJK) is a later enhancement
+  that **extends** the same `TextMeasurer`/positioned-glyph-run mechanism to more scripts — and
+  with it broadens the cross-backend parity guarantee — without re-architecting the pipeline.
 
-## 15. Design-Review Resolutions (rev. 2)
+## 15. Design-Review Resolutions
 
-External review (2026-06-07) surfaced three findings; all were accepted and folded into the
-sections above.
+### Round 1 (rev. 2) — three findings, all accepted and folded into the sections above
 
 1. **Flutter types in the "pure-Dart" core + missing text-metrics seam** *(blocker)*.
    `Size`/`Rect`/`Offset` (`dart:ui`) and `BoxConstraints` (Flutter) cannot live in a pure-Dart
@@ -387,3 +417,20 @@ sections above.
    (domain-pure) persists it; an explicit **`UnknownElement`** preserves unregistered types
    byte-for-byte on round-trip (§2 model, §6, §8). Custom elements are first-class persisted
    content, confirming the reviewer's assumption rather than narrowing scope to code-only.
+
+### Round 2 (rev. 3) — two "overclaim" findings (round-1 blockers confirmed resolved), both accepted
+
+4. **Dependency-boundary claim internally inconsistent** *(medium)*. "Only paint backends import
+   third-party libs" conflicted with the `barcode` package living in the barcode renderer (and
+   the TTF parser in the text seam). **Resolution**: split the claim into two precise boundaries
+   (§3, §4 legend, §12) — **Flutter/`dart:ui` confined to `CanvasPainter`** (the headless
+   guarantee) vs. **pure-Dart third-party libs permitted in rendering infrastructure** (barcode
+   renderer, TTF parser, pdf/printing) since they stay headless. Chose this over moving barcode
+   "behind paint," which would re-couple element-agnostic paint backends to element types.
+
+5. **Text-parity guarantee broader than supported script scope** *(medium)*. The blanket
+   "identical wrapping across backends" claim held only for Latin while complex-script shaping
+   was deferred. **Resolution**: scope the v1 guarantee explicitly to **Latin / simple LTR**
+   text (§1 text-scope, §3, §10), and state the exact mechanism (backends paint the measurer's
+   positioned glyph run, no re-shape). Complex-script shaping (§14) extends the same mechanism
+   and broadens the guarantee later — additive, not a re-architecture.
