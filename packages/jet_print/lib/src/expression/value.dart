@@ -150,3 +150,16 @@ String jetStringify(JetValue value) => switch (value) {
       JetDate(value: final DateTime v) => v.toIso8601String(),
       JetError() => '!ERR',
     };
+
+/// Compares two [JetValue]s that share an orderable type.
+///
+/// Returns a negative/zero/positive sign for [a] vs [b] when both are
+/// [JetNumber], both [JetString], or both [JetDate]; returns `null` when the
+/// types differ or are not orderable (null/bool/error). Used by the evaluator's
+/// `< <= > >=` and the aggregate calculator's MIN/MAX.
+int? jetCompare(JetValue a, JetValue b) {
+  if (a is JetNumber && b is JetNumber) return a.value.compareTo(b.value);
+  if (a is JetString && b is JetString) return a.value.compareTo(b.value);
+  if (a is JetDate && b is JetDate) return a.value.compareTo(b.value);
+  return null;
+}

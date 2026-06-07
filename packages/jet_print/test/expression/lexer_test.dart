@@ -93,8 +93,8 @@ void main() {
       expect(() => tokenize('5 @ 6'), throwsA(isA<ExpressionException>()));
     });
 
-    test('throws on a bad reference sigil (e.g. unsupported \$V in 005a)', () {
-      expect(() => tokenize(r'$V{total}'), throwsA(isA<ExpressionException>()));
+    test('throws on a bad reference sigil (e.g. unsupported \$X)', () {
+      expect(() => tokenize(r'$X{total}'), throwsA(isA<ExpressionException>()));
     });
 
     test('throws on an empty reference name', () {

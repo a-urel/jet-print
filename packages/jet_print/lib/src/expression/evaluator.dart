@@ -22,6 +22,8 @@ JetValue evaluate(Expr expr, EvalContext context) {
       return context.resolveField(n);
     case ParamRefExpr(name: final String n):
       return context.resolveParam(n);
+    case VariableRefExpr(name: final String n):
+      return context.resolveVariable(n);
     case UnaryExpr(op: final UnaryOp op, operand: final Expr operand):
       return _unary(op, evaluate(operand, context));
     case BinaryExpr(
@@ -145,14 +147,7 @@ JetValue _order(JetValue l, JetValue r, bool Function(int) test, String sym) {
   return JetBool(test(cmp));
 }
 
-/// Returns a sign-of-comparison for two same-typed orderable values, or null if
-/// they are not orderable / not the same type.
-int? _compare(JetValue l, JetValue r) {
-  if (l is JetNumber && r is JetNumber) return l.value.compareTo(r.value);
-  if (l is JetString && r is JetString) return l.value.compareTo(r.value);
-  if (l is JetDate && r is JetDate) return l.value.compareTo(r.value);
-  return null;
-}
+int? _compare(JetValue l, JetValue r) => jetCompare(l, r);
 
 JetValue _call(String name, List<Expr> argExprs, EvalContext ctx) {
   final List<JetValue> args = <JetValue>[];

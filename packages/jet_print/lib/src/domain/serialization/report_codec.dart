@@ -4,7 +4,10 @@ library;
 import '../page_format.dart';
 import '../report_band.dart';
 import '../report_element.dart';
+import '../report_group.dart';
+import '../report_parameter.dart';
 import '../report_template.dart';
+import '../report_variable.dart';
 import 'element_codec.dart';
 import 'migration.dart';
 import 'report_format_exception.dart';
@@ -26,6 +29,18 @@ Map<String, Object?> encodeTemplate(
     'bands': <Object?>[
       for (final ReportBand band in template.bands) _encodeBand(band, registry),
     ],
+    if (template.parameters.isNotEmpty)
+      'parameters': <Object?>[
+        for (final ReportParameter p in template.parameters) p.toJson(),
+      ],
+    if (template.variables.isNotEmpty)
+      'variables': <Object?>[
+        for (final ReportVariable v in template.variables) v.toJson(),
+      ],
+    if (template.groups.isNotEmpty)
+      'groups': <Object?>[
+        for (final ReportGroup g in template.groups) g.toJson(),
+      ],
   };
 }
 
@@ -85,6 +100,12 @@ ReportTemplate decodeTemplate(
       for (final Object? band in bands)
         _decodeBand((band! as Map).cast<String, Object?>(), registry),
     ],
+    parameters: _decodeList<ReportParameter>(
+        upgraded['parameters'], 'parameters', ReportParameter.fromJson),
+    variables: _decodeList<ReportVariable>(
+        upgraded['variables'], 'variables', ReportVariable.fromJson),
+    groups: _decodeList<ReportGroup>(
+        upgraded['groups'], 'groups', ReportGroup.fromJson),
   );
 }
 
@@ -114,5 +135,36 @@ BandType _parseBandType(Object? name) {
     return BandType.values.byName(name);
   } on ArgumentError {
     throw ReportFormatException('Unknown band type "$name".');
+  }
+}
+
+List<T> _decodeList<T>(
+  Object? raw,
+  String key,
+  T Function(Map<String, Object?>) fromJson,
+) {
+  if (raw == null) return <T>[];
+  if (raw is! List) {
+    throw ReportFormatException('"$key" must be a list.');
+  }
+  return <T>[
+    for (final Object? entry in raw) _decodeEntry<T>(entry, key, fromJson),
+  ];
+}
+
+T _decodeEntry<T>(
+  Object? entry,
+  String key,
+  T Function(Map<String, Object?>) fromJson,
+) {
+  if (entry is! Map) {
+    throw ReportFormatException('Each "$key" entry must be a JSON object.');
+  }
+  try {
+    return fromJson(entry.cast<String, Object?>());
+  } on ReportFormatException {
+    rethrow;
+  } catch (error) {
+    throw ReportFormatException('Malformed "$key" entry: $error');
   }
 }

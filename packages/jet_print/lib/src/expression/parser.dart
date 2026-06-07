@@ -171,6 +171,9 @@ class Parser {
       case TokenType.paramRef:
         _pos++;
         return ParamRefExpr(token.literal! as String);
+      case TokenType.variableRef:
+        _pos++;
+        return VariableRefExpr(token.literal! as String);
       case TokenType.identifier:
         return _call();
       case TokenType.leftParen:

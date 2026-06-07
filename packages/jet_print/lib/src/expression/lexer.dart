@@ -8,8 +8,8 @@ import 'token.dart';
 /// Tokenizes [source] into a list ending with a [TokenType.eof] token.
 ///
 /// Throws [ExpressionException] on an unterminated string/reference or an
-/// unexpected character. In 005a only `$F{...}` and `$P{...}` references are
-/// recognized; any other `$X{...}` sigil (e.g. `$V`) is an error.
+/// unexpected character. Recognizes `$F{...}`, `$P{...}`, and `$V{...}`
+/// references; any other `$X{...}` sigil is an error.
 List<Token> tokenize(String source) => _Lexer(source).scanAll();
 
 class _Lexer {
@@ -56,17 +56,19 @@ class _Lexer {
   }
 
   void _scanReference() {
-    // $F{name} or $P{name}
+    // $F{name}, $P{name} or $V{name}
     final String sigil = _peekAt(1);
     final TokenType type;
     if (sigil == 'F') {
       type = TokenType.fieldRef;
     } else if (sigil == 'P') {
       type = TokenType.paramRef;
+    } else if (sigil == 'V') {
+      type = TokenType.variableRef;
     } else {
       throw ExpressionException(
         'Unsupported reference "\$$sigil" at position $_pos '
-        '(expected \$F{...} or \$P{...})',
+        '(expected \$F{...}, \$P{...} or \$V{...})',
       );
     }
     if (_peekAt(2) != '{') {

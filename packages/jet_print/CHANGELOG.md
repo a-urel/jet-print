@@ -50,6 +50,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `DataRow` and `$P{}` from a parameter map. The architecture test now enforces
   the `expression -> domain/data` boundary. (Aggregates, variables, groups, and
   `$V{}` references follow in 005b.)
+- Aggregates & variables (spec 005b): `ReportVariable` (with `JetCalculation`
+  SUM/COUNT/AVG/MIN/MAX/FIRST/LAST or a plain expression, and report/group reset
+  scopes), `ReportGroup`, and typed `ReportParameter` declarations join
+  `ReportTemplate` and serialize sparsely (still schema v1 — additive). The
+  expression engine gains `$V{}` variable references, and a one-pass
+  `VariableCalculator` folds per-row values into running/group-scoped
+  accumulators with group-break detection (outermost-changed group cascades to
+  inner groups). `JetFieldType` moved to the `domain` seam (re-exported from
+  `data`) so parameters and fields share one value-type taxonomy. Page/column
+  reset scopes are deferred to 008 (pagination).
 
 ## 0.1.0
 

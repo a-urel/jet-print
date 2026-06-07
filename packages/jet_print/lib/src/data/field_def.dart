@@ -1,35 +1,15 @@
 /// Typed field metadata for the data layer (spec 004).
 ///
-/// A [FieldDef] names a column and tags it with a best-effort [JetFieldType].
-/// The type is additive metadata — a slot the expression engine (005) uses for
-/// formatting and coercion — never a hard contract; an indeterminate column is
-/// simply [JetFieldType.unknown]. Pure Dart, no Flutter dependency.
+/// A [FieldDef] names a column and tags it with a best-effort [JetFieldType]
+/// (re-exported from the domain seam). The type is additive metadata — a slot
+/// the expression engine uses for formatting and coercion — never a hard
+/// contract; an indeterminate column is simply [JetFieldType.unknown]. Pure
+/// Dart, no Flutter dependency.
 library;
 
-/// The coarse value type of a data field.
-///
-/// Deliberately small: enough to drive number/date formatting and coercion
-/// without modelling a full type system. [unknown] covers empty, all-null, or
-/// genuinely mixed columns.
-enum JetFieldType {
-  /// Textual values (`String`).
-  string,
+import '../domain/value_type.dart';
 
-  /// Whole numbers (`int`).
-  integer,
-
-  /// Fractional numbers (`double`), or a column mixing `int` and `double`.
-  double,
-
-  /// Boolean values (`bool`).
-  boolean,
-
-  /// Timestamps (`DateTime`).
-  dateTime,
-
-  /// Indeterminate — empty, all-null, or mixed/unsupported value types.
-  unknown,
-}
+export '../domain/value_type.dart' show JetFieldType;
 
 /// An immutable (name, type) pair describing one field of a [DataSet]'s schema.
 class FieldDef {
