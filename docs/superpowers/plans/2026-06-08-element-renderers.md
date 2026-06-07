@@ -433,7 +433,11 @@ abstract class ElementRenderer<E extends ReportElement> {
   /// Const base constructor.
   const ElementRenderer();
 
-  /// The element's desired size within [constraints] (no side effects).
+  /// The element's natural desired size (no side effects).
+  ///
+  /// [constraints] is part of the layout contract that 008 will use for
+  /// growth/overflow; the 007a built-in renderers return their natural size and
+  /// do **not** yet clamp to it (spec §7.1 — constraints are reserved for 008).
   JetSize measure(
       covariant ReportElement element, RenderContext ctx, JetConstraints constraints);
 
@@ -930,6 +934,18 @@ void main() {
     expect(prims[0], isA<RectPrimitive>());
     expect((prims[1] as TextRunPrimitive).lines.single.text, 'image');
   });
+
+  test('a field source (unresolved in 007a) also emits a placeholder', () {
+    // FieldImageSource is a distinct source kind; the placeholder branch must
+    // cover it too, not just UrlImageSource.
+    const ImageElement el = ImageElement(
+        id: 'i', bounds: bounds, source: FieldImageSource('photo'));
+    final FrameBuilder out = FrameBuilder(PageFormat.a4Portrait);
+    renderer.emit(el, ctx, bounds, out);
+    final List<FramePrimitive> prims = out.build().primitives;
+    expect(prims[0], isA<RectPrimitive>());
+    expect((prims[1] as TextRunPrimitive).lines.single.text, 'image');
+  });
 }
 ```
 
@@ -986,7 +1002,7 @@ class ImageElementRenderer extends ElementRenderer<ImageElement> {
 - [ ] **Step 4: Run the test + analyzer**
 
 Run: `flutter test test/rendering/elements/image_element_renderer_test.dart -r expanded && flutter analyze`
-Expected: PASS (3 tests); `No issues found!`.
+Expected: PASS (4 tests); `No issues found!`.
 
 - [ ] **Step 5: Commit**
 
@@ -1383,6 +1399,26 @@ void main() {
     const TextElement text = TextElement(id: 't', bounds: r, text: 'x');
     expect(reg.renderers.rendererFor(text), isA<UnknownElementRenderer>());
   });
+
+  test('wires all four codecs (round-trip via reg.codecs, not just text)', () {
+    final ElementTypeRegistry reg = ElementTypeRegistry();
+    registerBuiltInElementTypes(reg);
+    final List<ReportElement> elements = <ReportElement>[
+      const TextElement(id: 't', bounds: r, text: 'x'),
+      const ShapeElement(id: 's', bounds: r, kind: ShapeKind.rectangle),
+      ImageElement(
+          id: 'i', bounds: r, source: BytesImageSource(Uint8List.fromList(<int>[1, 2]))),
+      const BarcodeElement(
+          id: 'b', bounds: r, symbology: BarcodeSymbology.code128, data: '1'),
+    ];
+    for (final ReportElement el in elements) {
+      final Map<String, Object?> encoded = reg.codecs.encode(el);
+      final ReportElement decoded = reg.codecs.decode(encoded);
+      expect(decoded.typeKey, el.typeKey,
+          reason: 'codec for "${el.typeKey}" not wired by registerBuiltInElementTypes');
+      expect(decoded.runtimeType, el.runtimeType); // a real type, not UnknownElement
+    }
+  });
 }
 ```
 
@@ -1489,7 +1525,7 @@ void registerBuiltInElementTypes(ElementTypeRegistry registry) {
 - [ ] **Step 5: Run the test + analyzer**
 
 Run: `flutter test test/rendering/elements/element_type_registry_test.dart -r expanded && flutter analyze`
-Expected: PASS (2 tests); `No issues found!`.
+Expected: PASS (4 tests); `No issues found!`.
 
 - [ ] **Step 6: Commit**
 
