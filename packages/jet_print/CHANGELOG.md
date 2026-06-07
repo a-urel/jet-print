@@ -39,6 +39,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (`List<Map>`), `JetJsonDataSource` (JSON array string), and
   `JetObjectDataSource<T>` (typed object list). The architecture test now also
   enforces the `data → domain` boundary.
+- Expression engine core (spec 005a): the headless expression language —
+  a sealed `JetValue` model (null/bool/number/string/date/error; numbers are
+  `double`), a lexer/parser/AST/evaluator pipeline compiling expressions like
+  `$F{qty} * $F{price}` and `FORMAT(ROUND($F{total}, 2), '#,##0.00')`, and a
+  pluggable `JetFunctionRegistry` (engine extension point) with built-in math,
+  string, logic, and format function families. Evaluation never throws — a bad
+  operation yields a `JetError` value (rendered `!ERR`); only malformed syntax
+  throws `ExpressionException`. `RowEvalContext` resolves `$F{}` from a
+  `DataRow` and `$P{}` from a parameter map. The architecture test now enforces
+  the `expression -> domain/data` boundary. (Aggregates, variables, groups, and
+  `$V{}` references follow in 005b.)
 
 ## 0.1.0
 
