@@ -143,4 +143,52 @@ void main() {
       );
     });
   });
+
+  group('layer boundaries — rendering seam', () {
+    final Directory renderingDir =
+        Directory('${root.path}/packages/jet_print/lib/src/rendering');
+    List<File> renderingFiles() => renderingDir
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((FileSystemEntity f) => f.path.endsWith('.dart'))
+        .toList();
+
+    test('the rendering seam has source files to check (no false green)', () {
+      expect(renderingDir.existsSync(), isTrue);
+      expect(renderingFiles(), isNotEmpty);
+    });
+
+    test('rendering imports no designer seam', () {
+      final List<String> violations = <String>[];
+      for (final File file in renderingFiles()) {
+        for (final String uri in _directive
+            .allMatches(file.readAsStringSync())
+            .map((Match m) => m.group(1)!)) {
+          if (uri.contains('designer')) violations.add('${file.path} -> $uri');
+        }
+      }
+      expect(violations, isEmpty,
+          reason: 'Rendering must not depend on the designer seam:\n'
+              '${violations.join('\n')}');
+    });
+
+    test('only paint/canvas_painter.dart imports dart:ui / Flutter UI', () {
+      final List<String> violations = <String>[];
+      for (final File file in renderingFiles()) {
+        final String path = file.path.replaceAll(r'\', '/');
+        final bool isCanvasPainter =
+            path.endsWith('/paint/canvas_painter.dart');
+        for (final String uri in _directive
+            .allMatches(file.readAsStringSync())
+            .map((Match m) => m.group(1)!)) {
+          if (_isFlutterUi(uri) && !isCanvasPainter) {
+            violations.add('${file.path} -> $uri');
+          }
+        }
+      }
+      expect(violations, isEmpty,
+          reason: 'Only CanvasPainter may import dart:ui; frame/text/'
+              'report_painter must stay headless:\n${violations.join('\n')}');
+    });
+  });
 }
