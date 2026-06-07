@@ -387,8 +387,9 @@ may import `package:jet_print/src/...`.
   `\n`, **blank middle line preserved**, **runs of spaces and leading/trailing whitespace
   preserved**, single overlong word, tab-as-space, empty string ⇒ one empty line. Pure data;
   platform-independent.
-- **`frame/frame_snapshot_test.dart`** — `FrameBuilder`/`PageFrame` construct the expected
-  primitives; value-equality + `toString` data golden. Immutability of `PageFrame.primitives`.
+- **`frame/frame_builder_test.dart`** — `FrameBuilder`/`PageFrame` construct the expected
+  primitives and assert value-equality (a data golden by construction) and `PageFrame.primitives`
+  immutability.
 - **`paint/paint_frame_test.dart`** — `paintFrame` dispatches each primitive to the right method
   and calls `prepare`/`beginPage`/`endPage` in order, verified with a recording fake
   `ReportPainter` (no `dart:ui`). Headless.
@@ -465,6 +466,11 @@ arrive in 007/009. The committed `NotoSans-subset.ttf` + `OFL.txt` are repo arti
 - **Bold/italic synthesis** — v1 resolves registered variants or falls back; synthetic emboldening
   is out of scope.
 - **`ReportDiagnostics`** — warning surfacing lands with the engine facade (009).
+
+**Implementation follow-ups (non-blocking, from the final holistic review — recorded for traceability):**
+- **Wrap cost** — `MetricsTextMeasurer._wrap` re-measures `line + token` per token (O(n²) per line). Fine for report-sized text; refactor to a running width if large paragraphs ever flow through.
+- **cmap format-0/6 coverage** — the parser supports formats 0/6 defensively but the bundled font is format-4, so those branches are untested. A small hand-built format-6 fixture would close the gap cheaply if/when arbitrary consumer fonts need it.
+- **`_uiFamily` separator** — the `family__weight` scheme could theoretically collide if a consumer registers a family literally ending in `__normal`; a less-collidable separator (or hashing) would harden it.
 
 ---
 
