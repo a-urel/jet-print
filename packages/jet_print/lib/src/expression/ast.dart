@@ -69,9 +69,11 @@ final class LiteralExpr extends Expr {
   final JetValue value;
 
   @override
-  String toString() => value is JetString
-      ? "'${(value as JetString).value}'"
-      : jetStringify(value);
+  String toString() => switch (value) {
+        JetString(value: final String s) => "'$s'",
+        JetNull() => 'JetNull()',
+        _ => jetStringify(value),
+      };
 }
 
 /// A field reference `$F{name}`.
