@@ -25,6 +25,9 @@ enum TokenType {
   /// A parameter reference `$P{name}` (literal is the param name `String`).
   paramRef,
 
+  /// A variable reference `$V{name}` (literal is the variable name `String`).
+  variableRef,
+
   /// A bare identifier (a function name), e.g. `ROUND`.
   identifier,
 

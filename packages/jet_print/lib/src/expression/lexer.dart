@@ -56,17 +56,19 @@ class _Lexer {
   }
 
   void _scanReference() {
-    // $F{name} or $P{name}
+    // $F{name}, $P{name} or $V{name}
     final String sigil = _peekAt(1);
     final TokenType type;
     if (sigil == 'F') {
       type = TokenType.fieldRef;
     } else if (sigil == 'P') {
       type = TokenType.paramRef;
+    } else if (sigil == 'V') {
+      type = TokenType.variableRef;
     } else {
       throw ExpressionException(
         'Unsupported reference "\$$sigil" at position $_pos '
-        '(expected \$F{...} or \$P{...})',
+        '(expected \$F{...}, \$P{...} or \$V{...})',
       );
     }
     if (_peekAt(2) != '{') {
