@@ -54,6 +54,16 @@ void main() {
       expect(ds.current.hasField('ignored'), isFalse);
     });
 
+    test('open() accepts but ignores params', () {
+      final JetDataSource source = JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'qty': 1},
+      ]);
+      final DataSet ds = source.open(<String, Object?>{'unused': 42});
+      expect(ds.moveNext(), isTrue);
+      expect(ds.current.field('qty'), 1);
+      expect(ds.moveNext(), isFalse); // params had no effect on the rows
+    });
+
     test('open() yields independent cursors', () {
       final JetDataSource source = JetInMemoryDataSource(<Map<String, Object?>>[
         <String, Object?>{'qty': 1},

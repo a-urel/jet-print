@@ -19,9 +19,9 @@ import 'field_def.dart';
 /// }
 /// ```
 ///
-/// [current] is valid only immediately after a [moveNext] that returned `true`;
-/// reading it before the first such call, after [moveNext] returns `false`, or
-/// after [close] throws [StateError].
+/// [current] is valid only immediately after a [moveNext] that returned `true`.
+/// Reading it in any other state — before the first such call, after [moveNext]
+/// returns `false`, or after [close] — throws [StateError].
 abstract class DataSet {
   /// The cursor's schema, in column order. Stable for the cursor's lifetime.
   List<FieldDef> get fields;
