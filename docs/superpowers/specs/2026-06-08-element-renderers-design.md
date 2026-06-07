@@ -39,8 +39,10 @@ it.
 
 **Out of scope → 007b/later (named, not silent):** the text `expression` field and its evaluation,
 `FilledReport`, dataset iteration, group header/footer sequencing, deferred page-scoped
-placeholders, a diagnostics sink on the context, and real `FieldImageSource`/`UrlImageSource` byte
-resolution → **007b**. Real barcode symbology (Code128/EAN/QR/DataMatrix) → its own later spec.
+placeholders, and a diagnostics sink on the context → **007b**. Image byte resolution splits by
+source (§3.1): `FieldImageSource` (synchronous, from row data) → **007b**; `UrlImageSource` (async
+network prefetch — a paint-prep concern, *outside* the synchronous Fill pass) → **later**. Real
+barcode symbology (Code128/EAN/QR/DataMatrix) → its own later spec.
 
 ## 3. The resolved-element contract (the 007a↔007b seam)
 
@@ -74,6 +76,21 @@ A **resolved element** is defined tightly, so 007b cannot grow into a parallel e
 Renderers authored in 007a therefore need **zero changes** in 007b: Fill swaps in resolved copies
 and the renderer never learns it happened. The *mechanism* that produces copies (a per-type resolve
 hook vs. `copyWith`) is a 007b decision; 007a pins only the contract above.
+
+### 3.1 Image source resolution — owner & timing
+
+`ImageElement.source` is data-bearing (§3), but the three source kinds resolve in different stages,
+and the spec assigns each an explicit owner so 007b does not silently break the existing model:
+
+| Source | Resolved to bytes by | Stage | Notes |
+|---|---|---|---|
+| `BytesImageSource` | already bytes | — | rendered directly by 007a |
+| `FieldImageSource` | 007b Fill | **synchronous** | the field value carries the bytes; fits the sync `DataSet` pass |
+| `UrlImageSource` | a later paint-prep step | **async** | network fetch; preserves the existing "fetched at render time" contract in `image_source.dart` and the synchronous Fill pipeline (`ReportPainter.prepare` already owns async font-load + image-decode, not fetch) |
+
+Until a source is resolved to `BytesImageSource`, the image renderer emits a **placeholder** (§7) —
+so a `UrlImageSource` paints a placeholder through 007a/007b and only becomes pixels once the async
+prefetch lands. This keeps Fill synchronous and leaves `UrlImageSource`'s contract intact.
 
 ## 4. The render contract
 
@@ -136,8 +153,17 @@ both. This is a real change to the 006 text seam, handled as a formal 006 amendm
 
 The text renderer reads `m.fontFamily` for `TextRunPrimitive.fontFamily`; the painter combines that
 base family with `style.weight`/`italic` into its synthetic `_uiFamily` exactly as in 006. The
-`RenderContext` therefore needs **no** `FontRegistry`, and the measured family and the rendered
-family cannot diverge.
+`RenderContext` therefore needs **no** `FontRegistry`: the renderer cannot pick a family other than
+the one the measurer measured. This guarantees **renderer↔measurer** agreement — the scope of what
+`fontFamily` fixes.
+
+**What it does *not* fix.** The painter loads bytes from its *own* injected `FontRegistry`
+(`canvas_painter.dart`), so measured-vs-painted parity still requires the measurer and painter to
+share the same font state. That shared-registry invariant is the engine's (011) wiring
+responsibility — 006's cross-backend parity already relies on a shared registry instance
+(`canvas_painter_variant_test.dart`). `fontFamily` removes renderer-side divergence; it does not
+replace the shared-font-state requirement, and the spec does not claim families "cannot diverge"
+across independently-wired registries.
 
 ## 6. Registries & unified registration
 
@@ -180,6 +206,12 @@ void registerBuiltInElementTypes(ElementTypeRegistry r); // text, shape, image, 
   compile a mismatch; Dart offers no exact-type bound to forbid this. The spec documents this rather
   than overclaiming compile-time prevention — the same covariance trade-off the codec seam already
   documents in `domain/serialization/element_codec.dart` (the `covariant ReportElement` note).
+- **Duplicate registration is last-write-wins**, matching the existing `ElementCodecRegistry`
+  (`_codecs[typeKey] = codec`, a silent overwrite). `ElementRendererRegistry.register` and
+  `ElementTypeRegistry.register` overwrite a `typeKey`'s prior entry rather than throwing — this is
+  intentional, so a consumer can **override a built-in** (e.g. swap the barcode placeholder for a
+  real renderer, or replace the default text renderer) without a separate removal API. The three
+  registries stay consistent on this rule; a test pins it.
 
 ## 7. Built-in renderers (`rendering/elements/renderers/`)
 
@@ -188,7 +220,7 @@ placement. Text growth is **vertical only** — a text element's width is invari
 
 | Renderer (`E`) | `measure` | `emit` |
 |---|---|---|
-| **Text** (`TextElement`) | `measurer.measure(el.text, el.style, maxWidth: c.maxWidth).size` | `TextRunPrimitive(bounds, lines: m.lines, style: el.style, fontFamily: m.fontFamily, elementId: el.id)` where `m = measurer.measure(el.text, el.style, maxWidth: bounds.width)` |
+| **Text** (`TextElement`) | `measurer.measure(el.text, el.style, maxWidth: el.bounds.width).size` (§7.1) | `TextRunPrimitive(bounds, lines: m.lines, style: el.style, fontFamily: m.fontFamily, elementId: el.id)` where `m = measurer.measure(el.text, el.style, maxWidth: el.bounds.width)` |
 | **Shape** (`ShapeElement`) | `JetSize(el.bounds.width, el.bounds.height)` (non-growing) | rectangle → `RectPrimitive(fill: style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth)`; line → `LinePrimitive` across the box diagonal (TL→BR, or BL→TR when `flipDiagonal`), `color: style.stroke ?? JetColor.black`, `strokeWidth: style.strokeWidth` |
 | **Image** (`ImageElement`) | `JetSize(el.bounds.width, el.bounds.height)` | `el.source` is `BytesImageSource` → `ImagePrimitive(bytes, fit: el.fit, elementId)`; otherwise (URL/field — unresolved in 007a) → placeholder box labeled `image` |
 | **Barcode** (`BarcodeElement`) | `JetSize(el.bounds.width, el.bounds.height)` | **placeholder box** labeled with `el.symbology.name` (real symbology deferred) |
@@ -196,12 +228,16 @@ placement. Text growth is **vertical only** — a text element's width is invari
 
 ### 7.1 Authoritative wrap width (preserves 006 determinism)
 
-A text element's **width never changes** between measure and emit — it grows in height only. Both
-calls wrap at the **element box width**: `measure` is called with `c.maxWidth == el.bounds.width`
-and `emit` wraps at `bounds.width == el.bounds.width`. Identical width in ⇒ identical line breaks
-out, so the 006 line-break-determinism guarantee holds across the two calls. The spec states this as
-a hard contract: **Layout MUST pass the text element's box width as `maxWidth` to `measure`, and
-the emitted bounds preserve that width.**
+Rather than trust Layout to pass a particular constraint, the text renderer wraps at the element's
+**own authored width** `el.bounds.width` in **both** `measure` and `emit`. This makes determinism a
+**local** invariant of the renderer: it does not depend on `c.maxWidth` or the emitted `bounds.width`
+taking any specific value (the API accepts arbitrary constraints; the renderer ignores them for
+wrap purposes). Because the authored width is fixed and identical in both calls, line breaks are
+deterministic and identical, preserving the 006 guarantee. `emit` still **positions** the run at the
+Layout-supplied page-coordinate `bounds`; only the **wrap width** is taken locally from
+`el.bounds.width`. `c.maxWidth`/`c.maxHeight` are reserved for growth/overflow handling in 008. A
+**contract test** (§9) asserts `measure` and `emit` yield identical line geometry for the same
+element — encoding the invariant as a test now, not a cross-spec convention.
 
 ### 7.2 Placeholder helper (render-don't-crash)
 
@@ -236,9 +272,20 @@ One helper, three callers — every "can't render the real thing" path produces 
   `RectPrimitive` + label `TextRunPrimitive`. Headless, deterministic.
 - **`MeasuredText.fontFamily`** — a 006-level test asserts the measurer reports the resolved base
   family (default `JetSans`; a registered custom family when present).
-- **Flagship persisted-extension test** — `StarElement`/`StarCodec`/`StarRenderer` in test code;
-  assert round-trip through `typeRegistry.codecs.encode`→JSON→`decode` is unchanged **and**
-  `rendererFor(star).emit(...)` produces the expected primitive — **zero edits to library `src/`**.
+- **Text-width determinism contract test** — asserts the text renderer's `measure` and `emit`
+  produce identical line geometry for the same element (the §7.1 local invariant).
+- **Flagship persisted-extension test** — `StarElement`/`StarCodec`/`StarRenderer` in test code,
+  exercising the **real end-to-end serialization path**, not the registry in isolation:
+  - **(a) Persist** — build a one-band `ReportTemplate` holding the `StarElement`, run it through
+    `encodeTemplate(t, typeRegistry.codecs)` → `decodeTemplate(json, typeRegistry.codecs)` →
+    re-encode, and assert the re-encoded map **equals** the original map. (Round-trip is checked via
+    JSON-map equality because `ReportTemplate` has no value equality; the decoded band's element is
+    additionally asserted to be a `StarElement` with equal fields.) This drives the actual
+    `report_codec` path.
+  - **(b) Render** — `typeRegistry.renderers.rendererFor(star).emit(...)` produces the expected
+    primitive.
+  - **Zero edits to library `src/`** — `StarElement` and its codec/renderer live entirely in test
+    code. This is the Constitution-II proof for persistence *and* rendering.
 - **Layer-boundary** — extend the existing rendering-seam test to assert `rendering/elements/`
   imports no `dart:ui`/Flutter (the existing "only `paint/canvas_painter.dart` imports dart:ui"
   whitelist already enforces this; an explicit assertion documents intent).
@@ -287,3 +334,11 @@ Three pre-write review rounds (GitHub Copilot), folded in:
 - **R2 (refinements):** pin "resolved element" tightly (§3 field-partition table); treat
   `MeasuredText.fontFamily` as a real 006 amendment (§5); reuse the codec seam's covariance
   rationale verbatim (§6).
+- **R3 (seam ownership & test depth):** image-resolution seam had no valid owner under the
+  synchronous pipeline → split by source with explicit owner/stage (§3.1: `FieldImageSource`→Fill
+  sync, `UrlImageSource`→async paint-prep later, placeholder until then); "single font authority"
+  overstated → narrowed to renderer↔measurer agreement, with the measurer↔painter shared-registry
+  invariant called out as 011 wiring (§5); flagship test only proved the registry in isolation →
+  upgraded to a one-band `ReportTemplate` round-trip through `encodeTemplate`/`decodeTemplate`
+  (§9); text-width invariant made **local** + test-encoded (§7.1, Open-Q1); duplicate-registration
+  fixed as last-write-wins to allow built-in override (§6, Open-Q2).
