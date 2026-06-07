@@ -39,6 +39,8 @@ void main() {
       Directory('${root.path}/packages/jet_print/lib/src/domain');
   final Directory dataDir =
       Directory('${root.path}/packages/jet_print/lib/src/data');
+  final Directory expressionDir =
+      Directory('${root.path}/packages/jet_print/lib/src/expression');
 
   List<File> domainFiles() => domainDir
       .listSync(recursive: true)
@@ -47,6 +49,12 @@ void main() {
       .toList();
 
   List<File> dataFiles() => dataDir
+      .listSync(recursive: true)
+      .whereType<File>()
+      .where((FileSystemEntity f) => f.path.endsWith('.dart'))
+      .toList();
+
+  List<File> expressionFiles() => expressionDir
       .listSync(recursive: true)
       .whereType<File>()
       .where((FileSystemEntity f) => f.path.endsWith('.dart'))
@@ -103,6 +111,35 @@ void main() {
         isEmpty,
         reason: 'The data seam may depend only on domain. Violations:\n'
             '${violations.join('\n')}',
+      );
+    });
+  });
+
+  group('layer boundaries — expression seam', () {
+    test('the expression seam has source files to check (no false green)', () {
+      expect(expressionDir.existsSync(), isTrue,
+          reason: 'Missing ${expressionDir.path}');
+      expect(expressionFiles(), isNotEmpty,
+          reason: 'No .dart files found under ${expressionDir.path}');
+    });
+
+    test('expression imports no outer seam and no Flutter UI library', () {
+      final List<String> violations = <String>[];
+      for (final File file in expressionFiles()) {
+        for (final String uri in _directive
+            .allMatches(file.readAsStringSync())
+            .map((Match m) => m.group(1)!)) {
+          if (_reachesOtherSeam(uri) || _isFlutterUi(uri)) {
+            violations.add('${file.path} -> $uri');
+          }
+        }
+      }
+      expect(
+        violations,
+        isEmpty,
+        reason:
+            'The expression seam may depend only on domain/data (and intl). '
+            'Violations:\n${violations.join('\n')}',
       );
     });
   });
