@@ -68,6 +68,10 @@ final class LiteralExpr extends Expr {
   /// The literal value.
   final JetValue value;
 
+  // Debug/canonical rendering for tests — NOT the display path. Strings are
+  // quoted, and null is rendered as `JetNull()` (distinct from jetStringify's
+  // display blank `''`, which would be ambiguous in an S-expression). Display
+  // text comes from the evaluator + jetStringify, never from here.
   @override
   String toString() => switch (value) {
         JetString(value: final String s) => "'$s'",

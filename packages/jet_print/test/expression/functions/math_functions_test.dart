@@ -23,6 +23,10 @@ void main() {
     expect(_eval('ROUND(2.567, 2)'), const JetNumber(2.57));
   });
 
+  test('ROUND with out-of-range digits is an error (not a silent NaN)', () {
+    expect(_eval('ROUND(2.5, 400)'), isA<JetError>());
+  });
+
   test('CEIL and FLOOR', () {
     expect(_eval('CEIL(2.1)'), const JetNumber(3));
     expect(_eval('FLOOR(2.9)'), const JetNumber(2));

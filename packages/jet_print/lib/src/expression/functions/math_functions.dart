@@ -41,7 +41,14 @@ JetValue _round(List<JetValue> args, EvalContext ctx) {
     digits = d.toInt();
   }
   final num factor = math.pow(10, digits);
-  return JetNumber((x * factor).roundToDouble() / factor);
+  final double result = (x * factor).roundToDouble() / factor;
+  // A pathological `digits` (e.g. 400) overflows `factor` to infinity (or
+  // underflows it to zero), yielding a non-finite result. Surface that as an
+  // error rather than a silent NaN, consistent with the strict model.
+  if (!result.isFinite) {
+    return const JetError('ROUND digits out of range');
+  }
+  return JetNumber(result);
 }
 
 JetValue _ceil(List<JetValue> args, EvalContext ctx) {
