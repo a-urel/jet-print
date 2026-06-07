@@ -60,7 +60,7 @@ A **resolved element** is defined tightly, so 007b cannot grow into a parallel e
 |---|---|---|
 | `TextElement` | `text` (← evaluated expression; an unbound element keeps its literal `text`) | `id`, `bounds`, `style` |
 | `BarcodeElement` | `data` | `id`, `bounds`, `symbology`, `color` |
-| `ImageElement` | `source` (→ `BytesImageSource(resolvedBytes)`) | `id`, `bounds`, `fit` |
+| `ImageElement` | `source` — **only** `FieldImageSource`→`BytesImageSource` in 007b's sync pass; `BytesImageSource` is already resolved; `UrlImageSource` is **excluded** (deferred async prefetch, §3.1) | `id`, `bounds`, `fit` |
 | `ShapeElement` | *(none — purely static)* | all; resolved copy == authored |
 | `UnknownElement` | *(none — rendered as placeholder)* | preserved verbatim |
 
@@ -91,6 +91,13 @@ and the spec assigns each an explicit owner so 007b does not silently break the 
 Until a source is resolved to `BytesImageSource`, the image renderer emits a **placeholder** (§7) —
 so a `UrlImageSource` paints a placeholder through 007a/007b and only becomes pixels once the async
 prefetch lands. This keeps Fill synchronous and leaves `UrlImageSource`'s contract intact.
+
+**Open for the future URL-image spec (out of 007a/007b):** the painter currently consumes only
+frame primitives, never an unresolved image source (`report_painter.dart`). So that later spec must
+choose its reintegration point — either an async prefetch **resolves the element into a
+`BytesImageSource` before `emit`** (preferred: keeps the frame/painter contract unchanged and the
+draw walk synchronous), or the frame/painter contract **grows a new deferred-image path**. The
+resolved-element model (§3) deliberately leaves the first option open.
 
 ## 4. The render contract
 
@@ -342,3 +349,8 @@ Three pre-write review rounds (GitHub Copilot), folded in:
   upgraded to a one-band `ReportTemplate` round-trip through `encodeTemplate`/`decodeTemplate`
   (§9); text-width invariant made **local** + test-encoded (§7.1, Open-Q1); duplicate-registration
   fixed as last-write-wins to allow built-in override (§6, Open-Q2).
+- **R4 (final):** §3's resolved-copy table overstated image scope vs. §3.1 → qualified so the rule
+  covers only `BytesImageSource`/`FieldImageSource` in 007b, `UrlImageSource` explicitly excluded
+  (§3). Recorded the future URL-image reintegration choice (prefetch-before-`emit` vs. a new
+  frame/painter path) as a named open question for that later spec (§3.1). Font-state and
+  end-to-end-test concerns confirmed resolved.
