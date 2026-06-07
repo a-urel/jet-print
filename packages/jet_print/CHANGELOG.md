@@ -8,6 +8,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Report model foundation (spec 003 Part 1): pure-Dart geometry value types
+  (`JetSize`/`JetOffset`/`JetEdgeInsets`/`JetRect`), `PageFormat`, the element
+  model (`ReportElement`, `TextElement`, `UnknownElement`), `ReportBand`/
+  `BandType`/`ReportTemplate`, an `ElementCodecRegistry` extension point, and
+  versioned JSON serialization with a forward-migration framework
+  (`encodeTemplate`/`decodeTemplate`, `schemaVersion`, `SchemaMigration`).
 - `JetReportDesigner` — the report designer **shell** widget: a top command bar,
   a left element toolbox (a compact icon toolbar with tooltips), a center design
   surface (a bounded paper page), and a right three-tab context panel
