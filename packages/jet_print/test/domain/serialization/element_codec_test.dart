@@ -70,6 +70,25 @@ void main() {
       expect(() => registry.encode(element), throwsStateError);
     });
 
+    test('wraps a malformed element field in ReportFormatException', () {
+      final ElementCodecRegistry registry = _registryWithText();
+      final Map<String, Object?> json = <String, Object?>{
+        'type': 'text',
+        'id': 't',
+        'bounds': <String, Object?>{'x': 0, 'y': 0, 'w': 1, 'h': 1},
+        'text': 'x',
+        'style': <String, Object?>{
+          'fontSize': 12,
+          'weight': 'huge', // not a JetFontWeight name
+          'italic': false,
+          'color': '#FF000000',
+          'align': 'left',
+        },
+      };
+      expect(
+          () => registry.decode(json), throwsA(isA<ReportFormatException>()));
+    });
+
     test('preserves unknown JSON even if the source map is later mutated', () {
       final ElementCodecRegistry registry = _registryWithText();
       final List<Object?> series = <Object?>[3, 1, 4];

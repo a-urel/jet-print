@@ -26,6 +26,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   covering the designer chrome in English (default/fallback), German, and Turkish,
   exported with its `delegate` and `supportedLocales` so consumers can wire it
   into their app shell. Unsupported locales and missing keys fall back to English.
+- Visual model completion (spec 003 Part 2): style value types (`JetColor`
+  with hex serialization, `JetTextStyle`, `JetBoxStyle`); text styling on
+  `TextElement` (sparse-serialized); new element types `ShapeElement`
+  (line/rectangle), `ImageElement` (url/field/base64-bytes sources, `JetBoxFit`),
+  and `BarcodeElement` (QR / Code128 / EAN-13 / Data Matrix); and
+  `registerBuiltInElementCodecs` to wire all four built-in element codecs.
 
 ## 0.1.0
 
