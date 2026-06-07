@@ -16,7 +16,8 @@ The bundled default font is **already in the tree** (commit `build(rendering): p
 
 - `packages/jet_print/lib/src/rendering/text/fonts/default_font_data.dart` — `final Uint8List kDefaultFontBytes` (Latin subset of Noto Sans Regular, base64-embedded).
 - `packages/jet_print/lib/src/rendering/text/fonts/OFL.txt` — SIL OFL 1.1.
-- `packages/jet_print/tool/fonts/NotoSans-subset.ttf` — provenance source (23 KB).
+- `packages/jet_print/tool/fonts/NotoSans-subset.ttf` — provenance source (23 KB, 23356 bytes).
+- `packages/jet_print/tool/fonts/NotoSans-Bold-subset.ttf` — **test-only** bold fixture (23276 bytes; advances differ: A=690, M=943, i=305). Used by the variant tests; not embedded/shipped.
 - `packages/jet_print/tool/generate_default_font.dart` — regenerator (`dart run tool/generate_default_font.dart`).
 
 **Reference metrics of the bundled font** (used in test assertions below): `unitsPerEm = 1000`; `hhea` ascent/descent/lineGap = `1069 / -293 / 0`; glyph advances (font units): `space=260`, `A=639`, `i=258`, `M=907`, `W=930`, `period=268`. At `fontSize = 10`, `scale = 0.01`, so `lineAscent = 10.69`, `lineHeight = (1069 + 293 + 0)·0.01 = 13.62`, `width('A') = 6.39`, `width('M') = 9.07`, `width(' ') = 2.60`. Floating-point: assert with `closeTo(_, 1e-6)`.
@@ -41,7 +42,8 @@ The bundled default font is **already in the tree** (commit `build(rendering): p
 | `lib/src/rendering/text/font_registry.dart` | `FontRegistry` (byte-keyed; `registerDefault`) |
 | `lib/src/rendering/text/metrics_text_measurer.dart` | default measurer (advances, wrap, geometry) |
 | `lib/src/rendering/paint/report_painter.dart` | `ReportPainter` abstraction + `paintFrame` walk |
-| `lib/src/rendering/paint/canvas_painter.dart` | `CanvasPainter` (`dart:ui`) |
+| `lib/src/rendering/paint/image_fit.dart` | pure `computeImageFit` (src/dst rects per `JetBoxFit`) |
+| `lib/src/rendering/paint/canvas_painter.dart` | `CanvasPainter` (`dart:ui`); variant-aware font load/render |
 | `test/rendering/**` | white-box tests (allowlisted for `src/` imports) |
 
 **Remove in Task 11:** `lib/src/domain/domain.dart`, `lib/src/rendering/rendering.dart`, `test/domain/domain_test.dart`, `test/rendering/rendering_test.dart`.
@@ -866,8 +868,19 @@ void main() {
     expect(() => parseTtfMetrics(Uint8List.fromList(<int>[0, 1, 0, 0])),
         throwsA(isA<FontFormatException>()));
   });
+
+  test('throws FontFormatException when a table offset runs past the buffer', () {
+    // Keep the offset table + directory; drop the table data the offsets target.
+    final int numTables = ByteData.sublistView(bytes).getUint16(4);
+    final int dirEnd = 12 + numTables * 16;
+    final Uint8List truncated = Uint8List.sublistView(bytes, 0, dirEnd + 4);
+    expect(() => parseTtfMetrics(truncated),
+        throwsA(isA<FontFormatException>()));
+  });
 }
 ```
+
+The test already imports `dart:typed_data` (for `Uint8List`/`ByteData`).
 
 - [ ] **Step 2: Run — expect FAIL** (`ttf_metrics.dart` missing).
 
@@ -885,8 +898,16 @@ import '../font_format_exception.dart';
 import '../font_metrics.dart';
 
 /// Parses the metric tables of [bytes]. Throws [FontFormatException] on a
-/// malformed or unsupported font.
+/// malformed or unsupported font (including out-of-range table offsets).
 FontMetrics parseTtfMetrics(Uint8List bytes) {
+  try {
+    return _parseMetrics(bytes);
+  } on RangeError catch (e) {
+    throw FontFormatException('Malformed font (out-of-range access: $e).');
+  }
+}
+
+FontMetrics _parseMetrics(Uint8List bytes) {
   if (bytes.length < 12) {
     throw const FontFormatException('Too short for an offset table.');
   }
@@ -1206,16 +1227,24 @@ git -C /Users/ahmeturel/Projects/oss/jet-print commit -m "feat(rendering): byte-
 
 ```dart
 // test/rendering/text/metrics_text_measurer_test.dart
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/domain/styles/text_style.dart';
 import 'package:jet_print/src/rendering/text/font_registry.dart';
 import 'package:jet_print/src/rendering/text/metrics_text_measurer.dart';
 import 'package:jet_print/src/rendering/text/text_measurer.dart';
 
+import '../../support/workspace.dart';
+
 void main() {
   final FontRegistry reg = FontRegistry()..registerDefault();
   final MetricsTextMeasurer measurer = MetricsTextMeasurer(reg);
   const JetTextStyle s10 = JetTextStyle(fontSize: 10);
+  final Uint8List boldBytes = File('${findWorkspaceRoot().path}'
+          '/packages/jet_print/tool/fonts/NotoSans-Bold-subset.ttf')
+      .readAsBytesSync();
 
   test('single line: advance, ascent, line height, size', () {
     final MeasuredText m = measurer.measure('A', s10);
@@ -1269,6 +1298,29 @@ void main() {
     final MeasuredText m = measurer.measure('MMMM', s10, maxWidth: 5);
     expect(m.lines, hasLength(1));
     expect(m.lines.single.width, closeTo(4 * 9.07, 1e-6));
+  });
+
+  test('maxWidth <= 0 yields a single overflowing line per segment', () {
+    final MeasuredText m = measurer.measure('A A', s10, maxWidth: 0);
+    expect(m.lines, hasLength(1));
+    expect(m.lines.single.text, 'A A');
+  });
+
+  test('a registered bold variant measures wider than normal (variant-aware)',
+      () {
+    final FontRegistry r = FontRegistry()
+      ..registerDefault()
+      ..register(FontRegistry.defaultFamily, boldBytes,
+          weight: JetFontWeight.bold);
+    final MetricsTextMeasurer m = MetricsTextMeasurer(r);
+    final double normal = m.measure('A', s10).lines.single.width;
+    final double bold = m
+        .measure('A',
+            const JetTextStyle(fontSize: 10, weight: JetFontWeight.bold))
+        .lines
+        .single
+        .width;
+    expect(bold, greaterThan(normal)); // 6.90 > 6.39
   });
 }
 ```
@@ -1350,6 +1402,7 @@ class MetricsTextMeasurer implements TextMeasurer {
   /// every character) and packs tokens until the next would exceed [maxWidth].
   static List<String> _wrap(
       String segment, double maxWidth, double Function(String) advanceOf) {
+    if (maxWidth <= 0) return <String>[segment]; // wrapping is meaningless
     final List<String> tokens = _tokenize(segment);
     if (tokens.isEmpty) return <String>[''];
     final List<String> out = <String>[];
@@ -1535,20 +1588,167 @@ git -C /Users/ahmeturel/Projects/oss/jet-print commit -m "feat(rendering): Repor
 
 ---
 
-### Task 9: `CanvasPainter` (`dart:ui`) + Canvas smoke golden
+### Task 9: Image fit + `CanvasPainter` (`dart:ui`) — variant-aware
 
 **Files:**
-- Create: `lib/src/rendering/paint/canvas_painter.dart`
-- Test: `test/rendering/paint/canvas_painter_golden_test.dart`
+- Create: `lib/src/rendering/paint/image_fit.dart`, `lib/src/rendering/paint/canvas_painter.dart`
+- Test: `test/rendering/paint/image_fit_test.dart`, `test/rendering/paint/canvas_painter_golden_test.dart`, `test/rendering/paint/canvas_painter_variant_test.dart`
 - Golden (generated): `test/rendering/paint/goldens/canvas_fixture.png`
+
+#### 9A — `image_fit.dart` (pure, headless)
 
 - [ ] **Step 1: Write the failing test**
 
 ```dart
+// test/rendering/paint/image_fit_test.dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:jet_print/src/domain/elements/image_source.dart';
+import 'package:jet_print/src/domain/geometry.dart';
+import 'package:jet_print/src/rendering/paint/image_fit.dart';
+
+void main() {
+  const JetRect bounds = JetRect(x: 0, y: 0, width: 100, height: 100);
+
+  test('fill maps the full image to the full bounds', () {
+    final ImageFit f = computeImageFit(JetBoxFit.fill, bounds, 200, 100);
+    expect(f.src, const JetRect(x: 0, y: 0, width: 200, height: 100));
+    expect(f.dst, bounds);
+  });
+
+  test('contain letterboxes the image centered', () {
+    final ImageFit f = computeImageFit(JetBoxFit.contain, bounds, 200, 100);
+    // scale = min(100/200, 100/100) = 0.5 -> 100x50, centered vertically.
+    expect(f.src, const JetRect(x: 0, y: 0, width: 200, height: 100));
+    expect(f.dst, const JetRect(x: 0, y: 25, width: 100, height: 50));
+  });
+
+  test('cover crops the image centered', () {
+    final ImageFit f = computeImageFit(JetBoxFit.cover, bounds, 200, 100);
+    // scale = max(0.5, 1.0) = 1.0 -> sample 100x100 from the center of 200x100.
+    expect(f.src, const JetRect(x: 50, y: 0, width: 100, height: 100));
+    expect(f.dst, bounds);
+  });
+
+  test('none draws at intrinsic size, centered and clipped', () {
+    final ImageFit f = computeImageFit(JetBoxFit.none, bounds, 40, 20);
+    expect(f.src, const JetRect(x: 0, y: 0, width: 40, height: 20));
+    expect(f.dst, const JetRect(x: 30, y: 40, width: 40, height: 20));
+  });
+
+  test('a degenerate image falls back to fill', () {
+    final ImageFit f = computeImageFit(JetBoxFit.contain, bounds, 0, 0);
+    expect(f.dst, bounds);
+  });
+}
+```
+
+- [ ] **Step 2: Run — expect FAIL.**
+
+- [ ] **Step 3: Implement**
+
+```dart
+// lib/src/rendering/paint/image_fit.dart
+/// Pure image-fit math (spec 006): source (image px) and destination (page pt)
+/// rects for drawing an image under a [JetBoxFit]. No `dart:ui`.
+library;
+
+import '../../domain/elements/image_source.dart';
+import '../../domain/geometry.dart';
+
+/// A source rect (image pixels) and destination rect (page points).
+class ImageFit {
+  /// Creates a src/dst pair.
+  const ImageFit(this.src, this.dst);
+
+  /// The region of the source image to sample.
+  final JetRect src;
+
+  /// Where to draw it on the page.
+  final JetRect dst;
+
+  @override
+  bool operator ==(Object other) =>
+      other is ImageFit && other.src == src && other.dst == dst;
+
+  @override
+  int get hashCode => Object.hash(src, dst);
+
+  @override
+  String toString() => 'ImageFit(src: $src, dst: $dst)';
+}
+
+/// Computes the src/dst rects to render a [srcWidth]×[srcHeight] image into
+/// [bounds] under [fit]. A degenerate image (non-positive size) falls back to
+/// fill.
+ImageFit computeImageFit(
+    JetBoxFit fit, JetRect bounds, double srcWidth, double srcHeight) {
+  final JetRect fullSrc =
+      JetRect(x: 0, y: 0, width: srcWidth, height: srcHeight);
+  if (srcWidth <= 0 || srcHeight <= 0) return ImageFit(fullSrc, bounds);
+
+  switch (fit) {
+    case JetBoxFit.fill:
+      return ImageFit(fullSrc, bounds);
+    case JetBoxFit.contain:
+      final double scale =
+          _min(bounds.width / srcWidth, bounds.height / srcHeight);
+      final double w = srcWidth * scale;
+      final double h = srcHeight * scale;
+      return ImageFit(
+          fullSrc,
+          JetRect(
+              x: bounds.x + (bounds.width - w) / 2,
+              y: bounds.y + (bounds.height - h) / 2,
+              width: w,
+              height: h));
+    case JetBoxFit.cover:
+      final double scale =
+          _max(bounds.width / srcWidth, bounds.height / srcHeight);
+      final double sw = bounds.width / scale;
+      final double sh = bounds.height / scale;
+      return ImageFit(
+          JetRect(
+              x: (srcWidth - sw) / 2,
+              y: (srcHeight - sh) / 2,
+              width: sw,
+              height: sh),
+          bounds);
+    case JetBoxFit.none:
+      final double w = _min(srcWidth, bounds.width);
+      final double h = _min(srcHeight, bounds.height);
+      return ImageFit(
+          JetRect(
+              x: (srcWidth - w) / 2,
+              y: (srcHeight - h) / 2,
+              width: w,
+              height: h),
+          JetRect(
+              x: bounds.x + (bounds.width - w) / 2,
+              y: bounds.y + (bounds.height - h) / 2,
+              width: w,
+              height: h));
+  }
+}
+
+double _min(double a, double b) => a < b ? a : b;
+double _max(double a, double b) => a > b ? a : b;
+```
+
+- [ ] **Step 4: Run — expect PASS.** `flutter test test/rendering/paint/image_fit_test.dart`
+
+#### 9B — `CanvasPainter` (variant-aware) + goldens
+
+The font handoff must be **variant-aware**: the painter loads and renders the SAME `(family, weight, italic)` variant the measurer measured. Each variant loads under its own `dart:ui` family name, so distinct bold/italic bytes never collide. The loader is injectable for a deterministic, pixel-free variant test.
+
+- [ ] **Step 5: Write the failing golden test** (text + rect + line + image)
+
+```dart
 // test/rendering/paint/canvas_painter_golden_test.dart
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jet_print/src/domain/elements/image_source.dart';
 import 'package:jet_print/src/domain/geometry.dart';
 import 'package:jet_print/src/domain/page_format.dart';
 import 'package:jet_print/src/domain/styles/color.dart';
@@ -1562,15 +1762,25 @@ import 'package:jet_print/src/rendering/text/font_registry.dart';
 import 'package:jet_print/src/rendering/text/metrics_text_measurer.dart';
 import 'package:jet_print/src/rendering/text/text_measurer.dart';
 
+Future<Uint8List> _solidPng(int w, int h, int argb) async {
+  final ui.PictureRecorder rec = ui.PictureRecorder();
+  ui.Canvas(rec).drawRect(ui.Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble()),
+      ui.Paint()..color = ui.Color(argb));
+  final ui.Image img = await rec.endRecording().toImage(w, h);
+  final ByteData data = (await img.toByteData(format: ui.ImageByteFormat.png))!;
+  return data.buffer.asUint8List();
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('paints a fixture frame (text + rect + line) to a smoke golden',
+  test('paints a fixture frame (text + rect + line + image) to a smoke golden',
       () async {
     final FontRegistry reg = FontRegistry()..registerDefault();
     final MetricsTextMeasurer measurer = MetricsTextMeasurer(reg);
     final MeasuredText m =
         measurer.measure('Invoice', const JetTextStyle(fontSize: 24));
+    final Uint8List logo = await _solidPng(10, 10, 0xFF3366CC);
 
     const PageFormat page =
         PageFormat(width: 120, height: 60, margins: JetEdgeInsets.all(0));
@@ -1583,6 +1793,10 @@ void main() {
               lines: m.lines,
               style: const JetTextStyle(fontSize: 24),
               fontFamily: reg.resolveFamily(null)))
+          ..add(ImagePrimitive(
+              bounds: const JetRect(x: 96, y: 6, width: 18, height: 18),
+              bytes: logo,
+              fit: JetBoxFit.contain))
           ..add(const LinePrimitive(
               bounds: JetRect(x: 6, y: 44, width: 108, height: 0),
               start: JetOffset(6, 44),
@@ -1592,27 +1806,26 @@ void main() {
         .build();
 
     final ui.PictureRecorder recorder = ui.PictureRecorder();
-    final ui.Canvas canvas = ui.Canvas(recorder);
-    final ReportPainter painter = CanvasPainter(canvas, reg);
+    final ReportPainter painter = CanvasPainter(ui.Canvas(recorder), reg);
     await paintFrame(frame, painter);
     final ui.Image image = await recorder
         .endRecording()
         .toImage(page.width.toInt(), page.height.toInt());
 
-    await expectLater(
-        image, matchesGoldenFile('goldens/canvas_fixture.png'));
+    await expectLater(image, matchesGoldenFile('goldens/canvas_fixture.png'));
   });
 }
 ```
 
-- [ ] **Step 2: Run — expect FAIL** (`canvas_painter.dart` missing).
+- [ ] **Step 6: Run — expect FAIL** (`canvas_painter.dart` missing).
 
-- [ ] **Step 3: Implement**
+- [ ] **Step 7: Implement** — variant-aware font handoff + `computeImageFit`. `dart:typed_data` is now used (the explicit `Uint8List` in the loader/`_ensureFont`), satisfying the `unused_import: error` gate.
 
 ```dart
 // lib/src/rendering/paint/canvas_painter.dart
 /// The on-screen paint backend (spec 006): the ONLY rendering file that imports
-/// Flutter / `dart:ui`. Draws the same line-level runs the measurer produced.
+/// Flutter / `dart:ui`. Draws the same line-level runs the measurer produced,
+/// using the SAME font variant the measurer measured.
 library;
 
 import 'dart:typed_data';
@@ -1624,23 +1837,32 @@ import '../../domain/styles/text_style.dart';
 import '../frame/page_frame.dart';
 import '../frame/primitive.dart';
 import '../text/font_registry.dart';
+import 'image_fit.dart';
 import 'report_painter.dart';
+
+/// Loads font [bytes] into the engine under [fontFamily]. Defaults to
+/// `dart:ui`'s `loadFontFromList`; injectable for tests.
+typedef FontLoader = Future<void> Function(Uint8List bytes,
+    {String? fontFamily});
 
 /// Paints a [PageFrame] onto a `dart:ui` [ui.Canvas].
 class CanvasPainter implements ReportPainter {
   /// Creates a painter drawing to [_canvas], resolving fonts via [_registry].
-  CanvasPainter(this._canvas, this._registry);
+  /// [fontLoader] overrides the engine font loader (tests).
+  CanvasPainter(this._canvas, this._registry, {FontLoader? fontLoader})
+      : _loadFont = fontLoader ?? ui.loadFontFromList;
 
   final ui.Canvas _canvas;
   final FontRegistry _registry;
+  final FontLoader _loadFont;
   final Map<ImagePrimitive, ui.Image> _decoded = <ImagePrimitive, ui.Image>{};
-  static final Set<String> _loadedFamilies = <String>{};
+  final Set<String> _loadedFamilies = <String>{};
 
   @override
   Future<void> prepare(PageFrame frame) async {
     for (final FramePrimitive p in frame.primitives) {
       if (p is TextRunPrimitive) {
-        await _ensureFont(p.fontFamily);
+        await _ensureFont(p.fontFamily, p.style.weight, p.style.italic);
       } else if (p is ImagePrimitive) {
         final ui.Codec codec = await ui.instantiateImageCodec(p.bytes);
         _decoded[p] = (await codec.getNextFrame()).image;
@@ -1648,11 +1870,20 @@ class CanvasPainter implements ReportPainter {
     }
   }
 
-  Future<void> _ensureFont(String family) async {
-    if (_loadedFamilies.contains(family)) return;
-    await ui.loadFontFromList(_registry.bytesFor(family), fontFamily: family);
-    _loadedFamilies.add(family);
+  Future<void> _ensureFont(
+      String family, JetFontWeight weight, bool italic) async {
+    final String uiFamily = _uiFamily(family, weight, italic);
+    if (_loadedFamilies.contains(uiFamily)) return;
+    final Uint8List bytes =
+        _registry.bytesFor(family, weight: weight, italic: italic);
+    await _loadFont(bytes, fontFamily: uiFamily);
+    _loadedFamilies.add(uiFamily);
   }
+
+  /// A `dart:ui` family name unique to the (family, weight, italic) variant, so
+  /// distinct variant bytes never collide under one name.
+  static String _uiFamily(String family, JetFontWeight weight, bool italic) =>
+      '${family}__${weight.name}${italic ? '_italic' : ''}';
 
   @override
   void beginPage(PageFormat format) {}
@@ -1662,15 +1893,17 @@ class CanvasPainter implements ReportPainter {
 
   @override
   void drawTextRun(TextRunPrimitive p) {
+    final String uiFamily =
+        _uiFamily(p.fontFamily, p.style.weight, p.style.italic);
     final ui.Color color = ui.Color(p.style.color.argb);
     for (final line in p.lines) {
       if (line.text.isEmpty) continue;
       final ui.ParagraphBuilder pb = ui.ParagraphBuilder(ui.ParagraphStyle(
-        fontFamily: p.fontFamily,
+        fontFamily: uiFamily,
         fontSize: p.style.fontSize,
       ))
         ..pushStyle(ui.TextStyle(
-            color: color, fontFamily: p.fontFamily, fontSize: p.style.fontSize))
+            color: color, fontFamily: uiFamily, fontSize: p.style.fontSize))
         ..addText(line.text);
       final ui.Paragraph para = pb.build()
         ..layout(const ui.ParagraphConstraints(width: double.infinity));
@@ -1688,10 +1921,12 @@ class CanvasPainter implements ReportPainter {
   void drawImage(ImagePrimitive p) {
     final ui.Image? img = _decoded[p];
     if (img == null) return;
+    final ImageFit fit = computeImageFit(
+        p.fit, p.bounds, img.width.toDouble(), img.height.toDouble());
     _canvas.drawImageRect(
       img,
-      ui.Rect.fromLTWH(0, 0, img.width.toDouble(), img.height.toDouble()),
-      ui.Rect.fromLTWH(p.bounds.x, p.bounds.y, p.bounds.width, p.bounds.height),
+      ui.Rect.fromLTWH(fit.src.x, fit.src.y, fit.src.width, fit.src.height),
+      ui.Rect.fromLTWH(fit.dst.x, fit.dst.y, fit.dst.width, fit.dst.height),
       ui.Paint(),
     );
   }
@@ -1757,18 +1992,100 @@ class CanvasPainter implements ReportPainter {
 }
 ```
 
-- [ ] **Step 4: Generate the golden, then run to verify PASS**
+- [ ] **Step 8: Write the variant test** (deterministic, no pixels — proves measurement and paint resolve the SAME variant bytes)
+
+```dart
+// test/rendering/paint/canvas_painter_variant_test.dart
+import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:jet_print/src/domain/geometry.dart';
+import 'package:jet_print/src/domain/page_format.dart';
+import 'package:jet_print/src/domain/styles/text_style.dart';
+import 'package:jet_print/src/rendering/frame/frame_builder.dart';
+import 'package:jet_print/src/rendering/frame/primitive.dart';
+import 'package:jet_print/src/rendering/paint/canvas_painter.dart';
+import 'package:jet_print/src/rendering/text/font_registry.dart';
+import 'package:jet_print/src/rendering/text/metrics_text_measurer.dart';
+import 'package:jet_print/src/rendering/text/text_measurer.dart';
+
+import '../../support/workspace.dart';
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('paint loads the SAME variant bytes the measurer measures', () async {
+    final Uint8List boldBytes = File('${findWorkspaceRoot().path}'
+            '/packages/jet_print/tool/fonts/NotoSans-Bold-subset.ttf')
+        .readAsBytesSync();
+    final FontRegistry reg = FontRegistry()
+      ..registerDefault()
+      ..register(FontRegistry.defaultFamily, boldBytes,
+          weight: JetFontWeight.bold);
+    final int regularLen = reg.bytesFor(FontRegistry.defaultFamily).length;
+    final int boldLen = reg
+        .bytesFor(FontRegistry.defaultFamily, weight: JetFontWeight.bold)
+        .length;
+    expect(regularLen, isNot(boldLen)); // distinct variant bytes (23356 vs 23276)
+
+    final MetricsTextMeasurer measurer = MetricsTextMeasurer(reg);
+    final MeasuredText normalM =
+        measurer.measure('Hi', const JetTextStyle(fontSize: 10));
+    final MeasuredText boldM = measurer.measure(
+        'Hi', const JetTextStyle(fontSize: 10, weight: JetFontWeight.bold));
+
+    final List<({String family, int len})> loads =
+        <({String family, int len})>[];
+    Future<void> recordingLoader(Uint8List bytes, {String? fontFamily}) async {
+      loads.add((family: fontFamily!, len: bytes.length));
+    }
+
+    final ui.PictureRecorder recorder = ui.PictureRecorder();
+    final CanvasPainter painter =
+        CanvasPainter(ui.Canvas(recorder), reg, fontLoader: recordingLoader);
+
+    const PageFormat page =
+        PageFormat(width: 100, height: 40, margins: JetEdgeInsets.all(0));
+    final frame = (FrameBuilder(page)
+          ..add(TextRunPrimitive(
+              bounds: const JetRect(x: 0, y: 0, width: 100, height: 14),
+              lines: normalM.lines,
+              style: const JetTextStyle(fontSize: 10),
+              fontFamily: FontRegistry.defaultFamily))
+          ..add(TextRunPrimitive(
+              bounds: const JetRect(x: 0, y: 14, width: 100, height: 14),
+              lines: boldM.lines,
+              style:
+                  const JetTextStyle(fontSize: 10, weight: JetFontWeight.bold),
+              fontFamily: FontRegistry.defaultFamily)))
+        .build();
+    await painter.prepare(frame);
+
+    // Two distinct ui families loaded; the bold run loaded the bold bytes and
+    // the normal run loaded the regular bytes — paint matches measurement.
+    expect(loads, hasLength(2));
+    expect(loads.map((({String family, int len}) e) => e.family).toSet(),
+        hasLength(2));
+    expect(loads.map((({String family, int len}) e) => e.len).toSet(),
+        <int>{regularLen, boldLen});
+  });
+}
+```
+
+- [ ] **Step 9: Generate the golden, then run to verify PASS**
 
 Run: `cd packages/jet_print && flutter test --update-goldens test/rendering/paint/canvas_painter_golden_test.dart`
-Then: `flutter test test/rendering/paint/canvas_painter_golden_test.dart`
-Expected: PASS. A new `test/rendering/paint/goldens/canvas_fixture.png` is created. (Pixel golden is smoke-level / platform-pinned to this machine; the data goldens are the real guard.)
+Then: `flutter test test/rendering/paint/`
+Expected: PASS. A new `test/rendering/paint/goldens/canvas_fixture.png` is created; image-fit, paint-walk, and variant tests pass. (The pixel golden is smoke-level / platform-pinned; the data goldens + variant test are the real guard.)
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 10: Commit**
 
 ```bash
 cd packages/jet_print && dart format . && flutter analyze
-git -C /Users/ahmeturel/Projects/oss/jet-print add packages/jet_print/lib/src/rendering/paint/canvas_painter.dart packages/jet_print/test/rendering/paint/canvas_painter_golden_test.dart packages/jet_print/test/rendering/paint/goldens/canvas_fixture.png
-git -C /Users/ahmeturel/Projects/oss/jet-print commit -m "feat(rendering): CanvasPainter (dart:ui) + Canvas smoke golden (006)"
+git -C /Users/ahmeturel/Projects/oss/jet-print add packages/jet_print/lib/src/rendering/paint/image_fit.dart packages/jet_print/lib/src/rendering/paint/canvas_painter.dart packages/jet_print/test/rendering/paint/
+git -C /Users/ahmeturel/Projects/oss/jet-print commit -m "feat(rendering): variant-aware CanvasPainter + image fit + goldens (006)"
 ```
 
 ---
@@ -1926,11 +2243,18 @@ git -C /Users/ahmeturel/Projects/oss/jet-print commit -m "refactor(rendering): r
 - §3 seam layout → Tasks 1–9 create every listed file; §10 boundary rule → Task 10.
 - §4 frame primitives + `PageFrame`/`FrameBuilder` → Tasks 2–3.
 - §5.1 `FontMetrics`/TTF parser → Tasks 4–5; §5.2 `FontRegistry` → Task 6; §5.3 measurer (advances, hard breaks, whitespace-preserving wrap, `top`/`baseline`, empty→one line, tab=space) → Task 7.
-- §6 `ReportPainter` async `prepare` + `paintFrame` + `CanvasPainter` (`line.top` origin, align, image decode) → Tasks 8–9.
-- §7 error handling: unregistered font→default (Task 6), `.notdef` (Tasks 4/5/7), empty/blank/whitespace (Task 7), malformed→`FontFormatException` (Task 5), no-default→`StateError` (Task 6).
-- §8 tests: ttf metrics, measurer metrics, frame snapshot (data), paint-walk fake, Canvas smoke golden, parity placeholder, boundary test → Tasks 5,7,2–3,8,9,10.
+- §6 `ReportPainter` async `prepare` + `paintFrame` (Task 8); `CanvasPainter` **variant-aware** font load/render (loads `bytesFor(family,weight,italic)` under a per-variant `dart:ui` family — the same variant the measurer measures), `line.top` origin, align, async image decode, and `computeImageFit` for `JetBoxFit` (Task 9, incl. `image_fit.dart`).
+- §7 error handling: unregistered font→default (Task 6), `.notdef` (Tasks 4/5/7), empty/blank/whitespace/`maxWidth≤0`→one line (Task 7), malformed bytes **and out-of-range table offsets**→`FontFormatException` (Task 5), no-default→`StateError` (Task 6).
+- §8 tests: ttf metrics (+ malformed-offset), measurer (advances/whitespace/`maxWidth≤0`/variant), `image_fit` math, frame snapshot (data), paint-walk fake, Canvas smoke golden (text+rect+line+image), variant handoff, parity placeholder, boundary test → Tasks 2–10.
 - §9 scaffold retirement → Task 11. Deferred-export convention → no `jet_print.dart` change (intentional).
+
+**Review findings addressed (round 2, on the plan):**
+- *Font-variant handoff (High):* `CanvasPainter` now resolves `(family, weight, italic)` for both load (`bytesFor(...)`) and render (per-variant ui family), so paint can't diverge from measurement on styled text. Proven by the variant tests in Tasks 7 (measurer) and 9 (painter, via an injectable `FontLoader`) using the distinct bold fixture.
+- *`maxWidth ≤ 0` (Medium):* `_wrap` returns the whole segment as one overflowing line; test added (Task 7).
+- *Image fit (Medium):* implemented as a pure, unit-tested `computeImageFit` (contain/cover/fill/none) and wired into `drawImage`; decode exercised by the image in the golden (Task 9).
+- *Analyze gate (Medium):* the variant fix makes `dart:typed_data` used in `CanvasPainter`; every new file's imports are checked against `unused_import: error`.
+- *Parser hardening (Open Q):* out-of-range table offsets are caught and rethrown as `FontFormatException`; test added (Task 5).
 
 **Placeholder scan:** none — every code step has complete code; reference metric numbers are concrete (from the committed font); fp assertions use `closeTo`.
 
-**Type consistency:** `TextLine(text,width,top,baseline,height)`, `MeasuredText(lines,size,firstAscent)`, `FramePrimitive(bounds,elementId)` + five variants, `PathCommand` (`MoveTo`/`LineTo`/`ClosePath`), `PageFrame(page,primitives)`, `FrameBuilder(page).add().build()`, `FontMetrics(unitsPerEm,ascent,descent,lineGap,cmap,advanceWidths,defaultAdvance)`, `parseTtfMetrics(Uint8List)`, `FontRegistry.{register,registerDefault,hasDefault,metricsFor,bytesFor,resolveFamily,defaultFamily}`, `MetricsTextMeasurer(registry)`, `ReportPainter.{prepare,beginPage,drawTextRun,drawImage,drawLine,drawRect,drawPath,endPage}` + `paintFrame`, `CanvasPainter(canvas,registry)` — used identically across tasks. Build order respects dependencies: text result types (T1) precede frame primitives that reference `TextLine` (T2); `FontMetrics`/parser/registry (T4–6) precede the measurer (T7); frame + painter abstraction (T8) precede `CanvasPainter` (T9).
+**Type consistency:** `TextLine(text,width,top,baseline,height)`, `MeasuredText(lines,size,firstAscent)`, `FramePrimitive(bounds,elementId)` + five variants, `PathCommand` (`MoveTo`/`LineTo`/`ClosePath`), `PageFrame(page,primitives)`, `FrameBuilder(page).add().build()`, `FontMetrics(unitsPerEm,ascent,descent,lineGap,cmap,advanceWidths,defaultAdvance)`, `parseTtfMetrics(Uint8List)`, `FontRegistry.{register,registerDefault,hasDefault,metricsFor,bytesFor,resolveFamily,defaultFamily}`, `MetricsTextMeasurer(registry)`, `ReportPainter.{prepare,beginPage,drawTextRun,drawImage,drawLine,drawRect,drawPath,endPage}` + `paintFrame`, `computeImageFit(fit,bounds,w,h)→ImageFit(src,dst)`, `CanvasPainter(canvas,registry,{fontLoader})` — used identically across tasks. Build order respects dependencies: text result types (T1) precede frame primitives that reference `TextLine` (T2); `FontMetrics`/parser/registry (T4–6) precede the measurer (T7); frame + painter abstraction (T8) and `image_fit` (T9A) precede `CanvasPainter` (T9B).
