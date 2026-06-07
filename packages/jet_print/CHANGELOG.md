@@ -32,6 +32,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (line/rectangle), `ImageElement` (url/field/base64-bytes sources, `JetBoxFit`),
   and `BarcodeElement` (QR / Code128 / EAN-13 / Data Matrix); and
   `registerBuiltInElementCodecs` to wire all four built-in element codecs.
+- Data layer (spec 004): the headless data-access seam — `JetDataSource`
+  (factory) → `DataSet` (forward-only cursor) → immutable `DataRow` snapshots,
+  with typed `FieldDef`/`JetFieldType` metadata (best-effort column-type
+  inference). Three in-memory implementations: `JetInMemoryDataSource`
+  (`List<Map>`), `JetJsonDataSource` (JSON array string), and
+  `JetObjectDataSource<T>` (typed object list). The architecture test now also
+  enforces the `data → domain` boundary.
 
 ## 0.1.0
 
