@@ -99,4 +99,23 @@ void main() {
     expect(() => decodeTemplate(json, _registry()),
         throwsA(isA<ReportFormatException>()));
   });
+
+  test('round-trips a dateTime parameter default through a real template', () {
+    final ReportTemplate t = ReportTemplate(
+      name: 'Dated',
+      page: PageFormat.a4Portrait,
+      parameters: <ReportParameter>[
+        ReportParameter(
+          name: 'asOf',
+          type: JetFieldType.dateTime,
+          defaultValue: DateTime(2026, 6, 7),
+        ),
+      ],
+    );
+    final ElementCodecRegistry r = _registry();
+    final String wire = jsonEncode(encodeTemplate(t, r));
+    final ReportTemplate decoded =
+        decodeTemplate((jsonDecode(wire) as Map).cast<String, Object?>(), r);
+    expect(decoded.parameters.single.defaultValue, DateTime(2026, 6, 7));
+  });
 }

@@ -8,8 +8,8 @@ import 'token.dart';
 /// Tokenizes [source] into a list ending with a [TokenType.eof] token.
 ///
 /// Throws [ExpressionException] on an unterminated string/reference or an
-/// unexpected character. In 005a only `$F{...}` and `$P{...}` references are
-/// recognized; any other `$X{...}` sigil (e.g. `$V`) is an error.
+/// unexpected character. Recognizes `$F{...}`, `$P{...}`, and `$V{...}`
+/// references; any other `$X{...}` sigil is an error.
 List<Token> tokenize(String source) => _Lexer(source).scanAll();
 
 class _Lexer {
