@@ -93,7 +93,8 @@ void main() {
       );
       // …paired with its element glyph (a text element → the Text glyph).
       expect(
-        find.descendant(of: selector(), matching: find.byIcon(LucideIcons.type)),
+        find.descendant(
+            of: selector(), matching: find.byIcon(LucideIcons.type)),
         findsOneWidget,
       );
     });
@@ -165,7 +166,8 @@ void _refinementTests() {
 
       // The size control shows its current value '9' inside a ShadSelect…
       final Finder sizeSelect = find
-          .ancestor(of: find.text('9'), matching: find.byType(ShadSelect<String>))
+          .ancestor(
+              of: find.text('9'), matching: find.byType(ShadSelect<String>))
           .first;
       expect(sizeSelect, findsOneWidget);
 
@@ -213,7 +215,8 @@ void _refinementTests() {
         matching: find.byType(ShadInput),
       );
       await tester.tap(
-        find.descendant(of: xField, matching: find.byIcon(LucideIcons.chevronUp)),
+        find.descendant(
+            of: xField, matching: find.byIcon(LucideIcons.chevronUp)),
       );
       await tester.pumpAndSettle();
 

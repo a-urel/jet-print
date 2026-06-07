@@ -68,7 +68,8 @@ void main() {
 
       final double mid = kDesktopSize.width / 2;
       // The tool groups sit on the left, next to the title…
-      expect(tester.getCenter(find.byIcon(LucideIcons.undo2)).dx, lessThan(mid));
+      expect(
+          tester.getCenter(find.byIcon(LucideIcons.undo2)).dx, lessThan(mid));
       expect(
         tester.getCenter(find.byIcon(LucideIcons.grid2x2)).dx,
         lessThan(mid),

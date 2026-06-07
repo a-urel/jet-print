@@ -63,8 +63,8 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
               final double width = constraints.maxWidth;
               final bool compact = width < _compactWidth;
               final bool scrollable = width < _scrollWidth;
-              final Widget bar = _buildBar(context, compact: compact,
-                  scrollable: scrollable);
+              final Widget bar =
+                  _buildBar(context, compact: compact, scrollable: scrollable);
               if (!scrollable) return bar;
               // Final safety net: keep every control reachable by scrolling
               // rather than overflowing at extreme widths.
