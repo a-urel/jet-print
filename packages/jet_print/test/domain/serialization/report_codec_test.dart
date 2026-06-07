@@ -99,5 +99,59 @@ void main() {
       );
       expect(decoded.name, 'Legacy');
     });
+
+    test('throws ReportFormatException on an unknown band type', () {
+      final Map<String, Object?> json = <String, Object?>{
+        'schemaVersion': kReportSchemaVersion,
+        'name': 'X',
+        'page': PageFormat.a4Portrait.toJson(),
+        'bands': <Object?>[
+          <String, Object?>{
+            'type': 'nonsense',
+            'height': 10.0,
+            'elements': <Object?>[],
+          },
+        ],
+      };
+      expect(() => decodeTemplate(json, _registry()),
+          throwsA(isA<ReportFormatException>()));
+    });
+
+    test('preserves an unknown element type through a template round-trip', () {
+      final ElementCodecRegistry registry =
+          _registry(); // only 'text' registered
+      final Map<String, Object?> wireJson = <String, Object?>{
+        'schemaVersion': kReportSchemaVersion,
+        'name': 'Custom',
+        'page': PageFormat.a4Portrait.toJson(),
+        'bands': <Object?>[
+          <String, Object?>{
+            'type': 'detail',
+            'height': 20.0,
+            'elements': <Object?>[
+              <String, Object?>{
+                'type': 'qrcode',
+                'id': 'q1',
+                'bounds': <String, Object?>{
+                  'x': 1.0,
+                  'y': 2.0,
+                  'w': 30.0,
+                  'h': 30.0,
+                },
+                'payload': 'https://example.com',
+              },
+            ],
+          },
+        ],
+      };
+      final String wire = jsonEncode(wireJson);
+      final ReportTemplate decoded = decodeTemplate(
+        (jsonDecode(wire) as Map).cast<String, Object?>(),
+        registry,
+      );
+      // The unregistered 'qrcode' element survived as an UnknownElement and
+      // re-encodes to the original JSON byte-for-byte (lossless, Constitution V).
+      expect(encodeTemplate(decoded, registry), equals(wireJson));
+    });
   });
 }

@@ -97,11 +97,22 @@ ReportBand _decodeBand(
     throw const ReportFormatException('Band "elements" must be a list.');
   }
   return ReportBand(
-    type: BandType.values.byName(json['type']! as String),
+    type: _parseBandType(json['type']),
     height: (json['height']! as num).toDouble(),
     elements: <ReportElement>[
       for (final Object? element in elements)
         registry.decode((element! as Map).cast<String, Object?>()),
     ],
   );
+}
+
+BandType _parseBandType(Object? name) {
+  if (name is! String) {
+    throw const ReportFormatException('Band "type" must be a string.');
+  }
+  try {
+    return BandType.values.byName(name);
+  } on ArgumentError {
+    throw ReportFormatException('Unknown band type "$name".');
+  }
 }
