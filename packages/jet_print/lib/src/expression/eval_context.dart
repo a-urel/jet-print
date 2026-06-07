@@ -17,6 +17,9 @@ abstract class EvalContext {
   /// Resolves a `$P{name}` parameter reference.
   JetValue resolveParam(String name);
 
+  /// Resolves a `$V{name}` variable reference.
+  JetValue resolveVariable(String name);
+
   /// The function registry consulted for call nodes.
   JetFunctionRegistry get functions;
 }
@@ -27,17 +30,20 @@ abstract class EvalContext {
 /// the row does not declare (or whose value is null) resolves to [JetNull];
 /// other values are lifted via [JetValue.from].
 class RowEvalContext implements EvalContext {
-  /// Creates a context over an optional [row] and [params].
+  /// Creates a context over an optional [row], [params], and [variables].
   RowEvalContext({
     DataRow? row,
     Map<String, Object?> params = const <String, Object?>{},
+    Map<String, JetValue> variables = const <String, JetValue>{},
     required JetFunctionRegistry functions,
   })  : _row = row,
         _params = params,
+        _variables = variables,
         _functions = functions;
 
   final DataRow? _row;
   final Map<String, Object?> _params;
+  final Map<String, JetValue> _variables;
   final JetFunctionRegistry _functions;
 
   @override
@@ -54,4 +60,7 @@ class RowEvalContext implements EvalContext {
   JetValue resolveParam(String name) => _params.containsKey(name)
       ? JetValue.from(_params[name])
       : const JetNull();
+
+  @override
+  JetValue resolveVariable(String name) => _variables[name] ?? const JetNull();
 }

@@ -22,6 +22,8 @@ JetValue evaluate(Expr expr, EvalContext context) {
       return context.resolveField(n);
     case ParamRefExpr(name: final String n):
       return context.resolveParam(n);
+    case VariableRefExpr(name: final String n):
+      return context.resolveVariable(n);
     case UnaryExpr(op: final UnaryOp op, operand: final Expr operand):
       return _unary(op, evaluate(operand, context));
     case BinaryExpr(

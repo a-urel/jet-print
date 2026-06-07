@@ -104,6 +104,18 @@ final class ParamRefExpr extends Expr {
   String toString() => '(param $name)';
 }
 
+/// A variable reference `$V{name}`.
+final class VariableRefExpr extends Expr {
+  /// Creates a variable reference node.
+  const VariableRefExpr(this.name);
+
+  /// The variable name.
+  final String name;
+
+  @override
+  String toString() => '(var $name)';
+}
+
 /// A unary operation.
 final class UnaryExpr extends Expr {
   /// Creates a unary node.

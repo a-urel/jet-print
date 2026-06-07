@@ -67,6 +67,15 @@ void main() {
       expect(ctx.resolveField('qty'), const JetNull());
     });
 
+    test('resolves variables from the map; missing variable is JetNull', () {
+      final RowEvalContext ctx = RowEvalContext(
+        variables: <String, JetValue>{'total': const JetNumber(7)},
+        functions: JetFunctionRegistry(),
+      );
+      expect(ctx.resolveVariable('total'), const JetNumber(7));
+      expect(ctx.resolveVariable('missing'), const JetNull());
+    });
+
     test('exposes its function registry', () {
       final JetFunctionRegistry r = JetFunctionRegistry();
       expect(RowEvalContext(functions: r).functions, same(r));
@@ -81,4 +90,6 @@ class _CtxStub implements EvalContext {
   JetValue resolveField(String name) => const JetNull();
   @override
   JetValue resolveParam(String name) => const JetNull();
+  @override
+  JetValue resolveVariable(String name) => const JetNull();
 }
