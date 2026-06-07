@@ -195,7 +195,7 @@ class FontMetrics {
     required this.defaultAdvance,
   });
   final int unitsPerEm;                 // from `head`
-  final double ascent, descent, lineGap;// from `hhea` (OS/2 typo metrics as fallback), font units
+  final double ascent, descent, lineGap;// from `hhea`, font units
   int glyphForCodepoint(int cp);        // `cmap` (Unicode BMP format-4); missing → 0 (.notdef)
   double advanceForGlyph(int glyphId);  // `hmtx`; out of range → defaultAdvance
   final double defaultAdvance;
@@ -206,10 +206,11 @@ class FontMetrics {
 FontMetrics parseTtfMetrics(Uint8List bytes);
 ```
 
-The reader walks the table directory and reads **only** `head` (unitsPerEm), `hhea`
-(ascender/descender/lineGap, numberOfHMetrics), `hmtx` (advance widths), `cmap` (a Unicode BMP
-subtable, format 4), and `OS/2` (typo metrics, used when `hhea` is degenerate). It ignores `glyf`
-/ outlines entirely — metrics only. `FontFormatException` is a new typed error in `text/`.
+The reader walks the table directory and reads `head` (unitsPerEm), `hhea` (ascender/descender/
+lineGap, numberOfHMetrics), `maxp` (numGlyphs), `hmtx` (advance widths), and `cmap` (a Unicode BMP
+format-4 subtable). It ignores `glyf`/outlines entirely — metrics only. (`OS/2` typo-metric
+fallback for a degenerate `hhea` is deferred — the bundled font and target fonts carry valid
+`hhea`.) `FontFormatException` is a new typed error in `text/`.
 
 ### 5.2 `FontRegistry` (one contract: byte-keyed; default is a pre-registered entry)
 
