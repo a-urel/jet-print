@@ -190,5 +190,29 @@ void main() {
           reason: 'Only CanvasPainter may import dart:ui; frame/text/'
               'report_painter must stay headless:\n${violations.join('\n')}');
     });
+
+    test('the elements/ seam exists and stays Flutter-free', () {
+      final Directory elementsDir = Directory(
+          '${root.path}/packages/jet_print/lib/src/rendering/elements');
+      expect(elementsDir.existsSync(), isTrue,
+          reason: 'Missing ${elementsDir.path}');
+      final List<File> elementsFiles = elementsDir
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((FileSystemEntity f) => f.path.endsWith('.dart'))
+          .toList();
+      expect(elementsFiles, isNotEmpty);
+      final List<String> violations = <String>[];
+      for (final File file in elementsFiles) {
+        for (final String uri in _directive
+            .allMatches(file.readAsStringSync())
+            .map((Match m) => m.group(1)!)) {
+          if (_isFlutterUi(uri)) violations.add('${file.path} -> $uri');
+        }
+      }
+      expect(violations, isEmpty,
+          reason: 'rendering/elements must stay headless (no dart:ui/Flutter):\n'
+              '${violations.join('\n')}');
+    });
   });
 }

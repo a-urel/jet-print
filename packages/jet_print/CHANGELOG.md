@@ -73,6 +73,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `CanvasPainter` may import `dart:ui`; `frame/` and `text/` stay headless.
   Cross-backend pixel parity arrives with the PDF/PNG backends in 009. Replaces
   the `ReportDocument`/`ReportLayout` scaffold placeholders.
+- **Element renderers (spec 007a).** `ElementRenderer<E>` (measure + emit) paired with
+  `ElementCodec<E>` via `ElementTypeRegistry.register`; built-in renderers for text, shape, image,
+  and barcode/unknown placeholders; `RenderContext`; `JetConstraints`. `MeasuredText` gains a
+  resolved `fontFamily` (006 amendment). Custom element types round-trip through JSON *and* render
+  with zero core edits.
 
 ## 0.1.0
 

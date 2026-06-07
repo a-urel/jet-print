@@ -172,3 +172,40 @@ class JetRect {
   @override
   String toString() => 'JetRect($x, $y, $width, $height)';
 }
+
+/// Immutable sizing bounds for `ElementRenderer.measure`: a maximum [maxWidth]
+/// and [maxHeight] in logical points. Either may be [double.infinity]
+/// (unbounded). Pure-Dart; mirrors the role of a layout constraint without any
+/// `dart:ui` dependency.
+class JetConstraints {
+  /// Creates constraints; both axes default to unbounded.
+  const JetConstraints({
+    this.maxWidth = double.infinity,
+    this.maxHeight = double.infinity,
+  });
+
+  /// Maximum width, in points (may be [double.infinity]).
+  final double maxWidth;
+
+  /// Maximum height, in points (may be [double.infinity]).
+  final double maxHeight;
+
+  /// Returns [size] with each axis clamped down to the corresponding max.
+  JetSize constrain(JetSize size) => JetSize(
+        size.width < maxWidth ? size.width : maxWidth,
+        size.height < maxHeight ? size.height : maxHeight,
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      other is JetConstraints &&
+      other.maxWidth == maxWidth &&
+      other.maxHeight == maxHeight;
+
+  @override
+  int get hashCode => Object.hash(maxWidth, maxHeight);
+
+  @override
+  String toString() =>
+      'JetConstraints(maxWidth: $maxWidth, maxHeight: $maxHeight)';
+}
