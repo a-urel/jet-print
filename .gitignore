@@ -1,6 +1,9 @@
 # Auto Claude data directory
 .auto-claude/
 
+# Superpowers brainstorming visual-companion scratch files
+.superpowers/
+
 # Miscellaneous
 *.class
 *.log
