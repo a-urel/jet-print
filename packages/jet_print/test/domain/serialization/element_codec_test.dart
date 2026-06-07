@@ -59,5 +59,37 @@ void main() {
         throwsA(isA<ReportFormatException>()),
       );
     });
+
+    test('throws StateError encoding an unregistered element type', () {
+      final ElementCodecRegistry registry = ElementCodecRegistry();
+      const TextElement element = TextElement(
+        id: 'x',
+        bounds: JetRect.zero,
+        text: '',
+      );
+      expect(() => registry.encode(element), throwsStateError);
+    });
+
+    test('preserves unknown JSON even if the source map is later mutated', () {
+      final ElementCodecRegistry registry = _registryWithText();
+      final List<Object?> series = <Object?>[3, 1, 4];
+      final Map<String, Object?> json = <String, Object?>{
+        'type': 'sparkline',
+        'id': 's1',
+        'bounds': <String, Object?>{'x': 0, 'y': 0, 'w': 10, 'h': 5},
+        'series': series,
+      };
+      final ReportElement decoded = registry.decode(json);
+      // Mutate the original nested structures after decoding.
+      series.add(99);
+      (json['bounds']! as Map)['x'] = 999;
+      // The decoded element must still re-encode to the ORIGINAL shape.
+      expect(registry.encode(decoded), <String, Object?>{
+        'type': 'sparkline',
+        'id': 's1',
+        'bounds': <String, Object?>{'x': 0, 'y': 0, 'w': 10, 'h': 5},
+        'series': <Object?>[3, 1, 4],
+      });
+    });
   });
 }

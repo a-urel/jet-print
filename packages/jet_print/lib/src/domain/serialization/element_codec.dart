@@ -39,7 +39,7 @@ class ElementCodecRegistry {
   /// their preserved raw JSON; all others are `{'type': typeKey, ...fields}`.
   Map<String, Object?> encode(ReportElement element) {
     if (element is UnknownElement) {
-      return Map<String, Object?>.of(element.rawJson);
+      return _deepCopyJsonMap(element.rawJson);
     }
     final ElementCodec<ReportElement>? codec = _codecs[element.typeKey];
     if (codec == null) {
@@ -61,9 +61,28 @@ class ElementCodecRegistry {
     if (codec == null) {
       return UnknownElement(
         typeKey: typeKey,
-        rawJson: Map<String, Object?>.of(json),
+        rawJson: _deepCopyJsonMap(json),
       );
     }
     return codec.fromJson(json);
   }
 }
+
+/// Recursively copies a JSON-safe value so stored maps are immune to later
+/// mutation of the source — preserving [UnknownElement]'s byte-for-byte
+/// round-trip guarantee even if the caller mutates the original decoded map.
+Object? _deepCopyJson(Object? value) {
+  if (value is Map) {
+    return <String, Object?>{
+      for (final MapEntry<Object?, Object?> entry in value.entries)
+        entry.key! as String: _deepCopyJson(entry.value),
+    };
+  }
+  if (value is List) {
+    return <Object?>[for (final Object? item in value) _deepCopyJson(item)];
+  }
+  return value;
+}
+
+Map<String, Object?> _deepCopyJsonMap(Map<String, Object?> json) =>
+    _deepCopyJson(json)! as Map<String, Object?>;
