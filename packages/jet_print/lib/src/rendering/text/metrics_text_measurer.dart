@@ -63,6 +63,8 @@ class MetricsTextMeasurer implements TextMeasurer {
       lines: lines,
       size: JetSize(maxW, lines.length * lineHeight),
       firstAscent: lineAscent,
+      fontFamily: _registry.resolveFamily(style.fontFamily,
+          weight: style.weight, italic: style.italic),
     );
   }
 

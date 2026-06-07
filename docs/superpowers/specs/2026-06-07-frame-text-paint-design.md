@@ -483,3 +483,12 @@ arrive in 007/009. The committed `NotoSans-subset.ttf` + `OFL.txt` are repo arti
 | III — Test-First | TDD per phase; data goldens are the deterministic backbone; a recording fake tests the paint walk headless. |
 | IV — WYSIWYG | One headless `TextMeasurer` owns line breaks → identical wrapping/heights across backends; claim explicitly scoped to line-break parity for v1. |
 | VI — Documentation / DX | Dartdoc on public symbols; embedded default ⇒ zero-config first-run rendering; CHANGELOG per spec; zero-warning analyzer gate. |
+
+## Amendment (2026-06-08, for spec 007a)
+
+`MeasuredText` gains a required `String fontFamily` — the registry-resolved base family the
+measurer measured with (`FontRegistry.resolveFamily(...)`). This makes the measurer the single
+authority for the font family: the element renderer (007a) reads `MeasuredText.fontFamily` for
+`TextRunPrimitive.fontFamily`, so a measured run and its painted run cannot choose different
+families. The measurer↔painter parity still requires a shared `FontRegistry` instance (011 wiring);
+this amendment removes only the renderer-side divergence.

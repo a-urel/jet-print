@@ -13,13 +13,17 @@ abstract class TextMeasurer {
 }
 
 /// The result of [TextMeasurer.measure]: laid-out [lines] and the wrapped block
-/// [size]. [firstAscent] is the baseline offset of the first line.
+/// [size]. [firstAscent] is the baseline offset of the first line. [fontFamily]
+/// is the registry-resolved base family the measurer actually measured with —
+/// the painter renders the same family, so measurement and rendering cannot pick
+/// different families (006 amendment for 007a).
 class MeasuredText {
   /// Creates a measured-text result.
   const MeasuredText({
     required this.lines,
     required this.size,
     required this.firstAscent,
+    required this.fontFamily,
   });
 
   /// The laid-out lines, top to bottom.
@@ -30,6 +34,9 @@ class MeasuredText {
 
   /// Baseline offset of the first line from the block top, in points.
   final double firstAscent;
+
+  /// The registry-resolved base font family used for measurement.
+  final String fontFamily;
 }
 
 /// One laid-out line: literal [text] (whitespace preserved) plus geometry.
