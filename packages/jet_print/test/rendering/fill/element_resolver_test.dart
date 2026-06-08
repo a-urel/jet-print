@@ -1,4 +1,5 @@
 // ElementResolver: per-type resolution + diagnostics (007b).
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -111,6 +112,43 @@ void main() {
     final ReportElement out = resolver(d).resolve(el, row: row(<String, Object?>{}));
     expect(out, same(el));
     expect(d.entries.single.severity, DiagnosticSeverity.warning);
+  });
+
+  test('image field as List<int> resolves to bytes (defensively copied)', () {
+    final ReportDiagnostics d = ReportDiagnostics();
+    final List<int> raw = <int>[9, 8, 7];
+    const ImageElement el =
+        ImageElement(id: 'i', bounds: r, source: FieldImageSource('photo'));
+    final ImageElement out = resolver(d).resolve(el,
+        row: row(<String, Object?>{'photo': raw})) as ImageElement;
+    final BytesImageSource src = out.source as BytesImageSource;
+    expect(src.bytes, <int>[9, 8, 7]);
+    // Mutating the original list must NOT affect the resolved snapshot.
+    raw[0] = 0;
+    expect(src.bytes[0], 9);
+    expect(d.entries, isEmpty);
+  });
+
+  test('image field as a valid base64 string resolves to bytes', () {
+    final ReportDiagnostics d = ReportDiagnostics();
+    final String encoded = base64Encode(<int>[1, 2, 3, 4]);
+    const ImageElement el =
+        ImageElement(id: 'i', bounds: r, source: FieldImageSource('photo'));
+    final ImageElement out = resolver(d).resolve(el,
+        row: row(<String, Object?>{'photo': encoded})) as ImageElement;
+    expect((out.source as BytesImageSource).bytes, <int>[1, 2, 3, 4]);
+    expect(d.entries, isEmpty);
+  });
+
+  test('an invalid base64 image string warns distinctly and passes through', () {
+    final ReportDiagnostics d = ReportDiagnostics();
+    const ImageElement el =
+        ImageElement(id: 'i', bounds: r, source: FieldImageSource('photo'));
+    final ReportElement out = resolver(d)
+        .resolve(el, row: row(<String, Object?>{'photo': 'not!!base64!!'}));
+    expect(out, same(el)); // passthrough on bad data
+    expect(d.entries.single.severity, DiagnosticSeverity.warning);
+    expect(d.entries.single.message, contains('base64'));
   });
 
   test('a shape element passes through', () {

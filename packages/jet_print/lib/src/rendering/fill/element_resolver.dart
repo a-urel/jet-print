@@ -96,28 +96,31 @@ class ElementResolver {
 
   ImageElement _resolveImage(ImageElement el, DataRow? row) {
     final String field = (el.source as FieldImageSource).field;
-    final Uint8List? bytes = _bytesFromRow(row, field);
-    if (bytes != null) {
-      return ImageElement(
-          id: el.id, bounds: el.bounds, source: BytesImageSource(bytes), fit: el.fit);
+    if (row != null && row.hasField(field)) {
+      final Object? value = row.field(field);
+      // Defensively copy every byte form so the resolved element is an
+      // independent snapshot, never aliasing the data source's buffer.
+      if (value is Uint8List) {
+        return _withBytes(el, Uint8List.fromList(value));
+      }
+      if (value is List<int>) {
+        return _withBytes(el, Uint8List.fromList(value));
+      }
+      if (value is String) {
+        try {
+          return _withBytes(el, base64Decode(value));
+        } on FormatException {
+          diagnostics.warning('Image field "$field" contains an invalid base64 string',
+              elementId: el.id);
+          return el;
+        }
+      }
     }
     diagnostics.warning('Image field "$field" did not resolve to bytes',
         elementId: el.id);
     return el;
   }
 
-  Uint8List? _bytesFromRow(DataRow? row, String field) {
-    if (row == null || !row.hasField(field)) return null;
-    final Object? v = row.field(field);
-    if (v is Uint8List) return v;
-    if (v is List<int>) return Uint8List.fromList(v);
-    if (v is String) {
-      try {
-        return base64Decode(v);
-      } on FormatException {
-        return null;
-      }
-    }
-    return null;
-  }
+  ImageElement _withBytes(ImageElement el, Uint8List bytes) => ImageElement(
+      id: el.id, bounds: el.bounds, source: BytesImageSource(bytes), fit: el.fit);
 }
