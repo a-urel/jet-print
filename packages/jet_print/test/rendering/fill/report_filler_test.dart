@@ -9,6 +9,7 @@ import 'package:jet_print/src/domain/report_element.dart';
 import 'package:jet_print/src/domain/report_group.dart';
 import 'package:jet_print/src/domain/report_template.dart';
 import 'package:jet_print/src/domain/report_variable.dart';
+import 'package:jet_print/src/domain/serialization/report_format_exception.dart';
 import 'package:jet_print/src/expression/expression_exception.dart';
 import 'package:jet_print/src/expression/value.dart';
 import 'package:jet_print/src/rendering/fill/report_diagnostics.dart';
@@ -18,6 +19,19 @@ const JetRect r = JetRect(x: 0, y: 0, width: 100, height: 10);
 
 TextElement t(String id, {String? text, String? expr}) =>
     TextElement(id: id, bounds: r, text: text ?? '', expression: expr);
+
+ReportBand gh(String group, {String? text, String? expr}) => ReportBand(
+      type: BandType.groupHeader,
+      height: 10,
+      group: group,
+      elements: <ReportElement>[t('h-$group', text: text, expr: expr)],
+    );
+ReportBand gf(String group, {String? text, String? expr}) => ReportBand(
+      type: BandType.groupFooter,
+      height: 10,
+      group: group,
+      elements: <ReportElement>[t('f-$group', text: text, expr: expr)],
+    );
 
 ReportTemplate template({
   List<ReportElement> title = const <ReportElement>[],
@@ -249,5 +263,293 @@ void main() {
     );
     expect(res.diagnostics.hasErrors, isTrue);
     expect((res.report.bands.last.elements.single as TextElement).text, 'fb');
+  });
+
+  test('single group: header/detail/footer sequence with pre-reset subtotal', () {
+    final ReportTemplate tpl = ReportTemplate(
+      name: 'demo',
+      page: PageFormat.a4Portrait,
+      groups: const <ReportGroup>[
+        ReportGroup(name: 'region', expression: r'$F{region}'),
+      ],
+      variables: const <ReportVariable>[
+        ReportVariable(
+            name: 'regionTotal',
+            expression: r'$F{amt}',
+            calculation: JetCalculation.sum,
+            resetScope: VariableResetScope.group,
+            resetGroup: 'region'),
+      ],
+      bands: <ReportBand>[
+        gh('region', expr: r'$F{region}'),
+        ReportBand(type: BandType.detail, height: 10,
+            elements: <ReportElement>[t('d', expr: r'$V{regionTotal}')]),
+        gf('region', expr: r'$V{regionTotal}'),
+      ],
+    );
+    final FillResult res = ReportFiller().fill(
+      tpl,
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'region': 'West', 'amt': 10},
+        <String, Object?>{'region': 'West', 'amt': 5},
+        <String, Object?>{'region': 'East', 'amt': 7},
+      ]),
+    );
+    expect(res.report.bands.map((b) => b.type).toList(), <BandType>[
+      BandType.groupHeader,
+      BandType.detail,
+      BandType.detail,
+      BandType.groupFooter,
+      BandType.groupHeader,
+      BandType.detail,
+      BandType.groupFooter,
+    ]);
+    String txt(int i) =>
+        (res.report.bands[i].elements.single as TextElement).text;
+    expect(txt(0), 'West'); // header shows the group key (first row)
+    expect(txt(3), '15.0'); // CRUX: West footer = pre-reset subtotal, not 7
+    expect(txt(4), 'East');
+    expect(txt(6), '7.0'); // East footer (end of data)
+  });
+
+  test('header resolves the first row, footer the last row', () {
+    final ReportTemplate tpl = ReportTemplate(
+      name: 'demo',
+      page: PageFormat.a4Portrait,
+      groups: const <ReportGroup>[
+        ReportGroup(name: 'region', expression: r'$F{region}'),
+      ],
+      bands: <ReportBand>[
+        gh('region', expr: r'$F{city}'),
+        ReportBand(type: BandType.detail, height: 10,
+            elements: <ReportElement>[t('d', text: '.')]),
+        gf('region', expr: r'$F{city}'),
+      ],
+    );
+    final FillResult res = ReportFiller().fill(
+      tpl,
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'region': 'West', 'city': 'A'},
+        <String, Object?>{'region': 'West', 'city': 'B'},
+      ]),
+    );
+    expect((res.report.bands.first.elements.single as TextElement).text, 'A');
+    expect((res.report.bands.last.elements.single as TextElement).text, 'B');
+  });
+
+  test('nested groups: header outer->inner, footer inner->outer, cascade', () {
+    final ReportTemplate tpl = ReportTemplate(
+      name: 'demo',
+      page: PageFormat.a4Portrait,
+      groups: const <ReportGroup>[
+        ReportGroup(name: 'region', expression: r'$F{region}'),
+        ReportGroup(name: 'city', expression: r'$F{city}'),
+      ],
+      variables: const <ReportVariable>[
+        ReportVariable(
+            name: 'regionTotal',
+            expression: r'$F{amt}',
+            calculation: JetCalculation.sum,
+            resetScope: VariableResetScope.group,
+            resetGroup: 'region'),
+        ReportVariable(
+            name: 'cityTotal',
+            expression: r'$F{amt}',
+            calculation: JetCalculation.sum,
+            resetScope: VariableResetScope.group,
+            resetGroup: 'city'),
+      ],
+      bands: <ReportBand>[
+        gh('region', expr: r'$F{region}'),
+        gh('city', expr: r'$F{city}'),
+        ReportBand(type: BandType.detail, height: 10,
+            elements: <ReportElement>[t('d', text: '.')]),
+        gf('city', expr: r'$V{cityTotal}'),
+        gf('region', expr: r'$V{regionTotal}'),
+      ],
+    );
+    final FillResult res = ReportFiller().fill(
+      tpl,
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'region': 'West', 'city': 'A', 'amt': 10},
+        <String, Object?>{'region': 'West', 'city': 'A', 'amt': 5},
+        <String, Object?>{'region': 'West', 'city': 'B', 'amt': 7},
+        <String, Object?>{'region': 'East', 'city': 'C', 'amt': 3},
+      ]),
+    );
+    expect(res.report.bands.map((b) => b.type).toList(), <BandType>[
+      BandType.groupHeader, // region West
+      BandType.groupHeader, // city A
+      BandType.detail,
+      BandType.detail,
+      BandType.groupFooter, // city A
+      BandType.groupHeader, // city B
+      BandType.detail,
+      BandType.groupFooter, // city B (cascade)
+      BandType.groupFooter, // region West (cascade)
+      BandType.groupHeader, // region East
+      BandType.groupHeader, // city C
+      BandType.detail,
+      BandType.groupFooter, // city C (end)
+      BandType.groupFooter, // region East (end)
+    ]);
+    String txt(int i) =>
+        (res.report.bands[i].elements.single as TextElement).text;
+    expect(txt(4), '15.0'); // city A subtotal (pre-reset)
+    expect(txt(7), '7.0'); // city B subtotal (inner footer, cascade)
+    expect(txt(8), '22.0'); // region West subtotal (outer footer, cascade)
+    expect(txt(9), 'East'); // header order: region (outer) first
+    expect(txt(10), 'C'); // then city (inner)
+    expect(txt(13), '3.0'); // region East subtotal (end)
+  });
+
+  test('multiple headers/footers for one group emit in authored order', () {
+    final ReportTemplate tpl = ReportTemplate(
+      name: 'demo',
+      page: PageFormat.a4Portrait,
+      groups: const <ReportGroup>[
+        ReportGroup(name: 'region', expression: r'$F{region}'),
+      ],
+      bands: <ReportBand>[
+        gh('region', text: 'H1'),
+        gh('region', text: 'H2'),
+        ReportBand(type: BandType.detail, height: 10,
+            elements: <ReportElement>[t('d', text: '.')]),
+        gf('region', text: 'F1'),
+        gf('region', text: 'F2'),
+      ],
+    );
+    final FillResult res = ReportFiller().fill(
+      tpl,
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'region': 'West'},
+      ]),
+    );
+    String txt(int i) =>
+        (res.report.bands[i].elements.single as TextElement).text;
+    expect(txt(0), 'H1');
+    expect(txt(1), 'H2');
+    expect(txt(3), 'F1');
+    expect(txt(4), 'F2');
+  });
+
+  test('end-of-data group footers emit before the summary', () {
+    final ReportTemplate tpl = ReportTemplate(
+      name: 'demo',
+      page: PageFormat.a4Portrait,
+      groups: const <ReportGroup>[
+        ReportGroup(name: 'region', expression: r'$F{region}'),
+      ],
+      bands: <ReportBand>[
+        gh('region', text: 'H'),
+        ReportBand(type: BandType.detail, height: 10,
+            elements: <ReportElement>[t('d', text: '.')]),
+        gf('region', text: 'GF'),
+        ReportBand(type: BandType.summary, height: 10,
+            elements: <ReportElement>[t('s', text: 'SUM')]),
+      ],
+    );
+    final FillResult res = ReportFiller().fill(
+      tpl,
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'region': 'West'},
+      ]),
+    );
+    expect(res.report.bands.map((b) => b.type).toList(), <BandType>[
+      BandType.groupHeader,
+      BandType.detail,
+      BandType.groupFooter,
+      BandType.summary,
+    ]);
+  });
+
+  test('a page-scoped reference in a group-band element is an error', () {
+    final ReportTemplate tpl = ReportTemplate(
+      name: 'demo',
+      page: PageFormat.a4Portrait,
+      groups: const <ReportGroup>[
+        ReportGroup(name: 'region', expression: r'$F{region}'),
+      ],
+      bands: <ReportBand>[
+        gh('region', text: 'fb', expr: r'$V{PAGE_NUMBER}'),
+        ReportBand(type: BandType.detail, height: 10,
+            elements: <ReportElement>[t('d', text: '.')]),
+      ],
+    );
+    final FillResult res = ReportFiller().fill(
+      tpl,
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'region': 'West'},
+      ]),
+    );
+    expect(res.diagnostics.hasErrors, isTrue);
+    expect(
+        (res.report.bands.first.elements.single as TextElement).text, 'fb');
+  });
+
+  test('duplicate group names fail fast (fill throws)', () {
+    expect(
+      () => ReportFiller().fill(
+        const ReportTemplate(
+          name: 'demo',
+          page: PageFormat.a4Portrait,
+          groups: <ReportGroup>[
+            ReportGroup(name: 'region', expression: r'$F{a}'),
+            ReportGroup(name: 'region', expression: r'$F{b}'),
+          ],
+          bands: <ReportBand>[ReportBand(type: BandType.detail, height: 10)],
+        ),
+        JetInMemoryDataSource(<Map<String, Object?>>[
+          <String, Object?>{'a': 1, 'b': 2},
+        ]),
+      ),
+      throwsA(isA<ReportFormatException>()),
+    );
+  });
+
+  test('groups declared but no group bands emit no group bands (007b parity)',
+      () {
+    final ReportTemplate tpl = ReportTemplate(
+      name: 'demo',
+      page: PageFormat.a4Portrait,
+      groups: const <ReportGroup>[
+        ReportGroup(name: 'region', expression: r'$F{region}'),
+      ],
+      bands: <ReportBand>[
+        ReportBand(type: BandType.detail, height: 10,
+            elements: <ReportElement>[t('d', text: '.')]),
+      ],
+    );
+    final FillResult res = ReportFiller().fill(
+      tpl,
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'region': 'West'},
+        <String, Object?>{'region': 'East'},
+      ]),
+    );
+    expect(res.report.bands.map((b) => b.type).toList(),
+        <BandType>[BandType.detail, BandType.detail]);
+  });
+
+  test('determinism — re-filling a grouped template yields an equal report', () {
+    ReportTemplate make() => ReportTemplate(
+          name: 'demo',
+          page: PageFormat.a4Portrait,
+          groups: const <ReportGroup>[
+            ReportGroup(name: 'region', expression: r'$F{region}'),
+          ],
+          bands: <ReportBand>[
+            gh('region', expr: r'$F{region}'),
+            ReportBand(type: BandType.detail, height: 10,
+                elements: <ReportElement>[t('d', text: '.')]),
+            gf('region', text: 'GF'),
+          ],
+        );
+    JetInMemoryDataSource src() => JetInMemoryDataSource(<Map<String, Object?>>[
+          <String, Object?>{'region': 'West'},
+          <String, Object?>{'region': 'East'},
+        ]);
+    expect(ReportFiller().fill(make(), src()).report,
+        ReportFiller().fill(make(), src()).report);
   });
 }
