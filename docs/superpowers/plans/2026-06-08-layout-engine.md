@@ -52,7 +52,7 @@
 - Create: `lib/src/rendering/layout/band_measurer.dart`
 - Test: `test/rendering/layout/band_measurer_test.dart`
 
-Context: A pure unit that measures a single `FilledBand` to its grown height plus each element's grown, band-local box. Grow-only and height-only: an element's box height becomes `max(authored height, measured height)` (never shrinks; width stays authored — the text renderer wraps at the element's own width and grows vertically only), and the band height is `max(designed height, tallest element bottom)`. A growing element does **not** move its siblings (banded + absolute-in-band; no reflow). The box is carried alongside the element so emission needs no second measure. The test injects a deterministic fake `TextMeasurer` so growth is asserted exactly without depending on bundled-font pixel metrics.
+Context: A pure unit that measures a single `FilledBand` to its grown height plus each element's grown, band-local box. Grow-only and height-only: an element's box height becomes `max(authored height, measured height)` (never shrinks; width stays authored — the text renderer wraps at the element's own width and grows vertically only), and the band height is `max(designed height, tallest element bottom)`. A growing element does **not** move its siblings (banded + absolute-in-band; no reflow). The box is carried alongside the element so the layouter places each element from its already-measured box without measuring it again for geometry (the renderer's own `emit` re-derives its line content via the measurer — the existing 007a seam, which 008a leaves unchanged). The test injects a deterministic fake `TextMeasurer` so growth is asserted exactly without depending on bundled-font pixel metrics.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -177,8 +177,10 @@ Create `lib/src/rendering/layout/band_measurer.dart`:
 
 ```dart
 /// Measures a body band to its grown height with each element's grown, band-local
-/// box (spec 008a §5). Pure and position-independent, so a band is measured once
-/// and the result feeds both the page-break decision and emission.
+/// box (spec 008a §5). Pure and position-independent, so the layouter measures
+/// each element only once and reuses the result for both the page-break decision
+/// and placement (the renderer's `emit` re-derives its own line content — the
+/// 007a seam — which this pass does not change).
 ///
 /// **Grow-only, height-only:** an element keeps its authored width (the renderer
 /// wraps at the element's own width and grows vertically) and never shrinks below
@@ -195,7 +197,9 @@ import '../elements/render_context.dart';
 import '../fill/filled_report.dart';
 
 /// A band measured to its grown [height], with each element paired with its
-/// grown band-local [bounds] (so emission needs no second measure).
+/// grown band-local [bounds] (reused for placement, so the layouter measures an
+/// element's geometry only once — the renderer's `emit` re-derives its own line
+/// content separately, the unchanged 007a seam).
 class MeasuredBand {
   /// Creates a measured band.
   const MeasuredBand(this.height, this.elements);
@@ -203,7 +207,8 @@ class MeasuredBand {
   /// The grown band height (>= the band's designed height), in points.
   final double height;
 
-  /// Each element with its grown, band-local box.
+  /// Each element with its grown, band-local box (reused for placement, so the
+  /// layouter does not re-measure an element's geometry at emit time).
   final List<({ReportElement element, JetRect bounds})> elements;
 }
 
@@ -291,6 +296,7 @@ import 'package:jet_print/src/rendering/fill/report_diagnostics.dart';
 import 'package:jet_print/src/rendering/frame/page_frame.dart';
 import 'package:jet_print/src/rendering/frame/primitive.dart';
 import 'package:jet_print/src/rendering/layout/report_layouter.dart';
+import 'package:jet_print/src/rendering/text/text_measurer.dart';
 
 // A small page: 200x100, 10pt margins -> content 180x80; top=10 bottom=90
 // left=10 right=190.
@@ -384,6 +390,54 @@ void main() {
               p.bounds == const JetRect(x: 10, y: 70, width: 180, height: 20)),
           isTrue);
     }
+  });
+
+  test('multiple page header bands stack in document order', () {
+    final ReportTemplate tpl = _tpl(bands: <ReportBand>[
+      ReportBand(type: BandType.pageHeader, height: 15, elements: <ReportElement>[
+        _rect('h1', const JetRect(x: 0, y: 0, width: 180, height: 15)),
+      ]),
+      ReportBand(type: BandType.pageHeader, height: 15, elements: <ReportElement>[
+        _rect('h2', const JetRect(x: 0, y: 0, width: 180, height: 15)),
+      ]),
+    ]);
+    // headerHeight 30 -> bodyTop 40; h1 at top=10, h2 stacked below at 25.
+    final LayoutResult r =
+        ReportLayouter().layout(tpl, _filled(<FilledBand>[_body(20)]));
+    final List<RectPrimitive> rects =
+        r.pages.single.primitives.whereType<RectPrimitive>().toList();
+    expect(rects.firstWhere((RectPrimitive p) => p.elementId == 'h1').bounds,
+        const JetRect(x: 10, y: 10, width: 180, height: 15));
+    expect(rects.firstWhere((RectPrimitive p) => p.elementId == 'h2').bounds,
+        const JetRect(x: 10, y: 25, width: 180, height: 15));
+  });
+
+  test('non-detail body bands (title/group/summary) lay out in stream order',
+      () {
+    FilledBand band(BandType type, String id) => FilledBand(
+          type: type,
+          height: 15,
+          elements: <ReportElement>[
+            _rect(id, const JetRect(x: 0, y: 0, width: 180, height: 15)),
+          ],
+          variables: const <String, JetValue>{},
+        );
+    // The layouter is type-agnostic for body bands: Fill already ordered the
+    // stream (title first, summary last), so layout just stacks them in order.
+    final FilledReport filled = _filled(<FilledBand>[
+      band(BandType.title, 't'),
+      band(BandType.groupHeader, 'gh'),
+      band(BandType.detail, 'd'),
+      band(BandType.groupFooter, 'gf'),
+      band(BandType.summary, 's'),
+    ]);
+    // 5 * 15 = 75 <= capacity 80 -> one page, stacked in stream order.
+    final LayoutResult r = ReportLayouter().layout(_tpl(), filled);
+    final List<String?> ids = r.pages.single.primitives
+        .whereType<RectPrimitive>()
+        .map((RectPrimitive p) => p.elementId)
+        .toList();
+    expect(ids, <String>['t', 'gh', 'd', 'gf', 's']);
   });
 
   test('a chrome text expression renders its literal + an info diagnostic', () {
@@ -750,7 +804,7 @@ class ReportLayouter {
 - [ ] **Step 4: Run the tests + analyzer**
 
 Run: `flutter test test/rendering/layout/report_layouter_test.dart -r expanded && flutter analyze`
-Expected: PASS (13 tests); `No issues found!`.
+Expected: PASS (15 tests); `No issues found!`.
 
 - [ ] **Step 5: Commit**
 
@@ -844,7 +898,7 @@ In `CHANGELOG.md`, under the current unreleased `### Added` section (after the 0
 - [ ] **Step 2: Run the full suite + analyzer**
 
 Run: `flutter test -r expanded && flutter analyze`
-Expected: every test PASSES (008a adds 5 + 13 + 1 tests; 007a/b/c, domain, expression, data all unchanged); `No issues found!`.
+Expected: every test PASSES (008a adds 5 + 15 + 1 tests; 007a/b/c, domain, expression, data all unchanged); `No issues found!`.
 
 - [ ] **Step 3: Commit**
 

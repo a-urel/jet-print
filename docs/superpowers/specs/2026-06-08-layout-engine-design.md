@@ -117,8 +117,10 @@ class ReportLayouter {
 Body-band measurement is a **pure** unit, `BandMeasurer`, separate from pagination — the measurement
 rule (the part most worth scrutinizing) earns its own test file, the way 007c isolated
 `group_band_index.dart`. It is computed **once per body band**, independent of page position, and its
-result feeds both the break decision (band height) and emission (element boxes), so nothing is
-measured twice.
+result feeds both the break decision (band height) and placement (element boxes), so the layouter
+measures each element's geometry only once. (The renderer's `emit` re-derives its own line content via
+the measurer — the existing 007a `measure`/`emit` seam — which 008a leaves unchanged; the box reuse
+removes the layouter's second *geometry* pass, not the renderer's internal one.)
 
 ```dart
 /// One band measured to its grown height, with each element's grown, band-local box.
@@ -364,8 +366,9 @@ recoverable and produces something paintable.
 
 7. **`BandMeasurer` is a separate pure unit.** Mirrors 007c's `group_band_index.dart` split: the
    height rule is unit-tested on its own (heights), while pagination goldens test breaks and
-   coordinates. Two concerns, two test files. Measuring once and reusing the boxes also avoids a
-   double-measure at emission.
+   coordinates. Two concerns, two test files. Measuring once and reusing the boxes lets the layouter
+   place elements without a second *geometry* measure (the renderer's `emit` still re-derives its own
+   line content via the measurer — the 007a seam, unchanged here).
 
 ## §11 — File plan
 
