@@ -10,6 +10,15 @@ import '../function_registry.dart';
 import '../value.dart';
 import 'variable_accumulator.dart';
 
+/// Builds an [EvalContext] for one evaluation. Fill injects this so variable and
+/// group expressions evaluate through its diagnostics-tracking context (007b).
+typedef EvalContextFactory = EvalContext Function({
+  DataRow? row,
+  Map<String, Object?> params,
+  Map<String, JetValue> variables,
+  required JetFunctionRegistry functions,
+});
+
 /// Computes report variables row-by-row, folding aggregates and resetting
 /// group-scoped variables on group breaks.
 ///
@@ -26,9 +35,11 @@ class VariableCalculator {
     required List<ReportVariable> variables,
     required List<ReportGroup> groups,
     required JetFunctionRegistry functions,
+    EvalContextFactory? contextFactory,
   })  : _variables = List<ReportVariable>.unmodifiable(variables),
         _groups = List<ReportGroup>.unmodifiable(groups),
         _functions = functions,
+        _contextFactory = contextFactory ?? RowEvalContext.new,
         _varExprs = <Expression>[
           for (final ReportVariable v in variables)
             Expression.parse(v.expression),
@@ -47,6 +58,7 @@ class VariableCalculator {
   final List<Expression> _varExprs;
   final List<VariableAccumulator> _accumulators;
   final List<Expression> _groupExprs;
+  final EvalContextFactory _contextFactory;
 
   final Map<String, JetValue> _values = <String, JetValue>{};
   List<JetValue>? _prevKeys;
@@ -71,7 +83,7 @@ class VariableCalculator {
   /// without a prior [start] yields undefined results.
   void advance(DataRow row,
       {Map<String, Object?> params = const <String, Object?>{}}) {
-    EvalContext ctx() => RowEvalContext(
+    EvalContext ctx() => _contextFactory(
           row: row,
           params: params,
           variables: _values,
