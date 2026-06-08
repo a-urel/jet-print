@@ -1,4 +1,4 @@
-// ReportFiller: the flat Fill data pass (007b).
+// ReportFiller: the Fill data pass — flat bands (007b) + grouping (007c).
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/in_memory_data_source.dart';
 import 'package:jet_print/src/domain/elements/text_element.dart';

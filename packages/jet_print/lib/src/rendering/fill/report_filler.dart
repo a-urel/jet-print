@@ -1,7 +1,8 @@
-/// The Fill data pass (spec 007b). Walks a [ReportTemplate] over a
-/// [JetDataSource], drives the variable calculator, and emits the resolved
-/// title/detail/summary/noData band stream as a [FilledReport] + diagnostics.
-/// INTERNAL — the public surface is the 011 JetReportEngine.
+/// The Fill data pass (spec 007b/007c). Walks a [ReportTemplate] over a
+/// [JetDataSource], drives the variable calculator, and emits the resolved band
+/// stream — title/groupHeader/detail/groupFooter/summary/noData — as a
+/// [FilledReport] + diagnostics. INTERNAL — the public surface is the 011
+/// JetReportEngine.
 library;
 
 import '../../data/data_row.dart';

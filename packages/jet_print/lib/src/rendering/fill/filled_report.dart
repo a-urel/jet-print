@@ -22,7 +22,7 @@ class FilledBand {
   })  : elements = List<ReportElement>.unmodifiable(elements),
         variables = Map<String, JetValue>.unmodifiable(variables);
 
-  /// The band's role (title/detail/summary/noData in 007b).
+  /// The band's role (title/groupHeader/detail/groupFooter/summary/noData).
   final BandType type;
 
   /// The band's designed height, in points.
