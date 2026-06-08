@@ -111,6 +111,22 @@ void main() {
     }
   });
 
+  test('body primitives paint before chrome (emission z-order)', () {
+    final ReportTemplate tpl = _tpl(bands: <ReportBand>[
+      ReportBand(type: BandType.pageHeader, height: 20, elements: <ReportElement>[
+        _rect('hdr', const JetRect(x: 0, y: 0, width: 180, height: 20)),
+      ]),
+    ]);
+    final LayoutResult r =
+        ReportLayouter().layout(tpl, _filled(<FilledBand>[_body(20)]));
+    final List<String?> ids = r.pages.single.primitives
+        .whereType<RectPrimitive>()
+        .map((RectPrimitive p) => p.elementId)
+        .toList();
+    // Body band 'r' is emitted during pagination; chrome 'hdr' in the post-pass.
+    expect(ids.indexOf('r'), lessThan(ids.indexOf('hdr')));
+  });
+
   test('multiple page header bands stack in document order', () {
     final ReportTemplate tpl = _tpl(bands: <ReportBand>[
       ReportBand(type: BandType.pageHeader, height: 15, elements: <ReportElement>[
@@ -225,6 +241,23 @@ void main() {
     expect(r.pages, isNotEmpty);
   });
 
+  test('overcommitted chrome: each body band lands on its own page', () {
+    // Degenerate case (chrome 50+50 > printable 80 -> bodyCapacity -20): the
+    // break guard puts each subsequent band on a fresh page. Characterize this
+    // so any future change to overcommit handling is deliberate.
+    final ReportTemplate tpl = _tpl(bands: <ReportBand>[
+      ReportBand(type: BandType.pageHeader, height: 50, elements: <ReportElement>[
+        _rect('h', const JetRect(x: 0, y: 0, width: 180, height: 50)),
+      ]),
+      ReportBand(type: BandType.pageFooter, height: 50, elements: <ReportElement>[
+        _rect('f', const JetRect(x: 0, y: 0, width: 180, height: 50)),
+      ]),
+    ]);
+    final LayoutResult r = ReportLayouter()
+        .layout(tpl, _filled(<FilledBand>[_body(10), _body(10), _body(10)]));
+    expect(r.pages.length, 3);
+  });
+
   test('an empty band stream still produces one chrome-only page', () {
     final ReportTemplate tpl = _tpl(bands: <ReportBand>[
       ReportBand(type: BandType.pageHeader, height: 20, elements: <ReportElement>[
@@ -262,6 +295,7 @@ void main() {
     final ReportTemplate tpl = _tpl(bands: const <ReportBand>[
       ReportBand(type: BandType.background, height: 10),
       ReportBand(type: BandType.columnHeader, height: 10),
+      ReportBand(type: BandType.columnFooter, height: 10),
     ]);
     final LayoutResult r =
         ReportLayouter().layout(tpl, _filled(<FilledBand>[_body(20)]));
@@ -269,7 +303,7 @@ void main() {
         r.diagnostics.entries
             .where((Diagnostic d) => d.severity == DiagnosticSeverity.info)
             .length,
-        2);
+        3);
   });
 
   test('filled.page differing from template.page warns and uses template.page',
