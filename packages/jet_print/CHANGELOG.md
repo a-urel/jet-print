@@ -95,6 +95,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   emitted as authored (no expression evaluation yet — page-scoped substitution arrives in 008c);
   unresolved chrome bindings, chrome that overcommits the page, and not-yet-supported
   column/background bands are reported as diagnostics.
+- **Group-aware pagination (spec 008b).** Two opt-in `ReportGroup` flags: `reprintHeaderOnEachPage`
+  repeats a group's header band(s) at the top of each continuation page it spans, and `keepTogether`
+  moves a whole group instance to a fresh page rather than splitting it (when it fits a fresh page,
+  accounting for any repeated outer headers). Group identity is carried into the internal Fill→Layout
+  IR via `FilledBand.group`; the schema is unchanged (the codec contract comment now codifies the
+  pre-1.0 additive-optional-fields carve-out). A flag on a header-less group is a no-op + info.
 
 ## 0.1.0
 
