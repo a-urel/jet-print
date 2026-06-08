@@ -1,6 +1,6 @@
 # Page-scoped late substitution — Spec 008c Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. If those skills are unavailable in your workspace, the tasks below are self-contained — each is a TDD sequence with complete code, exact commands, and a commit — and can be executed directly, in order.
 
 **Goal:** Evaluate page-scoped expressions (`$V{PAGE_NUMBER}`, `$V{PAGE_COUNT}`, `$P{params}`) in `pageHeader`/`pageFooter` text at layout time, substituting the result at the authored bounds — finishing the post-pagination chrome seam 008a left open.
 
@@ -215,6 +215,32 @@ In `test/rendering/fill/filled_report_test.dart`, add these tests inside `main()
     final FilledReport r =
         FilledReport(page: PageFormat.a4Portrait, bands: const <FilledBand>[]);
     expect(r.params, isEmpty);
+  });
+
+  test('FilledReport.params equality and hash are insertion-order-independent',
+      () {
+    FilledReport report(Map<String, JetValue> params) => FilledReport(
+        page: PageFormat.a4Portrait,
+        bands: const <FilledBand>[],
+        params: params);
+    final FilledReport a = report(<String, JetValue>{
+      'a': const JetString('1'),
+      'b': const JetString('2'),
+    });
+    final FilledReport b = report(<String, JetValue>{
+      'b': const JetString('2'),
+      'a': const JetString('1'),
+    });
+    expect(a, b);
+    expect(a.hashCode, b.hashCode);
+  });
+
+  test('FilledReport freezes its params map', () {
+    final FilledReport r = FilledReport(
+        page: PageFormat.a4Portrait,
+        bands: const <FilledBand>[],
+        params: <String, JetValue>{'x': const JetString('a')});
+    expect(() => r.params['y'] = const JetString('b'), throwsUnsupportedError);
   });
 ```
 
@@ -478,7 +504,12 @@ Context: The layouter gains a `JetFunctionRegistry` (default built-ins, mirrorin
 
 - [ ] **Step 1: Add the failing tests**
 
-No new imports are needed in `test/rendering/layout/report_layouter_test.dart`: the existing 008a/008b test file already imports `value.dart` (`JetString`/`JetValue`), `primitive.dart` (`TextRunPrimitive`/`RectPrimitive`), `text_measurer.dart` (`TextLine`), `page_frame.dart` (`PageFrame`), `report_diagnostics.dart` (`Diagnostic`/`DiagnosticSeverity`), and `filled_report.dart` (`FilledReport`/`FilledBand`).
+In `test/rendering/layout/report_layouter_test.dart`, add two imports near the others (needed for the injected-registry test below). Everything else is already imported by the existing 008a/008b test file — `value.dart` (`JetString`/`JetValue`), `primitive.dart` (`TextRunPrimitive`/`RectPrimitive`), `text_measurer.dart` (`TextLine`), `page_frame.dart` (`PageFrame`), `report_diagnostics.dart` (`Diagnostic`/`DiagnosticSeverity`), and `filled_report.dart` (`FilledReport`/`FilledBand`):
+
+```dart
+import 'package:jet_print/src/expression/eval_context.dart';
+import 'package:jet_print/src/expression/function_registry.dart';
+```
 
 Add these helpers just below the existing `_filled` helper (top of the file, in the helper region):
 
@@ -652,6 +683,59 @@ Add these tests inside `main()` (after the existing 008a/008b tests):
         .toList();
     expect(proj(a), proj(b));
   });
+
+  test('a chrome function (CONCAT) evaluates through the registry', () {
+    final ReportTemplate tpl = _tpl(bands: <ReportBand>[
+      _chromeText(BandType.pageFooter, 'pn', r'CONCAT("Page ", $V{PAGE_NUMBER})'),
+    ]);
+    final LayoutResult r =
+        ReportLayouter().layout(tpl, _filled(<FilledBand>[_body(20)]));
+    expect(_chromeRun(r.pages[0], 'pn'), 'Page 1'); // built-in via default registry
+  });
+
+  test('an injected function registry is used for chrome evaluation', () {
+    // STARS is not a built-in: it can only resolve via the injected registry,
+    // proving constructor injection + PageEvalContext.functions are wired.
+    final JetFunctionRegistry functions = JetFunctionRegistry()
+      ..register('STARS',
+          (List<JetValue> args, EvalContext ctx) => const JetString('***'));
+    final ReportTemplate tpl = _tpl(bands: <ReportBand>[
+      _chromeText(BandType.pageFooter, 'pn', r'STARS($V{PAGE_NUMBER})'),
+    ]);
+    final LayoutResult r = ReportLayouter(functions: functions)
+        .layout(tpl, _filled(<FilledBand>[_body(20)]));
+    expect(_chromeRun(r.pages[0], 'pn'), '***');
+  });
+
+  test('a bare non-page variable warns once and renders blank', () {
+    final ReportTemplate tpl = _tpl(bands: <ReportBand>[
+      _chromeText(BandType.pageFooter, 'pn', r'$V{total}'),
+    ]);
+    final LayoutResult r = ReportLayouter()
+        .layout(tpl, _filled(<FilledBand>[_body(40), _body(40)]));
+    expect(r.pages.length, 2);
+    expect(_chromeRun(r.pages[0], 'pn'), ''); // non-page var -> JetNull -> blank
+    expect(
+        r.diagnostics.entries
+            .where((Diagnostic d) =>
+                d.severity == DiagnosticSeverity.warning && d.elementId == 'pn')
+            .length,
+        1); // once at the pre-pass, NOT once per page
+  });
+
+  test('a non-page variable consumed by an operator renders !ERR', () {
+    final ReportTemplate tpl = _tpl(bands: <ReportBand>[
+      _chromeText(BandType.pageFooter, 'pn', r'"x" + $V{total}'),
+    ]);
+    final LayoutResult r =
+        ReportLayouter().layout(tpl, _filled(<FilledBand>[_body(20)]));
+    expect(_chromeRun(r.pages[0], 'pn'), '!ERR'); // JetNull poisons "+" -> JetError
+    expect(
+        r.diagnostics.entries
+            .where((Diagnostic d) => d.elementId == 'pn')
+            .length,
+        1); // structural warning only; runtime error suppressed (already flagged)
+  });
 ```
 
 Now **rewrite** the two existing 008a chrome tests in this file (they assert the removed "not evaluated" info). Replace the test `'a chrome text expression renders its literal + an info diagnostic'` with:
@@ -818,7 +902,16 @@ And add this static beside `_defaultRenderers` (mirrors `ReportFiller._defaultFu
             id: el.id, bounds: el.bounds, text: '!ERR', style: el.style);
       }
       final Expression? expr = chromeExprs[el.id];
-      if (expr == null) return el; // defensive: no cached expression
+      if (expr == null) {
+        // Unreachable: the pre-pass files every chrome text expression under
+        // chromeExprs or chromeParseFailed. Surface a pre/post-pass drift loudly
+        // (visible '!ERR' + diagnostic) instead of silently rendering authored text.
+        diagnostics.error(
+            'internal: no compiled chrome expression for "${el.id}"',
+            elementId: el.id);
+        return TextElement(
+            id: el.id, bounds: el.bounds, text: '!ERR', style: el.style);
+      }
       final JetValue value = expr.evaluate(PageEvalContext(
         pageNumber: pageNumber,
         pageCount: pageCount,
@@ -958,4 +1051,4 @@ git commit -m "docs(layout): changelog for page-scoped substitution (008c)"
 
 ## Done
 
-All of spec 008c is implemented: the static `Expression.references` analyzer, the normalized `FilledReport.params` IR field (+ Fill propagation), the `PageEvalContext` page-scoped value resolver, and the layouter's compile-and-classify pre-pass + page-aware fixed-bounds substitution (page vars as integer strings, params from the IR, diagnostic-rich once-per-element structural diagnostics + coarse runtime errors), with the layout/expression layer-boundary rule relaxed (still Flutter-free). After Task 5, dispatch a final holistic code review over the whole 008c change set, then use `superpowers:finishing-a-development-branch` to merge `008c-page-scoped-substitution` into `main`.
+All of spec 008c is implemented: the static `Expression.references` analyzer, the normalized `FilledReport.params` IR field (+ Fill propagation), the `PageEvalContext` page-scoped value resolver, and the layouter's compile-and-classify pre-pass + page-aware fixed-bounds substitution (page vars as integer strings, params from the IR, diagnostic-rich once-per-element structural diagnostics + coarse runtime errors), with the layout/expression layer-boundary rule relaxed (still Flutter-free). After Task 5, dispatch a final holistic code review over the whole 008c change set, then use `superpowers:finishing-a-development-branch` to merge `008c-page-scoped-substitution` into `main` (or, without the skills: run the full suite + analyzer, do a final review, and merge the branch manually).
