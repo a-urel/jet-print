@@ -1,0 +1,63 @@
+// FilledReport/FilledBand: value-equal, snapshot-testable IR (007b).
+import 'package:flutter_test/flutter_test.dart';
+import 'package:jet_print/src/domain/elements/text_element.dart';
+import 'package:jet_print/src/domain/geometry.dart';
+import 'package:jet_print/src/domain/page_format.dart';
+import 'package:jet_print/src/domain/report_band.dart';
+import 'package:jet_print/src/domain/report_element.dart';
+import 'package:jet_print/src/expression/value.dart';
+import 'package:jet_print/src/rendering/fill/filled_report.dart';
+
+void main() {
+  const JetRect r = JetRect(x: 0, y: 0, width: 10, height: 5);
+  FilledBand band() => FilledBand(
+        type: BandType.detail,
+        height: 20,
+        elements: const <ReportElement>[TextElement(id: 't', bounds: r, text: 'A')],
+        variables: const <String, JetValue>{'total': JetNumber(3)},
+      );
+
+  test('FilledBand has value equality including the variables map', () {
+    expect(band(), band());
+    final FilledBand other = FilledBand(
+      type: BandType.detail,
+      height: 20,
+      elements: const <ReportElement>[TextElement(id: 't', bounds: r, text: 'A')],
+      variables: const <String, JetValue>{'total': JetNumber(4)}, // differs
+    );
+    expect(band(), isNot(other));
+  });
+
+  test('FilledReport has value equality over page + bands', () {
+    final FilledReport a =
+        FilledReport(page: PageFormat.a4Portrait, bands: <FilledBand>[band()]);
+    final FilledReport b =
+        FilledReport(page: PageFormat.a4Portrait, bands: <FilledBand>[band()]);
+    expect(a, b);
+    expect(a.bands.single.variables['total'], const JetNumber(3));
+  });
+
+  test('FilledBand freezes its nested collections', () {
+    final FilledBand b = band();
+    expect(() => b.elements.add(b.elements.first), throwsUnsupportedError);
+    expect(() => b.variables['x'] = const JetNull(), throwsUnsupportedError);
+  });
+
+  test('variables hash is order-independent (matches order-insensitive equality)',
+      () {
+    final FilledBand a = FilledBand(
+      type: BandType.detail,
+      height: 20,
+      elements: const <ReportElement>[],
+      variables: const <String, JetValue>{'a': JetNumber(1), 'b': JetNumber(2)},
+    );
+    final FilledBand b = FilledBand(
+      type: BandType.detail,
+      height: 20,
+      elements: const <ReportElement>[],
+      variables: <String, JetValue>{'b': const JetNumber(2), 'a': const JetNumber(1)},
+    );
+    expect(a, b);
+    expect(a.hashCode, b.hashCode);
+  });
+}
