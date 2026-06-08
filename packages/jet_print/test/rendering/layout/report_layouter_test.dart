@@ -10,6 +10,8 @@ import 'package:jet_print/src/domain/report_band.dart';
 import 'package:jet_print/src/domain/report_element.dart';
 import 'package:jet_print/src/domain/report_group.dart';
 import 'package:jet_print/src/domain/report_template.dart';
+import 'package:jet_print/src/expression/eval_context.dart';
+import 'package:jet_print/src/expression/function_registry.dart';
 import 'package:jet_print/src/expression/value.dart';
 import 'package:jet_print/src/rendering/fill/filled_report.dart';
 import 'package:jet_print/src/rendering/fill/report_diagnostics.dart';
@@ -42,6 +44,26 @@ ReportTemplate _tpl({List<ReportBand> bands = const <ReportBand>[]}) =>
 
 FilledReport _filled(List<FilledBand> bands) =>
     FilledReport(page: _smallPage, bands: bands);
+
+// A page-chrome band carrying one text element with an optional expression.
+ReportBand _chromeText(BandType type, String id, String expression,
+        {double height = 20}) =>
+    ReportBand(type: type, height: height, elements: <ReportElement>[
+      TextElement(
+        id: id,
+        bounds: JetRect(x: 0, y: 0, width: 180, height: height),
+        text: '',
+        expression: expression,
+      ),
+    ]);
+
+// The rendered text of the chrome TextRunPrimitive with [id] on [page].
+String _chromeRun(PageFrame page, String id) => page.primitives
+    .whereType<TextRunPrimitive>()
+    .firstWhere((TextRunPrimitive p) => p.elementId == id)
+    .lines
+    .map((TextLine l) => l.text)
+    .join();
 
 // A group-typed (or plain) body band carrying optional group identity.
 FilledBand _gband(BandType type,
@@ -204,48 +226,31 @@ void main() {
     expect(ids, <String>['t', 'gh', 'd', 'gf', 's']);
   });
 
-  test('a chrome text expression renders its literal + an info diagnostic', () {
+  test('a chrome text expression is evaluated (no "not evaluated" info)', () {
     final ReportTemplate tpl = _tpl(bands: <ReportBand>[
-      const ReportBand(type: BandType.pageHeader, height: 20, elements: <ReportElement>[
-        TextElement(
-            id: 'pn',
-            bounds: JetRect(x: 0, y: 0, width: 180, height: 20),
-            text: 'Page',
-            expression: r'$V{PAGE_NUMBER}'),
-      ]),
+      _chromeText(BandType.pageHeader, 'pn', r'$V{PAGE_NUMBER}'),
     ]);
     final LayoutResult r =
         ReportLayouter().layout(tpl, _filled(<FilledBand>[_body(20)]));
-    final TextRunPrimitive run = r.pages.single.primitives
-        .whereType<TextRunPrimitive>()
-        .firstWhere((TextRunPrimitive p) => p.elementId == 'pn');
-    expect(run.lines.map((TextLine l) => l.text).join(), 'Page');
-    expect(
-        r.diagnostics.entries.any((Diagnostic d) =>
-            d.severity == DiagnosticSeverity.info && d.elementId == 'pn'),
-        isTrue);
+    expect(_chromeRun(r.pages.single, 'pn'), '1'); // evaluated, not the literal
+    expect(r.diagnostics.entries.where((Diagnostic d) => d.elementId == 'pn'),
+        isEmpty); // PAGE_NUMBER resolves cleanly -> no diagnostic
   });
 
   test('a chrome binding is diagnosed once, not once per page', () {
     final ReportTemplate tpl = _tpl(bands: <ReportBand>[
-      const ReportBand(type: BandType.pageHeader, height: 20, elements: <ReportElement>[
-        TextElement(
-            id: 'pn',
-            bounds: JetRect(x: 0, y: 0, width: 180, height: 20),
-            text: 'Page',
-            expression: r'$V{PAGE_NUMBER}'),
-      ]),
+      _chromeText(BandType.pageHeader, 'pn', r'$F{x}'),
     ]);
-    // header 20 -> bodyTop=30, bodyBottom=90, capacity=60; bodies 40+40 overflow
-    // to a second page (chrome repeats on both). The scan runs once at setup.
+    // header 20 -> bodyTop=30 bodyBottom=90 capacity=60; bodies 40+40 -> 2 pages.
     final LayoutResult r = ReportLayouter()
         .layout(tpl, _filled(<FilledBand>[_body(40), _body(40)]));
-    expect(r.pages.length, 2); // sanity: genuinely multi-page
-    final List<Diagnostic> infos = r.diagnostics.entries
-        .where((Diagnostic d) =>
-            d.severity == DiagnosticSeverity.info && d.elementId == 'pn')
-        .toList();
-    expect(infos.length, 1); // diagnosed once at setup, NOT once per page
+    expect(r.pages.length, 2);
+    expect(
+        r.diagnostics.entries
+            .where((Diagnostic d) =>
+                d.severity == DiagnosticSeverity.warning && d.elementId == 'pn')
+            .length,
+        1); // once at the pre-pass, NOT once per page
   });
 
   test('an unresolved chrome image renders a placeholder + an info diagnostic',
@@ -811,5 +816,204 @@ void main() {
     expect(p2.map((RectPrimitive p) => p.elementId).toSet(),
         <String>{'GH', 'gd1'});
     expect(p2.firstWhere((RectPrimitive p) => p.elementId == 'GH').bounds.y, 30);
+  });
+
+  test('Page N of M substitutes the page number and count per page', () {
+    final ReportTemplate tpl = _tpl(bands: <ReportBand>[
+      _chromeText(BandType.pageFooter, 'pn',
+          r'"Page " + $V{PAGE_NUMBER} + " of " + $V{PAGE_COUNT}'),
+    ]);
+    // footer 20 -> bodyTop=10 bodyBottom=70 capacity=60; one body(40) per page.
+    final LayoutResult r = ReportLayouter()
+        .layout(tpl, _filled(<FilledBand>[_body(40), _body(40), _body(40)]));
+    expect(r.pages.length, 3);
+    expect(_chromeRun(r.pages[0], 'pn'), 'Page 1 of 3');
+    expect(_chromeRun(r.pages[1], 'pn'), 'Page 2 of 3');
+    expect(_chromeRun(r.pages[2], 'pn'), 'Page 3 of 3');
+  });
+
+  test('a bare PAGE_NUMBER renders an integer, not 1.0', () {
+    final ReportTemplate tpl = _tpl(bands: <ReportBand>[
+      _chromeText(BandType.pageFooter, 'pn', r'$V{PAGE_NUMBER}'),
+    ]);
+    final LayoutResult r = ReportLayouter()
+        .layout(tpl, _filled(<FilledBand>[_body(40), _body(40)]));
+    expect(r.pages.length, 2);
+    expect(_chromeRun(r.pages[0], 'pn'), '1');
+    expect(_chromeRun(r.pages[1], 'pn'), '2');
+  });
+
+  test('first/last-page conditions work via string equality', () {
+    final ReportTemplate tpl = _tpl(bands: <ReportBand>[
+      _chromeText(BandType.pageFooter, 'pn',
+          r'$V{PAGE_NUMBER} == "1" ? "FIRST" : ($V{PAGE_NUMBER} == $V{PAGE_COUNT} ? "LAST" : "MID")'),
+    ]);
+    final LayoutResult r = ReportLayouter()
+        .layout(tpl, _filled(<FilledBand>[_body(40), _body(40), _body(40)]));
+    expect(_chromeRun(r.pages[0], 'pn'), 'FIRST');
+    expect(_chromeRun(r.pages[1], 'pn'), 'MID');
+    expect(_chromeRun(r.pages[2], 'pn'), 'LAST');
+  });
+
+  test('a chrome param resolves from FilledReport.params', () {
+    final ReportTemplate tpl = _tpl(bands: <ReportBand>[
+      _chromeText(BandType.pageFooter, 'pn', r'$P{title}'),
+    ]);
+    final FilledReport filled = FilledReport(
+        page: _smallPage,
+        bands: <FilledBand>[_body(20)],
+        params: <String, JetValue>{'title': const JetString('Q1 Report')});
+    final LayoutResult r = ReportLayouter().layout(tpl, filled);
+    expect(r.pages.length, 1);
+    expect(_chromeRun(r.pages[0], 'pn'), 'Q1 Report');
+  });
+
+  test('substitution is fixed-bounds: long text does not add a page', () {
+    final ReportTemplate tpl = _tpl(bands: <ReportBand>[
+      _chromeText(BandType.pageFooter, 'pn',
+          r'"this is a very long footer that wraps well beyond the box " + $V{PAGE_NUMBER}'),
+    ]);
+    final LayoutResult r =
+        ReportLayouter().layout(tpl, _filled(<FilledBand>[_body(20)]));
+    expect(r.pages.length, 1); // wrapped text never repaginates the chrome
+  });
+
+  test('a chrome parse error renders !ERR and one error diagnostic', () {
+    final ReportTemplate tpl = _tpl(bands: <ReportBand>[
+      _chromeText(BandType.pageFooter, 'pn', r'$V{PAGE_NUMBER} +'),
+    ]);
+    final LayoutResult r = ReportLayouter()
+        .layout(tpl, _filled(<FilledBand>[_body(40), _body(40)]));
+    expect(r.pages.length, 2);
+    expect(_chromeRun(r.pages[0], 'pn'), '!ERR');
+    expect(
+        r.diagnostics.entries
+            .where((Diagnostic d) =>
+                d.severity == DiagnosticSeverity.error && d.elementId == 'pn')
+            .length,
+        1); // once, not once per page
+  });
+
+  test('an unavailable field hidden in an untaken branch still warns once', () {
+    final ReportTemplate tpl = _tpl(bands: <ReportBand>[
+      _chromeText(BandType.pageFooter, 'pn',
+          r'$V{PAGE_NUMBER} == "9" ? $F{x} : "ok"'),
+    ]);
+    final LayoutResult r = ReportLayouter()
+        .layout(tpl, _filled(<FilledBand>[_body(40), _body(40)]));
+    expect(_chromeRun(r.pages[0], 'pn'), 'ok'); // condition false on every page
+    expect(
+        r.diagnostics.entries
+            .where((Diagnostic d) =>
+                d.severity == DiagnosticSeverity.warning && d.elementId == 'pn')
+            .length,
+        1); // static analysis sees $F{x} despite the branch never being taken
+  });
+
+  test('a bare unavailable field renders blank; in an operation renders !ERR',
+      () {
+    final ReportTemplate bare = _tpl(bands: <ReportBand>[
+      _chromeText(BandType.pageFooter, 'pn', r'$F{x}'),
+    ]);
+    final LayoutResult rb =
+        ReportLayouter().layout(bare, _filled(<FilledBand>[_body(20)]));
+    expect(_chromeRun(rb.pages[0], 'pn'), ''); // JetNull -> blank
+    expect(
+        rb.diagnostics.entries
+            .where((Diagnostic d) => d.elementId == 'pn')
+            .length,
+        1); // one structural warning, no extra runtime error
+
+    final ReportTemplate inOp = _tpl(bands: <ReportBand>[
+      _chromeText(BandType.pageFooter, 'pn', r'"a" + $F{x}'),
+    ]);
+    final LayoutResult ro =
+        ReportLayouter().layout(inOp, _filled(<FilledBand>[_body(20)]));
+    expect(_chromeRun(ro.pages[0], 'pn'), '!ERR'); // JetNull poisons "+" -> JetError
+    expect(
+        ro.diagnostics.entries
+            .where((Diagnostic d) => d.elementId == 'pn')
+            .length,
+        1); // structural warning only; runtime error suppressed (already flagged)
+  });
+
+  test('an absent param renders blank with no diagnostic', () {
+    final ReportTemplate tpl = _tpl(bands: <ReportBand>[
+      _chromeText(BandType.pageFooter, 'pn', r'$P{missing}'),
+    ]);
+    final LayoutResult r =
+        ReportLayouter().layout(tpl, _filled(<FilledBand>[_body(20)]));
+    expect(_chromeRun(r.pages[0], 'pn'), '');
+    expect(r.diagnostics.entries.where((Diagnostic d) => d.elementId == 'pn'),
+        isEmpty);
+  });
+
+  test('a chrome function (CONCAT) evaluates through the registry', () {
+    final ReportTemplate tpl = _tpl(bands: <ReportBand>[
+      _chromeText(BandType.pageFooter, 'pn', r'CONCAT("Page ", $V{PAGE_NUMBER})'),
+    ]);
+    final LayoutResult r =
+        ReportLayouter().layout(tpl, _filled(<FilledBand>[_body(20)]));
+    expect(_chromeRun(r.pages[0], 'pn'), 'Page 1'); // built-in via default registry
+  });
+
+  test('an injected function registry is used for chrome evaluation', () {
+    // STARS is not a built-in: it can only resolve via the injected registry,
+    // proving constructor injection + PageEvalContext.functions are wired.
+    final JetFunctionRegistry functions = JetFunctionRegistry()
+      ..register('STARS',
+          (List<JetValue> args, EvalContext ctx) => const JetString('***'));
+    final ReportTemplate tpl = _tpl(bands: <ReportBand>[
+      _chromeText(BandType.pageFooter, 'pn', r'STARS($V{PAGE_NUMBER})'),
+    ]);
+    final LayoutResult r = ReportLayouter(functions: functions)
+        .layout(tpl, _filled(<FilledBand>[_body(20)]));
+    expect(_chromeRun(r.pages[0], 'pn'), '***');
+  });
+
+  test('a bare non-page variable warns once and renders blank', () {
+    final ReportTemplate tpl = _tpl(bands: <ReportBand>[
+      _chromeText(BandType.pageFooter, 'pn', r'$V{total}'),
+    ]);
+    final LayoutResult r = ReportLayouter()
+        .layout(tpl, _filled(<FilledBand>[_body(40), _body(40)]));
+    expect(r.pages.length, 2);
+    expect(_chromeRun(r.pages[0], 'pn'), ''); // non-page var -> JetNull -> blank
+    expect(
+        r.diagnostics.entries
+            .where((Diagnostic d) =>
+                d.severity == DiagnosticSeverity.warning && d.elementId == 'pn')
+            .length,
+        1); // once at the pre-pass, NOT once per page
+  });
+
+  test('a non-page variable consumed by an operator renders !ERR', () {
+    final ReportTemplate tpl = _tpl(bands: <ReportBand>[
+      _chromeText(BandType.pageFooter, 'pn', r'"x" + $V{total}'),
+    ]);
+    final LayoutResult r =
+        ReportLayouter().layout(tpl, _filled(<FilledBand>[_body(20)]));
+    expect(_chromeRun(r.pages[0], 'pn'), '!ERR'); // JetNull poisons "+" -> JetError
+    expect(
+        r.diagnostics.entries
+            .where((Diagnostic d) => d.elementId == 'pn')
+            .length,
+        1); // structural warning only; runtime error suppressed (already flagged)
+  });
+
+  test('page-scoped substitution is deterministic', () {
+    ReportTemplate tpl() => _tpl(bands: <ReportBand>[
+          _chromeText(BandType.pageFooter, 'pn',
+              r'"Page " + $V{PAGE_NUMBER} + " of " + $V{PAGE_COUNT}'),
+        ]);
+    FilledReport filled() => _filled(<FilledBand>[_body(40), _body(40)]);
+    final LayoutResult a = ReportLayouter().layout(tpl(), filled());
+    final LayoutResult b = ReportLayouter().layout(tpl(), filled());
+    expect(a.pages, b.pages);
+    List<(DiagnosticSeverity, String, String?)> proj(LayoutResult r) => r
+        .diagnostics.entries
+        .map((Diagnostic d) => (d.severity, d.message, d.elementId))
+        .toList();
+    expect(proj(a), proj(b));
   });
 }

@@ -1,7 +1,8 @@
-/// The Layout engine (spec 008a): places a resolved [FilledReport] band stream
-/// onto pages with repeating page chrome, producing one [PageFrame] per page.
-/// Pure geometry — no expression engine, no image byte-resolution. INTERNAL; the
-/// public surface is the 011 JetReportEngine.
+/// The Layout engine (spec 008a/008c): places a resolved [FilledReport] band
+/// stream onto pages with repeating page chrome, producing one [PageFrame] per
+/// page. Geometry plus page-scoped chrome substitution (008c — `PAGE_NUMBER`/
+/// `PAGE_COUNT`/params); no image byte-resolution. INTERNAL; the public surface
+/// is the 011 JetReportEngine.
 library;
 
 import '../../domain/elements/image_element.dart';
@@ -13,11 +14,17 @@ import '../../domain/report_band.dart';
 import '../../domain/report_element.dart';
 import '../../domain/report_group.dart';
 import '../../domain/report_template.dart';
+import '../../expression/expression.dart';
+import '../../expression/expression_exception.dart';
+import '../../expression/function_registry.dart';
+import '../../expression/functions/built_in_functions.dart';
+import '../../expression/value.dart';
 import '../elements/built_in_element_renderers.dart';
 import '../elements/element_renderer_registry.dart';
 import '../elements/element_type_registry.dart';
 import '../elements/render_context.dart';
 import '../fill/filled_report.dart';
+import '../fill/page_variables.dart';
 import '../fill/report_diagnostics.dart';
 import '../frame/frame_builder.dart';
 import '../frame/page_frame.dart';
@@ -25,6 +32,7 @@ import '../text/font_registry.dart';
 import '../text/metrics_text_measurer.dart';
 import '../text/text_measurer.dart';
 import 'band_measurer.dart';
+import 'page_eval_context.dart';
 
 /// One open group instance during pagination: its [name], nesting [level]
 /// (outermost = 0), the [headers] measured at its open (for reprint), and its
@@ -55,14 +63,20 @@ class LayoutResult {
 
 /// Lays a [FilledReport] out onto pages (spec 008a).
 class ReportLayouter {
-  /// Creates a layouter; [renderers] and [measurer] default to the built-ins.
-  ReportLayouter({ElementRendererRegistry? renderers, TextMeasurer? measurer})
-      : _renderers = renderers ?? _defaultRenderers(),
+  /// Creates a layouter; [renderers], [measurer], and [functions] default to the
+  /// built-ins.
+  ReportLayouter({
+    ElementRendererRegistry? renderers,
+    TextMeasurer? measurer,
+    JetFunctionRegistry? functions,
+  })  : _renderers = renderers ?? _defaultRenderers(),
         _measurer =
-            measurer ?? MetricsTextMeasurer(FontRegistry()..registerDefault());
+            measurer ?? MetricsTextMeasurer(FontRegistry()..registerDefault()),
+        _functions = functions ?? _defaultFunctions();
 
   final ElementRendererRegistry _renderers;
   final TextMeasurer _measurer;
+  final JetFunctionRegistry _functions;
 
   // Built-ins flow through the canonical PAIRED registration path; the layouter's
   // dependency stays renderer-only (like ReportFiller's JetFunctionRegistry).
@@ -70,6 +84,12 @@ class ReportLayouter {
     final ElementTypeRegistry reg = ElementTypeRegistry();
     registerBuiltInElementTypes(reg);
     return reg.renderers;
+  }
+
+  static JetFunctionRegistry _defaultFunctions() {
+    final JetFunctionRegistry r = JetFunctionRegistry();
+    registerBuiltInFunctions(r);
+    return r;
   }
 
   /// Lays [filled] out, sourcing page chrome + page format from [template].
@@ -131,15 +151,48 @@ class ReportLayouter {
       }
     }
 
-    // Scan chrome ONCE for unresolved bindings (spec §7) — info only; no later
-    // owner is named (page-scoped text -> 008c; images -> Fill/paint-prep).
+    // Compile-and-classify chrome text expressions ONCE (008c §5). Parsing and
+    // static reference analysis surface page-independent diagnostics here; the
+    // post-pass evaluates per page. Images keep the 008a placeholder info.
+    final Map<String, Expression> chromeExprs = <String, Expression>{};
+    final Set<String> chromeParseFailed = <String>{};
+    final Set<String> chromeFlagged = <String>{};
     for (final ReportBand band in <ReportBand>[...headers, ...footers]) {
       for (final ReportElement el in band.elements) {
         if (el is TextElement && el.expression != null) {
-          diagnostics.info(
-              'chrome text expression on "${el.id}" was not evaluated in the '
-              'static layout pass',
-              elementId: el.id);
+          final Expression expr;
+          try {
+            expr = Expression.parse(el.expression!);
+          } on ExpressionException catch (e) {
+            diagnostics.error(
+                'chrome text on "${el.id}" failed to parse: ${e.message}',
+                elementId: el.id);
+            chromeParseFailed.add(el.id);
+            chromeFlagged.add(el.id);
+            continue;
+          }
+          chromeExprs[el.id] = expr;
+          final ({Set<String> fields, Set<String> params, Set<String> variables})
+              refs = expr.references;
+          if (refs.fields.isNotEmpty) {
+            diagnostics.warning(
+                'chrome text on "${el.id}" references field(s) '
+                '${(refs.fields.toList()..sort()).join(', ')}, which have no '
+                'data row at page scope',
+                elementId: el.id);
+            chromeFlagged.add(el.id);
+          }
+          final List<String> nonPageVars = refs.variables
+              .where((String v) => !kPageScopedVariables.contains(v))
+              .toList()
+            ..sort();
+          if (nonPageVars.isNotEmpty) {
+            diagnostics.warning(
+                'chrome text on "${el.id}" references non-page variable(s) '
+                '${nonPageVars.join(', ')}, unavailable at page scope',
+                elementId: el.id);
+            chromeFlagged.add(el.id);
+          }
         } else if (el is ImageElement && el.source is! BytesImageSource) {
           diagnostics.info(
               'chrome image on "${el.id}" is not embedded; renders a placeholder',
@@ -349,18 +402,65 @@ class ReportLayouter {
           (band.type == BandType.groupHeader && isGroupBand) ? band.group : null;
     }
 
-    // Chrome post-pass (page count now known; chrome is fixed-height, emitted
-    // at authored bounds). This is the seam 008c reuses for page-number
-    // substitution.
-    for (final FrameBuilder fb in pages) {
+    // Per-page chrome substitution (008c). Render follows null-propagation:
+    // a bare unavailable ref is JetNull -> blank; consumed by an operator/
+    // function it poisons to JetError -> '!ERR' (jetStringify of JetError).
+    final Set<String> runtimeDiagnosed = <String>{};
+    ReportElement substitute(ReportElement el, int pageNumber, int pageCount) {
+      if (el is! TextElement || el.expression == null) return el;
+      if (chromeParseFailed.contains(el.id)) {
+        return TextElement(
+            id: el.id, bounds: el.bounds, text: '!ERR', style: el.style);
+      }
+      final Expression? expr = chromeExprs[el.id];
+      if (expr == null) {
+        // Unreachable: the pre-pass files every chrome text expression under
+        // chromeExprs or chromeParseFailed. Surface a pre/post-pass drift loudly
+        // (visible '!ERR' + diagnostic) instead of silently rendering authored text.
+        diagnostics.error(
+            'internal: no compiled chrome expression for "${el.id}"',
+            elementId: el.id);
+        return TextElement(
+            id: el.id, bounds: el.bounds, text: '!ERR', style: el.style);
+      }
+      final JetValue value = expr.evaluate(PageEvalContext(
+        pageNumber: pageNumber,
+        pageCount: pageCount,
+        params: filled.params,
+        functions: _functions,
+      ));
+      if (value is JetError && !chromeFlagged.contains(el.id)) {
+        if (runtimeDiagnosed.add('${el.id} ${value.message}')) {
+          diagnostics.error(
+              'chrome text on "${el.id}" failed to evaluate: ${value.message}',
+              elementId: el.id);
+        }
+      }
+      return TextElement(
+          id: el.id,
+          bounds: el.bounds,
+          text: jetStringify(value),
+          style: el.style);
+    }
+
+    final int pageCount = pages.length;
+    for (int p = 0; p < pages.length; p++) {
+      final FrameBuilder fb = pages[p];
+      final int pageNumber = p + 1;
       double y = top;
       for (final ReportBand h in headers) {
-        place(_authoredBoxes(h), y, fb);
+        place(<({ReportElement element, JetRect bounds})>[
+          for (final ReportElement el in h.elements)
+            (element: substitute(el, pageNumber, pageCount), bounds: el.bounds),
+        ], y, fb);
         y += h.height;
       }
       y = bodyBottom;
       for (final ReportBand f in footers) {
-        place(_authoredBoxes(f), y, fb);
+        place(<({ReportElement element, JetRect bounds})>[
+          for (final ReportElement el in f.elements)
+            (element: substitute(el, pageNumber, pageCount), bounds: el.bounds),
+        ], y, fb);
         y += f.height;
       }
     }
@@ -371,11 +471,4 @@ class ReportLayouter {
     );
   }
 
-  // Chrome elements emit at their authored band-local box (no growth).
-  List<({ReportElement element, JetRect bounds})> _authoredBoxes(
-          ReportBand band) =>
-      <({ReportElement element, JetRect bounds})>[
-        for (final ReportElement el in band.elements)
-          (element: el, bounds: el.bounds),
-      ];
 }

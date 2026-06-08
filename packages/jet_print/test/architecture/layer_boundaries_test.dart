@@ -257,8 +257,7 @@ void main() {
               'domain/data/expression:\n${violations.join('\n')}');
     });
 
-    test('the layout/ seam exists, stays Flutter-free, and imports no '
-        'expression engine', () {
+    test('the layout/ seam exists and stays Flutter-free', () {
       final Directory layoutDir = Directory(
           '${root.path}/packages/jet_print/lib/src/rendering/layout');
       expect(layoutDir.existsSync(), isTrue,
@@ -274,20 +273,17 @@ void main() {
         for (final String uri in _directive
             .allMatches(file.readAsStringSync())
             .map((Match m) => m.group(1)!)) {
-          // 008a is pure geometry: layout composes domain + sibling rendering
-          // subdirs (frame/elements/text/fill) but must NOT reach the expression
-          // engine. A relative '../../expression/' or absolute '/expression/' is
-          // the violation shape.
-          final bool expressionSeam =
-              uri.contains('../../expression/') || uri.contains('/expression/');
-          if (_isFlutterUi(uri) || expressionSeam) {
+          // layout stays headless. Since 008c it MAY import the expression engine
+          // (page-scoped chrome substitution): expression is inward of rendering
+          // in the dependency DAG, so the import is legal. The Flutter-UI ban
+          // remains.
+          if (_isFlutterUi(uri)) {
             violations.add('${file.path} -> $uri');
           }
         }
       }
       expect(violations, isEmpty,
-          reason: 'rendering/layout must stay headless and free of the '
-              'expression engine (008a is pure geometry):\n'
+          reason: 'rendering/layout must stay headless (Flutter-free):\n'
               '${violations.join('\n')}');
     });
   });
