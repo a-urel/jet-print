@@ -87,7 +87,10 @@ void main() {
     expect((res.report.bands[0].elements.single as TextElement).text, '10.0');
     expect((res.report.bands[1].elements.single as TextElement).text, '15.0');
     expect((res.report.bands.last.elements.single as TextElement).text, '15.0');
-    // frozen snapshot present
+    // Each band freezes its OWN snapshot: band 0 captured 10 (after row 1),
+    // band 1 captured 15 (after row 2). If variables were a live reference both
+    // would read 15 — so pinning both rows guards the per-band-copy invariant.
+    expect(res.report.bands[0].variables['total'], const JetNumber(10));
     expect(res.report.bands[1].variables['total'], const JetNumber(15));
   });
 

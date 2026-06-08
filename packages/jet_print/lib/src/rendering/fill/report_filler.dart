@@ -57,10 +57,13 @@ class ReportFiller {
   }) {
     final ReportDiagnostics diagnostics = ReportDiagnostics();
     final Set<String> warnedFields = <String>{};
-    // The calculator-injected context records page-scoped refs here, but the
-    // driver does NOT read this sink — variable/group page-scoped detection is
-    // done site-aware below (`scanPageScoped`). It only satisfies the context's
-    // required parameter; the context's missing-field tracking is what matters.
+    // A write-only sink for the calculator-injected context's page-scoped refs.
+    // The driver never READS it: variable/group page-scoped detection is done by
+    // the site-aware `scanPageScoped` pre-scan below (which preserves the site
+    // tag). This must be a mutable set, not `const <String>{}`, because
+    // FillEvalContext.resolveVariable calls `pageRefs.add(...)` and would throw
+    // on an unmodifiable set. It exists only to satisfy the required parameter
+    // and to share the context's missing-field tracking (diagnostics/warnedFields).
     final Set<String> ignoredPageRefs = <String>{};
 
     final ElementResolver resolver = ElementResolver(
