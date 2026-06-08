@@ -42,8 +42,13 @@ not invent new ones.
 - `groupHeader` repeat after a page break, `keep-together`/orphan control, `print-when`,
   `background` watermark, multi-column flow (`columnHeader`/`columnFooter`), title-on-own-page — all
   **008b**.
-- Page-scoped substitution ("Page N of M", per-page running totals) **and all chrome expression
-  evaluation** — **008c**.
+- **Page-scoped substitution** ("Page N of M", per-page running totals) within fixed bounds —
+  **008c**. This is the *only* late chrome resolution the `(template, filled)` input can support
+  unaided: `PAGE_NUMBER`/`PAGE_COUNT` are derivable from layout state (loop position, page count).
+  **Broader chrome expression evaluation** — `$P{}` params, `NOW()`, field refs — is **not promised
+  by 008c**: it needs a params/eval channel the current API does not carry (the runtime `params` map
+  lives only in the Fill call and is absent from `FilledReport`), so it is an **explicit open
+  question for 008c's own design** (§10 #2), not a commitment of this spec.
 - Any domain/serialization change. 008a adds **no** element overflow-policy field, **no** band
   directive fields (see §10 #1).
 
@@ -63,10 +68,10 @@ ReportTemplate ─┐                                  ┌─► List<PageFrame>
 FilledReport   ─┘                                  └─► ReportDiagnostics  (non-fatal issues)
 ```
 
-Pure and deterministic: identical `(template, filled)` → identical `List<PageFrame>` and identical
-diagnostics (Constitution III/IV; pinned by a determinism test, §9). All measurement is a
-side-effect-free function of `(element, TextMeasurer)`; pagination is a deterministic walk over
-pre-measured band heights.
+Pure and deterministic: identical `(template, filled)` → identical `List<PageFrame>` and the same
+diagnostics (Constitution III/IV; pinned by a determinism test that compares frames by value and
+diagnostics by a normalized projection, §9). All measurement is a side-effect-free function of
+`(element, TextMeasurer)`; pagination is a deterministic walk over pre-measured band heights.
 
 ## §4 — Public API & renderer wiring
 
@@ -157,6 +162,24 @@ bodyTop = top + headerHeight          bodyBottom = bottom - footerHeight
 bodyCapacity = bodyBottom - bodyTop
 ```
 
+**Chrome-overcommit guard (computed before any band is measured).** `bodyCapacity` can be ≤ 0 when
+the page chrome alone meets or exceeds the printable height (`headerHeight + footerHeight ≥
+contentHeight`). That is a **root-cause** condition, not a per-band one: the header and footer
+regions overlap and there is no body room at all. The layouter detects it up front and emits **one
+warning** naming the cause —
+
+```
+if bodyCapacity <= 0:
+    diagnostics.warning('page chrome (header ${headerHeight} + footer ${footerHeight}) '
+        'leaves no room for body on a ${contentHeight}-pt printable height; chrome overlaps and '
+        'body bands overflow')
+```
+
+— then proceeds (render-don't-crash): chrome is still emitted (and may overlap), and each body band
+is placed at `bodyTop` overflowing downward. When `bodyCapacity ≤ 0` the **per-band** capacity
+warning below is **suppressed** (it would just restate the symptom with a misleading negative number;
+the upfront warning is the real signal).
+
 ### Held builders + body loop + chrome post-pass (the 008c seam)
 
 The layouter accumulates **one `FrameBuilder` per page**, places **body** bands during the
@@ -172,7 +195,7 @@ cursorY   = bodyTop
 for mb in measured:                                             // 1. body pagination
     if cursorY + mb.height > bodyBottom && cursorY > bodyTop:
         pages.add(FrameBuilder(page)); cursorY = bodyTop        //    page break
-    if mb.height > bodyCapacity:                                //    bands have no id -> no elementId
+    if bodyCapacity > 0 && mb.height > bodyCapacity:           //    suppressed when chrome overcommits
         diagnostics.warning('band height ${mb.height} exceeds body capacity ${bodyCapacity}; content overflows')
     for e in mb.elements:                                       //    translate band-local -> page
         rendererFor(e.element).emit(e.element, ctx,
@@ -210,30 +233,38 @@ header/footer keep appending in this post-pass. **Emission order encodes z-order
 ## §7 — Page-chrome resolution (008a behavior, explicit)
 
 008a emits chrome through the **same renderers** as body, but against the **authored** template
-elements — **no expression engine enters Layout** (deferred wholesale to 008c). To keep this behavior
-*specified* rather than emergent, the layouter **scans chrome elements once during setup** for
-unresolved bindings and records a diagnostic per such element:
+elements — **no expression engine enters Layout**, **no image byte-resolution**. To keep this
+behavior *specified* rather than emergent, the layouter **scans chrome elements once during setup**
+(a single pass over `headers`+`footers`, not inside `placeChrome`, so each is flagged **once**, never
+per-page) and records one **info** diagnostic per element that carries a binding it cannot render
+dynamically. The diagnostic names the element id and states the binding was **not evaluated in the
+static layout pass** — it deliberately does **not** promise a specific later stage, because the
+owners differ by binding kind and that ownership is cross-spec (below), not 008a's to assert
+per-element:
 
-| Chrome element form | 008a render | Diagnostic |
-|---|---|---|
-| Static `TextElement` (no `expression`) | its literal `text` | — |
-| `TextElement` with `expression != null` | its **authored literal `text`** (the expression is not evaluated) | **info** (deferred to 008c) |
-| `ImageElement` with `BytesImageSource` | the image | — |
-| `ImageElement` with a `FieldImageSource`/url source | the **placeholder** (`emit` falls through to `emitPlaceholder`) | **info** (deferred to 008c) |
-| Shape / barcode / other static | rendered normally | — |
+| Chrome element form | 008a render | Diagnostic | Who could resolve it later |
+|---|---|---|---|
+| Static `TextElement` (no `expression`) | its literal `text` | — | — |
+| `TextElement` with `expression != null` | its **authored literal `text`** (not evaluated) | **info** | **page-scoped** refs (`PAGE_NUMBER`/`PAGE_COUNT`) → 008c; other exprs (`$P{}`/`NOW()`/fields) → open (needs a params channel, §2/§10 #2) |
+| `ImageElement` with `BytesImageSource` | the image | — | — |
+| `ImageElement` with `FieldImageSource` | the **placeholder** (`emit` → `emitPlaceholder`) | **info** | field images are row-bound (007b Fill); page chrome has **no row**, so this is effectively unresolvable in chrome — *not* an 008c concern |
+| `ImageElement` with `UrlImageSource` | the **placeholder** | **info** | a later **async paint-prep** step (its own future spec), per the 007a renderer-design — *not* 008c |
+| Shape / barcode / other static | rendered normally | — | — |
 
-So text shows its literal and an unresolved image shows the placeholder — both flagged **identically
-and once** (not once per page — the scan is a single setup pass over `headers`+`footers`, not inside
-`placeChrome`). The diagnostic message names the element id and states the binding is resolved in
-008c. 008c replaces this scan with real evaluation (page-scoped substitution within the now-reserved
-fixed bounds).
+So text shows its literal and a non-bytes image shows the placeholder — both flagged identically and
+once. The key correction over the first draft: the diagnostic no longer claims "resolved in 008c."
+Only **page-scoped text** is 008c's to substitute (within the fixed bounds §6 reserves); URL images
+belong to async paint-prep, field images to Fill (and are meaningless without a row), and arbitrary
+param/date text is an open question (§2). 008a promises none of these per-element — it renders
+deterministically and flags the gap.
 
 ## §8 — Diagnostics & error policy (render-don't-crash; reuses `ReportDiagnostics`)
 
 | Condition | Severity | Behavior |
 |---|---|---|
-| Body band taller than `bodyCapacity` | **warning** | place at `bodyTop`, overflow, continue (no flow solver) |
-| Unresolved chrome binding (expr / non-bytes image) | **info** | render renderer's natural output (literal / placeholder); one per element (§7) |
+| Page chrome ≥ printable height (`bodyCapacity ≤ 0`) | **warning** | **one** upfront root-cause warning (§6); proceed — chrome may overlap, body bands overflow; per-band capacity warnings suppressed |
+| Body band taller than `bodyCapacity` (when `bodyCapacity > 0`) | **warning** | place at `bodyTop`, overflow, continue (no flow solver) |
+| Unresolved chrome binding (expr / non-bytes image) | **info** | render renderer's natural output (literal / placeholder); one per element (§7); does **not** name a later owner |
 | `filled.page != template.page` | **warning** | use `template.page` (authoritative, §2); continue |
 | `columnHeader`/`columnFooter`/`background` present in `template.bands` | **info** | ignored in 008a (arrives in 008b); one per type |
 | Unknown element type | (none) | `rendererFor` → Unknown placeholder renderer (007a; no new code) |
@@ -259,12 +290,19 @@ recoverable and produces something paintable.
 - `pageHeader` repeated at `top` on every page; `pageFooter` anchored at `bodyBottom` on every page.
 - Multiple header/footer bands stack in document order.
 - Band taller than `bodyCapacity` → placed at `bodyTop`, overflows, **warning** emitted.
+- **Chrome overcommit** (`headerHeight + footerHeight ≥ contentHeight`) → **one** upfront warning;
+  per-band capacity warnings suppressed; frames still produced.
 - `noData` stream → one page (header + noData + footer).
-- **Determinism:** two `layout(...)` runs on identical inputs produce equal `List<PageFrame>` and
-  equal diagnostics.
+- **Determinism:** two `layout(...)` runs on identical inputs produce equal `List<PageFrame>`
+  (`PageFrame`/`FramePrimitive` have value equality) **and** equal diagnostics compared as a
+  **normalized projection** — `diagnostics.entries.map((d) => (d.severity, d.message, d.elementId))`
+  — because `Diagnostic`/`ReportDiagnostics` are plain mutable classes with **no** value equality, so
+  a direct `==` would compare by identity and always fail (the comparison is on the projected tuples,
+  not the objects).
 - Chrome authored content: a chrome `TextElement` with an `expression` emits its **literal** + an
-  **info** diagnostic; an unresolved chrome image emits the **placeholder** + an **info** diagnostic
-  (one each, not per page).
+  **info** diagnostic; an unresolved chrome image (`Field`/`Url` source) emits the **placeholder** +
+  an **info** diagnostic (one each, not per page); the diagnostic text does **not** name a later
+  resolver stage.
 - `columnHeader`/`columnFooter`/`background` present → ignored + **info**.
 - Empty stream (zero bands) → exactly one chrome-only page (the ≥1-page invariant).
 - `filled.page != template.page` → **warning**; the produced frames use `template.page`.
@@ -282,12 +320,19 @@ recoverable and produces something paintable.
    refinement, and adding the enum (field + codec + schema + `==`/`hashCode`) now would widen 008a
    into the domain layer for a feature 008b owns.
 
-2. **008a is a pure geometry engine — no expression engine.** Chrome elements emit as authored;
-   **all** dynamic chrome (params, dates, page numbers) is introduced together in 008c, where Layout
-   gains an eval context and the fixed-bounds page-scoped rule. *Rationale:* the cleanest
-   architectural boundary — 008a depends only on the renderer + measurer seams, not on
-   `expression/`. The interim cost (a `$P{title}` header shows its authored literal) is transient and
-   explicitly diagnosed (§7).
+2. **008a is a pure geometry engine — no expression engine.** Chrome elements emit as authored; 008a
+   depends only on the renderer + measurer seams, not on `expression/`. The interim cost (a
+   `$P{title}` header shows its authored literal) is transient and explicitly diagnosed (§7).
+   **Scope of later chrome resolution (corrected from the first draft, which over-promised "all
+   dynamic chrome → 008c"):** the `(template, filled)` input supports only **page-scoped**
+   substitution unaided — `PAGE_NUMBER`/`PAGE_COUNT` come from layout state — and that is 008c's
+   charter. **Broader chrome expression evaluation is an open question, not a commitment:** `$P{}`
+   needs the runtime `params` map, which lives only in the `ReportFiller.fill(...)` call and is
+   **absent from `FilledReport`**; `NOW()`/field refs likewise have no carrier in the current API.
+   Supporting them would require **widening the layout API** (e.g. `layout(template, filled, {params})`)
+   or the IR — a decision deferred to 008c's own design so 008a carries no unused channel (YAGNI).
+   (Image bindings are a *different* axis again: `UrlImageSource` → async paint-prep, `FieldImageSource`
+   → Fill and meaningless without a row — see §7.)
 
 3. **Held builders + post-pagination chrome pass is the 008c substitution seam.** `PageFrame`/
    `FramePrimitive` carry only resolved primitives — no authored elements, no placeholders — so if
@@ -368,3 +413,35 @@ layouter is `src/`-internal, consumed via white-box `package:jet_print/src/...` 
    sends a non-`BytesImageSource` to `emitPlaceholder`. 008a now scans chrome once for unresolved
    bindings and emits one **info** diagnostic per element, with the per-type behavior tabulated
    (§7) and tested (§9).
+
+**Second review (R2), folded in:**
+
+1. *008a over-promises 008c's chrome evaluation (High).* Reviewer: the spec defers "all chrome
+   expression evaluation" to 008c (params, dates, a `$P{title}` example), but `layout(template,
+   filled)` carries no runtime `params` map — `FilledReport` has only page + band snapshots — so 008c
+   can derive page numbers but cannot evaluate `$P{}`/`NOW()`/field chrome from that input.
+   **Verified and narrowed (the reviewer's "narrow the wording" option, YAGNI over widening the API
+   now):** confirmed `params` lives only in the `ReportFiller.fill(...)` call and is absent from the
+   IR. 008c's charter is **page-scoped substitution only**; broader chrome eval is flagged an explicit
+   **open question** needing a params channel, not a commitment (§2, §7, §10 #2).
+
+2. *Header/footer overcommit makes the geometry invalid before any band is measured (Medium).*
+   Reviewer: `bodyCapacity` can go negative when chrome ≥ printable height, silently overlapping
+   chrome and emitting misleading negative-capacity per-band warnings. **Verified and fixed:** added
+   an **upfront root-cause warning** when `bodyCapacity ≤ 0`, with explicit proceed-behavior (chrome
+   may overlap, bands overflow) and **suppression** of the now-misleading per-band capacity warnings
+   (§6, §8, §9).
+
+3. *Chrome-image rule assigns `UrlImageSource` to the wrong stage (Medium).* Reviewer: the 007a
+   renderer-design already owns `UrlImageSource` resolution in a later **async paint-prep** step, not
+   layout/008c — so "deferred to 008c" for URL chrome would strand it forever. **Verified and fixed:**
+   confirmed the renderer-design split (`FieldImageSource`→Fill, `UrlImageSource`→paint-prep). §7's
+   table now separates the rows and the diagnostic **no longer names 008c** for images — field images
+   are row-bound (meaningless in chrome), URL images belong to async paint-prep, only page-scoped
+   *text* is 008c's.
+
+4. *Determinism test would fail if implemented literally (Low).* Reviewer: `Diagnostic`/
+   `ReportDiagnostics` have no value equality, so an equality assertion compares by identity.
+   **Verified and fixed:** confirmed neither defines `==`. §9 now compares frames by value
+   (`PageFrame` has `==`) and diagnostics by a **normalized projection** of `(severity, message,
+   elementId)` tuples — no new `==` added to the 007b diagnostics types (out of 008a's scope).
