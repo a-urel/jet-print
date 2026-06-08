@@ -88,6 +88,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   footers the last row with the pre-reset subtotal. Adds an optional `ReportBand.group` link and a
   `GroupBandIndex` (fail-fast on duplicate group names; error diagnostics for null/unknown group
   references). Nesting order is derived from the authored group list.
+- **Layout engine (spec 008a).** `ReportLayouter` lays a `FilledReport` band stream onto pages:
+  it measures body bands (grow-only, via the element renderers), stacks and paginates them in the
+  per-page body region, and repeats `pageHeader`/`pageFooter` chrome on every page, emitting one
+  `PageFrame` per page plus diagnostics. A pure `BandMeasurer` computes grown band heights. Chrome is
+  emitted as authored (no expression evaluation yet — page-scoped substitution arrives in 008c);
+  unresolved chrome bindings, chrome that overcommits the page, and not-yet-supported
+  column/background bands are reported as diagnostics.
 
 ## 0.1.0
 
