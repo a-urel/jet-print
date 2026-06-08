@@ -743,4 +743,73 @@ void main() {
         .toList();
     expect(p2, <String>['RH', 'cd1']); // region header reprinted, then cd1
   });
+
+  test('a reprinted header lands at bodyTop below page chrome (not content-top)',
+      () {
+    // 20pt pageHeader pushes bodyTop to 10+20=30 (bodyBottom 90, capacity 60).
+    // A reprint that used content-top would land the header at y=10; this locks
+    // reEmitHeaders to bodyTop.
+    final ReportTemplate tpl = ReportTemplate(
+      name: 'demo',
+      page: _smallPage,
+      groups: <ReportGroup>[
+        ReportGroup(
+            name: 'g', expression: r'$F{g}', reprintHeaderOnEachPage: true),
+      ],
+      bands: <ReportBand>[
+        ReportBand(type: BandType.pageHeader, height: 20),
+        ReportBand(type: BandType.groupHeader, height: 0, group: 'g'),
+      ],
+    );
+    final FilledReport filled = _filled(<FilledBand>[
+      _gband(BandType.groupHeader, group: 'g', height: 20, id: 'GH'),
+      _gband(BandType.detail, height: 25, id: 'd1'),
+      _gband(BandType.detail, height: 25, id: 'd2'),
+    ]);
+    // GH@30..50 d1@50..75; d2 (75+25>90) -> page 2, GH reprinted at bodyTop=30.
+    final LayoutResult r = ReportLayouter().layout(tpl, filled);
+    expect(r.pages.length, 2);
+    final List<RectPrimitive> p2 =
+        r.pages[1].primitives.whereType<RectPrimitive>().toList();
+    expect(p2.first.elementId, 'GH');
+    expect(p2.first.bounds, const JetRect(x: 10, y: 30, width: 180, height: 20));
+  });
+
+  test('keepTogether respects page chrome in the fit decision and fresh top',
+      () {
+    // With a 20pt pageHeader, bodyTop=30/bodyBottom=90/capacity=60. The group
+    // (extent 50) would FIT the remainder with no chrome (pre@10..35, 35+50=85<=90,
+    // one page); the chrome shrinks the remainder so it is moved whole to page 2,
+    // landing at bodyTop=30.
+    final ReportTemplate tpl = ReportTemplate(
+      name: 'demo',
+      page: _smallPage,
+      groups: <ReportGroup>[
+        ReportGroup(name: 'g', expression: r'$F{g}', keepTogether: true),
+      ],
+      bands: <ReportBand>[
+        ReportBand(type: BandType.pageHeader, height: 20),
+        ReportBand(type: BandType.groupHeader, height: 0, group: 'g'),
+      ],
+    );
+    final FilledReport filled = _filled(<FilledBand>[
+      _gband(BandType.detail, height: 25, id: 'pre'),
+      _gband(BandType.groupHeader, group: 'g', height: 20, id: 'GH'),
+      _gband(BandType.detail, height: 30, id: 'gd1'),
+    ]);
+    // pre@30..55; group extent 50: 55+50=105>90 -> moved whole to page 2.
+    final LayoutResult r = ReportLayouter().layout(tpl, filled);
+    expect(r.pages.length, 2);
+    expect(
+        r.pages[0].primitives
+            .whereType<RectPrimitive>()
+            .map((RectPrimitive p) => p.elementId)
+            .toSet(),
+        <String>{'pre'});
+    final List<RectPrimitive> p2 =
+        r.pages[1].primitives.whereType<RectPrimitive>().toList();
+    expect(p2.map((RectPrimitive p) => p.elementId).toSet(),
+        <String>{'GH', 'gd1'});
+    expect(p2.firstWhere((RectPrimitive p) => p.elementId == 'GH').bounds.y, 30);
+  });
 }
