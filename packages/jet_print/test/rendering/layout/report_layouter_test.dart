@@ -652,4 +652,95 @@ void main() {
         .toList();
     expect(proj(a), proj(b)); // diagnostics by normalized projection
   });
+
+  test('keepTogether moves a whole group to a fresh page when it does not fit '
+      'the remainder', () {
+    final ReportTemplate tpl = _tplWithGroups(<ReportGroup>[
+      ReportGroup(name: 'g', expression: r'$F{g}', keepTogether: true),
+    ]);
+    final FilledReport filled = _filled(<FilledBand>[
+      _gband(BandType.detail, height: 60, id: 'pre'),
+      _gband(BandType.groupHeader, group: 'g', height: 20, id: 'GH'),
+      _gband(BandType.detail, height: 30, id: 'gd1'),
+    ]);
+    // pre@10..70; group extent 50 doesn't fit remainder (70..90) but fits a
+    // fresh page -> moved whole to page 2.
+    final LayoutResult r = ReportLayouter().layout(tpl, filled);
+    expect(r.pages.length, 2);
+    expect(
+        r.pages[0].primitives
+            .whereType<RectPrimitive>()
+            .map((RectPrimitive p) => p.elementId)
+            .toSet(),
+        <String>{'pre'});
+    expect(
+        r.pages[1].primitives
+            .whereType<RectPrimitive>()
+            .map((RectPrimitive p) => p.elementId)
+            .toSet()
+            .containsAll(<String>{'GH', 'gd1'}),
+        isTrue);
+    // one break per band: GH lands at bodyTop on page 2 (no blank page).
+    expect(
+        r.pages[1].primitives
+            .whereType<RectPrimitive>()
+            .firstWhere((RectPrimitive p) => p.elementId == 'GH')
+            .bounds
+            .y,
+        10);
+  });
+
+  test('keepTogether does not force-break a group taller than the page', () {
+    final ReportTemplate tpl = _tplWithGroups(<ReportGroup>[
+      ReportGroup(name: 'g', expression: r'$F{g}', keepTogether: true),
+    ]);
+    final FilledReport filled = _filled(<FilledBand>[
+      _gband(BandType.detail, height: 40, id: 'pre'),
+      _gband(BandType.groupHeader, group: 'g', height: 20, id: 'GH'),
+      _gband(BandType.detail, height: 70, id: 'big'),
+    ]);
+    // group extent 90 > bodyCapacity 80 -> not force-broken; it splits.
+    final LayoutResult r = ReportLayouter().layout(tpl, filled);
+    expect(r.pages.length, 2);
+    expect(
+        r.pages[0].primitives
+            .whereType<RectPrimitive>()
+            .map((RectPrimitive p) => p.elementId)
+            .toSet(),
+        <String>{'pre', 'GH'});
+    expect(r.pages[1].primitives.whereType<RectPrimitive>().single.elementId,
+        'big');
+  });
+
+  test('keepTogether accounts for repeated outer headers (splits, not moved)',
+      () {
+    final ReportTemplate tpl = _tplWithGroups(<ReportGroup>[
+      ReportGroup(
+          name: 'region', expression: r'$F{region}',
+          reprintHeaderOnEachPage: true),
+      ReportGroup(name: 'city', expression: r'$F{city}', keepTogether: true),
+    ]);
+    final FilledReport filled = _filled(<FilledBand>[
+      _gband(BandType.groupHeader, group: 'region', height: 20, id: 'RH'),
+      _gband(BandType.detail, height: 30, id: 'fill'),
+      _gband(BandType.groupHeader, group: 'city', height: 20, id: 'CH'),
+      _gband(BandType.detail, height: 50, id: 'cd1'),
+    ]);
+    // city extent 70 fits a raw page (80) but NOT after region's repeated header
+    // (80-20=60), so it is NOT moved whole -> it splits: CH on page 1, cd1 on
+    // page 2 below the reprinted RH.
+    final LayoutResult r = ReportLayouter().layout(tpl, filled);
+    expect(r.pages.length, 2);
+    expect(
+        r.pages[0].primitives
+            .whereType<RectPrimitive>()
+            .map((RectPrimitive p) => p.elementId)
+            .toSet(),
+        containsAll(<String>{'RH', 'fill', 'CH'}));
+    final List<String?> p2 = r.pages[1].primitives
+        .whereType<RectPrimitive>()
+        .map((RectPrimitive p) => p.elementId)
+        .toList();
+    expect(p2, <String>['RH', 'cd1']); // region header reprinted, then cd1
+  });
 }
