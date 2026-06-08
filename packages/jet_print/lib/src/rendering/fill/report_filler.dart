@@ -214,7 +214,14 @@ class ReportFiller {
     }
 
     return FillResult(
-      report: FilledReport(page: template.page, bands: bands),
+      report: FilledReport(
+        page: template.page,
+        bands: bands,
+        params: <String, JetValue>{
+          for (final MapEntry<String, Object?> e in params.entries)
+            e.key: JetValue.from(e.value),
+        },
+      ),
       diagnostics: diagnostics,
     );
   }
