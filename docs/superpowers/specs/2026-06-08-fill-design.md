@@ -16,8 +16,14 @@ band sequencing + the `ReportBand`↔`ReportGroup` link + group-scoped subtotals
 Fill is the **data pass**: walk a `ReportTemplate` over a `JetDataSource`, evaluate expressions,
 drive the variable calculator, and emit an ordered stream of **resolved band instances** —
 `FilledReport` — alongside a `ReportDiagnostics`. It produces *data, not geometry*: no measuring,
-no pagination, no rendering. 008 (Layout) consumes `FilledReport`; 007a's renderers draw the
-resolved elements it contains.
+no pagination, no rendering.
+
+**008 (Layout) consumes both the `ReportTemplate` and the `FilledReport`** — the template supplies
+the page/column/background chrome bands (which Fill does not process), the page format, and the
+page-scoped variable definitions; the `FilledReport` supplies the resolved content stream **and the
+frozen variable snapshot per band instance** (§7), which 008 needs for per-page late substitution.
+This contract is stated here because 007b defines the IR 008 consumes; 008 implements layout. 007a's
+renderers draw the resolved elements `FilledReport` contains.
 
 ## 2. Scope & boundary
 
@@ -33,11 +39,18 @@ but 007b emits **no** group bands — declared group-scoped subtotals simply are
 007c adds group footers.
 
 **Deferred → 008:** page/column header/footer/background bands (page-scoped chrome); pagination;
-**all page-scoped-expression handling** — page variables (`$V{PAGE_NUMBER}`, `$V{PAGE_COUNT}`),
-the fixed-bounds validation rule (blueprint §5), and late substitution into reserved bounds. These
-require pagination and page-scoped bands that do not exist in 007b. In 007b a reference to an
-undeclared variable (including a page-variable name) resolves to `JetNull` → blank (§5), with no
-special handling — Fill has no notion of "deferred" slots.
+page-scoped value *resolution* — defining the page variables, the fixed-bounds validation for their
+*legal* carriers (fixed elements in page/column header/footer, blueprint §5), and late substitution
+into reserved bounds. These require pagination and page-scoped bands that do not exist in 007b.
+
+007b does, however, **reserve the page-scoped variable names** — a documented constant set
+(`PAGE_NUMBER`, `PAGE_COUNT` for v1; 008 owns the authoritative list) — so it can **reject their
+*illegal* use** in the bands it processes. A `title`/`detail`/`summary` text expression that
+references a reserved page-scoped variable is an illegal placement (page-scoped values are legal
+only in page/column header/footer, which Fill does not process) → **error diagnostic** + the element
+keeps its authored `text` (§5). This enforces the blueprint's validation intent for 007b's bands
+instead of silently blanking the evidence. A reference to any *other* undeclared variable resolves
+to `JetNull` → blank, silently — 007b has no page-scoped machinery and no "deferred" slots.
 
 Fill processes **only** `title`, `detail`, `summary`, `noData` bands; it ignores
 `pageHeader`/`pageFooter`/`columnHeader`/`columnFooter`/`background`/`groupHeader`/`groupFooter`.
@@ -116,17 +129,30 @@ fail fast.
 |---|---|
 | Text expression — **parse** failure (`ExpressionException`) | caught → element text `'!ERR'` + **error** diagnostic |
 | Text expression — **eval** error (`JetError` result) | text `'!ERR'` (via `jetStringify`) + **error** diagnostic |
-| `$F{name}` to a field **absent from the current row's schema** (`!row.hasField(name)`) | blank + **warning** (deduped per field name — the schema-drift / typo signal) |
+| Text expression references a **reserved page-scoped variable** in a `title`/`detail`/`summary` band | **error** diagnostic (illegal placement, §2) + element keeps its authored `text` (not blanked, not `!ERR`) |
+| `$F{name}` to a field **absent from the current row's schema** (`!row.hasField(name)`) — element **or** variable/group expression | blank + **warning** (deduped per field name — the schema-drift / typo signal) |
 | `$F{name}` to a **declared-but-null** field | blank, **no** diagnostic (legitimate null data) |
 | `$F{}` / undeclared `$V{}` in title/summary (no row) | blank, **no** diagnostic (no row is expected; page vars legitimately absent) |
 | Unresolvable `FieldImageSource` (field missing or not byte-like) | renderer placeholders it + **warning** |
 | Variable/group expression **parse** failure | **fail fast** — typed structural exception (report-definition error) |
 
-The missing-field warning is implemented by a `fill/` `EvalContext` that wraps the data row and
-records a warning when `resolveField` is asked for a name the row's schema does not declare; a
-declared-but-null field and a no-row context stay silent. Missing **variables** (e.g. a
-not-yet-existing page variable) resolve to `JetNull` silently — 007b is not noisy about names 008
-will introduce.
+Both content signals come from a single `fill/` `EvalContext` that wraps the data row, params, and
+the calculator's variable values:
+- **Missing-field warnings** — it records a warning (deduped per field name) when `resolveField` is
+  asked for a name the current row's schema does not declare; a declared-but-null field and a no-row
+  context stay silent.
+- **Page-scoped detection** — it records, **precisely via `resolveVariable`** (so a string literal
+  containing `$V{PAGE_NUMBER}` cannot false-positive — only a real reference triggers it), that an
+  expression referenced a reserved page-scoped name; the resolver then raises the illegal-placement
+  error for text expressions. Any other missing variable resolves to `JetNull` silently.
+
+To make the missing-field warning reach **variable and group expressions** too — not just element
+expressions — `VariableCalculator` gains an **optional eval-context factory** (additive; the default
+builds `RowEvalContext`, so 005b behavior is unchanged). Fill injects a factory that builds this
+tracking context sharing the same diagnostics sink, so a typo'd field inside a `SUM` variable —
+which the accumulator otherwise skips as `JetNull` silently (`variable_accumulator.dart`) and quietly
+corrupts the total — now surfaces a warning. Dedup-by-field-name bounds the volume across element,
+variable, and group evaluations.
 
 ## 6. Band context (no order-sensitivity)
 
@@ -141,13 +167,27 @@ reflect all rows, via the calculator — that is the point of a grand total.)
 
 ```dart
 class FilledReport { final PageFormat page; final List<FilledBand> bands; /* value == + hashCode */ }
-class FilledBand  { final BandType type; final double height; final List<ReportElement> elements; /* value == */ }
+class FilledBand  {
+  final BandType type;
+  final double height;
+  final List<ReportElement> elements;    // resolved copies
+  final Map<String, JetValue> variables; // frozen variable snapshot at this instance
+  /* value == (incl. deep map equality on variables) */
+}
 ```
 
-Pure data with value equality (the resolved `ReportElement`s are already value-equal), so a fill is
-a **data golden**: assert the band stream's types + resolved element values, and that identical
-inputs yield an identical `FilledReport` (determinism). `FilledBand` carries only `type`, `height`,
-and the resolved `elements` — the geometry-free output 008 measures and paginates.
+Per the blueprint (`FilledReport` = "resolved values **+ frozen variable values**"), each
+`FilledBand` carries a **frozen snapshot of the calculator's variable values** as of when it was
+emitted — initial values for `title`/`noData`, the post-`advance` values for each `detail`, the
+final values for `summary`. 008 uses these for **per-page late substitution** (e.g. a page footer's
+running total at a page boundary) without re-running Fill. `calc.values` already returns a defensive
+copy, so snapshotting is cheap.
+
+Pure data with value equality (resolved `ReportElement`s and `JetValue`s are value-equal; the
+`variables` map compares by deep map equality), so a fill is a **data golden**: assert the band
+stream's types + resolved element values + frozen variables, and that identical inputs yield an
+identical `FilledReport` (determinism). `FilledBand` is geometry-free — the output 008 measures and
+paginates.
 
 ## 8. Testing (data goldens + behavior)
 
@@ -160,6 +200,13 @@ and the resolved `elements` — the geometry-free output 008 measures and pagina
 - **noData** — empty source → one `noData` band, no detail/summary.
 - **Diagnostics** — a bad-syntax text expression → `'!ERR'` + an **error** diagnostic (no throw); a
   `$F{}` to an undeclared field → blank + a **warning**; a declared-null field → blank, no diagnostic.
+- **Page-scoped rejection** — a `detail` text expression referencing `$V{PAGE_NUMBER}` → an **error**
+  diagnostic + the element keeps its authored `text` (not blanked); a *string literal* containing the
+  characters `$V{PAGE_NUMBER}` does **not** trigger it (precise `resolveVariable` detection).
+- **Variable schema-drift** — a `SUM($F{typo})` variable over a schema without `typo` → a **warning**
+  (via the calculator's injected tracking context), not a silently wrong total.
+- **Frozen variables** — each `FilledBand` carries the variable snapshot: detail bands show the
+  running `$V{total}`, summary carries the grand total.
 - **Fail-fast** — a malformed *variable* expression → the fill throws a typed structural exception.
 - **Band context** — `$F{}` in `summary` resolves to blank (no row), while `$V{}` grand total resolves.
 - **Determinism** — re-filling identical inputs yields an equal `FilledReport`.
@@ -173,24 +220,35 @@ eventual public door; `FilledReport` is intentionally incomplete until 007c.
 
 ## 10. Design decisions & deviations (auditable)
 
-1. **Page-scoped handling deferred to 008** (§2) — its legal carriers are page-scoped bands Fill
-   does not process, and it requires pagination; 007b treats page-variable names as ordinary
-   undeclared variables (→ blank).
+1. **Page-scoped *resolution* deferred to 008, but illegal placements rejected now** (§2, §5) —
+   007b reserves the page-scoped names and raises an error diagnostic (precise `resolveVariable`
+   detection) when a `title`/`detail`/`summary` expression references one, preserving the blueprint's
+   validation intent instead of silently blanking; other undeclared variables → blank.
 2. **Split parse-failure policy** (§5) — content (text) expressions caught → `!ERR` + diagnostic;
    structural (variable/group) expressions fail fast.
 3. **Barcode passthrough is an explicit 007a §3 amendment** (§4), not an implicit omission.
-4. **Missing-field warning honored** per the blueprint + `EvalContext` doc (§5), distinguishing
-   undeclared (warn) from declared-null (silent).
+4. **Missing-field warning honored across element AND variable/group expressions** (§5) — via an
+   injected calculator eval-context factory, distinguishing undeclared (warn) from declared-null
+   (silent).
 5. **Title/summary have no row context** (§6) — summary is order-stable.
 6. **Internal, intentionally-incomplete IR** (§3, §9) — not frozen public; 007c extends it.
+7. **008 consumes `(ReportTemplate, FilledReport)`** (§1) — the template for page chrome + page
+   variables, the FilledReport for resolved content + frozen variable snapshots.
+8. **`FilledBand` carries a frozen variable snapshot** (§7) — the blueprint's "frozen variable
+   values," for 008's per-page late substitution.
+9. **`VariableCalculator` gains an optional eval-context factory** (§5) — additive, default
+   `RowEvalContext`; lets Fill's diagnostics reach variable/group expressions.
 
 ## 11. File plan
 
 - **Modify:** `domain/elements/text_element.dart` (+`expression`); `domain/serialization/text_element_codec.dart`
-  (optional `expression` field); `CHANGELOG.md`; `test/architecture/layer_boundaries_test.dart`
-  (assert `rendering/fill/` is headless and imports no `rendering/elements`/`rendering/frame`/`rendering/paint`).
+  (optional `expression` field); `expression/aggregate/variable_calculator.dart` (additive optional
+  eval-context factory, default `RowEvalContext`); `CHANGELOG.md`;
+  `test/architecture/layer_boundaries_test.dart` (assert `rendering/fill/` is headless and imports no
+  `rendering/elements`/`rendering/frame`/`rendering/paint`).
 - **Create:** `rendering/fill/{report_diagnostics, filled_report, fill_eval_context, element_resolver, report_filler}.dart`
-  (`FillResult` lives with `report_filler.dart`); `test/rendering/fill/*`.
+  (`FillResult` lives with `report_filler.dart`; the reserved page-scoped-name constant lives in
+  `fill/`, e.g. alongside the resolver); `test/rendering/fill/*`.
 
 ## 12. Review history
 
@@ -201,3 +259,13 @@ Barcode passthrough contradicted the 007a seam → **explicit 007a §3 amendment
 silent-blanking diverged from the blueprint → **warning honored** (§5). Entry point read as public
 → **internal, intentionally-incomplete IR** (§3, §9). Open question on summary order-sensitivity →
 **title/summary carry no row context** (§6).
+
+Second review round, folded in: deferring page chrome + all page-scoped handling left 008 without
+enough input → **008's contract restated as `(ReportTemplate, FilledReport)`** and **`FilledBand`
+now carries the frozen variable snapshot** the blueprint mandates (§1, §7). Treating page-variable
+names as silently-blanked undeclared variables made the validation rule unenforceable and discarded
+authored intent → **reserved page-scoped names + reject illegal placements with an error
+diagnostic** (precise `resolveVariable` detection, §2, §5). The missing-field warning didn't reach
+variable/group expressions (the calculator uses its own `RowEvalContext`, and the accumulator skips
+`JetNull`/`JetError` silently) → **`VariableCalculator` gains an injected eval-context factory so the
+warning covers all expressions** (§5).
