@@ -152,13 +152,16 @@ the calculator's variable values:
 - **Missing-field warnings** — it records a warning (deduped per field name) when `resolveField` is
   asked for a name the current row's schema does not declare; a declared-but-null field and a no-row
   context stay silent.
-- **Page-scoped detection** — it records, **precisely via `resolveVariable`** (so a string literal
-  containing `$V{PAGE_NUMBER}` cannot false-positive — only a real reference triggers it), that an
-  expression referenced a reserved page-scoped name, tagged with the evaluation **site** (the element
-  id, or the variable/group name). An illegal-placement **error diagnostic** is raised **wherever it
-  occurs**: the text resolver raises it (and preserves the element's authored `text`) for element
-  expressions; Fill raises it for the calculator's variable/group expressions (which it injected the
-  tracking context into, §below). Any other missing variable resolves to `JetNull` silently.
+- **Page-scoped detection** — **precise, via `resolveVariable`** (so a string literal containing
+  `$V{PAGE_NUMBER}` cannot false-positive — only a real reference triggers it), and **site-tagged**.
+  For an **element** expression the text resolver detects it inline (site = element id), raises the
+  illegal-placement **error**, and preserves the element's authored `text`. For **variable/group**
+  expressions Fill runs a small **site-aware pre-scan**: it evaluates each variable's and group's
+  expression once with the tracking context, the driver supplying the **site** (the variable/group
+  name), and raises a site-tagged error if a reserved page-scoped name is referenced. A
+  **per-evaluation** ref set carries the site — a single shared name-set could not, which is why the
+  pre-scan, not the calculator-injected context, owns variable/group page-scoped detection. Any
+  other missing variable resolves to `JetNull` silently.
 
 To make the missing-field warning reach **variable and group expressions** too — not just element
 expressions — `VariableCalculator` gains an **optional eval-context factory** (additive; the default
@@ -239,8 +242,10 @@ eventual public door; `FilledReport` is intentionally incomplete until 007c.
 1. **Page-scoped *resolution* deferred to 008, but every illegal placement rejected now** (§2, §5) —
    page-scoped variables are legal only in page/column-chrome text elements; 007b raises an error
    diagnostic (precise `resolveVariable` detection) for a reference in **any** band it processes
-   (`title`/`detail`/`summary`/`noData`) **and** in any variable/group expression. The reserved names
-   are a **single `fill/` constant** (one authority; 008 imports it). Other undeclared variables → blank.
+   (`title`/`detail`/`summary`/`noData`) **and** in any variable/group expression. Detection is
+   **site-tagged**: inline for elements (site = element id), a **site-aware pre-scan** for
+   variable/group (site = variable/group name). The reserved names are a **single `fill/` constant**
+   (one authority; 008 imports it). Other undeclared variables → blank.
 2. **Split parse-failure policy** (§5) — content (text) expressions caught → `!ERR` + diagnostic;
    structural (variable/group) expressions fail fast.
 3. **Barcode passthrough is an explicit 007a §3 amendment** (§4), not an implicit omission.
@@ -296,3 +301,10 @@ Page-scoped name ownership was split three ways (template / 008 / `fill/` consta
 has no such slot → **collapsed to one authority: the `fill/` constant 008 imports; the template no
 longer "supplies page variables"** (§1/§2/§10). Legality made explicit (only in page/column-chrome
 text elements) with negative tests for `noData` and variable/group usage (§2/§8).
+
+Fourth review round (plan-driven), folded in: page-scoped tracking by bare name-set could not carry
+the **site** for variable/group references → **site-aware pre-scan** owns variable/group page-scoped
+detection (per-evaluation ref set; site = variable/group name); the calculator-injected context
+remains for missing-field warnings only (§5/§10). (Plan-level: `FilledBand` must defensively
+freeze its nested `elements`/`variables` and hash `variables` order-independently; the driver's test
+helper must expose `groups` to cover the group-expression path.)
