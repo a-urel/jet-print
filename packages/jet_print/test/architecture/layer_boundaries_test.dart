@@ -214,5 +214,35 @@ void main() {
           reason: 'rendering/elements must stay headless (no dart:ui/Flutter):\n'
               '${violations.join('\n')}');
     });
+
+    test('the fill/ seam exists, stays Flutter-free, and imports no sibling '
+        'rendering subdir', () {
+      final Directory fillDir = Directory(
+          '${root.path}/packages/jet_print/lib/src/rendering/fill');
+      expect(fillDir.existsSync(), isTrue, reason: 'Missing ${fillDir.path}');
+      final List<File> fillFiles = fillDir
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((FileSystemEntity f) => f.path.endsWith('.dart'))
+          .toList();
+      expect(fillFiles, isNotEmpty);
+      final List<String> violations = <String>[];
+      for (final File file in fillFiles) {
+        for (final String uri in _directive
+            .allMatches(file.readAsStringSync())
+            .map((Match m) => m.group(1)!)) {
+          final bool sibling = uri.contains('/rendering/elements/') ||
+              uri.contains('/rendering/frame/') ||
+              uri.contains('/rendering/paint/') ||
+              uri.contains('/rendering/text/');
+          if (_isFlutterUi(uri) || sibling) {
+            violations.add('${file.path} -> $uri');
+          }
+        }
+      }
+      expect(violations, isEmpty,
+          reason: 'rendering/fill must stay headless and depend only on '
+              'domain/data/expression:\n${violations.join('\n')}');
+    });
   });
 }
