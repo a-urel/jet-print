@@ -102,4 +102,11 @@ void main() {
         .bounds;
     expect(below.y, 5); // keeps its authored y even though 'top' grew to 30
   });
+
+  test('the elements list is an unmodifiable snapshot', () {
+    final MeasuredBand mb = _measurer().measure(_band(10, <ReportElement>[
+      _text('t', const JetRect(x: 0, y: 0, width: 100, height: 10), 'x'),
+    ]));
+    expect(() => mb.elements.clear(), throwsUnsupportedError);
+  });
 }

@@ -23,8 +23,11 @@ import '../fill/filled_report.dart';
 /// element's geometry only once — the renderer's `emit` re-derives its own line
 /// content separately, the unchanged 007a seam).
 class MeasuredBand {
-  /// Creates a measured band.
-  const MeasuredBand(this.height, this.elements);
+  /// Creates a measured band, defensively freezing [elements] so the snapshot is
+  /// immutable after construction (matching the FilledBand/GroupBandIndex
+  /// convention).
+  MeasuredBand(this.height, List<({ReportElement element, JetRect bounds})> elements)
+      : elements = List<({ReportElement element, JetRect bounds})>.unmodifiable(elements);
 
   /// The grown band height (>= the band's designed height), in points.
   final double height;
