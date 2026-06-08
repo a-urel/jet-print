@@ -83,13 +83,28 @@ void main() {
     );
   });
 
-  test('returned band lists are unmodifiable (frozen snapshot)', () {
+  test('returned header and footer lists are unmodifiable (frozen snapshot)', () {
     final ReportDiagnostics d = ReportDiagnostics();
     final GroupBandIndex idx = GroupBandIndex(
-      tpl(groups: <ReportGroup>[g('region')], bands: <ReportBand>[gh('region')]),
+      tpl(groups: <ReportGroup>[g('region')],
+          bands: <ReportBand>[gh('region'), gf('region')]),
       d,
     );
     expect(() => idx.headersFor('region').add(gh('region')),
+        throwsUnsupportedError);
+    expect(() => idx.footersFor('region').add(gf('region')),
+        throwsUnsupportedError);
+  });
+
+  test('the empty fallback for an unindexed group is also unmodifiable', () {
+    final ReportDiagnostics d = ReportDiagnostics();
+    final GroupBandIndex idx = GroupBandIndex(
+      tpl(groups: <ReportGroup>[g('region')]),
+      d,
+    );
+    expect(() => idx.headersFor('region').add(gh('region')),
+        throwsUnsupportedError);
+    expect(() => idx.footersFor('region').add(gf('region')),
         throwsUnsupportedError);
   });
 
