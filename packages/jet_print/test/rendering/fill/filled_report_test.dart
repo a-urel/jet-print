@@ -111,4 +111,51 @@ void main() {
         group: 'region');
     expect(grouped.toString(), contains('region'));
   });
+
+  test('FilledReport.params participates in equality and hashCode', () {
+    FilledReport report(Map<String, JetValue> params) => FilledReport(
+        page: PageFormat.a4Portrait,
+        bands: const <FilledBand>[],
+        params: params);
+    expect(report(<String, JetValue>{'x': const JetString('a')}),
+        report(<String, JetValue>{'x': const JetString('a')}));
+    expect(report(<String, JetValue>{'x': const JetString('a')}).hashCode,
+        report(<String, JetValue>{'x': const JetString('a')}).hashCode);
+    expect(
+        report(<String, JetValue>{'x': const JetString('a')}) ==
+            report(<String, JetValue>{'x': const JetString('b')}),
+        isFalse);
+  });
+
+  test('FilledReport.params defaults to empty', () {
+    final FilledReport r =
+        FilledReport(page: PageFormat.a4Portrait, bands: const <FilledBand>[]);
+    expect(r.params, isEmpty);
+  });
+
+  test('FilledReport.params equality and hash are insertion-order-independent',
+      () {
+    FilledReport report(Map<String, JetValue> params) => FilledReport(
+        page: PageFormat.a4Portrait,
+        bands: const <FilledBand>[],
+        params: params);
+    final FilledReport a = report(<String, JetValue>{
+      'a': const JetString('1'),
+      'b': const JetString('2'),
+    });
+    final FilledReport b = report(<String, JetValue>{
+      'b': const JetString('2'),
+      'a': const JetString('1'),
+    });
+    expect(a, b);
+    expect(a.hashCode, b.hashCode);
+  });
+
+  test('FilledReport freezes its params map', () {
+    final FilledReport r = FilledReport(
+        page: PageFormat.a4Portrait,
+        bands: const <FilledBand>[],
+        params: <String, JetValue>{'x': const JetString('a')});
+    expect(() => r.params['y'] = const JetString('b'), throwsUnsupportedError);
+  });
 }

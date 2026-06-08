@@ -72,8 +72,12 @@ class FilledBand {
 /// The full resolved report: a [page] and an ordered list of [bands].
 class FilledReport {
   /// Creates a filled report.
-  FilledReport({required this.page, required List<FilledBand> bands})
-      : bands = List<FilledBand>.unmodifiable(bands);
+  FilledReport({
+    required this.page,
+    required List<FilledBand> bands,
+    Map<String, JetValue> params = const <String, JetValue>{},
+  })  : bands = List<FilledBand>.unmodifiable(bands),
+        params = Map<String, JetValue>.unmodifiable(params);
 
   /// The page the report lays out onto.
   final PageFormat page;
@@ -81,14 +85,28 @@ class FilledReport {
   /// The ordered resolved band instances.
   final List<FilledBand> bands;
 
+  /// The report parameters in effect for this fill, normalized to [JetValue]
+  /// (008c). Carried so Layout can resolve `$P{}` in page chrome. Not persisted —
+  /// this is the internal IR.
+  final Map<String, JetValue> params;
+
   @override
   bool operator ==(Object other) =>
       other is FilledReport &&
       other.page == page &&
-      _listEquals(other.bands, bands);
+      _listEquals(other.bands, bands) &&
+      _mapEquals(other.params, params);
 
   @override
-  int get hashCode => Object.hash(page, Object.hashAll(bands));
+  int get hashCode {
+    final int paramsHash = Object.hashAllUnordered(
+      <int>[
+        for (final MapEntry<String, JetValue> e in params.entries)
+          Object.hash(e.key, e.value),
+      ],
+    );
+    return Object.hash(page, Object.hashAll(bands), paramsHash);
+  }
 
   @override
   String toString() => 'FilledReport(${bands.length} bands)';

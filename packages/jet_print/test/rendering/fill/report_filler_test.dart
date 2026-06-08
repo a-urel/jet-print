@@ -608,6 +608,27 @@ void main() {
     expect(b.last.group, 'region');
   });
 
+  test('fill normalizes params into FilledReport.params (JetValue; stable)', () {
+    final ReportTemplate tpl = ReportTemplate(
+      name: 'demo',
+      page: PageFormat.a4Portrait,
+      bands: <ReportBand>[
+        ReportBand(type: BandType.detail, height: 10,
+            elements: <ReportElement>[t('d', text: '.')]),
+      ],
+    );
+    FillResult run() => ReportFiller().fill(
+          tpl,
+          JetInMemoryDataSource(<Map<String, Object?>>[<String, Object?>{}]),
+          params: <String, Object?>{'n': 3, 's': 'hi', 'bad': <int>[1, 2]},
+        );
+    final FilledReport a = run().report;
+    expect(a.params['n'], const JetNumber(3));
+    expect(a.params['s'], const JetString('hi'));
+    expect(a.params['bad'], isA<JetError>()); // unsupported type -> stable error
+    expect(a, run().report); // normalization is stable -> two fills compare equal
+  });
+
   test('a page-scoped reference in a group FOOTER element is an error', () {
     final ReportTemplate tpl = ReportTemplate(
       name: 'demo',

@@ -101,6 +101,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   accounting for any repeated outer headers). Group identity is carried into the internal Fill→Layout
   IR via `FilledBand.group`; the schema is unchanged (the codec contract comment now codifies the
   pre-1.0 additive-optional-fields carve-out). A flag on a header-less group is a no-op + info.
+- **Page-scoped substitution (spec 008c).** `pageHeader`/`pageFooter` text expressions are evaluated
+  at layout time and substituted at their authored bounds: `$V{PAGE_NUMBER}`/`$V{PAGE_COUNT}` (as
+  integer strings, e.g. `Page 1 of 3`) and report `$P{params}` (threaded through the IR as the
+  normalized `FilledReport.params`). A new read-only `Expression.references` gives complete,
+  branch-independent reference analysis, so unavailable chrome references (`$F{}`, non-page `$V{}`)
+  are diagnosed once per element regardless of short-circuiting. Substitution is fixed-bounds (no
+  repagination, no chrome box growth); parse/evaluation failures render `!ERR`. The schema is
+  unchanged (`FilledReport.params` is internal IR).
 
 ## 0.1.0
 
