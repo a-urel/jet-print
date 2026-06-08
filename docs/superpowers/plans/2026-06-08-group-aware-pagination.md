@@ -451,8 +451,20 @@ FilledBand _gband(BandType type,
       variables: const <String, JetValue>{},
     );
 
-ReportTemplate _tplWithGroups(List<ReportGroup> groups) =>
-    ReportTemplate(name: 'demo', page: _smallPage, groups: groups);
+ReportTemplate _tplWithGroups(List<ReportGroup> groups) => ReportTemplate(
+      name: 'demo',
+      page: _smallPage,
+      groups: groups,
+      // One authored group-header band per group, so the template is consistent
+      // with the directly-built filled stream (a real Fill produces both). The
+      // header-less advisory then fires only for groups that genuinely lack an
+      // authored header. These template bands are inert at layout time — the
+      // layouter lays out filled.bands, not template body bands.
+      bands: <ReportBand>[
+        for (final ReportGroup g in groups)
+          ReportBand(type: BandType.groupHeader, height: 0, group: g.name),
+      ],
+    );
 ```
 
 Add these tests inside `main()` (after the existing 008a tests):
@@ -611,11 +623,34 @@ Add these tests inside `main()` (after the existing 008a tests):
     expect(r.diagnostics.entries, isEmpty); // no diagnostic
   });
 
-  test('a flag on a header-less group emits an info and changes nothing', () {
-    final ReportTemplate tpl = _tplWithGroups(<ReportGroup>[
-      ReportGroup(
-          name: 'g', expression: r'$F{g}', reprintHeaderOnEachPage: true),
+  test('a group band naming an undeclared group lays out as a plain band', () {
+    final ReportTemplate tpl = _tplWithGroups(const <ReportGroup>[]);
+    final FilledReport filled = _filled(<FilledBand>[
+      _gband(BandType.groupHeader, group: 'ghost', height: 30, id: 'GH'),
+      _gband(BandType.detail, height: 30, id: 'd1'),
+      _gband(BandType.detail, height: 30, id: 'd2'),
     ]);
+    final LayoutResult r = ReportLayouter().layout(tpl, filled);
+    expect(r.pages.length, 2); // 'ghost' undeclared -> plain band
+    expect(
+        r.pages[1].primitives
+            .whereType<RectPrimitive>()
+            .any((RectPrimitive p) => p.elementId == 'GH'),
+        isFalse); // not reprinted
+    expect(r.diagnostics.entries, isEmpty); // no declared groups -> no advisory
+  });
+
+  test('a flag on a header-less group emits an info and changes nothing', () {
+    // A flagged group with NO authored group-header band in the template.
+    final ReportTemplate tpl = ReportTemplate(
+      name: 'demo',
+      page: _smallPage,
+      groups: <ReportGroup>[
+        ReportGroup(
+            name: 'g', expression: r'$F{g}', reprintHeaderOnEachPage: true),
+      ],
+      bands: const <ReportBand>[],
+    );
     final FilledReport filled = _filled(<FilledBand>[
       _gband(BandType.detail, height: 30, id: 'd1'),
     ]);
@@ -625,6 +660,31 @@ Add these tests inside `main()` (after the existing 008a tests):
             .where((Diagnostic d) => d.severity == DiagnosticSeverity.info)
             .length,
         1);
+  });
+
+  test('a flagged group with an authored header gets no advisory on empty data',
+      () {
+    // The Medium regression: empty data emits only noData (no group bands), but
+    // the template DOES author a header, so no advisory must fire.
+    final ReportTemplate tpl = ReportTemplate(
+      name: 'demo',
+      page: _smallPage,
+      groups: <ReportGroup>[
+        ReportGroup(
+            name: 'g', expression: r'$F{g}', reprintHeaderOnEachPage: true),
+      ],
+      bands: const <ReportBand>[
+        ReportBand(type: BandType.groupHeader, height: 0, group: 'g'),
+      ],
+    );
+    final FilledReport filled = _filled(<FilledBand>[
+      _gband(BandType.noData, height: 20, id: 'ND'),
+    ]);
+    final LayoutResult r = ReportLayouter().layout(tpl, filled);
+    expect(
+        r.diagnostics.entries
+            .where((Diagnostic d) => d.severity == DiagnosticSeverity.info),
+        isEmpty);
   });
 
   test('a header-only group is closed by summary (no reprint above summary)',
@@ -664,6 +724,11 @@ Add these tests inside `main()` (after the existing 008a tests):
     final LayoutResult a = ReportLayouter().layout(tpl(), filled());
     final LayoutResult b = ReportLayouter().layout(tpl(), filled());
     expect(a.pages, b.pages); // PageFrame has value equality
+    List<(DiagnosticSeverity, String, String?)> proj(LayoutResult r) => r
+        .diagnostics.entries
+        .map((Diagnostic d) => (d.severity, d.message, d.elementId))
+        .toList();
+    expect(proj(a), proj(b)); // diagnostics by normalized projection
   });
 ```
 
@@ -777,9 +842,12 @@ Replace the `layout(...)` method body (everything inside the method) with this v
       for (final ReportGroup g in template.groups) g.name: g,
     };
 
-    // Advisory: a flag on a group that never opens a header band does nothing.
+    // Advisory: a flag on a group with no AUTHORED group-header band does
+    // nothing. Keyed off the template (static structure), NOT filled.bands —
+    // empty-data reports emit only noData, with no group bands, so a filled scan
+    // would falsely fire for every flagged group on empty input.
     final Set<String> groupsWithHeader = <String>{
-      for (final FilledBand b in filled.bands)
+      for (final ReportBand b in template.bands)
         if (b.type == BandType.groupHeader && b.group != null) b.group!,
     };
     for (final ReportGroup g in template.groups) {
@@ -919,7 +987,7 @@ Replace the `layout(...)` method body (everything inside the method) with this v
 - [ ] **Step 4: Run the tests + analyzer**
 
 Run: `flutter test test/rendering/layout/report_layouter_test.dart -r expanded && flutter analyze`
-Expected: PASS — all existing 008a layout tests (their group-typed bands carry no `group` → laid out as plain bands, byte-identical) **plus** the 10 new reprint/lifetime tests; `No issues found!`.
+Expected: PASS — all existing 008a layout tests (their group-typed bands carry no `group` → laid out as plain bands, byte-identical) **plus** the 12 new reprint/lifetime tests; `No issues found!`.
 
 - [ ] **Step 5: Commit**
 
