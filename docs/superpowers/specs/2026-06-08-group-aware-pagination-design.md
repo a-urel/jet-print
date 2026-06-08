@@ -85,24 +85,28 @@ class FilledBand {
   "intentionally incomplete."
 - `==`/`hashCode`/`toString` are updated to include `group`.
 
-## §4 — Schema-versioning: a codified pre-1.0 carve-out (not a silent exception)
+## §4 — Schema-versioning: explicit pre-1.0 carve-out (codec aligned; constitution exception pending)
 
-Adding the two persisted `ReportGroup` flags is a schema change, and the codec's contract today says
-*"Bump on every schema change and ship a [SchemaMigration]"* (`report_codec.dart`). Rather than keep
-taking silent per-spec exceptions to that contract (007b, 007c, and now 008b), 008b **codifies the
-pre-1.0 reality at the repo level**: the library is **not deployed**, so no serialized report exists
-to migrate or to break.
+Adding the two persisted `ReportGroup` flags is a schema change, and *two* contracts speak to it: the
+codec's comment (*"Bump on every schema change and ship a [SchemaMigration]"*, `report_codec.dart`)
+and Constitution V (semver + forward migration on schema change). Rather than keep taking *silent*
+per-spec exceptions (007b, 007c, and now 008b), 008b makes the carve-out **explicit** — the library
+is **not deployed**, so no serialized report exists to migrate or to break.
 
 - **`kReportSchemaVersion` stays `1`; no migration** — there is no prior on-disk data, so a bump +
   migration would be empty ceremony.
 - **The codec's contract comment is amended** (§8) to state the carve-out explicitly: *pre-1.0
   (pre-deployment), additive **optional** fields that load backward-compatibly (absent ⇒ default)
   may be introduced at the current schema version without a bump; the bump-and-migrate rule
-  activates at 1.0.* After this edit, code and docs agree — 008b is policy-compliant, not a breach.
+  activates at 1.0.* After this edit the **codec operational contract is aligned** with the practice
+  — the deviation is no longer silent.
 - **Backward compatibility still holds** for any in-memory/JSON template authored before the flags
   existed: absent keys decode to `false`.
-- A formal Constitution V reconciliation (and the eventual 1.0 bump discipline) is deferred to the
-  pre-1.0 versioning pass; the operational contract (the codec comment) is brought into sync now.
+- **Constitution V is *not* amended by this spec.** Its semver/migration *principle* still formally
+  requires a bump, so 008b remains an **explicit, acknowledged exception to Constitution V** — not a
+  claim of full policy compliance. Reconciling the constitution (and adopting the 1.0 bump discipline)
+  is deferred to a dedicated pre-1.0 versioning pass; a feature spec does not amend the ratified
+  constitution unilaterally.
 
 ## §5 — The group-instance lifetime model
 
@@ -314,9 +318,10 @@ adds no expression import.
    *which group a band belongs to*; adding it to the internal IR (not the persisted template) is
    enough for both features and costs no schema change.
 3. **Header-driven hybrid lifetime** (§5) — footers are independently optional, so closure cannot be
-   footer-only; opening is header-driven, closure is footer-run-end (cascade) + `summary`/`noData` +
-   next-instance. This is the model that survives header-only, footer-only, multi-header, and
-   multi-footer groups (the three review rounds that hardened it, §12).
+   footer-only; opening is header-driven, closure is **enter-outer-footer inner-pop (§5.2 rule 1)** +
+   footer-run-end (cascade) + `summary`/`noData` + next-instance. This is the model that survives
+   header-only, footer-only, multi-header, and multi-footer groups (the review rounds that hardened
+   it, §12).
 4. **Flags require ≥1 header band** — both anchor on the header (extent measured from it; reprint
    re-emits it). Header-less groups are no-ops + info, sidestepping the footer-only ambiguity.
 5. **`keepTogether` is a precise promise, not best-effort** — the fit check subtracts the headers
@@ -324,9 +329,10 @@ adds no expression import.
    "fits" provably does (§6.2). One break per band via the `broke` guard.
 6. **Reprint re-emits the already-resolved header instance** — same group key/snapshot on a
    continuation page, so no re-resolution and no expression engine in layout (008a invariant kept).
-7. **Codified pre-1.0 schema carve-out** (§4) — the library is not deployed, so no bump/migration;
-   instead of a silent per-spec exception, the codec's contract comment is amended to permit pre-1.0
-   additive optional fields at the current schema version, so code and docs agree.
+7. **Explicit pre-1.0 schema carve-out** (§4) — the library is not deployed, so no bump/migration; the
+   codec's contract comment is amended to permit pre-1.0 additive optional fields, **aligning the
+   codec operational contract**. Constitution V is not amended here, so 008b remains an **explicit,
+   acknowledged exception** to it, deferred to the pre-1.0 versioning pass.
 8. **Group bands without identity lay out as plain bands** — a `groupHeader`/`groupFooter` with a
    `null`/undeclared `group` gets no group-aware treatment and no diagnostic (§5), keeping direct
    `ReportLayouter` use well-defined and the 008a regressions byte-identical.
@@ -373,9 +379,9 @@ adds no expression import.
    body bands — no lifetime/keep-together/reprint, **no diagnostic** (§5) — which makes the
    byte-identical regression claim true and defines direct `ReportLayouter` use (Open Q2).
 2. *Schema exception is a contract breach, not a local choice (High).* **Resolved via the user's
-   "not deployed" decision:** §4 now **codifies** the pre-1.0 carve-out by amending the codec's
-   contract comment (repo-level) — so it is policy, not a silent breach — and skips the (empty)
-   migration since nothing is deployed.
+   "not deployed" decision:** §4 amends the codec's contract comment — making the deviation explicit
+   rather than silent — and skips the (empty) migration since nothing is deployed. *(Refined in R5:
+   the codec contract is aligned; the Constitution V exception remains explicit and pending.)*
 3. *Extent pre-pass is O(n²) (Medium).* **Fixed:** §6.1 is a single O(n) exit-driven pass over the
    lifetime stack + prefix sums; no per-header rescan.
 4. *`FilledBand.toString` inconsistency (Low).* **Fixed:** `toString` includes `group` when non-null;
@@ -383,3 +389,12 @@ adds no expression import.
 5. *Misleading inner-above-outer edge (Open Q1).* **Strengthened, not documented away:** §5.2 rule 1
    pops inner groups *before* an outer footer, eliminating the misleading case; only the benign
    own-header-above-own-footer remains (§5.3).
+
+**R5 (governance precision), folded in:**
+1. *§4 overclaimed compliance (Medium).* It said the codec-comment edit made 008b "policy-compliant"
+   while also deferring Constitution V — contradictory, since the constitution still requires a bump.
+   **Tightened:** §4 (and §11 #7) now state the **codec** operational contract is aligned while
+   **Constitution V remains an explicit, acknowledged exception** pending the versioning pass; the
+   spec does not amend the ratified constitution.
+2. *§11 lifetime summary stale (Low).* The compressed closure summary omitted the §5.2
+   enter-outer-footer inner-pop rule. **Fixed:** §11 #3 now lists it.
