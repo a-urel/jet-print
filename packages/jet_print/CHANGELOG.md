@@ -78,6 +78,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   and barcode/unknown placeholders; `RenderContext`; `JetConstraints`. `MeasuredText` gains a
   resolved `fontFamily` (006 amendment). Custom element types round-trip through JSON *and* render
   with zero core edits.
+- **Fill data pass (spec 007b).** `ReportFiller` turns a `ReportTemplate` + `JetDataSource` into a
+  resolved band-instance stream (`FilledReport`) — title/detail/summary/noData — with per-row text
+  `expression` and image `FieldImageSource` resolution, report-scoped running/grand totals, frozen
+  variable snapshots, and a `ReportDiagnostics` (missing-field warnings; `!ERR` on bad expressions;
+  rejection of illegal page-scoped variable use). Adds `TextElement.expression`.
 
 ## 0.1.0
 

@@ -59,7 +59,7 @@ A **resolved element** is defined tightly, so 007b cannot grow into a parallel e
 | Element | Data-bearing field(s) substituted | Preserved as authored |
 |---|---|---|
 | `TextElement` | `text` (← evaluated expression; an unbound element keeps its literal `text`) | `id`, `bounds`, `style` |
-| `BarcodeElement` | `data` | `id`, `bounds`, `symbology`, `color` |
+| `BarcodeElement` | `data` — **deferred: not bindable in v1** (no barcode `expression`; resolved == authored). See the 007b amendment below. | `id`, `bounds`, `symbology`, `color` |
 | `ImageElement` | `source` — **only** `FieldImageSource`→`BytesImageSource` in 007b's sync pass; `BytesImageSource` is already resolved; `UrlImageSource` is **excluded** (deferred async prefetch, §3.1) | `id`, `bounds`, `fit` |
 | `ShapeElement` | *(none — purely static)* | all; resolved copy == authored |
 | `UnknownElement` | *(none — rendered as placeholder)* | preserved verbatim |
@@ -354,3 +354,12 @@ Three pre-write review rounds (GitHub Copilot), folded in:
   (§3). Recorded the future URL-image reintegration choice (prefetch-before-`emit` vs. a new
   frame/painter path) as a named open question for that later spec (§3.1). Font-state and
   end-to-end-test concerns confirmed resolved.
+
+## Amendment (2026-06-08, from spec 007b)
+
+**Barcode is not data-bindable in v1.** §3's field-partition table prospectively listed
+`BarcodeElement.data` as a substituted data-bearing field. v1 ships no barcode binding mechanism
+(the 007 fork chose a text-only `expression`), so 007b's per-type resolver passes `BarcodeElement`
+through unchanged — its resolved copy equals the authored element. The §3 table row is annotated
+accordingly. Barcode data-binding (a barcode `expression` or equivalent) is deferred to a later
+spec; until then `barcode.data` is a literal, resolved == authored.
