@@ -552,4 +552,53 @@ void main() {
     expect(ReportFiller().fill(make(), src()).report,
         ReportFiller().fill(make(), src()).report);
   });
+
+  test('noData path with groups declared emits only noData (no group bands)', () {
+    final ReportTemplate tpl = ReportTemplate(
+      name: 'demo',
+      page: PageFormat.a4Portrait,
+      groups: const <ReportGroup>[
+        ReportGroup(name: 'region', expression: r'$F{region}'),
+      ],
+      bands: <ReportBand>[
+        gh('region', text: 'H'),
+        ReportBand(type: BandType.detail, height: 10,
+            elements: <ReportElement>[t('d', text: '.')]),
+        gf('region', text: 'F'),
+        ReportBand(type: BandType.noData, height: 10,
+            elements: <ReportElement>[t('n', text: 'ND')]),
+      ],
+    );
+    final FillResult res = ReportFiller().fill(
+      tpl,
+      JetInMemoryDataSource(const <Map<String, Object?>>[]),
+    );
+    // Empty source: only the noData band; no group headers/footers.
+    expect(res.report.bands.map((b) => b.type).toList(),
+        <BandType>[BandType.noData]);
+  });
+
+  test('a page-scoped reference in a group FOOTER element is an error', () {
+    final ReportTemplate tpl = ReportTemplate(
+      name: 'demo',
+      page: PageFormat.a4Portrait,
+      groups: const <ReportGroup>[
+        ReportGroup(name: 'region', expression: r'$F{region}'),
+      ],
+      bands: <ReportBand>[
+        ReportBand(type: BandType.detail, height: 10,
+            elements: <ReportElement>[t('d', text: '.')]),
+        gf('region', text: 'fb', expr: r'$V{PAGE_NUMBER}'),
+      ],
+    );
+    final FillResult res = ReportFiller().fill(
+      tpl,
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'region': 'West'},
+      ]),
+    );
+    expect(res.diagnostics.hasErrors, isTrue);
+    // The footer (emitted at end of data) preserves its authored text.
+    expect((res.report.bands.last.elements.single as TextElement).text, 'fb');
+  });
 }
