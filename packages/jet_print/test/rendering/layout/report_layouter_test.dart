@@ -197,6 +197,28 @@ void main() {
         isTrue);
   });
 
+  test('a chrome binding is diagnosed once, not once per page', () {
+    final ReportTemplate tpl = _tpl(bands: <ReportBand>[
+      const ReportBand(type: BandType.pageHeader, height: 20, elements: <ReportElement>[
+        TextElement(
+            id: 'pn',
+            bounds: JetRect(x: 0, y: 0, width: 180, height: 20),
+            text: 'Page',
+            expression: r'$V{PAGE_NUMBER}'),
+      ]),
+    ]);
+    // header 20 -> bodyTop=30, bodyBottom=90, capacity=60; bodies 40+40 overflow
+    // to a second page (chrome repeats on both). The scan runs once at setup.
+    final LayoutResult r = ReportLayouter()
+        .layout(tpl, _filled(<FilledBand>[_body(40), _body(40)]));
+    expect(r.pages.length, 2); // sanity: genuinely multi-page
+    final List<Diagnostic> infos = r.diagnostics.entries
+        .where((Diagnostic d) =>
+            d.severity == DiagnosticSeverity.info && d.elementId == 'pn')
+        .toList();
+    expect(infos.length, 1); // diagnosed once at setup, NOT once per page
+  });
+
   test('an unresolved chrome image renders a placeholder + an info diagnostic',
       () {
     final ReportTemplate tpl = _tpl(bands: <ReportBand>[
