@@ -82,6 +82,7 @@ The single state seam shared by the canvas and the panels (FR-018). Holds:
 | `template` | `ReportTemplate` (existing) | Current document model; the value to save (FR-022). |
 | `selection` | `Selection` (new) | Current selected element ids. |
 | `canUndo` / `canRedo` | `bool` | Drive top bar enablement (FR-017, US3.4). |
+| `gridEnabled` / `snapEnabled` | `bool` | Top-bar toggles (FR-011, US2.4); consulted by snapping; default on (view state, not in history). |
 | *(internal)* `EditHistory` | new | Undo/redo snapshot stacks. |
 | *(internal)* `Clipboard` | new | Cut/copied elements for paste. |
 | *(internal)* `_seq` | `int` | Monotonic id counter (FR-004). |

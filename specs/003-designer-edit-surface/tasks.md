@@ -71,7 +71,8 @@ description: "Task list for Designer Edit Surface — Direct-Manipulation Elemen
 - [ ] T020 [P] Implement `EditHistory` (undo/redo snapshot stacks; `push` clears redo; `revision` counter for `shouldRepaint`) in `packages/jet_print/lib/src/designer/controller/edit_history.dart`.
 - [ ] T021 [P] Implement `Clipboard` (in-memory `List<ReportElement>`; deep-copy with fresh ids + offset on paste) in `packages/jet_print/lib/src/designer/controller/clipboard.dart`.
 - [ ] T022 [P] Implement `ElementIdFactory` (monotonic `int`; `'<typeKey><n>'`; seed past the max suffix on `open`) in `packages/jet_print/lib/src/designer/controller/element_id_factory.dart`.
-- [ ] T023 Implement the `JetReportDesignerController` skeleton (`ChangeNotifier`; `template`/`selection`/`canUndo`/`canRedo` getters; `open`; `select`/`clearSelection`; `undo`/`redo`; `beginInteraction`/`updateInteraction`/`commitInteraction`/`cancelInteraction` scaffolding; one-history-entry-per-commit plumbing; `notifyListeners`) in `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart` (depends on T017–T022). Makes T007 pass.
+- [ ] T022a [P] Add a default-blank-`ReportTemplate` factory (a sensible default `PageFormat` + a default band structure per the spec assumption) in `packages/jet_print/lib/src/designer/controller/default_template.dart`; the no-arg `JetReportDesignerController()` and `const JetReportDesigner()` seed from it (contracts §2).
+- [ ] T023 Implement the `JetReportDesignerController` skeleton (`ChangeNotifier`; `template`/`selection`/`canUndo`/`canRedo` getters; `open`; `select`/`clearSelection`; `undo`/`redo`; `beginInteraction`/`updateInteraction`/`commitInteraction`/`cancelInteraction` scaffolding; one-history-entry-per-commit plumbing; `notifyListeners`) in `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart` (depends on T017–T022a). Makes T007 pass.
 
 ### Public surface
 
@@ -91,7 +92,7 @@ description: "Task list for Designer Edit Surface — Direct-Manipulation Elemen
 - [ ] T031 Convert `JetReportDesigner` to a `StatefulWidget` with optional `controller`/`initialReport`/`onSaveRequested`/`onOpenRequested` (still `const`-constructible with no args over a default blank template), providing the controller down-tree via `InheritedNotifier` (contracts §2, research D6) in `packages/jet_print/lib/src/designer/jet_report_designer.dart`.
 - [ ] T032 Replace the static A4 placeholder in `DesignerSurface` with the live `DesignCanvas` (reads the controller via the `InheritedNotifier`) in `packages/jet_print/lib/src/designer/layout/designer_surface.dart` (depends on T030, T031).
 - [ ] T033 [P] Extend the test harness (pump `JetReportDesigner` with a supplied controller; canvas keys/finders; page↔screen helpers) in `packages/jet_print/test/designer/support/designer_harness.dart`.
-- [ ] T034 [P] Add the backward-compat construction test (`const JetReportDesigner()` still constructs — 002 contract) in `packages/jet_print/test/designer/jet_report_designer_test.dart` (contracts §7.3).
+- [ ] T034 [P] Add the backward-compat construction test (`const JetReportDesigner()` still constructs — 002 contract) AND assert the no-arg controller yields the default blank template's band structure (contracts §2, T022a) in `packages/jet_print/test/designer/jet_report_designer_test.dart` (contracts §7.3).
 
 **Checkpoint**: Public model + format exposed and round-trip-tested; controller with undo/redo green; the surface hosts a live (empty-capable) canvas. User stories can now begin.
 
@@ -136,7 +137,9 @@ description: "Task list for Designer Edit Surface — Direct-Manipulation Elemen
 
 - [ ] T045 [P] [US2] Implement `ResizeCommand` (per-handle resize, min 4×4 pt floor with the line one-axis exception, clamp to band ∩ page) in `packages/jet_print/lib/src/designer/controller/commands/resize_command.dart`.
 - [ ] T046 [P] [US2] Implement snapping (grid + sibling edges/centers + band/page bounds → `SnapResult` + `SnapGuide`s; screen-px threshold converted via the live zoom; Alt/Option bypass) in `packages/jet_print/lib/src/designer/canvas/snapping.dart` (depends on T025).
-- [ ] T047 [US2] Add `resizeTo` + resize-interaction commit (snapping applied during the gesture) to the controller in `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart` (depends on T045, T046).
+- [ ] T046a [P] [US2] Add a grid-toggle snapping test — with the grid enabled, move/resize snaps positions/sizes to the grid increment; with it disabled, grid snap is suppressed (sibling/band snap unaffected); `snapEnabled == false` suppresses all snapping (US2.4 / FR-011) in `packages/jet_print/test/designer/canvas/snapping_test.dart` (extend; write FIRST — MUST fail).
+- [ ] T046b [US2] Add `gridEnabled` / `snapEnabled` boolean state to the controller (default on; `setGridEnabled`/`setSnapEnabled`; notifies) in `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart`, and consult both flags in `packages/jet_print/lib/src/designer/canvas/snapping.dart` (T046). Makes T046a pass.
+- [ ] T047 [US2] Add `resizeTo` + resize-interaction commit (snapping applied during the gesture, honoring `gridEnabled`/`snapEnabled` — T046b) to the controller in `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart` (depends on T045, T046).
 - [ ] T048 [US2] Add handle-drag resize gestures + live snap-guide rendering to the canvas and overlay in `packages/jet_print/lib/src/designer/canvas/design_canvas.dart` and `packages/jet_print/lib/src/designer/canvas/selection_overlay.dart` (depends on T047).
 
 **Checkpoint**: Elements resize precisely and snap/align with guides; bypass works. US1 + US2 both functional.
@@ -153,7 +156,7 @@ description: "Task list for Designer Edit Surface — Direct-Manipulation Elemen
 
 ### Tests for User Story 3 (write FIRST — MUST fail)
 
-- [ ] T049 [P] [US3] Undo/redo sequence test — a create/move/resize sequence undoes in reverse and redoes in order with model + selection exact at every step; a new edit after undo discards redo; past-the-end is a no-op (contracts §7.5 / SC-003 / acceptance US3.1–US3.4) in `packages/jet_print/test/designer/controller/undo_redo_sequence_test.dart`.
+- [ ] T049 [P] [US3] Undo/redo sequence test — a ≥50-step create/move/resize sequence (SC-003) undoes in reverse and redoes in order with model + selection exact at every step; a new edit after undo discards redo; past-the-end is a no-op (contracts §7.5 / SC-003 / acceptance US3.1–US3.4) in `packages/jet_print/test/designer/controller/undo_redo_sequence_test.dart`.
 - [ ] T050 [P] [US3] Top-bar undo/redo widget test — buttons reflect `canUndo`/`canRedo` and drive `controller.undo`/`redo`; `⌘Z`/`⇧⌘Z` act only when the canvas is focused in `packages/jet_print/test/designer/interaction/undo_redo_controls_test.dart`.
 
 ### Implementation for User Story 3
@@ -187,7 +190,7 @@ description: "Task list for Designer Edit Surface — Direct-Manipulation Elemen
 - [ ] T061 [P] [US4] Implement `NudgeCommand` (1 pt arrow / 10 pt Shift+arrow) in `packages/jet_print/lib/src/designer/controller/commands/nudge_command.dart`.
 - [ ] T062 [US4] Add `selectAll`/`addToSelection`/`toggle`, `delete`, `cut`/`copy`/`paste`/`duplicate`, `bringForward`/`sendBackward`/`bringToFront`/`sendToBack`, `align`/`distribute`, `nudge` methods to the controller in `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart` (depends on T056–T061).
 - [ ] T063 [US4] Implement marquee drag (rubber-band rect; enclosed → selection on release) + shift-click add/remove in `packages/jet_print/lib/src/designer/canvas/design_canvas.dart` and `packages/jet_print/lib/src/designer/canvas/selection_overlay.dart` (depends on T062).
-- [ ] T064 [US4] Extend the canvas shortcuts with nudge/Shift-nudge, delete, copy/cut/paste/duplicate, select-all (canvas-focus-scoped) in `packages/jet_print/lib/src/designer/interaction/canvas_shortcuts.dart` (depends on T062).
+- [ ] T064 [US4] Extend the canvas shortcuts with nudge/Shift-nudge, delete, copy/cut/paste/duplicate, select-all, Escape-clear (FR-006) (canvas-focus-scoped) in `packages/jet_print/lib/src/designer/interaction/canvas_shortcuts.dart` (depends on T062).
 - [ ] T065 [US4] Add z-order + align/distribute action affordances (top-bar and/or canvas context menu) wired to the controller in `packages/jet_print/lib/src/designer/layout/designer_top_bar.dart` (depends on T062).
 
 **Checkpoint**: Bulk operations act on the whole selection and are undoable. US1–US4 functional.
@@ -244,9 +247,11 @@ description: "Task list for Designer Edit Surface — Direct-Manipulation Elemen
 
 - [ ] T078 [P] Add the new localized strings (context-menu/tooltip/a11y/drop-hint/align/distribute/z-order/zoom action names) to `jet_print_en.arb`, `jet_print_de.arb`, `jet_print_tr.arb` and run `flutter gen-l10n`, in `packages/jet_print/lib/src/designer/l10n/`.
 - [ ] T079 [P] Extend the localization tests (new affordance strings render in en/de/tr; English fallback; no blank/raw-key labels — SC-008) in `packages/jet_print/test/designer/localization_test.dart`, `localization_de_test.dart`, `localization_tr_test.dart`.
+- [ ] T079a [P] Add an accessibility/semantics widget test — assert localized accessible names + roles on the 8 resize handles, on canvas element regions (e.g. "Text element …"), and on the align/distribute/z-order/zoom/save/open menu actions, and that each new affordance is focus-reachable and keyboard-operable with no mouse (SC-008 / FR-024) in `packages/jet_print/test/designer/accessibility_semantics_test.dart` (write FIRST — MUST fail).
+- [ ] T079b Attach `Semantics` labels/roles (using the localized strings from T078) to the selection handles in `packages/jet_print/lib/src/designer/canvas/selection_overlay.dart`, the element hit regions in `packages/jet_print/lib/src/designer/canvas/design_canvas.dart`, and the menu/toolbar actions in `packages/jet_print/lib/src/designer/layout/designer_top_bar.dart` (depends on T078). Makes T079a pass.
 - [ ] T080 [P] Add design-surface goldens (representative elements with a selection shown, light + dark, via the shared render pipeline — Constitution IV; generate with `flutter test --update-goldens`) in `packages/jet_print/test/designer/goldens/`.
 - [ ] T081 [P] Add the 200-element drag perf smoke (a 20-element selection drag within the frame budget, no exceptions — SC-007) in `packages/jet_print/test/designer/perf/large_design_drag_test.dart`.
-- [ ] T082 [US/FR-022] Wire the tester app to own a `JetReportDesignerController` and implement `onSaveRequested`/`onOpenRequested` via `file_selector` + `JetReportFormat.encodeJson`/`decodeJson` in `apps/jet_print_tester/lib/main.dart` (research D8).
+- [ ] T082 Wire the tester app to own a `JetReportDesignerController` and implement `onSaveRequested`/`onOpenRequested` via `file_selector` + `JetReportFormat.encodeJson`/`decodeJson` (FR-022 open/save) in `apps/jet_print_tester/lib/main.dart` (research D8).
 - [ ] T083 Wire the top-bar Save/Open actions to `onSaveRequested`/`onOpenRequested` and the grid/snap toggles to the controller in `packages/jet_print/lib/src/designer/layout/designer_top_bar.dart` (depends on T031).
 - [ ] T084 [P] Update the app consumer test to exercise a basic edit → save → reopen path through the public API in `apps/jet_print_tester/test/app_consumes_library_test.dart`.
 - [ ] T085 [P] Add dartdoc to all new public symbols (controller operations; designer params noting geometry + text-only editing this iteration; `JetReportFormat`; model types) and update `packages/jet_print/CHANGELOG.md` (Constitution VI).
@@ -260,7 +265,7 @@ description: "Task list for Designer Edit Surface — Direct-Manipulation Elemen
 ### Phase Dependencies
 
 - **Setup (Phase 1)**: No dependencies — start immediately.
-- **Foundational (Phase 2)**: Depends on Setup — **BLOCKS all user stories**. Within it: tests (T004–T007) first; domain helpers (T008 → T009–T015); format facade (T016); controller core (T017–T023); public export (T024, after T016 + T023); canvas infra (T025–T030); shell + harness (T031–T034).
+- **Foundational (Phase 2)**: Depends on Setup — **BLOCKS all user stories**. Within it: tests (T004–T007) first; domain helpers (T008 → T009–T015); format facade (T016); controller core (T017–T023, incl. T022a default-template factory); public export (T024, after T016 + T023); canvas infra (T025–T030); shell + harness (T031–T034).
 - **User Stories (Phases 3–8)**: All depend on Foundational. Ordered by priority (US1 → US2 → US3 → US4 → US5 → US6). Each is an independently testable increment; later stories layer onto, but do not break, earlier ones.
 - **Polish (Phase 9)**: Depends on all targeted user stories being complete.
 
