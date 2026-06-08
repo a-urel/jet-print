@@ -14,6 +14,12 @@ import 'report_format_exception.dart';
 
 /// The report-schema version this build writes. Bump on every schema change and
 /// ship a [SchemaMigration] for the previous version.
+///
+/// Pre-1.0 carve-out (spec 008b §4): while the library is **not deployed**,
+/// additive **optional** fields that load backward-compatibly (absent ⇒ default)
+/// may be introduced at the current schema version without a bump or migration —
+/// there is no on-disk data to migrate. The bump-and-migrate rule above applies
+/// in full from 1.0 onward.
 const int kReportSchemaVersion = 1;
 
 /// Encodes [template] to a JSON-safe map, stamping [kReportSchemaVersion] and

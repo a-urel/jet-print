@@ -19,6 +19,7 @@ class FilledBand {
     required this.height,
     required List<ReportElement> elements,
     required Map<String, JetValue> variables,
+    this.group,
   })  : elements = List<ReportElement>.unmodifiable(elements),
         variables = Map<String, JetValue>.unmodifiable(variables);
 
@@ -34,11 +35,17 @@ class FilledBand {
   /// The calculator's frozen variable values at this instance (unmodifiable).
   final Map<String, JetValue> variables;
 
+  /// The [ReportGroup] name this band belongs to (008b); set for
+  /// `groupHeader`/`groupFooter` bands, null otherwise. Lets the layout engine
+  /// track open group instances. Not persisted — this is the internal IR.
+  final String? group;
+
   @override
   bool operator ==(Object other) =>
       other is FilledBand &&
       other.type == type &&
       other.height == height &&
+      other.group == group &&
       _listEquals(other.elements, elements) &&
       _mapEquals(other.variables, variables);
 
@@ -54,11 +61,12 @@ class FilledBand {
           Object.hash(e.key, e.value),
       ],
     );
-    return Object.hash(type, height, Object.hashAll(elements), varsHash);
+    return Object.hash(type, height, group, Object.hashAll(elements), varsHash);
   }
 
   @override
-  String toString() => 'FilledBand(${type.name}, ${elements.length} elements)';
+  String toString() => 'FilledBand(${type.name}'
+      '${group == null ? '' : ' [$group]'}, ${elements.length} elements)';
 }
 
 /// The full resolved report: a [page] and an ordered list of [bands].

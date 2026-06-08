@@ -12,6 +12,7 @@ import 'package:jet_print/src/domain/report_variable.dart';
 import 'package:jet_print/src/domain/serialization/report_format_exception.dart';
 import 'package:jet_print/src/expression/expression_exception.dart';
 import 'package:jet_print/src/expression/value.dart';
+import 'package:jet_print/src/rendering/fill/filled_report.dart';
 import 'package:jet_print/src/rendering/fill/report_diagnostics.dart';
 import 'package:jet_print/src/rendering/fill/report_filler.dart';
 
@@ -576,6 +577,35 @@ void main() {
     // Empty source: only the noData band; no group headers/footers.
     expect(res.report.bands.map((b) => b.type).toList(),
         <BandType>[BandType.noData]);
+  });
+
+  test('filled group bands carry their group name; plain bands carry null', () {
+    final ReportTemplate tpl = ReportTemplate(
+      name: 'demo',
+      page: PageFormat.a4Portrait,
+      groups: const <ReportGroup>[
+        ReportGroup(name: 'region', expression: r'$F{region}'),
+      ],
+      bands: <ReportBand>[
+        gh('region', text: 'H'),
+        ReportBand(type: BandType.detail, height: 10,
+            elements: <ReportElement>[t('d', text: '.')]),
+        gf('region', text: 'F'),
+      ],
+    );
+    final FillResult res = ReportFiller().fill(
+      tpl,
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'region': 'West'},
+      ]),
+    );
+    final List<FilledBand> b = res.report.bands;
+    expect(b[0].type, BandType.groupHeader);
+    expect(b[0].group, 'region');
+    expect(b[1].type, BandType.detail);
+    expect(b[1].group, isNull);
+    expect(b.last.type, BandType.groupFooter);
+    expect(b.last.group, 'region');
   });
 
   test('a page-scoped reference in a group FOOTER element is an error', () {

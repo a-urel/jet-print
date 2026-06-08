@@ -147,6 +147,7 @@ class ReportFiller {
             resolver.resolve(e, row: row, params: params, variables: vars),
         ],
         variables: vars,
+        group: band.group,
       ));
     }
 
