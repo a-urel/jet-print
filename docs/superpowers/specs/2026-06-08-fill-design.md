@@ -19,9 +19,11 @@ drive the variable calculator, and emit an ordered stream of **resolved band ins
 no pagination, no rendering.
 
 **008 (Layout) consumes both the `ReportTemplate` and the `FilledReport`** — the template supplies
-the page/column/background chrome bands (which Fill does not process), the page format, and the
-page-scoped variable definitions; the `FilledReport` supplies the resolved content stream **and the
-frozen variable snapshot per band instance** (§7), which 008 needs for per-page late substitution.
+the page/column/background chrome bands (which Fill does not process) and the page format; the
+`FilledReport` supplies the resolved content stream **and the frozen variable snapshot per band
+instance** (§7), which 008 needs for per-page late substitution. The page-scoped variable **names**
+are a single shared constant (§2), not a template slot (`ReportTemplate` has none); 008 supplies
+their **values** at layout time.
 This contract is stated here because 007b defines the IR 008 consumes; 008 implements layout. 007a's
 renderers draw the resolved elements `FilledReport` contains.
 
@@ -43,14 +45,22 @@ page-scoped value *resolution* — defining the page variables, the fixed-bounds
 *legal* carriers (fixed elements in page/column header/footer, blueprint §5), and late substitution
 into reserved bounds. These require pagination and page-scoped bands that do not exist in 007b.
 
-007b does, however, **reserve the page-scoped variable names** — a documented constant set
-(`PAGE_NUMBER`, `PAGE_COUNT` for v1; 008 owns the authoritative list) — so it can **reject their
-*illegal* use** in the bands it processes. A `title`/`detail`/`summary` text expression that
-references a reserved page-scoped variable is an illegal placement (page-scoped values are legal
-only in page/column header/footer, which Fill does not process) → **error diagnostic** + the element
-keeps its authored `text` (§5). This enforces the blueprint's validation intent for 007b's bands
-instead of silently blanking the evidence. A reference to any *other* undeclared variable resolves
-to `JetNull` → blank, silently — 007b has no page-scoped machinery and no "deferred" slots.
+007b does, however, **reserve the page-scoped variable names** in a *single shared constant* — the
+authoritative list lives in `fill/` (`kPageScopedVariables = {'PAGE_NUMBER', 'PAGE_COUNT'}` for v1)
+and 008 **imports** it to resolve their values. It is **not** a `ReportTemplate` slot (the model has
+none) and there is no second list — one authority, no drift.
+
+**Legality (explicit):** a page-scoped variable is legal **only in a text element inside a page or
+column header/footer band** — bands Fill does not process. Everywhere 007b *can* see is therefore an
+illegal placement, and 007b **rejects it with an error diagnostic** (§5) rather than silently
+blanking the evidence:
+- a reference in **any band Fill processes** — `title`, `detail`, `summary`, **or `noData`** — text
+  expression → error + the element keeps its authored `text`;
+- a reference inside a **variable or group expression** → error (those are evaluated per-row during
+  the data pass and can never see a page value).
+
+A reference to any *other* undeclared variable resolves to `JetNull` → blank, silently — 007b has no
+page-scoped machinery and no "deferred" slots.
 
 Fill processes **only** `title`, `detail`, `summary`, `noData` bands; it ignores
 `pageHeader`/`pageFooter`/`columnHeader`/`columnFooter`/`background`/`groupHeader`/`groupFooter`.
@@ -129,7 +139,8 @@ fail fast.
 |---|---|
 | Text expression — **parse** failure (`ExpressionException`) | caught → element text `'!ERR'` + **error** diagnostic |
 | Text expression — **eval** error (`JetError` result) | text `'!ERR'` (via `jetStringify`) + **error** diagnostic |
-| Text expression references a **reserved page-scoped variable** in a `title`/`detail`/`summary` band | **error** diagnostic (illegal placement, §2) + element keeps its authored `text` (not blanked, not `!ERR`) |
+| Reserved page-scoped variable in a **`title`/`detail`/`summary`/`noData` text expression** | **error** diagnostic (illegal placement, §2) + element keeps its authored `text` (not blanked, not `!ERR`) |
+| Reserved page-scoped variable in a **variable or group expression** | **error** diagnostic (illegal placement, §2); the data pass continues — the offending aggregate/group-key may be wrong, and the error makes that explicit |
 | `$F{name}` to a field **absent from the current row's schema** (`!row.hasField(name)`) — element **or** variable/group expression | blank + **warning** (deduped per field name — the schema-drift / typo signal) |
 | `$F{name}` to a **declared-but-null** field | blank, **no** diagnostic (legitimate null data) |
 | `$F{}` / undeclared `$V{}` in title/summary (no row) | blank, **no** diagnostic (no row is expected; page vars legitimately absent) |
@@ -143,8 +154,11 @@ the calculator's variable values:
   context stay silent.
 - **Page-scoped detection** — it records, **precisely via `resolveVariable`** (so a string literal
   containing `$V{PAGE_NUMBER}` cannot false-positive — only a real reference triggers it), that an
-  expression referenced a reserved page-scoped name; the resolver then raises the illegal-placement
-  error for text expressions. Any other missing variable resolves to `JetNull` silently.
+  expression referenced a reserved page-scoped name, tagged with the evaluation **site** (the element
+  id, or the variable/group name). An illegal-placement **error diagnostic** is raised **wherever it
+  occurs**: the text resolver raises it (and preserves the element's authored `text`) for element
+  expressions; Fill raises it for the calculator's variable/group expressions (which it injected the
+  tracking context into, §below). Any other missing variable resolves to `JetNull` silently.
 
 To make the missing-field warning reach **variable and group expressions** too — not just element
 expressions — `VariableCalculator` gains an **optional eval-context factory** (additive; the default
@@ -200,9 +214,11 @@ paginates.
 - **noData** — empty source → one `noData` band, no detail/summary.
 - **Diagnostics** — a bad-syntax text expression → `'!ERR'` + an **error** diagnostic (no throw); a
   `$F{}` to an undeclared field → blank + a **warning**; a declared-null field → blank, no diagnostic.
-- **Page-scoped rejection** — a `detail` text expression referencing `$V{PAGE_NUMBER}` → an **error**
-  diagnostic + the element keeps its authored `text` (not blanked); a *string literal* containing the
-  characters `$V{PAGE_NUMBER}` does **not** trigger it (precise `resolveVariable` detection).
+- **Page-scoped rejection** (negative tests) — `$V{PAGE_NUMBER}` in a `detail` **and** a `noData`
+  text expression → an **error** diagnostic + the element keeps its authored `text` (not blanked);
+  the same reference inside a **variable** expression **and** a **group** expression → an **error**
+  diagnostic; a *string literal* containing the characters `$V{PAGE_NUMBER}` triggers **none** of
+  these (precise `resolveVariable` detection).
 - **Variable schema-drift** — a `SUM($F{typo})` variable over a schema without `typo` → a **warning**
   (via the calculator's injected tracking context), not a silently wrong total.
 - **Frozen variables** — each `FilledBand` carries the variable snapshot: detail bands show the
@@ -220,10 +236,11 @@ eventual public door; `FilledReport` is intentionally incomplete until 007c.
 
 ## 10. Design decisions & deviations (auditable)
 
-1. **Page-scoped *resolution* deferred to 008, but illegal placements rejected now** (§2, §5) —
-   007b reserves the page-scoped names and raises an error diagnostic (precise `resolveVariable`
-   detection) when a `title`/`detail`/`summary` expression references one, preserving the blueprint's
-   validation intent instead of silently blanking; other undeclared variables → blank.
+1. **Page-scoped *resolution* deferred to 008, but every illegal placement rejected now** (§2, §5) —
+   page-scoped variables are legal only in page/column-chrome text elements; 007b raises an error
+   diagnostic (precise `resolveVariable` detection) for a reference in **any** band it processes
+   (`title`/`detail`/`summary`/`noData`) **and** in any variable/group expression. The reserved names
+   are a **single `fill/` constant** (one authority; 008 imports it). Other undeclared variables → blank.
 2. **Split parse-failure policy** (§5) — content (text) expressions caught → `!ERR` + diagnostic;
    structural (variable/group) expressions fail fast.
 3. **Barcode passthrough is an explicit 007a §3 amendment** (§4), not an implicit omission.
@@ -233,7 +250,8 @@ eventual public door; `FilledReport` is intentionally incomplete until 007c.
 5. **Title/summary have no row context** (§6) — summary is order-stable.
 6. **Internal, intentionally-incomplete IR** (§3, §9) — not frozen public; 007c extends it.
 7. **008 consumes `(ReportTemplate, FilledReport)`** (§1) — the template for page chrome + page
-   variables, the FilledReport for resolved content + frozen variable snapshots.
+   format, the FilledReport for resolved content + frozen variable snapshots. Page-scoped variable
+   *names* are the shared `fill/` constant (not a template slot); 008 supplies their *values*.
 8. **`FilledBand` carries a frozen variable snapshot** (§7) — the blueprint's "frozen variable
    values," for 008's per-page late substitution.
 9. **`VariableCalculator` gains an optional eval-context factory** (§5) — additive, default
@@ -269,3 +287,12 @@ diagnostic** (precise `resolveVariable` detection, §2, §5). The missing-field 
 variable/group expressions (the calculator uses its own `RowEvalContext`, and the accumulator skips
 `JetNull`/`JetError` silently) → **`VariableCalculator` gains an injected eval-context factory so the
 warning covers all expressions** (§5).
+
+Third review round (policy/ownership edges), folded in: page-scoped rejection was raised only for
+text elements while the tracking context also saw variable/group references → **rejection extended
+to variable/group expressions** (error diagnostic; data pass continues, §2/§5). The illegal-placement
+rule omitted `noData`, which Fill also processes → **`noData` added** to the rejected bands (§2/§5).
+Page-scoped name ownership was split three ways (template / 008 / `fill/` constant) and the template
+has no such slot → **collapsed to one authority: the `fill/` constant 008 imports; the template no
+longer "supplies page variables"** (§1/§2/§10). Legality made explicit (only in page/column-chrome
+text elements) with negative tests for `noData` and variable/group usage (§2/§8).
