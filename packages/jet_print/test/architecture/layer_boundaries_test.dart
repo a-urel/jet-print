@@ -256,5 +256,39 @@ void main() {
           reason: 'rendering/fill must stay headless and depend only on '
               'domain/data/expression:\n${violations.join('\n')}');
     });
+
+    test('the layout/ seam exists, stays Flutter-free, and imports no '
+        'expression engine', () {
+      final Directory layoutDir = Directory(
+          '${root.path}/packages/jet_print/lib/src/rendering/layout');
+      expect(layoutDir.existsSync(), isTrue,
+          reason: 'Missing ${layoutDir.path}');
+      final List<File> layoutFiles = layoutDir
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((FileSystemEntity f) => f.path.endsWith('.dart'))
+          .toList();
+      expect(layoutFiles, isNotEmpty);
+      final List<String> violations = <String>[];
+      for (final File file in layoutFiles) {
+        for (final String uri in _directive
+            .allMatches(file.readAsStringSync())
+            .map((Match m) => m.group(1)!)) {
+          // 008a is pure geometry: layout composes domain + sibling rendering
+          // subdirs (frame/elements/text/fill) but must NOT reach the expression
+          // engine. A relative '../../expression/' or absolute '/expression/' is
+          // the violation shape.
+          final bool expressionSeam =
+              uri.contains('../../expression/') || uri.contains('/expression/');
+          if (_isFlutterUi(uri) || expressionSeam) {
+            violations.add('${file.path} -> $uri');
+          }
+        }
+      }
+      expect(violations, isEmpty,
+          reason: 'rendering/layout must stay headless and free of the '
+              'expression engine (008a is pure geometry):\n'
+              '${violations.join('\n')}');
+    });
   });
 }
