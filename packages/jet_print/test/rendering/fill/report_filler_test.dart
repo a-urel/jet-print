@@ -117,6 +117,8 @@ void main() {
       ]),
     );
     expect((res.report.bands.last.elements.single as TextElement).text, '');
+    // §5: $F{} with no row (summary) blanks SILENTLY — no warning/error.
+    expect(res.diagnostics.entries, isEmpty);
   });
 
   test('undeclared field in a variable warns (schema-drift signal)', () {
@@ -208,5 +210,44 @@ void main() {
         JetInMemoryDataSource(<Map<String, Object?>>[<String, Object?>{'n': 'a'}]);
     expect(ReportFiller().fill(make(), src()).report,
         ReportFiller().fill(make(), src()).report);
+  });
+
+  test('title has no row context — \$F{} blanks silently', () {
+    final FillResult res = ReportFiller().fill(
+      template(
+        title: <ReportElement>[t('h', expr: r'$F{name}')],
+        detail: <ReportElement>[t('d', text: '.')],
+      ),
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'name': 'Ada'},
+      ]),
+    );
+    // title is the first band; $F{} with no row → blank, no diagnostic.
+    expect((res.report.bands.first.elements.single as TextElement).text, '');
+    expect(res.diagnostics.entries, isEmpty);
+  });
+
+  test('page-scoped reference in a title element is an error', () {
+    final FillResult res = ReportFiller().fill(
+      template(
+        title: <ReportElement>[t('h', text: 'fb', expr: r'$V{PAGE_NUMBER}')],
+        detail: <ReportElement>[t('d', text: '.')],
+      ),
+      JetInMemoryDataSource(<Map<String, Object?>>[<String, Object?>{'x': 1}]),
+    );
+    expect(res.diagnostics.hasErrors, isTrue);
+    // authored text preserved (not blanked, not !ERR)
+    expect((res.report.bands.first.elements.single as TextElement).text, 'fb');
+  });
+
+  test('page-scoped reference in a summary element is an error', () {
+    final FillResult res = ReportFiller().fill(
+      template(
+        summary: <ReportElement>[t('s', text: 'fb', expr: r'$V{PAGE_NUMBER}')],
+      ),
+      JetInMemoryDataSource(<Map<String, Object?>>[<String, Object?>{'x': 1}]),
+    );
+    expect(res.diagnostics.hasErrors, isTrue);
+    expect((res.report.bands.last.elements.single as TextElement).text, 'fb');
   });
 }
