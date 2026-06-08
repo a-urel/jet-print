@@ -47,6 +47,7 @@ class ReportBand {
     required this.type,
     required this.height,
     this.elements = const <ReportElement>[],
+    this.group,
   });
 
   /// The band's role in the report flow.
@@ -57,4 +58,9 @@ class ReportBand {
 
   /// Elements placed within the band, at absolute bounds.
   final List<ReportElement> elements;
+
+  /// The name of the [ReportGroup] this band belongs to (007c). Meaningful only
+  /// for [BandType.groupHeader]/[BandType.groupFooter]; null (and ignored) for
+  /// every other band type.
+  final String? group;
 }

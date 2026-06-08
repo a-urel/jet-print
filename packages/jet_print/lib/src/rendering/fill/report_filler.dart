@@ -1,7 +1,8 @@
-/// The Fill data pass (spec 007b). Walks a [ReportTemplate] over a
-/// [JetDataSource], drives the variable calculator, and emits the resolved
-/// title/detail/summary/noData band stream as a [FilledReport] + diagnostics.
-/// INTERNAL — the public surface is the 011 JetReportEngine.
+/// The Fill data pass (spec 007b/007c). Walks a [ReportTemplate] over a
+/// [JetDataSource], drives the variable calculator, and emits the resolved band
+/// stream — title/groupHeader/detail/groupFooter/summary/noData — as a
+/// [FilledReport] + diagnostics. INTERNAL — the public surface is the 011
+/// JetReportEngine.
 library;
 
 import '../../data/data_row.dart';
@@ -21,6 +22,7 @@ import '../../expression/value.dart';
 import 'element_resolver.dart';
 import 'fill_eval_context.dart';
 import 'filled_report.dart';
+import 'group_band_index.dart';
 import 'report_diagnostics.dart';
 
 /// The result of a fill: the resolved [report] and the collected [diagnostics].
@@ -72,8 +74,6 @@ class ReportFiller {
       warnedFields: warnedFields,
     );
 
-    // Inject a tracking context for the calculator's variable/group evaluation,
-    // sharing the diagnostics + the missing-field dedup set.
     EvalContext contextFactory({
       DataRow? row,
       Map<String, Object?> params = const <String, Object?>{},
@@ -90,6 +90,11 @@ class ReportFiller {
           pageRefs: ignoredPageRefs,
         );
 
+    // Validate + index group bands FIRST: this throws ReportFormatException
+    // (fail-fast) on duplicate group names BEFORE constructing the calculator —
+    // whose brokenGroups/reset logic assumes unique names (spec 007c §4/§6).
+    final GroupBandIndex groupIndex = GroupBandIndex(template, diagnostics);
+
     final VariableCalculator calc = VariableCalculator(
       variables: template.variables,
       groups: template.groups,
@@ -97,11 +102,6 @@ class ReportFiller {
       contextFactory: contextFactory,
     )..start();
 
-    // Site-aware page-scoped pre-scan (§5): the driver owns the loop, so it
-    // supplies the *site* (the variable/group name). Runs after the calculator
-    // is built — a malformed variable/group expression has already failed fast,
-    // so Expression.parse here is safe. No row is needed (page-scoped detection
-    // is via resolveVariable).
     void scanPageScoped(String expression, String site) {
       final Set<String> refs = <String>{};
       Expression.parse(expression).evaluate(FillEvalContext(
@@ -123,21 +123,54 @@ class ReportFiller {
       scanPageScoped(g.expression, 'group "${g.name}"');
     }
 
+    // The authored group order (outermost first) is the single source of nesting
+    // order. `brokenGroups` is a membership Set, never iterated for order.
+    final List<String> groupOrder = <String>[
+      for (final ReportGroup g in template.groups) g.name,
+    ];
+    List<String> brokenInOrder(Set<String> broken, {required bool reversed}) {
+      final List<String> ordered = <String>[
+        for (final String name in groupOrder)
+          if (broken.contains(name)) name,
+      ];
+      return reversed ? ordered.reversed.toList() : ordered;
+    }
+
     final List<FilledBand> bands = <FilledBand>[];
+
+    void addBand(ReportBand band, DataRow? row, Map<String, JetValue> vars) {
+      bands.add(FilledBand(
+        type: band.type,
+        height: band.height,
+        elements: <ReportElement>[
+          for (final ReportElement e in band.elements)
+            resolver.resolve(e, row: row, params: params, variables: vars),
+        ],
+        variables: vars,
+      ));
+    }
 
     void emit(BandType type, DataRow? row) {
       for (final ReportBand band in template.bands) {
         if (band.type != type) continue;
-        bands.add(FilledBand(
-          type: band.type,
-          height: band.height,
-          elements: <ReportElement>[
-            for (final ReportElement e in band.elements)
-              resolver.resolve(e,
-                  row: row, params: params, variables: calc.values),
-          ],
-          variables: calc.values,
-        ));
+        addBand(band, row, calc.values);
+      }
+    }
+
+    void emitGroupHeaders(List<String> names, DataRow? row) {
+      for (final String name in names) {
+        for (final ReportBand band in groupIndex.headersFor(name)) {
+          addBand(band, row, calc.values);
+        }
+      }
+    }
+
+    void emitGroupFooters(
+        List<String> names, DataRow? footerRow, Map<String, JetValue> vars) {
+      for (final String name in names) {
+        for (final ReportBand band in groupIndex.footersFor(name)) {
+          addBand(band, footerRow, vars);
+        }
       }
     }
 
@@ -145,12 +178,27 @@ class ReportFiller {
 
     final DataSet ds = source.open(params);
     bool hadRows = false;
+    Map<String, JetValue> prevValues = const <String, JetValue>{};
+    DataRow? prevRow;
     try {
       while (ds.moveNext()) {
         final DataRow row = ds.current;
         calc.advance(row, params: params);
-        hadRows = true;
+        final Set<String> broken = calc.brokenGroups;
+        if (!hadRows) {
+          // First data row: open every group, outermost->innermost.
+          emitGroupHeaders(groupOrder, row);
+        } else if (broken.isNotEmpty) {
+          // Close the ended groups (inner->outer) with the pre-reset snapshot,
+          // then re-open them (outer->inner) with the post-reset snapshot.
+          emitGroupFooters(
+              brokenInOrder(broken, reversed: true), prevRow, prevValues);
+          emitGroupHeaders(brokenInOrder(broken, reversed: false), row);
+        }
         emit(BandType.detail, row);
+        hadRows = true;
+        prevValues = calc.values;
+        prevRow = row;
       }
     } finally {
       ds.close();
@@ -159,6 +207,8 @@ class ReportFiller {
     if (!hadRows) {
       emit(BandType.noData, null);
     } else {
+      // Close every still-open group (inner->outer) with the final snapshot.
+      emitGroupFooters(groupOrder.reversed.toList(), prevRow, prevValues);
       emit(BandType.summary, null);
     }
 

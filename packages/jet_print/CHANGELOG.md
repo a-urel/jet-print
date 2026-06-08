@@ -83,6 +83,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `expression` and image `FieldImageSource` resolution, report-scoped running/grand totals, frozen
   variable snapshots, and a `ReportDiagnostics` (missing-field warnings; `!ERR` on bad expressions;
   rejection of illegal page-scoped variable use). Adds `TextElement.expression`.
+- **Grouping in Fill (spec 007c).** `ReportFiller` now emits `groupHeader`/`groupFooter` band
+  instances with group-scoped subtotals at each group break — headers resolve the group's first row,
+  footers the last row with the pre-reset subtotal. Adds an optional `ReportBand.group` link and a
+  `GroupBandIndex` (fail-fast on duplicate group names; error diagnostics for null/unknown group
+  references). Nesting order is derived from the authored group list.
 
 ## 0.1.0
 

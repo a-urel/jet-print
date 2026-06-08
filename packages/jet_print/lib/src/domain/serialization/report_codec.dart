@@ -51,6 +51,7 @@ Map<String, Object?> _encodeBand(
   return <String, Object?>{
     'type': band.type.name,
     'height': band.height,
+    if (band.group != null) 'group': band.group,
     'elements': <Object?>[
       for (final ReportElement element in band.elements)
         registry.encode(element),
@@ -120,6 +121,7 @@ ReportBand _decodeBand(
   return ReportBand(
     type: _parseBandType(json['type']),
     height: (json['height']! as num).toDouble(),
+    group: json['group'] as String?,
     elements: <ReportElement>[
       for (final Object? element in elements)
         registry.decode((element! as Map).cast<String, Object?>()),
