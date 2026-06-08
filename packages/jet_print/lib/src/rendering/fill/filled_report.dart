@@ -44,12 +44,16 @@ class FilledBand {
 
   @override
   int get hashCode {
-    // Order-independent over variables (XOR), to match the order-insensitive
-    // _mapEquals — equal bands must hash equally regardless of map insertion order.
-    var varsHash = 0;
-    for (final MapEntry<String, JetValue> e in variables.entries) {
-      varsHash ^= Object.hash(e.key, e.value);
-    }
+    // Order-independent over the variables map, to match the order-insensitive
+    // _mapEquals — equal bands must hash equally regardless of insertion order.
+    // Object.hashAllUnordered combines per-entry hashes commutatively without the
+    // XOR-cancellation footgun (two equal per-entry hashes would cancel to zero).
+    final int varsHash = Object.hashAllUnordered(
+      <int>[
+        for (final MapEntry<String, JetValue> e in variables.entries)
+          Object.hash(e.key, e.value),
+      ],
+    );
     return Object.hash(type, height, Object.hashAll(elements), varsHash);
   }
 

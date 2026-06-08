@@ -60,4 +60,25 @@ void main() {
     expect(a, b);
     expect(a.hashCode, b.hashCode);
   });
+
+  test('variables hash stays order-independent with three distinct entries', () {
+    FilledBand make(Map<String, JetValue> vars) => FilledBand(
+          type: BandType.detail,
+          height: 20,
+          elements: const <ReportElement>[],
+          variables: vars,
+        );
+    final FilledBand a = make(const <String, JetValue>{
+      'x': JetNumber(1),
+      'y': JetNumber(2),
+      'z': JetNumber(3),
+    });
+    final FilledBand b = make(<String, JetValue>{
+      'z': const JetNumber(3),
+      'x': const JetNumber(1),
+      'y': const JetNumber(2),
+    });
+    expect(a, b);
+    expect(a.hashCode, b.hashCode);
+  });
 }
