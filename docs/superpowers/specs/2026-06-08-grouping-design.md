@@ -27,7 +27,8 @@ consumes the template and the filled stream together.
 - Correct **group-scoped subtotals** in footers (the value as of the group's last row, *before* the
   breaking row resets it).
 - Correct **nesting order** for headers and footers across multiple groups.
-- Validation diagnostics for malformed group-band references and duplicate group names.
+- Validation for malformed group-band references (recoverable diagnostics) and duplicate group
+  names (fail-fast throw).
 
 **Out of scope (later specs):**
 - Pagination, page/column chrome bands (`pageHeader`/`pageFooter`/`columnHeader`/`columnFooter`/
@@ -74,15 +75,26 @@ if (band.group != null) 'group': band.group,
 group: json['group'] as String?,
 ```
 
-## §4 — Group-name uniqueness (invariant + validation)
+## §4 — Group-name uniqueness (invariant + fail-fast)
 
 `ReportGroup.name` **must be unique** within a template. This is already an implicit invariant of
 005b — the calculator keys `brokenGroups` as a `Set<String>` and matches `ReportVariable.resetGroup`
-by name, so duplicate names make break detection, variable resets, and (now) band routing
-ambiguous. 007c makes the invariant **explicit** and **validates** it: at the start of the fill,
-duplicate `template.groups` names produce an **error diagnostic** (`Duplicate group name "<name>"`)
-and the data pass continues (render-don't-crash; the calculator's behavior under duplicates is
-defined-but-meaningless, and the diagnostic makes the misconfiguration explicit).
+by name. 007c adds a second name-keyed link (`ReportBand.group`) and name-keyed band routing, so a
+duplicate name is not merely "meaningless" — it is a **concrete over-emission bug**: with two groups
+named `region`, a single `brokenGroups` membership (`{region}`) matches **both** authored
+`template.groups` entries during the ordering filter (§5), and each replays the same
+`headersFor("region")`/`footersFor("region")` bucket (§6), emitting the same bands twice.
+
+007c therefore makes uniqueness an **explicit, fail-fast** invariant. Duplicate `template.groups`
+names are a **structural template-definition error** (like a malformed expression — detectable
+before any data is processed, and corrupting grouping at the 005b calculator level, not just band
+emission). The fill **throws** `ReportFormatException` (the existing malformed-report-definition
+exception, generalized from JSON to in-memory templates) up front, before any band is emitted. This
+is deliberately **not** a render-don't-crash diagnostic: render-don't-crash is scoped to *content*
+problems (bad data, eval errors, missing fields); a duplicate-name template is structurally invalid
+and is refused, exactly as Fill already refuses a malformed expression. A successfully-built
+`GroupBandIndex` therefore always has unique group names and unambiguous lookups, so the
+over-emission path cannot occur.
 
 ## §5 — The emission algorithm
 
@@ -114,7 +126,9 @@ Per `advance(row)`, the driver reads `calc.brokenGroups` and acts:
 
 An implementation must **not** iterate `brokenGroups` directly for ordering. When a group has
 multiple header (or footer) bands, they emit in **authored `template.bands` order** — `GroupBandIndex`
-(§6) preserves that encounter order.
+(§6) preserves that encounter order. Because group names are unique (§4 fail-fasts on duplicates),
+this membership filter maps each broken name to exactly one `template.groups` entry and one band
+bucket — there is no double-match.
 
 ### Row context & variable snapshot per band
 
@@ -168,17 +182,20 @@ This reuses the calculator's existing `brokenGroups` + reset machinery untouched
   decode as `String?`).
 
 **Create (`rendering/fill/`):**
-- `lib/src/rendering/fill/group_band_index.dart` — `GroupBandIndex`, a small **pure** unit built
-  from a `ReportTemplate` + a `ReportDiagnostics`. Responsibilities:
-  - Validate duplicate group names → error diagnostic (§4).
-  - Validate each `groupHeader`/`groupFooter` band's `group`: **null** → error
-    (`groupHeader band must declare a group`); **unknown** (not in `template.groups`) → error
-    (`band references unknown group "<name>"`). Malformed bands are **excluded** from the index
-    (render-don't-crash; the rest of the report still renders).
+- `lib/src/rendering/fill/group_band_index.dart` — `GroupBandIndex`, a small unit built from a
+  `ReportTemplate` + a `ReportDiagnostics`. Responsibilities:
+  - **Fail-fast on duplicate group names** (§4): the constructor **throws** `ReportFormatException`
+    *before* indexing. So any constructed index has unique names and unambiguous name lookups.
+  - Validate each `groupHeader`/`groupFooter` band's `group` (recoverable, render-don't-crash):
+    **null** → error diagnostic (`groupHeader band must declare a group`); **unknown** (not in
+    `template.groups`) → error diagnostic (`band references unknown group "<name>"`). Such malformed
+    bands are **excluded** from the index; the rest of the report still renders.
   - Index the valid group bands by `(group name)`, **preserving authored `template.bands` order**.
   - Expose `headersFor(String groupName) → List<ReportBand>` and
     `footersFor(String groupName) → List<ReportBand>`.
-  - Independently testable (pure: template + diagnostics in, lookups out).
+  - Independently testable (template + diagnostics in; throws on duplicates, lookups otherwise).
+  - The split is deliberate: a duplicate name corrupts the *whole* grouping (calculator-level) → fatal
+    throw; a single bad band ref only affects *that band* → recoverable diagnostic + exclude.
 
 **Modify (`rendering/fill/`):**
 - `lib/src/rendering/fill/report_filler.dart` — the sequencing (§5), factored into focused private
@@ -201,13 +218,14 @@ never thrown):
 
 | Condition | Severity | Behavior |
 |---|---|---|
-| Duplicate `ReportGroup.name` | **error** | continue; calculator behavior is ambiguous — the diagnostic flags it (§4) |
-| `groupHeader`/`groupFooter` band with `group == null` | **error** | exclude the band from the index; continue |
-| `groupHeader`/`groupFooter` band with `group` naming an undeclared group | **error** | exclude the band; continue |
+| `groupHeader`/`groupFooter` band with `group == null` | **error** diagnostic | exclude the band from the index; continue |
+| `groupHeader`/`groupFooter` band with `group` naming an undeclared group | **error** diagnostic | exclude the band; continue |
 | `group` set on a non-group band type | (none) | ignored silently |
 
-Fill still fail-fasts (throws) only on a variable/group **expression parse** failure (005b/007b
-behavior, unchanged).
+Fill **fail-fasts** (throws, never a diagnostic) on the two **structural template-definition**
+errors: a variable/group **expression parse** failure (005b/007b, unchanged, `ExpressionException`)
+and now **duplicate `ReportGroup.name`** (§4, `ReportFormatException`). Both are detected before the
+data pass produces output; everything else in the table above is recoverable (diagnostic + continue).
 
 ## §8 — Testing
 
@@ -217,7 +235,7 @@ behavior, unchanged).
   ordering).
 - `group == null` on a group band → error diagnostic + excluded.
 - Unknown group name on a group band → error diagnostic + excluded.
-- Duplicate group names → error diagnostic.
+- Duplicate group names → constructor **throws** `ReportFormatException` (no index produced).
 
 **`ReportFiller` (grouping):**
 - **Single group:** stream is `groupHeader, detail…, groupFooter` per group, in order.
@@ -232,6 +250,10 @@ behavior, unchanged).
 - **End-of-data footers** for all groups (inner→outer) emit **before** `summary`.
 - **Page-scoped reference in a group-band element** → error diagnostic + authored text preserved
   (reuses the resolver).
+- **Duplicate group names** → `fill()` **throws** `ReportFormatException` (fail-fast; no bands
+  emitted). This is the **filler-level** over-emission guard (R2 Finding 3): the index-unit test
+  alone cannot prove the filler does not double-emit, so this test asserts the throw at the
+  `fill()` boundary.
 - **Determinism:** re-filling identical inputs yields an equal `FilledReport`.
 
 **Regression (must stay green, unchanged):**
@@ -272,11 +294,15 @@ shape.
 5. **Ordering derived from `template.groups`, not the `brokenGroups` `Set`** — the authored
    outer-first order is the single source of nesting truth; the `Set` is membership-only. Multiple
    bands per `(type, group)` preserve authored `template.bands` order via `GroupBandIndex`.
-6. **Unique `ReportGroup.name` is an explicit invariant**, validated with an error diagnostic — the
-   005b calculator already assumes it (Set-keyed `brokenGroups`, name-keyed `resetGroup`).
-7. **Structural validation is render-don't-crash** (error diagnostics + exclude the offending band),
-   not fail-fast — consistent with 007b, which fail-fasts only on expression *parse* failures. The
-   report still renders without the malformed band.
+6. **Unique `ReportGroup.name` is an explicit, fail-fast invariant** (throws `ReportFormatException`).
+   The 005b calculator already assumes it (Set-keyed `brokenGroups`, name-keyed `resetGroup`), and
+   name-keyed band routing would **over-emit** under duplicates (§4) — so a duplicate name is a
+   structural template error, refused like a malformed expression, not a recoverable diagnostic.
+7. **Two-tier group validation.** *Fatal, fail-fast* (corrupts the whole grouping): duplicate group
+   names → throw. *Recoverable, render-don't-crash* (affects only one band): a `groupHeader`/
+   `groupFooter` with a null/unknown `group` → error diagnostic + exclude that band; the report still
+   renders. This mirrors 007b, which fail-fasts on expression *parse* failures but diagnoses content
+   problems.
 8. **Schema version is not bumped** (stays at 1). The library is **pre-1.0 and unreleased**, so
    there are no in-the-wild builds to protect with a forward-compat rejection, and `ReportBand.group`
    is an optional additive field — the same shape and treatment as 007b's `TextElement.expression`
@@ -322,3 +348,18 @@ shape.
    ("Ordering is derived from `template.groups`…") + §8 authored-order tests.
 4. *Non-finding — no `FilledBand.group`.* Reviewer confirmed leaving the filled IR unchanged is
    consistent with Layout consuming the template + the stream. **No change** (§1, §9).
+
+**Second review (R2), folded in:**
+1. *Schema bump (re-raised, now citing Constitution V).* **Reaffirmed, no change.** Constitution V's
+   hard requirement is *backward* compatibility ("older serialized reports MUST continue to load in
+   newer library versions") — satisfied by the optional `group` field (old docs → `group == null`).
+   Forward *rejection* (a new doc refused by an older build) is not constitutionally mandated, and
+   the rationale ("don't silently break users' saved reports") does not bite pre-release. The user
+   had already decided this with Constitution-V awareness; the decision stands (§10 #8).
+2. *Duplicate group names are an over-emission bug, not "defined-but-meaningless."* **Correct — fixed.**
+   Confirmed: a single `brokenGroups` membership matches both authored entries and replays the same
+   name bucket, double-emitting bands. Changed from "diagnose + continue" to **fail-fast throw**
+   (`ReportFormatException`), so the over-emission path is structurally impossible (§4, §7, §10 #6).
+3. *Test plan didn't cover the duplicate-name fallback at the filler level.* **Folded in:** §8 now
+   has a `fill()`-boundary throw test (not just the index-unit test), pinning that the filler never
+   double-emits for a duplicate-name template.
