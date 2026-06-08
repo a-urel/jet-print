@@ -231,7 +231,19 @@ void main() {
         for (final String uri in _directive
             .allMatches(file.readAsStringSync())
             .map((Match m) => m.group(1)!)) {
-          final bool sibling = uri.contains('/rendering/elements/') ||
+          // A fill file (lib/src/rendering/fill/) reaches a rendering sibling via a
+          // RELATIVE import like '../elements/foo.dart' (the codebase enforces
+          // prefer_relative_imports, so this — not a package: URI — is the real
+          // violation shape). The absolute '/rendering/<sibling>/' forms are kept as
+          // defense-in-depth for any package-qualified import. Note: the relative
+          // '../elements/' form does NOT match the LEGITIMATE '../../domain/elements/'
+          // import (TextElement/ImageElement live in domain/elements/), because that
+          // path has no '..' immediately before '/elements/'.
+          final bool sibling = uri.contains('../elements/') ||
+              uri.contains('../frame/') ||
+              uri.contains('../paint/') ||
+              uri.contains('../text/') ||
+              uri.contains('/rendering/elements/') ||
               uri.contains('/rendering/frame/') ||
               uri.contains('/rendering/paint/') ||
               uri.contains('/rendering/text/');
