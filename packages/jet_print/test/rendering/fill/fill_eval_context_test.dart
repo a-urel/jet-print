@@ -63,4 +63,31 @@ void main() {
     expect(c.resolveVariable('other'), const JetNull()); // undeclared, not recorded
     expect(pageRefs, isNot(contains('other')));
   });
+
+  test('dedup spans multiple contexts sharing one warnedFields sink', () {
+    final ReportDiagnostics d = ReportDiagnostics();
+    final Set<String> warned = <String>{};
+    // Two separate contexts (as the resolver builds one per element) sharing the
+    // same caller-owned warnedFields set: the same missing field warns only once.
+    ctx(row: rowWith('present', 'v'), diagnostics: d, warned: warned, elementId: 'e1')
+        .resolveField('missing');
+    ctx(row: rowWith('present', 'v'), diagnostics: d, warned: warned, elementId: 'e2')
+        .resolveField('missing');
+    expect(
+        d.entries.where((e) => e.severity == DiagnosticSeverity.warning).length, 1);
+  });
+
+  test('a declared variable resolves to its value and is not recorded', () {
+    final ReportDiagnostics d = ReportDiagnostics();
+    final Set<String> pageRefs = <String>{};
+    final FillEvalContext c = FillEvalContext(
+      functions: JetFunctionRegistry(),
+      diagnostics: d,
+      warnedFields: <String>{},
+      pageRefs: pageRefs,
+      variables: const <String, JetValue>{'myVar': JetNumber(7)},
+    );
+    expect(c.resolveVariable('myVar'), const JetNumber(7));
+    expect(pageRefs, isEmpty);
+  });
 }

@@ -14,68 +14,69 @@ import 'report_diagnostics.dart';
 
 /// An [EvalContext] that records Fill diagnostics as a side effect of resolution.
 class FillEvalContext implements EvalContext {
-  /// Creates a context. [warnedFields] and [pageRefs] are shared sinks the caller
-  /// owns; [elementId] tags any warning with its originating element.
+  /// Creates a context over an optional [row], [params], and [variables].
+  ///
+  /// [warnedFields] and [pageRefs] are shared sinks the caller owns and reads
+  /// back after the fill: resolving a missing field adds its name to
+  /// [warnedFields] (deduping the warning), and resolving a reserved page-scoped
+  /// variable adds its name to [pageRefs]. Both mutations happen as a side effect
+  /// of [resolveField] and [resolveVariable] respectively. [elementId] tags any
+  /// missing-field warning with its originating element.
   FillEvalContext({
-    this.row,
-    this.params = const <String, Object?>{},
-    this.variables = const <String, JetValue>{},
-    required this.functions,
-    required this.diagnostics,
-    required this.warnedFields,
-    required this.pageRefs,
-    this.elementId,
-  });
+    DataRow? row,
+    Map<String, Object?> params = const <String, Object?>{},
+    Map<String, JetValue> variables = const <String, JetValue>{},
+    required JetFunctionRegistry functions,
+    required ReportDiagnostics diagnostics,
+    required Set<String> warnedFields,
+    required Set<String> pageRefs,
+    String? elementId,
+  })  : _row = row,
+        _params = params,
+        _variables = variables,
+        _functions = functions,
+        _diagnostics = diagnostics,
+        _warnedFields = warnedFields,
+        _pageRefs = pageRefs,
+        _elementId = elementId;
 
-  /// The current row (null for title/summary/noData).
-  final DataRow? row;
-
-  /// The parameter map.
-  final Map<String, Object?> params;
-
-  /// The calculator's current variable values.
-  final Map<String, JetValue> variables;
+  final DataRow? _row;
+  final Map<String, Object?> _params;
+  final Map<String, JetValue> _variables;
+  final JetFunctionRegistry _functions;
+  final ReportDiagnostics _diagnostics;
+  final Set<String> _warnedFields;
+  final Set<String> _pageRefs;
+  final String? _elementId;
 
   @override
-  final JetFunctionRegistry functions;
-
-  /// The diagnostics sink.
-  final ReportDiagnostics diagnostics;
-
-  /// Field names already warned about (dedup, shared across one fill).
-  final Set<String> warnedFields;
-
-  /// Reserved page-scoped names referenced during evaluation (shared sink).
-  final Set<String> pageRefs;
-
-  /// The element being resolved, for warning attribution (null for var/group).
-  final String? elementId;
+  JetFunctionRegistry get functions => _functions;
 
   @override
   JetValue resolveField(String name) {
-    final DataRow? r = row;
-    if (r == null) return const JetNull();
-    if (!r.hasField(name)) {
-      if (warnedFields.add(name)) {
-        diagnostics.warning('Field "$name" is not in the data schema',
-            elementId: elementId);
+    final DataRow? row = _row;
+    if (row == null) return const JetNull();
+    if (!row.hasField(name)) {
+      if (_warnedFields.add(name)) {
+        _diagnostics.warning('Field "$name" is not in the data schema',
+            elementId: _elementId);
       }
       return const JetNull();
     }
-    return JetValue.from(r.field(name));
+    return JetValue.from(row.field(name));
   }
 
   @override
-  JetValue resolveParam(String name) => params.containsKey(name)
-      ? JetValue.from(params[name])
+  JetValue resolveParam(String name) => _params.containsKey(name)
+      ? JetValue.from(_params[name])
       : const JetNull();
 
   @override
   JetValue resolveVariable(String name) {
     if (kPageScopedVariables.contains(name)) {
-      pageRefs.add(name);
+      _pageRefs.add(name);
       return const JetNull();
     }
-    return variables[name] ?? const JetNull();
+    return _variables[name] ?? const JetNull();
   }
 }
