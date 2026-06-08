@@ -85,25 +85,24 @@ class FilledBand {
   "intentionally incomplete."
 - `==`/`hashCode`/`toString` are updated to include `group`.
 
-## §4 — Schema-versioning decision (explicit pre-1.0 exception)
+## §4 — Schema-versioning: a codified pre-1.0 carve-out (not a silent exception)
 
-Adding the two persisted `ReportGroup` flags **is a schema change**, and the codec's own contract is
-unambiguous: *"Bump on every schema change and ship a [SchemaMigration] for the previous version"*
-(`report_codec.dart`). 008b consciously **does not** bump `kReportSchemaVersion` (stays `1`). This is
-recorded as an **explicit exception to that contract**, not a claim that it complies:
+Adding the two persisted `ReportGroup` flags is a schema change, and the codec's contract today says
+*"Bump on every schema change and ship a [SchemaMigration]"* (`report_codec.dart`). Rather than keep
+taking silent per-spec exceptions to that contract (007b, 007c, and now 008b), 008b **codifies the
+pre-1.0 reality at the repo level**: the library is **not deployed**, so no serialized report exists
+to migrate or to break.
 
-- **Constitution V's hard requirement is *backward* compatibility** ("older serialized reports MUST
-  continue to load in newer library versions"). The flags are additive optional fields defaulting to
-  `false`, so an older template loads unchanged — backward compat is satisfied.
-- What the no-bump consciously **trades away** is *forward* compatibility: a new template's flags
-  would be silently dropped by a hypothetical older build. Pre-release, no such build exists, so the
-  tradeoff costs nothing now.
-- This continues the standing pre-1.0 decision applied to 007b's `TextElement.expression` and 007c's
-  `ReportBand.group` (both added at schema 1). A dedicated schema-versioning pass before 1.0 will
-  settle the bump/migration policy across all accumulated additive fields at once.
-
-(If the project later elects to pay the versioning debt, the migration is trivial — the v1→v2
-migration is the identity, since every v1 template is a valid v2 template with both flags `false`.)
+- **`kReportSchemaVersion` stays `1`; no migration** — there is no prior on-disk data, so a bump +
+  migration would be empty ceremony.
+- **The codec's contract comment is amended** (§8) to state the carve-out explicitly: *pre-1.0
+  (pre-deployment), additive **optional** fields that load backward-compatibly (absent ⇒ default)
+  may be introduced at the current schema version without a bump; the bump-and-migrate rule
+  activates at 1.0.* After this edit, code and docs agree — 008b is policy-compliant, not a breach.
+- **Backward compatibility still holds** for any in-memory/JSON template authored before the flags
+  existed: absent keys decode to `false`.
+- A formal Constitution V reconciliation (and the eventual 1.0 bump discipline) is deferred to the
+  pre-1.0 versioning pass; the operational contract (the codec comment) is brought into sync now.
 
 ## §5 — The group-instance lifetime model
 
@@ -115,6 +114,15 @@ driven by **headers + nesting level**, with footers and report bands closing ins
 
 `level[g]` = the index of `g` in `template.groups` (outermost = 0). The open set is a stack ordered
 outer→inner (strictly increasing level, because groups always open outermost-first).
+
+**Null or unknown group identity.** A `groupHeader`/`groupFooter` whose `group` is `null` or names a
+group absent from `template.groups` carries no usable identity, so it is treated as an **ordinary body
+band**: it never opens/closes an instance and is exempt from keep-together and reprint, with **no
+diagnostic**. The Fill path never produces this (007c's `GroupBandIndex` validates group bands before
+emission), so it only arises for directly-constructed `FilledReport`s — which keeps direct
+`ReportLayouter` use well-defined and makes the 008a regression suite (whose group-typed bands carry
+no identity) byte-identical. Every rule below applies only to group bands with a valid, declared
+`group`.
 
 ### §5.1 — Open / reopen
 
@@ -131,41 +139,46 @@ The `prevHeaderGroup` test is essential: at a break the prior instance is still 
 re-opening `groupHeader(g)` after a footer/detail must be treated as a *new* instance, while a
 contiguous second header band of one instance must be treated as a *continuation*.
 
-### §5.2 — Close (three triggers; earliest wins)
+### §5.2 — Close (triggers; earliest wins, applied before the band's break check)
 
-1. **Footer-run end (cascade).** After the last `groupFooter(g)` of a contiguous run (the next band
-   is not `groupFooter(g)`), pop every open group with `level ≥ level[g]`. The cascade closes `g`
-   and any still-open inner group — e.g. a header-only inner group with no footer of its own, ended
-   by its outer group's footer.
-2. **A `summary` or `noData` band.** Pop **all** open groups before processing the band. This covers
-   the all-header-only report, where no footer ever fires, so a break before `summary` cannot reprint
-   a group header above it.
-3. **Next-instance / outer header.** Already handled by §5.1's new-instance pop.
+1. **Entering a `groupFooter` at level L** (before placing it): pop open groups at level **> L**. An
+   outer group's footer ends its inner groups, so a header-only inner group closes *before* the outer
+   footer rather than lingering above it — this is what eliminates the otherwise-misleading edge (§5.3).
+2. **Footer-run end:** after the last `groupFooter(g)` of a contiguous run (next band is not
+   `groupFooter(g)`), pop `g` itself (level ≥ `level[g]`; its inner groups are already gone via rule 1).
+3. **A `summary` or `noData` band:** pop **all** open groups before processing it — covers the
+   all-header-only report, where no footer ever fires, so a break before `summary` cannot reprint a
+   group header above it.
+4. **Next-instance / outer header:** already handled by §5.1's new-instance pop.
 
-### §5.3 — One documented, accepted edge
+### §5.3 — The one remaining edge is benign (own header above own footer)
 
-A header-only *inner* group can still have its header reprinted above its *outer* group's footer, if
-a page break lands in the narrow window between that group's last detail and the outer footer. It is
-cosmetic (the inner label sits above the outer total) and rare; 008b accepts it rather than add a
-fourth closure rule. Footer-having groups and the common cases are exact.
+With §5.2 rule 1, the misleading case — an *inner* group's header above an *outer* subtotal — cannot
+occur. What remains: a group's **own** header may reprint above its **own** footer when that footer
+flows alone to a continuation page (the group stays open until its footer-run end). This is **correct
+and contextual** — the group's label sits above its own subtotal on the continuation page, exactly as
+a banded report should — so it needs no special handling.
 
 ## §6 — `keepTogether`
 
-### §6.1 — Pre-measure + extent pre-pass
+### §6.1 — Pre-measure + extent pre-pass (single O(n) pass)
 
 Layout first measures **every** body band once (`measured[i] = bandMeasurer.measure(filled.bands[i])`)
-— pure and position-independent, so lookahead is free. Then, for each **new-instance** opening header
-of a `keepTogether` group at index `o` (level `L`), it computes the instance **extent** = the sum of
-`measured[k].height` from `k = o` up to (but excluding) the first band that **exits** `g`:
+— pure and position-independent — and builds a prefix-sum array `cumHeight` (`cumHeight[k] = Σ
+measured[0..k-1]`, so any span sum is `cumHeight[b+1] − cumHeight[a]`).
 
-> A band at `k > o` **exits** `g` when it is a new-instance `groupHeader` at `level ≤ L`, a
-> `groupFooter` at `level < L` (an *outer* group's footer ending the block), a `summary`, or a
-> `noData`; end-of-stream also ends it.
+Extents are then computed in a **single forward pass that reuses the lifetime stack**, finalizing each
+instance at its *exit* — no per-header rescan (which is what avoids the O(n²) a forward scan per
+opening header would cost on deeply grouped reports). Processing band `k` first closes the instances
+`k` exits, and each closing `keepTogether` instance records `extent = cumHeight[k] −
+cumHeight[openIndex]` keyed by its `openIndex`:
 
-So `g`'s own footers (`level == L`) and all inner bands (`level > L`) are **included**; an outer
-footer is **excluded**. A footer-having group's extent includes its footer; a header-only group's
-extent stops before the outer footer — exact for both shapes (the over-count the pure header-driven
-rule would have caused is avoided).
+> Band `k` **exits** an open group `g` (open at `openIndex`, level `L`) when `k` is a new-instance
+> `groupHeader` at `level ≤ L`, a `groupFooter` at `level < L` (an *outer* footer), or a
+> `summary`/`noData`; end-of-stream finalizes any still-open instances.
+
+So `g`'s own footers (`level == L`) and all inner bands (`level > L`) are **included**, an outer footer
+**excluded** — exact for both header-only and footer-having groups, in one pass.
 
 ### §6.2 — Break decision (a real promise, one break per band)
 
@@ -213,6 +226,9 @@ breakPage():
 **Modify (domain + serialization):**
 - `lib/src/domain/report_group.dart` — `keepTogether`, `reprintHeaderOnEachPage` (fields, ctor,
   `fromJson`/`toJson` additive omit-when-false, `==`/`hashCode`/`toString`).
+- `lib/src/domain/serialization/report_codec.dart` — amend the `kReportSchemaVersion` contract
+  comment to codify the pre-1.0 additive-optional-fields carve-out (§4). Comment only; the version
+  stays `1` and the encode/decode logic is unchanged.
 
 **Modify (`rendering/fill/`):**
 - `lib/src/rendering/fill/filled_report.dart` — `FilledBand.group` (field, ctor, `==`/`hashCode`/
@@ -225,8 +241,9 @@ breakPage():
   pre-pass; the open-group lifetime stack (§5); the keep-together break (§6) and header re-emit (§7)
   in the pagination loop. No new file; the body loop grows (consistent with the single-method idiom).
 
-**No change:** `band_measurer.dart` (reused as-is), `report_codec.dart` (delegates to
-`ReportGroup.toJson`/`fromJson`), the 005b `VariableCalculator`, the 007c `GroupBandIndex`.
+**No code change:** `band_measurer.dart` (reused as-is), the 005b `VariableCalculator`, the 007c
+`GroupBandIndex`, and `report_codec`'s encode/decode logic (group (de)serialization already delegates
+to `ReportGroup.toJson`/`fromJson`; only its contract comment changes, above).
 
 ## §9 — Diagnostics & edges (render-don't-crash; reuses `ReportDiagnostics`)
 
@@ -235,7 +252,7 @@ breakPage():
 | `keepTogether`/`reprintHeaderOnEachPage` set on a group with **no header band** | **info** | flag is a no-op for that group; report still renders |
 | A `keepTogether` group's extent **> bodyCapacity** (can't fit any page) | (none) | no forced break; group flows and may split (header-repeat covers it if flagged) |
 | Re-emitted headers + the triggering band overflow the new page | (none, 008a behavior) | atomic placement, overflow, no re-break (no infinite loop) |
-| Header-only inner group header reprinted above an outer footer (§5.3) | (none) | accepted cosmetic edge |
+| A `groupHeader`/`groupFooter` with `null`/undeclared `group` | (none) | laid out as a plain body band — no lifetime/keep-together/reprint (§5); Fill never emits this, so it only arises for hand-built IR |
 
 No new fatal/structural error: 008b adds no parse paths; malformed templates already fail at
 decode/fill. All 008a diagnostics (overcommit, unresolved chrome, ignored bands, page mismatch) carry
@@ -250,7 +267,7 @@ over unchanged.
 
 **IR — `filled_report_test.dart` (extend):**
 - `FilledBand.group` participates in `==`/`hashCode` (two bands differing only in `group` are
-  unequal; equal when identical); `toString` unaffected structurally.
+  unequal; equal when identical) and appears in `toString` when non-null.
 
 **Fill — `report_filler_test.dart` (extend):**
 - A `groupHeader`/`groupFooter` `FilledBand` carries its `group` name; non-group bands carry `null`.
@@ -279,9 +296,12 @@ over unchanged.
 - **determinism:** two runs equal (frames by value; diagnostics by the 008a normalized projection of
   `(severity, message, elementId)` tuples).
 - **header-less flagged group:** an **info** diagnostic; layout otherwise identical to flags-off.
+- **null/unknown group on a group band:** a `groupHeader` with `group == null` (or an undeclared
+  name) lays out exactly as a plain band — no reprint, no keep-together, **no** diagnostic (§5).
 
-**Regression:** all 008a `report_layouter_test`, 007c `report_filler_test`, and existing
-`report_group`/`filled_report` tests stay green (flags-off path is byte-identical to 008a).
+**Regression:** all 008a `report_layouter_test` (whose group-typed bands carry no `group`, so they lay
+out as plain bands per §5), 007c `report_filler_test`, and existing `report_group`/`filled_report`
+tests stay green (the flags-off path is byte-identical to 008a, diagnostics included).
 
 **Architecture:** the existing `layout/` seam test (no `expression/`, headless) still passes — 008b
 adds no expression import.
@@ -304,9 +324,14 @@ adds no expression import.
    "fits" provably does (§6.2). One break per band via the `broke` guard.
 6. **Reprint re-emits the already-resolved header instance** — same group key/snapshot on a
    continuation page, so no re-resolution and no expression engine in layout (008a invariant kept).
-7. **Conscious pre-1.0 schema exception** (§4) — no `kReportSchemaVersion` bump for the two additive
-   flags; backward compat is met, the forward tradeoff is accepted, deferred to a pre-1.0 versioning
-   pass. Documented as a deviation from the codec contract, not as compliance.
+7. **Codified pre-1.0 schema carve-out** (§4) — the library is not deployed, so no bump/migration;
+   instead of a silent per-spec exception, the codec's contract comment is amended to permit pre-1.0
+   additive optional fields at the current schema version, so code and docs agree.
+8. **Group bands without identity lay out as plain bands** — a `groupHeader`/`groupFooter` with a
+   `null`/undeclared `group` gets no group-aware treatment and no diagnostic (§5), keeping direct
+   `ReportLayouter` use well-defined and the 008a regressions byte-identical.
+9. **Extents in one O(n) pass** (§6.1) — a single exit-driven pass over the lifetime stack plus
+   prefix sums, not a per-header forward scan, so heavily-grouped reports stay linear.
 
 ## §12 — Review history
 
@@ -314,8 +339,8 @@ adds no expression import.
 1. *Schema "no bump" framed as if it matched the rule (High).* The codec says bump on every schema
    change; adding persisted `ReportGroup` fields is a schema change. **Verified and reframed:** §4 now
    documents the no-bump as an **explicit conscious pre-1.0 exception** (backward compat met, forward
-   tradeoff accepted), mirroring 007c — not as compliance. The bump-now alternative was offered and
-   declined in favor of the standing precedent.
+   tradeoff accepted), mirroring 007c — not as compliance. *(Superseded in R4: the exception was
+   escalated to a codified repo-level carve-out — see R4 #2.)*
 2. *Undercounted test surface (Medium).* `FilledBand` and `ReportGroup` are value types with existing
    `==`/JSON tests. **Folded in:** §10 extends `filled_report_test` (FilledBand.group equality) and
    `report_group_test` (flag round-trip + equality), not only filler/layouter coverage.
@@ -340,3 +365,21 @@ adds no expression import.
    pop — and the extent uses the matching **exit rule** (§6.1) that excludes outer footers. Added the
    two must-have tests (inner↔outer footer break; final footer↔summary break) to §10. The R2 break
    fixes (the `broke` guard, repeated-outer-header fit) were confirmed correct and retained.
+
+**R4 (data contract + complexity), folded in:**
+1. *Undefined behavior for `null`/unknown group on a group band (High).* The 008a layouter tests
+   build group-typed `FilledBand`s with no identity (`report_layouter_test.dart`), so after the IR
+   field is added they are `group == null`. **Verified and specified:** such bands lay out as plain
+   body bands — no lifetime/keep-together/reprint, **no diagnostic** (§5) — which makes the
+   byte-identical regression claim true and defines direct `ReportLayouter` use (Open Q2).
+2. *Schema exception is a contract breach, not a local choice (High).* **Resolved via the user's
+   "not deployed" decision:** §4 now **codifies** the pre-1.0 carve-out by amending the codec's
+   contract comment (repo-level) — so it is policy, not a silent breach — and skips the (empty)
+   migration since nothing is deployed.
+3. *Extent pre-pass is O(n²) (Medium).* **Fixed:** §6.1 is a single O(n) exit-driven pass over the
+   lifetime stack + prefix sums; no per-header rescan.
+4. *`FilledBand.toString` inconsistency (Low).* **Fixed:** `toString` includes `group` when non-null;
+   the contradictory §10 "unaffected" note was removed.
+5. *Misleading inner-above-outer edge (Open Q1).* **Strengthened, not documented away:** §5.2 rule 1
+   pops inner groups *before* an outer footer, eliminating the misleading case; only the benign
+   own-header-above-own-footer remains (§5.3).
