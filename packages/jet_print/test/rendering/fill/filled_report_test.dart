@@ -81,4 +81,34 @@ void main() {
     expect(a, b);
     expect(a.hashCode, b.hashCode);
   });
+
+  test('FilledBand.group participates in equality and hashCode', () {
+    FilledBand band(String? group) => FilledBand(
+          type: BandType.groupHeader,
+          height: 10,
+          elements: const <ReportElement>[],
+          variables: const <String, JetValue>{},
+          group: group,
+        );
+    expect(band('region'), band('region'));
+    expect(band('region').hashCode, band('region').hashCode);
+    expect(band('region') == band('city'), isFalse);
+    expect(band('region') == band(null), isFalse);
+  });
+
+  test('FilledBand.group defaults to null and appears in toString when set', () {
+    final FilledBand plain = FilledBand(
+        type: BandType.detail,
+        height: 10,
+        elements: const <ReportElement>[],
+        variables: const <String, JetValue>{});
+    expect(plain.group, isNull);
+    final FilledBand grouped = FilledBand(
+        type: BandType.groupHeader,
+        height: 10,
+        elements: const <ReportElement>[],
+        variables: const <String, JetValue>{},
+        group: 'region');
+    expect(grouped.toString(), contains('region'));
+  });
 }
