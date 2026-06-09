@@ -55,7 +55,8 @@ void main() {
     expect(find.text('arrangeBringToFront'), findsNothing);
   });
 
-  testWidgets('the Properties inspector labels are localized in English', (
+  testWidgets(
+      'the Properties inspector is localized in English across every state', (
     WidgetTester tester,
   ) async {
     final JetReportDesignerController c =
@@ -63,18 +64,41 @@ void main() {
     c.createElement(DesignerToolType.text,
         bandIndex: 1, at: const JetOffset(20, 20));
     await tester.pumpAndSettle();
-    final Finder tab = find.text('Properties'); // the right-panel tab
-    await tester.ensureVisible(tab);
-    await tester.pumpAndSettle();
-    await tester.tap(tab);
-    await tester.pumpAndSettle();
+    await openPropertiesTab(tester);
 
-    // Section labels are rendered upper-cased by SectionLabel.
+    // (1) Element inspector — section labels are upper-cased by SectionLabel.
     expect(find.text('POSITION'), findsOneWidget);
     expect(find.text('SIZE'), findsOneWidget);
     expect(find.text('TEXT'), findsOneWidget);
-    // No raw keys.
+    // No raw resource keys leak through.
     expect(find.text('propertiesPosition'), findsNothing);
     expect(find.text('PROPERTIESPOSITION'), findsNothing);
+
+    // (2) Report inspector — page section label + verbatim header/margins rows.
+    c.selectReport();
+    await tester.pumpAndSettle();
+    expect(find.text('Report'), findsWidgets); // inspector header
+    expect(find.text('PAGE'), findsOneWidget);
+    expect(find.text('Margins'), findsOneWidget);
+
+    // (3) Band inspector — the height row label (rendered verbatim).
+    c.selectBand(1);
+    await tester.pumpAndSettle();
+    expect(find.text('Height'), findsOneWidget);
+
+    // (4) Empty state — nothing selected.
+    c.clearSelection();
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Select an object to edit its properties.'),
+      findsOneWidget,
+    );
+
+    // (5) Multi-selection — the count summary.
+    c.createElement(DesignerToolType.text,
+        bandIndex: 1, at: const JetOffset(80, 60));
+    c.selectAll();
+    await tester.pumpAndSettle();
+    expect(find.text('2 elements selected'), findsOneWidget);
   });
 }

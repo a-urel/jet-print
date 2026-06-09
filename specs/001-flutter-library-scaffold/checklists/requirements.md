@@ -1,4 +1,4 @@
-# Specification Quality Checklist: Flutter Library + Tester App Scaffold
+# Specification Quality Checklist: Flutter Library + Playground App Scaffold
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-06-05

@@ -78,7 +78,7 @@ the minimum needed to *host, construct, mutate, and round-trip* a design:
 
 **Rationale**:
 - Constitution I makes the library the product and every app a consumer "through its public API —
-  never through private internals." FR-022 requires a consumer (the tester app) to **open and
+  never through private internals." FR-022 requires a consumer (the playground app) to **open and
   save** via the existing serialization; FR-003 requires an in-memory model the surface mutates.
   Neither is reachable without exposing the model + codec. The 002 deferral was correct *for a
   layout-only iteration*; this iteration's scope retires it.
@@ -302,7 +302,7 @@ and testable.
 **Decision**: The **library stays I/O-free** (no `dart:io`); file open/save is a **consumer**
 concern. The top bar's Save/Open actions invoke controller-level hooks (`onSaveRequested` /
 `onOpenRequested`, or equivalent callbacks on `JetReportDesigner`) that hand the consumer the
-current `ReportTemplate` (for save) or accept one (for open). The **tester app** implements those
+current `ReportTemplate` (for save) or accept one (for open). The **playground app** implements those
 hooks: it uses a file-picker dependency to choose a path and `JetReportFormat.encodeJson` /
 `decodeJson` to write/read the JSON. The lossless guarantee (FR-003 / SC-002) is verified as a
 pure-Dart contract test on `JetReportFormat` (edit → `controller.template` → encode → decode →
@@ -313,8 +313,8 @@ pure-Dart contract test on `JetReportFormat` (edit → `controller.template` →
 targets. Keeping I/O in the consumer matches how 002 already treats the app as a pure consumer and
 keeps the round-trip testable without a filesystem.
 
-**Tester-app dependency**: a maintained, permissively-licensed file picker (e.g.
-`file_selector`, first-party Flutter) added to **`apps/jet_print_tester`** only — not to the
+**Playground-app dependency**: a maintained, permissively-licensed file picker (e.g.
+`file_selector`, first-party Flutter) added to **`apps/jet_print_playground`** only — not to the
 published `packages/jet_print`. This respects the "minimal/justified deps" rule for the library
 while letting the consumer demonstrate open/save.
 

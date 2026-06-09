@@ -20,7 +20,7 @@ description: "Task list for Report Designer Main Layout"
 ## Path Conventions
 
 - **Library** (the product): `packages/jet_print/`
-- **Tester app** (the consumer): `apps/jet_print_tester/`
+- **Playground app** (the consumer): `apps/jet_print_playground/`
 - **This feature's library code**: `packages/jet_print/lib/src/designer/`
 - **This feature's library tests**: `packages/jet_print/test/designer/`
 
@@ -31,7 +31,7 @@ description: "Task list for Report Designer Main Layout"
 **Purpose**: Add localization dependencies and tooling config so the gen-l10n pipeline can run.
 
 - [X] T001 [P] Add `flutter_localizations` (SDK) + `intl` dependencies and set `flutter: generate: true` in `packages/jet_print/pubspec.yaml`
-- [X] T002 [P] Add `flutter_localizations` (SDK) dependency in `apps/jet_print_tester/pubspec.yaml` (consumer needs `GlobalMaterial/Widgets/Cupertino` delegates)
+- [X] T002 [P] Add `flutter_localizations` (SDK) dependency in `apps/jet_print_playground/pubspec.yaml` (consumer needs `GlobalMaterial/Widgets/Cupertino` delegates)
 - [X] T003 [P] Create `packages/jet_print/l10n.yaml` with `arb-dir: lib/src/designer/l10n`, `template-arb-file: jet_print_en.arb`, `output-localization-file: jet_print_localizations.dart`, `output-class: JetPrintLocalizations`, `synthetic-package: false`
 - [X] T004 [P] Add `analyzer: exclude:` entry for `**/l10n/jet_print_localizations*.dart` in `analysis_options.yaml` (keep the zero-warning gate over generated output)
 - [X] T005 Run `flutter pub get` at the workspace root to resolve the new dependencies (depends on T001–T004)
@@ -56,7 +56,7 @@ description: "Task list for Report Designer Main Layout"
 
 **Goal**: Render the complete designer shell — top bar, left toolbox, center design surface, right tabbed panel — inside one resizable, collapsible, theme-driven frame, all regions visible simultaneously at desktop width with the surface occupying the largest share.
 
-**Independent Test**: Launch the tester app; confirm all four regions are present and correctly positioned at default desktop width with the surface largest; toggle light/dark and confirm every region adopts the shadcn theme; drag splitters to resize side regions to their minimums; narrow the window below the breakpoint and confirm side regions collapse to rails and re-expand.
+**Independent Test**: Launch the playground app; confirm all four regions are present and correctly positioned at default desktop width with the surface largest; toggle light/dark and confirm every region adopts the shadcn theme; drag splitters to resize side regions to their minimums; narrow the window below the breakpoint and confirm side regions collapse to rails and re-expand.
 
 ### Tests for User Story 1 (write FIRST, must FAIL before implementation) ⚠️
 
@@ -74,8 +74,8 @@ description: "Task list for Report Designer Main Layout"
 - [X] T016 [P] [US1] Create `DesignerRightPanel` (private) in `packages/jet_print/lib/src/designer/layout/designer_right_panel.dart`: `ShadTabs<String>` container with three localized captions in order Data Source / Outline / Properties (tab bodies stubbed; switching wired in US2) (FR-004/FR-016)
 - [X] T017 [US1] Create the shell `JetReportDesigner` (public `StatefulWidget`, no required params) in `packages/jet_print/lib/src/designer/jet_report_designer.dart`: compose the four regions in a frame using `ShadResizablePanelGroup` (horizontal) inside a `LayoutBuilder`; ≥1024px → three resizable panels honoring min widths with the surface absorbing the remainder (FR-013); <1024px → icon rails + overlay expand per side, holding collapse + active-tab state (FR-011/FR-014); read `ShadTheme` (FR-008/009); add dartdoc noting layout-only scope (Principle VI) (depends on T013–T016; verified by T010, T011, T011a)
 - [X] T018 [US1] Export `JetReportDesigner` from `packages/jet_print/lib/jet_print.dart` (depends on T017)
-- [X] T019 [US1] Render `JetReportDesigner` as `home` in `apps/jet_print_tester/lib/main.dart`, wiring `localizationsDelegates: [JetPrintLocalizations.delegate, GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate]` and `supportedLocales: JetPrintLocalizations.supportedLocales`; keep the existing theme toggle (depends on T018)
-- [X] T020 [US1] Update `apps/jet_print_tester/test/app_consumes_library_test.dart` to assert the app root renders exactly one `JetReportDesigner` inside a `ShadApp` (depends on T019)
+- [X] T019 [US1] Render `JetReportDesigner` as `home` in `apps/jet_print_playground/lib/main.dart`, wiring `localizationsDelegates: [JetPrintLocalizations.delegate, GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate]` and `supportedLocales: JetPrintLocalizations.supportedLocales`; keep the existing theme toggle (depends on T018)
+- [X] T020 [US1] Update `apps/jet_print_playground/test/app_consumes_library_test.dart` to assert the app root renders exactly one `JetReportDesigner` inside a `ShadApp` (depends on T019)
 
 **Checkpoint**: The full designer layout renders at desktop width in light and dark, resizes via splitters, and collapses/expands below the breakpoint. US1 is independently demoable as the MVP.
 
@@ -139,7 +139,7 @@ description: "Task list for Report Designer Main Layout"
 - [X] T033 [P] [US4] Create the German ARB `packages/jet_print/lib/src/designer/l10n/jet_print_de.arb` translating every key in the en template
 - [X] T034 [P] [US4] Create the Turkish ARB `packages/jet_print/lib/src/designer/l10n/jet_print_tr.arb` translating every key in the en template
 - [X] T035 [US4] Regenerate `JetPrintLocalizations` via `flutter gen-l10n` (or `flutter pub get`) so de + tr are compiled into the delegate (depends on T033–T034)
-- [X] T036 [US4] Add a runtime language toggle (cycles en → de → tr) to `apps/jet_print_tester/lib/main.dart` that holds a `Locale` in state and drives `ShadApp.locale` via `setState`, analogous to the existing theme toggle (FR-018, SC-007) (depends on T035)
+- [X] T036 [US4] Add a runtime language toggle (cycles en → de → tr) to `apps/jet_print_playground/lib/main.dart` that holds a `Locale` in state and drives `ShadApp.locale` via `setState`, analogous to the existing theme toggle (FR-018, SC-007) (depends on T035)
 
 **Checkpoint**: Designer renders in all three languages with live switching and English fallback. All four user stories independently functional.
 
@@ -155,7 +155,7 @@ description: "Task list for Report Designer Main Layout"
 - [X] T040 Run `flutter analyze` and confirm zero warnings (generated l10n excluded per T004) (FR-009)
 - [X] T041 Run `dart format --output=none --set-exit-if-changed .` and confirm no formatting drift
 - [X] T042 Run `flutter test` from the workspace root — all green, no skips; regenerate goldens with `flutter test --update-goldens` only for intentional visual changes (Principle III/IV)
-- [ ] T043 Execute `quickstart.md` validation: run the tester app on macOS and manually confirm tab switch, splitter resize, narrow-window collapse/expand, light/dark theme, and en/de/tr language switch
+- [ ] T043 Execute `quickstart.md` validation: run the playground app on macOS and manually confirm tab switch, splitter resize, narrow-window collapse/expand, light/dark theme, and en/de/tr language switch
 
 ---
 
@@ -166,7 +166,7 @@ description: "Task list for Report Designer Main Layout"
 - **Setup (Phase 1)**: No dependencies — start immediately. T005 depends on T001–T004.
 - **Foundational (Phase 2)**: Depends on Setup. **BLOCKS all user stories** (every region widget reads `JetPrintLocalizations`).
 - **User Stories (Phases 3–6)**: All depend on Foundational completion.
-  - US1 (P1) is the MVP and should land first; US2 extends the right panel US1 created; US3 fills content into widgets US1/US2 created; US4 extends the seam US1 wired into the tester app.
+  - US1 (P1) is the MVP and should land first; US2 extends the right panel US1 created; US3 fills content into widgets US1/US2 created; US4 extends the seam US1 wired into the playground app.
   - With sufficient staffing US2/US3/US4 can proceed in parallel after US1, but they share files created in US1 (see notes), so coordinate edits.
 - **Polish (Phase 7)**: Depends on all targeted user stories being complete.
 
@@ -175,15 +175,15 @@ description: "Task list for Report Designer Main Layout"
 - **US1 (P1)**: Depends only on Foundational. Creates the shell + all region widget files. No dependency on other stories.
 - **US2 (P2)**: Depends on Foundational; integrates with `DesignerRightPanel` (created in US1). Independently testable via tab-switching.
 - **US3 (P3)**: Depends on Foundational; enriches widgets created in US1 (toolbox, surface) and US2 (panel bodies). Independently testable via content inspection.
-- **US4 (P3)**: Depends on Foundational; adds de/tr ARBs (extending the en template from T006) and the tester toggle (extending main.dart wiring from US1 T019). Independently testable via language switching.
+- **US4 (P3)**: Depends on Foundational; adds de/tr ARBs (extending the en template from T006) and the playground toggle (extending main.dart wiring from US1 T019). Independently testable via language switching.
 
 ### Within Each User Story
 
 - Tests are written and MUST FAIL before implementation.
 - Region widget files (T013–T016) before the composing shell (T017).
-- Shell before export (T018) before tester wiring (T019) before tester test (T020).
+- Shell before export (T018) before playground wiring (T019) before playground test (T020).
 - Panel body files (T022–T024) before tab wiring (T025).
-- ARB files (T033–T034) before regeneration (T035) before tester toggle (T036).
+- ARB files (T033–T034) before regeneration (T035) before playground toggle (T036).
 
 ### Parallel Opportunities
 
@@ -221,7 +221,7 @@ Task: "Create DesignerRightPanel in packages/jet_print/lib/src/designer/layout/d
 1. Complete Phase 1: Setup (localization deps + tooling config).
 2. Complete Phase 2: Foundational (en ARB + generated delegate + export) — CRITICAL, blocks all stories.
 3. Complete Phase 3: User Story 1 — the full layout shell.
-4. **STOP and VALIDATE**: launch the tester app, confirm all regions present, themed, resizable, collapsible.
+4. **STOP and VALIDATE**: launch the playground app, confirm all regions present, themed, resizable, collapsible.
 5. Demo the workspace skeleton for stakeholder sign-off (SC-006).
 
 ### Incremental Delivery
@@ -240,7 +240,7 @@ Task: "Create DesignerRightPanel in packages/jet_print/lib/src/designer/layout/d
 - `[P]` = different files, no dependency on incomplete tasks.
 - `[Story]` label maps each task to its user story for traceability.
 - Layout-only iteration: no data binding, element creation, property editing, drag-and-drop, or persistence (Constitution V deferred).
-- Some later-story tasks edit files created in earlier stories (US3 fills US1/US2 widgets; US4 extends US1's tester wiring) — these are intentional incremental refinements, not parallelizable across stories on the same file.
+- Some later-story tasks edit files created in earlier stories (US3 fills US1/US2 widgets; US4 extends US1's playground wiring) — these are intentional incremental refinements, not parallelizable across stories on the same file.
 - Verify each test FAILS before implementing (Principle III).
 - Run `flutter analyze` + `dart format` + `flutter test` before claiming completion (Principle VI).
 - Commit after each task or logical group; stop at any checkpoint to validate a story independently.

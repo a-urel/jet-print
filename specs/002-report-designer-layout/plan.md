@@ -6,7 +6,7 @@
 ## Summary
 
 Build the **visual shell** of the report designer as a new public library widget,
-`JetReportDesigner`, living in the library's `designer` seam and consumed by the tester app
+`JetReportDesigner`, living in the library's `designer` seam and consumed by the playground app
 exactly as an external consumer would. The shell arranges five regions — a top bar, a
 left toolbox, a center design surface, and a right three-tab panel (Data Source / Outline /
 Properties) inside an enclosing frame — using only `shadcn_ui` components already resolved in
@@ -18,7 +18,7 @@ and collapse/expand below a width breakpoint.
 In parallel, this feature establishes the **localization seam** the rest of the designer will
 rely on: the library ships its own `flutter_localizations` + `intl` + ARB-based
 `JetPrintLocalizations` delegate (en default/fallback, de, tr) covering the designer chrome,
-exported through the single public entry point. The tester app gains a runtime language
+exported through the single public entry point. The playground app gains a runtime language
 toggle (analogous to the existing light/dark switch) that flips `ShadApp.locale` so every
 visible designer label updates live. Layout-only: no data binding, element creation, property
 editing, or persistence.
@@ -33,8 +33,8 @@ editing, or persistence.
 **Testing**: `flutter test` — widget tests (regions present, tab switch, collapse at narrow
 width, locale switch + English fallback); light/dark golden tests of the shell extending the
 WYSIWYG harness; existing architecture (layer-boundary) test stays green
-**Target Platform**: macOS desktop (tester app); library remains platform-agnostic
-**Project Type**: Dart pub workspace monorepo — reusable library + sample/tester desktop app
+**Target Platform**: macOS desktop (playground app); library remains platform-agnostic
+**Project Type**: Dart pub workspace monorepo — reusable library + sample/playground desktop app
 **Performance Goals**: N/A (static placeholder chrome; no rendering pipeline). Layout must
 render without horizontal scroll at default desktop window size (SC-004) and switch
 theme/language without restart (SC-003/SC-007)
@@ -50,12 +50,12 @@ zero analyzer warnings (generated l10n excluded from analysis if needed); minima
 
 | # | Principle | Status | How this plan complies |
 |---|-----------|--------|------------------------|
-| I | Library-First & Clean Public API | ✅ PASS | The designer shell is a **library** widget (`JetReportDesigner`) in `lib/src/designer/`, exported from the single entry point `lib/jet_print.dart`; the tester app renders it as a consumer only. Localization is exposed as a public `JetPrintLocalizations.delegate` + `supportedLocales` so consumers opt in (FR-016/018). Internals stay under `src/`. |
+| I | Library-First & Clean Public API | ✅ PASS | The designer shell is a **library** widget (`JetReportDesigner`) in `lib/src/designer/`, exported from the single entry point `lib/jet_print.dart`; the playground app renders it as a consumer only. Localization is exposed as a public `JetPrintLocalizations.delegate` + `supportedLocales` so consumers opt in (FR-016/018). Internals stay under `src/`. |
 | II | Layered & Extensible Architecture | ✅ PASS | Layout is presentation-only, confined to the `designer` seam (allowed to use Flutter UI). No domain/rendering coupling — placeholder content is static, not bound to a report model; the `domain` seam stays UI-free and the layer-boundary test remains green. Localized strings are a presentation resource, not a domain entity. |
 | III | Test-First (NON-NEGOTIABLE) | ✅ PASS | Phase 2 tasks write widget tests (region presence, tab switching, collapse at narrow width, locale switch + en fallback) and shell goldens **before** implementation; suite must be green with no skips. |
 | IV | Rendering Fidelity — WYSIWYG (NON-NEGOTIABLE) | 🟡 N/A this iteration (not violated) | This is designer **chrome**, not report-model rendering; no canvas/preview/print paths exist yet, so no parallel rendering is introduced. Light/dark golden tests of the shell **extend** the seeded WYSIWYG harness; full fidelity coverage arrives with real rendering. |
 | V | Versioned & Backward-Compatible Serialization | 🟡 DEFERRED (not violated) | Layout-only; nothing is persisted or serialized. No schema introduced, so no version/migration obligation triggered. |
-| VI | Documentation & Developer Experience | ✅ PASS | New public symbols (`JetReportDesigner`, `JetPrintLocalizations` + delegate) carry dartdoc; tester app stays runnable and gains the language toggle; `CHANGELOG.md` updated; `dart format` + strict `analysis_options` enforced (generated l10n excluded from analysis to keep the zero-warning gate). |
+| VI | Documentation & Developer Experience | ✅ PASS | New public symbols (`JetReportDesigner`, `JetPrintLocalizations` + delegate) carry dartdoc; playground app stays runnable and gains the language toggle; `CHANGELOG.md` updated; `dart format` + strict `analysis_options` enforced (generated l10n excluded from analysis to keep the zero-warning gate). |
 
 **Initial gate**: PASS. No unjustified complexity. The two non-applicable principles (IV, V)
 are spec-sanctioned scope boundaries (layout-only, placeholders acceptable), not violations,
@@ -64,7 +64,7 @@ so the Complexity Tracking table stays empty. The one new dependency surface
 
 **Post-Design re-check**: PASS. The Phase 1 design (one shell widget composed from existing
 `shadcn_ui` components, region sub-widgets private under `src/designer/`, ARB-based delegate
-exported from the public entry point, tester locale toggle) adds no structural complexity
+exported from the public entry point, playground locale toggle) adds no structural complexity
 beyond what the constitution's layering already mandates and introduces no new runtime
 dependency beyond the standard localization packages. No new violations.
 
@@ -127,7 +127,7 @@ jet-print/                                  # workspace root (unchanged structur
 │               └── goldens/
 │                   └── jet_report_designer_light_dark_test.dart  # SC-003 light/dark shell goldens
 └── apps/
-    └── jet_print_tester/                   # TESTER APP (consumer; macOS desktop)
+    └── jet_print_playground/                   # PLAYGROUND APP (consumer; macOS desktop)
         ├── pubspec.yaml                    # + flutter_localizations (sdk) for global delegates
         ├── lib/
         │   └── main.dart                   # hosts JetReportDesigner; wires l10n delegates + supportedLocales;
@@ -141,7 +141,7 @@ single public widget (`JetReportDesigner`) in the library's `designer` seam, com
 private region sub-widgets under `src/designer/layout/`. Localization lives in
 `src/designer/l10n/` (ARB + gen-l10n output with `synthetic-package: false` so the generated
 delegate is a real, exportable source file). The public entry point gains exactly the symbols
-in `contracts/designer-layout-api.md`; everything else stays private. The tester app remains a
+in `contracts/designer-layout-api.md`; everything else stays private. The playground app remains a
 pure consumer: it imports only `package:jet_print/jet_print.dart`, renders `JetReportDesigner`,
 and wires the exported localization delegate plus a language toggle.
 

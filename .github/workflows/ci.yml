@@ -34,4 +34,4 @@ jobs:
       - name: Run tests
         # `flutter test` at a workspace root does not fan out to members, so the
         # member packages are listed explicitly.
-        run: flutter test packages/jet_print apps/jet_print_tester
+        run: flutter test packages/jet_print apps/jet_print_playground

@@ -1,6 +1,6 @@
-# jet_print_tester
+# jet_print_playground
 
-The macOS desktop tester app for the `jet_print` library. It consumes the
+The macOS desktop playground app for the `jet_print` library. It consumes the
 library through its public entry point only and renders the placeholder inside a
 shadcn-themed shell with a light/dark toggle.
 

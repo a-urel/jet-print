@@ -1,6 +1,6 @@
 // Consumption widget test (US2 / FR-002 / FR-005 / FR-022).
 //
-// Proves the tester app really consumes the library through its public API:
+// Proves the playground app really consumes the library through its public API:
 //  * pumping the app's root yields exactly one JetReportDesigner in a ShadApp;
 //  * the app owns a controller and wires the Save/Open persistence callbacks;
 //  * the edit → save → reopen path the app implements (a JetReportFormat round
@@ -8,14 +8,14 @@
 //    the native file picker cannot run in a widget test.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
-import 'package:jet_print_tester/main.dart';
+import 'package:jet_print_playground/main.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 void main() {
   testWidgets(
     'root widget renders one JetReportDesigner inside a ShadApp',
     (WidgetTester tester) async {
-      await tester.pumpWidget(const JetPrintTesterApp());
+      await tester.pumpWidget(const JetPrintPlaygroundApp());
 
       // The shadcn theming pipeline is present...
       expect(find.byType(ShadApp), findsOneWidget);
@@ -27,7 +27,7 @@ void main() {
   testWidgets(
     'the app owns a controller and wires the Save/Open callbacks (FR-022)',
     (WidgetTester tester) async {
-      await tester.pumpWidget(const JetPrintTesterApp());
+      await tester.pumpWidget(const JetPrintPlaygroundApp());
 
       final JetReportDesigner designer =
           tester.widget<JetReportDesigner>(find.byType(JetReportDesigner));

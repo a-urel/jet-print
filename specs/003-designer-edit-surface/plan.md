@@ -40,7 +40,7 @@ null-safety.
 **Primary Dependencies**: Flutter SDK (`flutter`, `flutter_localizations`); `intl` (gen-l10n);
 `shadcn_ui ^0.54.0` (chrome — buttons/inputs/menus/tabs/cards/tooltips, theme). The interactive
 canvas is built from Flutter `CustomPaint` + pointer/gesture/focus primitives — **no new library
-dependency**. The **tester app only** adds a maintained, permissive file picker (e.g.
+dependency**. The **playground app only** adds a maintained, permissive file picker (e.g.
 `file_selector`) for open/save (research D8); the published package adds none.
 **Storage**: The versioned `ReportTemplate` JSON (Constitution V) via the existing
 `report_codec.dart`, newly surfaced through a public `JetReportFormat` facade. Library performs no
@@ -50,10 +50,10 @@ widget (drop-create, select/move/resize, marquee, snapping, z-order, clipboard, 
 inline-edit, cross-panel sync, zoom accuracy), localization (en/de/tr + fallback), goldens
 (design surface light/dark via the shared render pipeline), and a 200-element drag perf smoke. The
 existing architecture (layer-boundary) + encapsulation tests stay green.
-**Target Platform**: macOS desktop (tester app); the library stays platform-agnostic/headless.
+**Target Platform**: macOS desktop (playground app); the library stays platform-agnostic/headless.
 Input target is mouse + keyboard (touch/stylus not this iteration).
 **Project Type**: Dart pub workspace monorepo — reusable library (`packages/jet_print`, the
-product) + sample/tester desktop app (`apps/jet_print_tester`, a consumer).
+product) + sample/playground desktop app (`apps/jet_print_playground`, a consumer).
 **Performance Goals**: ~200 elements/design at ~60 fps (≈16 ms/frame); a ≥20-element selection
 drags without perceptible lag (SC-007). Achieved by caching the committed frame as a `ui.Picture`
 and keeping per-frame work proportional to the active selection (research D5).
@@ -76,18 +76,18 @@ stories (P1–P4); ~11 contract/test groups (contracts/designer-edit-api.md §7)
 
 | # | Principle | Status | How this plan complies |
 |---|-----------|--------|------------------------|
-| I | Library-First & Clean Public API | ✅ PASS | All new capability ships as library symbols (`JetReportDesignerController`, `JetReportFormat`, the `ReportTemplate` model graph) from the single entry point `lib/jet_print.dart`; the tester app consumes them as an external consumer (drives file I/O itself). Internals (canvas, commands, layout, design-time frame) stay under `src/`, guarded by the encapsulation test. The public-surface *expansion* is deliberate and required by FR-003/FR-022 (research D2), not incidental coupling. |
+| I | Library-First & Clean Public API | ✅ PASS | All new capability ships as library symbols (`JetReportDesignerController`, `JetReportFormat`, the `ReportTemplate` model graph) from the single entry point `lib/jet_print.dart`; the playground app consumes them as an external consumer (drives file I/O itself). Internals (canvas, commands, layout, design-time frame) stay under `src/`, guarded by the encapsulation test. The public-surface *expansion* is deliberate and required by FR-003/FR-022 (research D2), not incidental coupling. |
 | II | Layered & Extensible Architecture | ✅ PASS | Editing lives in the **designer** seam; it depends inward on `domain` (model) and `rendering` (renderers/painter), never the reverse. The domain seam stays UI-free — the only domain additions are pure value-copy helpers (`withBounds`/`copyWith`), keeping the layer-boundary test green. New element types still flow through the existing codec + renderer registries (open/closed); the designer reads them generically. |
 | III | Test-First (NON-NEGOTIABLE) | ✅ PASS | Phase 2 writes tests before code for every unit (commands/history/controller/codec round-trip/domain helpers) and behavior (drop/select/move/resize/marquee/snap/z-order/clipboard/keyboard/inline-edit/sync/zoom). Suite must be green, no skips. Contracts §7 enumerates the test-first set. |
 | IV | Rendering Fidelity — WYSIWYG (NON-NEGOTIABLE) | ✅ PASS | The canvas renders element appearance through the **unchanged** `ElementRenderer.emit` + `CanvasPainter` pipeline; only non-paginated band-stacking geometry is design-specific (research D1). No parallel/divergent element-drawing code. Design-surface goldens (light/dark) extend the WYSIWYG harness and lock fidelity. |
 | V | Versioned & Backward-Compatible Serialization | ✅ PASS | Save/open use the existing versioned, migration-aware codec, surfaced as `JetReportFormat` (stamps `schemaVersion`, runs migrations, preserves unknown elements/fields). No schema change is introduced; the lossless round-trip is contract-tested (SC-002). Making the format public is the act Constitution V anticipates (the format is a user-owned contract). |
-| VI | Documentation & Developer Experience | ✅ PASS | New public symbols carry dartdoc (controller ops, designer params, codec, model types); tester app stays runnable and gains working open/save + interaction; `CHANGELOG.md` updated; `dart format` + strict analysis enforced (generated l10n excluded as already configured). |
+| VI | Documentation & Developer Experience | ✅ PASS | New public symbols carry dartdoc (controller ops, designer params, codec, model types); playground app stays runnable and gains working open/save + interaction; `CHANGELOG.md` updated; `dart format` + strict analysis enforced (generated l10n excluded as already configured). |
 
 **Initial gate: PASS.** The one structurally significant move — exposing the model + codec — is
 **spec-mandated** (FR-003: in-memory model; FR-022: open/save via the existing serialization) and
 **constitution-aligned** (I makes the library the product; V treats the format as a public
 contract). It is therefore not unjustified complexity. No Complexity Tracking entries required.
-The single new dependency (`file_selector`) is confined to the **tester app**, not the published
+The single new dependency (`file_selector`) is confined to the **playground app**, not the published
 package, honoring the minimal-deps rule.
 
 ### Post-Design re-check (post-Phase-1)
@@ -198,7 +198,7 @@ jet-print/                                   # workspace root (unchanged structu
 │               ├── perf/                            # NEW — 200-element drag smoke (SC-007)
 │               └── goldens/                         # + design-surface light/dark (shared-render fidelity)
 └── apps/
-    └── jet_print_tester/                     # TESTER APP (consumer; macOS)
+    └── jet_print_playground/                     # PLAYGROUND APP (consumer; macOS)
         ├── pubspec.yaml                      # + file_selector (consumer-only; open/save)
         ├── lib/main.dart                     # MODIFIED — own a controller; wire onSave/onOpen via JetReportFormat
         └── test/app_consumes_library_test.dart  # MODIFIED — still one designer; exercises a basic edit/save path
@@ -211,7 +211,7 @@ reuse), and `interaction/` (keyboard + toolbox DnD) — composed by the existing
 `JetReportDesigner` shell. The **domain** seam gets only additive value-copy helpers and a new
 public `JetReportFormat` facade; **rendering** is reused untouched. The public entry point gains
 exactly the symbols in [contracts/designer-edit-api.md](contracts/designer-edit-api.md) §1;
-everything else stays private. The tester app remains a pure consumer that imports only
+everything else stays private. The playground app remains a pure consumer that imports only
 `package:jet_print/jet_print.dart` and supplies its own file I/O.
 
 ## Complexity Tracking
@@ -221,7 +221,7 @@ everything else stays private. The tester app remains a pure consumer that impor
 > the spec** (FR-003 in-memory model; FR-022 open/save via the existing serialization) and
 > **anticipated by the constitution** (Principle I: the library is the product; Principle V: the
 > serialized format is a user-owned public contract), so it is justified scope, not incidental
-> complexity. The sole new dependency (`file_selector`) is confined to the tester app, leaving the
+> complexity. The sole new dependency (`file_selector`) is confined to the playground app, leaving the
 > published package's dependency surface unchanged.
 
 ---

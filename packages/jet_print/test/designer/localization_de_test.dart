@@ -52,4 +52,49 @@ void main() {
     expect(find.text('Align left'), findsNothing);
     expect(find.text('Bring to front'), findsNothing);
   });
+
+  testWidgets('the Properties inspector is localized under the de locale', (
+    WidgetTester tester,
+  ) async {
+    final JetReportDesignerController c =
+        await pumpDesignerWith(tester, locale: const Locale('de'));
+    c.createElement(DesignerToolType.text,
+        bandIndex: 1, at: const JetOffset(20, 20));
+    await tester.pumpAndSettle();
+    await openPropertiesTab(tester);
+
+    // (1) Element inspector — German section label (upper-cased: ß is preserved).
+    expect(find.text('GRÖßE'), findsOneWidget); // Size → Größe
+    expect(find.text('SIZE'), findsNothing); // real translation, not a fallback
+
+    // (2) Report inspector — header + page section + margins row (verbatim).
+    c.selectReport();
+    await tester.pumpAndSettle();
+    expect(find.text('Bericht'), findsWidgets); // Report (header)
+    expect(find.text('SEITE'), findsOneWidget); // Page (section)
+    expect(find.text('Ränder'), findsOneWidget); // Margins (row)
+    expect(find.text('PAGE'), findsNothing);
+    expect(find.text('Report'), findsNothing);
+
+    // (3) Band inspector — the height row label (verbatim).
+    c.selectBand(1);
+    await tester.pumpAndSettle();
+    expect(find.text('Höhe'), findsOneWidget); // Height
+    expect(find.text('Height'), findsNothing);
+
+    // (4) Empty state.
+    c.clearSelection();
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Wählen Sie ein Objekt, um seine Eigenschaften zu bearbeiten.'),
+      findsOneWidget,
+    );
+
+    // (5) Multi-selection — the count summary.
+    c.createElement(DesignerToolType.text,
+        bandIndex: 1, at: const JetOffset(80, 60));
+    c.selectAll();
+    await tester.pumpAndSettle();
+    expect(find.text('2 Elemente ausgewählt'), findsOneWidget);
+  });
 }

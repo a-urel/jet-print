@@ -2,7 +2,7 @@ name: jet_print
 description: >-
   A layered, theme-aware Flutter widget library scaffold for building WYSIWYG
   report designers, integrating the shadcn_ui design system. This is the
-  publishable product; the tester app consumes it exactly as an external
+  publishable product; the playground app consumes it exactly as an external
   consumer would.
 version: 0.1.0
 

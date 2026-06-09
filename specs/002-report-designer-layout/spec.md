@@ -42,14 +42,14 @@ later feature (toolbox drag, canvas editing, property binding) attaches to. With
 correctly arranged, nothing else can be demonstrated. It is independently valuable as the
 visual skeleton the team and stakeholders review and sign off on.
 
-**Independent Test**: Launch the tester app, open the designer screen, and visually confirm
+**Independent Test**: Launch the playground app, open the designer screen, and visually confirm
 all five regions (top bar, left toolbox, center design surface, right tabbed panel, and an
 enclosing frame) are present, correctly positioned, and styled with the shadcn theme in both
 light and dark mode. Delivers value as a reviewable, demoable workspace skeleton.
 
 **Acceptance Scenarios**:
 
-1. **Given** the tester app is running, **When** the report designer screen is shown, **Then** a top bar, a left toolbox region, a center design surface, and a right panel region are all visible simultaneously without horizontal scrolling on a standard desktop window.
+1. **Given** the playground app is running, **When** the report designer screen is shown, **Then** a top bar, a left toolbox region, a center design surface, and a right panel region are all visible simultaneously without horizontal scrolling on a standard desktop window.
 2. **Given** the designer is shown, **When** the user observes the layout, **Then** the center design surface occupies the largest share of horizontal space, with the toolbox and right panel flanking it.
 3. **Given** the active theme is toggled between light and dark, **When** the designer re-renders, **Then** every region adopts the corresponding shadcn theme colors with no unstyled or default-look elements.
 
@@ -128,7 +128,7 @@ with no blank or untranslated captions.
 
 - **Narrow window**: When the window is resized below the defined width breakpoint, the side regions MUST collapse (icon rail / toggle) so the design surface stays usable, rather than clipping a region out of view; the user MUST be able to expand a collapsed region again.
 - **Very tall content**: When a panel's placeholder list is longer than its height, that panel MUST scroll independently without pushing other regions off-screen.
-- **Theme with no explicit selection**: When the app starts without a user theme choice, the designer MUST render with a sensible default theme (matching the tester app's default) rather than an unstyled fallback.
+- **Theme with no explicit selection**: When the app starts without a user theme choice, the designer MUST render with a sensible default theme (matching the playground app's default) rather than an unstyled fallback.
 - **Empty design surface**: The design surface with no report content MUST still render its page/canvas placeholder, not a blank void.
 - **Missing translation / unsupported locale**: When a label has no translation for the active language, or the host locale is outside the supported set (en, de, tr), the designer MUST fall back to English rather than showing a blank label or a raw key.
 - **Language with longer text**: When a translated label (e.g., a German caption) is longer than its English equivalent, the region MUST accommodate it (wrap, ellipsize, or expand) without breaking the layout or clipping adjacent controls.
@@ -154,7 +154,7 @@ with no blank or untranslated captions.
 - **FR-015**: The top bar MUST display a placeholder report title and one or more placeholder action controls; these actions MUST be visible and themed but non-functional this iteration.
 - **FR-016**: All user-visible text in the designer chrome (top bar title and action labels/tooltips, the three tab captions, toolbox entries, and panel placeholder labels) MUST be sourced from localized string resources rather than hard-coded literals, with translations provided for English (en), German (de), and Turkish (tr).
 - **FR-017**: The designer MUST render its UI text in the active application locale when that locale is one of the supported languages (en, de, tr); when the active locale is unsupported or an individual translation is missing, it MUST fall back to English (the default language) and MUST NOT display a blank label or a raw resource key.
-- **FR-018**: The tester app MUST provide a runtime control to switch the active language among English, German, and Turkish (analogous to the existing light/dark theme toggle), and switching MUST update all visible designer labels without an app restart.
+- **FR-018**: The playground app MUST provide a runtime control to switch the active language among English, German, and Turkish (analogous to the existing light/dark theme toggle), and switching MUST update all visible designer labels without an app restart.
 
 ### Key Entities *(layout regions — visual only, no data model)*
 
@@ -175,7 +175,7 @@ with no blank or untranslated captions.
 - **SC-001**: A first-time reviewer can identify the primary regions (top bar, toolbox, design surface, right tabbed panel) and correctly state each region's purpose within 15 seconds of seeing the screen, without guidance.
 - **SC-002**: All three right-side tabs are reachable, and switching to any tab shows its placeholder and hides the others in 100% of attempts.
 - **SC-003**: The layout renders correctly with no unthemed or visually broken regions in both light and dark themes (2 of 2 theme variants pass visual review).
-- **SC-004**: The full layout is visible without horizontal scrolling at the tester app's default desktop window size; side regions resize via splitters down to their minimum widths, and below the defined width breakpoint they collapse so the design surface stays usable — with every region re-expandable in 100% of attempts.
+- **SC-004**: The full layout is visible without horizontal scrolling at the playground app's default desktop window size; side regions resize via splitters down to their minimum widths, and below the defined width breakpoint they collapse so the design surface stays usable — with every region re-expandable in 100% of attempts.
 - **SC-005**: 100% of visible controls are shadcn-based components themed consistently — zero default-styled or platform-native-looking controls appear in review.
 - **SC-006**: Stakeholders can approve the workspace arrangement from the layout alone (no functional features required), confirming the shell is ready for subsequent feature work.
 - **SC-007**: In each of the three supported languages (en, de, tr), 100% of visible designer labels render in that language with zero blank, untranslated, or raw-key captions, and switching language updates all labels without an app restart.
@@ -184,10 +184,10 @@ with no blank or untranslated captions.
 
 - **shadcn = Flutter `shadcn_ui`**: "shadcn widgets" refers to the project's adopted `shadcn_ui` Flutter component library (per the established scaffold), not the React/TypeScript shadcn/ui. Components such as the tabbed panel, cards, list rows, and resizable dividers come from that library.
 - **Tab label "Outline"**: The "report explorer" panel is labeled **Outline**. If the team prefers *Report Tree*, *Structure*, or the original *Report Explorer*, it is a single caption change with no structural impact.
-- **Desktop-first**: The designer targets the macOS desktop tester app (per the current scaffold). Touch/mobile layouts are out of scope this iteration.
+- **Desktop-first**: The designer targets the macOS desktop playground app (per the current scaffold). Touch/mobile layouts are out of scope this iteration.
 - **Top bar is included**: A top strip with a placeholder report title and placeholder action controls is part of the enclosing frame (clarified 2026-06-06). The actions are non-functional this iteration.
 - **Default tab**: The Data Source tab is the default-active right-side tab on load (any single default is acceptable for review).
 - **Width breakpoint / minimums are a sensible default**: The exact collapse breakpoint and minimum side-region widths (e.g., ~1024 px wide / ~200 px panels) are chosen during planning as reasonable desktop defaults; the spec fixes the *behavior*, not the pixel values.
 - **Placeholder content is illustrative**: Sample entries (element types, fields, properties) are static and chosen to communicate intent; they are not wired to any real report model.
-- **Non-functional by design**: Drag-and-drop, selection, editing, and saving are explicitly deferred. The only interactive behaviors are tab switching, side-region resizing, side-region collapse/expand, and language switching (in the tester app).
+- **Non-functional by design**: Drag-and-drop, selection, editing, and saving are explicitly deferred. The only interactive behaviors are tab switching, side-region resizing, side-region collapse/expand, and language switching (in the playground app).
 - **Localization scope & default**: English (en) is the default and fallback language; German (de) and Turkish (tr) are the additional supported languages. Localization covers the designer's own *chrome and labels* (top bar, tab captions, toolbox entries, panel placeholder labels). Illustrative *sample data values* in placeholders (e.g., mock field or element names) represent future report data, not UI chrome, and need not be translated this iteration. Right-to-left layouts are out of scope (all three supported languages are left-to-right).

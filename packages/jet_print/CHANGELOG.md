@@ -118,7 +118,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - **Open / Save are wired to the host.** The top bar gains an **Open** action
     beside **Save**; both call the new `JetReportDesigner.onOpenRequested` /
     `onSaveRequested` callbacks and render disabled when the host wired none. The
-    library still performs **no** file I/O itself (FR-022) — the tester app
+    library still performs **no** file I/O itself (FR-022) — the playground app
     implements the host side with `file_selector` + `JetReportFormat`.
   - **Accessibility.** Every interactive affordance now exposes a localized
     accessible name and a button role: each canvas element ("Text element …"),

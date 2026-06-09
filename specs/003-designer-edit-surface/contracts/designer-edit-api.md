@@ -96,7 +96,7 @@ existing const-construction (`const JetReportDesigner()`) keeps compiling.
 
 ---
 
-## 5. Consumer usage (the tester app, and any external consumer)
+## 5. Consumer usage (the playground app, and any external consumer)
 
 ```dart
 import 'package:jet_print/jet_print.dart';

@@ -1,4 +1,4 @@
-# Phase 0 Research: Flutter Library + Tester App Scaffold
+# Phase 0 Research: Flutter Library + Playground App Scaffold
 
 **Feature**: `001-flutter-library-scaffold`
 **Date**: 2026-06-05
@@ -10,10 +10,10 @@ considered so future contributors understand *why* the scaffold is shaped this w
 ## Decision 1: Monorepo strategy — Dart pub workspaces
 
 - **Decision**: Use built-in Dart **pub workspaces** (`resolution: workspace`). The
-  repository root declares a `workspace:` list; the library and tester app are separate
+  repository root declares a `workspace:` list; the library and playground app are separate
   sibling packages that share a single root `pubspec.lock`.
 - **Rationale**: Pub workspaces (stable since Dart 3.6; toolchain here is Dart 3.12.0)
-  let the tester app depend on the library exactly as an external consumer would — through
+  let the playground app depend on the library exactly as an external consumer would — through
   normal dependency resolution — while keeping one lockfile and one `pub get`. No
   third-party orchestration tooling is required, satisfying the constitution's
   "minimal, justified dependencies" standard.
@@ -22,7 +22,7 @@ considered so future contributors understand *why* the scaffold is shaped this w
     built-in workspace feature now makes unnecessary for a two-package repo. Rejected as
     avoidable complexity.
   - **Path dependencies without a workspace**: works, but produces per-package lockfiles
-    and lets versions drift between packages; weaker guarantee that the tester consumes the
+    and lets versions drift between packages; weaker guarantee that the playground consumes the
     same resolution a real consumer gets. Rejected.
   - **Separate repositories**: maximally consumer-honest but destroys the "one clone, run
     everything" developer experience the spec requires (SC-002). Rejected.
@@ -41,13 +41,13 @@ considered so future contributors understand *why* the scaffold is shaped this w
     iteration with placeholder contents; can be extracted later without breaking the public
     API since everything lives under `src/`. Rejected for now as premature.
 
-## Decision 3: Tester app target platform — macOS desktop
+## Decision 3: Playground app target platform — macOS desktop
 
 - **Decision**: Target **macOS desktop** for this iteration; other platforms may be enabled
   later.
 - **Rationale**: Fast native iteration on the development machine (Apple Silicon), no
   emulator/simulator overhead, and a single platform to document for the <10-minute
-  clone-to-run goal (SC-002). The library itself stays platform-agnostic; only the tester
+  clone-to-run goal (SC-002). The library itself stays platform-agnostic; only the playground
   app pins a platform.
 - **Alternatives considered**:
   - **Web**: fast to run, but desktop better represents a print/report-design host.
@@ -55,10 +55,10 @@ considered so future contributors understand *why* the scaffold is shaped this w
 
 ## Decision 4: shadcn UI implementation — `shadcn_ui` (nank1ro)
 
-- **Decision**: Use the community **`shadcn_ui`** Flutter package, wiring the tester app
+- **Decision**: Use the community **`shadcn_ui`** Flutter package, wiring the playground app
   through the `ShadApp` / `ShadThemeData` (`ShadTheme`) pipeline.
 - **Rationale**: Named explicitly in the spec clarification. It provides themed components
-  and a complete theming pipeline (light/dark color schemes) that lets the tester
+  and a complete theming pipeline (light/dark color schemes) that lets the playground
   demonstrate a live theme switch on the placeholder component (SC-006). The library
   depends on it loosely so consumers can supply a compatible version.
 - **Alternatives considered**:

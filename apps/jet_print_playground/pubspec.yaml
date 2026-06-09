@@ -1,10 +1,10 @@
-name: jet_print_tester
+name: jet_print_playground
 description: >-
-  macOS tester app for the jet_print library. Consumes jet_print exactly as an
+  macOS playground app for the jet_print library. Consumes jet_print exactly as an
   external consumer would (via workspace resolution, public entry point only)
   and renders the placeholder inside a shadcn_ui themed shell with a light/dark
   toggle.
-publish_to: 'none' # This is a sample/tester app, never published.
+publish_to: 'none' # This is a sample/playground app, never published.
 
 # Member of the jet_print workspace; resolved once at the workspace root.
 resolution: workspace
@@ -42,7 +42,7 @@ dependencies:
     sdk: flutter
 
   # The library under test. No version constraint: it resolves to the local
-  # workspace member, so the tester always consumes the in-repo jet_print
+  # workspace member, so the playground always consumes the in-repo jet_print
   # exactly as the single root lockfile pins it (FR-006a).
   jet_print:
   # shadcn_ui constraint written by `flutter pub add` (real resolved range).

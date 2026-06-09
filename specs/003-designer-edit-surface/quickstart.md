@@ -9,10 +9,10 @@ that gate a merge (Constitution III/VI).
 
 ---
 
-## 1. Run the designer (tester app)
+## 1. Run the designer (playground app)
 
 ```bash
-cd apps/jet_print_tester
+cd apps/jet_print_playground
 flutter run -d macos          # desktop-first target (mouse + keyboard)
 ```
 
@@ -43,9 +43,9 @@ You should get the 002 shell — top bar, toolbox, surface, three-tab right pane
 
 ## 3. Open & save (US / FR-022)
 
-- **Save** (top bar) → the tester app picks a path and writes the design as JSON via
+- **Save** (top bar) → the playground app picks a path and writes the design as JSON via
   `JetReportFormat.encodeJson`.
-- **Open** (top bar) → pick a `.json` design; the tester app loads it with
+- **Open** (top bar) → pick a `.json` design; the playground app loads it with
   `JetReportFormat.decodeJson` into the controller.
 - **Verify lossless round-trip**: save a design, reopen it → it is identical (same elements,
   order, attributes). This is the human view of SC-002 (the machine view is the round-trip test).
@@ -78,7 +78,7 @@ controller.undo();
 ```
 
 > The library performs **no filesystem I/O** — the consumer owns open/save (headless;
-> research [D8](research.md#d8--persistence-seam-fr-022-keeping-the-library-headless)). The tester
+> research [D8](research.md#d8--persistence-seam-fr-022-keeping-the-library-headless)). The playground
 > app adds a file-picker dependency to demonstrate it; the published package does not.
 
 ## 5. Tests & merge gates (run before claiming done)

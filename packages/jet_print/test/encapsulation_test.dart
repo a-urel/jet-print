@@ -4,9 +4,9 @@
 // (so the literal strings used as patterns below never match themselves):
 //
 //   (a) No consumer file — the library's own tests (which stand in for an
-//       external consumer) or the tester app — reaches into
+//       external consumer) or the playground app — reaches into
 //       `package:jet_print/src/...`. The public entry point is the only door.
-//   (b) No library file under `lib/` depends on the tester or any host app
+//   (b) No library file under `lib/` depends on the playground or any host app
 //       (FR-011): the product must stand alone.
 import 'dart:io';
 
@@ -54,8 +54,8 @@ void main() {
   final Directory libraryLib = Directory('${root.path}/packages/jet_print/lib');
   final Directory libraryTest =
       Directory('${root.path}/packages/jet_print/test');
-  final Directory testerLib =
-      Directory('${root.path}/apps/jet_print_tester/lib');
+  final Directory playgroundLib =
+      Directory('${root.path}/apps/jet_print_playground/lib');
 
   group('encapsulation', () {
     test('the source trees to scan actually exist (no false green)', () {
@@ -64,7 +64,7 @@ void main() {
       for (final Directory dir in <Directory>[
         libraryLib,
         libraryTest,
-        testerLib,
+        playgroundLib,
       ]) {
         expect(
           dir.existsSync(),
@@ -77,7 +77,7 @@ void main() {
 
     test('no consumer file imports package:jet_print/src/...', () {
       final List<String> violations = <String>[];
-      for (final Directory dir in <Directory>[libraryTest, testerLib]) {
+      for (final Directory dir in <Directory>[libraryTest, playgroundLib]) {
         for (final File file in _dartFiles(dir)) {
           if (_isWhiteBoxSeamTest(file)) continue;
           for (final String uri in _directiveUris(file)) {
@@ -95,11 +95,11 @@ void main() {
       );
     });
 
-    test('no library file depends on tester/host app code (FR-011)', () {
+    test('no library file depends on playground/host app code (FR-011)', () {
       final List<String> violations = <String>[];
       for (final File file in _dartFiles(libraryLib)) {
         for (final String uri in _directiveUris(file)) {
-          if (uri.startsWith('package:jet_print_tester')) {
+          if (uri.startsWith('package:jet_print_playground')) {
             violations.add('${file.path} -> $uri');
           }
         }
@@ -107,7 +107,7 @@ void main() {
       expect(
         violations,
         isEmpty,
-        reason: 'The library MUST NOT import tester/host code:\n'
+        reason: 'The library MUST NOT import playground/host code:\n'
             '${violations.join('\n')}',
       );
     });

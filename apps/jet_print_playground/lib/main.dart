@@ -10,31 +10,31 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 void main() {
   // Fail fast on unsupported platforms so a wrong target surfaces a clear
   // message instead of rendering incorrectly (spec Edge Cases). The library is
-  // platform-agnostic; only this tester app pins macOS desktop this iteration.
+  // platform-agnostic; only this playground app pins macOS desktop this iteration.
   if (!Platform.isMacOS) {
     throw UnsupportedError(
-      'jet_print_tester targets macOS desktop this iteration.',
+      'jet_print_playground targets macOS desktop this iteration.',
     );
   }
-  runApp(const JetPrintTesterApp());
+  runApp(const JetPrintPlaygroundApp());
 }
 
-/// Root widget of the tester app.
+/// Root widget of the playground app.
 ///
 /// Wraps everything in a [ShadApp], owning the [ThemeMode] and the active
 /// [Locale] so the in-app toggles can flip the whole tree's theme and language
 /// live (FR-018). It consumes the library through its public entry point only,
 /// rendering [JetReportDesigner] and wiring [JetPrintLocalizations] exactly as
 /// an external consumer would.
-class JetPrintTesterApp extends StatefulWidget {
-  /// Creates the tester app root.
-  const JetPrintTesterApp({super.key});
+class JetPrintPlaygroundApp extends StatefulWidget {
+  /// Creates the playground app root.
+  const JetPrintPlaygroundApp({super.key});
 
   @override
-  State<JetPrintTesterApp> createState() => _JetPrintTesterAppState();
+  State<JetPrintPlaygroundApp> createState() => _JetPrintPlaygroundAppState();
 }
 
-class _JetPrintTesterAppState extends State<JetPrintTesterApp> {
+class _JetPrintPlaygroundAppState extends State<JetPrintPlaygroundApp> {
   ThemeMode _themeMode = ThemeMode.light;
 
   /// Index into [JetPrintLocalizations.supportedLocales] (en → de → tr).
@@ -60,7 +60,7 @@ class _JetPrintTesterAppState extends State<JetPrintTesterApp> {
   @override
   Widget build(BuildContext context) {
     return ShadApp(
-      title: 'jet_print tester',
+      title: 'jet_print playground',
       themeMode: _themeMode,
       locale: _locale,
       localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
@@ -78,7 +78,7 @@ class _JetPrintTesterAppState extends State<JetPrintTesterApp> {
         brightness: Brightness.dark,
         colorScheme: const ShadSlateColorScheme.dark(),
       ),
-      home: _TesterHome(
+      home: _PlaygroundHome(
         isDark: _isDark,
         localeCode: _locale.languageCode,
         onToggleTheme: _toggleTheme,
@@ -96,8 +96,8 @@ class _JetPrintTesterAppState extends State<JetPrintTesterApp> {
 /// persistence seam (FR-022): Save encodes the live template to a file picked
 /// with `file_selector`, Open decodes a picked file back into the controller.
 /// The library itself performs no file I/O — this is the consumer's job.
-class _TesterHome extends StatefulWidget {
-  const _TesterHome({
+class _PlaygroundHome extends StatefulWidget {
+  const _PlaygroundHome({
     required this.isDark,
     required this.localeCode,
     required this.onToggleTheme,
@@ -110,10 +110,10 @@ class _TesterHome extends StatefulWidget {
   final VoidCallback onCycleLanguage;
 
   @override
-  State<_TesterHome> createState() => _TesterHomeState();
+  State<_PlaygroundHome> createState() => _PlaygroundHomeState();
 }
 
-class _TesterHomeState extends State<_TesterHome> {
+class _PlaygroundHomeState extends State<_PlaygroundHome> {
   final JetReportDesignerController _controller = JetReportDesignerController();
 
   /// The file type the designer reads/writes: a JSON document produced by

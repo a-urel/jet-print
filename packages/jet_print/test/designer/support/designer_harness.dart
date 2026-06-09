@@ -66,7 +66,7 @@ Future<void> pumpDesigner(
     // delegates load CLDR data via static, async paths whose state leaks across
     // locales within one test isolate (e.g. exercising de then tr) — a framework
     // quirk unrelated to the library. Consumers' full Global* wiring is covered
-    // by the tester app's consumption test.
+    // by the playground app's consumption test.
     localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
       JetPrintLocalizations.delegate,
     ],
@@ -102,6 +102,23 @@ Future<void> openArrangeMenu(
   c.selectAll();
   await tester.pumpAndSettle();
   await tester.tap(find.byKey(kArrangeButtonKey));
+  await tester.pumpAndSettle();
+}
+
+/// Opens the right panel's **Properties** tab in any locale.
+///
+/// The tab caption is itself localized, so rather than hardcode "Properties"
+/// (which would only work in English) this resolves the live caption from the
+/// tree via the public [JetReportDesigner] context and [JetPrintLocalizations] —
+/// the same string the tab rendered, so the match is exact and locale-agnostic.
+Future<void> openPropertiesTab(WidgetTester tester) async {
+  final JetPrintLocalizations l10n = JetPrintLocalizations.of(
+    tester.element(find.byType(JetReportDesigner)),
+  );
+  final Finder tab = find.text(l10n.tabProperties);
+  await tester.ensureVisible(tab);
+  await tester.pumpAndSettle();
+  await tester.tap(tab);
   await tester.pumpAndSettle();
 }
 

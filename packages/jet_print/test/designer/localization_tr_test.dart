@@ -51,4 +51,56 @@ void main() {
     expect(find.text('Align left'), findsNothing);
     expect(find.text('Bring to front'), findsNothing);
   });
+
+  testWidgets('the Properties inspector is localized under the tr locale', (
+    WidgetTester tester,
+  ) async {
+    // Unlike this file's top-bar/canvas assertions, the inspector labels are
+    // matched on their exact translated strings (including accented characters):
+    // the strings are taken verbatim from the tr ARB, so the source and the
+    // rendered Text share one normalization and the match is exact.
+    final JetReportDesignerController c =
+        await pumpDesignerWith(tester, locale: const Locale('tr'));
+    c.createElement(DesignerToolType.text,
+        bandIndex: 1, at: const JetOffset(20, 20));
+    await tester.pumpAndSettle();
+    await openPropertiesTab(tester);
+
+    // (1) Element inspector — Turkish section labels (upper-cased).
+    expect(find.text('KONUM'), findsOneWidget); // Position → Konum
+    expect(find.text('BOYUT'), findsOneWidget); // Size → Boyut
+    expect(find.text('METIN'), findsOneWidget); // Text → Metin
+    // The English captions are gone — a real translation, not a fallback.
+    expect(find.text('POSITION'), findsNothing);
+    expect(find.text('SIZE'), findsNothing);
+    expect(find.text('TEXT'), findsNothing);
+
+    // (2) Report inspector — header + page section + margins row (verbatim).
+    c.selectReport();
+    await tester.pumpAndSettle();
+    expect(find.text('Rapor'), findsWidgets); // Report (header)
+    expect(find.text('SAYFA'), findsOneWidget); // Page (section)
+    expect(find.text('Kenar boşlukları'), findsOneWidget); // Margins (row)
+    expect(find.text('PAGE'), findsNothing);
+
+    // (3) Band inspector — the height row label (verbatim).
+    c.selectBand(1);
+    await tester.pumpAndSettle();
+    expect(find.text('Yükseklik'), findsOneWidget); // Height
+
+    // (4) Empty state.
+    c.clearSelection();
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Özelliklerini düzenlemek için bir nesne seçin.'),
+      findsOneWidget,
+    );
+
+    // (5) Multi-selection — the count summary.
+    c.createElement(DesignerToolType.text,
+        bandIndex: 1, at: const JetOffset(80, 60));
+    c.selectAll();
+    await tester.pumpAndSettle();
+    expect(find.text('2 öğe seçildi'), findsOneWidget);
+  });
 }

@@ -1,7 +1,7 @@
 name: jet_print_workspace
 description: >-
   Workspace root for jet-print: a publishable Flutter widget library
-  (packages/jet_print) and a macOS tester app (apps/jet_print_tester) that
+  (packages/jet_print) and a macOS playground app (apps/jet_print_playground) that
   consumes it exactly as an external consumer would. Resolution happens once
   here, producing a single shared pubspec.lock.
 publish_to: none
@@ -14,4 +14,4 @@ environment:
 # the whole repo into one root pubspec.lock (FR-006a / SC-002).
 workspace:
   - packages/jet_print
-  - apps/jet_print_tester
+  - apps/jet_print_playground

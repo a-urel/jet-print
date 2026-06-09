@@ -53,7 +53,7 @@ capability MUST be consumable as a library by embedding applications without mod
 - The public API surface MUST be deliberately minimal. Internal types MUST live under
   `src/` and MUST NOT be exported; only intentionally public symbols are re-exported from
   the package's top-level library files.
-- The sample/tester app and the (future) VS Code extension are CONSUMERS of the library.
+- The sample/playground app and the (future) VS Code extension are CONSUMERS of the library.
   They MUST exercise the package only through its public API — never through private
   internals — proving the API is sufficient for real use.
 - Breaking changes to the public API MUST follow Semantic Versioning (see Principle V).

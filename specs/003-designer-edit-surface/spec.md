@@ -36,7 +36,7 @@ A report author drags an element type (text, shape, image, barcode) from the too
 
 **Why this priority**: This is the core WYSIWYG act — creating and positioning elements — and is the MVP: with only this, an author can compose a report layout. Everything else refines it.
 
-**Independent Test**: In the tester app designer, drag each toolbox element type onto a band, confirm a corresponding element appears at the drop point; click to select (handles show); drag to move; confirm the element's model position updates and survives a save/reload round-trip.
+**Independent Test**: In the playground app designer, drag each toolbox element type onto a band, confirm a corresponding element appears at the drop point; click to select (handles show); drag to move; confirm the element's model position updates and survives a save/reload round-trip.
 
 **Acceptance Scenarios**:
 
@@ -223,7 +223,7 @@ The author zooms the canvas in/out, fits the page to the viewport, and pans, so 
 
 ## Assumptions
 
-- **Continues 002**: the designer shell (toolbox, surface, Outline / Data Source / Properties panels, top bar), the shadcn_ui component library, the desktop-first target (macOS tester app), and en/de/tr localization are in place and reused.
+- **Continues 002**: the designer shell (toolbox, surface, Outline / Data Source / Properties panels, top bar), the shadcn_ui component library, the desktop-first target (macOS playground app), and en/de/tr localization are in place and reused.
 - **Existing band structure**: a report being designed has a band structure (a new/blank report provides a default one); creating/editing bands is a separate later spec — this spec edits elements *within* bands.
 - **Design-time fidelity, not a data run**: the canvas shows element appearance + placement, not a data-bound, paginated render; a true rendered/exported preview depends on the engine export slice (engine spec 009) and is a later designer spec.
 - **"Industry grade" reference behaviors**: modeled on established desktop report/diagram designers — select/move/resize handles, marquee, snapping + guides, multi-select, keyboard nudge, clipboard, z-order, align/distribute, unlimited session undo/redo, zoom/pan.

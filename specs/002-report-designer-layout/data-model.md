@@ -66,10 +66,10 @@ JetReportDesigner (public StatefulWidget — holds collapse state + active tab)
 | Toolbox collapsed | `JetReportDesigner` | `bool` (default false at desktop width) | FR-014 collapse/expand |
 | Right panel collapsed | `JetReportDesigner` | `bool` (default false at desktop width) | FR-014 collapse/expand |
 | Panel split sizes | `ShadResizableController` | fractions ≥ per-panel `minSize` | FR-013 resize |
-| Active locale | **tester app** (consumer), via `ShadApp.locale` | `en` (default) \| `de` \| `tr` | FR-018 live label switch |
-| Theme mode | **tester app** (consumer), existing | light (default) \| dark | FR-009 theme |
+| Active locale | **playground app** (consumer), via `ShadApp.locale` | `en` (default) \| `de` \| `tr` | FR-018 live label switch |
+| Theme mode | **playground app** (consumer), existing | light (default) \| dark | FR-009 theme |
 
-> Locale and theme are owned by the **consumer** (tester app), not the library widget — the
+> Locale and theme are owned by the **consumer** (playground app), not the library widget — the
 > library reads the ambient `Localizations`/`ShadTheme`, keeping `JetReportDesigner` free of
 > host state (Constitution §I).
 
