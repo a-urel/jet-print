@@ -69,6 +69,9 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get tabProperties => 'Özellikler';
 
   @override
+  String get dataSourceEmpty => 'Veri kaynağı bağlı değil.';
+
+  @override
   String get toolboxTextEntry => 'Metin';
 
   @override
@@ -182,6 +185,24 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
 
   @override
   String get propertiesText => 'Metin';
+
+  @override
+  String get propertiesBinding => 'Bağlama';
+
+  @override
+  String get bindingExpressionHint => 'Alan veya ifade';
+
+  @override
+  String get bindingImageFieldHint => 'Alan adı';
+
+  @override
+  String get bindingClearTooltip => 'Bağlamayı temizle';
+
+  @override
+  String get bindingCollectionHint => 'Koleksiyon alanı';
+
+  @override
+  String get bindingUnresolved => 'Alan veri kaynağında bulunamadı';
 
   @override
   String get propertiesHeight => 'Yükseklik';

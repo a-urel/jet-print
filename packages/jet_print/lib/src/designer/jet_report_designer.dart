@@ -1,8 +1,10 @@
 import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../data/data_schema.dart';
 import '../domain/report_template.dart';
 import 'controller/jet_report_designer_controller.dart';
+import 'designer_schema_scope.dart';
 import 'designer_scope.dart';
 import 'l10n/jet_print_localizations.dart';
 import 'layout/designer_right_panel.dart';
@@ -58,11 +60,19 @@ class JetReportDesigner extends StatefulWidget {
     this.initialReport,
     this.onSaveRequested,
     this.onOpenRequested,
+    this.dataSchema,
   });
 
   /// An externally-owned controller. When provided, the host owns its lifecycle
   /// and [initialReport] is ignored.
   final JetReportDesignerController? controller;
+
+  /// The structure of the data source this design binds against (009), shown in
+  /// the Data Source panel and used to resolve bindings. Null (the default)
+  /// means no source is attached — the panel shows an empty state, and any
+  /// existing element bindings still display their tokens (they are
+  /// self-describing). Supplying or changing it never mutates the template.
+  final JetDataSchema? dataSchema;
 
   /// The design to seed an internally-created controller with (ignored when
   /// [controller] is given). Null seeds a blank default design.
@@ -142,24 +152,28 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
   @override
   Widget build(BuildContext context) {
     // Share the controller with the canvas and panels so a change in any one
-    // rebuilds the others (FR-018).
-    return DesignerScope(
-      controller: _controller,
-      child: LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints constraints) {
-          final Widget shell = _buildShell(context);
-          if (constraints.maxWidth >= _minShellWidth) return shell;
-          // Too narrow: lay the shell out at its minimum width and let the user
-          // reach the off-screen edge by scrolling, rather than overflowing.
-          return SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SizedBox(
-              width: _minShellWidth,
-              height: constraints.maxHeight,
-              child: shell,
-            ),
-          );
-        },
+    // rebuilds the others (FR-018), and the attached data-source structure (009)
+    // so the panels can display it and resolve bindings.
+    return DesignerSchemaScope(
+      dataSchema: widget.dataSchema,
+      child: DesignerScope(
+        controller: _controller,
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            final Widget shell = _buildShell(context);
+            if (constraints.maxWidth >= _minShellWidth) return shell;
+            // Too narrow: lay the shell out at its minimum width and let the user
+            // reach the off-screen edge by scrolling, rather than overflowing.
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: _minShellWidth,
+                height: constraints.maxHeight,
+                child: shell,
+              ),
+            );
+          },
+        ),
       ),
     );
   }

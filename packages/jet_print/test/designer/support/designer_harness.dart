@@ -132,6 +132,7 @@ Future<JetReportDesignerController> pumpDesignerWith(
   Size size = kDesktopSize,
   Locale? locale,
   ThemeMode themeMode = ThemeMode.light,
+  JetDataSchema? dataSchema,
 }) async {
   final JetReportDesignerController c =
       controller ?? JetReportDesignerController();
@@ -141,7 +142,7 @@ Future<JetReportDesignerController> pumpDesignerWith(
     size: size,
     locale: locale,
     themeMode: themeMode,
-    designer: JetReportDesigner(controller: c),
+    designer: JetReportDesigner(controller: c, dataSchema: dataSchema),
   );
   return c;
 }

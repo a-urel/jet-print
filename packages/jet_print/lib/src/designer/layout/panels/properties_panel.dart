@@ -1,13 +1,18 @@
 import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../data/binding_scope.dart';
+import '../../../data/data_schema.dart';
+import '../../../data/field_def.dart';
 import '../../../domain/elements/barcode_element.dart';
 import '../../../domain/elements/image_element.dart';
+import '../../../domain/elements/image_source.dart';
 import '../../../domain/elements/shape_element.dart';
 import '../../../domain/elements/text_element.dart';
 import '../../../domain/geometry.dart';
 import '../../../domain/report_element.dart';
 import '../../controller/jet_report_designer_controller.dart';
+import '../../designer_schema_scope.dart';
 import '../../designer_scope.dart';
 import '../../l10n/band_type_label.dart';
 import '../../l10n/jet_print_localizations.dart';
@@ -36,6 +41,7 @@ class PropertiesPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final JetReportDesignerController controller = DesignerScope.of(context);
+    final JetDataSchema? schema = DesignerSchemaScope.of(context);
     final selection = controller.selection;
     final ShadThemeData theme = ShadTheme.of(context);
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
@@ -47,8 +53,8 @@ class PropertiesPanel extends StatelessWidget {
       children = _bandInspector(controller, bandIndex, theme, l10n);
     } else if (selection.singleOrNull case final String id
         when _find(controller, id) != null) {
-      children =
-          _elementInspector(controller, _find(controller, id)!, theme, l10n);
+      children = _elementInspector(
+          controller, _find(controller, id)!, theme, l10n, schema);
     } else {
       return KeyedSubtree(
         key: const ValueKey<String>('$_p.empty'),
@@ -72,6 +78,7 @@ class PropertiesPanel extends StatelessWidget {
     ReportElement element,
     ShadThemeData theme,
     JetPrintLocalizations l10n,
+    JetDataSchema? schema,
   ) {
     final String id = element.id;
     final JetRect b = element.bounds;
@@ -131,8 +138,61 @@ class PropertiesPanel extends StatelessWidget {
           value: element.text,
           onCommit: (String v) => controller.setText(id, v),
         ),
+        const SizedBox(height: 12),
+        SectionLabel(l10n.propertiesBinding),
+        _BindingField(
+          fieldKey: const ValueKey<String>('$_p.field.binding'),
+          value: element.expression ?? '',
+          placeholder: l10n.bindingExpressionHint,
+          clearTooltip: l10n.bindingClearTooltip,
+          onSet: (String v) => controller.setBinding(id, v),
+          onClear: () => controller.clearBinding(id),
+        ),
+        if (element.expression case final String expr
+            when _unresolved(schema, controller, id, expression: expr))
+          _UnresolvedHint(message: l10n.bindingUnresolved),
+      ],
+      // Image binding: a field picker only (no expression) — FR-013 / U1.
+      if (element is ImageElement) ...<Widget>[
+        const SizedBox(height: 12),
+        SectionLabel(l10n.propertiesBinding),
+        _BindingField(
+          fieldKey: const ValueKey<String>('$_p.field.imageBinding'),
+          value: element.source is FieldImageSource
+              ? (element.source as FieldImageSource).field
+              : '',
+          placeholder: l10n.bindingImageFieldHint,
+          clearTooltip: l10n.bindingClearTooltip,
+          onSet: (String v) => controller.setImageField(id, v),
+          onClear: () => controller.setImageField(id, ''),
+        ),
+        if (element.source case final FieldImageSource s
+            when s.field.isNotEmpty &&
+                _unresolved(schema, controller, id, imageField: s.field))
+          _UnresolvedHint(message: l10n.bindingUnresolved),
       ],
     ];
+  }
+
+  /// Whether [elementId]'s binding fails to resolve against the attached
+  /// [schema] in its band scope (FR-018). With no schema attached, nothing is
+  /// flagged — the token still shows, and resolution waits for a source
+  /// (FR-019a).
+  bool _unresolved(
+    JetDataSchema? schema,
+    JetReportDesignerController controller,
+    String elementId, {
+    String? expression,
+    String? imageField,
+  }) {
+    if (schema == null) return false;
+    final List<int>? path = bandPathOfElement(controller.template, elementId);
+    if (path == null) return false;
+    final List<FieldDef> scope =
+        fieldsInScopeAt(schema, controller.template, path);
+    if (expression != null) return !expressionResolves(scope, expression);
+    if (imageField != null) return !fieldResolves(scope, imageField);
+    return false;
   }
 
   // --- Band ------------------------------------------------------------------
@@ -160,6 +220,18 @@ class PropertiesPanel extends StatelessWidget {
           value: height,
           onCommit: (double v) => controller.setBandHeight(index, v),
         ),
+      ),
+      // Master/detail: designate the nested-collection field this band iterates
+      // (US3 / FR-015). Addresses the selected top-level band as path [index].
+      const SizedBox(height: 12),
+      SectionLabel(l10n.propertiesBinding),
+      _BindingField(
+        fieldKey: const ValueKey<String>('$_p.field.bandCollection'),
+        value: controller.template.bands[index].collectionField ?? '',
+        placeholder: l10n.bindingCollectionHint,
+        clearTooltip: l10n.bindingClearTooltip,
+        onSet: (String v) => controller.setBandCollection(<int>[index], v),
+        onClear: () => controller.setBandCollection(<int>[index], null),
       ),
     ];
   }
@@ -448,6 +520,130 @@ class _TextFieldState extends State<_TextField> {
       controller: _controller,
       focusNode: _focus,
       onSubmitted: widget.onCommit,
+    );
+  }
+}
+
+/// A data-binding inspector field (US2 / FR-009, FR-012, FR-013): an input
+/// holding the current binding ([value] — a text element's expression or an
+/// image element's field), with a trailing clear affordance. Committing a
+/// non-empty value calls [onSet]; committing empty, or tapping clear, calls
+/// [onClear]. Each commit is one undoable model edit through the controller.
+class _BindingField extends StatefulWidget {
+  const _BindingField({
+    required this.fieldKey,
+    required this.value,
+    required this.placeholder,
+    required this.clearTooltip,
+    required this.onSet,
+    required this.onClear,
+  });
+
+  final Key fieldKey;
+  final String value;
+  final String placeholder;
+  final String clearTooltip;
+  final ValueChanged<String> onSet;
+  final VoidCallback onClear;
+
+  @override
+  State<_BindingField> createState() => _BindingFieldState();
+}
+
+class _BindingFieldState extends State<_BindingField> {
+  late final TextEditingController _controller =
+      TextEditingController(text: widget.value);
+  final FocusNode _focus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _focus.addListener(_onFocusChange);
+  }
+
+  @override
+  void didUpdateWidget(_BindingField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_focus.hasFocus && widget.value != oldWidget.value) {
+      _controller.text = widget.value;
+    }
+  }
+
+  void _onFocusChange() {
+    if (!_focus.hasFocus) _commit();
+  }
+
+  void _commit() {
+    final String text = _controller.text.trim();
+    if (text.isEmpty) {
+      if (widget.value.isNotEmpty) widget.onClear();
+    } else if (text != widget.value) {
+      widget.onSet(text);
+    }
+  }
+
+  void _clear() {
+    _controller.clear();
+    widget.onClear();
+  }
+
+  @override
+  void dispose() {
+    _focus.removeListener(_onFocusChange);
+    _focus.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ShadColorScheme colors = ShadTheme.of(context).colorScheme;
+    return ShadInput(
+      key: widget.fieldKey,
+      controller: _controller,
+      focusNode: _focus,
+      placeholder: Text(widget.placeholder),
+      onSubmitted: (_) => _commit(),
+      trailing: Semantics(
+        label: widget.clearTooltip,
+        button: true,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: _clear,
+          child: Icon(LucideIcons.x, size: 14, color: colors.mutedForeground),
+        ),
+      ),
+    );
+  }
+}
+
+/// A small inline warning shown beneath a binding whose field is missing from
+/// (or out of scope in) the attached data source (FR-018) — a triangle glyph
+/// plus the localized message, in the theme's destructive color.
+class _UnresolvedHint extends StatelessWidget {
+  const _UnresolvedHint({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final ShadThemeData theme = ShadTheme.of(context);
+    final Color color = theme.colorScheme.destructive;
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(LucideIcons.triangleAlert, size: 13, color: color),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              message,
+              style: theme.textTheme.muted.copyWith(color: color),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

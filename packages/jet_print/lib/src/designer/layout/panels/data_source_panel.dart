@@ -1,133 +1,112 @@
 import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../data/data_schema.dart';
+import '../../../data/field_def.dart';
+import '../../canvas/field_drag_data.dart';
+import '../../designer_schema_scope.dart';
+import '../../l10n/jet_print_localizations.dart';
 import '../region_chrome.dart';
 
-/// Body of the **Data Source** tab: the bound dataset presented as a three-level
-/// explorer tree — database → tables/collections → fields — that a report would
-/// bind elements against (FR-007). Database and table nodes expand and collapse;
-/// each field carries an icon chosen for its data type. Unlike the other right
-/// panels this body intentionally has no header/title or hint text: the tree is
-/// the panel, and the owning tab already names it.
+/// Body of the **Data Source** tab: the host-attached [JetDataSchema] rendered
+/// as an expandable explorer tree — dataset → fields — that report elements bind
+/// against (FR-005..FR-007). A field of type [JetFieldType.collection] is a
+/// branch whose children are its own fields, so a master/detail structure
+/// (e.g. an invoice with a nested `lines` collection) nests to arbitrary depth.
 ///
-/// The database, table and field names are illustrative sample data and are
-/// intentionally NOT translated (only chrome is localized).
+/// When no schema is attached the panel shows a clear empty state (FR-008) — no
+/// stale or placeholder field names. Field names come from the host's schema and
+/// are intentionally NOT translated; only the empty-state message is localized.
 class DataSourcePanel extends StatelessWidget {
   /// Creates the Data Source panel body. Private to the library.
   const DataSourcePanel({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final JetDataSchema? schema = DesignerSchemaScope.of(context);
+    if (schema == null) {
+      return RegionEmptyHint(
+        icon: LucideIcons.database,
+        message: JetPrintLocalizations.of(context).dataSourceEmpty,
+      );
+    }
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(8, 10, 8, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[_databaseNode(_sampleDatabase)],
+        children: <Widget>[_datasetNode(schema)],
       ),
     );
   }
 }
 
-/// Builds the database root branch (expanded), listing its tables. The first
-/// table opens so the typed-field shape is visible at a glance; later tables
-/// start collapsed to advertise the expand affordance.
-Widget _databaseNode(_Database database) {
+/// Builds the dataset root branch (expanded), listing its root fields.
+Widget _datasetNode(JetDataSchema schema) {
   return TreeBranch(
     icon: LucideIcons.database,
-    label: database.name,
+    label: schema.name,
     depth: 0,
     children: <Widget>[
-      for (int i = 0; i < database.tables.length; i++)
-        TreeBranch(
-          icon: LucideIcons.table2,
-          label: database.tables[i].name,
-          depth: 1,
-          initiallyExpanded: i == 0,
-          children: <Widget>[
-            for (final _Field field in database.tables[i].fields)
-              _FieldRow(field: field, depth: 2),
-          ],
-        ),
+      for (final FieldDef field in schema.fields) _fieldNode(field, 1),
     ],
   );
 }
 
-// --- Sample dataset (illustrative placeholder, not localized) ---------------
-
-/// One database exposed to the report, holding tables/collections.
-class _Database {
-  const _Database(this.name, this.tables);
-
-  final String name;
-  final List<_Table> tables;
+/// One field at [depth]: a collapsible branch for a nested collection (its
+/// children are the collection's own fields), or a leaf row for a scalar.
+Widget _fieldNode(FieldDef field, int depth) {
+  if (field.type == JetFieldType.collection) {
+    return TreeBranch(
+      icon: _glyphFor(JetFieldType.collection),
+      label: field.name,
+      depth: depth,
+      // Collections start collapsed so deep structures don't flood the panel;
+      // the disclosure chevron advertises that children are inside.
+      initiallyExpanded: false,
+      children: <Widget>[
+        for (final FieldDef child in field.fields) _fieldNode(child, depth + 1),
+      ],
+    );
+  }
+  return _FieldRow(field: field, depth: depth);
 }
 
-/// One table/collection, holding typed fields.
-class _Table {
-  const _Table(this.name, this.fields);
+/// The glyph that signals a field's [JetFieldType] at a glance.
+IconData _glyphFor(JetFieldType type) => switch (type) {
+      JetFieldType.string => LucideIcons.type,
+      JetFieldType.integer => LucideIcons.hash,
+      JetFieldType.double => LucideIcons.calculator,
+      JetFieldType.boolean => LucideIcons.toggleLeft,
+      JetFieldType.dateTime => LucideIcons.calendarClock,
+      JetFieldType.collection => LucideIcons.list,
+      JetFieldType.unknown => LucideIcons.circleHelp,
+    };
 
-  final String name;
-  final List<_Field> fields;
-}
+/// A short, technical type caption shown trailing a leaf field (not localized —
+/// these are type tokens, like SQL types, not UI chrome). Empty for `unknown`.
+String _labelFor(JetFieldType type) => switch (type) {
+      JetFieldType.string => 'String',
+      JetFieldType.integer => 'Integer',
+      JetFieldType.double => 'Decimal',
+      JetFieldType.boolean => 'Boolean',
+      JetFieldType.dateTime => 'DateTime',
+      JetFieldType.collection => 'Collection',
+      JetFieldType.unknown => '',
+    };
 
-/// One field: a name plus the data [type] that picks its glyph.
-class _Field {
-  const _Field(this.name, this.type);
-
-  final String name;
-  final _FieldType type;
-}
-
-/// The data types a field can have, each paired with the label shown on the row
-/// and the icon that signals the type at a glance.
-enum _FieldType {
-  text('String', LucideIcons.type),
-  integer('Int32', LucideIcons.hash),
-  decimal('Decimal', LucideIcons.calculator),
-  dateTime('DateTime', LucideIcons.calendarClock),
-  boolean('Boolean', LucideIcons.toggleLeft);
-
-  const _FieldType(this.label, this.icon);
-
-  /// The short type caption shown trailing the field name.
-  final String label;
-
-  /// The glyph that signals this data type.
-  final IconData icon;
-}
-
-const _Database _sampleDatabase = _Database('SalesDB', <_Table>[
-  _Table('Orders', <_Field>[
-    _Field('OrderID', _FieldType.integer),
-    _Field('CustomerName', _FieldType.text),
-    _Field('OrderDate', _FieldType.dateTime),
-    _Field('Total', _FieldType.decimal),
-    _Field('Status', _FieldType.text),
-    _Field('ShippedDate', _FieldType.dateTime),
-  ]),
-  _Table('Customers', <_Field>[
-    _Field('CustomerID', _FieldType.integer),
-    _Field('Name', _FieldType.text),
-    _Field('Email', _FieldType.text),
-    _Field('IsActive', _FieldType.boolean),
-  ]),
-]);
-
-// --- Field rows -------------------------------------------------------------
-
-/// A leaf field row: its data-type glyph, the field name, and the type label.
-/// Branch (database/table) rows come from the shared [TreeBranch].
+/// A leaf field row: its data-type glyph, the field name, and the type token.
+/// Branch (dataset / collection) rows come from the shared [TreeBranch].
 class _FieldRow extends StatelessWidget {
   const _FieldRow({required this.field, required this.depth});
 
-  final _Field field;
+  final FieldDef field;
   final int depth;
 
   @override
   Widget build(BuildContext context) {
     final ShadThemeData theme = ShadTheme.of(context);
     final ShadColorScheme colors = theme.colorScheme;
-    return Padding(
+    final Widget row = Padding(
       padding: EdgeInsets.only(
         left: treeRowInset(depth),
         top: 4,
@@ -136,7 +115,7 @@ class _FieldRow extends StatelessWidget {
       ),
       child: Row(
         children: <Widget>[
-          Icon(field.type.icon, size: 14, color: colors.mutedForeground),
+          Icon(_glyphFor(field.type), size: 14, color: colors.mutedForeground),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -147,10 +126,54 @@ class _FieldRow extends StatelessWidget {
             ),
           ),
           Text(
-            field.type.label,
+            _labelFor(field.type),
             style: theme.textTheme.muted.copyWith(fontSize: 11),
           ),
         ],
+      ),
+    );
+    // Leaf fields are draggable onto the canvas to create a bound element
+    // (FR-011). Collection (branch) nodes use TreeBranch and are never wrapped
+    // here, so dropping one is a no-op by construction.
+    return Draggable<FieldDragData>(
+      data: FieldDragData(fieldName: field.name),
+      dragAnchorStrategy: pointerDragAnchorStrategy,
+      feedback: _FieldDragChip(name: field.name, theme: theme),
+      child: row,
+    );
+  }
+}
+
+/// The little chip shown under the pointer while dragging a field. Carries an
+/// explicit text style so it renders correctly in the drag Overlay (no Material
+/// ancestor).
+class _FieldDragChip extends StatelessWidget {
+  const _FieldDragChip({required this.name, required this.theme});
+
+  final String name;
+  final ShadThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final ShadColorScheme colors = theme.colorScheme;
+    return Transform.translate(
+      offset: const Offset(8, 8),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: colors.primary,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Text(
+            name,
+            style: TextStyle(
+              color: colors.primaryForeground,
+              fontSize: 12,
+              decoration: TextDecoration.none,
+            ),
+          ),
+        ),
       ),
     );
   }

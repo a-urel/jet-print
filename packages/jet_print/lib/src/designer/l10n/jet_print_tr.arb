@@ -25,6 +25,8 @@
   "tabOutline": "Anahat",
   "tabProperties": "Özellikler",
 
+  "dataSourceEmpty": "Veri kaynağı bağlı değil.",
+
   "toolboxTextEntry": "Metin",
   "toolboxShapeEntry": "Şekil",
   "toolboxTableEntry": "Tablo",
@@ -69,6 +71,12 @@
   "propertiesPosition": "Konum",
   "propertiesSize": "Boyut",
   "propertiesText": "Metin",
+  "propertiesBinding": "Bağlama",
+  "bindingExpressionHint": "Alan veya ifade",
+  "bindingImageFieldHint": "Alan adı",
+  "bindingClearTooltip": "Bağlamayı temizle",
+  "bindingCollectionHint": "Koleksiyon alanı",
+  "bindingUnresolved": "Alan veri kaynağında bulunamadı",
   "propertiesHeight": "Yükseklik",
   "propertiesPage": "Sayfa",
   "propertiesMargins": "Kenar boşlukları",

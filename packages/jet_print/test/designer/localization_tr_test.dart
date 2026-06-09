@@ -25,6 +25,10 @@ void main() {
     expect(find.text('Untitled report'), findsNothing);
     expect(find.text('Save'), findsNothing);
     expect(find.text('Data Source'), findsNothing);
+    // The Data Source empty state is translated (US1) — the English string is
+    // gone. (Asserting the negative keeps this file's ASCII-only convention;
+    // the German test asserts the positive translation.)
+    expect(find.text('No data source attached.'), findsNothing);
 
     // Band-type badges on the canvas are localized too. Scoped to the canvas
     // (independent of the Outline panel) and asserted on ASCII-only Turkish
@@ -74,6 +78,8 @@ void main() {
     expect(find.text('POSITION'), findsNothing);
     expect(find.text('SIZE'), findsNothing);
     expect(find.text('TEXT'), findsNothing);
+    expect(
+        find.text('BINDING'), findsNothing); // Binding section translated (US2)
 
     // (2) Report inspector — header + page section + margins row (verbatim).
     c.selectReport();
@@ -87,6 +93,8 @@ void main() {
     c.selectBand(1);
     await tester.pumpAndSettle();
     expect(find.text('Yükseklik'), findsOneWidget); // Height
+    // Band collection-binding placeholder is translated (US3) — English gone.
+    expect(find.text('Collection field'), findsNothing);
 
     // (4) Empty state.
     c.clearSelection();

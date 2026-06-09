@@ -18,10 +18,13 @@ void main() {
     expect(find.text('Unbenannter Bericht'), findsOneWidget);
     expect(find.text('Vorschau'), findsOneWidget); // Preview (top-bar action)
     expect(find.text('Datenquelle'), findsWidgets); // tab + panel header
+    // Data Source panel empty state (no schema attached) is localized (US1).
+    expect(find.text('Keine Datenquelle verbunden.'), findsOneWidget);
     // Real translation applied — the English captions are gone, not merely
     // falling back everywhere.
     expect(find.text('Untitled report'), findsNothing);
     expect(find.text('Data Source'), findsNothing);
+    expect(find.text('No data source attached.'), findsNothing);
 
     // Band-type badges on the canvas are localized too (scoped to the canvas so
     // the match is independent of the Outline panel's band names).
@@ -66,6 +69,8 @@ void main() {
     // (1) Element inspector — German section label (upper-cased: ß is preserved).
     expect(find.text('GRÖßE'), findsOneWidget); // Size → Größe
     expect(find.text('SIZE'), findsNothing); // real translation, not a fallback
+    expect(find.text('BINDUNG'), findsOneWidget); // Binding section (US2)
+    expect(find.text('BINDING'), findsNothing);
 
     // (2) Report inspector — header + page section + margins row (verbatim).
     c.selectReport();
@@ -81,6 +86,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Höhe'), findsOneWidget); // Height
     expect(find.text('Height'), findsNothing);
+    // Band master/detail collection-binding placeholder (US3).
+    expect(find.text('Sammlungsfeld'), findsOneWidget); // Collection field
+    expect(find.text('Collection field'), findsNothing);
 
     // (4) Empty state.
     c.clearSelection();

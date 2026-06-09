@@ -25,6 +25,8 @@
   "tabOutline": "Gliederung",
   "tabProperties": "Eigenschaften",
 
+  "dataSourceEmpty": "Keine Datenquelle verbunden.",
+
   "toolboxTextEntry": "Text",
   "toolboxShapeEntry": "Form",
   "toolboxTableEntry": "Tabelle",
@@ -69,6 +71,12 @@
   "propertiesPosition": "Position",
   "propertiesSize": "Größe",
   "propertiesText": "Text",
+  "propertiesBinding": "Bindung",
+  "bindingExpressionHint": "Feld oder Ausdruck",
+  "bindingImageFieldHint": "Feldname",
+  "bindingClearTooltip": "Bindung entfernen",
+  "bindingCollectionHint": "Sammlungsfeld",
+  "bindingUnresolved": "Feld nicht in der Datenquelle gefunden",
   "propertiesHeight": "Höhe",
   "propertiesPage": "Seite",
   "propertiesMargins": "Ränder",

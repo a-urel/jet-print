@@ -11,17 +11,29 @@ import '../domain/value_type.dart';
 
 export '../domain/value_type.dart' show JetFieldType;
 
-/// An immutable (name, type) pair describing one field of a [DataSet]'s schema.
+/// An immutable description of one field of a [DataSet]'s schema: a [name], a
+/// coarse [type], and — for a [JetFieldType.collection] field — its own child
+/// [fields] (spec 009). The recursion lets a schema model master/detail to
+/// arbitrary depth (e.g. invoice → lines → sub-lines).
 class FieldDef {
   /// Creates a field named [name] with the given [type] (default
-  /// [JetFieldType.unknown]).
-  const FieldDef(this.name, {this.type = JetFieldType.unknown});
+  /// [JetFieldType.unknown]). Pass [fields] only for a [JetFieldType.collection]
+  /// field, to declare its child schema.
+  const FieldDef(
+    this.name, {
+    this.type = JetFieldType.unknown,
+    this.fields = const <FieldDef>[],
+  });
 
   /// The field's name, as referenced by `DataRow.field(name)`.
   final String name;
 
   /// The field's coarse value type (best-effort).
   final JetFieldType type;
+
+  /// The child field schema of a [JetFieldType.collection] field; empty for a
+  /// scalar field. Recursive — a child may itself be a collection.
+  final List<FieldDef> fields;
 
   /// Best-effort inference of a column's [JetFieldType] from its [values].
   ///
@@ -62,11 +74,28 @@ class FieldDef {
 
   @override
   bool operator ==(Object other) =>
-      other is FieldDef && other.name == name && other.type == type;
+      other is FieldDef &&
+      other.name == name &&
+      other.type == type &&
+      _fieldListEquals(other.fields, fields);
 
   @override
-  int get hashCode => Object.hash(name, type);
+  int get hashCode => Object.hash(name, type, Object.hashAll(fields));
 
   @override
-  String toString() => 'FieldDef($name, $type)';
+  String toString() => fields.isEmpty
+      ? 'FieldDef($name, $type)'
+      : 'FieldDef($name, $type, fields: $fields)';
+}
+
+/// Deep, order-sensitive equality over two [FieldDef] lists. Pure Dart (no
+/// Flutter `listEquals`) so the data seam stays headless; the per-element `==`
+/// recurses into nested collection schemas.
+bool _fieldListEquals(List<FieldDef> a, List<FieldDef> b) {
+  if (identical(a, b)) return true;
+  if (a.length != b.length) return false;
+  for (int i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
 }

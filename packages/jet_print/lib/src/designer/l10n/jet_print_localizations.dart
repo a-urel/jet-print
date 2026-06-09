@@ -221,6 +221,12 @@ abstract class JetPrintLocalizations {
   /// **'Properties'**
   String get tabProperties;
 
+  /// Data Source panel empty state shown when no data-source structure is attached to the designer (009).
+  ///
+  /// In en, this message translates to:
+  /// **'No data source attached.'**
+  String get dataSourceEmpty;
+
   /// Toolbox element: a static or data-bound text element. Shown as an icon-button tooltip.
   ///
   /// In en, this message translates to:
@@ -448,6 +454,42 @@ abstract class JetPrintLocalizations {
   /// In en, this message translates to:
   /// **'Text'**
   String get propertiesText;
+
+  /// Properties panel section label for an element's data binding (009).
+  ///
+  /// In en, this message translates to:
+  /// **'Binding'**
+  String get propertiesBinding;
+
+  /// Placeholder for the text binding input (a field reference or a full expression).
+  ///
+  /// In en, this message translates to:
+  /// **'Field or expression'**
+  String get bindingExpressionHint;
+
+  /// Placeholder for the image binding input (the data field supplying the picture).
+  ///
+  /// In en, this message translates to:
+  /// **'Field name'**
+  String get bindingImageFieldHint;
+
+  /// Accessible name / tooltip for the button that clears an element's data binding.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear binding'**
+  String get bindingClearTooltip;
+
+  /// Placeholder for the band collection-binding input (the nested-collection field this band iterates, for master/detail).
+  ///
+  /// In en, this message translates to:
+  /// **'Collection field'**
+  String get bindingCollectionHint;
+
+  /// Shown under a binding whose field is missing from, or out of scope in, the attached data source (009).
+  ///
+  /// In en, this message translates to:
+  /// **'Field not found in the data source'**
+  String get bindingUnresolved;
 
   /// Properties panel field label for a band's height.
   ///

@@ -7,6 +7,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:jet_print/jet_print.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import 'invoice_sample.dart';
+
 void main() {
   // Fail fast on unsupported platforms so a wrong target surfaces a clear
   // message instead of rendering incorrectly (spec Edge Cases). The library is
@@ -114,7 +116,10 @@ class _PlaygroundHome extends StatefulWidget {
 }
 
 class _PlaygroundHomeState extends State<_PlaygroundHome> {
-  final JetReportDesignerController _controller = JetReportDesignerController();
+  // Seed the designer with the bundled invoice sample so the data-aware
+  // master/detail design is visible on first run (FR-021).
+  final JetReportDesignerController _controller =
+      JetReportDesignerController(template: invoiceSampleTemplate());
 
   /// The file type the designer reads/writes: a JSON document produced by
   /// `JetReportFormat.encodeJson`.
@@ -157,6 +162,7 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
         Positioned.fill(
           child: JetReportDesigner(
             controller: _controller,
+            dataSchema: invoiceSchema,
             onSaveRequested: _save,
             onOpenRequested: _open,
           ),

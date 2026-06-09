@@ -69,6 +69,9 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get tabProperties => 'Properties';
 
   @override
+  String get dataSourceEmpty => 'No data source attached.';
+
+  @override
   String get toolboxTextEntry => 'Text';
 
   @override
@@ -182,6 +185,24 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
 
   @override
   String get propertiesText => 'Text';
+
+  @override
+  String get propertiesBinding => 'Binding';
+
+  @override
+  String get bindingExpressionHint => 'Field or expression';
+
+  @override
+  String get bindingImageFieldHint => 'Field name';
+
+  @override
+  String get bindingClearTooltip => 'Clear binding';
+
+  @override
+  String get bindingCollectionHint => 'Collection field';
+
+  @override
+  String get bindingUnresolved => 'Field not found in the data source';
 
   @override
   String get propertiesHeight => 'Height';

@@ -31,6 +31,7 @@ import 'canvas_view_transform.dart';
 import 'design_time_frame.dart';
 import 'design_time_layout.dart';
 import 'design_tunables.dart';
+import 'field_drag_data.dart';
 import 'frame_custom_painter.dart';
 import 'hit_testing.dart';
 import 'inline_text_editor.dart';
@@ -468,6 +469,30 @@ class _DesignCanvasState extends State<DesignCanvas> {
     );
   }
 
+  /// Drops a field dragged from the Data Source panel, creating a text element
+  /// bound to `$F{fieldName}` at the drop point (US2 / FR-011). Same coordinate
+  /// math as [_handleDrop]; a drop outside any band is ignored.
+  void _handleFieldDrop(
+    FieldDragData data,
+    Offset globalOffset,
+    JetReportDesignerController controller,
+    CanvasViewTransform transform,
+    DesignTimeLayout layout,
+  ) {
+    final RenderObject? object = _pageKey.currentContext?.findRenderObject();
+    if (object is! RenderBox) return;
+    final Offset local = object.globalToLocal(globalOffset);
+    final JetOffset page =
+        JetOffset(local.dx / transform.scale, local.dy / transform.scale);
+    final int? bandIndex = layout.bandIndexAt(page);
+    if (bandIndex == null) return;
+    controller.createBoundElement(
+      bandIndex: bandIndex,
+      at: layout.toBandLocal(bandIndex, page),
+      expression: '\$F{${data.fieldName}}',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final JetReportDesignerController controller = DesignerScope.of(context);
@@ -625,120 +650,127 @@ class _DesignCanvasState extends State<DesignCanvas> {
     ShadColorScheme colors,
     bool isEmpty,
   ) {
-    return DragTarget<DesignerToolType>(
-      onAcceptWithDetails: (DragTargetDetails<DesignerToolType> details) {
-        _handleDrop(details.data, details.offset, controller,
+    return DragTarget<FieldDragData>(
+      onAcceptWithDetails: (DragTargetDetails<FieldDragData> details) {
+        _handleFieldDrop(details.data, details.offset, controller,
             CanvasViewTransform(scale: scale), layout);
       },
-      builder: (BuildContext context, _, __) {
-        return KeyedSubtree(
-          key: _pageKey,
-          child: DecoratedBox(
-            key: kDesignPageKey,
-            decoration: const BoxDecoration(
-              color: _paperColor,
-              border:
-                  Border.fromBorderSide(BorderSide(color: _paperBorderColor)),
-              boxShadow: <BoxShadow>[
-                BoxShadow(
-                  color: _paperShadowColor,
-                  blurRadius: 12,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Stack(
-              children: <Widget>[
-                // Band-structure chrome (design-only; not element appearance).
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: _BandChromePainter(
-                      layout: layout,
-                      scale: scale,
-                      separatorColor: _bandSeparatorColor,
-                    ),
+      builder: (BuildContext context, _, __) => DragTarget<DesignerToolType>(
+        onAcceptWithDetails: (DragTargetDetails<DesignerToolType> details) {
+          _handleDrop(details.data, details.offset, controller,
+              CanvasViewTransform(scale: scale), layout);
+        },
+        builder: (BuildContext context, _, __) {
+          return KeyedSubtree(
+            key: _pageKey,
+            child: DecoratedBox(
+              key: kDesignPageKey,
+              decoration: const BoxDecoration(
+                color: _paperColor,
+                border:
+                    Border.fromBorderSide(BorderSide(color: _paperBorderColor)),
+                boxShadow: <BoxShadow>[
+                  BoxShadow(
+                    color: _paperShadowColor,
+                    blurRadius: 12,
+                    offset: Offset(0, 4),
                   ),
-                ),
-                // Band-type captions, one per band, anchored at each band's
-                // top-left corner. Drawn below element appearance so an element
-                // sharing the corner visually wins; they never capture pointers.
-                ..._bandBadges(controller, layout, scale),
-                // Element appearance via the shared render pipeline (cached).
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: FrameCustomPainter(
-                      picture: _picture,
-                      scale: scale,
-                      revision: _renderedRevision,
-                    ),
-                  ),
-                ),
-                // Per-element regions: accessibility + test hooks. They do not
-                // capture pointers (the canvas gesture detector handles hit-testing),
-                // so the canvas still owns select/move.
-                ..._elementRegions(controller, layout, scale,
-                    JetPrintLocalizations.of(context)),
-                // Selection chrome (outline + handles), on top.
-                Positioned.fill(
-                  child: DesignerSelectionOverlay(layout: layout, scale: scale),
-                ),
-                // Inline text editor over the element being double-click-edited.
-                if (_editingId case final String editId)
-                  if (layout.elementRect(editId) case final JetRect er)
-                    if (_findElement(controller, editId)
-                        case final TextElement t)
-                      Positioned(
-                        left: er.x * scale,
-                        top: er.y * scale,
-                        width: er.width * scale < 80 ? 80 : er.width * scale,
-                        // Height intentionally unconstrained: the input sizes to
-                        // its natural height (a text element can be shorter than
-                        // the field's minimum).
-                        child: InlineTextEditor(
-                          initialText: t.text,
-                          onCommit: (String value) {
-                            controller.setText(editId, value);
-                            if (mounted) setState(() => _editingId = null);
-                          },
-                          onCancel: () {
-                            if (mounted) setState(() => _editingId = null);
-                          },
-                        ),
-                      ),
-                // Marquee rubber-band, while dragging on empty canvas.
-                if (_marqueeRect case final JetRect m)
-                  Positioned(
-                    key: const ValueKey<String>('jet_print.designer.marquee'),
-                    left: m.x * scale,
-                    top: m.y * scale,
-                    width: m.width * scale,
-                    height: m.height * scale,
-                    child: IgnorePointer(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: colors.primary.withValues(alpha: 0.08),
-                          border: Border.all(color: colors.primary, width: 1),
-                        ),
-                      ),
-                    ),
-                  ),
-                // Centered "drop something here" hint while the design is empty.
-                if (isEmpty)
+                ],
+              ),
+              child: Stack(
+                children: <Widget>[
+                  // Band-structure chrome (design-only; not element appearance).
                   Positioned.fill(
-                    child: IgnorePointer(
-                      child: Center(
-                        child: _EmptyHint(
-                          message: JetPrintLocalizations.of(context)
-                              .surfaceEmptyHint,
-                        ),
+                    child: CustomPaint(
+                      painter: _BandChromePainter(
+                        layout: layout,
+                        scale: scale,
+                        separatorColor: _bandSeparatorColor,
                       ),
                     ),
                   ),
-              ],
+                  // Band-type captions, one per band, anchored at each band's
+                  // top-left corner. Drawn below element appearance so an element
+                  // sharing the corner visually wins; they never capture pointers.
+                  ..._bandBadges(controller, layout, scale),
+                  // Element appearance via the shared render pipeline (cached).
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: FrameCustomPainter(
+                        picture: _picture,
+                        scale: scale,
+                        revision: _renderedRevision,
+                      ),
+                    ),
+                  ),
+                  // Per-element regions: accessibility + test hooks. They do not
+                  // capture pointers (the canvas gesture detector handles hit-testing),
+                  // so the canvas still owns select/move.
+                  ..._elementRegions(controller, layout, scale,
+                      JetPrintLocalizations.of(context)),
+                  // Selection chrome (outline + handles), on top.
+                  Positioned.fill(
+                    child:
+                        DesignerSelectionOverlay(layout: layout, scale: scale),
+                  ),
+                  // Inline text editor over the element being double-click-edited.
+                  if (_editingId case final String editId)
+                    if (layout.elementRect(editId) case final JetRect er)
+                      if (_findElement(controller, editId)
+                          case final TextElement t)
+                        Positioned(
+                          left: er.x * scale,
+                          top: er.y * scale,
+                          width: er.width * scale < 80 ? 80 : er.width * scale,
+                          // Height intentionally unconstrained: the input sizes to
+                          // its natural height (a text element can be shorter than
+                          // the field's minimum).
+                          child: InlineTextEditor(
+                            initialText: t.text,
+                            onCommit: (String value) {
+                              controller.setText(editId, value);
+                              if (mounted) setState(() => _editingId = null);
+                            },
+                            onCancel: () {
+                              if (mounted) setState(() => _editingId = null);
+                            },
+                          ),
+                        ),
+                  // Marquee rubber-band, while dragging on empty canvas.
+                  if (_marqueeRect case final JetRect m)
+                    Positioned(
+                      key: const ValueKey<String>('jet_print.designer.marquee'),
+                      left: m.x * scale,
+                      top: m.y * scale,
+                      width: m.width * scale,
+                      height: m.height * scale,
+                      child: IgnorePointer(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: colors.primary.withValues(alpha: 0.08),
+                            border: Border.all(color: colors.primary, width: 1),
+                          ),
+                        ),
+                      ),
+                    ),
+                  // Centered "drop something here" hint while the design is empty.
+                  if (isEmpty)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: Center(
+                          child: _EmptyHint(
+                            message: JetPrintLocalizations.of(context)
+                                .surfaceEmptyHint,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
