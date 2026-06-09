@@ -266,6 +266,14 @@
   "@bindingClearTooltip": {
     "description": "Accessible name / tooltip for the button that clears an element's data binding."
   },
+  "bindingCollectionHint": "Collection field",
+  "@bindingCollectionHint": {
+    "description": "Placeholder for the band collection-binding input (the nested-collection field this band iterates, for master/detail)."
+  },
+  "bindingUnresolved": "Field not found in the data source",
+  "@bindingUnresolved": {
+    "description": "Shown under a binding whose field is missing from, or out of scope in, the attached data source (009)."
+  },
   "propertiesHeight": "Height",
   "@propertiesHeight": {
     "description": "Properties panel field label for a band's height."

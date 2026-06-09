@@ -75,6 +75,8 @@
   "bindingExpressionHint": "Alan veya ifade",
   "bindingImageFieldHint": "Alan adı",
   "bindingClearTooltip": "Bağlamayı temizle",
+  "bindingCollectionHint": "Koleksiyon alanı",
+  "bindingUnresolved": "Alan veri kaynağında bulunamadı",
   "propertiesHeight": "Yükseklik",
   "propertiesPage": "Sayfa",
   "propertiesMargins": "Kenar boşlukları",

@@ -19,6 +19,7 @@ import 'commands/delete_command.dart';
 import 'commands/move_command.dart';
 import 'commands/reorder_command.dart';
 import 'commands/resize_command.dart';
+import 'commands/set_band_collection_command.dart';
 import 'commands/set_band_height_command.dart';
 import 'commands/set_binding_command.dart';
 import 'commands/set_text_command.dart';
@@ -509,6 +510,18 @@ class JetReportDesignerController extends ChangeNotifier {
   /// to the same field.
   void setImageField(String id, String field) {
     _commit(SetImageBindingCommand(id: id, field: field));
+  }
+
+  /// Designates the band addressed by [path] (child indices from the top-level
+  /// band list; a top-level band is `[index]`) as iterating the nested
+  /// [collectionField] for master/detail, or clears it when [collectionField]
+  /// is null (US3 / FR-015, FR-015a). One undoable step; no-op for an
+  /// out-of-range path or an unchanged binding.
+  void setBandCollection(List<int> path, String? collectionField) {
+    _commit(SetBandCollectionCommand(
+      path: path,
+      collectionField: collectionField,
+    ));
   }
 
   List<JetRect> _siblingBounds(int bandIndex, String excludeId) => <JetRect>[

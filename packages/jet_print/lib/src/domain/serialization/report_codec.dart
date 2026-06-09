@@ -58,10 +58,18 @@ Map<String, Object?> _encodeBand(
     'type': band.type.name,
     'height': band.height,
     if (band.group != null) 'group': band.group,
+    // Master/detail (009): additive-optional fields — present only when set, so
+    // existing documents load unchanged (pre-1.0 carve-out, no version bump).
+    if (band.collectionField != null) 'collectionField': band.collectionField,
     'elements': <Object?>[
       for (final ReportElement element in band.elements)
         registry.encode(element),
     ],
+    if (band.children.isNotEmpty)
+      'children': <Object?>[
+        for (final ReportBand child in band.children)
+          _encodeBand(child, registry),
+      ],
   };
 }
 
@@ -124,14 +132,25 @@ ReportBand _decodeBand(
   if (elements is! List) {
     throw const ReportFormatException('Band "elements" must be a list.');
   }
+  final Object? children = json['children'];
+  if (children != null && children is! List) {
+    throw const ReportFormatException('Band "children" must be a list.');
+  }
   return ReportBand(
     type: _parseBandType(json['type']),
     height: (json['height']! as num).toDouble(),
     group: json['group'] as String?,
+    collectionField: json['collectionField'] as String?,
     elements: <ReportElement>[
       for (final Object? element in elements)
         registry.decode((element! as Map).cast<String, Object?>()),
     ],
+    children: children == null
+        ? const <ReportBand>[]
+        : <ReportBand>[
+            for (final Object? child in children as List)
+              _decodeBand((child! as Map).cast<String, Object?>(), registry),
+          ],
   );
 }
 

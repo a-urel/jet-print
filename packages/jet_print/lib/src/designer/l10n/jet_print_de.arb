@@ -75,6 +75,8 @@
   "bindingExpressionHint": "Feld oder Ausdruck",
   "bindingImageFieldHint": "Feldname",
   "bindingClearTooltip": "Bindung entfernen",
+  "bindingCollectionHint": "Sammlungsfeld",
+  "bindingUnresolved": "Feld nicht in der Datenquelle gefunden",
   "propertiesHeight": "Höhe",
   "propertiesPage": "Seite",
   "propertiesMargins": "Ränder",

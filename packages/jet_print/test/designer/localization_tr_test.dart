@@ -78,7 +78,8 @@ void main() {
     expect(find.text('POSITION'), findsNothing);
     expect(find.text('SIZE'), findsNothing);
     expect(find.text('TEXT'), findsNothing);
-    expect(find.text('BINDING'), findsNothing); // Binding section translated (US2)
+    expect(
+        find.text('BINDING'), findsNothing); // Binding section translated (US2)
 
     // (2) Report inspector — header + page section + margins row (verbatim).
     c.selectReport();
@@ -92,6 +93,8 @@ void main() {
     c.selectBand(1);
     await tester.pumpAndSettle();
     expect(find.text('Yükseklik'), findsOneWidget); // Height
+    // Band collection-binding placeholder is translated (US3) — English gone.
+    expect(find.text('Collection field'), findsNothing);
 
     // (4) Empty state.
     c.clearSelection();

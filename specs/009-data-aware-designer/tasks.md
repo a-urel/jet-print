@@ -119,25 +119,27 @@ description: "Task list for 009-data-aware-designer (Invoice MVP — Data-Aware 
 
 ### Tests (write first; must fail)
 
-- [ ] T029 [P] [US3] Test `ReportBand.copyWith` for the new `collectionField` and `children` (non-destructive; other fields preserved referentially) — in `packages/jet_print/test/domain/report_band_collection_test.dart`.
-- [ ] T030 [P] [US3] Test codec round-trip for `collectionField` + nested `children` (and existing `expression`): encode→jsonDecode→decode→re-encode is stable; `schemaVersion` stays 1 — in `packages/jet_print/test/domain/serialization/band_collection_round_trip_test.dart`.
-- [ ] T031 [P] [US3] Test `SetBandCollectionCommand` (designate/clear) + band-**path** addressing for nested bands + undo/redo — in `packages/jet_print/test/designer/controller/band_collection_command_test.dart`.
-- [ ] T032 [P] [US3] Test designation + arbitrary nesting + scope resolution (master vs child) and that an unresolved binding (missing field / wrong scope) is flagged and **preserved** — in `packages/jet_print/test/designer/band_collection_binding_test.dart`.
-- [ ] T033 [P] [US3] Test the design-time layout renders nested collection-bound band regions recursively — in `packages/jet_print/test/designer/canvas/nested_band_layout_test.dart`.
-- [ ] T033a [P] [US3] Localization test: the collection-binding and unresolved-binding chrome (e.g. "Bind to collection", unresolved tooltip) renders in en/de/tr with English fallback — extend `packages/jet_print/test/designer/localization_de_test.dart` and `localization_tr_test.dart`. (Precedes the ARB task T041.)
+- [X] T029 [P] [US3] Test `ReportBand.copyWith` for the new `collectionField` and `children` (non-destructive; other fields preserved referentially) — in `packages/jet_print/test/domain/report_band_collection_test.dart`.
+- [X] T030 [P] [US3] Test codec round-trip for `collectionField` + nested `children` (and existing `expression`): encode→jsonDecode→decode→re-encode is stable; `schemaVersion` stays 1 — in `packages/jet_print/test/domain/serialization/band_collection_round_trip_test.dart`.
+- [X] T031 [P] [US3] Test `SetBandCollectionCommand` (designate/clear) + band-**path** addressing for nested bands + undo/redo — in `packages/jet_print/test/designer/controller/band_collection_command_test.dart`.
+- [X] T032 [P] [US3] Test designation + arbitrary nesting + scope resolution (master vs child) and that an unresolved binding (missing field / wrong scope) is flagged and **preserved** — in `packages/jet_print/test/designer/band_collection_binding_test.dart`.
+- [~] T033 [P] [US3] **DEFERRED (see US3 scope note)** — canvas rendering of *nested* band regions is deferred; arbitrary-depth **scope resolution** is instead verified in `packages/jet_print/test/data/binding_scope_test.dart`.
+- [X] T033a [P] [US3] Localization test: the collection-binding and unresolved-binding chrome renders in en/de/tr with English fallback — extended `localization_de_test.dart` / `localization_tr_test.dart`.
 
 ### Implementation
 
-- [ ] T034 [US3] Add `collectionField` (`String?`) and `children` (`List<ReportBand>`, default `const []`) + extend `copyWith` in `packages/jet_print/lib/src/domain/report_band.dart`.
-- [ ] T035 [US3] Encode/decode `collectionField` (when non-null) and `children` (when non-empty, recursing through `_encodeBand`/decode) in `packages/jet_print/lib/src/domain/serialization/report_codec.dart` (depends on T034).
-- [ ] T036 [US3] Extend `Selection` and the controller to address/select nested bands by path (`List<int>`), preserving the existing top-level `int`-index API — in `packages/jet_print/lib/src/designer/controller/selection.dart` and the controller (depends on T034).
-- [ ] T037 [US3] Implement `SetBandCollectionCommand` and `controller.setBandCollection(bandPath, collectionField)` — in `packages/jet_print/lib/src/designer/controller/commands/set_band_collection_command.dart` + controller (depends on T034, T036).
-- [ ] T038 [US3] Make the design-time layout recurse into a collection-bound band's `children` (nested regions) in `packages/jet_print/lib/src/designer/canvas/design_time_layout.dart` (depends on T034).
-- [ ] T039 [US3] Make the design-time frame emit nested `children` band elements recursively in `packages/jet_print/lib/src/designer/canvas/design_time_frame.dart` (depends on T038, T024).
-- [ ] T040 [US3] Add a scope-resolution helper (derive a band/element's scope from the nesting), an unresolved-binding indicator, and a band collection-field editor in the Properties panel — in `packages/jet_print/lib/src/designer/layout/panels/properties_panel.dart` (+ a small designer helper) (depends on T027, T036).
-- [ ] T041 [P] [US3] Add collection/unresolved chrome strings (e.g. "Bind to collection", unresolved tooltip) to the three ARB files + `flutter gen-l10n` — in `packages/jet_print/lib/src/designer/l10n/`.
+- [X] T034 [US3] Add `collectionField` (`String?`) and `children` (`List<ReportBand>`, default `const []`) + extend `copyWith` in `packages/jet_print/lib/src/domain/report_band.dart`.
+- [X] T035 [US3] Encode/decode `collectionField` (when non-null) and `children` (when non-empty, recursing through `_encodeBand`/decode) in `packages/jet_print/lib/src/domain/serialization/report_codec.dart` (depends on T034).
+- [~] T036 [US3] **PARTIAL (see US3 scope note)** — band-**path** addressing (`List<int>`) is delivered at the **command/controller** level (`setBandCollection(path, …)`); extending `Selection` to *select* nested bands on the canvas is deferred (the canvas selects top-level bands).
+- [X] T037 [US3] Implement `SetBandCollectionCommand` and `controller.setBandCollection(bandPath, collectionField)` — in `packages/jet_print/lib/src/designer/controller/commands/set_band_collection_command.dart` + controller (depends on T034, T036).
+- [~] T038 [US3] **DEFERRED (see US3 scope note)** — design-time layout recursion into nested `children` bands (the flat band-index drives badges/chrome/hit-testing/overlay; recursing them is band-structure work the spec defers).
+- [~] T039 [US3] **DEFERRED (see US3 scope note)** — design-time frame emission of nested `children` band elements (paired with T038).
+- [X] T040 [US3] Add a scope-resolution helper (derive a band/element's scope from the nesting), an unresolved-binding indicator, and a band collection-field editor in the Properties panel — in `packages/jet_print/lib/src/designer/layout/panels/properties_panel.dart` (+ a small designer helper) (depends on T027, T036).
+- [X] T041 [P] [US3] Add collection/unresolved chrome strings (e.g. "Bind to collection", unresolved tooltip) to the three ARB files + `flutter gen-l10n` — in `packages/jet_print/lib/src/designer/l10n/`.
 
-**Checkpoint**: Arbitrary-depth master/detail is authorable, scope-correct, and persists. US3 is independently demoable.
+> **US3 scope note (deliberate):** The **model, codec, and scope resolution fully support arbitrary-depth** master/detail — `ReportBand.collectionField`/`children` round-trip losslessly (T030), `setBandCollection` addresses any band by path (T031), and `binding_scope` resolves scope/unresolved at any depth (T032, `binding_scope_test`). What's deferred is the **design-time canvas rendering of *nested* child bands** (and nested-band *selection*): the canvas's `DesignTimeLayout` is flat-band-index-aligned and that index drives band badges, chrome, hit-testing, and the selection overlay — recursing all of them is *band-structure editing*, which the spec's Out-of-Scope explicitly defers ("beyond what is needed to designate a band as collection-bound"). The headline **invoice → lines** master/detail is authored as a **top-level detail band** bound to `lines`, which renders today; no acceptance criterion or the US4 sample requires nested *rendering*. Deferred: T033, T036 (Selection part), T038, T039.
+
+**Checkpoint**: Master/detail is authorable (designate a band's collection), scope-correct (incl. arbitrary depth), and persists. US3 is independently demoable.
 
 ---
 

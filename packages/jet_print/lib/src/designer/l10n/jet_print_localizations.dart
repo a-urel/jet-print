@@ -479,6 +479,18 @@ abstract class JetPrintLocalizations {
   /// **'Clear binding'**
   String get bindingClearTooltip;
 
+  /// Placeholder for the band collection-binding input (the nested-collection field this band iterates, for master/detail).
+  ///
+  /// In en, this message translates to:
+  /// **'Collection field'**
+  String get bindingCollectionHint;
+
+  /// Shown under a binding whose field is missing from, or out of scope in, the attached data source (009).
+  ///
+  /// In en, this message translates to:
+  /// **'Field not found in the data source'**
+  String get bindingUnresolved;
+
   /// Properties panel field label for a band's height.
   ///
   /// In en, this message translates to:

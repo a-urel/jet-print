@@ -199,6 +199,12 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get bindingClearTooltip => 'Clear binding';
 
   @override
+  String get bindingCollectionHint => 'Collection field';
+
+  @override
+  String get bindingUnresolved => 'Field not found in the data source';
+
+  @override
   String get propertiesHeight => 'Height';
 
   @override

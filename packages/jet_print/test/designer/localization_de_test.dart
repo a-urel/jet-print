@@ -86,6 +86,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Höhe'), findsOneWidget); // Height
     expect(find.text('Height'), findsNothing);
+    // Band master/detail collection-binding placeholder (US3).
+    expect(find.text('Sammlungsfeld'), findsOneWidget); // Collection field
+    expect(find.text('Collection field'), findsNothing);
 
     // (4) Empty state.
     c.clearSelection();

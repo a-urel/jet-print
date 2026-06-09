@@ -199,6 +199,12 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get bindingClearTooltip => 'Bağlamayı temizle';
 
   @override
+  String get bindingCollectionHint => 'Koleksiyon alanı';
+
+  @override
+  String get bindingUnresolved => 'Alan veri kaynağında bulunamadı';
+
+  @override
   String get propertiesHeight => 'Yükseklik';
 
   @override
