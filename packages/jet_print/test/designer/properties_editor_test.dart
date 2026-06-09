@@ -1,267 +1,176 @@
-// Properties panel editor test.
+// Properties panel editor test (model-driven, T072).
 //
-// The Properties tab dropped its header title and hint (like the Data Source
-// and Outline tabs) and turned its static name/value rows into a real, editable
-// property inspector built only from shadcn widgets: text fields (`ShadInput`),
-// dropdowns (`ShadSelect`) and a boolean toggle (`ShadSwitch`), grouped under
-// section labels.
+// The Properties tab is a context-aware inspector bound to the controller:
+//  * a single selected element → editable X/Y/W/H (setGeometry) and, for a text
+//    element, its text (setText); every edit is one undoable step;
+//  * a selected band → editable height (setBandHeight);
+//  * the selected report → read-only page info;
+//  * nothing / a multi-selection → a friendly empty state.
+// The fields reflect the live model (a canvas move updates them).
 //
-// These tests drive the public `JetReportDesigner` (Properties is reached by
-// selecting its tab) and never reach into `src/`.
+// Drives the public `JetReportDesigner` only (Properties reached via its tab).
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jet_print/jet_print.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'support/designer_harness.dart';
 
-/// Brings [caption] into view and taps it (the tab bar can scroll when narrow).
-Future<void> _selectTab(WidgetTester tester, String caption) async {
-  final Finder tab = find.text(caption);
+const String _p = 'jet_print.designer.properties';
+Finder _emptyHint = find.byKey(const ValueKey<String>('$_p.empty'));
+Finder _field(String name) => find.byKey(ValueKey<String>('$_p.field.$name'));
+Finder _editable(String name) =>
+    find.descendant(of: _field(name), matching: find.byType(EditableText));
+Finder _valueIn(String name, String text) =>
+    find.descendant(of: _field(name), matching: find.text(text));
+
+JetRect _bounds(JetReportDesignerController c, String id) => c.template.bands
+    .expand((ReportBand b) => b.elements)
+    .firstWhere((ReportElement e) => e.id == id)
+    .bounds;
+
+String _text(JetReportDesignerController c, String id) => (c.template.bands
+        .expand((ReportBand b) => b.elements)
+        .firstWhere((ReportElement e) => e.id == id) as TextElement)
+    .text;
+
+Future<void> _openProperties(WidgetTester tester) async {
+  final Finder tab = find.text('Properties');
   await tester.ensureVisible(tab);
   await tester.pumpAndSettle();
   await tester.tap(tab);
   await tester.pumpAndSettle();
 }
 
-void main() {
-  group('properties editor', () {
-    testWidgets('renders editable shadcn controls', (
-      WidgetTester tester,
-    ) async {
-      await pumpDesigner(tester);
-      await _selectTab(tester, 'Properties');
-
-      expect(find.byType(ShadInput), findsWidgets); // text fields
-      expect(find.byType(ShadSelect<String>), findsWidgets); // dropdowns
-      expect(find.byType(ShadSwitch), findsOneWidget); // boolean toggle
-    });
-
-    testWidgets('the Visible toggle flips when tapped', (
-      WidgetTester tester,
-    ) async {
-      await pumpDesigner(tester);
-      await _selectTab(tester, 'Properties');
-
-      ShadSwitch toggle() => tester.widget<ShadSwitch>(find.byType(ShadSwitch));
-      expect(toggle().value, isTrue); // starts on
-
-      await tester.tap(find.byType(ShadSwitch));
-      await tester.pumpAndSettle();
-
-      expect(toggle().value, isFalse); // genuinely editable, not static text
-    });
-
-    testWidgets('keeps property labels and section groupings', (
-      WidgetTester tester,
-    ) async {
-      await pumpDesigner(tester);
-      await _selectTab(tester, 'Properties');
-
-      expect(find.text('Name'), findsOneWidget);
-      expect(find.text('Visible'), findsOneWidget);
-    });
-
-    testWidgets('no longer shows a header title or hint', (
-      WidgetTester tester,
-    ) async {
-      await pumpDesigner(tester);
-      await _selectTab(tester, 'Properties');
-
-      expect(
-        find.text('Select an element to edit its properties here.'),
-        findsNothing,
-      );
-    });
-  });
-
-  group('element selector', () {
-    // Stable key mirroring the one assigned to the selector in
-    // properties_panel.dart (key-as-test-seam, like the region keys).
-    const Finder Function() selector = _elementSelector;
-
-    testWidgets('shows the current element with its glyph at the top', (
-      WidgetTester tester,
-    ) async {
-      await pumpDesigner(tester);
-      await _selectTab(tester, 'Properties');
-
-      expect(selector(), findsOneWidget);
-      // The closed dropdown displays the selected element name…
-      expect(
-        find.descendant(of: selector(), matching: find.text('label1')),
-        findsOneWidget,
-      );
-      // …paired with its element glyph (a text element → the Text glyph).
-      expect(
-        find.descendant(
-            of: selector(), matching: find.byIcon(LucideIcons.type)),
-        findsOneWidget,
-      );
-    });
-
-    testWidgets('lists the report elements as a flat list when opened', (
-      WidgetTester tester,
-    ) async {
-      await pumpDesigner(tester);
-      await _selectTab(tester, 'Properties');
-
-      await tester.tap(selector());
-      await tester.pumpAndSettle();
-
-      expect(find.text('Title'), findsOneWidget);
-      expect(find.text('OrdersTable'), findsOneWidget);
-      expect(find.text('PageInfo'), findsOneWidget);
-    });
-
-    testWidgets('pairs each element row with a proper glyph', (
-      WidgetTester tester,
-    ) async {
-      await pumpDesigner(tester);
-      await _selectTab(tester, 'Properties');
-
-      await tester.tap(selector());
-      await tester.pumpAndSettle();
-
-      // The table element row shows the Table glyph beside its name.
-      final Finder tableRow = find
-          .ancestor(of: find.text('OrdersTable'), matching: find.byType(Row))
-          .first;
-      expect(
-        find.descendant(of: tableRow, matching: find.byIcon(LucideIcons.table)),
-        findsOneWidget,
-      );
-    });
-  });
-
-  _refinementTests();
+Future<String> _addText(WidgetTester tester, JetReportDesignerController c,
+    {JetOffset at = const JetOffset(20, 30)}) async {
+  c.createElement(DesignerToolType.text, bandIndex: 1, at: at);
+  final String id = c.selection.singleOrNull!;
+  await tester.pumpAndSettle();
+  return id;
 }
 
-/// Locates the Properties-panel element selector by its stable key.
-Finder _elementSelector() => find.byKey(
-      const ValueKey<String>('jet_print.designer.elementSelector'),
-    );
+void main() {
+  group('properties — empty state', () {
+    testWidgets('shows a hint and no geometry fields when nothing is selected',
+        (WidgetTester tester) async {
+      await pumpDesignerWith(tester);
+      await _openProperties(tester);
 
-void _refinementTests() {
-  group('properties refinements', () {
-    testWidgets('section headers are flush with the panel content edge', (
-      WidgetTester tester,
-    ) async {
-      await pumpDesigner(tester);
-      await _selectTab(tester, 'Properties');
+      expect(_emptyHint, findsOneWidget);
+      expect(_field('x'), findsNothing);
+    });
+  });
 
-      final Padding box = tester.widget<Padding>(
-        find
-            .ancestor(of: find.text('LAYOUT'), matching: find.byType(Padding))
-            .first,
-      );
-      final EdgeInsets insets = box.padding.resolve(TextDirection.ltr);
-      expect(insets.left, 0); // no left indent before the heading
+  group('properties — element', () {
+    testWidgets('reflects the selected element geometry',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      await _addText(tester, c); // bounds (20, 30, 144, 18)
+
+      expect(_valueIn('x', '20'), findsOneWidget);
+      expect(_valueIn('y', '30'), findsOneWidget);
+      expect(_valueIn('width', '144'), findsOneWidget);
+      expect(_valueIn('height', '18'), findsOneWidget);
     });
 
-    testWidgets('font size is a dropdown of point sizes', (
-      WidgetTester tester,
-    ) async {
-      await pumpDesigner(tester);
-      await _selectTab(tester, 'Properties');
+    testWidgets('editing X commits to the model as one undoable step',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      final String id = await _addText(tester, c);
 
-      // The size control shows its current value '9' inside a ShadSelect…
-      final Finder sizeSelect = find
-          .ancestor(
-              of: find.text('9'), matching: find.byType(ShadSelect<String>))
-          .first;
-      expect(sizeSelect, findsOneWidget);
-
-      // …and opening it reveals standard point sizes.
-      await tester.tap(sizeSelect);
+      await tester.enterText(_editable('x'), '60');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
-      expect(find.text('72'), findsOneWidget);
+
+      expect(_bounds(c, id).x, 60);
+      expect(c.canUndo, isTrue);
+      c.undo();
+      expect(_bounds(c, id).x, 20);
     });
 
-    testWidgets('Location fields use axis icon prefixes, not letters', (
-      WidgetTester tester,
-    ) async {
-      await pumpDesigner(tester);
-      await _selectTab(tester, 'Properties');
+    testWidgets('the width stepper bumps the size by one',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      final String id = await _addText(tester, c);
+      final double before = _bounds(c, id).width;
 
-      // Single-direction position arrows (X →, Y ↓) replace the old letters.
-      expect(find.byIcon(LucideIcons.arrowRight), findsOneWidget); // X
-      expect(find.byIcon(LucideIcons.arrowDown), findsOneWidget); // Y
-      expect(find.text('X'), findsNothing);
-      expect(find.text('Y'), findsNothing);
+      await tester.tap(find.descendant(
+          of: _field('width'), matching: find.byIcon(LucideIcons.chevronUp)));
+      await tester.pumpAndSettle();
+
+      expect(_bounds(c, id).width, greaterThan(before));
     });
 
-    testWidgets('Size fields use width/height icon prefixes, not letters', (
-      WidgetTester tester,
-    ) async {
-      await pumpDesigner(tester);
-      await _selectTab(tester, 'Properties');
+    testWidgets('a text element exposes an editable text field',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      final String id = await _addText(tester, c);
 
-      // The width/height dimension glyphs replace the old W/H letters.
-      expect(find.byIcon(LucideIcons.moveHorizontal), findsOneWidget); // width
-      expect(find.byIcon(LucideIcons.moveVertical), findsOneWidget); // height
-      expect(find.text('W'), findsNothing);
-      expect(find.text('H'), findsNothing);
+      expect(_field('text'), findsOneWidget);
+      await tester.enterText(_editable('text'), 'Hello');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(_text(c, id), 'Hello');
     });
 
-    testWidgets('the numeric stepper increments the field value', (
-      WidgetTester tester,
-    ) async {
-      await pumpDesigner(tester);
-      await _selectTab(tester, 'Properties');
+    testWidgets('a non-text element has no text field',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      c.createElement(DesignerToolType.shape,
+          bandIndex: 1, at: const JetOffset(10, 10));
+      await tester.pumpAndSettle();
 
-      // The Location X field starts at 10; its up-chevron bumps it to 11.
-      final Finder xField = find.ancestor(
-        of: find.byIcon(LucideIcons.arrowRight),
-        matching: find.byType(ShadInput),
-      );
-      await tester.tap(
+      expect(_field('x'), findsOneWidget); // geometry still shown
+      expect(_field('text'), findsNothing);
+    });
+
+    testWidgets('the fields reflect a model change made elsewhere',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      final String id = await _addText(tester, c);
+      expect(_valueIn('x', '20'), findsOneWidget);
+
+      c.setGeometry(id, x: 88); // e.g. a canvas drag / nudge
+      await tester.pumpAndSettle();
+      expect(_valueIn('x', '88'), findsOneWidget);
+    });
+  });
+
+  group('properties — band & report', () {
+    testWidgets('a selected band exposes an editable height',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      c.selectBand(1); // detail, height 200
+      await tester.pumpAndSettle();
+
+      expect(_valueIn('bandHeight', '200'), findsOneWidget);
+      await tester.enterText(_editable('bandHeight'), '260');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(c.template.bands[1].height, 260);
+    });
+
+    testWidgets('the selected report shows read-only info, no geometry fields',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      c.selectReport();
+      await tester.pumpAndSettle();
+
+      expect(_field('x'), findsNothing);
+      expect(
         find.descendant(
-            of: xField, matching: find.byIcon(LucideIcons.chevronUp)),
+            of: find.byKey(kRightPanelKey), matching: find.text('Report')),
+        findsOneWidget,
       );
-      await tester.pumpAndSettle();
-
-      expect(find.text('11'), findsOneWidget); // genuinely editable
-    });
-
-    testWidgets('text align is an icon toggle group, not a dropdown', (
-      WidgetTester tester,
-    ) async {
-      await pumpDesigner(tester);
-      await _selectTab(tester, 'Properties');
-
-      expect(find.byIcon(LucideIcons.alignLeft), findsOneWidget);
-      expect(find.byIcon(LucideIcons.alignCenter), findsOneWidget);
-      expect(find.byIcon(LucideIcons.alignRight), findsOneWidget);
-      expect(find.byIcon(LucideIcons.alignJustify), findsOneWidget);
-
-      // The old dropdown displayed its value as text; the icon group doesn't.
-      expect(find.text('Left'), findsNothing);
-    });
-
-    testWidgets('the active alignment starts at Left and switches on tap', (
-      WidgetTester tester,
-    ) async {
-      await pumpDesigner(tester);
-      await _selectTab(tester, 'Properties');
-
-      // The selected button uses the filled (primary) variant; the rest ghost.
-      ShadButtonVariant variantOf(IconData icon) => tester
-          .widget<ShadIconButton>(
-            find.ancestor(
-              of: find.byIcon(icon),
-              matching: find.byType(ShadIconButton),
-            ),
-          )
-          .variant;
-
-      expect(variantOf(LucideIcons.alignLeft), ShadButtonVariant.primary);
-      expect(variantOf(LucideIcons.alignCenter), ShadButtonVariant.ghost);
-
-      await tester.tap(find.byIcon(LucideIcons.alignCenter));
-      await tester.pumpAndSettle();
-
-      expect(variantOf(LucideIcons.alignCenter), ShadButtonVariant.primary);
-      expect(variantOf(LucideIcons.alignLeft), ShadButtonVariant.ghost);
     });
   });
 }

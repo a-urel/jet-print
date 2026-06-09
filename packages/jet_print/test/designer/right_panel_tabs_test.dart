@@ -28,7 +28,9 @@ Future<void> _selectTab(WidgetTester tester, String caption) async {
 // (Properties).
 const String _dataSourceMarker = 'SalesDB';
 const String _outlineMarker = 'Report';
-const String _propertiesMarker = 'Location';
+// The Properties panel is model-driven; with nothing selected it shows its
+// empty-state hint, which is its representative default content.
+const String _propertiesMarker = 'Select an object to edit its properties.';
 
 void main() {
   group('right panel tabs', () {
@@ -96,14 +98,14 @@ void main() {
       );
     });
 
-    testWidgets('Properties shows a property-rows shape', (
+    testWidgets('Properties shows its inspector (empty state by default)', (
       WidgetTester tester,
     ) async {
       await pumpDesigner(tester);
       await _selectTab(tester, 'Properties');
 
-      // A sample property name in the property grid.
-      expect(find.text('Location'), findsOneWidget);
+      // With nothing selected the inspector prompts the user to select an object.
+      expect(find.text(_propertiesMarker), findsOneWidget);
     });
   });
 }

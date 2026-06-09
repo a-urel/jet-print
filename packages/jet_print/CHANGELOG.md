@@ -94,6 +94,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     and the row matching the current selection is highlighted (and marked
     selected for accessibility). The disclosure chevron collapses/expands a
     branch independently of selection.
+  - **The Properties panel is now a model-driven, context-aware inspector** (was
+    static sample content): a selected element exposes live **X / Y / W / H**
+    fields (committed through `setGeometry`) and, for a text element, its **text**
+    (`setText`) — each edit one undoable step, with steppers for ±1 nudges and
+    commit on Enter or blur; a selected band exposes its **height**
+    (`setBandHeight`); the report shows read-only page info; and nothing/a
+    multi-selection shows a friendly empty state. Fields reflect the live model,
+    so a canvas move/resize updates the numbers and vice-versa.
   - *Remaining for later increments:* model-driven Outline/Properties panels with
     two-way selection sync (the controller already exposes everything they need);
     an align/distribute/z-order top-bar menu (controller ops done); and polish
