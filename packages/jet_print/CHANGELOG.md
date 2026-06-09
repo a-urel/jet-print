@@ -102,6 +102,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     (`setBandHeight`); the report shows read-only page info; and nothing/a
     multi-selection shows a friendly empty state. Fields reflect the live model,
     so a canvas move/resize updates the numbers and vice-versa.
+  - **Selecting an element scrolls it into view.** When a selection comes from the
+    Outline panel (or any non-canvas source), the canvas scrolls the element into
+    the viewport so the user sees what they selected — a no-op when it is already
+    visible. This completes the canvas ↔ Outline ↔ Properties two-way sync.
   - *Remaining for later increments:* model-driven Outline/Properties panels with
     two-way selection sync (the controller already exposes everything they need);
     an align/distribute/z-order top-bar menu (controller ops done); and polish

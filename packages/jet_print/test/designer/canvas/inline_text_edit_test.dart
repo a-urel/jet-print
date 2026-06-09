@@ -47,4 +47,29 @@ void main() {
     controller.undo();
     expect(_textOf(controller, id), 'Text');
   });
+
+  testWidgets('inline edit also commits when focus is lost (blur)',
+      (WidgetTester tester) async {
+    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    controller.createElement(DesignerToolType.text,
+        bandIndex: 1, at: const JetOffset(20, 20));
+    await tester.pumpAndSettle();
+    final String id = controller.selection.singleOrNull!;
+
+    final Offset center = tester.getCenter(_elementFinder(id));
+    await tester.tapAt(center);
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tapAt(center);
+    await tester.pumpAndSettle();
+    expect(_editor, findsOneWidget);
+
+    await tester.enterText(_editor, 'Blurred');
+    // Tap the grey margin off the paper to move focus away from the editor.
+    final Offset canvasTopLeft = tester.getTopLeft(find.byKey(kDesignCanvasKey));
+    await tester.tapAt(canvasTopLeft + const Offset(6, 120));
+    await tester.pumpAndSettle();
+
+    expect(_textOf(controller, id), 'Blurred');
+    expect(_editor, findsNothing);
+  });
 }

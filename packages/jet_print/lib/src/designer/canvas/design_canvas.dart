@@ -127,8 +127,56 @@ class _DesignCanvasState extends State<DesignCanvas> {
   final ScrollController _vScroll = ScrollController();
   final ScrollController _hScroll = ScrollController();
 
+  /// A stable per-element key on each element's hit region, so a selection from
+  /// another surface (the Outline/Properties panels) can scroll it into view.
+  final Map<String, GlobalKey> _elementKeys = <String, GlobalKey>{};
+
+  /// The controller we are subscribed to for scroll-into-view, and the last
+  /// single-element selection we scrolled to (so we only react to *changes*).
+  JetReportDesignerController? _boundController;
+  String? _lastEnsuredSelectionId;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Subscribe to the controller for the scroll-into-view side effect (the
+    // build path already rebuilds via DesignerScope's InheritedNotifier).
+    final JetReportDesignerController controller =
+        DesignerScope.of(context, listen: false);
+    if (!identical(controller, _boundController)) {
+      _boundController?.removeListener(_handleSelectionForScroll);
+      _boundController = controller;
+      _lastEnsuredSelectionId = controller.selection.singleOrNull;
+      _boundController!.addListener(_handleSelectionForScroll);
+    }
+  }
+
+  /// When the single-element selection changes (typically from an Outline row or
+  /// Properties field), scroll that element into the viewport so the user sees
+  /// what they selected (FR-007 / SC-005). A no-op when it is already visible.
+  void _handleSelectionForScroll() {
+    final JetReportDesignerController? controller = _boundController;
+    if (controller == null) return;
+    final String? id = controller.selection.singleOrNull;
+    if (id == _lastEnsuredSelectionId) return;
+    _lastEnsuredSelectionId = id;
+    if (id == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final BuildContext? ctx = _elementKeys[id]?.currentContext;
+      if (ctx != null && ctx.mounted) {
+        Scrollable.ensureVisible(
+          ctx,
+          alignment: 0.5,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _boundController?.removeListener(_handleSelectionForScroll);
     _doubleTapTimer?.cancel();
     _picture?.dispose();
     _focusNode.dispose();
@@ -724,17 +772,24 @@ class _DesignCanvasState extends State<DesignCanvas> {
       for (final element in band.elements) {
         final JetRect? rect = layout.elementRect(element.id);
         if (rect == null) continue;
+        final GlobalKey regionKey =
+            _elementKeys.putIfAbsent(element.id, () => GlobalKey());
         regions.add(Positioned(
           left: rect.x * scale,
           top: rect.y * scale,
           width: rect.width * scale,
           height: rect.height * scale,
-          child: Semantics(
-            key: ValueKey<String>('jet_print.designer.element.${element.id}'),
-            label: '${element.typeKey} ${element.id}',
-            button: true,
-            selected: controller.selection.contains(element.id),
-            child: const SizedBox.expand(),
+          // KeyedSubtree carries the GlobalKey used for scroll-into-view; the
+          // Semantics keeps its own stable ValueKey (a11y + test seam).
+          child: KeyedSubtree(
+            key: regionKey,
+            child: Semantics(
+              key: ValueKey<String>('jet_print.designer.element.${element.id}'),
+              label: '${element.typeKey} ${element.id}',
+              button: true,
+              selected: controller.selection.contains(element.id),
+              child: const SizedBox.expand(),
+            ),
           ),
         ));
       }

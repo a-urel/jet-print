@@ -206,7 +206,7 @@ description: "Task list for Designer Edit Surface — Direct-Manipulation Elemen
 ### Tests for User Story 5 (write FIRST — MUST fail)
 
 - [x] T066 [P] [US5] `SetGeometryCommand` + `SetTextCommand` unit tests (numeric x/y/w/h set + clamp; text set; non-destructive; undoable) in `packages/jet_print/test/designer/controller/geometry_text_command_test.dart`.
-- [ ] T067 [P] [US5] Cross-panel sync + inline-edit widget tests — canvas select → Outline highlight + Properties reflect; Outline row → canvas select + scroll-into-view; Properties number edit → canvas updates (undoable); double-click text → inline edit commits (contracts §7.7 / SC-005 / acceptance US5.1–US5.3) in `packages/jet_print/test/designer/panels/cross_panel_sync_test.dart` and `packages/jet_print/test/designer/canvas/inline_text_edit_test.dart`.
+- [X] T067 [P] [US5] Cross-panel sync + inline-edit widget tests — canvas select → Outline highlight + Properties reflect; Outline row → canvas select + scroll-into-view; Properties number edit → canvas updates (undoable); double-click text → inline edit commits (contracts §7.7 / SC-005 / acceptance US5.1–US5.3) in `packages/jet_print/test/designer/panels/cross_panel_sync_test.dart` and `packages/jet_print/test/designer/canvas/inline_text_edit_test.dart`. Scroll-into-view implemented in `design_canvas.dart` (per-element `GlobalKey` + controller listener → `Scrollable.ensureVisible`).
 
 ### Implementation for User Story 5
 
