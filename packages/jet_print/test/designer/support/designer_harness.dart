@@ -86,6 +86,25 @@ Future<void> pumpDesigner(
   await tester.pumpAndSettle();
 }
 
+/// The top-bar Arrange menu trigger key (must match `designer_top_bar.dart`).
+const Key kArrangeButtonKey =
+    ValueKey<String>('jet_print.designer.action.arrange');
+
+/// Creates two elements, selects them, and opens the top-bar **Arrange** menu,
+/// so a test can assert the localized align/distribute/z-order item labels. The
+/// trigger is found by its stable key, so this works in any locale.
+Future<void> openArrangeMenu(
+    WidgetTester tester, JetReportDesignerController c) async {
+  c.createElement(DesignerToolType.text,
+      bandIndex: 1, at: const JetOffset(10, 10));
+  c.createElement(DesignerToolType.text,
+      bandIndex: 1, at: const JetOffset(80, 60));
+  c.selectAll();
+  await tester.pumpAndSettle();
+  await tester.tap(find.byKey(kArrangeButtonKey));
+  await tester.pumpAndSettle();
+}
+
 /// Pumps the designer bound to a [controller] (created if none is supplied) and
 /// returns it, so interaction tests can both drive and assert the model. The
 /// controller is disposed automatically by the designer only when it created

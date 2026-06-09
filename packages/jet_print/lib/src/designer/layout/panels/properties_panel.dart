@@ -42,12 +42,13 @@ class PropertiesPanel extends StatelessWidget {
 
     final List<Widget> children;
     if (selection.isReport) {
-      children = _reportInspector(controller, theme);
+      children = _reportInspector(controller, theme, l10n);
     } else if (selection.bandIndex case final int bandIndex) {
       children = _bandInspector(controller, bandIndex, theme, l10n);
     } else if (selection.singleOrNull case final String id
         when _find(controller, id) != null) {
-      children = _elementInspector(controller, _find(controller, id)!, theme);
+      children =
+          _elementInspector(controller, _find(controller, id)!, theme, l10n);
     } else {
       return KeyedSubtree(
         key: const ValueKey<String>('$_p.empty'),
@@ -70,13 +71,14 @@ class PropertiesPanel extends StatelessWidget {
     JetReportDesignerController controller,
     ReportElement element,
     ShadThemeData theme,
+    JetPrintLocalizations l10n,
   ) {
     final String id = element.id;
     final JetRect b = element.bounds;
     return <Widget>[
       _Header(icon: _elementGlyph(element), title: id, theme: theme),
       const SizedBox(height: 14),
-      const SectionLabel('Position'),
+      SectionLabel(l10n.propertiesPosition),
       Row(
         children: <Widget>[
           Expanded(
@@ -99,7 +101,7 @@ class PropertiesPanel extends StatelessWidget {
         ],
       ),
       const SizedBox(height: 12),
-      const SectionLabel('Size'),
+      SectionLabel(l10n.propertiesSize),
       Row(
         children: <Widget>[
           Expanded(
@@ -123,7 +125,7 @@ class PropertiesPanel extends StatelessWidget {
       ),
       if (element is TextElement) ...<Widget>[
         const SizedBox(height: 12),
-        const SectionLabel('Text'),
+        SectionLabel(l10n.propertiesText),
         _TextField(
           fieldKey: const ValueKey<String>('$_p.field.text'),
           value: element.text,
@@ -149,9 +151,9 @@ class PropertiesPanel extends StatelessWidget {
         theme: theme,
       ),
       const SizedBox(height: 14),
-      const SectionLabel('Size'),
+      SectionLabel(l10n.propertiesSize),
       _LabeledRow(
-        label: 'Height',
+        label: l10n.propertiesHeight,
         child: _NumberField(
           fieldKey: const ValueKey<String>('$_p.field.bandHeight'),
           prefix: LucideIcons.moveVertical,
@@ -167,17 +169,19 @@ class PropertiesPanel extends StatelessWidget {
   List<Widget> _reportInspector(
     JetReportDesignerController controller,
     ShadThemeData theme,
+    JetPrintLocalizations l10n,
   ) {
     final page = controller.template.page;
     String pt(double v) => v.round().toString();
     return <Widget>[
-      _Header(icon: LucideIcons.fileText, title: 'Report', theme: theme),
+      _Header(icon: LucideIcons.fileText, title: l10n.reportLabel, theme: theme),
       const SizedBox(height: 14),
-      const SectionLabel('Page'),
+      SectionLabel(l10n.propertiesPage),
       _ReadonlyRow(
-          label: 'Size', value: '${pt(page.width)} × ${pt(page.height)} pt'),
+          label: l10n.propertiesSize,
+          value: '${pt(page.width)} × ${pt(page.height)} pt'),
       _ReadonlyRow(
-        label: 'Margins',
+        label: l10n.propertiesMargins,
         value: '${pt(page.margins.left)} · ${pt(page.margins.top)} · '
             '${pt(page.margins.right)} · ${pt(page.margins.bottom)}',
       ),
@@ -496,9 +500,10 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
     final String message = count > 1
-        ? '$count elements selected'
-        : 'Select an object to edit its properties.';
+        ? l10n.propertiesMultiSelected(count)
+        : l10n.propertiesEmptyHint;
     return RegionEmptyHint(icon: LucideIcons.mousePointer2, message: message);
   }
 }

@@ -128,4 +128,120 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
 
   @override
   String get collapsePanelTooltip => 'Bereich ausblenden';
+
+  @override
+  String get actionArrangeTooltip => 'Anordnen';
+
+  @override
+  String get arrangeAlignLeft => 'Linksbündig ausrichten';
+
+  @override
+  String get arrangeAlignCenter => 'Horizontal zentrieren';
+
+  @override
+  String get arrangeAlignRight => 'Rechtsbündig ausrichten';
+
+  @override
+  String get arrangeAlignTop => 'Oben ausrichten';
+
+  @override
+  String get arrangeAlignMiddle => 'Vertikal zentrieren';
+
+  @override
+  String get arrangeAlignBottom => 'Unten ausrichten';
+
+  @override
+  String get arrangeDistributeHorizontally => 'Horizontal verteilen';
+
+  @override
+  String get arrangeDistributeVertically => 'Vertikal verteilen';
+
+  @override
+  String get arrangeBringToFront => 'In den Vordergrund';
+
+  @override
+  String get arrangeBringForward => 'Eine Ebene nach vorne';
+
+  @override
+  String get arrangeSendBackward => 'Eine Ebene nach hinten';
+
+  @override
+  String get arrangeSendToBack => 'In den Hintergrund';
+
+  @override
+  String get propertiesPosition => 'Position';
+
+  @override
+  String get propertiesSize => 'Größe';
+
+  @override
+  String get propertiesText => 'Text';
+
+  @override
+  String get propertiesHeight => 'Höhe';
+
+  @override
+  String get propertiesPage => 'Seite';
+
+  @override
+  String get propertiesMargins => 'Ränder';
+
+  @override
+  String get reportLabel => 'Bericht';
+
+  @override
+  String get propertiesEmptyHint =>
+      'Wählen Sie ein Objekt, um seine Eigenschaften zu bearbeiten.';
+
+  @override
+  String propertiesMultiSelected(int count) {
+    return '$count Elemente ausgewählt';
+  }
+
+  @override
+  String get elementTypeText => 'Text';
+
+  @override
+  String get elementTypeShape => 'Form';
+
+  @override
+  String get elementTypeImage => 'Bild';
+
+  @override
+  String get elementTypeBarcode => 'Barcode';
+
+  @override
+  String get elementTypeGeneric => 'Element';
+
+  @override
+  String elementSemanticLabel(String type, String id) {
+    return '$type-Element $id';
+  }
+
+  @override
+  String get resizeHandleTopLeft => 'Größe ändern, obere linke Ecke';
+
+  @override
+  String get resizeHandleTop => 'Größe ändern, obere Kante';
+
+  @override
+  String get resizeHandleTopRight => 'Größe ändern, obere rechte Ecke';
+
+  @override
+  String get resizeHandleRight => 'Größe ändern, rechte Kante';
+
+  @override
+  String get resizeHandleBottomRight => 'Größe ändern, untere rechte Ecke';
+
+  @override
+  String get resizeHandleBottom => 'Größe ändern, untere Kante';
+
+  @override
+  String get resizeHandleBottomLeft => 'Größe ändern, untere linke Ecke';
+
+  @override
+  String get resizeHandleLeft => 'Größe ändern, linke Kante';
+
+  @override
+  String get resizeBandHandle => 'Bandhöhe ändern';
 }

@@ -61,7 +61,7 @@ class _OutlinePanelState extends State<OutlinePanel> {
             const ValueKey<String>('jet_print.designer.outline.report.toggle'),
         depth: 0,
         icon: LucideIcons.fileText,
-        label: 'Report',
+        label: l10n.reportLabel,
         expanded: _rootExpanded,
         selected: selection.isReport,
         onToggle: () => setState(() => _rootExpanded = !_rootExpanded),

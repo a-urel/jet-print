@@ -283,6 +283,7 @@ class _ArrangeMenuState extends State<_ArrangeMenu> {
   @override
   Widget build(BuildContext context) {
     final JetReportDesignerController c = widget.controller;
+    final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
     final int count = c.selection.ids.length;
     final bool hasSelection = count > 0;
     // Aligning/distributing a single element is a no-op, so those need a pair.
@@ -294,46 +295,55 @@ class _ArrangeMenuState extends State<_ArrangeMenu> {
       child: ShadContextMenu(
         controller: _popover,
         items: <Widget>[
-          _action('alignLeft', LucideIcons.alignStartVertical, 'Align left',
+          _action('alignLeft', LucideIcons.alignStartVertical,
+              l10n.arrangeAlignLeft,
               enabled: canAlign, op: () => c.align(AlignKind.left)),
           _action('alignCenterHorizontal', LucideIcons.alignCenterVertical,
-              'Align center',
+              l10n.arrangeAlignCenter,
               enabled: canAlign, op: () => c.align(AlignKind.centerHorizontal)),
-          _action('alignRight', LucideIcons.alignEndVertical, 'Align right',
+          _action('alignRight', LucideIcons.alignEndVertical,
+              l10n.arrangeAlignRight,
               enabled: canAlign, op: () => c.align(AlignKind.right)),
-          _action('alignTop', LucideIcons.alignStartHorizontal, 'Align top',
+          _action('alignTop', LucideIcons.alignStartHorizontal,
+              l10n.arrangeAlignTop,
               enabled: canAlign, op: () => c.align(AlignKind.top)),
           _action('alignMiddle', LucideIcons.alignCenterHorizontal,
-              'Align middle',
+              l10n.arrangeAlignMiddle,
               enabled: canAlign, op: () => c.align(AlignKind.middle)),
-          _action('alignBottom', LucideIcons.alignEndHorizontal, 'Align bottom',
+          _action('alignBottom', LucideIcons.alignEndHorizontal,
+              l10n.arrangeAlignBottom,
               enabled: canAlign, op: () => c.align(AlignKind.bottom)),
           const _MenuDivider(),
           _action(
               'distributeHorizontal',
               LucideIcons.alignHorizontalDistributeCenter,
-              'Distribute horizontally',
+              l10n.arrangeDistributeHorizontally,
               enabled: canAlign,
               op: () => c.distribute(DistributeAxis.horizontal)),
-          _action('distributeVertical',
-              LucideIcons.alignVerticalDistributeCenter, 'Distribute vertically',
+          _action(
+              'distributeVertical',
+              LucideIcons.alignVerticalDistributeCenter,
+              l10n.arrangeDistributeVertically,
               enabled: canAlign,
               op: () => c.distribute(DistributeAxis.vertical)),
           const _MenuDivider(),
-          _action('bringToFront', LucideIcons.bringToFront, 'Bring to front',
+          _action('bringToFront', LucideIcons.bringToFront,
+              l10n.arrangeBringToFront,
               enabled: hasSelection, op: c.bringToFront),
-          _action('bringForward', LucideIcons.chevronUp, 'Bring forward',
+          _action('bringForward', LucideIcons.chevronUp,
+              l10n.arrangeBringForward,
               enabled: hasSelection, op: c.bringForward),
-          _action('sendBackward', LucideIcons.chevronDown, 'Send backward',
+          _action('sendBackward', LucideIcons.chevronDown,
+              l10n.arrangeSendBackward,
               enabled: hasSelection, op: c.sendBackward),
-          _action('sendToBack', LucideIcons.sendToBack, 'Send to back',
+          _action('sendToBack', LucideIcons.sendToBack, l10n.arrangeSendToBack,
               enabled: hasSelection, op: c.sendToBack),
         ],
         // A labelled Semantics wrapper rather than a hover ShadTooltip: a
         // tooltip overlay would render on top of the just-opened menu. The
         // menu items are self-describing; this keeps an accessible name.
         child: Semantics(
-          label: 'Arrange',
+          label: l10n.actionArrangeTooltip,
           button: true,
           child: ShadIconButton.ghost(
             key: const ValueKey<String>('jet_print.designer.action.arrange'),

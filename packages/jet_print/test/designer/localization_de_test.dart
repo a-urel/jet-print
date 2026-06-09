@@ -5,6 +5,7 @@
 // tree unbuilt, so each non-English locale is verified in isolation.
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jet_print/jet_print.dart';
 
 import 'support/designer_harness.dart';
 
@@ -35,5 +36,20 @@ void main() {
     // (wrap/ellipsize) without clipping adjacent controls — no overflow recorded
     // (longer-text edge case / T037).
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('the Arrange menu actions are localized under the de locale', (
+    WidgetTester tester,
+  ) async {
+    final JetReportDesignerController c =
+        await pumpDesignerWith(tester, locale: const Locale('de'));
+    await openArrangeMenu(tester, c);
+
+    expect(find.text('Linksbündig ausrichten'), findsOneWidget); // Align left
+    expect(find.text('Vertikal verteilen'), findsOneWidget); // Distribute vert.
+    expect(find.text('In den Vordergrund'), findsOneWidget); // Bring to front
+    // The English captions are gone — a real translation, not a fallback.
+    expect(find.text('Align left'), findsNothing);
+    expect(find.text('Bring to front'), findsNothing);
   });
 }
