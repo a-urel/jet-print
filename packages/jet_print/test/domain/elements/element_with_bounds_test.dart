@@ -20,7 +20,8 @@ const JetRect _a = JetRect(x: 1, y: 2, width: 3, height: 4);
 const JetRect _b = JetRect(x: 10, y: 20, width: 30, height: 40);
 
 void main() {
-  group('ReportElement.withBounds returns a same-type copy with new bounds', () {
+  group('ReportElement.withBounds returns a same-type copy with new bounds',
+      () {
     test('TextElement preserves text/style/expression', () {
       const TextElement original = TextElement(
         id: 't1',
@@ -90,7 +91,8 @@ void main() {
       expect(bc.color, const JetColor(0xFFABCDEF));
     });
 
-    test('UnknownElement is a passthrough — rawJson preserved byte-for-byte', () {
+    test('UnknownElement is a passthrough — rawJson preserved byte-for-byte',
+        () {
       final UnknownElement original = UnknownElement(
         typeKey: 'customGauge',
         rawJson: <String, Object?>{

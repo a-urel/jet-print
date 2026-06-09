@@ -79,20 +79,18 @@ class _NsCursorBridge {
           process.lookupFunction<_MallocNative, _MallocDart>('malloc');
       final _FreeDart free =
           process.lookupFunction<_FreeNative, _FreeDart>('free');
-      final _PtrFromCStrDart getClass = process
-          .lookupFunction<_PtrFromCStrNative, _PtrFromCStrDart>('objc_getClass');
+      final _PtrFromCStrDart getClass =
+          process.lookupFunction<_PtrFromCStrNative, _PtrFromCStrDart>(
+              'objc_getClass');
       final _PtrFromCStrDart selRegister =
           process.lookupFunction<_PtrFromCStrNative, _PtrFromCStrDart>(
               'sel_registerName');
-      final _MsgSendIdDart msgSendId =
-          process.lookupFunction<_MsgSendIdNative, _MsgSendIdDart>(
-              'objc_msgSend');
-      final _MsgSendVoidDart msgSendVoid =
-          process.lookupFunction<_MsgSendVoidNative, _MsgSendVoidDart>(
-              'objc_msgSend');
-      final _MsgSendBoolDart msgSendBool =
-          process.lookupFunction<_MsgSendBoolNative, _MsgSendBoolDart>(
-              'objc_msgSend');
+      final _MsgSendIdDart msgSendId = process
+          .lookupFunction<_MsgSendIdNative, _MsgSendIdDart>('objc_msgSend');
+      final _MsgSendVoidDart msgSendVoid = process
+          .lookupFunction<_MsgSendVoidNative, _MsgSendVoidDart>('objc_msgSend');
+      final _MsgSendBoolDart msgSendBool = process
+          .lookupFunction<_MsgSendBoolNative, _MsgSendBoolDart>('objc_msgSend');
 
       // Turn an ASCII string into a freshly malloc'd, NUL-terminated C string,
       // hand it to [resolve] (objc_getClass / sel_registerName, both of which

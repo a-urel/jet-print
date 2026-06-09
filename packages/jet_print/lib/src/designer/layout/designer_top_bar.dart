@@ -147,7 +147,8 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
             width: 46,
             child: Text(
               '${(controller.viewScale * 100).round()}%',
-              key: const ValueKey<String>('jet_print.designer.action.zoomLevel'),
+              key:
+                  const ValueKey<String>('jet_print.designer.action.zoomLevel'),
               textAlign: TextAlign.center,
               style: theme.textTheme.small.copyWith(color: colors.foreground),
             ),
@@ -354,11 +355,11 @@ class _ArrangeMenuState extends State<_ArrangeMenu> {
           _action('bringToFront', LucideIcons.bringToFront,
               l10n.arrangeBringToFront,
               enabled: hasSelection, op: c.bringToFront),
-          _action('bringForward', LucideIcons.chevronUp,
-              l10n.arrangeBringForward,
+          _action(
+              'bringForward', LucideIcons.chevronUp, l10n.arrangeBringForward,
               enabled: hasSelection, op: c.bringForward),
-          _action('sendBackward', LucideIcons.chevronDown,
-              l10n.arrangeSendBackward,
+          _action(
+              'sendBackward', LucideIcons.chevronDown, l10n.arrangeSendBackward,
               enabled: hasSelection, op: c.sendBackward),
           _action('sendToBack', LucideIcons.sendToBack, l10n.arrangeSendToBack,
               enabled: hasSelection, op: c.sendToBack),

@@ -29,7 +29,8 @@ void main() {
       expect(c.selection.isReport, isFalse);
     });
 
-    test('selectReport replaces a band selection, and select() clears both', () {
+    test('selectReport replaces a band selection, and select() clears both',
+        () {
       final JetReportDesignerController c = make();
       c.selectBand(1);
       c.selectReport();
@@ -59,12 +60,14 @@ void main() {
 
       c.setBandHeight(1, 260);
       expect(bandHeight(c, 1), 260);
-      expect(c.selection.bandIndex, 1, reason: 'the resized band stays selected');
+      expect(c.selection.bandIndex, 1,
+          reason: 'the resized band stays selected');
       expect(c.canUndo, isTrue);
 
       c.undo();
       expect(bandHeight(c, 1), 200);
-      expect(c.selection.isEmpty, isTrue, reason: 'prior (empty) selection back');
+      expect(c.selection.isEmpty, isTrue,
+          reason: 'prior (empty) selection back');
     });
 
     test('setBandHeight clamps to a minimum floor', () {
@@ -129,14 +132,12 @@ void main() {
       final JetReportDesignerController c = make();
       c.createElement(DesignerToolType.text,
           bandIndex: 1, at: const JetOffset(10, 10));
-      final int before = c.template.bands
-          .expand((ReportBand b) => b.elements)
-          .length;
+      final int before =
+          c.template.bands.expand((ReportBand b) => b.elements).length;
       c.selectBand(1);
       c.delete();
-      final int after = c.template.bands
-          .expand((ReportBand b) => b.elements)
-          .length;
+      final int after =
+          c.template.bands.expand((ReportBand b) => b.elements).length;
       expect(after, before, reason: 'delete targets elements, not bands');
     });
   });

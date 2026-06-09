@@ -12,7 +12,8 @@ void main() {
     expect(s.ids, isEmpty);
     expect(s.length, 0);
     expect(s.singleOrNull, isNull);
-    expect(s.isEmpty, isFalse, reason: 'a selected band is a non-empty selection');
+    expect(s.isEmpty, isFalse,
+        reason: 'a selected band is a non-empty selection');
     expect(s.isNotEmpty, isTrue);
   });
 

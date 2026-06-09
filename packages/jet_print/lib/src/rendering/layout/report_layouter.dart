@@ -172,8 +172,11 @@ class ReportLayouter {
             continue;
           }
           chromeExprs[el.id] = expr;
-          final ({Set<String> fields, Set<String> params, Set<String> variables})
-              refs = expr.references;
+          final ({
+            Set<String> fields,
+            Set<String> params,
+            Set<String> variables
+          }) refs = expr.references;
           if (refs.fields.isNotEmpty) {
             diagnostics.warning(
                 'chrome text on "${el.id}" references field(s) '
@@ -295,8 +298,9 @@ class ReportLayouter {
       if (newHeader) {
         spanStack.add((name: band.group!, level: level, openIndex: k));
       }
-      spanPrevHeader =
-          (band.type == BandType.groupHeader && isGroupBand) ? band.group : null;
+      spanPrevHeader = (band.type == BandType.groupHeader && isGroupBand)
+          ? band.group
+          : null;
     }
     while (spanStack.isNotEmpty) {
       finalizeSpan(spanStack.removeLast(), filled.bands.length);
@@ -398,8 +402,9 @@ class ReportLayouter {
           }
         }
       }
-      prevHeaderGroup =
-          (band.type == BandType.groupHeader && isGroupBand) ? band.group : null;
+      prevHeaderGroup = (band.type == BandType.groupHeader && isGroupBand)
+          ? band.group
+          : null;
     }
 
     // Per-page chrome substitution (008c). Render follows null-propagation:
@@ -470,5 +475,4 @@ class ReportLayouter {
       diagnostics: diagnostics,
     );
   }
-
 }

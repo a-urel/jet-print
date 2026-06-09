@@ -55,9 +55,8 @@ void main() {
       final String saved = JetReportFormat.encodeJson(editor.template);
 
       // Reopen: the exact call the app's onOpenRequested makes.
-      final JetReportDesignerController reopened =
-          JetReportDesignerController()
-            ..open(JetReportFormat.decodeJson(saved));
+      final JetReportDesignerController reopened = JetReportDesignerController()
+        ..open(JetReportFormat.decodeJson(saved));
       addTearDown(reopened.dispose);
 
       final TextElement restored = reopened.template.bands

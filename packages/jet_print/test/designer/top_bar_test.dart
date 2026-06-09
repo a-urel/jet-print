@@ -50,8 +50,8 @@ void main() {
       await pumpDesigner(tester);
 
       // The canvas drives the zoom % (it fits the page to width on load).
-      final Finder zoomLevel = find.byKey(
-          const ValueKey<String>('jet_print.designer.action.zoomLevel'));
+      final Finder zoomLevel = find
+          .byKey(const ValueKey<String>('jet_print.designer.action.zoomLevel'));
       int pct() =>
           int.parse(tester.widget<Text>(zoomLevel).data!.replaceAll('%', ''));
 

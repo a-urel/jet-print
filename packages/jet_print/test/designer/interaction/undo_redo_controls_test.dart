@@ -22,13 +22,14 @@ Finder _elementFinder(String id) =>
 bool _disabled(WidgetTester tester, Finder f) =>
     tester.widget<ShadIconButton>(f).onPressed == null;
 
-int _count(JetReportDesignerController c) =>
-    c.template.bands.fold<int>(0, (int n, ReportBand b) => n + b.elements.length);
+int _count(JetReportDesignerController c) => c.template.bands
+    .fold<int>(0, (int n, ReportBand b) => n + b.elements.length);
 
 void main() {
   testWidgets('undo/redo buttons reflect availability and drive the controller',
       (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
 
     // Nothing to undo/redo yet → both disabled.
     expect(_disabled(tester, _undoButton), isTrue);
@@ -54,7 +55,8 @@ void main() {
 
   testWidgets('⌘Z undoes and ⇧⌘Z redoes when the canvas is focused',
       (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     await tester.tap(_toolFinder(DesignerToolType.shape));
     await tester.pumpAndSettle();
     final String id = controller.selection.singleOrNull!;

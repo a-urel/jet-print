@@ -33,7 +33,8 @@ void main() {
       expect(out.height, 24);
     });
 
-    test('preserves the (referentially identical) element list when omitted', () {
+    test('preserves the (referentially identical) element list when omitted',
+        () {
       final ReportBand out = band.copyWith(height: 40);
       expect(out.height, 40);
       expect(identical(out.elements, band.elements), isTrue);

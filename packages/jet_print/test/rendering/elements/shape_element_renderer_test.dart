@@ -13,14 +13,14 @@ import 'package:jet_print/src/rendering/text/font_registry.dart';
 import 'package:jet_print/src/rendering/text/metrics_text_measurer.dart';
 
 void main() {
-  final RenderContext ctx =
-      RenderContext(measurer: MetricsTextMeasurer(FontRegistry()..registerDefault()));
+  final RenderContext ctx = RenderContext(
+      measurer: MetricsTextMeasurer(FontRegistry()..registerDefault()));
   const ShapeElementRenderer renderer = ShapeElementRenderer();
   const JetRect bounds = JetRect(x: 10, y: 20, width: 40, height: 30);
 
   test('measure returns the authored box size', () {
-    const ShapeElement el = ShapeElement(
-        id: 'r', bounds: bounds, kind: ShapeKind.rectangle);
+    const ShapeElement el =
+        ShapeElement(id: 'r', bounds: bounds, kind: ShapeKind.rectangle);
     expect(renderer.measure(el, ctx, const JetConstraints()),
         const JetSize(40, 30));
   });
@@ -30,7 +30,8 @@ void main() {
       id: 'r',
       bounds: bounds,
       kind: ShapeKind.rectangle,
-      style: JetBoxStyle(fill: JetColor.black, stroke: JetColor.black, strokeWidth: 2),
+      style: JetBoxStyle(
+          fill: JetColor.black, stroke: JetColor.black, strokeWidth: 2),
     );
     final FrameBuilder out = FrameBuilder(PageFormat.a4Portrait);
     renderer.emit(el, ctx, bounds, out);

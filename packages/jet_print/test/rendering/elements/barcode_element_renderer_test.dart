@@ -11,14 +11,17 @@ import 'package:jet_print/src/rendering/text/font_registry.dart';
 import 'package:jet_print/src/rendering/text/metrics_text_measurer.dart';
 
 void main() {
-  final RenderContext ctx =
-      RenderContext(measurer: MetricsTextMeasurer(FontRegistry()..registerDefault()));
+  final RenderContext ctx = RenderContext(
+      measurer: MetricsTextMeasurer(FontRegistry()..registerDefault()));
   const BarcodeElementRenderer renderer = BarcodeElementRenderer();
   const JetRect bounds = JetRect(x: 0, y: 0, width: 80, height: 30);
 
   test('measure returns the authored box size', () {
     const BarcodeElement el = BarcodeElement(
-        id: 'b', bounds: bounds, symbology: BarcodeSymbology.code128, data: '123');
+        id: 'b',
+        bounds: bounds,
+        symbology: BarcodeSymbology.code128,
+        data: '123');
     expect(renderer.measure(el, ctx, const JetConstraints()),
         const JetSize(80, 30));
   });

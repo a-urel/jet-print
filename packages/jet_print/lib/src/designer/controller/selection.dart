@@ -33,8 +33,7 @@ class Selection {
       Selection._(const <String>[], bandIndex: index);
 
   /// Selects the report/page itself (and nothing else).
-  factory Selection.report() =>
-      const Selection._(<String>[], isReport: true);
+  factory Selection.report() => const Selection._(<String>[], isReport: true);
 
   /// The empty selection (nothing selected).
   static const Selection empty = Selection._(<String>[]);
@@ -71,9 +70,8 @@ class Selection {
       contains(id) ? this : Selection.of(<String>[...ids, id]);
 
   /// Returns a selection with [id] removed (no-op if absent).
-  Selection excluding(String id) => contains(id)
-      ? Selection.of(ids.where((String e) => e != id))
-      : this;
+  Selection excluding(String id) =>
+      contains(id) ? Selection.of(ids.where((String e) => e != id)) : this;
 
   /// Returns a selection with [id] toggled in/out.
   Selection toggled(String id) => contains(id) ? excluding(id) : including(id);

@@ -64,7 +64,8 @@ void main() {
 
     c.undo();
     expect(_detailCount(c), 2);
-    expect(c.selection.isEmpty, isTrue); // selection before the create was empty
+    expect(
+        c.selection.isEmpty, isTrue); // selection before the create was empty
     expect(c.canRedo, isTrue);
 
     c.redo();

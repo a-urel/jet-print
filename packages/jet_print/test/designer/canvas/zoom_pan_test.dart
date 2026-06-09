@@ -24,7 +24,8 @@ void main() {
 
   testWidgets('elements render at the view scale (pointer-accurate placement)',
       (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     controller.createElement(DesignerToolType.barcode,
         bandIndex: 1, at: const JetOffset(20, 20));
     await tester.pumpAndSettle();
@@ -46,7 +47,8 @@ void main() {
 
   testWidgets('fit-to-width recenters after zooming out',
       (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     controller.createElement(DesignerToolType.text,
         bandIndex: 1, at: const JetOffset(20, 20));
     await tester.pumpAndSettle();

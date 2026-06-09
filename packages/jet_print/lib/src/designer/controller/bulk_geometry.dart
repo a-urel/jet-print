@@ -51,8 +51,9 @@ Map<String, JetRect> computeAlign(List<Positioned> items, AlignKind kind) {
   double maxBottom = items.first.bounds.y + items.first.bounds.height;
   for (final Positioned p in items) {
     minX = p.bounds.x < minX ? p.bounds.x : minX;
-    maxRight =
-        (p.bounds.x + p.bounds.width) > maxRight ? p.bounds.x + p.bounds.width : maxRight;
+    maxRight = (p.bounds.x + p.bounds.width) > maxRight
+        ? p.bounds.x + p.bounds.width
+        : maxRight;
     minY = p.bounds.y < minY ? p.bounds.y : minY;
     maxBottom = (p.bounds.y + p.bounds.height) > maxBottom
         ? p.bounds.y + p.bounds.height
@@ -114,8 +115,10 @@ Map<String, JetRect> computeDistribute(
     final double target = first + step * i;
     final JetRect b = p.bounds;
     out[p.id] = axis == DistributeAxis.horizontal
-        ? JetRect(x: target - b.width / 2, y: b.y, width: b.width, height: b.height)
-        : JetRect(x: b.x, y: target - b.height / 2, width: b.width, height: b.height);
+        ? JetRect(
+            x: target - b.width / 2, y: b.y, width: b.width, height: b.height)
+        : JetRect(
+            x: b.x, y: target - b.height / 2, width: b.width, height: b.height);
   }
   return out;
 }

@@ -13,8 +13,8 @@ Finder _toolFinder(DesignerToolType type) =>
 Finder _elementFinder(String id) =>
     find.byKey(ValueKey<String>('jet_print.designer.element.$id'));
 
-int _count(JetReportDesignerController c) =>
-    c.template.bands.fold<int>(0, (int n, ReportBand b) => n + b.elements.length);
+int _count(JetReportDesignerController c) => c.template.bands
+    .fold<int>(0, (int n, ReportBand b) => n + b.elements.length);
 
 Future<void> _meta(WidgetTester tester, LogicalKeyboardKey key) async {
   await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
@@ -36,8 +36,10 @@ Future<String> _createAndFocus(
 }
 
 void main() {
-  testWidgets('arrow keys nudge the selection by 1 pt', (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+  testWidgets('arrow keys nudge the selection by 1 pt',
+      (WidgetTester tester) async {
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     final String id = await _createAndFocus(tester, controller);
     final double x0 = controller.template.bands
         .expand((ReportBand b) => b.elements)
@@ -57,7 +59,8 @@ void main() {
   });
 
   testWidgets('Delete removes the selection', (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     await _createAndFocus(tester, controller);
     expect(_count(controller), 1);
 
@@ -68,7 +71,8 @@ void main() {
 
   testWidgets('⌘C / ⌘V copy and paste; ⌘D duplicates; ⌘A selects all',
       (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     await _createAndFocus(tester, controller);
 
     await _meta(tester, LogicalKeyboardKey.keyC); // copy

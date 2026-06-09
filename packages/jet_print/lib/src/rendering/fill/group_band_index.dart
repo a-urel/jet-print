@@ -32,7 +32,8 @@ class GroupBandIndex {
     }
     if (duplicates.isNotEmpty) {
       final List<String> names = duplicates.toList()..sort();
-      throw ReportFormatException('Duplicate group name(s): ${names.join(', ')}');
+      throw ReportFormatException(
+          'Duplicate group name(s): ${names.join(', ')}');
     }
 
     for (final ReportBand band in template.bands) {

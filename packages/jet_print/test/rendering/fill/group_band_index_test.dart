@@ -29,7 +29,8 @@ void main() {
   test('indexes header/footer bands by group name', () {
     final ReportDiagnostics d = ReportDiagnostics();
     final GroupBandIndex idx = GroupBandIndex(
-      tpl(groups: <ReportGroup>[g('region')],
+      tpl(
+          groups: <ReportGroup>[g('region')],
           bands: <ReportBand>[gh('region'), gf('region')]),
       d,
     );
@@ -52,7 +53,9 @@ void main() {
   test('a group band with a null group records an error and is excluded', () {
     final ReportDiagnostics d = ReportDiagnostics();
     final GroupBandIndex idx = GroupBandIndex(
-      tpl(groups: <ReportGroup>[g('region')], bands: const <ReportBand>[
+      tpl(groups: <ReportGroup>[
+        g('region')
+      ], bands: const <ReportBand>[
         ReportBand(type: BandType.groupHeader, height: 10),
       ]),
       d,
@@ -83,10 +86,12 @@ void main() {
     );
   });
 
-  test('returned header and footer lists are unmodifiable (frozen snapshot)', () {
+  test('returned header and footer lists are unmodifiable (frozen snapshot)',
+      () {
     final ReportDiagnostics d = ReportDiagnostics();
     final GroupBandIndex idx = GroupBandIndex(
-      tpl(groups: <ReportGroup>[g('region')],
+      tpl(
+          groups: <ReportGroup>[g('region')],
           bands: <ReportBand>[gh('region'), gf('region')]),
       d,
     );
@@ -108,10 +113,13 @@ void main() {
         throwsUnsupportedError);
   });
 
-  test('a group on a non-group band is ignored (not indexed, no diagnostic)', () {
+  test('a group on a non-group band is ignored (not indexed, no diagnostic)',
+      () {
     final ReportDiagnostics d = ReportDiagnostics();
     final GroupBandIndex idx = GroupBandIndex(
-      tpl(groups: <ReportGroup>[g('region')], bands: const <ReportBand>[
+      tpl(groups: <ReportGroup>[
+        g('region')
+      ], bands: const <ReportBand>[
         ReportBand(type: BandType.detail, height: 10, group: 'region'),
       ]),
       d,

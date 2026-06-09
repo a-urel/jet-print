@@ -5,17 +5,19 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
-int _count(JetReportDesignerController c) =>
-    c.template.bands.fold<int>(0, (int n, ReportBand b) => n + b.elements.length);
+int _count(JetReportDesignerController c) => c.template.bands
+    .fold<int>(0, (int n, ReportBand b) => n + b.elements.length);
 
 void main() {
-  test('a 60-step create sequence fully undoes and redoes with exact state', () {
+  test('a 60-step create sequence fully undoes and redoes with exact state',
+      () {
     final JetReportDesignerController c = JetReportDesignerController();
     const int steps = 60;
     const List<DesignerToolType> cycle = DesignerToolType.values;
 
     // Snapshot (count, selectedId) after each edit; index 0 is the origin.
-    final List<({int count, String? sel})> states = <({int count, String? sel})>[
+    final List<({int count, String? sel})> states =
+        <({int count, String? sel})>[
       (count: _count(c), sel: c.selection.singleOrNull),
     ];
     for (int i = 0; i < steps; i++) {

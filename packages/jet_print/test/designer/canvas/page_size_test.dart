@@ -24,7 +24,8 @@ void main() {
 
   testWidgets('the page-footer band is anchored to the bottom of the sheet',
       (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     // Default template bands: 0 = page header, 1 = detail, 2 = page footer.
     controller.createElement(DesignerToolType.text,
         bandIndex: 2, at: const JetOffset(0, 0));

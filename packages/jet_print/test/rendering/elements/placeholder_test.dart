@@ -10,13 +10,14 @@ import 'package:jet_print/src/rendering/text/font_registry.dart';
 import 'package:jet_print/src/rendering/text/metrics_text_measurer.dart';
 
 void main() {
-  final RenderContext ctx =
-      RenderContext(measurer: MetricsTextMeasurer(FontRegistry()..registerDefault()));
+  final RenderContext ctx = RenderContext(
+      measurer: MetricsTextMeasurer(FontRegistry()..registerDefault()));
 
   test('emits an outline rect then a label text run, both tagged', () {
     final FrameBuilder out = FrameBuilder(PageFormat.a4Portrait);
-    emitPlaceholder(out, const JetRect(x: 2, y: 3, width: 40, height: 20),
-        'image', ctx, elementId: 'img1');
+    emitPlaceholder(
+        out, const JetRect(x: 2, y: 3, width: 40, height: 20), 'image', ctx,
+        elementId: 'img1');
     final List<FramePrimitive> prims = out.build().primitives;
     expect(prims.length, 2);
 

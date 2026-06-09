@@ -33,7 +33,10 @@ class SetTextCommand extends EditCommand {
             changed = true;
             return band.copyWith(elements: <ReportElement>[
               for (final ReportElement e in band.elements)
-                if (e.id == id && e is TextElement) e.copyWith(text: text) else e,
+                if (e.id == id && e is TextElement)
+                  e.copyWith(text: text)
+                else
+                  e,
             ]);
           }()
         else

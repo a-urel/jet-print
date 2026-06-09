@@ -24,7 +24,8 @@ JetRect _bounds(JetReportDesignerController c, String id) => c.template.bands
 void main() {
   testWidgets('dragging a handle resizes the element and commits',
       (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     await tester.tap(_toolFinder(DesignerToolType.shape));
     await tester.pumpAndSettle();
     final String id = controller.selection.singleOrNull!;
@@ -41,7 +42,8 @@ void main() {
 
   testWidgets('the overlay renders a snap guide during a resize and clears it',
       (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     await tester.tap(_toolFinder(DesignerToolType.shape));
     await tester.pumpAndSettle();
     final String id = controller.selection.singleOrNull!;
@@ -61,13 +63,15 @@ void main() {
   });
 
   testWidgets('Alt bypasses snapping (no guide)', (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     await tester.tap(_toolFinder(DesignerToolType.shape));
     await tester.pumpAndSettle();
     final String id = controller.selection.singleOrNull!;
 
     controller.beginResize(id, ResizeHandle.right);
-    controller.updateResize(const JetOffset(5, 0), threshold: 6, bypassSnap: true);
+    controller.updateResize(const JetOffset(5, 0),
+        threshold: 6, bypassSnap: true);
     await tester.pump();
     expect(controller.activeGuides, isEmpty);
     expect(_guideBox, findsNothing);

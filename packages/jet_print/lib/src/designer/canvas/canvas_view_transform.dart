@@ -12,7 +12,8 @@ import '../../domain/geometry.dart';
 /// (FR-020 / SC-006).
 class CanvasViewTransform {
   /// Creates a transform; identity by default.
-  const CanvasViewTransform({this.scale = 1.0, this.pan = const JetOffset(0, 0)});
+  const CanvasViewTransform(
+      {this.scale = 1.0, this.pan = const JetOffset(0, 0)});
 
   /// The zoom factor (1.0 == 100%).
   final double scale;
@@ -42,9 +43,7 @@ class CanvasViewTransform {
 
   @override
   bool operator ==(Object other) =>
-      other is CanvasViewTransform &&
-      other.scale == scale &&
-      other.pan == pan;
+      other is CanvasViewTransform && other.scale == scale && other.pan == pan;
 
   @override
   int get hashCode => Object.hash(scale, pan);

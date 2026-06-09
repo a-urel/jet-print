@@ -12,16 +12,16 @@ Finder _elementFinder(String id) =>
 final Finder _editor =
     find.byKey(const ValueKey<String>('jet_print.designer.inlineTextEditor'));
 
-String _textOf(JetReportDesignerController c, String id) =>
-    (c.template.bands
-            .expand((ReportBand b) => b.elements)
-            .firstWhere((ReportElement e) => e.id == id) as TextElement)
-        .text;
+String _textOf(JetReportDesignerController c, String id) => (c.template.bands
+        .expand((ReportBand b) => b.elements)
+        .firstWhere((ReportElement e) => e.id == id) as TextElement)
+    .text;
 
 void main() {
   testWidgets('double-click opens an inline editor; Enter commits, undoable',
       (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     controller.createElement(DesignerToolType.text,
         bandIndex: 1, at: const JetOffset(20, 20));
     await tester.pumpAndSettle();
@@ -50,7 +50,8 @@ void main() {
 
   testWidgets('inline edit also commits when focus is lost (blur)',
       (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     controller.createElement(DesignerToolType.text,
         bandIndex: 1, at: const JetOffset(20, 20));
     await tester.pumpAndSettle();
@@ -65,7 +66,8 @@ void main() {
 
     await tester.enterText(_editor, 'Blurred');
     // Tap the grey margin off the paper to move focus away from the editor.
-    final Offset canvasTopLeft = tester.getTopLeft(find.byKey(kDesignCanvasKey));
+    final Offset canvasTopLeft =
+        tester.getTopLeft(find.byKey(kDesignCanvasKey));
     await tester.tapAt(canvasTopLeft + const Offset(6, 120));
     await tester.pumpAndSettle();
 

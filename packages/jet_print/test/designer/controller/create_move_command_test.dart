@@ -25,7 +25,8 @@ ReportTemplate _twoBandFixture() => const ReportTemplate(
 
 void main() {
   group('createElement', () {
-    test('inserts a typed, default-sized element with a fresh id, selected', () {
+    test('inserts a typed, default-sized element with a fresh id, selected',
+        () {
       final JetReportDesignerController c = JetReportDesignerController()
         ..open(_twoBandFixture());
       c.createElement(DesignerToolType.barcode,
@@ -37,7 +38,8 @@ void main() {
       expect(c.selection.singleOrNull, els.last.id);
       // The pre-existing sibling is untouched (non-destructive, FR-025).
       expect(els.first.id, 'keep1');
-      expect(els.first.bounds, const JetRect(x: 5, y: 5, width: 40, height: 12));
+      expect(
+          els.first.bounds, const JetRect(x: 5, y: 5, width: 40, height: 12));
       c.dispose();
     });
 

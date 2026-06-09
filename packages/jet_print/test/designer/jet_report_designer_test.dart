@@ -132,7 +132,8 @@ void main() {
   group('JetReportDesigner 003 contract', () {
     testWidgets('const JetReportDesigner() still constructs and hosts a canvas',
         (WidgetTester tester) async {
-      await pumpDesigner(tester); // default designer is `const JetReportDesigner()`
+      await pumpDesigner(
+          tester); // default designer is `const JetReportDesigner()`
       expect(find.byKey(kSurfaceKey), findsOneWidget);
       expect(find.byKey(kDesignCanvasKey), findsOneWidget);
       expect(tester.takeException(), isNull);

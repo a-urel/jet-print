@@ -101,7 +101,8 @@ const double _c = 10; // coarse nudge (Shift, pt)
 /// Both ⌘ (macOS) and Ctrl are bound for clipboard/undo/redo/select-all.
 class CanvasShortcuts extends StatelessWidget {
   /// Wraps [child] with the canvas shortcuts.
-  const CanvasShortcuts({required this.controller, required this.child, super.key});
+  const CanvasShortcuts(
+      {required this.controller, required this.child, super.key});
 
   /// The controller the shortcuts drive.
   final JetReportDesignerController controller;
@@ -128,20 +129,25 @@ class CanvasShortcuts extends StatelessWidget {
         SingleActivator(LogicalKeyboardKey.keyV, meta: true): PasteIntent(),
         SingleActivator(LogicalKeyboardKey.keyV, control: true): PasteIntent(),
         SingleActivator(LogicalKeyboardKey.keyD, meta: true): DuplicateIntent(),
-        SingleActivator(LogicalKeyboardKey.keyD, control: true): DuplicateIntent(),
+        SingleActivator(LogicalKeyboardKey.keyD, control: true):
+            DuplicateIntent(),
         SingleActivator(LogicalKeyboardKey.keyA, meta: true): SelectAllIntent(),
-        SingleActivator(LogicalKeyboardKey.keyA, control: true): SelectAllIntent(),
+        SingleActivator(LogicalKeyboardKey.keyA, control: true):
+            SelectAllIntent(),
         // Delete + escape.
         SingleActivator(LogicalKeyboardKey.delete): DeleteSelectionIntent(),
         SingleActivator(LogicalKeyboardKey.backspace): DeleteSelectionIntent(),
         SingleActivator(LogicalKeyboardKey.escape): ClearSelectionIntent(),
         // Zoom.
         SingleActivator(LogicalKeyboardKey.equal, meta: true): ZoomInIntent(),
-        SingleActivator(LogicalKeyboardKey.equal, control: true): ZoomInIntent(),
+        SingleActivator(LogicalKeyboardKey.equal, control: true):
+            ZoomInIntent(),
         SingleActivator(LogicalKeyboardKey.minus, meta: true): ZoomOutIntent(),
-        SingleActivator(LogicalKeyboardKey.minus, control: true): ZoomOutIntent(),
+        SingleActivator(LogicalKeyboardKey.minus, control: true):
+            ZoomOutIntent(),
         SingleActivator(LogicalKeyboardKey.digit0, meta: true): ZoomFitIntent(),
-        SingleActivator(LogicalKeyboardKey.digit0, control: true): ZoomFitIntent(),
+        SingleActivator(LogicalKeyboardKey.digit0, control: true):
+            ZoomFitIntent(),
         // Nudge (arrows; Shift = coarse).
         SingleActivator(LogicalKeyboardKey.arrowLeft): NudgeIntent(-_n, 0),
         SingleActivator(LogicalKeyboardKey.arrowRight): NudgeIntent(_n, 0),
@@ -160,7 +166,8 @@ class CanvasShortcuts extends StatelessWidget {
         actions: <Type, Action<Intent>>{
           UndoIntent: _cb<UndoIntent>((_) => controller.undo()),
           RedoIntent: _cb<RedoIntent>((_) => controller.redo()),
-          DeleteSelectionIntent: _cb<DeleteSelectionIntent>((_) => controller.delete()),
+          DeleteSelectionIntent:
+              _cb<DeleteSelectionIntent>((_) => controller.delete()),
           CopyIntent: _cb<CopyIntent>((_) => controller.copy()),
           CutIntent: _cb<CutIntent>((_) => controller.cut()),
           PasteIntent: _cb<PasteIntent>((_) => controller.paste()),
@@ -171,8 +178,8 @@ class CanvasShortcuts extends StatelessWidget {
           ZoomInIntent: _cb<ZoomInIntent>((_) => controller.zoomIn()),
           ZoomOutIntent: _cb<ZoomOutIntent>((_) => controller.zoomOut()),
           ZoomFitIntent: _cb<ZoomFitIntent>((_) => controller.fitToView()),
-          NudgeIntent: _cb<NudgeIntent>(
-              (NudgeIntent i) => controller.nudge(i.dx, i.dy)),
+          NudgeIntent:
+              _cb<NudgeIntent>((NudgeIntent i) => controller.nudge(i.dx, i.dy)),
         },
         child: child,
       ),

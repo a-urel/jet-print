@@ -29,7 +29,8 @@ class DesignerToolbox extends StatelessWidget {
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
 
     final List<_ToolboxEntry> entries = <_ToolboxEntry>[
-      _ToolboxEntry(DesignerToolType.text, LucideIcons.type, l10n.toolboxTextEntry),
+      _ToolboxEntry(
+          DesignerToolType.text, LucideIcons.type, l10n.toolboxTextEntry),
       _ToolboxEntry(
           DesignerToolType.shape, LucideIcons.square, l10n.toolboxShapeEntry),
       _ToolboxEntry(

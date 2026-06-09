@@ -18,11 +18,13 @@ class ImageElementRenderer extends ElementRenderer<ImageElement> {
   const ImageElementRenderer();
 
   @override
-  JetSize measure(ImageElement el, RenderContext ctx, JetConstraints constraints) =>
+  JetSize measure(
+          ImageElement el, RenderContext ctx, JetConstraints constraints) =>
       JetSize(el.bounds.width, el.bounds.height);
 
   @override
-  void emit(ImageElement el, RenderContext ctx, JetRect bounds, FrameBuilder out) {
+  void emit(
+      ImageElement el, RenderContext ctx, JetRect bounds, FrameBuilder out) {
     final JetImageSource source = el.source;
     if (source is BytesImageSource) {
       out.add(ImagePrimitive(

@@ -23,7 +23,8 @@ Offset Function(double, double) pageMapper(
 void main() {
   testWidgets('clicking a band\'s empty area selects that band',
       (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     final PageFormat page = controller.template.page;
     final JetEdgeInsets m = page.margins;
     // Band 1 (detail) center: below band 0 (page header), centered horizontally.
@@ -41,7 +42,8 @@ void main() {
 
   testWidgets('clicking the paper off any band selects the report',
       (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     // The top-left margin corner: inside the paper, inside no band.
     final Offset Function(double, double) at = pageMapper(tester, controller);
     await tester.tapAt(at(2, 2));
@@ -53,13 +55,15 @@ void main() {
 
   testWidgets('clicking off the paper clears the selection',
       (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     controller.selectReport();
     await tester.pump();
     expect(controller.selection.isEmpty, isFalse);
 
     // The muted canvas margin left of the page (off the paper).
-    final Offset canvasTopLeft = tester.getTopLeft(find.byKey(kDesignCanvasKey));
+    final Offset canvasTopLeft =
+        tester.getTopLeft(find.byKey(kDesignCanvasKey));
     await tester.tapAt(canvasTopLeft + const Offset(6, 120));
     await tester.pumpAndSettle();
 
@@ -68,7 +72,8 @@ void main() {
 
   testWidgets('clicking an element still selects the element',
       (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     controller.createElement(DesignerToolType.text,
         bandIndex: 1, at: const JetOffset(30, 20));
     final String id = controller.selection.singleOrNull!;

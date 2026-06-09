@@ -14,8 +14,8 @@ import 'package:jet_print/src/rendering/text/font_registry.dart';
 import 'package:jet_print/src/rendering/text/metrics_text_measurer.dart';
 
 void main() {
-  final RenderContext ctx =
-      RenderContext(measurer: MetricsTextMeasurer(FontRegistry()..registerDefault()));
+  final RenderContext ctx = RenderContext(
+      measurer: MetricsTextMeasurer(FontRegistry()..registerDefault()));
   const ImageElementRenderer renderer = ImageElementRenderer();
   const JetRect bounds = JetRect(x: 0, y: 0, width: 50, height: 40);
 
@@ -29,7 +29,10 @@ void main() {
   test('embedded bytes emit an ImagePrimitive with the element fit', () {
     final Uint8List bytes = Uint8List.fromList(<int>[1, 2, 3, 4]);
     final ImageElement el = ImageElement(
-        id: 'i', bounds: bounds, source: BytesImageSource(bytes), fit: JetBoxFit.cover);
+        id: 'i',
+        bounds: bounds,
+        source: BytesImageSource(bytes),
+        fit: JetBoxFit.cover);
     final FrameBuilder out = FrameBuilder(PageFormat.a4Portrait);
     renderer.emit(el, ctx, bounds, out);
     final ImagePrimitive p = out.build().primitives.single as ImagePrimitive;

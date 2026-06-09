@@ -88,7 +88,8 @@ void main() {
     c.dispose();
   });
 
-  test('duplicate copies the selection in place without using the clipboard', () {
+  test('duplicate copies the selection in place without using the clipboard',
+      () {
     final JetReportDesignerController c = _open()..select('b');
     c.duplicate();
     expect(_els(c).length, 4);
@@ -135,7 +136,8 @@ void main() {
     c.dispose();
   });
 
-  test('nudge moves the selection by exact points (no snapping) and is undoable',
+  test(
+      'nudge moves the selection by exact points (no snapping) and is undoable',
       () {
     final JetReportDesignerController c = _open()..select('a');
     c.nudge(1, 0);
@@ -144,7 +146,8 @@ void main() {
     expect(_boundsOf(c, 'a').y, 9);
     c.undo();
     c.undo();
-    expect(_boundsOf(c, 'a'), const JetRect(x: 10, y: 10, width: 20, height: 10));
+    expect(
+        _boundsOf(c, 'a'), const JetRect(x: 10, y: 10, width: 20, height: 10));
     c.dispose();
   });
 }

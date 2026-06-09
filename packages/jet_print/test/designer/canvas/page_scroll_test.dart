@@ -8,13 +8,14 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../support/designer_harness.dart';
 
-ScrollableState _vertical(WidgetTester tester) =>
-    tester.stateList<ScrollableState>(
+ScrollableState _vertical(WidgetTester tester) => tester
+    .stateList<ScrollableState>(
       find.descendant(
         of: find.byKey(kDesignCanvasKey),
         matching: find.byType(Scrollable),
       ),
-    ).firstWhere((ScrollableState s) => s.position.axis == Axis.vertical);
+    )
+    .firstWhere((ScrollableState s) => s.position.axis == Axis.vertical);
 
 void main() {
   testWidgets('the page area scrolls when the page overflows the viewport',

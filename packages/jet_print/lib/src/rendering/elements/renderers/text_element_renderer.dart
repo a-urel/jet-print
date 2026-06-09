@@ -19,11 +19,13 @@ class TextElementRenderer extends ElementRenderer<TextElement> {
   const TextElementRenderer();
 
   @override
-  JetSize measure(TextElement el, RenderContext ctx, JetConstraints constraints) =>
+  JetSize measure(
+          TextElement el, RenderContext ctx, JetConstraints constraints) =>
       ctx.measurer.measure(el.text, el.style, maxWidth: el.bounds.width).size;
 
   @override
-  void emit(TextElement el, RenderContext ctx, JetRect bounds, FrameBuilder out) {
+  void emit(
+      TextElement el, RenderContext ctx, JetRect bounds, FrameBuilder out) {
     final MeasuredText m =
         ctx.measurer.measure(el.text, el.style, maxWidth: el.bounds.width);
     out.add(TextRunPrimitive(

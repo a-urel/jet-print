@@ -46,7 +46,8 @@ class ElementResolver {
     Map<String, JetValue> variables = const <String, JetValue>{},
   }) {
     if (element is TextElement && element.expression != null) {
-      return _resolveText(element, row: row, params: params, variables: variables);
+      return _resolveText(element,
+          row: row, params: params, variables: variables);
     }
     if (element is ImageElement && element.source is FieldImageSource) {
       return _resolveImage(element, row);
@@ -75,8 +76,10 @@ class ElementResolver {
     try {
       value = Expression.parse(el.expression!).evaluate(ctx);
     } on ExpressionException catch (e) {
-      diagnostics.error('Expression parse failed: ${e.message}', elementId: el.id);
-      return TextElement(id: el.id, bounds: el.bounds, text: '!ERR', style: el.style);
+      diagnostics.error('Expression parse failed: ${e.message}',
+          elementId: el.id);
+      return TextElement(
+          id: el.id, bounds: el.bounds, text: '!ERR', style: el.style);
     }
     if (pageRefs.isNotEmpty) {
       diagnostics.error(
@@ -85,13 +88,17 @@ class ElementResolver {
         elementId: el.id,
       );
       // Preserve the authored text; clear the (illegal) expression.
-      return TextElement(id: el.id, bounds: el.bounds, text: el.text, style: el.style);
+      return TextElement(
+          id: el.id, bounds: el.bounds, text: el.text, style: el.style);
     }
     if (value is JetError) {
       diagnostics.error('Expression error: ${value.message}', elementId: el.id);
     }
     return TextElement(
-        id: el.id, bounds: el.bounds, text: jetStringify(value), style: el.style);
+        id: el.id,
+        bounds: el.bounds,
+        text: jetStringify(value),
+        style: el.style);
   }
 
   ImageElement _resolveImage(ImageElement el, DataRow? row) {
@@ -110,7 +117,8 @@ class ElementResolver {
         try {
           return _withBytes(el, base64Decode(value));
         } on FormatException {
-          diagnostics.warning('Image field "$field" contains an invalid base64 string',
+          diagnostics.warning(
+              'Image field "$field" contains an invalid base64 string',
               elementId: el.id);
           return el;
         }
@@ -122,5 +130,8 @@ class ElementResolver {
   }
 
   ImageElement _withBytes(ImageElement el, Uint8List bytes) => ImageElement(
-      id: el.id, bounds: el.bounds, source: BytesImageSource(bytes), fit: el.fit);
+      id: el.id,
+      bounds: el.bounds,
+      source: BytesImageSource(bytes),
+      fit: el.fit);
 }

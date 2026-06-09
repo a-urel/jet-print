@@ -26,8 +26,10 @@ class MeasuredBand {
   /// Creates a measured band, defensively freezing [elements] so the snapshot is
   /// immutable after construction (matching the FilledBand/GroupBandIndex
   /// convention).
-  MeasuredBand(this.height, List<({ReportElement element, JetRect bounds})> elements)
-      : elements = List<({ReportElement element, JetRect bounds})>.unmodifiable(elements);
+  MeasuredBand(
+      this.height, List<({ReportElement element, JetRect bounds})> elements)
+      : elements = List<({ReportElement element, JetRect bounds})>.unmodifiable(
+            elements);
 
   /// The grown band height (>= the band's designed height), in points.
   final double height;
@@ -57,9 +59,8 @@ class BandMeasurer {
             _ctx,
             JetConstraints(maxWidth: el.bounds.width),
           );
-      final double grownHeight = natural.height > el.bounds.height
-          ? natural.height
-          : el.bounds.height;
+      final double grownHeight =
+          natural.height > el.bounds.height ? natural.height : el.bounds.height;
       boxes.add((
         element: el,
         bounds: JetRect(

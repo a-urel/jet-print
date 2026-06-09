@@ -114,8 +114,8 @@ void main() {
     final double beforeLeft = tester.getRect(_canvasElement(id)).left;
 
     await _selectTab(tester, 'Properties');
-    final Finder xEditable =
-        find.descendant(of: _propField('x'), matching: find.byType(EditableText));
+    final Finder xEditable = find.descendant(
+        of: _propField('x'), matching: find.byType(EditableText));
     await tester.enterText(xEditable, '120');
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();

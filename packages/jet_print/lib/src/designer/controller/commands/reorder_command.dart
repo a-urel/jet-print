@@ -57,10 +57,12 @@ class ReorderCommand extends EditCommand {
 
   List<ReportElement> _reorder(List<ReportElement> elements) {
     final List<ReportElement> selected = <ReportElement>[
-      for (final ReportElement e in elements) if (ids.contains(e.id)) e,
+      for (final ReportElement e in elements)
+        if (ids.contains(e.id)) e,
     ];
     final List<ReportElement> others = <ReportElement>[
-      for (final ReportElement e in elements) if (!ids.contains(e.id)) e,
+      for (final ReportElement e in elements)
+        if (!ids.contains(e.id)) e,
     ];
     switch (mode) {
       case ReorderMode.toFront:
@@ -76,7 +78,8 @@ class ReorderCommand extends EditCommand {
 
   /// Shifts each selected element one slot in [toward] (+1 front, -1 back),
   /// processing in the order that avoids selected elements leapfrogging.
-  List<ReportElement> _shift(List<ReportElement> elements, {required int toward}) {
+  List<ReportElement> _shift(List<ReportElement> elements,
+      {required int toward}) {
     final List<ReportElement> out = List<ReportElement>.of(elements);
     final Iterable<int> order = toward > 0
         ? Iterable<int>.generate(out.length, (int i) => out.length - 1 - i)

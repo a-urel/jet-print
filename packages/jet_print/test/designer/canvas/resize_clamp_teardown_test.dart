@@ -22,9 +22,11 @@ JetRect _bounds(JetReportDesignerController c, String id) => c.template.bands
     .bounds;
 
 void main() {
-  testWidgets('a resize dragged past the boundary commits clamped and tears down',
+  testWidgets(
+      'a resize dragged past the boundary commits clamped and tears down',
       (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     await tester.tap(_toolFinder(DesignerToolType.shape));
     await tester.pumpAndSettle();
     final String id = controller.selection.singleOrNull!;

@@ -90,7 +90,8 @@ List<double> _xCandidates(
         s.x + s.width,
       ],
       if (grid)
-        for (final double seed in gridSeeds) (seed / gridStep).round() * gridStep,
+        for (final double seed in gridSeeds)
+          (seed / gridStep).round() * gridStep,
     ];
 
 List<double> _yCandidates(
@@ -109,7 +110,8 @@ List<double> _yCandidates(
         s.y + s.height,
       ],
       if (grid)
-        for (final double seed in gridSeeds) (seed / gridStep).round() * gridStep,
+        for (final double seed in gridSeeds)
+          (seed / gridStep).round() * gridStep,
     ];
 
 /// Snaps a translated [moving] rect by aligning any of its left/center/right and
@@ -131,13 +133,13 @@ SnapResult snapMove(
 
   final _Best? bx = _nearest(
       <double>[left, cx, rightE],
-      _xCandidates(siblings, bandBox.width, grid, gridStep,
-          <double>[left, cx, rightE]),
+      _xCandidates(
+          siblings, bandBox.width, grid, gridStep, <double>[left, cx, rightE]),
       threshold);
   final _Best? by = _nearest(
       <double>[top, cy, bottomE],
-      _yCandidates(siblings, bandBox.height, grid, gridStep,
-          <double>[top, cy, bottomE]),
+      _yCandidates(
+          siblings, bandBox.height, grid, gridStep, <double>[top, cy, bottomE]),
       threshold);
 
   final List<SnapGuide> guides = <SnapGuide>[];
@@ -152,7 +154,11 @@ SnapResult snapMove(
     guides.add(SnapGuide(SnapAxis.horizontal, by.position));
   }
   return SnapResult(
-    JetRect(x: moving.x + dx, y: moving.y + dy, width: moving.width, height: moving.height),
+    JetRect(
+        x: moving.x + dx,
+        y: moving.y + dy,
+        width: moving.width,
+        height: moving.height),
     guides,
   );
 }
@@ -202,9 +208,9 @@ SnapResult snapResize(
       guides.add(SnapGuide(SnapAxis.horizontal, b.position));
     }
   } else if (handle.movesBottom) {
-    final _Best? b = _nearest(
-        <double>[bottom],
-        _yCandidates(siblings, bandBox.height, grid, gridStep, <double>[bottom]),
+    final _Best? b = _nearest(<double>[
+      bottom
+    ], _yCandidates(siblings, bandBox.height, grid, gridStep, <double>[bottom]),
         threshold);
     if (b != null && (bottom + b.adjust) - top >= 4) {
       bottom += b.adjust;

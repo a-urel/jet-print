@@ -174,7 +174,8 @@ class PropertiesPanel extends StatelessWidget {
     final page = controller.template.page;
     String pt(double v) => v.round().toString();
     return <Widget>[
-      _Header(icon: LucideIcons.fileText, title: l10n.reportLabel, theme: theme),
+      _Header(
+          icon: LucideIcons.fileText, title: l10n.reportLabel, theme: theme),
       const SizedBox(height: 14),
       SectionLabel(l10n.propertiesPage),
       _ReadonlyRow(

@@ -37,9 +37,13 @@ void main() {
   test('text expression resolves to its evaluated value', () {
     final ReportDiagnostics d = ReportDiagnostics();
     const TextElement el = TextElement(
-        id: 't', bounds: r, text: '', expression: r'CONCAT($F{first}, " ", $F{last})');
+        id: 't',
+        bounds: r,
+        text: '',
+        expression: r'CONCAT($F{first}, " ", $F{last})');
     final TextElement out = resolver(d).resolve(el,
-        row: row(<String, Object?>{'first': 'Ada', 'last': 'Lovelace'})) as TextElement;
+            row: row(<String, Object?>{'first': 'Ada', 'last': 'Lovelace'}))
+        as TextElement;
     expect(out.text, 'Ada Lovelace');
     expect(out.expression, isNull); // cleared on resolution
     expect(d.entries, isEmpty);
@@ -55,8 +59,8 @@ void main() {
     final ReportDiagnostics d = ReportDiagnostics();
     const TextElement el =
         TextElement(id: 't', bounds: r, text: '', expression: r'CONCAT($F{a},');
-    final TextElement out =
-        resolver(d).resolve(el, row: row(<String, Object?>{'a': 'x'})) as TextElement;
+    final TextElement out = resolver(d)
+        .resolve(el, row: row(<String, Object?>{'a': 'x'})) as TextElement;
     expect(out.text, '!ERR');
     expect(d.hasErrors, isTrue);
   });
@@ -83,7 +87,8 @@ void main() {
     expect(d.hasErrors, isTrue);
   });
 
-  test('a string literal that looks like a page var does NOT trigger rejection', () {
+  test('a string literal that looks like a page var does NOT trigger rejection',
+      () {
     final ReportDiagnostics d = ReportDiagnostics();
     const TextElement el = TextElement(
         id: 't', bounds: r, text: '', expression: r'"$V{PAGE_NUMBER}"');
@@ -98,8 +103,9 @@ void main() {
     final Uint8List bytes = Uint8List.fromList(<int>[1, 2, 3]);
     const ImageElement el =
         ImageElement(id: 'i', bounds: r, source: FieldImageSource('photo'));
-    final ImageElement out = resolver(d).resolve(el,
-        row: row(<String, Object?>{'photo': bytes})) as ImageElement;
+    final ImageElement out =
+        resolver(d).resolve(el, row: row(<String, Object?>{'photo': bytes}))
+            as ImageElement;
     expect(out.source, isA<BytesImageSource>());
     expect((out.source as BytesImageSource).bytes, bytes);
     expect(d.entries, isEmpty);
@@ -109,7 +115,8 @@ void main() {
     final ReportDiagnostics d = ReportDiagnostics();
     const ImageElement el =
         ImageElement(id: 'i', bounds: r, source: FieldImageSource('photo'));
-    final ReportElement out = resolver(d).resolve(el, row: row(<String, Object?>{}));
+    final ReportElement out =
+        resolver(d).resolve(el, row: row(<String, Object?>{}));
     expect(out, same(el));
     expect(d.entries.single.severity, DiagnosticSeverity.warning);
   });
@@ -119,8 +126,8 @@ void main() {
     final List<int> raw = <int>[9, 8, 7];
     const ImageElement el =
         ImageElement(id: 'i', bounds: r, source: FieldImageSource('photo'));
-    final ImageElement out = resolver(d).resolve(el,
-        row: row(<String, Object?>{'photo': raw})) as ImageElement;
+    final ImageElement out = resolver(d)
+        .resolve(el, row: row(<String, Object?>{'photo': raw})) as ImageElement;
     final BytesImageSource src = out.source as BytesImageSource;
     expect(src.bytes, <int>[9, 8, 7]);
     // Mutating the original list must NOT affect the resolved snapshot.
@@ -134,13 +141,15 @@ void main() {
     final String encoded = base64Encode(<int>[1, 2, 3, 4]);
     const ImageElement el =
         ImageElement(id: 'i', bounds: r, source: FieldImageSource('photo'));
-    final ImageElement out = resolver(d).resolve(el,
-        row: row(<String, Object?>{'photo': encoded})) as ImageElement;
+    final ImageElement out =
+        resolver(d).resolve(el, row: row(<String, Object?>{'photo': encoded}))
+            as ImageElement;
     expect((out.source as BytesImageSource).bytes, <int>[1, 2, 3, 4]);
     expect(d.entries, isEmpty);
   });
 
-  test('an invalid base64 image string warns distinctly and passes through', () {
+  test('an invalid base64 image string warns distinctly and passes through',
+      () {
     final ReportDiagnostics d = ReportDiagnostics();
     const ImageElement el =
         ImageElement(id: 'i', bounds: r, source: FieldImageSource('photo'));
@@ -153,7 +162,8 @@ void main() {
 
   test('a shape element passes through', () {
     final ReportDiagnostics d = ReportDiagnostics();
-    const ShapeElement el = ShapeElement(id: 's', bounds: r, kind: ShapeKind.rectangle);
+    const ShapeElement el =
+        ShapeElement(id: 's', bounds: r, kind: ShapeKind.rectangle);
     expect(resolver(d).resolve(el, row: row(<String, Object?>{})), same(el));
   });
 }

@@ -63,7 +63,8 @@ void main() {
           bandIndex: 1, at: const JetOffset(40, 40));
       await tester.pumpAndSettle();
       expect(controller.selection.singleOrNull, isNotNull,
-          reason: 'a freshly created element is selected, so handles are shown');
+          reason:
+              'a freshly created element is selected, so handles are shown');
 
       final TestGesture gesture = await _mouse(tester);
       final Map<ResizeHandle, SystemMouseCursor> expected =
@@ -83,7 +84,8 @@ void main() {
     }
   });
 
-  testWidgets('corner cursors win over overlapping edge handles when zoomed out',
+  testWidgets(
+      'corner cursors win over overlapping edge handles when zoomed out',
       (WidgetTester tester) async {
     // Zoomed out, the fixed-size (16px) handle hit areas overlap: each edge
     // handle reaches over its adjacent corners. The corner cursor must still win
@@ -107,7 +109,8 @@ void main() {
         await gesture.moveTo(tester.getCenter(_handle(entry.key)));
         await tester.pump();
         expect(_activeCursor(), entry.value,
-            reason: 'the ${entry.key.name} corner must keep its diagonal cursor '
+            reason:
+                'the ${entry.key.name} corner must keep its diagonal cursor '
                 'even when an edge handle overlaps it');
       }
     } finally {

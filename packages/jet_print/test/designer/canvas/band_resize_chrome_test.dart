@@ -22,7 +22,8 @@ final Finder _elementHandles = find.byWidgetPredicate((Widget w) {
 void main() {
   testWidgets('a selected band shows one divider handle and no element handles',
       (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     controller.selectBand(1);
     await tester.pumpAndSettle();
 
@@ -33,7 +34,8 @@ void main() {
 
   testWidgets('a selected report shows no resize handles at all',
       (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     controller.selectReport();
     await tester.pumpAndSettle();
 
@@ -44,7 +46,8 @@ void main() {
 
   testWidgets('dragging a flow band\'s divider down grows its height',
       (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     controller.setViewScale(0.3); // whole sheet visible → handle on-screen
     controller.selectBand(1); // detail (flow band)
     await tester.pumpAndSettle();
@@ -52,7 +55,8 @@ void main() {
 
     // Several steps so movement clears kPanSlop (~36px) and still leaves
     // post-recognition deltas to grow the band.
-    final TestGesture g = await tester.startGesture(tester.getCenter(_bandHandle));
+    final TestGesture g =
+        await tester.startGesture(tester.getCenter(_bandHandle));
     for (int i = 0; i < 4; i++) {
       await g.moveBy(const Offset(0, 40));
       await tester.pump();
@@ -66,14 +70,16 @@ void main() {
 
   testWidgets('dragging a footer\'s divider up grows its height',
       (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     controller.setViewScale(0.3);
     controller.selectBand(2); // page footer (bottom-anchored)
     await tester.pumpAndSettle();
     final double before = controller.template.bands[2].height;
 
     // The footer grows from its top edge, so dragging the divider UP enlarges it.
-    final TestGesture g = await tester.startGesture(tester.getCenter(_bandHandle));
+    final TestGesture g =
+        await tester.startGesture(tester.getCenter(_bandHandle));
     for (int i = 0; i < 4; i++) {
       await g.moveBy(const Offset(0, -40));
       await tester.pump();
@@ -82,6 +88,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(controller.template.bands[2].height, greaterThan(before),
-        reason: 'a bottom-anchored band grows when its top divider is dragged up');
+        reason:
+            'a bottom-anchored band grows when its top divider is dragged up');
   });
 }

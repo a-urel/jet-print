@@ -23,10 +23,10 @@ ReportTemplate _fixture() => const ReportTemplate(
       ],
     );
 
-JetRect _b(JetReportDesignerController c, String id) => c.template.bands.first
-    .elements
-    .firstWhere((ReportElement e) => e.id == id)
-    .bounds;
+JetRect _b(JetReportDesignerController c, String id) =>
+    c.template.bands.first.elements
+        .firstWhere((ReportElement e) => e.id == id)
+        .bounds;
 
 JetReportDesignerController _open() =>
     JetReportDesignerController()..open(_fixture());
@@ -63,9 +63,11 @@ void main() {
     test('sets a text element and is undoable', () {
       final JetReportDesignerController c = _open();
       c.setText('t1', 'world');
-      expect((c.template.bands.first.elements.first as TextElement).text, 'world');
+      expect(
+          (c.template.bands.first.elements.first as TextElement).text, 'world');
       c.undo();
-      expect((c.template.bands.first.elements.first as TextElement).text, 'hello');
+      expect(
+          (c.template.bands.first.elements.first as TextElement).text, 'hello');
       c.dispose();
     });
 

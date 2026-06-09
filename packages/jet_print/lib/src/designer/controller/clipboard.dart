@@ -17,7 +17,8 @@ class Clipboard {
   bool get isEmpty => _entries.isEmpty;
 
   /// The stored entries (unmodifiable).
-  List<ClipboardEntry> get entries => List<ClipboardEntry>.unmodifiable(_entries);
+  List<ClipboardEntry> get entries =>
+      List<ClipboardEntry>.unmodifiable(_entries);
 
   /// Replaces the clipboard contents with [entries].
   void set(List<ClipboardEntry> entries) =>

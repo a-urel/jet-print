@@ -12,7 +12,8 @@ import 'package:flutter/gestures.dart'
         PointerPanZoomUpdateEvent,
         PointerScrollEvent,
         PointerSignalEvent;
-import 'package:flutter/services.dart' show HardwareKeyboard, LogicalKeyboardKey;
+import 'package:flutter/services.dart'
+    show HardwareKeyboard, LogicalKeyboardKey;
 import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
@@ -71,7 +72,8 @@ class DesignCanvas extends StatefulWidget {
 
 class _DesignCanvasState extends State<DesignCanvas> {
   final DesignTimeFrameBuilder _frameBuilder = DesignTimeFrameBuilder();
-  final FocusNode _focusNode = FocusNode(debugLabel: 'jet_print.designer.canvas');
+  final FocusNode _focusNode =
+      FocusNode(debugLabel: 'jet_print.designer.canvas');
   final GlobalKey _pageKey = GlobalKey();
 
   ui.Picture? _picture;
@@ -227,8 +229,8 @@ class _DesignCanvasState extends State<DesignCanvas> {
     DesignTimeLayout layout,
   ) {
     _focusNode.requestFocus();
-    final JetOffset page = transform
-        .screenToPage(JetOffset(localPosition.dx, localPosition.dy));
+    final JetOffset page =
+        transform.screenToPage(JetOffset(localPosition.dx, localPosition.dy));
     final String? hit = hitTestElement(
       controller.template,
       layout,
@@ -362,8 +364,8 @@ class _DesignCanvasState extends State<DesignCanvas> {
       _movingSelection = false;
       _marqueeing = true;
       _marqueeStartPage = page;
-      setState(() => _marqueeRect =
-          JetRect(x: page.dx, y: page.dy, width: 0, height: 0));
+      setState(() =>
+          _marqueeRect = JetRect(x: page.dx, y: page.dy, width: 0, height: 0));
       return;
     }
     if (!controller.selection.contains(hit)) controller.select(hit);
@@ -435,7 +437,8 @@ class _DesignCanvasState extends State<DesignCanvas> {
     controller.commitMove();
   }
 
-  ReportElement? _findElement(JetReportDesignerController controller, String id) {
+  ReportElement? _findElement(
+      JetReportDesignerController controller, String id) {
     for (final band in controller.template.bands) {
       for (final ReportElement e in band.elements) {
         if (e.id == id) return e;
@@ -470,8 +473,8 @@ class _DesignCanvasState extends State<DesignCanvas> {
     final JetReportDesignerController controller = DesignerScope.of(context);
     final ShadColorScheme colors = ShadTheme.of(context).colorScheme;
     final DesignTimeLayout layout = DesignTimeLayout.of(controller.template);
-    final bool isEmpty = !controller.template.bands
-        .any((band) => band.elements.isNotEmpty);
+    final bool isEmpty =
+        !controller.template.bands.any((band) => band.elements.isNotEmpty);
 
     // Re-record the committed picture when the model changes (off the build path).
     if (controller.revision != _renderedRevision) {
@@ -486,128 +489,130 @@ class _DesignCanvasState extends State<DesignCanvas> {
         key: kDesignCanvasKey,
         focusNode: _focusNode,
         child: LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints constraints) {
-          final Size viewport = constraints.biggest;
-          // Apply the initial fit-to-width once, and again whenever a fit is
-          // requested — off the build path (it mutates the controller + scroll).
-          if (!_viewInitialized || controller.fitRequest != _appliedFitRequest) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (!mounted) return;
-              _viewInitialized = true;
-              _appliedFitRequest = controller.fitRequest;
-              controller.setViewScale(_fitScale(layout.size, viewport));
-              if (_vScroll.hasClients) _vScroll.jumpTo(0);
-              if (_hScroll.hasClients) _hScroll.jumpTo(0);
-            });
-          }
+          builder: (BuildContext context, BoxConstraints constraints) {
+            final Size viewport = constraints.biggest;
+            // Apply the initial fit-to-width once, and again whenever a fit is
+            // requested — off the build path (it mutates the controller + scroll).
+            if (!_viewInitialized ||
+                controller.fitRequest != _appliedFitRequest) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+                _viewInitialized = true;
+                _appliedFitRequest = controller.fitRequest;
+                controller.setViewScale(_fitScale(layout.size, viewport));
+                if (_vScroll.hasClients) _vScroll.jumpTo(0);
+                if (_hScroll.hasClients) _hScroll.jumpTo(0);
+              });
+            }
 
-          final double scale = controller.viewScale;
-          final double pageW = layout.size.width * scale;
-          final double pageH = layout.size.height * scale;
-          // The scroll content is the page plus padding, but never smaller than
-          // the viewport — so a page that fits is centered, and a larger one
-          // scrolls. The page is centered within that content.
-          final double contentW =
-              math.max(pageW + 2 * _viewportPadding, viewport.width);
-          final double contentH =
-              math.max(pageH + 2 * _viewportPadding, viewport.height);
-          final JetOffset pageOffset =
-              JetOffset((contentW - pageW) / 2, (contentH - pageH) / 2);
-          final CanvasViewTransform transform =
-              CanvasViewTransform(scale: scale, pan: pageOffset);
-          final bool vScrollable = contentH > viewport.height + 0.5;
-          final bool hScrollable = contentW > viewport.width + 0.5;
-          final Color thumbColor = colors.foreground.withValues(alpha: 0.4);
+            final double scale = controller.viewScale;
+            final double pageW = layout.size.width * scale;
+            final double pageH = layout.size.height * scale;
+            // The scroll content is the page plus padding, but never smaller than
+            // the viewport — so a page that fits is centered, and a larger one
+            // scrolls. The page is centered within that content.
+            final double contentW =
+                math.max(pageW + 2 * _viewportPadding, viewport.width);
+            final double contentH =
+                math.max(pageH + 2 * _viewportPadding, viewport.height);
+            final JetOffset pageOffset =
+                JetOffset((contentW - pageW) / 2, (contentH - pageH) / 2);
+            final CanvasViewTransform transform =
+                CanvasViewTransform(scale: scale, pan: pageOffset);
+            final bool vScrollable = contentH > viewport.height + 0.5;
+            final bool hScrollable = contentW > viewport.width + 0.5;
+            final Color thumbColor = colors.foreground.withValues(alpha: 0.4);
 
-          final Widget content = Listener(
-            onPointerSignal: (PointerSignalEvent event) =>
-                _handlePointerSignal(event, controller),
-            onPointerPanZoomUpdate: _handlePanZoomUpdate,
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              supportedDevices: _interactionDevices,
-              onTapDown: (TapDownDetails d) =>
-                  _handleTapDown(d.localPosition, controller, transform, layout),
-              onTap: () => _handleTap(controller, layout),
-              onTapCancel: () => _emptyTapPage = null,
-              onPanStart: (DragStartDetails d) => _handlePanStart(
-                  d.localPosition, controller, transform, layout),
-              onPanUpdate: (DragUpdateDetails d) =>
-                  _handlePanUpdate(d.localPosition, controller, transform),
-              onPanEnd: (DragEndDetails d) => _handlePanEnd(controller, layout),
-              child: SizedBox(
-                width: contentW,
-                height: contentH,
-                child: ColoredBox(
-                  color: colors.muted,
-                  child: Stack(
-                    children: <Widget>[
-                      Positioned(
-                        left: pageOffset.dx,
-                        top: pageOffset.dy,
-                        width: pageW,
-                        height: pageH,
-                        child:
-                            _buildPage(controller, layout, scale, colors, isEmpty),
-                      ),
-                    ],
+            final Widget content = Listener(
+              onPointerSignal: (PointerSignalEvent event) =>
+                  _handlePointerSignal(event, controller),
+              onPointerPanZoomUpdate: _handlePanZoomUpdate,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                supportedDevices: _interactionDevices,
+                onTapDown: (TapDownDetails d) => _handleTapDown(
+                    d.localPosition, controller, transform, layout),
+                onTap: () => _handleTap(controller, layout),
+                onTapCancel: () => _emptyTapPage = null,
+                onPanStart: (DragStartDetails d) => _handlePanStart(
+                    d.localPosition, controller, transform, layout),
+                onPanUpdate: (DragUpdateDetails d) =>
+                    _handlePanUpdate(d.localPosition, controller, transform),
+                onPanEnd: (DragEndDetails d) =>
+                    _handlePanEnd(controller, layout),
+                child: SizedBox(
+                  width: contentW,
+                  height: contentH,
+                  child: ColoredBox(
+                    color: colors.muted,
+                    child: Stack(
+                      children: <Widget>[
+                        Positioned(
+                          left: pageOffset.dx,
+                          top: pageOffset.dy,
+                          width: pageW,
+                          height: pageH,
+                          child: _buildPage(
+                              controller, layout, scale, colors, isEmpty),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
+            );
 
-          // 2D scroll viewport with scrollbars. Drag-to-scroll is disabled (see
-          // _CanvasScrollBehavior) so canvas drags win; the wheel/trackpad and
-          // the scrollbars still scroll the oversized page.
-          // The scroll views provide the scrolling mechanism + clipping; the
-          // scrollbars are drawn as a fixed overlay pinned to the viewport edges
-          // (a horizontal bar nested inside the vertical scroll view would scroll
-          // away with the content). Both are driven by the same controllers.
-          return Stack(
-            children: <Widget>[
-              ScrollConfiguration(
-                behavior: const _CanvasScrollBehavior(),
-                child: SingleChildScrollView(
-                  controller: _vScroll,
+            // 2D scroll viewport with scrollbars. Drag-to-scroll is disabled (see
+            // _CanvasScrollBehavior) so canvas drags win; the wheel/trackpad and
+            // the scrollbars still scroll the oversized page.
+            // The scroll views provide the scrolling mechanism + clipping; the
+            // scrollbars are drawn as a fixed overlay pinned to the viewport edges
+            // (a horizontal bar nested inside the vertical scroll view would scroll
+            // away with the content). Both are driven by the same controllers.
+            return Stack(
+              children: <Widget>[
+                ScrollConfiguration(
+                  behavior: const _CanvasScrollBehavior(),
                   child: SingleChildScrollView(
-                    controller: _hScroll,
-                    scrollDirection: Axis.horizontal,
-                    child: content,
-                  ),
-                ),
-              ),
-              if (vScrollable)
-                Positioned(
-                  top: 0,
-                  right: 0,
-                  bottom: hScrollable ? 8 : 0,
-                  width: 8,
-                  child: _CanvasScrollbar(
-                    key: const ValueKey<String>(
-                        'jet_print.designer.scrollbar.vertical'),
                     controller: _vScroll,
-                    axis: Axis.vertical,
-                    color: thumbColor,
+                    child: SingleChildScrollView(
+                      controller: _hScroll,
+                      scrollDirection: Axis.horizontal,
+                      child: content,
+                    ),
                   ),
                 ),
-              if (hScrollable)
-                Positioned(
-                  left: 0,
-                  right: vScrollable ? 8 : 0,
-                  bottom: 0,
-                  height: 8,
-                  child: _CanvasScrollbar(
-                    key: const ValueKey<String>(
-                        'jet_print.designer.scrollbar.horizontal'),
-                    controller: _hScroll,
-                    axis: Axis.horizontal,
-                    color: thumbColor,
+                if (vScrollable)
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    bottom: hScrollable ? 8 : 0,
+                    width: 8,
+                    child: _CanvasScrollbar(
+                      key: const ValueKey<String>(
+                          'jet_print.designer.scrollbar.vertical'),
+                      controller: _vScroll,
+                      axis: Axis.vertical,
+                      color: thumbColor,
+                    ),
                   ),
-                ),
-            ],
-          );
-        },
+                if (hScrollable)
+                  Positioned(
+                    left: 0,
+                    right: vScrollable ? 8 : 0,
+                    bottom: 0,
+                    height: 8,
+                    child: _CanvasScrollbar(
+                      key: const ValueKey<String>(
+                          'jet_print.designer.scrollbar.horizontal'),
+                      controller: _hScroll,
+                      axis: Axis.horizontal,
+                      color: thumbColor,
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -629,108 +634,109 @@ class _DesignCanvasState extends State<DesignCanvas> {
         return KeyedSubtree(
           key: _pageKey,
           child: DecoratedBox(
-          key: kDesignPageKey,
-          decoration: const BoxDecoration(
-            color: _paperColor,
-            border:
-                Border.fromBorderSide(BorderSide(color: _paperBorderColor)),
-            boxShadow: <BoxShadow>[
-              BoxShadow(
-                color: _paperShadowColor,
-                blurRadius: 12,
-                offset: Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Stack(
-            children: <Widget>[
-              // Band-structure chrome (design-only; not element appearance).
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: _BandChromePainter(
-                    layout: layout,
-                    scale: scale,
-                    separatorColor: _bandSeparatorColor,
-                  ),
+            key: kDesignPageKey,
+            decoration: const BoxDecoration(
+              color: _paperColor,
+              border:
+                  Border.fromBorderSide(BorderSide(color: _paperBorderColor)),
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: _paperShadowColor,
+                  blurRadius: 12,
+                  offset: Offset(0, 4),
                 ),
-              ),
-              // Band-type captions, one per band, anchored at each band's
-              // top-left corner. Drawn below element appearance so an element
-              // sharing the corner visually wins; they never capture pointers.
-              ..._bandBadges(controller, layout, scale),
-              // Element appearance via the shared render pipeline (cached).
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: FrameCustomPainter(
-                    picture: _picture,
-                    scale: scale,
-                    revision: _renderedRevision,
-                  ),
-                ),
-              ),
-              // Per-element regions: accessibility + test hooks. They do not
-              // capture pointers (the canvas gesture detector handles hit-testing),
-              // so the canvas still owns select/move.
-              ..._elementRegions(controller, layout, scale,
-                  JetPrintLocalizations.of(context)),
-              // Selection chrome (outline + handles), on top.
-              Positioned.fill(
-                child: DesignerSelectionOverlay(layout: layout, scale: scale),
-              ),
-              // Inline text editor over the element being double-click-edited.
-              if (_editingId case final String editId)
-                if (layout.elementRect(editId) case final JetRect er)
-                  if (_findElement(controller, editId) case final TextElement t)
-                    Positioned(
-                      left: er.x * scale,
-                      top: er.y * scale,
-                      width: er.width * scale < 80 ? 80 : er.width * scale,
-                      // Height intentionally unconstrained: the input sizes to
-                      // its natural height (a text element can be shorter than
-                      // the field's minimum).
-                      child: InlineTextEditor(
-                        initialText: t.text,
-                        onCommit: (String value) {
-                          controller.setText(editId, value);
-                          if (mounted) setState(() => _editingId = null);
-                        },
-                        onCancel: () {
-                          if (mounted) setState(() => _editingId = null);
-                        },
-                      ),
-                    ),
-              // Marquee rubber-band, while dragging on empty canvas.
-              if (_marqueeRect case final JetRect m)
-                Positioned(
-                  key: const ValueKey<String>('jet_print.designer.marquee'),
-                  left: m.x * scale,
-                  top: m.y * scale,
-                  width: m.width * scale,
-                  height: m.height * scale,
-                  child: IgnorePointer(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: colors.primary.withValues(alpha: 0.08),
-                        border: Border.all(color: colors.primary, width: 1),
-                      ),
-                    ),
-                  ),
-                ),
-              // Centered "drop something here" hint while the design is empty.
-              if (isEmpty)
+              ],
+            ),
+            child: Stack(
+              children: <Widget>[
+                // Band-structure chrome (design-only; not element appearance).
                 Positioned.fill(
-                  child: IgnorePointer(
-                    child: Center(
-                      child: _EmptyHint(
-                        message:
-                            JetPrintLocalizations.of(context).surfaceEmptyHint,
-                      ),
+                  child: CustomPaint(
+                    painter: _BandChromePainter(
+                      layout: layout,
+                      scale: scale,
+                      separatorColor: _bandSeparatorColor,
                     ),
                   ),
                 ),
-            ],
+                // Band-type captions, one per band, anchored at each band's
+                // top-left corner. Drawn below element appearance so an element
+                // sharing the corner visually wins; they never capture pointers.
+                ..._bandBadges(controller, layout, scale),
+                // Element appearance via the shared render pipeline (cached).
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: FrameCustomPainter(
+                      picture: _picture,
+                      scale: scale,
+                      revision: _renderedRevision,
+                    ),
+                  ),
+                ),
+                // Per-element regions: accessibility + test hooks. They do not
+                // capture pointers (the canvas gesture detector handles hit-testing),
+                // so the canvas still owns select/move.
+                ..._elementRegions(controller, layout, scale,
+                    JetPrintLocalizations.of(context)),
+                // Selection chrome (outline + handles), on top.
+                Positioned.fill(
+                  child: DesignerSelectionOverlay(layout: layout, scale: scale),
+                ),
+                // Inline text editor over the element being double-click-edited.
+                if (_editingId case final String editId)
+                  if (layout.elementRect(editId) case final JetRect er)
+                    if (_findElement(controller, editId)
+                        case final TextElement t)
+                      Positioned(
+                        left: er.x * scale,
+                        top: er.y * scale,
+                        width: er.width * scale < 80 ? 80 : er.width * scale,
+                        // Height intentionally unconstrained: the input sizes to
+                        // its natural height (a text element can be shorter than
+                        // the field's minimum).
+                        child: InlineTextEditor(
+                          initialText: t.text,
+                          onCommit: (String value) {
+                            controller.setText(editId, value);
+                            if (mounted) setState(() => _editingId = null);
+                          },
+                          onCancel: () {
+                            if (mounted) setState(() => _editingId = null);
+                          },
+                        ),
+                      ),
+                // Marquee rubber-band, while dragging on empty canvas.
+                if (_marqueeRect case final JetRect m)
+                  Positioned(
+                    key: const ValueKey<String>('jet_print.designer.marquee'),
+                    left: m.x * scale,
+                    top: m.y * scale,
+                    width: m.width * scale,
+                    height: m.height * scale,
+                    child: IgnorePointer(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: colors.primary.withValues(alpha: 0.08),
+                          border: Border.all(color: colors.primary, width: 1),
+                        ),
+                      ),
+                    ),
+                  ),
+                // Centered "drop something here" hint while the design is empty.
+                if (isEmpty)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: Center(
+                        child: _EmptyHint(
+                          message: JetPrintLocalizations.of(context)
+                              .surfaceEmptyHint,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
-        ),
         );
       },
     );
@@ -867,7 +873,8 @@ class _CanvasScrollbar extends StatelessWidget {
             final double thumb =
                 (track * viewport / (viewport + maxExtent)).clamp(24.0, track);
             final double range = track - thumb;
-            final double thumbPos = range <= 0 ? 0 : range * (pixels / maxExtent);
+            final double thumbPos =
+                range <= 0 ? 0 : range * (pixels / maxExtent);
             return Stack(
               children: <Widget>[
                 Positioned(
@@ -987,7 +994,8 @@ class _EmptyHint extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        const Icon(LucideIcons.filePlus, size: 32, color: _badgeForegroundColor),
+        const Icon(LucideIcons.filePlus,
+            size: 32, color: _badgeForegroundColor),
         const SizedBox(height: 12),
         Text(
           message,

@@ -97,7 +97,8 @@ void main() {
       expect(JetReportFormat.encode(back), equals(JetReportFormat.encode(t)));
     });
 
-    test('preserves an unknown element type byte-for-byte (Constitution V)', () {
+    test('preserves an unknown element type byte-for-byte (Constitution V)',
+        () {
       final Map<String, Object?> wire = <String, Object?>{
         'schemaVersion': JetReportFormat.encode(_fixture())['schemaVersion'],
         'name': 'Custom',
@@ -123,7 +124,8 @@ void main() {
           },
         ],
       };
-      final ReportTemplate decoded = JetReportFormat.decodeJson(jsonEncode(wire));
+      final ReportTemplate decoded =
+          JetReportFormat.decodeJson(jsonEncode(wire));
       expect(JetReportFormat.encode(decoded), equals(wire));
     });
 

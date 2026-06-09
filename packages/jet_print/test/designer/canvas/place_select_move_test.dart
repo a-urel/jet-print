@@ -18,15 +18,18 @@ Finder _elementFinder(String id) =>
 
 Finder _handleFinder = find.byWidgetPredicate((Widget w) =>
     w.key is ValueKey<String> &&
-    (w.key! as ValueKey<String>).value.startsWith('jet_print.designer.handle.'));
+    (w.key! as ValueKey<String>)
+        .value
+        .startsWith('jet_print.designer.handle.'));
 
-int _elementCount(JetReportDesignerController c) =>
-    c.template.bands.fold<int>(0, (int n, ReportBand b) => n + b.elements.length);
+int _elementCount(JetReportDesignerController c) => c.template.bands
+    .fold<int>(0, (int n, ReportBand b) => n + b.elements.length);
 
 void main() {
   testWidgets('clicking a toolbox entry places a selected element of its type',
       (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     expect(_elementCount(controller), 0);
 
     await tester.tap(_toolFinder(DesignerToolType.text));
@@ -43,7 +46,8 @@ void main() {
   });
 
   testWidgets('each toolbox type is creatable', (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     for (final DesignerToolType type in DesignerToolType.values) {
       await tester.tap(_toolFinder(type));
       await tester.pumpAndSettle();
@@ -53,7 +57,8 @@ void main() {
 
   testWidgets('dragging a toolbox entry onto the canvas creates an element',
       (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
 
     final Offset toolCenter =
         tester.getCenter(_toolFinder(DesignerToolType.barcode));
@@ -67,16 +72,15 @@ void main() {
 
     expect(_elementCount(controller), 1);
     expect(
-      controller.template.bands
-          .expand((ReportBand b) => b.elements)
-          .single,
+      controller.template.bands.expand((ReportBand b) => b.elements).single,
       isA<BarcodeElement>(),
     );
   });
 
   testWidgets('selection shows 8 handles; empty-click clears it',
       (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     await tester.tap(_toolFinder(DesignerToolType.shape));
     await tester.pumpAndSettle();
     final String id = controller.selection.singleOrNull!;
@@ -85,7 +89,8 @@ void main() {
     expect(_handleFinder, findsNWidgets(8));
 
     // Empty-click inside the canvas (the muted margin left of the page) clears.
-    final Offset canvasTopLeft = tester.getTopLeft(find.byKey(kDesignCanvasKey));
+    final Offset canvasTopLeft =
+        tester.getTopLeft(find.byKey(kDesignCanvasKey));
     await tester.tapAt(canvasTopLeft + const Offset(6, 120));
     await tester.pumpAndSettle();
     expect(controller.selection.isEmpty, isTrue);
@@ -100,7 +105,8 @@ void main() {
 
   testWidgets('dragging a selected element moves and commits its position',
       (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     await tester.tap(_toolFinder(DesignerToolType.text));
     await tester.pumpAndSettle();
     final String id = controller.selection.singleOrNull!;

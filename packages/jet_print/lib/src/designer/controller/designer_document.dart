@@ -25,7 +25,8 @@ class DesignerDocument {
       DesignerDocument(template: template, selection: selection);
 
   /// Returns a copy with the model (and optionally [selection]) replaced.
-  DesignerDocument withTemplate(ReportTemplate template, {Selection? selection}) =>
+  DesignerDocument withTemplate(ReportTemplate template,
+          {Selection? selection}) =>
       DesignerDocument(
         template: template,
         selection: selection ?? this.selection,

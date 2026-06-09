@@ -33,16 +33,16 @@ class ReportDiagnostics {
   List<Diagnostic> get entries => List<Diagnostic>.unmodifiable(_entries);
 
   /// Records an informational diagnostic.
-  void info(String message, {String? elementId}) =>
-      _entries.add(Diagnostic(DiagnosticSeverity.info, message, elementId: elementId));
+  void info(String message, {String? elementId}) => _entries
+      .add(Diagnostic(DiagnosticSeverity.info, message, elementId: elementId));
 
   /// Records a warning diagnostic.
-  void warning(String message, {String? elementId}) =>
-      _entries.add(Diagnostic(DiagnosticSeverity.warning, message, elementId: elementId));
+  void warning(String message, {String? elementId}) => _entries.add(
+      Diagnostic(DiagnosticSeverity.warning, message, elementId: elementId));
 
   /// Records an error diagnostic.
-  void error(String message, {String? elementId}) =>
-      _entries.add(Diagnostic(DiagnosticSeverity.error, message, elementId: elementId));
+  void error(String message, {String? elementId}) => _entries
+      .add(Diagnostic(DiagnosticSeverity.error, message, elementId: elementId));
 
   /// Whether any error-severity diagnostic was recorded.
   bool get hasErrors =>

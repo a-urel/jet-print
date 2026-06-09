@@ -12,7 +12,8 @@ Finder _elementFinder(String id) =>
 void main() {
   testWidgets('dragging on the empty canvas marquee-selects enclosed elements',
       (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     controller.createElement(DesignerToolType.text,
         bandIndex: 1, at: const JetOffset(40, 20));
     await tester.pumpAndSettle();
@@ -47,7 +48,8 @@ void main() {
 
   testWidgets('shift-click toggles an element in and out of the selection',
       (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     controller.createElement(DesignerToolType.text,
         bandIndex: 1, at: const JetOffset(20, 20));
     final String first = controller.selection.singleOrNull!;

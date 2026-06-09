@@ -11,8 +11,8 @@ import '../support/designer_harness.dart';
 final Finder _marquee =
     find.byKey(const ValueKey<String>('jet_print.designer.marquee'));
 
-final Finder _hScrollbar =
-    find.byKey(const ValueKey<String>('jet_print.designer.scrollbar.horizontal'));
+final Finder _hScrollbar = find
+    .byKey(const ValueKey<String>('jet_print.designer.scrollbar.horizontal'));
 
 void main() {
   testWidgets('a two-finger trackpad scroll does not draw a marquee',
@@ -33,10 +33,12 @@ void main() {
     await tester.pump();
   });
 
-  testWidgets('the horizontal scrollbar is shown and pinned to the viewport '
+  testWidgets(
+      'the horizontal scrollbar is shown and pinned to the viewport '
       'bottom when the page is wider than the viewport',
       (WidgetTester tester) async {
-    final JetReportDesignerController controller = await pumpDesignerWith(tester);
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
     controller.setViewScale(4.0); // page now far wider than the viewport
     await tester.pumpAndSettle();
 

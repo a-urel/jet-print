@@ -115,6 +115,7 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
     if (_ownsController) _controller.dispose();
     super.dispose();
   }
+
   /// Below this logical width the right panel collapses to an icon rail
   /// (FR-011). The left toolbox is already a compact icon strip and stays put.
   static const double _breakpoint = 1024;

@@ -109,7 +109,8 @@ void main() {
     expect(rect.bounds, const JetRect(x: 10, y: 10, width: 180, height: 30));
   });
 
-  test('a body band taller than the body capacity overflows with a warning', () {
+  test('a body band taller than the body capacity overflows with a warning',
+      () {
     // No chrome -> capacity 80; a 100pt band cannot fit even an empty page, so
     // it is placed at bodyTop and overflows (atomic band; no flow solver).
     final LayoutResult r =
@@ -127,24 +128,32 @@ void main() {
         _tpl(), _filled(<FilledBand>[_body(30, id: 'a'), _body(30, id: 'b')]));
     final List<RectPrimitive> rects =
         r.pages.single.primitives.whereType<RectPrimitive>().toList();
-    expect(rects[0].bounds, const JetRect(x: 10, y: 10, width: 180, height: 30));
-    expect(rects[1].bounds, const JetRect(x: 10, y: 40, width: 180, height: 30));
+    expect(
+        rects[0].bounds, const JetRect(x: 10, y: 10, width: 180, height: 30));
+    expect(
+        rects[1].bounds, const JetRect(x: 10, y: 40, width: 180, height: 30));
   });
 
   test('page header and footer repeat on every page; footer anchored to bottom',
       () {
     final ReportTemplate tpl = _tpl(bands: <ReportBand>[
-      ReportBand(type: BandType.pageHeader, height: 20, elements: <ReportElement>[
-        _rect('hdr', const JetRect(x: 0, y: 0, width: 180, height: 20)),
-      ]),
-      ReportBand(type: BandType.pageFooter, height: 20, elements: <ReportElement>[
-        _rect('ftr', const JetRect(x: 0, y: 0, width: 180, height: 20)),
-      ]),
+      ReportBand(
+          type: BandType.pageHeader,
+          height: 20,
+          elements: <ReportElement>[
+            _rect('hdr', const JetRect(x: 0, y: 0, width: 180, height: 20)),
+          ]),
+      ReportBand(
+          type: BandType.pageFooter,
+          height: 20,
+          elements: <ReportElement>[
+            _rect('ftr', const JetRect(x: 0, y: 0, width: 180, height: 20)),
+          ]),
     ]);
     // header 20 + footer 20 -> bodyTop=30, bodyBottom=70, capacity=40.
     // body 30: band1 at 30 (60<=70); band2: 60+30=90>70 -> page 2.
-    final LayoutResult r =
-        ReportLayouter().layout(tpl, _filled(<FilledBand>[_body(30), _body(30)]));
+    final LayoutResult r = ReportLayouter()
+        .layout(tpl, _filled(<FilledBand>[_body(30), _body(30)]));
     expect(r.pages.length, 2);
     for (final PageFrame pf in r.pages) {
       final List<RectPrimitive> rects =
@@ -164,9 +173,12 @@ void main() {
 
   test('body primitives paint before chrome (emission z-order)', () {
     final ReportTemplate tpl = _tpl(bands: <ReportBand>[
-      ReportBand(type: BandType.pageHeader, height: 20, elements: <ReportElement>[
-        _rect('hdr', const JetRect(x: 0, y: 0, width: 180, height: 20)),
-      ]),
+      ReportBand(
+          type: BandType.pageHeader,
+          height: 20,
+          elements: <ReportElement>[
+            _rect('hdr', const JetRect(x: 0, y: 0, width: 180, height: 20)),
+          ]),
     ]);
     final LayoutResult r =
         ReportLayouter().layout(tpl, _filled(<FilledBand>[_body(20)]));
@@ -180,12 +192,18 @@ void main() {
 
   test('multiple page header bands stack in document order', () {
     final ReportTemplate tpl = _tpl(bands: <ReportBand>[
-      ReportBand(type: BandType.pageHeader, height: 15, elements: <ReportElement>[
-        _rect('h1', const JetRect(x: 0, y: 0, width: 180, height: 15)),
-      ]),
-      ReportBand(type: BandType.pageHeader, height: 15, elements: <ReportElement>[
-        _rect('h2', const JetRect(x: 0, y: 0, width: 180, height: 15)),
-      ]),
+      ReportBand(
+          type: BandType.pageHeader,
+          height: 15,
+          elements: <ReportElement>[
+            _rect('h1', const JetRect(x: 0, y: 0, width: 180, height: 15)),
+          ]),
+      ReportBand(
+          type: BandType.pageHeader,
+          height: 15,
+          elements: <ReportElement>[
+            _rect('h2', const JetRect(x: 0, y: 0, width: 180, height: 15)),
+          ]),
     ]);
     // headerHeight 30 -> bodyTop 40; h1 at top=10, h2 stacked below at 25.
     final LayoutResult r =
@@ -256,12 +274,15 @@ void main() {
   test('an unresolved chrome image renders a placeholder + an info diagnostic',
       () {
     final ReportTemplate tpl = _tpl(bands: <ReportBand>[
-      const ReportBand(type: BandType.pageHeader, height: 20, elements: <ReportElement>[
-        ImageElement(
-            id: 'logo',
-            bounds: JetRect(x: 0, y: 0, width: 40, height: 20),
-            source: FieldImageSource('logo')),
-      ]),
+      const ReportBand(
+          type: BandType.pageHeader,
+          height: 20,
+          elements: <ReportElement>[
+            ImageElement(
+                id: 'logo',
+                bounds: JetRect(x: 0, y: 0, width: 40, height: 20),
+                source: FieldImageSource('logo')),
+          ]),
     ]);
     final LayoutResult r =
         ReportLayouter().layout(tpl, _filled(<FilledBand>[_body(20)]));
@@ -280,12 +301,18 @@ void main() {
       () {
     // header 50 + footer 50 = 100 > content 80 -> capacity = -20.
     final ReportTemplate tpl = _tpl(bands: <ReportBand>[
-      ReportBand(type: BandType.pageHeader, height: 50, elements: <ReportElement>[
-        _rect('h', const JetRect(x: 0, y: 0, width: 180, height: 50)),
-      ]),
-      ReportBand(type: BandType.pageFooter, height: 50, elements: <ReportElement>[
-        _rect('f', const JetRect(x: 0, y: 0, width: 180, height: 50)),
-      ]),
+      ReportBand(
+          type: BandType.pageHeader,
+          height: 50,
+          elements: <ReportElement>[
+            _rect('h', const JetRect(x: 0, y: 0, width: 180, height: 50)),
+          ]),
+      ReportBand(
+          type: BandType.pageFooter,
+          height: 50,
+          elements: <ReportElement>[
+            _rect('f', const JetRect(x: 0, y: 0, width: 180, height: 50)),
+          ]),
     ]);
     final LayoutResult r =
         ReportLayouter().layout(tpl, _filled(<FilledBand>[_body(30)]));
@@ -302,12 +329,18 @@ void main() {
     // break guard puts each subsequent band on a fresh page. Characterize this
     // so any future change to overcommit handling is deliberate.
     final ReportTemplate tpl = _tpl(bands: <ReportBand>[
-      ReportBand(type: BandType.pageHeader, height: 50, elements: <ReportElement>[
-        _rect('h', const JetRect(x: 0, y: 0, width: 180, height: 50)),
-      ]),
-      ReportBand(type: BandType.pageFooter, height: 50, elements: <ReportElement>[
-        _rect('f', const JetRect(x: 0, y: 0, width: 180, height: 50)),
-      ]),
+      ReportBand(
+          type: BandType.pageHeader,
+          height: 50,
+          elements: <ReportElement>[
+            _rect('h', const JetRect(x: 0, y: 0, width: 180, height: 50)),
+          ]),
+      ReportBand(
+          type: BandType.pageFooter,
+          height: 50,
+          elements: <ReportElement>[
+            _rect('f', const JetRect(x: 0, y: 0, width: 180, height: 50)),
+          ]),
     ]);
     final LayoutResult r = ReportLayouter()
         .layout(tpl, _filled(<FilledBand>[_body(10), _body(10), _body(10)]));
@@ -316,9 +349,12 @@ void main() {
 
   test('an empty band stream still produces one chrome-only page', () {
     final ReportTemplate tpl = _tpl(bands: <ReportBand>[
-      ReportBand(type: BandType.pageHeader, height: 20, elements: <ReportElement>[
-        _rect('hdr', const JetRect(x: 0, y: 0, width: 180, height: 20)),
-      ]),
+      ReportBand(
+          type: BandType.pageHeader,
+          height: 20,
+          elements: <ReportElement>[
+            _rect('hdr', const JetRect(x: 0, y: 0, width: 180, height: 20)),
+          ]),
     ]);
     final LayoutResult r =
         ReportLayouter().layout(tpl, _filled(const <FilledBand>[]));
@@ -332,13 +368,9 @@ void main() {
 
   test('a noData band lays out as the sole body band', () {
     final FilledReport filled = _filled(<FilledBand>[
-      FilledBand(
-          type: BandType.noData,
-          height: 30,
-          elements: <ReportElement>[
-            _rect('nd', const JetRect(x: 0, y: 0, width: 180, height: 30)),
-          ],
-          variables: const <String, JetValue>{}),
+      FilledBand(type: BandType.noData, height: 30, elements: <ReportElement>[
+        _rect('nd', const JetRect(x: 0, y: 0, width: 180, height: 30)),
+      ], variables: const <String, JetValue>{}),
     ]);
     final LayoutResult r = ReportLayouter().layout(_tpl(), filled);
     expect(r.pages.length, 1);
@@ -390,10 +422,10 @@ void main() {
     final LayoutResult a = ReportLayouter().layout(tpl(), filled());
     final LayoutResult b = ReportLayouter().layout(tpl(), filled());
     expect(a.pages, b.pages); // PageFrame has value equality
-    List<(DiagnosticSeverity, String, String?)> proj(LayoutResult r) => r
-        .diagnostics.entries
-        .map((Diagnostic d) => (d.severity, d.message, d.elementId))
-        .toList();
+    List<(DiagnosticSeverity, String, String?)> proj(LayoutResult r) =>
+        r.diagnostics.entries
+            .map((Diagnostic d) => (d.severity, d.message, d.elementId))
+            .toList();
     expect(proj(a), proj(b)); // diagnostics by normalized projection
   });
 
@@ -414,7 +446,8 @@ void main() {
     final List<RectPrimitive> p2 =
         r.pages[1].primitives.whereType<RectPrimitive>().toList();
     expect(p2.first.elementId, 'GH'); // reprinted header is first on page 2
-    expect(p2.first.bounds, const JetRect(x: 10, y: 10, width: 180, height: 20));
+    expect(
+        p2.first.bounds, const JetRect(x: 10, y: 10, width: 180, height: 20));
   });
 
   test('a group header does not reprint when the flag is off (default)', () {
@@ -440,11 +473,11 @@ void main() {
       () {
     final ReportTemplate tpl = _tplWithGroups(<ReportGroup>[
       ReportGroup(
-          name: 'region', expression: r'$F{region}',
+          name: 'region',
+          expression: r'$F{region}',
           reprintHeaderOnEachPage: true),
       ReportGroup(
-          name: 'city', expression: r'$F{city}',
-          reprintHeaderOnEachPage: true),
+          name: 'city', expression: r'$F{city}', reprintHeaderOnEachPage: true),
     ]);
     final FilledReport filled = _filled(<FilledBand>[
       _gband(BandType.groupHeader, group: 'region', height: 20, id: 'RH'),
@@ -481,15 +514,16 @@ void main() {
     expect(ids.take(2).toList(), <String>['H1', 'H2']);
   });
 
-  test('a break between an inner footer and an outer footer reprints only the '
+  test(
+      'a break between an inner footer and an outer footer reprints only the '
       'outer header', () {
     final ReportTemplate tpl = _tplWithGroups(<ReportGroup>[
       ReportGroup(
-          name: 'region', expression: r'$F{region}',
+          name: 'region',
+          expression: r'$F{region}',
           reprintHeaderOnEachPage: true),
       ReportGroup(
-          name: 'city', expression: r'$F{city}',
-          reprintHeaderOnEachPage: true),
+          name: 'city', expression: r'$F{city}', reprintHeaderOnEachPage: true),
     ]);
     final FilledReport filled = _filled(<FilledBand>[
       _gband(BandType.groupHeader, group: 'region', height: 10, id: 'RH'),
@@ -651,14 +685,15 @@ void main() {
     final LayoutResult a = ReportLayouter().layout(tpl(), filled());
     final LayoutResult b = ReportLayouter().layout(tpl(), filled());
     expect(a.pages, b.pages); // PageFrame has value equality
-    List<(DiagnosticSeverity, String, String?)> proj(LayoutResult r) => r
-        .diagnostics.entries
-        .map((Diagnostic d) => (d.severity, d.message, d.elementId))
-        .toList();
+    List<(DiagnosticSeverity, String, String?)> proj(LayoutResult r) =>
+        r.diagnostics.entries
+            .map((Diagnostic d) => (d.severity, d.message, d.elementId))
+            .toList();
     expect(proj(a), proj(b)); // diagnostics by normalized projection
   });
 
-  test('keepTogether moves a whole group to a fresh page when it does not fit '
+  test(
+      'keepTogether moves a whole group to a fresh page when it does not fit '
       'the remainder', () {
     final ReportTemplate tpl = _tplWithGroups(<ReportGroup>[
       ReportGroup(name: 'g', expression: r'$F{g}', keepTogether: true),
@@ -721,7 +756,8 @@ void main() {
       () {
     final ReportTemplate tpl = _tplWithGroups(<ReportGroup>[
       ReportGroup(
-          name: 'region', expression: r'$F{region}',
+          name: 'region',
+          expression: r'$F{region}',
           reprintHeaderOnEachPage: true),
       ReportGroup(name: 'city', expression: r'$F{city}', keepTogether: true),
     ]);
@@ -749,7 +785,8 @@ void main() {
     expect(p2, <String>['RH', 'cd1']); // region header reprinted, then cd1
   });
 
-  test('a reprinted header lands at bodyTop below page chrome (not content-top)',
+  test(
+      'a reprinted header lands at bodyTop below page chrome (not content-top)',
       () {
     // 20pt pageHeader pushes bodyTop to 10+20=30 (bodyBottom 90, capacity 60).
     // A reprint that used content-top would land the header at y=10; this locks
@@ -777,7 +814,8 @@ void main() {
     final List<RectPrimitive> p2 =
         r.pages[1].primitives.whereType<RectPrimitive>().toList();
     expect(p2.first.elementId, 'GH');
-    expect(p2.first.bounds, const JetRect(x: 10, y: 30, width: 180, height: 20));
+    expect(
+        p2.first.bounds, const JetRect(x: 10, y: 30, width: 180, height: 20));
   });
 
   test('keepTogether respects page chrome in the fit decision and fresh top',
@@ -815,7 +853,8 @@ void main() {
         r.pages[1].primitives.whereType<RectPrimitive>().toList();
     expect(p2.map((RectPrimitive p) => p.elementId).toSet(),
         <String>{'GH', 'gd1'});
-    expect(p2.firstWhere((RectPrimitive p) => p.elementId == 'GH').bounds.y, 30);
+    expect(
+        p2.firstWhere((RectPrimitive p) => p.elementId == 'GH').bounds.y, 30);
   });
 
   test('Page N of M substitutes the page number and count per page', () {
@@ -896,8 +935,8 @@ void main() {
 
   test('an unavailable field hidden in an untaken branch still warns once', () {
     final ReportTemplate tpl = _tpl(bands: <ReportBand>[
-      _chromeText(BandType.pageFooter, 'pn',
-          r'$V{PAGE_NUMBER} == "9" ? $F{x} : "ok"'),
+      _chromeText(
+          BandType.pageFooter, 'pn', r'$V{PAGE_NUMBER} == "9" ? $F{x} : "ok"'),
     ]);
     final LayoutResult r = ReportLayouter()
         .layout(tpl, _filled(<FilledBand>[_body(40), _body(40)]));
@@ -929,7 +968,8 @@ void main() {
     ]);
     final LayoutResult ro =
         ReportLayouter().layout(inOp, _filled(<FilledBand>[_body(20)]));
-    expect(_chromeRun(ro.pages[0], 'pn'), '!ERR'); // JetNull poisons "+" -> JetError
+    expect(_chromeRun(ro.pages[0], 'pn'),
+        '!ERR'); // JetNull poisons "+" -> JetError
     expect(
         ro.diagnostics.entries
             .where((Diagnostic d) => d.elementId == 'pn')
@@ -950,11 +990,13 @@ void main() {
 
   test('a chrome function (CONCAT) evaluates through the registry', () {
     final ReportTemplate tpl = _tpl(bands: <ReportBand>[
-      _chromeText(BandType.pageFooter, 'pn', r'CONCAT("Page ", $V{PAGE_NUMBER})'),
+      _chromeText(
+          BandType.pageFooter, 'pn', r'CONCAT("Page ", $V{PAGE_NUMBER})'),
     ]);
     final LayoutResult r =
         ReportLayouter().layout(tpl, _filled(<FilledBand>[_body(20)]));
-    expect(_chromeRun(r.pages[0], 'pn'), 'Page 1'); // built-in via default registry
+    expect(_chromeRun(r.pages[0], 'pn'),
+        'Page 1'); // built-in via default registry
   });
 
   test('an injected function registry is used for chrome evaluation', () {
@@ -978,7 +1020,8 @@ void main() {
     final LayoutResult r = ReportLayouter()
         .layout(tpl, _filled(<FilledBand>[_body(40), _body(40)]));
     expect(r.pages.length, 2);
-    expect(_chromeRun(r.pages[0], 'pn'), ''); // non-page var -> JetNull -> blank
+    expect(
+        _chromeRun(r.pages[0], 'pn'), ''); // non-page var -> JetNull -> blank
     expect(
         r.diagnostics.entries
             .where((Diagnostic d) =>
@@ -993,7 +1036,8 @@ void main() {
     ]);
     final LayoutResult r =
         ReportLayouter().layout(tpl, _filled(<FilledBand>[_body(20)]));
-    expect(_chromeRun(r.pages[0], 'pn'), '!ERR'); // JetNull poisons "+" -> JetError
+    expect(_chromeRun(r.pages[0], 'pn'),
+        '!ERR'); // JetNull poisons "+" -> JetError
     expect(
         r.diagnostics.entries
             .where((Diagnostic d) => d.elementId == 'pn')
@@ -1010,10 +1054,10 @@ void main() {
     final LayoutResult a = ReportLayouter().layout(tpl(), filled());
     final LayoutResult b = ReportLayouter().layout(tpl(), filled());
     expect(a.pages, b.pages);
-    List<(DiagnosticSeverity, String, String?)> proj(LayoutResult r) => r
-        .diagnostics.entries
-        .map((Diagnostic d) => (d.severity, d.message, d.elementId))
-        .toList();
+    List<(DiagnosticSeverity, String, String?)> proj(LayoutResult r) =>
+        r.diagnostics.entries
+            .map((Diagnostic d) => (d.severity, d.message, d.elementId))
+            .toList();
     expect(proj(a), proj(b));
   });
 }

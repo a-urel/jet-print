@@ -16,7 +16,8 @@ void main() {
     expect(reg.rendererFor(el), isA<TextElementRenderer>());
   });
 
-  test('rendererFor falls back to the Unknown renderer for an unregistered type',
+  test(
+      'rendererFor falls back to the Unknown renderer for an unregistered type',
       () {
     final ElementRendererRegistry reg = ElementRendererRegistry();
     final UnknownElement el = UnknownElement(

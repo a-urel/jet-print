@@ -75,8 +75,8 @@ class DesignTimeLayout {
       final ReportBand band = template.bands[i];
       if (!isBottomAnchored(band.type)) continue;
       bottomY -= band.height;
-      rects[i] =
-          JetRect(x: left, y: bottomY, width: contentWidth, height: band.height);
+      rects[i] = JetRect(
+          x: left, y: bottomY, width: contentWidth, height: band.height);
     }
 
     final List<JetRect> bandRects = <JetRect>[];

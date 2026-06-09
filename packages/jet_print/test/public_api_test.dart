@@ -74,7 +74,8 @@ void main() {
   });
 
   test('JetReportDesignerController mutates the model and is undoable', () {
-    final JetReportDesignerController controller = JetReportDesignerController();
+    final JetReportDesignerController controller =
+        JetReportDesignerController();
     final int before = controller.template.bands.first.elements.length;
     controller.createElement(
       DesignerToolType.text,
@@ -90,7 +91,8 @@ void main() {
   });
 
   test('JetReportFormat serializes a mutated design losslessly', () {
-    final JetReportDesignerController controller = JetReportDesignerController();
+    final JetReportDesignerController controller =
+        JetReportDesignerController();
     controller.createElement(
       DesignerToolType.barcode,
       bandIndex: 0,

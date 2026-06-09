@@ -48,6 +48,7 @@ void main() {
         reason: 'a clamped no-op commit must still notify so the guide clears');
     expect(c.activeGuides, isEmpty, reason: 'the guide must be torn down');
     expect(c.moveDelta, isNull, reason: 'the move ghost must be torn down');
-    expect(_boundsOf(c, id), pinned, reason: 'the position is unchanged (no-op)');
+    expect(_boundsOf(c, id), pinned,
+        reason: 'the position is unchanged (no-op)');
   });
 }

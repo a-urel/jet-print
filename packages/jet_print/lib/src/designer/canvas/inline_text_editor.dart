@@ -40,7 +40,8 @@ class _InlineTextEditorState extends State<InlineTextEditor> {
   void initState() {
     super.initState();
     _focusNode.addListener(_onFocusChange);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _focusNode.requestFocus());
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _focusNode.requestFocus());
   }
 
   void _onFocusChange() {

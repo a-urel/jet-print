@@ -80,7 +80,8 @@ class JetReportDesignerController extends ChangeNotifier {
   /// Replaces the whole design with [template], clearing history and re-seeding
   /// id assignment past the largest existing suffix (FR-004).
   void open(ReportTemplate template) {
-    _document = DesignerDocument(template: template, selection: Selection.empty);
+    _document =
+        DesignerDocument(template: template, selection: Selection.empty);
     _history.clear();
     _ids.seedFrom(template);
     notifyListeners();
@@ -173,7 +174,8 @@ class JetReportDesignerController extends ChangeNotifier {
   /// single element is selected and snapping is on, [threshold] (points) and the
   /// grid/sibling/band candidates pull the delta to an aligned position and
   /// publish guides. [bypassSnap] (Alt/Option) disables snapping for this update.
-  void updateMove(JetOffset delta, {double threshold = 0, bool bypassSnap = false}) {
+  void updateMove(JetOffset delta,
+      {double threshold = 0, bool bypassSnap = false}) {
     JetOffset effective = delta;
     _guides = const <SnapGuide>[];
     _activeBand = null;
@@ -310,8 +312,8 @@ class JetReportDesignerController extends ChangeNotifier {
     } else {
       _guides = const <SnapGuide>[];
     }
-    _resizePreview =
-        clampToBand(resized, _document.template.bands[loc.bandIndex], _document.template.page);
+    _resizePreview = clampToBand(resized,
+        _document.template.bands[loc.bandIndex], _document.template.page);
     notifyListeners();
   }
 
@@ -354,8 +356,8 @@ class JetReportDesignerController extends ChangeNotifier {
   void resizeTo(String id, JetRect bounds) {
     final ({int bandIndex, ReportElement element})? loc = _locate(id);
     if (loc == null) return;
-    final JetRect clamped = clampToBand(
-        bounds, _document.template.bands[loc.bandIndex], _document.template.page);
+    final JetRect clamped = clampToBand(bounds,
+        _document.template.bands[loc.bandIndex], _document.template.page);
     if (clamped == loc.element.bounds) return;
     _commit(ResizeCommand(id: id, bounds: clamped));
   }
@@ -461,14 +463,18 @@ class JetReportDesignerController extends ChangeNotifier {
   }
 
   List<JetRect> _siblingBounds(int bandIndex, String excludeId) => <JetRect>[
-        for (final ReportElement e in _document.template.bands[bandIndex].elements)
+        for (final ReportElement e
+            in _document.template.bands[bandIndex].elements)
           if (e.id != excludeId) e.bounds,
       ];
 
   JetRect _bandBox(int bandIndex) {
     final ReportBand band = _document.template.bands[bandIndex];
     return JetRect(
-        x: 0, y: 0, width: bandContentWidth(_document.template.page), height: band.height);
+        x: 0,
+        y: 0,
+        width: bandContentWidth(_document.template.page),
+        height: band.height);
   }
 
   Map<String, JetRect> _clampedMoveTargets(JetOffset delta) {
@@ -512,8 +518,7 @@ class JetReportDesignerController extends ChangeNotifier {
       ]));
 
   /// Replaces the selection with exactly [ids] (used by marquee select).
-  void selectElements(Iterable<String> ids) =>
-      _setSelection(Selection.of(ids));
+  void selectElements(Iterable<String> ids) => _setSelection(Selection.of(ids));
 
   /// Adds [id] to the selection (shift-click extend).
   void addToSelection(String id) =>
@@ -595,8 +600,8 @@ class JetReportDesignerController extends ChangeNotifier {
     newBounds.forEach((String id, JetRect bounds) {
       final ({int bandIndex, ReportElement element})? loc = _locate(id);
       if (loc == null) return;
-      clamped[id] = clampToBand(bounds,
-          _document.template.bands[loc.bandIndex], _document.template.page);
+      clamped[id] = clampToBand(bounds, _document.template.bands[loc.bandIndex],
+          _document.template.page);
     });
     if (clamped.isNotEmpty) _commit(MoveCommand(clamped));
   }
@@ -616,7 +621,8 @@ class JetReportDesignerController extends ChangeNotifier {
   List<ClipboardEntry> _buildCopies(List<ClipboardEntry> source) {
     final List<ClipboardEntry> copies = <ClipboardEntry>[];
     for (final ClipboardEntry entry in source) {
-      if (entry.bandIndex < 0 || entry.bandIndex >= _document.template.bands.length) {
+      if (entry.bandIndex < 0 ||
+          entry.bandIndex >= _document.template.bands.length) {
         continue;
       }
       final String id = _ids.next(entry.element.typeKey);
