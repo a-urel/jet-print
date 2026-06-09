@@ -76,6 +76,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     diagonal cursor when zoomed out. On macOS — whose public cursor set has no
     diagonal — the corners drive the native window-resize `NSCursor` directly, so
     they look the same as everywhere else.
+  - **The report (page) and individual bands are now selectable**, not just
+    elements. Clicking a band's empty area selects that band; clicking the paper
+    off any band selects the report; clicking off the paper clears. The selection
+    targets are mutually exclusive. `Selection` gains `Selection.band(i)` /
+    `Selection.report()` with `bandIndex` / `isReport`; the controller gains
+    `selectBand` / `selectReport`.
+  - **Bands resize vertically.** A selected band shows a single divider handle on
+    its growth-facing edge (the bottom for a flow band, the top for a
+    bottom-anchored footer) — no element-style corner/side handles, since a band
+    only has a height. Dragging it changes the band height (floor-clamped, one
+    undoable step); `setBandHeight` exposes the same change numerically. A
+    selected report shows an outline only (the sheet is a fixed format).
   - *Remaining for later increments:* model-driven Outline/Properties panels with
     two-way selection sync (the controller already exposes everything they need);
     an align/distribute/z-order top-bar menu (controller ops done); and polish

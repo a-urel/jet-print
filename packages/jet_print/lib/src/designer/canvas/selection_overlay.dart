@@ -50,6 +50,9 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
   /// Cumulative pointer delta (page points) for the active handle drag.
   Offset _resizeDelta = Offset.zero;
 
+  /// Cumulative pointer delta (page points) for the active band-divider drag.
+  Offset _bandResizeDelta = Offset.zero;
+
   void _onHandleStart(
     JetReportDesignerController controller,
     String id,
@@ -84,6 +87,15 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
     if (selection.isEmpty) return const SizedBox.shrink();
 
     final ShadColorScheme colors = ShadTheme.of(context).colorScheme;
+
+    // Report and band selections get their own minimal chrome (the report is a
+    // fixed-format sheet → outline only; a band resizes vertically → one
+    // divider handle). Neither uses the element outline/handle machinery.
+    if (selection.isReport) return _reportChrome();
+    final int? selectedBand = selection.bandIndex;
+    if (selectedBand != null)
+      return _bandChrome(controller, selectedBand, colors);
+
     final JetOffset move = controller.moveDelta ?? const JetOffset(0, 0);
     final List<Widget> children = <Widget>[];
 
@@ -143,6 +155,98 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
     }
 
     return Stack(children: children);
+  }
+
+  /// Chrome for a selected report/page: an outline around the whole sheet, with
+  /// no resize handles (the page is a fixed format, not interactively resizable).
+  Widget _reportChrome() => Stack(children: <Widget>[
+        _outline(JetRect(
+          x: 0,
+          y: 0,
+          width: widget.layout.size.width,
+          height: widget.layout.size.height,
+        )),
+      ]);
+
+  /// Chrome for a selected band: an outline at the band's (possibly previewed)
+  /// height plus a single vertical divider handle on the growth-facing edge —
+  /// the bottom for a flow band, the top for a bottom-anchored footer (which
+  /// grows upward). No element-style corner/side handles: a band only resizes
+  /// vertically.
+  Widget _bandChrome(
+    JetReportDesignerController controller,
+    int index,
+    ShadColorScheme colors,
+  ) {
+    final JetRect? bandRect = widget.layout.bandRect(index);
+    if (bandRect == null) return const SizedBox.shrink();
+    final bool footer = DesignTimeLayout.isBottomAnchored(
+        controller.template.bands[index].type);
+    final double height =
+        controller.bandResizePreviewHeight(index) ?? bandRect.height;
+    // Anchor the fixed edge; the other edge is where the divider sits and moves.
+    final double top =
+        footer ? bandRect.y + bandRect.height - height : bandRect.y;
+    final double edgeY = footer ? top : top + height;
+    return Stack(children: <Widget>[
+      _outline(JetRect(
+          x: bandRect.x, y: top, width: bandRect.width, height: height)),
+      _bandHandle(controller, index, footer, bandRect.x + bandRect.width / 2,
+          edgeY, colors),
+    ]);
+  }
+
+  /// The single vertical band-divider handle: a horizontal grip centered on
+  /// [centerX] at the growth edge [edgeY] (page points), with a vertical resize
+  /// cursor. Dragging it drives the controller's band resize; a [footer] grows
+  /// from its top edge, so an upward drag enlarges it.
+  Widget _bandHandle(
+    JetReportDesignerController controller,
+    int index,
+    bool footer,
+    double centerX,
+    double edgeY,
+    ShadColorScheme colors,
+  ) {
+    const double hit = kHandleHitSize;
+    const double barWidth = 28;
+    return Positioned(
+      left: centerX * widget.scale - barWidth / 2,
+      top: edgeY * widget.scale - hit / 2,
+      width: barWidth,
+      height: hit,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.resizeUpDown,
+        child: GestureDetector(
+          key: const ValueKey<String>('jet_print.designer.bandHandle'),
+          behavior: HitTestBehavior.opaque,
+          onPanStart: (_) {
+            _bandResizeDelta = Offset.zero;
+            controller.beginBandResize(index);
+          },
+          onPanUpdate: (DragUpdateDetails d) {
+            _bandResizeDelta += d.delta / widget.scale;
+            controller.updateBandResize(
+                footer ? -_bandResizeDelta.dy : _bandResizeDelta.dy);
+          },
+          onPanEnd: (_) => controller.commitBandResize(),
+          onPanCancel: controller.cancelBandResize,
+          child: Center(
+            child: SizedBox(
+              width: barWidth,
+              height: kHandleVisualSize,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: colors.background,
+                  border: Border.all(color: _accent, width: 1.5),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   /// Handle z-order (back to front): the four edges, then the four corners on

@@ -41,7 +41,7 @@ class DesignTimeLayout {
     double topHeight = 0;
     double bottomHeight = 0;
     for (final ReportBand band in template.bands) {
-      if (_isBottomAnchored(band.type)) {
+      if (isBottomAnchored(band.type)) {
         bottomHeight += band.height;
       } else {
         topHeight += band.height;
@@ -62,7 +62,7 @@ class DesignTimeLayout {
     double topY = top;
     for (int i = 0; i < template.bands.length; i++) {
       final ReportBand band = template.bands[i];
-      if (_isBottomAnchored(band.type)) continue;
+      if (isBottomAnchored(band.type)) continue;
       rects[i] =
           JetRect(x: left, y: topY, width: contentWidth, height: band.height);
       topY += band.height;
@@ -73,7 +73,7 @@ class DesignTimeLayout {
     double bottomY = surfaceHeight - bottom;
     for (int i = template.bands.length - 1; i >= 0; i--) {
       final ReportBand band = template.bands[i];
-      if (!_isBottomAnchored(band.type)) continue;
+      if (!isBottomAnchored(band.type)) continue;
       bottomY -= band.height;
       rects[i] =
           JetRect(x: left, y: bottomY, width: contentWidth, height: band.height);
@@ -105,8 +105,9 @@ class DesignTimeLayout {
   }
 
   /// Whether a band of [type] is anchored to the bottom of the sheet (printed at
-  /// the page bottom) rather than flowing from the top.
-  static bool _isBottomAnchored(BandType type) =>
+  /// the page bottom) rather than flowing from the top. Bottom-anchored bands
+  /// grow upward from their bottom edge, so their resize handle sits on top.
+  static bool isBottomAnchored(BandType type) =>
       type == BandType.pageFooter || type == BandType.columnFooter;
 
   /// The full design-surface extent, in points (page width × stacked height).
@@ -153,6 +154,25 @@ class DesignTimeLayout {
       }
     }
     return nearest;
+  }
+
+  /// The index of the band whose rect exactly contains [point], or null when the
+  /// point lands in no band (the margins, the empty flow gap, or off the sheet).
+  ///
+  /// Unlike [bandIndexAt] there is no nearest-band fallback: this drives *click
+  /// selection*, where an empty spot must resolve to the report/page — not to a
+  /// band the pointer is merely near.
+  int? bandAt(JetOffset point) {
+    for (int i = 0; i < _bandRects.length; i++) {
+      final JetRect r = _bandRects[i];
+      if (point.dx >= r.x &&
+          point.dx <= r.x + r.width &&
+          point.dy >= r.y &&
+          point.dy <= r.y + r.height) {
+        return i;
+      }
+    }
+    return null;
   }
 
   /// Converts a page point to a band-relative offset within the band at

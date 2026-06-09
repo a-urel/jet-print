@@ -91,6 +91,13 @@ class _DesignCanvasState extends State<DesignCanvas> {
   JetRect? _marqueeRect;
   bool _marqueeing = false;
 
+  /// The page point of a press that landed on no element, pending tap-up. On a
+  /// real tap it classifies into a band/report/clear selection; if the press
+  /// instead becomes a drag (marquee, or a band-handle resize) the tap is
+  /// cancelled and this is discarded — so band/page selection never fights an
+  /// in-progress drag.
+  JetOffset? _emptyTapPage;
+
   /// The id of the text element being inline-edited (double-click), or null.
   String? _editingId;
 
@@ -179,8 +186,14 @@ class _DesignCanvasState extends State<DesignCanvas> {
       slop: kHandleHitSize / 2 / transform.scale,
     );
     if (hit == null) {
-      if (!_shiftPressed) controller.clearSelection();
-    } else if (_shiftPressed) {
+      // Defer band/report/clear classification to tap-up: if this press turns
+      // into a drag (marquee or a band-handle resize) the tap is cancelled and
+      // the selection is left alone. Shift+empty leaves the selection as-is.
+      _emptyTapPage = _shiftPressed ? null : page;
+      return;
+    }
+    _emptyTapPage = null;
+    if (_shiftPressed) {
       controller.toggleSelection(hit); // extend/contract multi-selection
     } else {
       controller.select(hit);
@@ -191,7 +204,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
     // single-tap select above.
     final bool near = _lastTapPosition != null &&
         (_lastTapPosition! - localPosition).distance < 24;
-    if (near && hit != null && _findElement(controller, hit) is TextElement) {
+    if (near && _findElement(controller, hit) is TextElement) {
       _doubleTapTimer?.cancel();
       _lastTapPosition = null;
       setState(() => _editingId = hit);
@@ -200,6 +213,42 @@ class _DesignCanvasState extends State<DesignCanvas> {
     _lastTapPosition = localPosition;
     _doubleTapTimer?.cancel();
     _doubleTapTimer = Timer(_doubleTapWindow, () => _lastTapPosition = null);
+  }
+
+  /// Tap-up: complete an empty-area tap as a band/report/clear selection. A press
+  /// that became a drag fired `onTapCancel` (clearing [_emptyTapPage]) first, so
+  /// this only runs for a genuine tap on no element.
+  void _handleTap(
+      JetReportDesignerController controller, DesignTimeLayout layout) {
+    final JetOffset? page = _emptyTapPage;
+    _emptyTapPage = null;
+    if (page == null) return;
+    _selectEmptyTarget(page, controller, layout);
+  }
+
+  /// Classifies an empty (no-element) page point: inside a band → select it;
+  /// elsewhere on the paper (margins / flow gap) → select the report; off the
+  /// paper → clear.
+  void _selectEmptyTarget(
+    JetOffset page,
+    JetReportDesignerController controller,
+    DesignTimeLayout layout,
+  ) {
+    final JetSize size = layout.size;
+    final bool onPaper = page.dx >= 0 &&
+        page.dx <= size.width &&
+        page.dy >= 0 &&
+        page.dy <= size.height;
+    if (!onPaper) {
+      controller.clearSelection();
+      return;
+    }
+    final int? band = layout.bandAt(page);
+    if (band != null) {
+      controller.selectBand(band);
+    } else {
+      controller.selectReport();
+    }
   }
 
   bool get _shiftPressed =>
@@ -257,7 +306,9 @@ class _DesignCanvasState extends State<DesignCanvas> {
     final String? hit = hitTestElement(controller.template, layout, page,
         slop: kHandleHitSize / 2 / transform.scale);
     if (hit == null) {
-      // Empty-area drag → marquee (rubber-band) selection.
+      // Empty-area drag → marquee (rubber-band) selection. Cancel any pending
+      // empty-tap classification (this press is a drag, not a tap).
+      _emptyTapPage = null;
       _movingSelection = false;
       _marqueeing = true;
       _marqueeStartPage = page;
@@ -427,6 +478,8 @@ class _DesignCanvasState extends State<DesignCanvas> {
               supportedDevices: _interactionDevices,
               onTapDown: (TapDownDetails d) =>
                   _handleTapDown(d.localPosition, controller, transform, layout),
+              onTap: () => _handleTap(controller, layout),
+              onTapCancel: () => _emptyTapPage = null,
               onPanStart: (DragStartDetails d) => _handlePanStart(
                   d.localPosition, controller, transform, layout),
               onPanUpdate: (DragUpdateDetails d) =>

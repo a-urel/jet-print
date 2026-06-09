@@ -45,6 +45,10 @@ const double kCoarseNudgeStep = 10;
 /// [ShapeKind.line] may collapse the cross-axis below this; see `ResizeCommand`.
 const double kMinElementSize = 4;
 
+/// Minimum band height, in points, enforced when resizing a band vertically so a
+/// band can never collapse to an ungrabbable sliver.
+const double kMinBandHeight = 8;
+
 /// Translation applied to each pasted/duplicated copy so it does not land
 /// exactly on its source (FR-015 / D7).
 const JetOffset kPasteOffset = JetOffset(8, 8);

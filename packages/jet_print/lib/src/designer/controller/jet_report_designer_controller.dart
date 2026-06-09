@@ -18,6 +18,7 @@ import 'commands/delete_command.dart';
 import 'commands/move_command.dart';
 import 'commands/reorder_command.dart';
 import 'commands/resize_command.dart';
+import 'commands/set_band_height_command.dart';
 import 'commands/set_text_command.dart';
 import 'default_template.dart';
 import 'designer_document.dart';
@@ -92,6 +93,17 @@ class JetReportDesignerController extends ChangeNotifier {
 
   /// Selects exactly [id] (replacing any prior selection).
   void select(String id) => _setSelection(Selection.of(<String>[id]));
+
+  /// Selects the band at [index] (replacing any prior selection). The band
+  /// becomes the selection target — exclusive with element/report selection. An
+  /// out-of-range [index] is ignored.
+  void selectBand(int index) {
+    if (index < 0 || index >= _document.template.bands.length) return;
+    _setSelection(Selection.band(index));
+  }
+
+  /// Selects the report/page itself (replacing any prior selection).
+  void selectReport() => _setSelection(Selection.report());
 
   /// Clears the selection.
   void clearSelection() => _setSelection(Selection.empty);
@@ -348,6 +360,79 @@ class JetReportDesignerController extends ChangeNotifier {
     _commit(ResizeCommand(id: id, bounds: clamped));
   }
 
+  // --- Band resize (vertical only) -------------------------------------------
+  // A band only has a height; resizing it changes that height. The live
+  // interaction previews a height without committing (so the cached frame isn't
+  // rebuilt mid-drag), mirroring the element resize lifecycle. The drag's
+  // direction-to-height mapping is the caller's concern (a footer grows from its
+  // top edge), so [updateBandResize] takes a signed *height* delta.
+
+  int? _bandResizeIndex;
+  double? _bandResizeStartHeight;
+  double? _bandResizePreviewHeight;
+
+  /// The previewed height of the band at [index] during a live band resize, or
+  /// null. The overlay draws the band at this height while dragging the divider.
+  double? bandResizePreviewHeight(int index) =>
+      _bandResizeIndex == index ? _bandResizePreviewHeight : null;
+
+  /// Begins resizing the band at [index] (no history yet). Out-of-range ignored.
+  void beginBandResize(int index) {
+    if (index < 0 || index >= _document.template.bands.length) return;
+    _bandResizeIndex = index;
+    _bandResizeStartHeight = _document.template.bands[index].height;
+    _bandResizePreviewHeight = _bandResizeStartHeight;
+  }
+
+  /// Updates the in-progress band resize to a cumulative [heightDelta] (points,
+  /// positive grows the band), applying the [kMinBandHeight] floor; publishes the
+  /// preview.
+  void updateBandResize(double heightDelta) {
+    final double? start = _bandResizeStartHeight;
+    if (start == null) return;
+    final double next = start + heightDelta;
+    _bandResizePreviewHeight = next < kMinBandHeight ? kMinBandHeight : next;
+    notifyListeners();
+  }
+
+  /// Commits the in-progress band resize as one history entry, or clears the
+  /// transient state when nothing changed.
+  void commitBandResize() {
+    final int? index = _bandResizeIndex;
+    final double? preview = _bandResizePreviewHeight;
+    _bandResizeIndex = null;
+    _bandResizeStartHeight = null;
+    _bandResizePreviewHeight = null;
+    bool committed = false;
+    if (index != null && preview != null) {
+      committed = _applyBandHeight(index, preview);
+    }
+    // Repaint to drop the preview even when the resize committed nothing.
+    if (!committed) notifyListeners();
+  }
+
+  /// Discards an in-progress band resize.
+  void cancelBandResize() {
+    if (_bandResizeIndex == null) return;
+    _bandResizeIndex = null;
+    _bandResizeStartHeight = null;
+    _bandResizePreviewHeight = null;
+    notifyListeners();
+  }
+
+  /// Sets the band at [index]'s height to [height] (floor-clamped) as one
+  /// undoable step — the committed form used by numeric editing and tests.
+  void setBandHeight(int index, double height) {
+    if (index < 0 || index >= _document.template.bands.length) return;
+    _applyBandHeight(index, height);
+  }
+
+  bool _applyBandHeight(int index, double height) {
+    final double clamped = height < kMinBandHeight ? kMinBandHeight : height;
+    if (clamped == _document.template.bands[index].height) return false;
+    return _commit(SetBandHeightCommand(bandIndex: index, height: clamped));
+  }
+
   // --- Numeric geometry + text (Properties / inline) -------------------------
 
   /// Sets any of [id]'s band-relative x/y/width/height numerically (Properties
@@ -442,9 +527,10 @@ class JetReportDesignerController extends ChangeNotifier {
 
   final Clipboard _clipboard = Clipboard();
 
-  /// Deletes the selected elements as one undoable step (FR-014).
+  /// Deletes the selected elements as one undoable step (FR-014). No-op when the
+  /// selection holds no elements (e.g. a band or the report is selected).
   void delete() {
-    if (_document.selection.isEmpty) return;
+    if (_document.selection.ids.isEmpty) return;
     _commit(DeleteCommand(_document.selection.ids.toSet()));
   }
 
@@ -465,7 +551,7 @@ class JetReportDesignerController extends ChangeNotifier {
   void sendToBack() => _reorder(ReorderMode.toBack);
 
   void _reorder(ReorderMode mode) {
-    if (_document.selection.isEmpty) return;
+    if (_document.selection.ids.isEmpty) return;
     _commit(ReorderCommand(_document.selection.ids.toSet(), mode));
   }
 
