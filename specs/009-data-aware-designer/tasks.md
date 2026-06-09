@@ -89,23 +89,23 @@ description: "Task list for 009-data-aware-designer (Invoice MVP — Data-Aware 
 
 ### Tests (write first; must fail)
 
-- [ ] T016 [P] [US2] Test `SetBindingCommand`/`clearBinding`/`setImageField`: sets `TextElement.expression` / `FieldImageSource`, reverts to static, supports undo/redo, and a no-op pushes no history — in `packages/jet_print/test/designer/controller/binding_command_test.dart`.
-- [ ] T017 [P] [US2] Test the design-time frame shows a delimited, visually-distinct token for a bound text element and a placeholder for a bound image element, via the shared renderer — in `packages/jet_print/test/designer/canvas/bound_token_render_test.dart`.
-- [ ] T018 [P] [US2] Test the Properties binding editor: pick a field, type a free-form expression, and clear — in `packages/jet_print/test/designer/properties_binding_editor_test.dart`.
-- [ ] T019 [P] [US2] Test dragging a leaf field from the panel onto a band creates a bound text element with a token, and dragging a `collection` (branch) node is a no-op — in `packages/jet_print/test/designer/canvas/drag_field_bind_test.dart`.
-- [ ] T020 [P] [US2] Test persistence: a template with text + image bindings round-trips (encode→decode equal), and decoding with **no** `dataSchema` attached still shows tokens (tree empty) — in `packages/jet_print/test/designer/reopen_without_source_test.dart`.
-- [ ] T020a [P] [US2] Localization test: the binding chrome (Binding / Field / Expression / Clear labels) renders in en/de/tr with English fallback — extend `packages/jet_print/test/designer/localization_de_test.dart` and `localization_tr_test.dart`. (Precedes the ARB task T028.)
+- [X] T016 [P] [US2] Test `SetBindingCommand`/`clearBinding`/`setImageField`: sets `TextElement.expression` / `FieldImageSource`, reverts to static, supports undo/redo, and a no-op pushes no history — in `packages/jet_print/test/designer/controller/binding_command_test.dart`.
+- [X] T017 [P] [US2] Test the design-time frame shows a delimited, visually-distinct token for a bound text element and a placeholder for a bound image element, via the shared renderer — in `packages/jet_print/test/designer/canvas/bound_token_render_test.dart`.
+- [X] T018 [P] [US2] Test the Properties binding editor: pick a field, type a free-form expression, and clear — in `packages/jet_print/test/designer/properties_binding_editor_test.dart`.
+- [X] T019 [P] [US2] Test dragging a leaf field from the panel onto a band creates a bound text element with a token, and dragging a `collection` (branch) node is a no-op — in `packages/jet_print/test/designer/canvas/drag_field_bind_test.dart`.
+- [X] T020 [P] [US2] Test persistence: a template with text + image bindings round-trips (encode→decode equal), and decoding with **no** `dataSchema` attached still shows tokens (tree empty) — in `packages/jet_print/test/designer/reopen_without_source_test.dart`.
+- [X] T020a [P] [US2] Localization test: the binding chrome (Binding / Field / Expression / Clear labels) renders in en/de/tr with English fallback — extend `packages/jet_print/test/designer/localization_de_test.dart` and `localization_tr_test.dart`. (Precedes the ARB task T028.)
 
 ### Implementation
 
-- [ ] T021 [P] [US2] Add the `FieldDragData` payload type (field name, path, type) in `packages/jet_print/lib/src/designer/canvas/field_drag_data.dart`.
-- [ ] T022 [US2] Implement `SetBindingCommand` (text → `expression`; image → `FieldImageSource`; and a clear path) following the `SetTextCommand` pattern — in `packages/jet_print/lib/src/designer/controller/commands/set_binding_command.dart`.
-- [ ] T023 [US2] Add `setBinding`/`clearBinding`/`setImageField`/`createBoundElement` to the controller, each committing one command via `_commit` — in `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart` (depends on T022).
-- [ ] T024 [US2] In `packages/jet_print/lib/src/designer/canvas/design_time_frame.dart`, emit a token (delimited display copy) for bound text and a placeholder for bound image through the **unchanged** `ElementRenderer` (no renderer edits) — depends on T023.
-- [ ] T025 [US2] Make the Data Source panel field rows `Draggable<FieldDragData>` (leaf fields only) in `packages/jet_print/lib/src/designer/layout/panels/data_source_panel.dart` (depends on T013, T021).
-- [ ] T026 [US2] Extend the canvas drop handling to accept `FieldDragData` (a `DragTarget` discriminating field drags from toolbox drags): drop on empty band space → `createBoundElement`; drop on a bindable element → bind — in `packages/jet_print/lib/src/designer/canvas/design_canvas.dart` (depends on T021, T023).
-- [ ] T027 [US2] Add the binding editor (field picker from the in-scope schema + free-form expression input + Clear) to the element inspector in `packages/jet_print/lib/src/designer/layout/panels/properties_panel.dart` (depends on T023, scope from T010). The editor branches by element type: for image elements it presents a field picker only (no expression input), and the chosen field sets `FieldImageSource`.
-- [ ] T028 [P] [US2] Add binding chrome strings (Binding/Field/Expression/Clear) to the three ARB files + `flutter gen-l10n` — in `packages/jet_print/lib/src/designer/l10n/`.
+- [X] T021 [P] [US2] Add the `FieldDragData` payload type (field name, path, type) in `packages/jet_print/lib/src/designer/canvas/field_drag_data.dart`.
+- [X] T022 [US2] Implement `SetBindingCommand` (text → `expression`; image → `FieldImageSource`; and a clear path) following the `SetTextCommand` pattern — in `packages/jet_print/lib/src/designer/controller/commands/set_binding_command.dart`.
+- [X] T023 [US2] Add `setBinding`/`clearBinding`/`setImageField`/`createBoundElement` to the controller, each committing one command via `_commit` — in `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart` (depends on T022).
+- [X] T024 [US2] In `packages/jet_print/lib/src/designer/canvas/design_time_frame.dart`, emit a token (delimited display copy) for bound text and a placeholder for bound image through the **unchanged** `ElementRenderer` (no renderer edits) — depends on T023.
+- [X] T025 [US2] Make the Data Source panel field rows `Draggable<FieldDragData>` (leaf fields only) in `packages/jet_print/lib/src/designer/layout/panels/data_source_panel.dart` (depends on T013, T021).
+- [X] T026 [US2] Extend the canvas drop handling to accept `FieldDragData` (a `DragTarget` discriminating field drags from toolbox drags): drop on empty band space → `createBoundElement`; drop on a bindable element → bind — in `packages/jet_print/lib/src/designer/canvas/design_canvas.dart` (depends on T021, T023).
+- [X] T027 [US2] Add the binding editor (field picker from the in-scope schema + free-form expression input + Clear) to the element inspector in `packages/jet_print/lib/src/designer/layout/panels/properties_panel.dart` (depends on T023, scope from T010). The editor branches by element type: for image elements it presents a field picker only (no expression input), and the chosen field sets `FieldImageSource`.
+- [X] T028 [P] [US2] Add binding chrome strings (Binding/Field/Expression/Clear) to the three ARB files + `flutter gen-l10n` — in `packages/jet_print/lib/src/designer/l10n/`.
 
 **Checkpoint**: Elements can be bound (drag + Properties), show tokens, clear, and persist (incl. reopen-without-source). US2 is independently demoable.
 

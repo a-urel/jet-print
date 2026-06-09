@@ -187,6 +187,18 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get propertiesText => 'Metin';
 
   @override
+  String get propertiesBinding => 'Bağlama';
+
+  @override
+  String get bindingExpressionHint => 'Alan veya ifade';
+
+  @override
+  String get bindingImageFieldHint => 'Alan adı';
+
+  @override
+  String get bindingClearTooltip => 'Bağlamayı temizle';
+
+  @override
   String get propertiesHeight => 'Yükseklik';
 
   @override

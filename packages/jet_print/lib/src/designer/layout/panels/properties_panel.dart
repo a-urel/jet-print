@@ -3,6 +3,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../domain/elements/barcode_element.dart';
 import '../../../domain/elements/image_element.dart';
+import '../../../domain/elements/image_source.dart';
 import '../../../domain/elements/shape_element.dart';
 import '../../../domain/elements/text_element.dart';
 import '../../../domain/geometry.dart';
@@ -130,6 +131,31 @@ class PropertiesPanel extends StatelessWidget {
           fieldKey: const ValueKey<String>('$_p.field.text'),
           value: element.text,
           onCommit: (String v) => controller.setText(id, v),
+        ),
+        const SizedBox(height: 12),
+        SectionLabel(l10n.propertiesBinding),
+        _BindingField(
+          fieldKey: const ValueKey<String>('$_p.field.binding'),
+          value: element.expression ?? '',
+          placeholder: l10n.bindingExpressionHint,
+          clearTooltip: l10n.bindingClearTooltip,
+          onSet: (String v) => controller.setBinding(id, v),
+          onClear: () => controller.clearBinding(id),
+        ),
+      ],
+      // Image binding: a field picker only (no expression) — FR-013 / U1.
+      if (element is ImageElement) ...<Widget>[
+        const SizedBox(height: 12),
+        SectionLabel(l10n.propertiesBinding),
+        _BindingField(
+          fieldKey: const ValueKey<String>('$_p.field.imageBinding'),
+          value: element.source is FieldImageSource
+              ? (element.source as FieldImageSource).field
+              : '',
+          placeholder: l10n.bindingImageFieldHint,
+          clearTooltip: l10n.bindingClearTooltip,
+          onSet: (String v) => controller.setImageField(id, v),
+          onClear: () => controller.setImageField(id, ''),
         ),
       ],
     ];
@@ -448,6 +474,99 @@ class _TextFieldState extends State<_TextField> {
       controller: _controller,
       focusNode: _focus,
       onSubmitted: widget.onCommit,
+    );
+  }
+}
+
+/// A data-binding inspector field (US2 / FR-009, FR-012, FR-013): an input
+/// holding the current binding ([value] — a text element's expression or an
+/// image element's field), with a trailing clear affordance. Committing a
+/// non-empty value calls [onSet]; committing empty, or tapping clear, calls
+/// [onClear]. Each commit is one undoable model edit through the controller.
+class _BindingField extends StatefulWidget {
+  const _BindingField({
+    required this.fieldKey,
+    required this.value,
+    required this.placeholder,
+    required this.clearTooltip,
+    required this.onSet,
+    required this.onClear,
+  });
+
+  final Key fieldKey;
+  final String value;
+  final String placeholder;
+  final String clearTooltip;
+  final ValueChanged<String> onSet;
+  final VoidCallback onClear;
+
+  @override
+  State<_BindingField> createState() => _BindingFieldState();
+}
+
+class _BindingFieldState extends State<_BindingField> {
+  late final TextEditingController _controller =
+      TextEditingController(text: widget.value);
+  final FocusNode _focus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _focus.addListener(_onFocusChange);
+  }
+
+  @override
+  void didUpdateWidget(_BindingField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_focus.hasFocus && widget.value != oldWidget.value) {
+      _controller.text = widget.value;
+    }
+  }
+
+  void _onFocusChange() {
+    if (!_focus.hasFocus) _commit();
+  }
+
+  void _commit() {
+    final String text = _controller.text.trim();
+    if (text.isEmpty) {
+      if (widget.value.isNotEmpty) widget.onClear();
+    } else if (text != widget.value) {
+      widget.onSet(text);
+    }
+  }
+
+  void _clear() {
+    _controller.clear();
+    widget.onClear();
+  }
+
+  @override
+  void dispose() {
+    _focus.removeListener(_onFocusChange);
+    _focus.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ShadColorScheme colors = ShadTheme.of(context).colorScheme;
+    return ShadInput(
+      key: widget.fieldKey,
+      controller: _controller,
+      focusNode: _focus,
+      placeholder: Text(widget.placeholder),
+      onSubmitted: (_) => _commit(),
+      trailing: Semantics(
+        label: widget.clearTooltip,
+        button: true,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: _clear,
+          child: Icon(LucideIcons.x, size: 14, color: colors.mutedForeground),
+        ),
+      ),
     );
   }
 }

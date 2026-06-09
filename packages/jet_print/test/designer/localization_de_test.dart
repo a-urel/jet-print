@@ -69,6 +69,8 @@ void main() {
     // (1) Element inspector — German section label (upper-cased: ß is preserved).
     expect(find.text('GRÖßE'), findsOneWidget); // Size → Größe
     expect(find.text('SIZE'), findsNothing); // real translation, not a fallback
+    expect(find.text('BINDUNG'), findsOneWidget); // Binding section (US2)
+    expect(find.text('BINDING'), findsNothing);
 
     // (2) Report inspector — header + page section + margins row (verbatim).
     c.selectReport();

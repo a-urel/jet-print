@@ -455,6 +455,30 @@ abstract class JetPrintLocalizations {
   /// **'Text'**
   String get propertiesText;
 
+  /// Properties panel section label for an element's data binding (009).
+  ///
+  /// In en, this message translates to:
+  /// **'Binding'**
+  String get propertiesBinding;
+
+  /// Placeholder for the text binding input (a field reference or a full expression).
+  ///
+  /// In en, this message translates to:
+  /// **'Field or expression'**
+  String get bindingExpressionHint;
+
+  /// Placeholder for the image binding input (the data field supplying the picture).
+  ///
+  /// In en, this message translates to:
+  /// **'Field name'**
+  String get bindingImageFieldHint;
+
+  /// Accessible name / tooltip for the button that clears an element's data binding.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear binding'**
+  String get bindingClearTooltip;
+
   /// Properties panel field label for a band's height.
   ///
   /// In en, this message translates to:

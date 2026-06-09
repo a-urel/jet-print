@@ -250,6 +250,22 @@
   "@propertiesText": {
     "description": "Properties panel section label for a text element's content."
   },
+  "propertiesBinding": "Binding",
+  "@propertiesBinding": {
+    "description": "Properties panel section label for an element's data binding (009)."
+  },
+  "bindingExpressionHint": "Field or expression",
+  "@bindingExpressionHint": {
+    "description": "Placeholder for the text binding input (a field reference or a full expression)."
+  },
+  "bindingImageFieldHint": "Field name",
+  "@bindingImageFieldHint": {
+    "description": "Placeholder for the image binding input (the data field supplying the picture)."
+  },
+  "bindingClearTooltip": "Clear binding",
+  "@bindingClearTooltip": {
+    "description": "Accessible name / tooltip for the button that clears an element's data binding."
+  },
   "propertiesHeight": "Height",
   "@propertiesHeight": {
     "description": "Properties panel field label for a band's height."

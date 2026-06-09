@@ -3,6 +3,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../data/data_schema.dart';
 import '../../../data/field_def.dart';
+import '../../canvas/field_drag_data.dart';
 import '../../designer_schema_scope.dart';
 import '../../l10n/jet_print_localizations.dart';
 import '../region_chrome.dart';
@@ -105,7 +106,7 @@ class _FieldRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final ShadThemeData theme = ShadTheme.of(context);
     final ShadColorScheme colors = theme.colorScheme;
-    return Padding(
+    final Widget row = Padding(
       padding: EdgeInsets.only(
         left: treeRowInset(depth),
         top: 4,
@@ -129,6 +130,50 @@ class _FieldRow extends StatelessWidget {
             style: theme.textTheme.muted.copyWith(fontSize: 11),
           ),
         ],
+      ),
+    );
+    // Leaf fields are draggable onto the canvas to create a bound element
+    // (FR-011). Collection (branch) nodes use TreeBranch and are never wrapped
+    // here, so dropping one is a no-op by construction.
+    return Draggable<FieldDragData>(
+      data: FieldDragData(fieldName: field.name),
+      dragAnchorStrategy: pointerDragAnchorStrategy,
+      feedback: _FieldDragChip(name: field.name, theme: theme),
+      child: row,
+    );
+  }
+}
+
+/// The little chip shown under the pointer while dragging a field. Carries an
+/// explicit text style so it renders correctly in the drag Overlay (no Material
+/// ancestor).
+class _FieldDragChip extends StatelessWidget {
+  const _FieldDragChip({required this.name, required this.theme});
+
+  final String name;
+  final ShadThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final ShadColorScheme colors = theme.colorScheme;
+    return Transform.translate(
+      offset: const Offset(8, 8),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: colors.primary,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Text(
+            name,
+            style: TextStyle(
+              color: colors.primaryForeground,
+              fontSize: 12,
+              decoration: TextDecoration.none,
+            ),
+          ),
+        ),
       ),
     );
   }

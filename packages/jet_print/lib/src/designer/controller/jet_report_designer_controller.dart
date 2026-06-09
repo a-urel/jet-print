@@ -4,6 +4,7 @@ library;
 import 'package:flutter/foundation.dart';
 
 import '../../domain/elements/shape_element.dart';
+import '../../domain/elements/text_element.dart';
 import '../../domain/geometry.dart';
 import '../../domain/report_band.dart';
 import '../../domain/report_element.dart';
@@ -19,6 +20,7 @@ import 'commands/move_command.dart';
 import 'commands/reorder_command.dart';
 import 'commands/resize_command.dart';
 import 'commands/set_band_height_command.dart';
+import 'commands/set_binding_command.dart';
 import 'commands/set_text_command.dart';
 import 'default_template.dart';
 import 'designer_document.dart';
@@ -134,6 +136,33 @@ class JetReportDesignerController extends ChangeNotifier {
     _commit(CreateElementCommand(
       bandIndex: bandIndex,
       element: buildDefaultElement(type, id, bounds),
+    ));
+  }
+
+  /// Creates a **data-bound** text element at the band-relative point [at]
+  /// within the band at [bandIndex], bound to [expression] (a `$F{}`/`$P{}`/
+  /// `$V{}` string), and selects it (US2 / FR-009, FR-011). Used by drag-a-field
+  /// from the Data Source panel. The new element gets a fresh id and the default
+  /// text size; its literal text is a neutral fallback shown only if the binding
+  /// is later cleared. An out-of-range [bandIndex] is ignored.
+  void createBoundElement({
+    required int bandIndex,
+    required JetOffset at,
+    required String expression,
+  }) {
+    if (bandIndex < 0 || bandIndex >= _document.template.bands.length) return;
+    final String id = _ids.next(_typeKeyFor(DesignerToolType.text));
+    final JetSize size = kDefaultElementSize[DesignerToolType.text]!;
+    final JetRect bounds =
+        JetRect(x: at.dx, y: at.dy, width: size.width, height: size.height);
+    _commit(CreateElementCommand(
+      bandIndex: bandIndex,
+      element: TextElement(
+        id: id,
+        bounds: bounds,
+        text: 'Text',
+        expression: expression,
+      ),
     ));
   }
 
@@ -460,6 +489,26 @@ class JetReportDesignerController extends ChangeNotifier {
   /// undoable step (FR-019). No-op for a non-text or absent id.
   void setText(String id, String text) {
     _commit(SetTextCommand(id: id, text: text));
+  }
+
+  /// Binds the [TextElement] [id] to [expression] (a `$F{}`/`$P{}`/`$V{}`
+  /// string), as one undoable step (US2 / FR-009). No-op for a non-text or
+  /// absent id, or when already bound to the same expression.
+  void setBinding(String id, String expression) {
+    _commit(SetTextBindingCommand(id: id, expression: expression));
+  }
+
+  /// Clears the [TextElement] [id]'s binding, reverting it to its static text
+  /// (US2 / FR-012). No-op for a non-text or absent id, or when already static.
+  void clearBinding(String id) {
+    _commit(SetTextBindingCommand(id: id, expression: null));
+  }
+
+  /// Binds the [ImageElement] [id] to read its picture from the data [field]
+  /// (US2 / FR-013). No-op for a non-image or absent id, or when already bound
+  /// to the same field.
+  void setImageField(String id, String field) {
+    _commit(SetImageBindingCommand(id: id, field: field));
   }
 
   List<JetRect> _siblingBounds(int bandIndex, String excludeId) => <JetRect>[

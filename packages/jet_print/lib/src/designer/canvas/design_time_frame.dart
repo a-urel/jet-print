@@ -9,7 +9,9 @@ library;
 
 import 'dart:ui' as ui;
 
+import '../../domain/elements/text_element.dart';
 import '../../domain/page_format.dart';
+import '../../domain/report_element.dart';
 import '../../domain/report_template.dart';
 import '../../rendering/elements/built_in_element_renderers.dart';
 import '../../rendering/elements/element_renderer_registry.dart';
@@ -21,6 +23,7 @@ import '../../rendering/paint/canvas_painter.dart';
 import '../../rendering/paint/report_painter.dart';
 import '../../rendering/text/font_registry.dart';
 import '../../rendering/text/metrics_text_measurer.dart';
+import 'binding_token.dart';
 import 'design_time_layout.dart';
 
 /// Reusable builder that turns a `(template, layout)` pair into a [PageFrame]
@@ -63,10 +66,24 @@ class DesignTimeFrameBuilder {
       for (final element in band.elements) {
         final rect = layout.elementRect(element.id);
         if (rect == null) continue;
-        _renderers.rendererFor(element).emit(element, _ctx, rect, out);
+        final ReportElement display = _designTimeDisplay(element);
+        _renderers.rendererFor(display).emit(display, _ctx, rect, out);
       }
     }
     return out.build();
+  }
+
+  /// Maps an element to what is *shown* at design time. A data-bound text
+  /// element renders its binding **token** (FR-010, FR-014: tokens, not values),
+  /// fed through the unchanged text renderer as ordinary text so the shared
+  /// pipeline stays single-sourced (Constitution IV). Every other element —
+  /// including a field-bound image, which the shared renderer already draws as a
+  /// placeholder — renders as-is.
+  ReportElement _designTimeDisplay(ReportElement element) {
+    if (element is TextElement && element.expression != null) {
+      return element.copyWith(text: fieldTokenLabel(element.expression!));
+    }
+    return element;
   }
 
   /// Records [frame] into a cacheable [ui.Picture] at 1:1 logical scale. The

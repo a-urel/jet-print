@@ -187,6 +187,18 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   String get propertiesText => 'Text';
 
   @override
+  String get propertiesBinding => 'Bindung';
+
+  @override
+  String get bindingExpressionHint => 'Feld oder Ausdruck';
+
+  @override
+  String get bindingImageFieldHint => 'Feldname';
+
+  @override
+  String get bindingClearTooltip => 'Bindung entfernen';
+
+  @override
   String get propertiesHeight => 'Höhe';
 
   @override

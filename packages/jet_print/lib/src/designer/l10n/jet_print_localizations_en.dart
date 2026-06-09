@@ -187,6 +187,18 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get propertiesText => 'Text';
 
   @override
+  String get propertiesBinding => 'Binding';
+
+  @override
+  String get bindingExpressionHint => 'Field or expression';
+
+  @override
+  String get bindingImageFieldHint => 'Field name';
+
+  @override
+  String get bindingClearTooltip => 'Clear binding';
+
+  @override
   String get propertiesHeight => 'Height';
 
   @override
