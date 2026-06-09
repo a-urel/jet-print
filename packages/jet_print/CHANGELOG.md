@@ -8,6 +8,37 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Data-aware designer — Invoice MVP (spec 009-data-aware-designer).** The
+  designer can now describe, display, and bind to a data source's structure
+  (tokens only this iteration — values are not yet filled/rendered). New/changed
+  public surface from the single entry point:
+  - `JetDataSchema` — a host-supplied data-source **structure** (a named dataset
+    of `FieldDef`s) attached to the designer via the new `JetReportDesigner`
+    `dataSchema:` parameter. Not embedded in the saved template; bindings are
+    self-describing, so a report reopened without a source still shows its tokens.
+  - `FieldDef` is now public **and recursive** — a `JetFieldType.collection`
+    field carries its own child `fields`, modelling master/detail (e.g. an
+    invoice with a nested `lines` collection) to arbitrary depth.
+  - `JetFieldType.collection` — the nested-collection field type.
+  - `JetReportDesignerController` gains `setBinding` / `clearBinding` /
+    `setImageField` / `createBoundElement` (element data binding) and
+    `setBandCollection(bandPath, field)` (designate a band's master/detail
+    collection); each is one undoable step.
+  - `ReportBand` gains additive-optional `collectionField` + nested `children`
+    (master/detail); they round-trip losslessly at the existing `schemaVersion`
+    (no migration — pre-1.0 additive carve-out).
+  - Designer UX: the **Data Source panel** renders the attached schema as an
+    expandable tree (nested collections included) with a clear empty state,
+    replacing the hardcoded placeholder; leaf fields drag onto the canvas to
+    create a bound element; the **Properties** inspector binds an element (field
+    or expression) or designates a band's collection, clears a binding, and flags
+    an unresolved binding; bound elements show a design-time token through the
+    shared render pipeline. All new chrome localized (en/de/tr).
+  - The **playground** ships an invoice sample (`invoiceSchema` +
+    `invoiceSampleTemplate`) demonstrating master/detail through the public API.
+  - *Deferred:* filling/rendering real data values, exposing the fill/expression
+    engine, barcode binding, and design-canvas rendering of *nested* child bands
+    (the model/codec/scope support arbitrary nesting today).
 - **Designer edit surface (spec 003-designer-edit-surface).** The center surface
   is now a fully interactive WYSIWYG canvas — create, select, move, resize,
   multi-select, snap, align/distribute/z-order, undo/redo, zoom/pan, inline text

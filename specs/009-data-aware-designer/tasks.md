@@ -166,11 +166,11 @@ description: "Task list for 009-data-aware-designer (Invoice MVP — Data-Aware 
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T047 [P] Update `packages/jet_print/CHANGELOG.md` with the data-aware designer additions and the public API surface (`FieldDef`, `JetDataSchema`, `JetReportDesigner.dataSchema`, new controller methods, `ReportBand` fields).
-- [ ] T048 [P] Verify dartdoc on every new public symbol (`FieldDef.fields`, `JetDataSchema`, `dataSchema`, `setBinding`/`clearBinding`/`setImageField`/`setBandCollection`, `ReportBand.collectionField`/`children`) — Constitution VI.
-- [ ] T049 Run the full verify loop from repo root (`dart format` check, `flutter analyze` zero warnings, `flutter test packages/jet_print apps/jet_print_playground` all green, goldens current).
-- [ ] T050 Walk through [quickstart.md](quickstart.md) end-to-end (build schema → attach → bind → master/detail → save/open) and confirm each step matches the shipped behavior.
-- [ ] T051 Confirm the architecture suite (`encapsulation_test.dart`, `architecture/layer_boundaries_test.dart`) and the full designer/localization/golden suites are green.
+- [X] T047 [P] Update `packages/jet_print/CHANGELOG.md` with the data-aware designer additions and the public API surface (`FieldDef`, `JetDataSchema`, `JetReportDesigner.dataSchema`, new controller methods, `ReportBand` fields).
+- [X] T048 [P] Verify dartdoc on every new public symbol (`FieldDef.fields`, `JetDataSchema`, `dataSchema`, `setBinding`/`clearBinding`/`setImageField`/`setBandCollection`, `ReportBand.collectionField`/`children`) — Constitution VI.
+- [X] T049 Run the full verify loop from repo root (`dart format` check, `flutter analyze` zero warnings, `flutter test packages/jet_print apps/jet_print_playground` all green, goldens current).
+- [X] T050 Walk through [quickstart.md](quickstart.md) end-to-end (build schema → attach → bind → master/detail → save/open) and confirm each step matches the shipped behavior.
+- [X] T051 Confirm the architecture suite (`encapsulation_test.dart`, `architecture/layer_boundaries_test.dart`) and the full designer/localization/golden suites are green.
 
 ---
 
