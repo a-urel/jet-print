@@ -229,33 +229,33 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
             cursor: SystemMouseCursors.resizeUpDown,
             child: GestureDetector(
               key: const ValueKey<String>('jet_print.designer.bandHandle'),
-          behavior: HitTestBehavior.opaque,
-          onPanStart: (_) {
-            _bandResizeDelta = Offset.zero;
-            controller.beginBandResize(index);
-          },
-          onPanUpdate: (DragUpdateDetails d) {
-            _bandResizeDelta += d.delta / widget.scale;
-            controller.updateBandResize(
-                footer ? -_bandResizeDelta.dy : _bandResizeDelta.dy);
-          },
-          onPanEnd: (_) => controller.commitBandResize(),
-          onPanCancel: controller.cancelBandResize,
-          child: Center(
-            child: SizedBox(
-              width: barWidth,
-              height: kHandleVisualSize,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: colors.background,
-                  border: Border.all(color: _accent, width: 1.5),
-                  borderRadius: BorderRadius.circular(2),
+              behavior: HitTestBehavior.opaque,
+              onPanStart: (_) {
+                _bandResizeDelta = Offset.zero;
+                controller.beginBandResize(index);
+              },
+              onPanUpdate: (DragUpdateDetails d) {
+                _bandResizeDelta += d.delta / widget.scale;
+                controller.updateBandResize(
+                    footer ? -_bandResizeDelta.dy : _bandResizeDelta.dy);
+              },
+              onPanEnd: (_) => controller.commitBandResize(),
+              onPanCancel: controller.cancelBandResize,
+              child: Center(
+                child: SizedBox(
+                  width: barWidth,
+                  height: kHandleVisualSize,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: colors.background,
+                      border: Border.all(color: _accent, width: 1.5),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ),
         ),
       ),
     );

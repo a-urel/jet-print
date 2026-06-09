@@ -8,9 +8,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- **Designer edit surface (spec 003-designer-edit-surface) — foundation + MVP +
-  undo/redo (in progress).** The center surface is now an interactive WYSIWYG
-  canvas. New public surface from the single entry point:
+- **Designer edit surface (spec 003-designer-edit-surface).** The center surface
+  is now a fully interactive WYSIWYG canvas — create, select, move, resize,
+  multi-select, snap, align/distribute/z-order, undo/redo, zoom/pan, inline text
+  edit, model-driven panels, accessibility, localization, and a host save/open
+  seam. New public surface from the single entry point:
   - `JetReportDesignerController` (`ChangeNotifier`) — holds the in-memory
     `ReportTemplate`, the `Selection`, and unlimited session undo/redo over
     immutable `(template, selection)` snapshots; exposes `open`, `createElement`,
@@ -113,9 +115,26 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     is selected; the align/distribute items further require two or more (a lone
     element has nothing to align against), while the z-order items act on a single
     element too.
-  - *Remaining for later increments:* polish (a11y semantics, design-surface
-    goldens, the 200-element perf smoke, and the tester app's file open/save
-    wiring).
+  - **Open / Save are wired to the host.** The top bar gains an **Open** action
+    beside **Save**; both call the new `JetReportDesigner.onOpenRequested` /
+    `onSaveRequested` callbacks and render disabled when the host wired none. The
+    library still performs **no** file I/O itself (FR-022) — the tester app
+    implements the host side with `file_selector` + `JetReportFormat`.
+  - **Accessibility.** Every interactive affordance now exposes a localized
+    accessible name and a button role: each canvas element ("Text element …"),
+    all eight resize handles (directional names) and the band-height handle, and
+    the top-bar actions (Arrange, zoom, Open/Save). Element regions are discrete
+    semantics nodes so a screen reader announces one element per stop.
+  - **Localization (en / de / tr).** The Arrange menu, the Properties inspector
+    labels, the Outline root, the Open action, and all the new accessible names
+    are fully localized with English fallback — no raw keys or blank labels
+    (SC-008).
+  - **Fidelity + performance coverage.** Added design-surface goldens
+    (representative elements with a selection shown, light + dark, via the shared
+    render pipeline) and a 200-element multi-select drag performance smoke
+    (SC-007).
+  - This completes the spec-003 designer edit surface; only the merge-gate
+    house-keeping remains.
 - Report model foundation (spec 003 Part 1): pure-Dart geometry value types
   (`JetSize`/`JetOffset`/`JetEdgeInsets`/`JetRect`), `PageFormat`, the element
   model (`ReportElement`, `TextElement`, `UnknownElement`), `ReportBand`/

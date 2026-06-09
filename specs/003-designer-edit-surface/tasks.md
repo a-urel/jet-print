@@ -69,7 +69,7 @@ description: "Task list for Designer Edit Surface — Direct-Manipulation Elemen
 - [x] T018 [P] Implement `DesignerDocument` snapshot (`{template, selection}`, value-equal) in `packages/jet_print/lib/src/designer/controller/designer_document.dart`.
 - [x] T019 [P] Implement the `EditCommand` abstract base (`String get label`; `DesignerDocument apply(DesignerDocument before)`) in `packages/jet_print/lib/src/designer/controller/edit_command.dart`.
 - [x] T020 [P] Implement `EditHistory` (undo/redo snapshot stacks; `push` clears redo; `revision` counter for `shouldRepaint`) in `packages/jet_print/lib/src/designer/controller/edit_history.dart`.
-- [ ] T021 [P] Implement `Clipboard` (in-memory `List<ReportElement>`; deep-copy with fresh ids + offset on paste) in `packages/jet_print/lib/src/designer/controller/clipboard.dart`.
+- [X] T021 [P] Implement `Clipboard` (in-memory `List<ReportElement>`; deep-copy with fresh ids + offset on paste) in `packages/jet_print/lib/src/designer/controller/clipboard.dart`.
 - [x] T022 [P] Implement `ElementIdFactory` (monotonic `int`; `'<typeKey><n>'`; seed past the max suffix on `open`) in `packages/jet_print/lib/src/designer/controller/element_id_factory.dart`.
 - [x] T022a [P] Add a default-blank-`ReportTemplate` factory (a sensible default `PageFormat` + a default band structure per the spec assumption) in `packages/jet_print/lib/src/designer/controller/default_template.dart`; the no-arg `JetReportDesignerController()` and `const JetReportDesigner()` seed from it (contracts §2).
 - [x] T023 Implement the `JetReportDesignerController` skeleton (`ChangeNotifier`; `template`/`selection`/`canUndo`/`canRedo` getters; `open`; `select`/`clearSelection`; `undo`/`redo`; `beginInteraction`/`updateInteraction`/`commitInteraction`/`cancelInteraction` scaffolding; one-history-entry-per-commit plumbing; `notifyListeners`) in `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart` (depends on T017–T022a). Makes T007 pass.
@@ -254,9 +254,9 @@ description: "Task list for Designer Edit Surface — Direct-Manipulation Elemen
 - [X] T082 Wire the tester app to own a `JetReportDesignerController` and implement `onSaveRequested`/`onOpenRequested` via `file_selector` + `JetReportFormat.encodeJson`/`decodeJson` (FR-022 open/save) in `apps/jet_print_tester/lib/main.dart` (research D8).
 - [X] T083 Wire the top-bar Save/Open actions to `onSaveRequested`/`onOpenRequested` and the grid/snap toggles to the controller in `packages/jet_print/lib/src/designer/layout/designer_top_bar.dart` (depends on T031).
 - [X] T084 [P] Update the app consumer test to exercise a basic edit → save → reopen path through the public API in `apps/jet_print_tester/test/app_consumes_library_test.dart`.
-- [ ] T085 [P] Add dartdoc to all new public symbols (controller operations; designer params noting geometry + text-only editing this iteration; `JetReportFormat`; model types) and update `packages/jet_print/CHANGELOG.md` (Constitution VI).
-- [ ] T086 Verify the encapsulation + layer-boundary architecture tests still pass (no `package:jet_print/src/...` import leaks; domain stays UI-free) in `packages/jet_print/test/encapsulation_test.dart` and `packages/jet_print/test/architecture/layer_boundaries_test.dart`.
-- [ ] T087 Run the full merge gate from `packages/jet_print`: `flutter gen-l10n`, `flutter analyze` (zero warnings), `dart format --output=none --set-exit-if-changed .`, `flutter test` (all green, no skips); then run the `quickstart.md` §6 acceptance walkthrough.
+- [X] T085 [P] Add dartdoc to all new public symbols (controller operations; designer params noting geometry + text-only editing this iteration; `JetReportFormat`; model types) and update `packages/jet_print/CHANGELOG.md` (Constitution VI).
+- [X] T086 Verify the encapsulation + layer-boundary architecture tests still pass (no `package:jet_print/src/...` import leaks; domain stays UI-free) in `packages/jet_print/test/encapsulation_test.dart` and `packages/jet_print/test/architecture/layer_boundaries_test.dart`.
+- [X] T087 Run the full merge gate from `packages/jet_print`: `flutter gen-l10n`, `flutter analyze` (zero warnings), `dart format --output=none --set-exit-if-changed .`, `flutter test` (all green, no skips); then run the `quickstart.md` §6 acceptance walkthrough.
 
 ---
 
