@@ -29,6 +29,12 @@ class UnknownElement extends ReportElement {
       ? JetRect.fromJson(bounds.cast<String, Object?>())
       : JetRect.zero;
 
+  /// A no-op: an unknown element's preserved JSON is never rewritten, so it
+  /// round-trips byte-for-byte (Constitution V). Moving/resizing an
+  /// unrecognized element is intentionally inert rather than lossy.
+  @override
+  UnknownElement withBounds(JetRect bounds) => this;
+
   @override
   String toString() => 'UnknownElement($typeKey)';
 }

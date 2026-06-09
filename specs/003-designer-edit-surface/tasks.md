@@ -29,9 +29,9 @@ description: "Task list for Designer Edit Surface — Direct-Manipulation Elemen
 
 **Purpose**: Establish the new folders, the consumer dependency, and the centralized tunables.
 
-- [ ] T001 Create the new private designer-seam folders (`controller/`, `controller/commands/`, `canvas/`, `interaction/`) under `packages/jet_print/lib/src/designer/` and the matching test folders (`controller/`, `canvas/`, `interaction/`, `panels/`, `perf/`) under `packages/jet_print/test/designer/`.
+- [x] T001 Create the new private designer-seam folders (`controller/`, `controller/commands/`, `canvas/`, `interaction/`) under `packages/jet_print/lib/src/designer/` and the matching test folders (`controller/`, `canvas/`, `interaction/`, `panels/`, `perf/`) under `packages/jet_print/test/designer/`.
 - [ ] T002 [P] Add the `file_selector` dependency (consumer-only) to `apps/jet_print_tester/pubspec.yaml` and run `flutter pub get` from the repo root.
-- [ ] T003 [P] Add the behavioral-tunable constants (grid 8 pt, snap 6 px, nudge 1 pt / 10 pt, per-type default sizes, 4×4 pt min size, +8/+8 paste offset, 25 %–400 % zoom, 8 px/16 px handle sizes — research D7) in `packages/jet_print/lib/src/designer/canvas/design_tunables.dart`.
+- [x] T003 [P] Add the behavioral-tunable constants (grid 8 pt, snap 6 px, nudge 1 pt / 10 pt, per-type default sizes, 4×4 pt min size, +8/+8 paste offset, 25 %–400 % zoom, 8 px/16 px handle sizes — research D7) in `packages/jet_print/lib/src/designer/canvas/design_tunables.dart`.
 
 ---
 
@@ -43,56 +43,56 @@ description: "Task list for Designer Edit Surface — Direct-Manipulation Elemen
 
 ### Foundational tests (write FIRST — MUST fail before implementation)
 
-- [ ] T004 [P] Extend the public-API import contract test to reference `JetReportDesignerController`, `JetReportFormat`, `ReportTemplate`, the four element types, and geometry/style types through only `package:jet_print/jet_print.dart` (contracts §7.1) in `packages/jet_print/test/public_api_test.dart`.
-- [ ] T005 [P] Add the `JetReportFormat` lossless round-trip test — `decode(encode(t)) == t` across a fixture incl. `UnknownElement` + parameters/variables/groups, no reordering (contracts §7.4 / SC-002) in `packages/jet_print/test/domain/serialization/report_format_test.dart`.
-- [ ] T006 [P] Add domain-helper unit tests for `withBounds` (each element type, incl. `UnknownElement` passthrough) and `copyWith` (text/band/template), asserting value-equality and referential preservation of untouched fields (FR-025) in `packages/jet_print/test/domain/elements/element_with_bounds_test.dart` and `packages/jet_print/test/domain/report_template_copywith_test.dart`.
-- [ ] T007 Add the controller-core unit test — `open` seeds the id sequence past the largest suffix; `undo`/`redo` restore both template and selection; `canUndo`/`canRedo` correct; undo/redo past the ends is a no-op (contracts §7.5 / SC-003) in `packages/jet_print/test/designer/controller/controller_history_test.dart`.
+- [x] T004 [P] Extend the public-API import contract test to reference `JetReportDesignerController`, `JetReportFormat`, `ReportTemplate`, the four element types, and geometry/style types through only `package:jet_print/jet_print.dart` (contracts §7.1) in `packages/jet_print/test/public_api_test.dart`.
+- [x] T005 [P] Add the `JetReportFormat` lossless round-trip test — `decode(encode(t)) == t` across a fixture incl. `UnknownElement` + parameters/variables/groups, no reordering (contracts §7.4 / SC-002) in `packages/jet_print/test/domain/serialization/report_format_test.dart`.
+- [x] T006 [P] Add domain-helper unit tests for `withBounds` (each element type, incl. `UnknownElement` passthrough) and `copyWith` (text/band/template), asserting value-equality and referential preservation of untouched fields (FR-025) in `packages/jet_print/test/domain/elements/element_with_bounds_test.dart` and `packages/jet_print/test/domain/report_template_copywith_test.dart`.
+- [x] T007 Add the controller-core unit test — `open` seeds the id sequence past the largest suffix; `undo`/`redo` restore both template and selection; `canUndo`/`canRedo` correct; undo/redo past the ends is a no-op (contracts §7.5 / SC-003) in `packages/jet_print/test/designer/controller/controller_history_test.dart`.
 
 ### Additive domain helpers (the move/resize/copy primitives)
 
-- [ ] T008 Add abstract `withBounds(JetRect)` to `ReportElement` in `packages/jet_print/lib/src/domain/report_element.dart`.
-- [ ] T009 [P] Implement `withBounds` + `copyWith({text, style, bounds})` on `TextElement` in `packages/jet_print/lib/src/domain/elements/text_element.dart` (after T008).
-- [ ] T010 [P] Implement `withBounds` on `ShapeElement` in `packages/jet_print/lib/src/domain/elements/shape_element.dart` (after T008).
-- [ ] T011 [P] Implement `withBounds` on `ImageElement` in `packages/jet_print/lib/src/domain/elements/image_element.dart` (after T008).
-- [ ] T012 [P] Implement `withBounds` on `BarcodeElement` in `packages/jet_print/lib/src/domain/elements/barcode_element.dart` (after T008).
-- [ ] T013 [P] Implement `withBounds` passthrough on `UnknownElement` (preserve the raw map byte-for-byte) in `packages/jet_print/lib/src/domain/unknown_element.dart` (after T008).
-- [ ] T014 [P] Add `copyWith({type, height, elements, group})` to `ReportBand` in `packages/jet_print/lib/src/domain/report_band.dart`.
-- [ ] T015 [P] Add `copyWith({name, page, bands, ...})` to `ReportTemplate`, preserving parameters/variables/groups, in `packages/jet_print/lib/src/domain/report_template.dart`.
+- [x] T008 Add abstract `withBounds(JetRect)` to `ReportElement` in `packages/jet_print/lib/src/domain/report_element.dart`.
+- [x] T009 [P] Implement `withBounds` + `copyWith({text, style, bounds})` on `TextElement` in `packages/jet_print/lib/src/domain/elements/text_element.dart` (after T008).
+- [x] T010 [P] Implement `withBounds` on `ShapeElement` in `packages/jet_print/lib/src/domain/elements/shape_element.dart` (after T008).
+- [x] T011 [P] Implement `withBounds` on `ImageElement` in `packages/jet_print/lib/src/domain/elements/image_element.dart` (after T008).
+- [x] T012 [P] Implement `withBounds` on `BarcodeElement` in `packages/jet_print/lib/src/domain/elements/barcode_element.dart` (after T008).
+- [x] T013 [P] Implement `withBounds` passthrough on `UnknownElement` (preserve the raw map byte-for-byte) in `packages/jet_print/lib/src/domain/unknown_element.dart` (after T008).
+- [x] T014 [P] Add `copyWith({type, height, elements, group})` to `ReportBand` in `packages/jet_print/lib/src/domain/report_band.dart`.
+- [x] T015 [P] Add `copyWith({name, page, bands, ...})` to `ReportTemplate`, preserving parameters/variables/groups, in `packages/jet_print/lib/src/domain/report_template.dart`.
 
 ### Serialization facade (public file-format contract)
 
-- [ ] T016 Implement the public `JetReportFormat` facade — `encode`/`decode`/`encodeJson`/`decodeJson`, pre-wiring the built-in element codecs + migrations, stamping `schemaVersion`, throwing `ReportFormatException` on invalid/newer version (contracts §4) in `packages/jet_print/lib/src/domain/serialization/report_format.dart`. Makes T005 pass.
+- [x] T016 Implement the public `JetReportFormat` facade — `encode`/`decode`/`encodeJson`/`decodeJson`, pre-wiring the built-in element codecs + migrations, stamping `schemaVersion`, throwing `ReportFormatException` on invalid/newer version (contracts §4) in `packages/jet_print/lib/src/domain/serialization/report_format.dart`. Makes T005 pass.
 
 ### Editing-state core (controller + snapshots + history)
 
-- [ ] T017 [P] Implement `Selection` (immutable id set; `isEmpty`/`contains`/`single`/`with`/`without`/`toggled`) in `packages/jet_print/lib/src/designer/controller/selection.dart`.
-- [ ] T018 [P] Implement `DesignerDocument` snapshot (`{template, selection}`, value-equal) in `packages/jet_print/lib/src/designer/controller/designer_document.dart`.
-- [ ] T019 [P] Implement the `EditCommand` abstract base (`String get label`; `DesignerDocument apply(DesignerDocument before)`) in `packages/jet_print/lib/src/designer/controller/edit_command.dart`.
-- [ ] T020 [P] Implement `EditHistory` (undo/redo snapshot stacks; `push` clears redo; `revision` counter for `shouldRepaint`) in `packages/jet_print/lib/src/designer/controller/edit_history.dart`.
+- [x] T017 [P] Implement `Selection` (immutable id set; `isEmpty`/`contains`/`single`/`with`/`without`/`toggled`) in `packages/jet_print/lib/src/designer/controller/selection.dart`.
+- [x] T018 [P] Implement `DesignerDocument` snapshot (`{template, selection}`, value-equal) in `packages/jet_print/lib/src/designer/controller/designer_document.dart`.
+- [x] T019 [P] Implement the `EditCommand` abstract base (`String get label`; `DesignerDocument apply(DesignerDocument before)`) in `packages/jet_print/lib/src/designer/controller/edit_command.dart`.
+- [x] T020 [P] Implement `EditHistory` (undo/redo snapshot stacks; `push` clears redo; `revision` counter for `shouldRepaint`) in `packages/jet_print/lib/src/designer/controller/edit_history.dart`.
 - [ ] T021 [P] Implement `Clipboard` (in-memory `List<ReportElement>`; deep-copy with fresh ids + offset on paste) in `packages/jet_print/lib/src/designer/controller/clipboard.dart`.
-- [ ] T022 [P] Implement `ElementIdFactory` (monotonic `int`; `'<typeKey><n>'`; seed past the max suffix on `open`) in `packages/jet_print/lib/src/designer/controller/element_id_factory.dart`.
-- [ ] T022a [P] Add a default-blank-`ReportTemplate` factory (a sensible default `PageFormat` + a default band structure per the spec assumption) in `packages/jet_print/lib/src/designer/controller/default_template.dart`; the no-arg `JetReportDesignerController()` and `const JetReportDesigner()` seed from it (contracts §2).
-- [ ] T023 Implement the `JetReportDesignerController` skeleton (`ChangeNotifier`; `template`/`selection`/`canUndo`/`canRedo` getters; `open`; `select`/`clearSelection`; `undo`/`redo`; `beginInteraction`/`updateInteraction`/`commitInteraction`/`cancelInteraction` scaffolding; one-history-entry-per-commit plumbing; `notifyListeners`) in `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart` (depends on T017–T022a). Makes T007 pass.
+- [x] T022 [P] Implement `ElementIdFactory` (monotonic `int`; `'<typeKey><n>'`; seed past the max suffix on `open`) in `packages/jet_print/lib/src/designer/controller/element_id_factory.dart`.
+- [x] T022a [P] Add a default-blank-`ReportTemplate` factory (a sensible default `PageFormat` + a default band structure per the spec assumption) in `packages/jet_print/lib/src/designer/controller/default_template.dart`; the no-arg `JetReportDesignerController()` and `const JetReportDesigner()` seed from it (contracts §2).
+- [x] T023 Implement the `JetReportDesignerController` skeleton (`ChangeNotifier`; `template`/`selection`/`canUndo`/`canRedo` getters; `open`; `select`/`clearSelection`; `undo`/`redo`; `beginInteraction`/`updateInteraction`/`commitInteraction`/`cancelInteraction` scaffolding; one-history-entry-per-commit plumbing; `notifyListeners`) in `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart` (depends on T017–T022a). Makes T007 pass.
 
 ### Public surface
 
-- [ ] T024 Export the controller, `JetReportFormat`, and the `ReportTemplate`-reachable model graph (model + geometry + style + parameter/variable/group types) from `packages/jet_print/lib/jet_print.dart` (contracts §1). Makes T004 pass (depends on T016, T023).
+- [x] T024 Export the controller, `JetReportFormat`, and the `ReportTemplate`-reachable model graph (model + geometry + style + parameter/variable/group types) from `packages/jet_print/lib/jet_print.dart` (contracts §1). Makes T004 pass (depends on T016, T023).
 
 ### Canvas base infrastructure (shared-render reuse — Constitution IV)
 
-- [ ] T025 [P] Implement `CanvasViewTransform` (`scale` + `pan`; `pageToScreen`/`screenToPage`) in `packages/jet_print/lib/src/designer/canvas/canvas_view_transform.dart`.
-- [ ] T026 [P] Implement `DesignTimeLayout` (template → element id ⇒ absolute page `JetRect` + owning band; band ⇒ page rect; non-paginated top-to-bottom band stacking) in `packages/jet_print/lib/src/designer/canvas/design_time_layout.dart`.
-- [ ] T027 Implement the design-time frame builder (template + layout → `PageFrame` via the **unchanged** `ElementRenderer.emit` + `FrameBuilder` — Constitution IV, research D1; no duplicated element-drawing code) in `packages/jet_print/lib/src/designer/canvas/design_time_frame.dart` (depends on T026).
-- [ ] T028 Implement `FrameCustomPainter` wrapping the unchanged `CanvasPainter`, caching the committed frame as a `ui.Picture` and re-blitting under the transform (research D5) in `packages/jet_print/lib/src/designer/canvas/frame_custom_painter.dart` (depends on T027).
-- [ ] T029 [P] Implement hit-testing (page point → top-most element in z-order; handle hit; hit-area ≥ visual) in `packages/jet_print/lib/src/designer/canvas/hit_test.dart` (depends on T026).
-- [ ] T030 Implement the `DesignCanvas` host shell (`Focus` + `CustomPaint` + `DragTarget` + pointer/gesture wiring scaffold; base/interaction/overlay paint layers; reads the controller) in `packages/jet_print/lib/src/designer/canvas/design_canvas.dart` (depends on T025, T028, T029).
+- [x] T025 [P] Implement `CanvasViewTransform` (`scale` + `pan`; `pageToScreen`/`screenToPage`) in `packages/jet_print/lib/src/designer/canvas/canvas_view_transform.dart`.
+- [x] T026 [P] Implement `DesignTimeLayout` (template → element id ⇒ absolute page `JetRect` + owning band; band ⇒ page rect; non-paginated top-to-bottom band stacking) in `packages/jet_print/lib/src/designer/canvas/design_time_layout.dart`.
+- [x] T027 Implement the design-time frame builder (template + layout → `PageFrame` via the **unchanged** `ElementRenderer.emit` + `FrameBuilder` — Constitution IV, research D1; no duplicated element-drawing code) in `packages/jet_print/lib/src/designer/canvas/design_time_frame.dart` (depends on T026).
+- [x] T028 Implement `FrameCustomPainter` wrapping the unchanged `CanvasPainter`, caching the committed frame as a `ui.Picture` and re-blitting under the transform (research D5) in `packages/jet_print/lib/src/designer/canvas/frame_custom_painter.dart` (depends on T027).
+- [x] T029 [P] Implement hit-testing (page point → top-most element in z-order; handle hit; hit-area ≥ visual) in `packages/jet_print/lib/src/designer/canvas/hit_test.dart` (depends on T026).
+- [x] T030 Implement the `DesignCanvas` host shell (`Focus` + `CustomPaint` + `DragTarget` + pointer/gesture wiring scaffold; base/interaction/overlay paint layers; reads the controller) in `packages/jet_print/lib/src/designer/canvas/design_canvas.dart` (depends on T025, T028, T029).
 
 ### Widget shell + test harness
 
-- [ ] T031 Convert `JetReportDesigner` to a `StatefulWidget` with optional `controller`/`initialReport`/`onSaveRequested`/`onOpenRequested` (still `const`-constructible with no args over a default blank template), providing the controller down-tree via `InheritedNotifier` (contracts §2, research D6) in `packages/jet_print/lib/src/designer/jet_report_designer.dart`.
-- [ ] T032 Replace the static A4 placeholder in `DesignerSurface` with the live `DesignCanvas` (reads the controller via the `InheritedNotifier`) in `packages/jet_print/lib/src/designer/layout/designer_surface.dart` (depends on T030, T031).
-- [ ] T033 [P] Extend the test harness (pump `JetReportDesigner` with a supplied controller; canvas keys/finders; page↔screen helpers) in `packages/jet_print/test/designer/support/designer_harness.dart`.
-- [ ] T034 [P] Add the backward-compat construction test (`const JetReportDesigner()` still constructs — 002 contract) AND assert the no-arg controller yields the default blank template's band structure (contracts §2, T022a) in `packages/jet_print/test/designer/jet_report_designer_test.dart` (contracts §7.3).
+- [x] T031 Convert `JetReportDesigner` to a `StatefulWidget` with optional `controller`/`initialReport`/`onSaveRequested`/`onOpenRequested` (still `const`-constructible with no args over a default blank template), providing the controller down-tree via `InheritedNotifier` (contracts §2, research D6) in `packages/jet_print/lib/src/designer/jet_report_designer.dart`.
+- [x] T032 Replace the static A4 placeholder in `DesignerSurface` with the live `DesignCanvas` (reads the controller via the `InheritedNotifier`) in `packages/jet_print/lib/src/designer/layout/designer_surface.dart` (depends on T030, T031).
+- [x] T033 [P] Extend the test harness (pump `JetReportDesigner` with a supplied controller; canvas keys/finders; page↔screen helpers) in `packages/jet_print/test/designer/support/designer_harness.dart`.
+- [x] T034 [P] Add the backward-compat construction test (`const JetReportDesigner()` still constructs — 002 contract) AND assert the no-arg controller yields the default blank template's band structure (contracts §2, T022a) in `packages/jet_print/test/designer/jet_report_designer_test.dart` (contracts §7.3).
 
 **Checkpoint**: Public model + format exposed and round-trip-tested; controller with undo/redo green; the surface hosts a live (empty-capable) canvas. User stories can now begin.
 
@@ -106,17 +106,17 @@ description: "Task list for Designer Edit Surface — Direct-Manipulation Elemen
 
 ### Tests for User Story 1 (write FIRST — MUST fail)
 
-- [ ] T035 [P] [US1] `CreateElementCommand` + `MoveCommand` unit tests (typed default element at a band point with a fresh id, selected; move via `withBounds` clamped to band ∩ page; non-destructive to siblings) in `packages/jet_print/test/designer/controller/create_move_command_test.dart`.
-- [ ] T036 [P] [US1] Drop-create + click-select + drag-move widget tests (each toolbox type drops at the pointer in the target band; click selects + shows 8 handles; empty-click clears; drag moves + commits on release; off-page drag constrained — contracts §7.6 / acceptance US1.1–US1.5) in `packages/jet_print/test/designer/canvas/place_select_move_test.dart`.
+- [x] T035 [P] [US1] `CreateElementCommand` + `MoveCommand` unit tests (typed default element at a band point with a fresh id, selected; move via `withBounds` clamped to band ∩ page; non-destructive to siblings) in `packages/jet_print/test/designer/controller/create_move_command_test.dart`.
+- [x] T036 [P] [US1] Drop-create + click-select + drag-move widget tests (each toolbox type drops at the pointer in the target band; click selects + shows 8 handles; empty-click clears; drag moves + commits on release; off-page drag constrained — contracts §7.6 / acceptance US1.1–US1.5) in `packages/jet_print/test/designer/canvas/place_select_move_test.dart`.
 
 ### Implementation for User Story 1
 
-- [ ] T037 [P] [US1] Implement `CreateElementCommand` (insert a typed element with default size/attrs from tunables + fresh id; route/reject an invalid drop band; select the new element) in `packages/jet_print/lib/src/designer/controller/commands/create_element_command.dart`.
-- [ ] T038 [P] [US1] Implement `MoveCommand` (new bounds via `withBounds`, clamped to owning band ∩ page content area; multi-element aware) in `packages/jet_print/lib/src/designer/controller/commands/move_command.dart`.
-- [ ] T039 [US1] Add `createElement(type, bandId, atPage)`, single-click `select`, and move-interaction commit (`moveBy` + begin/update/commit) to the controller in `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart` (depends on T037, T038).
-- [ ] T040 [US1] Implement toolbox drag payloads (`Draggable<DesignerToolType>`) + click-to-place, and the canvas `DragTarget` drop → page-coordinate conversion → `createElement`, in `packages/jet_print/lib/src/designer/interaction/toolbox_drag.dart` and `packages/jet_print/lib/src/designer/layout/designer_toolbox.dart` (depends on T039).
-- [ ] T041 [US1] Implement the selection overlay (selection outline + 8 resize handles; body-drag move ghost; drop hint) in `packages/jet_print/lib/src/designer/canvas/selection_overlay.dart`.
-- [ ] T042 [US1] Wire canvas pointer/gesture handling for click-select, empty-click-clear, and body-drag move (begin/update/commit interaction) in `packages/jet_print/lib/src/designer/canvas/design_canvas.dart` (depends on T039, T041).
+- [x] T037 [P] [US1] Implement `CreateElementCommand` (insert a typed element with default size/attrs from tunables + fresh id; route/reject an invalid drop band; select the new element) in `packages/jet_print/lib/src/designer/controller/commands/create_element_command.dart`.
+- [x] T038 [P] [US1] Implement `MoveCommand` (new bounds via `withBounds`, clamped to owning band ∩ page content area; multi-element aware) in `packages/jet_print/lib/src/designer/controller/commands/move_command.dart`.
+- [x] T039 [US1] Add `createElement(type, bandId, atPage)`, single-click `select`, and move-interaction commit (`moveBy` + begin/update/commit) to the controller in `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart` (depends on T037, T038).
+- [x] T040 [US1] Implement toolbox drag payloads (`Draggable<DesignerToolType>`) + click-to-place, and the canvas `DragTarget` drop → page-coordinate conversion → `createElement`, in `packages/jet_print/lib/src/designer/interaction/toolbox_drag.dart` and `packages/jet_print/lib/src/designer/layout/designer_toolbox.dart` (depends on T039).
+- [x] T041 [US1] Implement the selection overlay (selection outline + 8 resize handles; body-drag move ghost; drop hint) in `packages/jet_print/lib/src/designer/canvas/selection_overlay.dart`.
+- [x] T042 [US1] Wire canvas pointer/gesture handling for click-select, empty-click-clear, and body-drag move (begin/update/commit interaction) in `packages/jet_print/lib/src/designer/canvas/design_canvas.dart` (depends on T039, T041).
 
 **Checkpoint**: An author can place, select, and move elements by direct manipulation; positions round-trip losslessly. MVP is demoable.
 
@@ -130,17 +130,17 @@ description: "Task list for Designer Edit Surface — Direct-Manipulation Elemen
 
 ### Tests for User Story 2 (write FIRST — MUST fail)
 
-- [ ] T043 [P] [US2] `ResizeCommand` + snapping unit tests (per-handle resize, 4×4 pt floor, model w/h commit; snap to grid / sibling edges+centers / band+page bounds within threshold; bypass flag) in `packages/jet_print/test/designer/controller/resize_command_test.dart` and `packages/jet_print/test/designer/canvas/snapping_test.dart`.
-- [ ] T044 [P] [US2] Resize + snap-guide widget test (drag each handle resizes with live feedback; snap + guide line appears; Alt/Option bypasses — contracts §7.6 / SC-004 / acceptance US2.1–US2.4) in `packages/jet_print/test/designer/canvas/resize_snap_test.dart`.
+- [x] T043 [P] [US2] `ResizeCommand` + snapping unit tests (per-handle resize, 4×4 pt floor, model w/h commit; snap to grid / sibling edges+centers / band+page bounds within threshold; bypass flag) in `packages/jet_print/test/designer/controller/resize_command_test.dart` and `packages/jet_print/test/designer/canvas/snapping_test.dart`.
+- [x] T044 [P] [US2] Resize + snap-guide widget test (drag each handle resizes with live feedback; snap + guide line appears; Alt/Option bypasses — contracts §7.6 / SC-004 / acceptance US2.1–US2.4) in `packages/jet_print/test/designer/canvas/resize_snap_test.dart`.
 
 ### Implementation for User Story 2
 
-- [ ] T045 [P] [US2] Implement `ResizeCommand` (per-handle resize, min 4×4 pt floor with the line one-axis exception, clamp to band ∩ page) in `packages/jet_print/lib/src/designer/controller/commands/resize_command.dart`.
-- [ ] T046 [P] [US2] Implement snapping (grid + sibling edges/centers + band/page bounds → `SnapResult` + `SnapGuide`s; screen-px threshold converted via the live zoom; Alt/Option bypass) in `packages/jet_print/lib/src/designer/canvas/snapping.dart` (depends on T025).
-- [ ] T046a [P] [US2] Add a grid-toggle snapping test — with the grid enabled, move/resize snaps positions/sizes to the grid increment; with it disabled, grid snap is suppressed (sibling/band snap unaffected); `snapEnabled == false` suppresses all snapping (US2.4 / FR-011) in `packages/jet_print/test/designer/canvas/snapping_test.dart` (extend; write FIRST — MUST fail).
-- [ ] T046b [US2] Add `gridEnabled` / `snapEnabled` boolean state to the controller (default on; `setGridEnabled`/`setSnapEnabled`; notifies) in `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart`, and consult both flags in `packages/jet_print/lib/src/designer/canvas/snapping.dart` (T046). Makes T046a pass.
-- [ ] T047 [US2] Add `resizeTo` + resize-interaction commit (snapping applied during the gesture, honoring `gridEnabled`/`snapEnabled` — T046b) to the controller in `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart` (depends on T045, T046).
-- [ ] T048 [US2] Add handle-drag resize gestures + live snap-guide rendering to the canvas and overlay in `packages/jet_print/lib/src/designer/canvas/design_canvas.dart` and `packages/jet_print/lib/src/designer/canvas/selection_overlay.dart` (depends on T047).
+- [x] T045 [P] [US2] Implement `ResizeCommand` (per-handle resize, min 4×4 pt floor with the line one-axis exception, clamp to band ∩ page) in `packages/jet_print/lib/src/designer/controller/commands/resize_command.dart`.
+- [x] T046 [P] [US2] Implement snapping (grid + sibling edges/centers + band/page bounds → `SnapResult` + `SnapGuide`s; screen-px threshold converted via the live zoom; Alt/Option bypass) in `packages/jet_print/lib/src/designer/canvas/snapping.dart` (depends on T025).
+- [x] T046a [P] [US2] Add a grid-toggle snapping test — with the grid enabled, move/resize snaps positions/sizes to the grid increment; with it disabled, grid snap is suppressed (sibling/band snap unaffected); `snapEnabled == false` suppresses all snapping (US2.4 / FR-011) in `packages/jet_print/test/designer/canvas/snapping_test.dart` (extend; write FIRST — MUST fail).
+- [x] T046b [US2] Add `gridEnabled` / `snapEnabled` boolean state to the controller (default on; `setGridEnabled`/`setSnapEnabled`; notifies) in `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart`, and consult both flags in `packages/jet_print/lib/src/designer/canvas/snapping.dart` (T046). Makes T046a pass.
+- [x] T047 [US2] Add `resizeTo` + resize-interaction commit (snapping applied during the gesture, honoring `gridEnabled`/`snapEnabled` — T046b) to the controller in `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart` (depends on T045, T046).
+- [x] T048 [US2] Add handle-drag resize gestures + live snap-guide rendering to the canvas and overlay in `packages/jet_print/lib/src/designer/canvas/design_canvas.dart` and `packages/jet_print/lib/src/designer/canvas/selection_overlay.dart` (depends on T047).
 
 **Checkpoint**: Elements resize precisely and snap/align with guides; bypass works. US1 + US2 both functional.
 
@@ -156,14 +156,14 @@ description: "Task list for Designer Edit Surface — Direct-Manipulation Elemen
 
 ### Tests for User Story 3 (write FIRST — MUST fail)
 
-- [ ] T049 [P] [US3] Undo/redo sequence test — a ≥50-step create/move/resize sequence (SC-003) undoes in reverse and redoes in order with model + selection exact at every step; a new edit after undo discards redo; past-the-end is a no-op (contracts §7.5 / SC-003 / acceptance US3.1–US3.4) in `packages/jet_print/test/designer/controller/undo_redo_sequence_test.dart`.
-- [ ] T050 [P] [US3] Top-bar undo/redo widget test — buttons reflect `canUndo`/`canRedo` and drive `controller.undo`/`redo`; `⌘Z`/`⇧⌘Z` act only when the canvas is focused in `packages/jet_print/test/designer/interaction/undo_redo_controls_test.dart`.
+- [x] T049 [P] [US3] Undo/redo sequence test — a ≥50-step create/move/resize sequence (SC-003) undoes in reverse and redoes in order with model + selection exact at every step; a new edit after undo discards redo; past-the-end is a no-op (contracts §7.5 / SC-003 / acceptance US3.1–US3.4) in `packages/jet_print/test/designer/controller/undo_redo_sequence_test.dart`.
+- [x] T050 [P] [US3] Top-bar undo/redo widget test — buttons reflect `canUndo`/`canRedo` and drive `controller.undo`/`redo`; `⌘Z`/`⇧⌘Z` act only when the canvas is focused in `packages/jet_print/test/designer/interaction/undo_redo_controls_test.dart`.
 
 ### Implementation for User Story 3
 
-- [ ] T051 [US3] Audit that every command commit pushes the prior `DesignerDocument` and clears redo (create/move/resize) via the controller's single commit path in `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart`.
-- [ ] T052 [US3] Wire the top-bar Undo/Redo buttons to `controller.undo`/`redo` with enablement bound to `canUndo`/`canRedo` in `packages/jet_print/lib/src/designer/layout/designer_top_bar.dart`.
-- [ ] T053 [US3] Introduce canvas-focus-scoped `Shortcuts`/`Actions` with undo/redo bindings in `packages/jet_print/lib/src/designer/interaction/canvas_shortcuts.dart` and mount it on the canvas focus node in `packages/jet_print/lib/src/designer/canvas/design_canvas.dart`.
+- [x] T051 [US3] Audit that every command commit pushes the prior `DesignerDocument` and clears redo (create/move/resize) via the controller's single commit path in `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart`.
+- [x] T052 [US3] Wire the top-bar Undo/Redo buttons to `controller.undo`/`redo` with enablement bound to `canUndo`/`canRedo` in `packages/jet_print/lib/src/designer/layout/designer_top_bar.dart`.
+- [x] T053 [US3] Introduce canvas-focus-scoped `Shortcuts`/`Actions` with undo/redo bindings in `packages/jet_print/lib/src/designer/interaction/canvas_shortcuts.dart` and mount it on the canvas focus node in `packages/jet_print/lib/src/designer/canvas/design_canvas.dart`.
 
 **Checkpoint**: Undo/redo reverses/replays every edit (model + selection); controls reflect availability.
 
@@ -177,20 +177,20 @@ description: "Task list for Designer Edit Surface — Direct-Manipulation Elemen
 
 ### Tests for User Story 4 (write FIRST — MUST fail)
 
-- [ ] T054 [P] [US4] Bulk-command unit tests — `Delete`/`Reorder`/`Clipboard`(paste, duplicate)/`Align`/`Distribute`/`Nudge` against a fixture (acts on the whole selection; offset on paste/duplicate with fresh ids; reorder within `band.elements`; undoable) in `packages/jet_print/test/designer/controller/bulk_commands_test.dart`.
-- [ ] T055 [P] [US4] Multi-select + bulk widget tests — marquee encloses → selects; shift-click add/remove; select-all; arrow nudge (Shift larger); delete; copy/paste; duplicate; bring-forward/send-back; align-left/distribute (contracts §7.6 / acceptance US4.1–US4.6) in `packages/jet_print/test/designer/canvas/marquee_multiselect_test.dart` and `packages/jet_print/test/designer/interaction/keyboard_clipboard_test.dart`.
+- [x] T054 [P] [US4] Bulk-command unit tests — `Delete`/`Reorder`/`Clipboard`(paste, duplicate)/`Align`/`Distribute`/`Nudge` against a fixture (acts on the whole selection; offset on paste/duplicate with fresh ids; reorder within `band.elements`; undoable) in `packages/jet_print/test/designer/controller/bulk_commands_test.dart`.
+- [x] T055 [P] [US4] Multi-select + bulk widget tests — marquee encloses → selects; shift-click add/remove; select-all; arrow nudge (Shift larger); delete; copy/paste; duplicate; bring-forward/send-back; align-left/distribute (contracts §7.6 / acceptance US4.1–US4.6) in `packages/jet_print/test/designer/canvas/marquee_multiselect_test.dart` and `packages/jet_print/test/designer/interaction/keyboard_clipboard_test.dart`.
 
 ### Implementation for User Story 4
 
-- [ ] T056 [P] [US4] Implement `DeleteCommand` (remove selected elements from their bands) in `packages/jet_print/lib/src/designer/controller/commands/delete_command.dart`.
-- [ ] T057 [P] [US4] Implement `ReorderCommand` (forward/back/to-front/to-back within `band.elements`) in `packages/jet_print/lib/src/designer/controller/commands/reorder_command.dart`.
-- [ ] T058 [P] [US4] Implement `ClipboardCommand` (paste/duplicate; +8/+8 offset copies; fresh ids; select the new elements) in `packages/jet_print/lib/src/designer/controller/commands/clipboard_command.dart`.
-- [ ] T059 [P] [US4] Implement `AlignCommand` (left/center/right/top/middle/bottom) in `packages/jet_print/lib/src/designer/controller/commands/align_command.dart`.
-- [ ] T060 [P] [US4] Implement `DistributeCommand` (horizontal/vertical) in `packages/jet_print/lib/src/designer/controller/commands/distribute_command.dart`.
-- [ ] T061 [P] [US4] Implement `NudgeCommand` (1 pt arrow / 10 pt Shift+arrow) in `packages/jet_print/lib/src/designer/controller/commands/nudge_command.dart`.
-- [ ] T062 [US4] Add `selectAll`/`addToSelection`/`toggle`, `delete`, `cut`/`copy`/`paste`/`duplicate`, `bringForward`/`sendBackward`/`bringToFront`/`sendToBack`, `align`/`distribute`, `nudge` methods to the controller in `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart` (depends on T056–T061).
-- [ ] T063 [US4] Implement marquee drag (rubber-band rect; enclosed → selection on release) + shift-click add/remove in `packages/jet_print/lib/src/designer/canvas/design_canvas.dart` and `packages/jet_print/lib/src/designer/canvas/selection_overlay.dart` (depends on T062).
-- [ ] T064 [US4] Extend the canvas shortcuts with nudge/Shift-nudge, delete, copy/cut/paste/duplicate, select-all, Escape-clear (FR-006) (canvas-focus-scoped) in `packages/jet_print/lib/src/designer/interaction/canvas_shortcuts.dart` (depends on T062).
+- [x] T056 [P] [US4] Implement `DeleteCommand` (remove selected elements from their bands) in `packages/jet_print/lib/src/designer/controller/commands/delete_command.dart`.
+- [x] T057 [P] [US4] Implement `ReorderCommand` (forward/back/to-front/to-back within `band.elements`) in `packages/jet_print/lib/src/designer/controller/commands/reorder_command.dart`.
+- [x] T058 [P] [US4] Implement `ClipboardCommand` (paste/duplicate; +8/+8 offset copies; fresh ids; select the new elements) in `packages/jet_print/lib/src/designer/controller/commands/clipboard_command.dart`.
+- [x] T059 [P] [US4] Implement `AlignCommand` (left/center/right/top/middle/bottom) in `packages/jet_print/lib/src/designer/controller/commands/align_command.dart`.
+- [x] T060 [P] [US4] Implement `DistributeCommand` (horizontal/vertical) in `packages/jet_print/lib/src/designer/controller/commands/distribute_command.dart`.
+- [x] T061 [P] [US4] Implement `NudgeCommand` (1 pt arrow / 10 pt Shift+arrow) in `packages/jet_print/lib/src/designer/controller/commands/nudge_command.dart`.
+- [x] T062 [US4] Add `selectAll`/`addToSelection`/`toggle`, `delete`, `cut`/`copy`/`paste`/`duplicate`, `bringForward`/`sendBackward`/`bringToFront`/`sendToBack`, `align`/`distribute`, `nudge` methods to the controller in `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart` (depends on T056–T061).
+- [x] T063 [US4] Implement marquee drag (rubber-band rect; enclosed → selection on release) + shift-click add/remove in `packages/jet_print/lib/src/designer/canvas/design_canvas.dart` and `packages/jet_print/lib/src/designer/canvas/selection_overlay.dart` (depends on T062).
+- [x] T064 [US4] Extend the canvas shortcuts with nudge/Shift-nudge, delete, copy/cut/paste/duplicate, select-all, Escape-clear (FR-006) (canvas-focus-scoped) in `packages/jet_print/lib/src/designer/interaction/canvas_shortcuts.dart` (depends on T062).
 - [ ] T065 [US4] Add z-order + align/distribute action affordances (top-bar and/or canvas context menu) wired to the controller in `packages/jet_print/lib/src/designer/layout/designer_top_bar.dart` (depends on T062).
 
 **Checkpoint**: Bulk operations act on the whole selection and are undoable. US1–US4 functional.
@@ -205,17 +205,17 @@ description: "Task list for Designer Edit Surface — Direct-Manipulation Elemen
 
 ### Tests for User Story 5 (write FIRST — MUST fail)
 
-- [ ] T066 [P] [US5] `SetGeometryCommand` + `SetTextCommand` unit tests (numeric x/y/w/h set + clamp; text set; non-destructive; undoable) in `packages/jet_print/test/designer/controller/geometry_text_command_test.dart`.
+- [x] T066 [P] [US5] `SetGeometryCommand` + `SetTextCommand` unit tests (numeric x/y/w/h set + clamp; text set; non-destructive; undoable) in `packages/jet_print/test/designer/controller/geometry_text_command_test.dart`.
 - [ ] T067 [P] [US5] Cross-panel sync + inline-edit widget tests — canvas select → Outline highlight + Properties reflect; Outline row → canvas select + scroll-into-view; Properties number edit → canvas updates (undoable); double-click text → inline edit commits (contracts §7.7 / SC-005 / acceptance US5.1–US5.3) in `packages/jet_print/test/designer/panels/cross_panel_sync_test.dart` and `packages/jet_print/test/designer/canvas/inline_text_edit_test.dart`.
 
 ### Implementation for User Story 5
 
-- [ ] T068 [P] [US5] Implement `SetGeometryCommand` (set x/y/w/h numerically, clamped to band ∩ page) in `packages/jet_print/lib/src/designer/controller/commands/set_geometry_command.dart`.
-- [ ] T069 [P] [US5] Implement `SetTextCommand` (set a text element's `text` via `copyWith`) in `packages/jet_print/lib/src/designer/controller/commands/set_text_command.dart`.
-- [ ] T070 [US5] Add `setGeometry(...)` and `setText(...)` to the controller in `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart` (depends on T068, T069).
+- [x] T068 [P] [US5] Implement `SetGeometryCommand` (set x/y/w/h numerically, clamped to band ∩ page) in `packages/jet_print/lib/src/designer/controller/commands/set_geometry_command.dart`.
+- [x] T069 [P] [US5] Implement `SetTextCommand` (set a text element's `text` via `copyWith`) in `packages/jet_print/lib/src/designer/controller/commands/set_text_command.dart`.
+- [x] T070 [US5] Add `setGeometry(...)` and `setText(...)` to the controller in `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart` (depends on T068, T069).
 - [ ] T071 [US5] Make the Outline panel model-driven (tree from `template`; highlight `selection`; row tap → `controller.select`; scroll/zoom the element into view) in `packages/jet_print/lib/src/designer/layout/panels/outline_panel.dart` (depends on T070).
 - [ ] T072 [US5] Make the Properties panel model-driven (x/y/w/h numeric fields bound to `setGeometry`; text field for a single text element bound to `setText`) in `packages/jet_print/lib/src/designer/layout/panels/properties_panel.dart` (depends on T070).
-- [ ] T073 [US5] Implement the inline text editor overlay (double-click a text element → positioned `ShadInput` at the current scale; commit on Enter/blur via `setText`) in `packages/jet_print/lib/src/designer/canvas/inline_text_editor.dart` and wire it into `packages/jet_print/lib/src/designer/canvas/design_canvas.dart` (depends on T070).
+- [x] T073 [US5] Implement the inline text editor overlay (double-click a text element → positioned `ShadInput` at the current scale; commit on Enter/blur via `setText`) in `packages/jet_print/lib/src/designer/canvas/inline_text_editor.dart` and wire it into `packages/jet_print/lib/src/designer/canvas/design_canvas.dart` (depends on T070).
 
 **Checkpoint**: The designer coheres as one tool — selection and geometry/text edits sync across canvas and panels, undoable. US1–US5 functional.
 
@@ -229,13 +229,13 @@ description: "Task list for Designer Edit Surface — Direct-Manipulation Elemen
 
 ### Tests for User Story 6 (write FIRST — MUST fail)
 
-- [ ] T074 [P] [US6] Zoom-accuracy + pan/fit widget test — a drop/placement lands at the pointer's page position across zoom levels; pan scrolls without page-relative movement; fit-to-page/width centers (contracts §7.8 / SC-006 / acceptance US6.1–US6.3) in `packages/jet_print/test/designer/canvas/zoom_pan_test.dart`.
+- [x] T074 [P] [US6] Zoom-accuracy + pan/fit widget test — a drop/placement lands at the pointer's page position across zoom levels; pan scrolls without page-relative movement; fit-to-page/width centers (contracts §7.8 / SC-006 / acceptance US6.1–US6.3) in `packages/jet_print/test/designer/canvas/zoom_pan_test.dart`.
 
 ### Implementation for User Story 6
 
-- [ ] T075 [US6] Add zoom in/out, fit-to-page, fit-to-width, and pan to the canvas (mouse-wheel/gesture pan + zoom via `CanvasViewTransform`, clamped to 25 %–400 %) in `packages/jet_print/lib/src/designer/canvas/design_canvas.dart`.
-- [ ] T076 [US6] Wire the top-bar zoom controls (in/out/fit/percentage) to the canvas transform in `packages/jet_print/lib/src/designer/layout/designer_top_bar.dart` (depends on T075).
-- [ ] T077 [US6] Add zoom/fit keyboard shortcuts (canvas-focus-scoped) in `packages/jet_print/lib/src/designer/interaction/canvas_shortcuts.dart` (depends on T075).
+- [x] T075 [US6] Add zoom in/out, fit-to-page, fit-to-width, and pan to the canvas (mouse-wheel/gesture pan + zoom via `CanvasViewTransform`, clamped to 25 %–400 %) in `packages/jet_print/lib/src/designer/canvas/design_canvas.dart`.
+- [x] T076 [US6] Wire the top-bar zoom controls (in/out/fit/percentage) to the canvas transform in `packages/jet_print/lib/src/designer/layout/designer_top_bar.dart` (depends on T075).
+- [x] T077 [US6] Add zoom/fit keyboard shortcuts (canvas-focus-scoped) in `packages/jet_print/lib/src/designer/interaction/canvas_shortcuts.dart` (depends on T075).
 
 **Checkpoint**: The whole feature is navigable and pointer-accurate at any zoom. All user stories functional.
 

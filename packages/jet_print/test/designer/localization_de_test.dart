@@ -22,6 +22,15 @@ void main() {
     expect(find.text('Untitled report'), findsNothing);
     expect(find.text('Data Source'), findsNothing);
 
+    // Band-type badges on the canvas are localized too (scoped to the canvas so
+    // the match is independent of the Outline panel's band names).
+    Finder onCanvas(String text) => find.descendant(
+          of: find.byKey(kDesignCanvasKey),
+          matching: find.text(text),
+        );
+    expect(onCanvas('Seitenkopf'), findsOneWidget); // Page Header
+    expect(onCanvas('Seitenfuß'), findsOneWidget); // Page Footer
+
     // German has the longest chrome captions; the layout must accommodate them
     // (wrap/ellipsize) without clipping adjacent controls — no overflow recorded
     // (longer-text edge case / T037).

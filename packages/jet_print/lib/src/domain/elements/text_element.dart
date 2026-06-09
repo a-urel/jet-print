@@ -1,6 +1,7 @@
 /// A static or (later) data-bound text element.
 library;
 
+import '../geometry.dart';
 import '../report_element.dart';
 import '../styles/text_style.dart';
 
@@ -31,6 +32,20 @@ class TextElement extends ReportElement {
 
   @override
   String get typeKey => 'text';
+
+  /// Returns a copy with the given fields replaced; all others (incl.
+  /// [expression]) are preserved (FR-019 / FR-025).
+  TextElement copyWith({String? text, JetTextStyle? style, JetRect? bounds}) =>
+      TextElement(
+        id: id,
+        bounds: bounds ?? this.bounds,
+        text: text ?? this.text,
+        style: style ?? this.style,
+        expression: expression,
+      );
+
+  @override
+  TextElement withBounds(JetRect bounds) => copyWith(bounds: bounds);
 
   @override
   bool operator ==(Object other) =>

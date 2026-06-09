@@ -42,6 +42,9 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get actionZoomOutTooltip => 'Zoom out';
 
   @override
+  String get actionZoomFitTooltip => 'Fit to width';
+
+  @override
   String get toggleGridTooltip => 'Show grid';
 
   @override
@@ -63,6 +66,9 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get toolboxTextEntry => 'Text';
 
   @override
+  String get toolboxShapeEntry => 'Shape';
+
+  @override
   String get toolboxTableEntry => 'Table';
 
   @override
@@ -77,6 +83,39 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   @override
   String get surfaceEmptyHint =>
       'Drag elements from the toolbox onto the page to begin.';
+
+  @override
+  String get bandTypeTitle => 'Title';
+
+  @override
+  String get bandTypePageHeader => 'Page Header';
+
+  @override
+  String get bandTypeColumnHeader => 'Column Header';
+
+  @override
+  String get bandTypeGroupHeader => 'Group Header';
+
+  @override
+  String get bandTypeDetail => 'Detail';
+
+  @override
+  String get bandTypeGroupFooter => 'Group Footer';
+
+  @override
+  String get bandTypeColumnFooter => 'Column Footer';
+
+  @override
+  String get bandTypePageFooter => 'Page Footer';
+
+  @override
+  String get bandTypeSummary => 'Summary';
+
+  @override
+  String get bandTypeBackground => 'Background';
+
+  @override
+  String get bandTypeNoData => 'No Data';
 
   @override
   String get expandToolboxTooltip => 'Expand toolbox';

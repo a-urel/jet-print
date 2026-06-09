@@ -24,5 +24,15 @@ void main() {
     expect(find.text('Untitled report'), findsNothing);
     expect(find.text('Save'), findsNothing);
     expect(find.text('Data Source'), findsNothing);
+
+    // Band-type badges on the canvas are localized too. Scoped to the canvas
+    // (independent of the Outline panel) and asserted on ASCII-only Turkish
+    // tokens, per this file's convention.
+    Finder onCanvas(String text) => find.descendant(
+          of: find.byKey(kDesignCanvasKey),
+          matching: find.text(text),
+        );
+    expect(onCanvas('Detay'), findsOneWidget); // Detail
+    expect(onCanvas('Sayfa Alt Bilgisi'), findsOneWidget); // Page Footer
   });
 }

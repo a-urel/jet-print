@@ -8,6 +8,53 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Designer edit surface (spec 003-designer-edit-surface) — foundation + MVP +
+  undo/redo (in progress).** The center surface is now an interactive WYSIWYG
+  canvas. New public surface from the single entry point:
+  - `JetReportDesignerController` (`ChangeNotifier`) — holds the in-memory
+    `ReportTemplate`, the `Selection`, and unlimited session undo/redo over
+    immutable `(template, selection)` snapshots; exposes `open`, `createElement`,
+    `moveBy`, live `begin/update/commit/cancelMove`, `select`/`clearSelection`,
+    `undo`/`redo`. Headless (no file I/O).
+  - `JetReportFormat` — a static facade over the versioned codec
+    (`encode`/`decode`/`encodeJson`/`decodeJson`) with built-in element codecs +
+    migrations pre-wired; lossless round-trip incl. `UnknownElement` and the full
+    parameter/variable/group payload.
+  - The `ReportTemplate`-reachable model graph + geometry/style types, plus the
+    additive `ReportElement.withBounds` / `copyWith` value-copy helpers.
+  - `JetReportDesigner` gains optional `controller` / `initialReport` /
+    `onSaveRequested` / `onOpenRequested` (still `const`-constructible — the 002
+    contract holds).
+  - Canvas: drag-from-toolbox or click-to-place create; click-select with eight
+    resize handles; drag-to-move; fit-to-width zoom transform; per-element
+    accessibility regions. Element appearance is painted through the **unchanged**
+    shared render pipeline (`ElementRenderer.emit` + `CanvasPainter`), cached as a
+    `ui.Picture` (Constitution IV — no parallel draw code).
+  - Undo/redo wired to the top bar (disabled at the history ends) and to
+    canvas-focus-scoped ⌘Z / ⇧⌘Z (Ctrl on non-macOS).
+  - Per-handle **resize** with a 4×4 pt minimum floor, plus **snapping** to the
+    grid, sibling edges/centers, and band/page bounds with live guide lines;
+    Alt/Option bypasses snapping; grid/snap toggles in the top bar.
+  - **Multi-select** (shift-click; marquee rubber-band) and **bulk operations** —
+    delete, z-order (forward/back/to-front/to-back), cut/copy/paste/duplicate
+    (codec-cloned with fresh ids + offset), align (6 ways), distribute, and
+    arrow-key nudge (Shift = 10 pt) — each one undoable.
+  - Numeric geometry + text editing on the controller (`setGeometry` / `setText`)
+    and **inline text editing**: double-click a text element to edit in place
+    (Enter commits, Escape cancels), undoable.
+  - **Zoom / pan / fit**: top-bar zoom in/out, click the zoom % to fit-to-width,
+    ⌘±/⌘0 shortcuts, and trackpad/wheel pan (Ctrl/⌘+scroll zooms), clamped
+    25 %–400 %; placement stays pointer-accurate at every zoom (SC-006).
+  - **Band-type badges**: each band on the canvas carries a small localized
+    caption (Page Header / Detail / Page Footer / …, all eleven `BandType`s) at
+    its top-left corner, so authors always know which band they are editing. The
+    badge is constant-size UI chrome (legible at any zoom) and never captures
+    pointers.
+  - *Remaining for later increments:* model-driven Outline/Properties panels with
+    two-way selection sync (the controller already exposes everything they need);
+    an align/distribute/z-order top-bar menu (controller ops done); and polish
+    (a11y semantics, design-surface goldens, the 200-element perf smoke, and the
+    tester app's file open/save wiring).
 - Report model foundation (spec 003 Part 1): pure-Dart geometry value types
   (`JetSize`/`JetOffset`/`JetEdgeInsets`/`JetRect`), `PageFormat`, the element
   model (`ReportElement`, `TextElement`, `UnknownElement`), `ReportBand`/

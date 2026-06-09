@@ -42,6 +42,9 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get actionZoomOutTooltip => 'Uzaklaştır';
 
   @override
+  String get actionZoomFitTooltip => 'Genişliğe sığdır';
+
+  @override
   String get toggleGridTooltip => 'Izgarayı göster';
 
   @override
@@ -63,6 +66,9 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get toolboxTextEntry => 'Metin';
 
   @override
+  String get toolboxShapeEntry => 'Şekil';
+
+  @override
   String get toolboxTableEntry => 'Tablo';
 
   @override
@@ -77,6 +83,39 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   @override
   String get surfaceEmptyHint =>
       'Başlamak için araç kutusundan öğeleri sayfaya sürükleyin.';
+
+  @override
+  String get bandTypeTitle => 'Başlık';
+
+  @override
+  String get bandTypePageHeader => 'Sayfa Başlığı';
+
+  @override
+  String get bandTypeColumnHeader => 'Sütun Başlığı';
+
+  @override
+  String get bandTypeGroupHeader => 'Grup Başlığı';
+
+  @override
+  String get bandTypeDetail => 'Detay';
+
+  @override
+  String get bandTypeGroupFooter => 'Grup Alt Bilgisi';
+
+  @override
+  String get bandTypeColumnFooter => 'Sütun Alt Bilgisi';
+
+  @override
+  String get bandTypePageFooter => 'Sayfa Alt Bilgisi';
+
+  @override
+  String get bandTypeSummary => 'Özet';
+
+  @override
+  String get bandTypeBackground => 'Arka Plan';
+
+  @override
+  String get bandTypeNoData => 'Veri Yok';
 
   @override
   String get expandToolboxTooltip => 'Araç kutusunu genişlet';

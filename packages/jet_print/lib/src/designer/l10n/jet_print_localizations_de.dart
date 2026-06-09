@@ -42,6 +42,9 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   String get actionZoomOutTooltip => 'Verkleinern';
 
   @override
+  String get actionZoomFitTooltip => 'An Breite anpassen';
+
+  @override
   String get toggleGridTooltip => 'Raster anzeigen';
 
   @override
@@ -63,6 +66,9 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   String get toolboxTextEntry => 'Text';
 
   @override
+  String get toolboxShapeEntry => 'Form';
+
+  @override
   String get toolboxTableEntry => 'Tabelle';
 
   @override
@@ -77,6 +83,39 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   @override
   String get surfaceEmptyHint =>
       'Ziehen Sie Elemente aus dem Werkzeugkasten auf die Seite, um zu beginnen.';
+
+  @override
+  String get bandTypeTitle => 'Titel';
+
+  @override
+  String get bandTypePageHeader => 'Seitenkopf';
+
+  @override
+  String get bandTypeColumnHeader => 'Spaltenkopf';
+
+  @override
+  String get bandTypeGroupHeader => 'Gruppenkopf';
+
+  @override
+  String get bandTypeDetail => 'Detail';
+
+  @override
+  String get bandTypeGroupFooter => 'Gruppenfuß';
+
+  @override
+  String get bandTypeColumnFooter => 'Spaltenfuß';
+
+  @override
+  String get bandTypePageFooter => 'Seitenfuß';
+
+  @override
+  String get bandTypeSummary => 'Zusammenfassung';
+
+  @override
+  String get bandTypeBackground => 'Hintergrund';
+
+  @override
+  String get bandTypeNoData => 'Keine Daten';
 
   @override
   String get expandToolboxTooltip => 'Werkzeugkasten einblenden';

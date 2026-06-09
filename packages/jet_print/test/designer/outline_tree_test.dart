@@ -23,9 +23,15 @@ Future<void> _selectTab(WidgetTester tester, String caption) async {
   await tester.pumpAndSettle();
 }
 
+/// A tree node labelled [text] *within the Outline panel*. Scoped to the right
+/// panel so band names like "Page Header" don't collide with the canvas's
+/// band-type badges (which surface the same captions on the design surface).
+Finder _node(String text) =>
+    find.descendant(of: find.byKey(kRightPanelKey), matching: find.text(text));
+
 /// Brings a tree node labelled [text] into view and taps it (toggles a branch).
 Future<void> _tapNode(WidgetTester tester, String text) async {
-  final Finder node = find.text(text);
+  final Finder node = _node(text);
   await tester.ensureVisible(node);
   await tester.pumpAndSettle();
   await tester.tap(node);
@@ -40,10 +46,10 @@ void main() {
       await pumpDesigner(tester);
       await _selectTab(tester, 'Outline');
 
-      expect(find.text('Report'), findsOneWidget);
-      expect(find.text('Page Header'), findsOneWidget);
-      expect(find.text('Detail'), findsOneWidget);
-      expect(find.text('Page Footer'), findsOneWidget);
+      expect(_node('Report'), findsOneWidget);
+      expect(_node('Page Header'), findsOneWidget);
+      expect(_node('Detail'), findsOneWidget);
+      expect(_node('Page Footer'), findsOneWidget);
     });
 
     testWidgets('band rows show their band glyph beside the chevron', (
@@ -92,10 +98,10 @@ void main() {
       await _selectTab(tester, 'Outline');
 
       // Bands start expanded, so the Title element is visible under Page Header.
-      expect(find.text('Title'), findsOneWidget);
+      expect(_node('Title'), findsOneWidget);
 
       await _tapNode(tester, 'Page Header');
-      expect(find.text('Title'), findsNothing);
+      expect(_node('Title'), findsNothing);
     });
 
     testWidgets('re-expanding a band restores its elements', (
@@ -105,10 +111,10 @@ void main() {
       await _selectTab(tester, 'Outline');
 
       await _tapNode(tester, 'Page Header');
-      expect(find.text('Title'), findsNothing);
+      expect(_node('Title'), findsNothing);
 
       await _tapNode(tester, 'Page Header');
-      expect(find.text('Title'), findsOneWidget);
+      expect(_node('Title'), findsOneWidget);
     });
 
     testWidgets('collapsing the report root hides the whole tree', (
@@ -117,12 +123,12 @@ void main() {
       await pumpDesigner(tester);
       await _selectTab(tester, 'Outline');
 
-      expect(find.text('Page Header'), findsOneWidget);
+      expect(_node('Page Header'), findsOneWidget);
 
       await _tapNode(tester, 'Report');
-      expect(find.text('Page Header'), findsNothing);
-      expect(find.text('Detail'), findsNothing);
-      expect(find.text('PageInfo'), findsNothing);
+      expect(_node('Page Header'), findsNothing);
+      expect(_node('Detail'), findsNothing);
+      expect(_node('PageInfo'), findsNothing);
     });
   });
 }

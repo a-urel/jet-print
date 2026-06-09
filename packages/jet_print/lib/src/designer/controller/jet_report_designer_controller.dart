@@ -1,0 +1,652 @@
+/// The public edit-state seam for the report designer.
+library;
+
+import 'package:flutter/foundation.dart';
+
+import '../../domain/elements/shape_element.dart';
+import '../../domain/geometry.dart';
+import '../../domain/report_band.dart';
+import '../../domain/report_element.dart';
+import '../../domain/report_template.dart';
+import '../canvas/design_tunables.dart';
+import '../canvas/resize_handle.dart';
+import 'bulk_geometry.dart';
+import 'clipboard.dart';
+import 'commands/clipboard_command.dart';
+import 'commands/create_element_command.dart';
+import 'commands/delete_command.dart';
+import 'commands/move_command.dart';
+import 'commands/reorder_command.dart';
+import 'commands/resize_command.dart';
+import 'commands/set_text_command.dart';
+import 'default_template.dart';
+import 'designer_document.dart';
+import 'edit_command.dart';
+import 'edit_history.dart';
+import 'element_bounds.dart';
+import 'element_clone.dart';
+import 'element_id_factory.dart';
+import 'selection.dart';
+import 'snapping.dart';
+
+/// Owns the editable design and all editing operations for [JetReportDesigner].
+///
+/// A [ChangeNotifier] holding the current [template], the [selection], and an
+/// unbounded session undo/redo history of immutable `(template, selection)`
+/// snapshots ([DesignerDocument]). Every state-changing edit funnels through a
+/// single [EditCommand] commit path, so:
+///
+/// * undo/redo restore **both** model and selection exactly (FR-017), and
+/// * each operation is a pure, independently-testable transform.
+///
+/// The controller is headless — it performs no filesystem or platform I/O; a
+/// host drives save/open via `JetReportFormat` and the designer's
+/// `onSaveRequested`/`onOpenRequested` hooks (FR-022).
+///
+/// Property editing this iteration is geometry + text only; the full per-type
+/// property suite is deferred (contracts §6).
+class JetReportDesignerController extends ChangeNotifier {
+  /// Creates a controller over [template], or a blank default design when none
+  /// is supplied (so `JetReportDesignerController()` is drop-in).
+  JetReportDesignerController({ReportTemplate? template})
+      : _document = DesignerDocument(
+          template: template ?? defaultBlankTemplate(),
+          selection: Selection.empty,
+        ) {
+    _ids.seedFrom(_document.template);
+  }
+
+  DesignerDocument _document;
+  final EditHistory _history = EditHistory();
+  final ElementIdFactory _ids = ElementIdFactory();
+
+  /// The current report model — the value a host saves (FR-022).
+  ReportTemplate get template => _document.template;
+
+  /// The currently-selected element ids.
+  Selection get selection => _document.selection;
+
+  /// Whether an [undo] is available (drives top-bar enablement, US3.4).
+  bool get canUndo => _history.canUndo;
+
+  /// Whether a [redo] is available (drives top-bar enablement, US3.4).
+  bool get canRedo => _history.canRedo;
+
+  /// A monotonically increasing model-revision counter; the canvas painter uses
+  /// it to decide when to rebuild its cached frame (D5).
+  int get revision => _history.revision;
+
+  /// Replaces the whole design with [template], clearing history and re-seeding
+  /// id assignment past the largest existing suffix (FR-004).
+  void open(ReportTemplate template) {
+    _document = DesignerDocument(template: template, selection: Selection.empty);
+    _history.clear();
+    _ids.seedFrom(template);
+    notifyListeners();
+  }
+
+  // --- Selection -------------------------------------------------------------
+  // Selection changes are not history entries, but because every snapshot
+  // includes the selection, undoing a model edit still restores the prior
+  // selection (FR-017).
+
+  /// Selects exactly [id] (replacing any prior selection).
+  void select(String id) => _setSelection(Selection.of(<String>[id]));
+
+  /// Clears the selection.
+  void clearSelection() => _setSelection(Selection.empty);
+
+  void _setSelection(Selection selection) {
+    if (selection == _document.selection) return;
+    _document = _document.withSelection(selection);
+    notifyListeners();
+  }
+
+  // --- Creation --------------------------------------------------------------
+
+  /// Creates a default element of [type] at the band-relative point [at] within
+  /// the band at [bandIndex], selecting it. The new element gets a fresh unique
+  /// id and the per-type default size; its bounds are clamped to the band
+  /// (FR-001/002/004/010). An out-of-range [bandIndex] is ignored.
+  void createElement(
+    DesignerToolType type, {
+    required int bandIndex,
+    required JetOffset at,
+  }) {
+    if (bandIndex < 0 || bandIndex >= _document.template.bands.length) return;
+    final String id = _ids.next(_typeKeyFor(type));
+    final JetSize size = kDefaultElementSize[type]!;
+    final JetRect bounds =
+        JetRect(x: at.dx, y: at.dy, width: size.width, height: size.height);
+    _commit(CreateElementCommand(
+      bandIndex: bandIndex,
+      element: buildDefaultElement(type, id, bounds),
+    ));
+  }
+
+  // --- Move ------------------------------------------------------------------
+
+  /// Translates every selected element by [delta] points (band-relative),
+  /// clamping each to its band ∩ page, as one undoable step (FR-008/010/017).
+  /// No-op when nothing is selected or the delta is zero.
+  void moveBy(JetOffset delta) {
+    if (delta.dx == 0 && delta.dy == 0) return;
+    final Map<String, JetRect> targets = _clampedMoveTargets(delta);
+    if (targets.isEmpty) return;
+    _commit(MoveCommand(targets));
+  }
+
+  JetOffset? _moveDelta;
+  List<SnapGuide> _guides = const <SnapGuide>[];
+  int? _activeBand;
+
+  /// The live drag delta during a move interaction (points), or null when no
+  /// move is in progress. The selection overlay reads this to draw drag ghosts
+  /// without touching the committed model (so the cached frame is not rebuilt
+  /// mid-drag).
+  JetOffset? get moveDelta => _moveDelta;
+
+  /// Guides (band-relative) currently firing during a live move/resize, for the
+  /// overlay to draw (FR-023 / SC-004). Empty when no guide is active.
+  List<SnapGuide> get activeGuides => _guides;
+
+  /// The band index of the element being moved/resized, so the overlay can map
+  /// band-relative guide positions to page coordinates. Null when idle.
+  int? get activeBand => _activeBand;
+
+  /// Begins a live move of the current selection (no history yet).
+  void beginMove() => _moveDelta = const JetOffset(0, 0);
+
+  /// Updates the in-progress move to a cumulative [delta] (points). When a
+  /// single element is selected and snapping is on, [threshold] (points) and the
+  /// grid/sibling/band candidates pull the delta to an aligned position and
+  /// publish guides. [bypassSnap] (Alt/Option) disables snapping for this update.
+  void updateMove(JetOffset delta, {double threshold = 0, bool bypassSnap = false}) {
+    JetOffset effective = delta;
+    _guides = const <SnapGuide>[];
+    _activeBand = null;
+    final String? single = _document.selection.singleOrNull;
+    if (single != null && _snapEnabled && !bypassSnap && threshold > 0) {
+      final ({int bandIndex, ReportElement element})? loc = _locate(single);
+      if (loc != null) {
+        final JetRect b = loc.element.bounds;
+        final SnapResult result = snapMove(
+          JetRect(
+              x: b.x + delta.dx,
+              y: b.y + delta.dy,
+              width: b.width,
+              height: b.height),
+          siblings: _siblingBounds(loc.bandIndex, single),
+          bandBox: _bandBox(loc.bandIndex),
+          grid: _gridEnabled,
+          gridStep: kGridStep,
+          threshold: threshold,
+        );
+        effective = JetOffset(result.rect.x - b.x, result.rect.y - b.y);
+        _guides = result.guides;
+        _activeBand = loc.bandIndex;
+      }
+    }
+    _moveDelta = effective;
+    notifyListeners();
+  }
+
+  /// Commits the in-progress move as a single history entry (FR-017), or clears
+  /// the transient state when nothing moved.
+  void commitMove() {
+    final JetOffset? delta = _moveDelta;
+    _moveDelta = null;
+    _guides = const <SnapGuide>[];
+    _activeBand = null;
+    bool committed = false;
+    if (delta != null && (delta.dx != 0 || delta.dy != 0)) {
+      final Map<String, JetRect> targets = _clampedMoveTargets(delta);
+      if (targets.isNotEmpty) committed = _commit(MoveCommand(targets));
+    }
+    // Always repaint to drop the drag ghost + snap guides — even when the move
+    // was wholly absorbed by clamping (which commits nothing), so the guide
+    // never stays frozen on the canvas with no drag in progress.
+    if (!committed) notifyListeners();
+  }
+
+  /// Discards an in-progress move, restoring the pre-drag view.
+  void cancelMove() {
+    if (_moveDelta == null) return;
+    _moveDelta = null;
+    _guides = const <SnapGuide>[];
+    _activeBand = null;
+    notifyListeners();
+  }
+
+  // --- Resize ----------------------------------------------------------------
+
+  bool _gridEnabled = true;
+  bool _snapEnabled = true;
+  String? _resizeId;
+  ResizeHandle? _resizeHandle;
+  JetRect? _resizeStart;
+  JetRect? _resizePreview;
+
+  /// Whether grid snapping is active (top-bar toggle; default on, FR-011).
+  bool get gridEnabled => _gridEnabled;
+
+  /// Whether snapping (grid + sibling + band) is active (default on, FR-011).
+  bool get snapEnabled => _snapEnabled;
+
+  /// Toggles grid snapping.
+  void setGridEnabled(bool value) {
+    if (_gridEnabled == value) return;
+    _gridEnabled = value;
+    notifyListeners();
+  }
+
+  /// Toggles all snapping.
+  void setSnapEnabled(bool value) {
+    if (_snapEnabled == value) return;
+    _snapEnabled = value;
+    notifyListeners();
+  }
+
+  /// The previewed band-relative bounds of [id] during a live resize, or null.
+  /// The overlay draws the selection at this preview while dragging a handle.
+  JetRect? previewBoundsFor(String id) =>
+      _resizeId == id ? _resizePreview : null;
+
+  /// Begins resizing element [id] by dragging [handle].
+  void beginResize(String id, ResizeHandle handle) {
+    final ({int bandIndex, ReportElement element})? loc = _locate(id);
+    if (loc == null) return;
+    _resizeId = id;
+    _resizeHandle = handle;
+    _resizeStart = loc.element.bounds;
+    _resizePreview = loc.element.bounds;
+    _activeBand = loc.bandIndex;
+    _guides = const <SnapGuide>[];
+  }
+
+  /// Updates the in-progress resize by a cumulative pointer [delta] (points),
+  /// applying the min-size floor, optional snapping (within [threshold] points,
+  /// [bypassSnap] to disable), and band clamping; publishes the preview + guides.
+  void updateResize(JetOffset delta,
+      {double threshold = 0, bool bypassSnap = false}) {
+    final String? id = _resizeId;
+    final ResizeHandle? handle = _resizeHandle;
+    final JetRect? start = _resizeStart;
+    if (id == null || handle == null || start == null) return;
+    final ({int bandIndex, ReportElement element})? loc = _locate(id);
+    if (loc == null) return;
+
+    final bool isLine = loc.element is ShapeElement &&
+        (loc.element as ShapeElement).kind == ShapeKind.line;
+    final double minW = isLine ? 0 : kMinElementSize;
+    final double minH = isLine ? 0 : kMinElementSize;
+
+    JetRect resized =
+        resizeRect(start, handle, delta, minWidth: minW, minHeight: minH);
+    if (_snapEnabled && !bypassSnap && threshold > 0) {
+      final SnapResult result = snapResize(
+        resized,
+        handle,
+        siblings: _siblingBounds(loc.bandIndex, id),
+        bandBox: _bandBox(loc.bandIndex),
+        grid: _gridEnabled,
+        gridStep: kGridStep,
+        threshold: threshold,
+      );
+      resized = result.rect;
+      _guides = result.guides;
+    } else {
+      _guides = const <SnapGuide>[];
+    }
+    _resizePreview =
+        clampToBand(resized, _document.template.bands[loc.bandIndex], _document.template.page);
+    notifyListeners();
+  }
+
+  /// Commits the in-progress resize as one history entry, or clears state.
+  void commitResize() {
+    final String? id = _resizeId;
+    final JetRect? preview = _resizePreview;
+    _resizeId = null;
+    _resizeHandle = null;
+    _resizeStart = null;
+    _resizePreview = null;
+    _guides = const <SnapGuide>[];
+    _activeBand = null;
+    bool committed = false;
+    if (id != null && preview != null) {
+      final ({int bandIndex, ReportElement element})? loc = _locate(id);
+      if (loc != null && preview != loc.element.bounds) {
+        committed = _commit(ResizeCommand(id: id, bounds: preview));
+      }
+    }
+    // Repaint to drop the resize preview + guides even when the resize committed
+    // nothing (a clamped no-op), so no guide stays frozen on the canvas.
+    if (!committed) notifyListeners();
+  }
+
+  /// Discards an in-progress resize.
+  void cancelResize() {
+    if (_resizeId == null) return;
+    _resizeId = null;
+    _resizeHandle = null;
+    _resizeStart = null;
+    _resizePreview = null;
+    _guides = const <SnapGuide>[];
+    _activeBand = null;
+    notifyListeners();
+  }
+
+  /// Resizes [id] to [bounds] (clamped to its band) as one undoable step — the
+  /// committed form used by numeric Properties editing and tests.
+  void resizeTo(String id, JetRect bounds) {
+    final ({int bandIndex, ReportElement element})? loc = _locate(id);
+    if (loc == null) return;
+    final JetRect clamped = clampToBand(
+        bounds, _document.template.bands[loc.bandIndex], _document.template.page);
+    if (clamped == loc.element.bounds) return;
+    _commit(ResizeCommand(id: id, bounds: clamped));
+  }
+
+  // --- Numeric geometry + text (Properties / inline) -------------------------
+
+  /// Sets any of [id]'s band-relative x/y/width/height numerically (Properties
+  /// panel), clamped to its band, as one undoable step (FR-019).
+  void setGeometry(String id,
+      {double? x, double? y, double? width, double? height}) {
+    final ({int bandIndex, ReportElement element})? loc = _locate(id);
+    if (loc == null) return;
+    final JetRect b = loc.element.bounds;
+    final JetRect next = JetRect(
+      x: x ?? b.x,
+      y: y ?? b.y,
+      width: width ?? b.width,
+      height: height ?? b.height,
+    );
+    final JetRect clamped = clampToBand(
+        next, _document.template.bands[loc.bandIndex], _document.template.page);
+    if (clamped == b) return;
+    _commit(ResizeCommand(id: id, bounds: clamped));
+  }
+
+  /// Sets the text of the [TextElement] [id] (inline or Properties), one
+  /// undoable step (FR-019). No-op for a non-text or absent id.
+  void setText(String id, String text) {
+    _commit(SetTextCommand(id: id, text: text));
+  }
+
+  List<JetRect> _siblingBounds(int bandIndex, String excludeId) => <JetRect>[
+        for (final ReportElement e in _document.template.bands[bandIndex].elements)
+          if (e.id != excludeId) e.bounds,
+      ];
+
+  JetRect _bandBox(int bandIndex) {
+    final ReportBand band = _document.template.bands[bandIndex];
+    return JetRect(
+        x: 0, y: 0, width: bandContentWidth(_document.template.page), height: band.height);
+  }
+
+  Map<String, JetRect> _clampedMoveTargets(JetOffset delta) {
+    final ReportTemplate t = _document.template;
+    final Map<String, JetRect> targets = <String, JetRect>{};
+    for (final String id in _document.selection.ids) {
+      final ({int bandIndex, ReportElement element})? located = _locate(id);
+      if (located == null) continue;
+      final JetRect b = located.element.bounds;
+      targets[id] = clampToBand(
+        JetRect(
+          x: b.x + delta.dx,
+          y: b.y + delta.dy,
+          width: b.width,
+          height: b.height,
+        ),
+        t.bands[located.bandIndex],
+        t.page,
+      );
+    }
+    return targets;
+  }
+
+  /// Finds the band index and element for [id], or null if not present.
+  ({int bandIndex, ReportElement element})? _locate(String id) {
+    final bands = _document.template.bands;
+    for (int i = 0; i < bands.length; i++) {
+      for (final ReportElement element in bands[i].elements) {
+        if (element.id == id) return (bandIndex: i, element: element);
+      }
+    }
+    return null;
+  }
+
+  // --- Multi-selection -------------------------------------------------------
+
+  /// Selects every element in the template.
+  void selectAll() => _setSelection(Selection.of(<String>[
+        for (final band in _document.template.bands)
+          for (final ReportElement e in band.elements) e.id,
+      ]));
+
+  /// Replaces the selection with exactly [ids] (used by marquee select).
+  void selectElements(Iterable<String> ids) =>
+      _setSelection(Selection.of(ids));
+
+  /// Adds [id] to the selection (shift-click extend).
+  void addToSelection(String id) =>
+      _setSelection(_document.selection.including(id));
+
+  /// Toggles [id] in/out of the selection (shift-click).
+  void toggleSelection(String id) =>
+      _setSelection(_document.selection.toggled(id));
+
+  // --- Bulk operations -------------------------------------------------------
+
+  final Clipboard _clipboard = Clipboard();
+
+  /// Deletes the selected elements as one undoable step (FR-014).
+  void delete() {
+    if (_document.selection.isEmpty) return;
+    _commit(DeleteCommand(_document.selection.ids.toSet()));
+  }
+
+  /// Moves the selection by a precise nudge (no snapping), one undoable step
+  /// (FR-016). Arrow keys pass ±1 pt; Shift+arrow ±10 pt.
+  void nudge(double dx, double dy) => moveBy(JetOffset(dx, dy));
+
+  /// Brings the selection one step toward the front (FR-013).
+  void bringForward() => _reorder(ReorderMode.forward);
+
+  /// Sends the selection one step toward the back.
+  void sendBackward() => _reorder(ReorderMode.backward);
+
+  /// Brings the selection to the very front.
+  void bringToFront() => _reorder(ReorderMode.toFront);
+
+  /// Sends the selection to the very back.
+  void sendToBack() => _reorder(ReorderMode.toBack);
+
+  void _reorder(ReorderMode mode) {
+    if (_document.selection.isEmpty) return;
+    _commit(ReorderCommand(_document.selection.ids.toSet(), mode));
+  }
+
+  /// Copies the selection to the in-memory clipboard (no history; FR-015).
+  void copy() {
+    final List<ClipboardEntry> entries = _collectSelected();
+    if (entries.isNotEmpty) _clipboard.set(entries);
+  }
+
+  /// Cuts: copies the selection, then deletes it (one undoable step).
+  void cut() {
+    copy();
+    delete();
+  }
+
+  /// Pastes the clipboard's contents as fresh-id, offset copies, selecting them.
+  void paste() {
+    if (_clipboard.isEmpty) return;
+    final List<ClipboardEntry> copies = _buildCopies(_clipboard.entries);
+    if (copies.isNotEmpty) _commit(ClipboardCommand(copies));
+  }
+
+  /// Duplicates the current selection in place (fresh ids + offset), selecting
+  /// the copies — without touching the clipboard.
+  void duplicate() {
+    final List<ClipboardEntry> copies = _buildCopies(_collectSelected());
+    if (copies.isNotEmpty) _commit(ClipboardCommand(copies));
+  }
+
+  /// Aligns the (multi-)selection per [kind], one undoable step (FR-012).
+  void align(AlignKind kind) =>
+      _commitBounds(computeAlign(_collectPositioned(), kind));
+
+  /// Distributes the (multi-)selection evenly along [axis] (FR-012).
+  void distribute(DistributeAxis axis) =>
+      _commitBounds(computeDistribute(_collectPositioned(), axis));
+
+  void _commitBounds(Map<String, JetRect> newBounds) {
+    if (newBounds.isEmpty) return;
+    final Map<String, JetRect> clamped = <String, JetRect>{};
+    newBounds.forEach((String id, JetRect bounds) {
+      final ({int bandIndex, ReportElement element})? loc = _locate(id);
+      if (loc == null) return;
+      clamped[id] = clampToBand(bounds,
+          _document.template.bands[loc.bandIndex], _document.template.page);
+    });
+    if (clamped.isNotEmpty) _commit(MoveCommand(clamped));
+  }
+
+  List<ClipboardEntry> _collectSelected() => <ClipboardEntry>[
+        for (final String id in _document.selection.ids)
+          if (_locate(id) case final ({int bandIndex, ReportElement element}) l)
+            (bandIndex: l.bandIndex, element: l.element),
+      ];
+
+  List<Positioned> _collectPositioned() => <Positioned>[
+        for (final String id in _document.selection.ids)
+          if (_locate(id) case final ({int bandIndex, ReportElement element}) l)
+            (id: id, bounds: l.element.bounds),
+      ];
+
+  List<ClipboardEntry> _buildCopies(List<ClipboardEntry> source) {
+    final List<ClipboardEntry> copies = <ClipboardEntry>[];
+    for (final ClipboardEntry entry in source) {
+      if (entry.bandIndex < 0 || entry.bandIndex >= _document.template.bands.length) {
+        continue;
+      }
+      final String id = _ids.next(entry.element.typeKey);
+      final JetRect b = entry.element.bounds;
+      final JetRect offset = clampToBand(
+        JetRect(
+            x: b.x + kPasteOffset.dx,
+            y: b.y + kPasteOffset.dy,
+            width: b.width,
+            height: b.height),
+        _document.template.bands[entry.bandIndex],
+        _document.template.page,
+      );
+      copies.add((
+        bandIndex: entry.bandIndex,
+        element: cloneElement(entry.element, id: id, bounds: offset),
+      ));
+    }
+    return copies;
+  }
+
+  // --- View (zoom / pan) -----------------------------------------------------
+  // View state is not part of the model or history; the canvas reads it and the
+  // top bar drives it (FR-020).
+
+  double _viewScale = 1.0;
+  JetOffset _viewPan = const JetOffset(0, 0);
+  int _fitRequest = 0;
+
+  /// The current zoom factor (1.0 == 100%), clamped to [kMinZoom]..[kMaxZoom].
+  double get viewScale => _viewScale;
+
+  /// The current pan offset, in screen pixels.
+  JetOffset get viewPan => _viewPan;
+
+  /// Increments whenever a fit is requested; the canvas recomputes fit-to-width
+  /// (it owns the viewport) and calls [setView].
+  int get fitRequest => _fitRequest;
+
+  /// Sets the zoom [scale] (clamped) and [pan] together.
+  void setView(double scale, JetOffset pan) {
+    final double clamped =
+        scale < kMinZoom ? kMinZoom : (scale > kMaxZoom ? kMaxZoom : scale);
+    if (clamped == _viewScale && pan == _viewPan) return;
+    _viewScale = clamped;
+    _viewPan = pan;
+    notifyListeners();
+  }
+
+  /// Sets just the zoom factor (keeping the current pan).
+  void setViewScale(double scale) => setView(scale, _viewPan);
+
+  /// Sets just the pan offset (keeping the current zoom).
+  void setViewPan(JetOffset pan) => setView(_viewScale, pan);
+
+  /// Zooms in one step (×1.25).
+  void zoomIn() => setViewScale(_viewScale * 1.25);
+
+  /// Zooms out one step (÷1.25).
+  void zoomOut() => setViewScale(_viewScale / 1.25);
+
+  /// Requests fit-to-width recentering (fulfilled by the canvas).
+  void fitToView() {
+    _fitRequest++;
+    notifyListeners();
+  }
+
+  // --- History ---------------------------------------------------------------
+
+  /// Reverts the last edit, restoring model and selection (no-op if [canUndo]
+  /// is false).
+  void undo() {
+    if (!_history.canUndo) return;
+    _document = _history.undo(_document);
+    notifyListeners();
+  }
+
+  /// Re-applies the last undone edit (no-op if [canRedo] is false).
+  void redo() {
+    if (!_history.canRedo) return;
+    _document = _history.redo(_document);
+    notifyListeners();
+  }
+
+  /// Applies [command], banks the prior document for undo (clearing redo), and
+  /// notifies listeners. Every model-mutating edit goes through here, which is
+  /// what makes the whole edit set uniformly undoable.
+  /// Applies [command], recording one history entry and notifying listeners.
+  /// Returns whether anything actually changed: a no-op command (same template
+  /// instance + selection — e.g. set-text to the same value, or a move wholly
+  /// absorbed by clamping) records nothing and returns `false`, so a caller that
+  /// holds its own transient state (a live move/resize) knows it still owes
+  /// listeners a repaint to tear that state down.
+  bool _commit(EditCommand command) {
+    final DesignerDocument before = _document;
+    final DesignerDocument after = command.apply(before);
+    if (identical(after.template, before.template) &&
+        after.selection == before.selection) {
+      return false;
+    }
+    _document = after;
+    _history.push(before);
+    notifyListeners();
+    return true;
+  }
+
+  static String _typeKeyFor(DesignerToolType type) {
+    switch (type) {
+      case DesignerToolType.text:
+        return 'text';
+      case DesignerToolType.shape:
+        return 'shape';
+      case DesignerToolType.image:
+        return 'image';
+      case DesignerToolType.barcode:
+        return 'barcode';
+    }
+  }
+}

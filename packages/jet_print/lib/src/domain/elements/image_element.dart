@@ -1,6 +1,7 @@
 /// An image element.
 library;
 
+import '../geometry.dart';
 import '../report_element.dart';
 import 'image_source.dart';
 
@@ -22,6 +23,10 @@ class ImageElement extends ReportElement {
 
   @override
   String get typeKey => 'image';
+
+  @override
+  ImageElement withBounds(JetRect bounds) =>
+      ImageElement(id: id, bounds: bounds, source: source, fit: fit);
 
   @override
   bool operator ==(Object other) =>

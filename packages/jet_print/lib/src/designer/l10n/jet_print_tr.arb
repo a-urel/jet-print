@@ -14,6 +14,7 @@
   "actionRedoTooltip": "Yinele",
   "actionZoomInTooltip": "Yakınlaştır",
   "actionZoomOutTooltip": "Uzaklaştır",
+  "actionZoomFitTooltip": "Genişliğe sığdır",
   "toggleGridTooltip": "Izgarayı göster",
   "toggleRulerTooltip": "Cetvelleri göster",
   "toggleSnapTooltip": "Izgaraya hizala",
@@ -23,6 +24,7 @@
   "tabProperties": "Özellikler",
 
   "toolboxTextEntry": "Metin",
+  "toolboxShapeEntry": "Şekil",
   "toolboxTableEntry": "Tablo",
   "toolboxImageEntry": "Resim",
   "toolboxChartEntry": "Grafik",
@@ -30,6 +32,18 @@
 
 
   "surfaceEmptyHint": "Başlamak için araç kutusundan öğeleri sayfaya sürükleyin.",
+
+  "bandTypeTitle": "Başlık",
+  "bandTypePageHeader": "Sayfa Başlığı",
+  "bandTypeColumnHeader": "Sütun Başlığı",
+  "bandTypeGroupHeader": "Grup Başlığı",
+  "bandTypeDetail": "Detay",
+  "bandTypeGroupFooter": "Grup Alt Bilgisi",
+  "bandTypeColumnFooter": "Sütun Alt Bilgisi",
+  "bandTypePageFooter": "Sayfa Alt Bilgisi",
+  "bandTypeSummary": "Özet",
+  "bandTypeBackground": "Arka Plan",
+  "bandTypeNoData": "Veri Yok",
 
   "expandToolboxTooltip": "Araç kutusunu genişlet",
   "collapseToolboxTooltip": "Araç kutusunu daralt",

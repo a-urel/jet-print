@@ -29,6 +29,9 @@ const Key kRightPanelRailKey =
 const Key kRightPanelExpandKey =
     ValueKey<String>('jet_print.designer.rightPanelExpand');
 
+/// The interactive canvas key (must match `canvas/design_canvas.dart`).
+const Key kDesignCanvasKey = ValueKey<String>('jet_print.designer.canvas');
+
 /// A comfortable desktop size at/above the 1024px collapse breakpoint where all
 /// regions render side by side.
 const Size kDesktopSize = Size(1440, 900);
@@ -78,4 +81,28 @@ Future<void> pumpDesigner(
 
   await tester.pumpWidget(app);
   await tester.pumpAndSettle();
+}
+
+/// Pumps the designer bound to a [controller] (created if none is supplied) and
+/// returns it, so interaction tests can both drive and assert the model. The
+/// controller is disposed automatically by the designer only when it created
+/// the controller; here the test owns it, so we dispose on tear-down.
+Future<JetReportDesignerController> pumpDesignerWith(
+  WidgetTester tester, {
+  JetReportDesignerController? controller,
+  Size size = kDesktopSize,
+  Locale? locale,
+  ThemeMode themeMode = ThemeMode.light,
+}) async {
+  final JetReportDesignerController c =
+      controller ?? JetReportDesignerController();
+  addTearDown(c.dispose);
+  await pumpDesigner(
+    tester,
+    size: size,
+    locale: locale,
+    themeMode: themeMode,
+    designer: JetReportDesigner(controller: c),
+  );
+  return c;
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../controller/jet_report_designer_controller.dart';
+import '../designer_scope.dart';
 import '../l10n/jet_print_localizations.dart';
 
 /// The designer's top strip: a command bar modelled on desktop report designers
@@ -27,18 +29,8 @@ class DesignerTopBar extends StatefulWidget {
 
 class _DesignerTopBarState extends State<DesignerTopBar> {
   static const double _height = 52;
-  static const int _zoomStep = 10;
-  static const int _zoomMin = 25;
-  static const int _zoomMax = 400;
 
-  int _zoom = 100;
-  bool _grid = true;
   bool _ruler = true;
-  bool _snap = false;
-
-  void _nudgeZoom(int delta) {
-    setState(() => _zoom = (_zoom + delta).clamp(_zoomMin, _zoomMax));
-  }
 
   /// Below this width the labelled actions collapse to icon-only buttons and the
   /// title yields its space, so the dense command groups keep fitting.
@@ -91,6 +83,7 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
     final ShadThemeData theme = ShadTheme.of(context);
     final ShadColorScheme colors = theme.colorScheme;
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
+    final JetReportDesignerController controller = DesignerScope.of(context);
 
     final List<Widget> leftChildren = <Widget>[
       const SizedBox(width: 4),
@@ -108,47 +101,60 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
           ),
         ),
 
-      // History group.
+      // History group — wired to the controller, disabled at the ends (US3.4).
       const _Divider(),
       _IconButton(
+        buttonKey: const ValueKey<String>('jet_print.designer.action.undo'),
         icon: LucideIcons.undo2,
         tooltip: l10n.actionUndoTooltip,
-        onPressed: () {},
+        enabled: controller.canUndo,
+        onPressed: controller.undo,
       ),
       _IconButton(
+        buttonKey: const ValueKey<String>('jet_print.designer.action.redo'),
         icon: LucideIcons.redo2,
         tooltip: l10n.actionRedoTooltip,
-        onPressed: () {},
+        enabled: controller.canRedo,
+        onPressed: controller.redo,
       ),
 
-      // Zoom group.
+      // Zoom group — driven by the controller's view state; tap the % to fit.
       const _Divider(),
       _IconButton(
         icon: LucideIcons.zoomOut,
         tooltip: l10n.actionZoomOutTooltip,
-        onPressed: () => _nudgeZoom(-_zoomStep),
+        onPressed: controller.zoomOut,
       ),
-      SizedBox(
-        width: 40,
-        child: Text(
-          '$_zoom%',
-          textAlign: TextAlign.center,
-          style: theme.textTheme.small.copyWith(color: colors.foreground),
+      ShadTooltip(
+        builder: (BuildContext context) => Text(l10n.actionZoomFitTooltip),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: controller.fitToView,
+          child: SizedBox(
+            width: 46,
+            child: Text(
+              '${(controller.viewScale * 100).round()}%',
+              key: const ValueKey<String>('jet_print.designer.action.zoomLevel'),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.small.copyWith(color: colors.foreground),
+            ),
+          ),
         ),
       ),
       _IconButton(
         icon: LucideIcons.zoomIn,
         tooltip: l10n.actionZoomInTooltip,
-        onPressed: () => _nudgeZoom(_zoomStep),
+        onPressed: controller.zoomIn,
       ),
 
       // View-toggle group.
       const _Divider(),
       _ToggleButton(
+        buttonKey: const ValueKey<String>('jet_print.designer.toggle.grid'),
         icon: LucideIcons.grid2x2,
         tooltip: l10n.toggleGridTooltip,
-        active: _grid,
-        onPressed: () => setState(() => _grid = !_grid),
+        active: controller.gridEnabled,
+        onPressed: () => controller.setGridEnabled(!controller.gridEnabled),
       ),
       _ToggleButton(
         icon: LucideIcons.ruler,
@@ -157,10 +163,11 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
         onPressed: () => setState(() => _ruler = !_ruler),
       ),
       _ToggleButton(
+        buttonKey: const ValueKey<String>('jet_print.designer.toggle.snap'),
         icon: LucideIcons.magnet,
         tooltip: l10n.toggleSnapTooltip,
-        active: _snap,
-        onPressed: () => setState(() => _snap = !_snap),
+        active: controller.snapEnabled,
+        onPressed: () => controller.setSnapEnabled(!controller.snapEnabled),
       ),
     ];
 
@@ -226,11 +233,20 @@ class _IconButton extends StatelessWidget {
     required this.icon,
     required this.tooltip,
     required this.onPressed,
+    this.enabled = true,
+    this.buttonKey,
   });
 
   final IconData icon;
   final String tooltip;
   final VoidCallback onPressed;
+
+  /// When false the button renders disabled (a null `onPressed`), e.g. an Undo
+  /// button at the start of history (US3.4).
+  final bool enabled;
+
+  /// Optional stable key on the inner button (test seam).
+  final Key? buttonKey;
 
   @override
   Widget build(BuildContext context) {
@@ -240,11 +256,12 @@ class _IconButton extends StatelessWidget {
       child: ShadTooltip(
         builder: (BuildContext context) => Text(tooltip),
         child: ShadIconButton.ghost(
+          key: buttonKey,
           icon: Icon(icon, size: 16),
           width: 32,
           height: 32,
           padding: EdgeInsets.zero,
-          onPressed: onPressed,
+          onPressed: enabled ? onPressed : null,
         ),
       ),
     );
@@ -259,12 +276,14 @@ class _ToggleButton extends StatelessWidget {
     required this.tooltip,
     required this.active,
     required this.onPressed,
+    this.buttonKey,
   });
 
   final IconData icon;
   final String tooltip;
   final bool active;
   final VoidCallback onPressed;
+  final Key? buttonKey;
 
   @override
   Widget build(BuildContext context) {
@@ -276,6 +295,7 @@ class _ToggleButton extends StatelessWidget {
         builder: (BuildContext context) => Text(tooltip),
         child: active
             ? ShadIconButton.secondary(
+                key: buttonKey,
                 icon: glyph,
                 width: 32,
                 height: 32,
@@ -283,6 +303,7 @@ class _ToggleButton extends StatelessWidget {
                 onPressed: onPressed,
               )
             : ShadIconButton.ghost(
+                key: buttonKey,
                 icon: glyph,
                 width: 32,
                 height: 32,

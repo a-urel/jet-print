@@ -14,6 +14,7 @@
   "actionRedoTooltip": "Wiederholen",
   "actionZoomInTooltip": "Vergrößern",
   "actionZoomOutTooltip": "Verkleinern",
+  "actionZoomFitTooltip": "An Breite anpassen",
   "toggleGridTooltip": "Raster anzeigen",
   "toggleRulerTooltip": "Lineale anzeigen",
   "toggleSnapTooltip": "Am Raster ausrichten",
@@ -23,6 +24,7 @@
   "tabProperties": "Eigenschaften",
 
   "toolboxTextEntry": "Text",
+  "toolboxShapeEntry": "Form",
   "toolboxTableEntry": "Tabelle",
   "toolboxImageEntry": "Bild",
   "toolboxChartEntry": "Diagramm",
@@ -30,6 +32,18 @@
 
 
   "surfaceEmptyHint": "Ziehen Sie Elemente aus dem Werkzeugkasten auf die Seite, um zu beginnen.",
+
+  "bandTypeTitle": "Titel",
+  "bandTypePageHeader": "Seitenkopf",
+  "bandTypeColumnHeader": "Spaltenkopf",
+  "bandTypeGroupHeader": "Gruppenkopf",
+  "bandTypeDetail": "Detail",
+  "bandTypeGroupFooter": "Gruppenfuß",
+  "bandTypeColumnFooter": "Spaltenfuß",
+  "bandTypePageFooter": "Seitenfuß",
+  "bandTypeSummary": "Zusammenfassung",
+  "bandTypeBackground": "Hintergrund",
+  "bandTypeNoData": "Keine Daten",
 
   "expandToolboxTooltip": "Werkzeugkasten einblenden",
   "collapseToolboxTooltip": "Werkzeugkasten ausblenden",

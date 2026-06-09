@@ -63,4 +63,20 @@ class ReportBand {
   /// for [BandType.groupHeader]/[BandType.groupFooter]; null (and ignored) for
   /// every other band type.
   final String? group;
+
+  /// Returns a copy with the given fields replaced. The most common edit —
+  /// replacing the [elements] list when a single band is touched — preserves
+  /// every other band referentially (FR-025 non-destructiveness).
+  ReportBand copyWith({
+    BandType? type,
+    double? height,
+    List<ReportElement>? elements,
+    String? group,
+  }) =>
+      ReportBand(
+        type: type ?? this.type,
+        height: height ?? this.height,
+        elements: elements ?? this.elements,
+        group: group ?? this.group,
+      );
 }

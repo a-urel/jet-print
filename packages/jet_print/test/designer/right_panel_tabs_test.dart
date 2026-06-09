@@ -84,8 +84,16 @@ void main() {
       await pumpDesigner(tester);
       await _selectTab(tester, 'Outline');
 
-      // A sample band node in the outline tree.
-      expect(find.text('Page Header'), findsOneWidget);
+      // A sample band node in the outline tree. Scoped to the right panel so it
+      // does not collide with the canvas's band-type badges (which surface the
+      // same caption on the design surface).
+      expect(
+        find.descendant(
+          of: find.byKey(kRightPanelKey),
+          matching: find.text('Page Header'),
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('Properties shows a property-rows shape', (

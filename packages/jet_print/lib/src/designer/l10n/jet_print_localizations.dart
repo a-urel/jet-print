@@ -167,6 +167,12 @@ abstract class JetPrintLocalizations {
   /// **'Zoom out'**
   String get actionZoomOutTooltip;
 
+  /// Tooltip for the zoom-level label, which fits the page to the viewport width when tapped.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit to width'**
+  String get actionZoomFitTooltip;
+
   /// Tooltip for the grid view-toggle in the top bar.
   ///
   /// In en, this message translates to:
@@ -209,6 +215,12 @@ abstract class JetPrintLocalizations {
   /// **'Text'**
   String get toolboxTextEntry;
 
+  /// Toolbox element: a line or rectangle shape element.
+  ///
+  /// In en, this message translates to:
+  /// **'Shape'**
+  String get toolboxShapeEntry;
+
   /// Toolbox element: a tabular layout element.
   ///
   /// In en, this message translates to:
@@ -238,6 +250,72 @@ abstract class JetPrintLocalizations {
   /// In en, this message translates to:
   /// **'Drag elements from the toolbox onto the page to begin.'**
   String get surfaceEmptyHint;
+
+  /// Caption on the design-surface badge for a Title band (printed once at the report start).
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get bandTypeTitle;
+
+  /// Caption on the design-surface badge for a Page Header band (repeated atop every page).
+  ///
+  /// In en, this message translates to:
+  /// **'Page Header'**
+  String get bandTypePageHeader;
+
+  /// Caption on the design-surface badge for a Column Header band.
+  ///
+  /// In en, this message translates to:
+  /// **'Column Header'**
+  String get bandTypeColumnHeader;
+
+  /// Caption on the design-surface badge for a Group Header band (printed when a group key changes).
+  ///
+  /// In en, this message translates to:
+  /// **'Group Header'**
+  String get bandTypeGroupHeader;
+
+  /// Caption on the design-surface badge for a Detail band (repeated once per data row).
+  ///
+  /// In en, this message translates to:
+  /// **'Detail'**
+  String get bandTypeDetail;
+
+  /// Caption on the design-surface badge for a Group Footer band (printed when a group ends).
+  ///
+  /// In en, this message translates to:
+  /// **'Group Footer'**
+  String get bandTypeGroupFooter;
+
+  /// Caption on the design-surface badge for a Column Footer band.
+  ///
+  /// In en, this message translates to:
+  /// **'Column Footer'**
+  String get bandTypeColumnFooter;
+
+  /// Caption on the design-surface badge for a Page Footer band (repeated at the bottom of every page).
+  ///
+  /// In en, this message translates to:
+  /// **'Page Footer'**
+  String get bandTypePageFooter;
+
+  /// Caption on the design-surface badge for a Summary band (printed once at the report end).
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get bandTypeSummary;
+
+  /// Caption on the design-surface badge for a Background band (drawn behind every page).
+  ///
+  /// In en, this message translates to:
+  /// **'Background'**
+  String get bandTypeBackground;
+
+  /// Caption on the design-surface badge for a No Data band (printed instead of details when the data set is empty).
+  ///
+  /// In en, this message translates to:
+  /// **'No Data'**
+  String get bandTypeNoData;
 
   /// Tooltip on the collapsed toolbox rail's expand button (narrow window).
   ///

@@ -49,6 +49,10 @@
   "@actionZoomOutTooltip": {
     "description": "Tooltip for the Zoom out top-bar icon button (zoom group)."
   },
+  "actionZoomFitTooltip": "Fit to width",
+  "@actionZoomFitTooltip": {
+    "description": "Tooltip for the zoom-level label, which fits the page to the viewport width when tapped."
+  },
   "toggleGridTooltip": "Show grid",
   "@toggleGridTooltip": {
     "description": "Tooltip for the grid view-toggle in the top bar."
@@ -79,6 +83,10 @@
   "@toolboxTextEntry": {
     "description": "Toolbox element: a static or data-bound text element. Shown as an icon-button tooltip."
   },
+  "toolboxShapeEntry": "Shape",
+  "@toolboxShapeEntry": {
+    "description": "Toolbox element: a line or rectangle shape element."
+  },
   "toolboxTableEntry": "Table",
   "@toolboxTableEntry": {
     "description": "Toolbox element: a tabular layout element."
@@ -99,6 +107,51 @@
   "surfaceEmptyHint": "Drag elements from the toolbox onto the page to begin.",
   "@surfaceEmptyHint": {
     "description": "Hint shown on the empty design surface page so it never reads as a blank void."
+  },
+
+  "bandTypeTitle": "Title",
+  "@bandTypeTitle": {
+    "description": "Caption on the design-surface badge for a Title band (printed once at the report start)."
+  },
+  "bandTypePageHeader": "Page Header",
+  "@bandTypePageHeader": {
+    "description": "Caption on the design-surface badge for a Page Header band (repeated atop every page)."
+  },
+  "bandTypeColumnHeader": "Column Header",
+  "@bandTypeColumnHeader": {
+    "description": "Caption on the design-surface badge for a Column Header band."
+  },
+  "bandTypeGroupHeader": "Group Header",
+  "@bandTypeGroupHeader": {
+    "description": "Caption on the design-surface badge for a Group Header band (printed when a group key changes)."
+  },
+  "bandTypeDetail": "Detail",
+  "@bandTypeDetail": {
+    "description": "Caption on the design-surface badge for a Detail band (repeated once per data row)."
+  },
+  "bandTypeGroupFooter": "Group Footer",
+  "@bandTypeGroupFooter": {
+    "description": "Caption on the design-surface badge for a Group Footer band (printed when a group ends)."
+  },
+  "bandTypeColumnFooter": "Column Footer",
+  "@bandTypeColumnFooter": {
+    "description": "Caption on the design-surface badge for a Column Footer band."
+  },
+  "bandTypePageFooter": "Page Footer",
+  "@bandTypePageFooter": {
+    "description": "Caption on the design-surface badge for a Page Footer band (repeated at the bottom of every page)."
+  },
+  "bandTypeSummary": "Summary",
+  "@bandTypeSummary": {
+    "description": "Caption on the design-surface badge for a Summary band (printed once at the report end)."
+  },
+  "bandTypeBackground": "Background",
+  "@bandTypeBackground": {
+    "description": "Caption on the design-surface badge for a Background band (drawn behind every page)."
+  },
+  "bandTypeNoData": "No Data",
+  "@bandTypeNoData": {
+    "description": "Caption on the design-surface badge for a No Data band (printed instead of details when the data set is empty)."
   },
 
   "expandToolboxTooltip": "Expand toolbox",
