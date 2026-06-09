@@ -1,18 +1,25 @@
 /// The non-paginated, design-time geometry of a template's bands and elements.
 library;
 
+import 'dart:math' as math;
+
 import '../../domain/geometry.dart';
+import '../../domain/report_band.dart';
 import '../../domain/report_template.dart';
 
 /// Computes, once per template revision, the page-absolute rectangles of every
 /// band and element for the **design** view.
 ///
-/// Unlike the render-time layout engine, the design surface is *not* paginated:
-/// bands simply stack top-to-bottom from the top margin, each at its designed
-/// height, across the page's content width. Element bounds are band-relative
-/// (origin at the band's content top-left), so the page-absolute element rect is
-/// `(margin.left + bounds.x, bandTop + bounds.y)` — exactly the mapping the
-/// render-time layouter uses, which is what keeps the design view WYSIWYG.
+/// The design surface is a real sheet of paper: it spans the page format's full
+/// dimensions ([ReportTemplate.page] width × height). Flow bands (title, page
+/// header, detail, groups, …) stack downward from the top margin; the page-/
+/// column-footer bands are *anchored to the bottom* of the sheet (stacked upward
+/// from the bottom margin, preserving authored order), leaving an empty "flow"
+/// gap in between — exactly how a rendered page looks (true WYSIWYG). If the
+/// authored bands are taller than the sheet, the surface grows so nothing is
+/// clipped. Element bounds are band-relative (origin at the band's content
+/// top-left), so the page-absolute element rect is `(bandLeft + bounds.x,
+/// bandTop + bounds.y)` — the same mapping the render-time layouter uses.
 class DesignTimeLayout {
   DesignTimeLayout._({
     required this.size,
@@ -31,35 +38,76 @@ class DesignTimeLayout {
     final double bottom = template.page.margins.bottom;
     final double contentWidth = template.page.width - left - right;
 
+    double topHeight = 0;
+    double bottomHeight = 0;
+    for (final ReportBand band in template.bands) {
+      if (_isBottomAnchored(band.type)) {
+        bottomHeight += band.height;
+      } else {
+        topHeight += band.height;
+      }
+    }
+
+    // The surface is the full paper sheet, but never shorter than the authored
+    // content (top flow + bottom-anchored bands + margins) so nothing is clipped.
+    final double surfaceHeight = math.max(
+      template.page.height,
+      top + topHeight + bottomHeight + bottom,
+    );
+
+    final List<JetRect?> rects =
+        List<JetRect?>.filled(template.bands.length, null);
+
+    // Flow bands stack downward from the top margin.
+    double topY = top;
+    for (int i = 0; i < template.bands.length; i++) {
+      final ReportBand band = template.bands[i];
+      if (_isBottomAnchored(band.type)) continue;
+      rects[i] =
+          JetRect(x: left, y: topY, width: contentWidth, height: band.height);
+      topY += band.height;
+    }
+
+    // Footer bands stack upward from the bottom margin, preserving authored
+    // order (so e.g. a column footer ends up above the page footer).
+    double bottomY = surfaceHeight - bottom;
+    for (int i = template.bands.length - 1; i >= 0; i--) {
+      final ReportBand band = template.bands[i];
+      if (!_isBottomAnchored(band.type)) continue;
+      bottomY -= band.height;
+      rects[i] =
+          JetRect(x: left, y: bottomY, width: contentWidth, height: band.height);
+    }
+
     final List<JetRect> bandRects = <JetRect>[];
     final Map<String, JetRect> elementRects = <String, JetRect>{};
     final Map<String, int> bandOfElement = <String, int>{};
-
-    double y = top;
     for (int i = 0; i < template.bands.length; i++) {
-      final band = template.bands[i];
-      bandRects.add(
-        JetRect(x: left, y: y, width: contentWidth, height: band.height),
-      );
-      for (final element in band.elements) {
+      final JetRect r = rects[i]!;
+      bandRects.add(r);
+      for (final element in template.bands[i].elements) {
         elementRects[element.id] = JetRect(
-          x: left + element.bounds.x,
-          y: y + element.bounds.y,
+          x: r.x + element.bounds.x,
+          y: r.y + element.bounds.y,
           width: element.bounds.width,
           height: element.bounds.height,
         );
         bandOfElement[element.id] = i;
       }
-      y += band.height;
     }
 
     return DesignTimeLayout._(
-      size: JetSize(template.page.width, y + bottom),
+      size: JetSize(template.page.width, surfaceHeight),
       bandRects: List<JetRect>.unmodifiable(bandRects),
       elementRects: elementRects,
       bandOfElement: bandOfElement,
     );
   }
+
+  /// Whether a band of [type] is anchored to the bottom of the sheet (printed at
+  /// the page bottom) rather than flowing from the top.
+  static bool _isBottomAnchored(BandType type) =>
+      type == BandType.pageFooter || type == BandType.columnFooter;
 
   /// The full design-surface extent, in points (page width × stacked height).
   final JetSize size;
@@ -81,8 +129,10 @@ class DesignTimeLayout {
   /// The index of the band owning the element with [id], or null if absent.
   int? bandOfElement(String id) => _bandOfElement[id];
 
-  /// The index of the band whose vertical range contains [point]'s `dy`,
-  /// clamped to the first/last band so a drop always lands somewhere valid
+  /// The index of the band whose vertical range contains [point]'s `dy`. When
+  /// the point lands outside every band — the empty flow gap between the last
+  /// flow band and the bottom-anchored footers, or above/below the sheet — it
+  /// snaps to the vertically nearest band so a drop always lands somewhere valid
   /// (FR-023 nearest-valid-band). Null only when the template has no bands.
   int? bandIndexAt(JetOffset point) {
     if (_bandRects.isEmpty) return null;
@@ -90,8 +140,19 @@ class DesignTimeLayout {
       final JetRect r = _bandRects[i];
       if (point.dy >= r.y && point.dy < r.y + r.height) return i;
     }
-    // Above the first band -> first; below the last -> last.
-    return point.dy < _bandRects.first.y ? 0 : _bandRects.length - 1;
+    int nearest = 0;
+    double bestDistance = double.infinity;
+    for (int i = 0; i < _bandRects.length; i++) {
+      final JetRect r = _bandRects[i];
+      final double distance = point.dy < r.y
+          ? r.y - point.dy
+          : (point.dy > r.y + r.height ? point.dy - (r.y + r.height) : 0);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        nearest = i;
+      }
+    }
+    return nearest;
   }
 
   /// Converts a page point to a band-relative offset within the band at

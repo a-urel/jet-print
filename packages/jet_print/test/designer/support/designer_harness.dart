@@ -32,6 +32,9 @@ const Key kRightPanelExpandKey =
 /// The interactive canvas key (must match `canvas/design_canvas.dart`).
 const Key kDesignCanvasKey = ValueKey<String>('jet_print.designer.canvas');
 
+/// The paper page-surface key (must match `canvas/design_canvas.dart`).
+const Key kDesignPageKey = ValueKey<String>('jet_print.designer.page');
+
 /// A comfortable desktop size at/above the 1024px collapse breakpoint where all
 /// regions render side by side.
 const Size kDesktopSize = Size(1440, 900);

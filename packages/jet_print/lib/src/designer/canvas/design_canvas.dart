@@ -2,9 +2,16 @@
 library;
 
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
-import 'package:flutter/gestures.dart' show PointerScrollEvent, PointerSignalEvent;
+import 'package:flutter/gestures.dart'
+    show
+        GestureBinding,
+        PointerDeviceKind,
+        PointerPanZoomUpdateEvent,
+        PointerScrollEvent,
+        PointerSignalEvent;
 import 'package:flutter/services.dart' show HardwareKeyboard, LogicalKeyboardKey;
 import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
@@ -28,6 +35,24 @@ import 'selection_overlay.dart';
 
 /// Stable widget key for the interactive canvas (test seam).
 const Key kDesignCanvasKey = ValueKey<String>('jet_print.designer.canvas');
+
+/// Stable widget key for the paper page surface (test seam).
+const Key kDesignPageKey = ValueKey<String>('jet_print.designer.page');
+
+// --- Paper palette -----------------------------------------------------------
+// The design surface represents a sheet of printed paper, so it (and the
+// design-time chrome drawn on it) is painted with a constant, theme-independent
+// "paper" palette in every theme. The report content is emitted with print
+// colors (e.g. dark text), which only read correctly on white — so a dark page
+// in dark mode would both look wrong and hide content. Only the surrounding
+// canvas and the app chrome follow the light/dark theme.
+const Color _paperColor = Color(0xFFFFFFFF);
+const Color _paperBorderColor = Color(0xFFE2E8F0); // slate-200
+const Color _paperShadowColor = Color(0x1A000000); // black 10%
+const Color _bandSeparatorColor = Color(0x14000000); // black 8%
+const Color _badgeBackgroundColor = Color(0xFFF1F5F9); // slate-100
+const Color _badgeForegroundColor = Color(0xFF64748B); // slate-500
+const Color _badgeBorderColor = Color(0xFFE2E8F0); // slate-200
 
 /// The live design surface: it paints element *appearance* through the shared
 /// render pipeline (cached as a `ui.Picture`) and layers direct-manipulation
@@ -78,11 +103,29 @@ class _DesignCanvasState extends State<DesignCanvas> {
 
   static const double _viewportPadding = 32;
 
+  /// Pointer kinds whose drags drive canvas interactions (move / marquee /
+  /// resize). The trackpad is excluded so a two-finger trackpad pan scrolls the
+  /// viewport instead of starting a rubber-band selection.
+  static const Set<PointerDeviceKind> _interactionDevices = <PointerDeviceKind>{
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.stylus,
+    PointerDeviceKind.invertedStylus,
+    PointerDeviceKind.unknown,
+  };
+
+  /// Scroll controllers for the 2D page viewport (vertical outer, horizontal
+  /// inner). They drive the scrollbars and let fit/zoom recenter the page.
+  final ScrollController _vScroll = ScrollController();
+  final ScrollController _hScroll = ScrollController();
+
   @override
   void dispose() {
     _doubleTapTimer?.cancel();
     _picture?.dispose();
     _focusNode.dispose();
+    _vScroll.dispose();
+    _hScroll.dispose();
     super.dispose();
   }
 
@@ -111,16 +154,13 @@ class _DesignCanvasState extends State<DesignCanvas> {
     });
   }
 
-  CanvasViewTransform _fitToWidth(JetSize content, Size viewport) {
+  /// The zoom that fits the page width into [viewport] (with padding), clamped to
+  /// the allowed zoom range. Centering + vertical reach are handled by the scroll
+  /// viewport, so this only needs the scale.
+  double _fitScale(JetSize content, Size viewport) {
     final double usable = viewport.width - 2 * _viewportPadding;
     final double raw = usable <= 0 ? 1.0 : usable / content.width;
-    final double scale = raw.clamp(kMinZoom, kMaxZoom);
-    final double panX = (viewport.width - content.width * scale) / 2;
-    return CanvasViewTransform(
-      scale: scale,
-      pan: JetOffset(panX < _viewportPadding ? _viewportPadding : panX,
-          _viewportPadding),
-    );
+    return raw.clamp(kMinZoom, kMaxZoom);
   }
 
   void _handleTapDown(
@@ -168,19 +208,41 @@ class _DesignCanvasState extends State<DesignCanvas> {
       HardwareKeyboard.instance.logicalKeysPressed
           .contains(LogicalKeyboardKey.shiftRight);
 
-  /// Trackpad/wheel: scroll pans; Ctrl/⌘+scroll zooms (FR-020).
+  /// Mouse wheel: Ctrl/⌘ + wheel zooms (FR-020); a plain wheel scrolls the page.
+  /// Both axes are routed explicitly (nested scroll views otherwise let the
+  /// inner axis swallow a cross-axis scroll). The signal is claimed via the
+  /// resolver so the scroll views never also act on it.
   void _handlePointerSignal(
       PointerSignalEvent event, JetReportDesignerController controller) {
     if (event is! PointerScrollEvent) return;
-    if (HardwareKeyboard.instance.isControlPressed ||
-        HardwareKeyboard.instance.isMetaPressed) {
-      controller.setViewScale(controller.viewScale *
-          (event.scrollDelta.dy > 0 ? 0.9 : 1.1));
-    } else {
-      controller.setViewPan(JetOffset(
-        controller.viewPan.dx - event.scrollDelta.dx,
-        controller.viewPan.dy - event.scrollDelta.dy,
-      ));
+    final bool zoom = HardwareKeyboard.instance.isControlPressed ||
+        HardwareKeyboard.instance.isMetaPressed;
+    GestureBinding.instance.pointerSignalResolver.register(event,
+        (PointerSignalEvent _) {
+      if (zoom) {
+        controller.setViewScale(
+            controller.viewScale * (event.scrollDelta.dy > 0 ? 0.9 : 1.1));
+      } else {
+        _scrollBy(event.scrollDelta);
+      }
+    });
+  }
+
+  /// Two-finger trackpad pan → scroll the page (opposite the finger movement, so
+  /// it follows the platform's natural-scrolling convention). Handled here rather
+  /// than by the scroll views, which mis-route a 2D pan across nested axes.
+  void _handlePanZoomUpdate(PointerPanZoomUpdateEvent event) =>
+      _scrollBy(-event.localPanDelta);
+
+  /// Applies a scroll [delta] to the page viewport, per axis, clamped to range.
+  void _scrollBy(Offset delta) {
+    if (delta.dy != 0 && _vScroll.hasClients) {
+      _vScroll.jumpTo((_vScroll.offset + delta.dy)
+          .clamp(0.0, _vScroll.position.maxScrollExtent));
+    }
+    if (delta.dx != 0 && _hScroll.hasClients) {
+      _hScroll.jumpTo((_hScroll.offset + delta.dx)
+          .clamp(0.0, _hScroll.position.maxScrollExtent));
     }
   }
 
@@ -326,67 +388,121 @@ class _DesignCanvasState extends State<DesignCanvas> {
         builder: (BuildContext context, BoxConstraints constraints) {
           final Size viewport = constraints.biggest;
           // Apply the initial fit-to-width once, and again whenever a fit is
-          // requested — off the build path (it mutates the controller).
+          // requested — off the build path (it mutates the controller + scroll).
           if (!_viewInitialized || controller.fitRequest != _appliedFitRequest) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (!mounted) return;
               _viewInitialized = true;
               _appliedFitRequest = controller.fitRequest;
-              final CanvasViewTransform fit =
-                  _fitToWidth(layout.size, viewport);
-              controller.setView(fit.scale, fit.pan);
+              controller.setViewScale(_fitScale(layout.size, viewport));
+              if (_vScroll.hasClients) _vScroll.jumpTo(0);
+              if (_hScroll.hasClients) _hScroll.jumpTo(0);
             });
           }
-          final CanvasViewTransform transform = CanvasViewTransform(
-              scale: controller.viewScale, pan: controller.viewPan);
-          final double scale = transform.scale;
+
+          final double scale = controller.viewScale;
           final double pageW = layout.size.width * scale;
           final double pageH = layout.size.height * scale;
+          // The scroll content is the page plus padding, but never smaller than
+          // the viewport — so a page that fits is centered, and a larger one
+          // scrolls. The page is centered within that content.
+          final double contentW =
+              math.max(pageW + 2 * _viewportPadding, viewport.width);
+          final double contentH =
+              math.max(pageH + 2 * _viewportPadding, viewport.height);
+          final JetOffset pageOffset =
+              JetOffset((contentW - pageW) / 2, (contentH - pageH) / 2);
+          final CanvasViewTransform transform =
+              CanvasViewTransform(scale: scale, pan: pageOffset);
+          final bool vScrollable = contentH > viewport.height + 0.5;
+          final bool hScrollable = contentW > viewport.width + 0.5;
+          final Color thumbColor = colors.foreground.withValues(alpha: 0.4);
 
-          return Listener(
+          final Widget content = Listener(
             onPointerSignal: (PointerSignalEvent event) =>
                 _handlePointerSignal(event, controller),
+            onPointerPanZoomUpdate: _handlePanZoomUpdate,
             child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTapDown: (TapDownDetails d) =>
-                _handleTapDown(d.localPosition, controller, transform, layout),
-            onPanStart: (DragStartDetails d) =>
-                _handlePanStart(d.localPosition, controller, transform, layout),
-            onPanUpdate: (DragUpdateDetails d) =>
-                _handlePanUpdate(d.localPosition, controller, transform),
-            onPanEnd: (DragEndDetails d) => _handlePanEnd(controller, layout),
-            child: ColoredBox(
-              color: colors.muted,
-              child: Stack(
-                children: <Widget>[
-                  Positioned(
-                    left: transform.pan.dx,
-                    top: transform.pan.dy,
-                    width: pageW,
-                    height: pageH,
-                    child: _buildPage(
-                      controller,
-                      layout,
-                      scale,
-                      colors,
-                    ),
-                  ),
-                  if (isEmpty)
-                    Positioned.fill(
-                      child: IgnorePointer(
-                        child: Center(
-                          child: _EmptyHint(
-                            message:
-                                JetPrintLocalizations.of(context).surfaceEmptyHint,
-                            colors: colors,
-                          ),
-                        ),
+              behavior: HitTestBehavior.opaque,
+              supportedDevices: _interactionDevices,
+              onTapDown: (TapDownDetails d) =>
+                  _handleTapDown(d.localPosition, controller, transform, layout),
+              onPanStart: (DragStartDetails d) => _handlePanStart(
+                  d.localPosition, controller, transform, layout),
+              onPanUpdate: (DragUpdateDetails d) =>
+                  _handlePanUpdate(d.localPosition, controller, transform),
+              onPanEnd: (DragEndDetails d) => _handlePanEnd(controller, layout),
+              child: SizedBox(
+                width: contentW,
+                height: contentH,
+                child: ColoredBox(
+                  color: colors.muted,
+                  child: Stack(
+                    children: <Widget>[
+                      Positioned(
+                        left: pageOffset.dx,
+                        top: pageOffset.dy,
+                        width: pageW,
+                        height: pageH,
+                        child:
+                            _buildPage(controller, layout, scale, colors, isEmpty),
                       ),
-                    ),
-                ],
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
+          );
+
+          // 2D scroll viewport with scrollbars. Drag-to-scroll is disabled (see
+          // _CanvasScrollBehavior) so canvas drags win; the wheel/trackpad and
+          // the scrollbars still scroll the oversized page.
+          // The scroll views provide the scrolling mechanism + clipping; the
+          // scrollbars are drawn as a fixed overlay pinned to the viewport edges
+          // (a horizontal bar nested inside the vertical scroll view would scroll
+          // away with the content). Both are driven by the same controllers.
+          return Stack(
+            children: <Widget>[
+              ScrollConfiguration(
+                behavior: const _CanvasScrollBehavior(),
+                child: SingleChildScrollView(
+                  controller: _vScroll,
+                  child: SingleChildScrollView(
+                    controller: _hScroll,
+                    scrollDirection: Axis.horizontal,
+                    child: content,
+                  ),
+                ),
+              ),
+              if (vScrollable)
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  bottom: hScrollable ? 8 : 0,
+                  width: 8,
+                  child: _CanvasScrollbar(
+                    key: const ValueKey<String>(
+                        'jet_print.designer.scrollbar.vertical'),
+                    controller: _vScroll,
+                    axis: Axis.vertical,
+                    color: thumbColor,
+                  ),
+                ),
+              if (hScrollable)
+                Positioned(
+                  left: 0,
+                  right: vScrollable ? 8 : 0,
+                  bottom: 0,
+                  height: 8,
+                  child: _CanvasScrollbar(
+                    key: const ValueKey<String>(
+                        'jet_print.designer.scrollbar.horizontal'),
+                    controller: _hScroll,
+                    axis: Axis.horizontal,
+                    color: thumbColor,
+                  ),
+                ),
+            ],
           );
         },
         ),
@@ -399,6 +515,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
     DesignTimeLayout layout,
     double scale,
     ShadColorScheme colors,
+    bool isEmpty,
   ) {
     return DragTarget<DesignerToolType>(
       onAcceptWithDetails: (DragTargetDetails<DesignerToolType> details) {
@@ -406,16 +523,19 @@ class _DesignCanvasState extends State<DesignCanvas> {
             CanvasViewTransform(scale: scale), layout);
       },
       builder: (BuildContext context, _, __) {
-        return DecoratedBox(
+        return KeyedSubtree(
           key: _pageKey,
-          decoration: BoxDecoration(
-            color: colors.card,
-            border: Border.all(color: colors.border),
+          child: DecoratedBox(
+          key: kDesignPageKey,
+          decoration: const BoxDecoration(
+            color: _paperColor,
+            border:
+                Border.fromBorderSide(BorderSide(color: _paperBorderColor)),
             boxShadow: <BoxShadow>[
               BoxShadow(
-                color: colors.foreground.withValues(alpha: 0.08),
+                color: _paperShadowColor,
                 blurRadius: 12,
-                offset: const Offset(0, 4),
+                offset: Offset(0, 4),
               ),
             ],
           ),
@@ -427,14 +547,14 @@ class _DesignCanvasState extends State<DesignCanvas> {
                   painter: _BandChromePainter(
                     layout: layout,
                     scale: scale,
-                    separatorColor: colors.border,
+                    separatorColor: _bandSeparatorColor,
                   ),
                 ),
               ),
               // Band-type captions, one per band, anchored at each band's
               // top-left corner. Drawn below element appearance so an element
               // sharing the corner visually wins; they never capture pointers.
-              ..._bandBadges(controller, layout, scale, colors),
+              ..._bandBadges(controller, layout, scale),
               // Element appearance via the shared render pipeline (cached).
               Positioned.fill(
                 child: CustomPaint(
@@ -478,6 +598,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
               // Marquee rubber-band, while dragging on empty canvas.
               if (_marqueeRect case final JetRect m)
                 Positioned(
+                  key: const ValueKey<String>('jet_print.designer.marquee'),
                   left: m.x * scale,
                   top: m.y * scale,
                   width: m.width * scale,
@@ -491,8 +612,21 @@ class _DesignCanvasState extends State<DesignCanvas> {
                     ),
                   ),
                 ),
+              // Centered "drop something here" hint while the design is empty.
+              if (isEmpty)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: Center(
+                      child: _EmptyHint(
+                        message:
+                            JetPrintLocalizations.of(context).surfaceEmptyHint,
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
+        ),
         );
       },
     );
@@ -505,7 +639,6 @@ class _DesignCanvasState extends State<DesignCanvas> {
     JetReportDesignerController controller,
     DesignTimeLayout layout,
     double scale,
-    ShadColorScheme colors,
   ) {
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
     final List<Widget> badges = <Widget>[];
@@ -520,10 +653,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
         left: rect.x * scale,
         top: rect.y * scale,
         child: IgnorePointer(
-          child: _BandBadge(
-            caption: _bandTypeLabel(bands[i].type, l10n),
-            colors: colors,
-          ),
+          child: _BandBadge(caption: _bandTypeLabel(bands[i].type, l10n)),
         ),
       ));
     }
@@ -589,6 +719,100 @@ class _DesignCanvasState extends State<DesignCanvas> {
   }
 }
 
+/// Scroll behavior for the page viewport. Drag/pan scrolling by the scroll views
+/// is fully disabled (empty [dragDevices]) — the canvas owns all pointer drags
+/// (move / marquee / resize) and routes wheel + trackpad scrolling to the scroll
+/// controllers itself (see `_handlePointerSignal` / `_handlePanZoomUpdate`), so a
+/// 2D trackpad pan scrolls both axes instead of being swallowed by one nested
+/// scroll view. The library supplies its own [RawScrollbar]s, so the behavior
+/// adds neither a scrollbar nor an overscroll indicator.
+class _CanvasScrollBehavior extends ScrollBehavior {
+  const _CanvasScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => const <PointerDeviceKind>{};
+
+  @override
+  Widget buildScrollbar(
+          BuildContext context, Widget child, ScrollableDetails details) =>
+      child;
+
+  @override
+  Widget buildOverscrollIndicator(
+          BuildContext context, Widget child, ScrollableDetails details) =>
+      child;
+}
+
+/// A minimal scrollbar pinned to a viewport edge, driven by a [ScrollController].
+/// Drawn as a fixed overlay (not inside the scroll view) so it stays at the
+/// viewport edge; the thumb is draggable. Renders nothing until the controller
+/// has dimensions.
+class _CanvasScrollbar extends StatelessWidget {
+  const _CanvasScrollbar({
+    required this.controller,
+    required this.axis,
+    required this.color,
+    super.key,
+  });
+
+  final ScrollController controller;
+  final Axis axis;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (BuildContext context, Widget? _) {
+        if (!controller.hasClients || !controller.position.haveDimensions) {
+          return const SizedBox.expand();
+        }
+        final ScrollPosition pos = controller.position;
+        final double maxExtent = pos.maxScrollExtent;
+        if (maxExtent <= 0) return const SizedBox.expand();
+        final double viewport = pos.viewportDimension;
+        final double pixels = pos.pixels.clamp(0.0, maxExtent);
+        final bool vertical = axis == Axis.vertical;
+        return LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints c) {
+            final double track = vertical ? c.maxHeight : c.maxWidth;
+            final double thumb =
+                (track * viewport / (viewport + maxExtent)).clamp(24.0, track);
+            final double range = track - thumb;
+            final double thumbPos = range <= 0 ? 0 : range * (pixels / maxExtent);
+            return Stack(
+              children: <Widget>[
+                Positioned(
+                  left: vertical ? 0 : thumbPos,
+                  top: vertical ? thumbPos : 0,
+                  right: vertical ? 0 : null,
+                  bottom: vertical ? null : 0,
+                  width: vertical ? null : thumb,
+                  height: vertical ? thumb : null,
+                  child: GestureDetector(
+                    onPanUpdate: (DragUpdateDetails d) {
+                      if (range <= 0) return;
+                      final double delta = vertical ? d.delta.dy : d.delta.dx;
+                      controller.jumpTo((pixels + delta * maxExtent / range)
+                          .clamp(0.0, maxExtent));
+                    },
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: color,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
 /// Draws subtle separators between bands so the report's vertical structure is
 /// visible on the design surface. This is design-time chrome (band boundaries),
 /// not element appearance, so it is drawn directly rather than through the
@@ -607,11 +831,15 @@ class _BandChromePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final Paint line = Paint()
-      ..color = separatorColor.withValues(alpha: 0.6)
+      ..color = separatorColor
       ..strokeWidth = 1;
+    // Each band is delineated top and bottom, so the bottom-anchored footer and
+    // the empty flow gap above it read as distinct regions on the sheet.
     for (final JetRect band in layout.bandRects) {
-      final double y = (band.y + band.height) * scale;
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), line);
+      final double top = band.y * scale;
+      final double bottom = (band.y + band.height) * scale;
+      canvas.drawLine(Offset(0, top), Offset(size.width, top), line);
+      canvas.drawLine(Offset(0, bottom), Offset(size.width, bottom), line);
     }
   }
 
@@ -624,34 +852,32 @@ class _BandChromePainter extends CustomPainter {
 
 /// A small, subtle caption naming a band's role, sat flush in the band's
 /// top-left corner (a "tab" — only the bottom-right corner is rounded). This is
-/// the band-identity affordance every report designer surfaces; it is muted so
-/// it never competes with the element content placed within the band.
+/// the band-identity affordance every report designer surfaces; it uses the
+/// fixed paper-chrome palette (not the app theme) so it reads on the white page
+/// in every theme, and stays muted so it never competes with band content.
 class _BandBadge extends StatelessWidget {
-  const _BandBadge({required this.caption, required this.colors});
+  const _BandBadge({required this.caption});
 
   final String caption;
-  final ShadColorScheme colors;
 
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.muted.withValues(alpha: 0.85),
-        border: Border.all(color: colors.border.withValues(alpha: 0.6)),
-        borderRadius: const BorderRadius.only(
-          bottomRight: Radius.circular(4),
-        ),
+      decoration: const BoxDecoration(
+        color: _badgeBackgroundColor,
+        border: Border.fromBorderSide(BorderSide(color: _badgeBorderColor)),
+        borderRadius: BorderRadius.only(bottomRight: Radius.circular(4)),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         child: Text(
           caption,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 10,
             height: 1.2,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.2,
-            color: colors.mutedForeground,
+            color: _badgeForegroundColor,
           ),
         ),
       ),
@@ -661,23 +887,24 @@ class _BandBadge extends StatelessWidget {
 
 /// A centered hint shown while the design has no elements, so an empty surface
 /// reads as "drop something here" rather than a blank void (FR-023 edge case).
+/// It sits over the white page, so it uses the fixed paper-chrome foreground
+/// (not the theme) to stay legible on paper in every theme.
 class _EmptyHint extends StatelessWidget {
-  const _EmptyHint({required this.message, required this.colors});
+  const _EmptyHint({required this.message});
 
   final String message;
-  final ShadColorScheme colors;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Icon(LucideIcons.filePlus, size: 32, color: colors.mutedForeground),
+        const Icon(LucideIcons.filePlus, size: 32, color: _badgeForegroundColor),
         const SizedBox(height: 12),
         Text(
           message,
           textAlign: TextAlign.center,
-          style: TextStyle(color: colors.mutedForeground),
+          style: const TextStyle(color: _badgeForegroundColor),
         ),
       ],
     );

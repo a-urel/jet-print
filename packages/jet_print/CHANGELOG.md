@@ -50,6 +50,25 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     its top-left corner, so authors always know which band they are editing. The
     badge is constant-size UI chrome (legible at any zoom) and never captures
     pointers.
+  - The **page viewport scrolls** when the (paper-sized) page doesn't fit:
+    horizontal + vertical scrollbars appear and the wheel/trackpad scroll the
+    sheet, so the bottom of a full A4 page is always reachable. Drag-to-scroll is
+    intentionally disabled so a pointer drag still moves elements / rubber-band
+    selects; Ctrl/⌘+wheel still zooms. A page smaller than the viewport is
+    centered.
+  - The **design surface is a real, paper-sized sheet**: it spans the page
+    format's full dimensions (A4 portrait by default), flow bands (title / page
+    header / detail / groups / …) stack from the top margin, and the page-/
+    column-footer bands are **anchored to the bottom** of the sheet with an empty
+    flow gap between — true WYSIWYG, the way a rendered page looks. The surface
+    grows if the authored bands exceed the sheet, and a drop in the empty gap
+    snaps to the vertically nearest band.
+  - The **paper page surface is a constant white in every theme** (WYSIWYG —
+    it represents printed paper, and report content is emitted with print colors
+    such as dark text that only read on white). Only the surrounding canvas and
+    the app chrome follow the light/dark theme; the design-time chrome drawn on
+    the page (band separators, band badges, the empty hint) uses a fixed
+    paper-relative palette so it stays legible on white in dark mode too.
   - *Remaining for later increments:* model-driven Outline/Properties panels with
     two-way selection sync (the controller already exposes everything they need);
     an align/distribute/z-order top-bar menu (controller ops done); and polish
