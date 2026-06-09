@@ -32,7 +32,7 @@ import 'design_time_frame.dart';
 import 'design_time_layout.dart';
 import 'design_tunables.dart';
 import 'frame_custom_painter.dart';
-import 'hit_test.dart';
+import 'hit_testing.dart';
 import 'inline_text_editor.dart';
 import 'selection_overlay.dart';
 
