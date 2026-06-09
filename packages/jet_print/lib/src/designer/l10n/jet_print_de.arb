@@ -25,6 +25,8 @@
   "tabOutline": "Gliederung",
   "tabProperties": "Eigenschaften",
 
+  "dataSourceEmpty": "Keine Datenquelle verbunden.",
+
   "toolboxTextEntry": "Text",
   "toolboxShapeEntry": "Form",
   "toolboxTableEntry": "Tabelle",

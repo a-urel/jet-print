@@ -9,6 +9,7 @@
 // leaves the widget tree entirely — so "hidden" is provable as `findsNothing`,
 // giving an unambiguous "exactly one body visible" guarantee.
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jet_print/jet_print.dart';
 
 import 'support/designer_harness.dart';
 
@@ -26,7 +27,9 @@ Future<void> _selectTab(WidgetTester tester, String caption) async {
 // three panels dropped their header/hint, so each is detected by stable sample
 // content: a root tree-node name (Data Source / Outline) or a property label
 // (Properties).
-const String _dataSourceMarker = 'SalesDB';
+// With no data source attached, the Data Source panel shows its empty state —
+// its representative default content (the old hardcoded sample tree is gone).
+const String _dataSourceMarker = 'No data source attached.';
 const String _outlineMarker = 'Report';
 // The Properties panel is model-driven; with nothing selected it shows its
 // empty-state hint, which is its representative default content.
@@ -71,13 +74,20 @@ void main() {
 
   // --- US3: each panel body shows representative placeholder content (T026) ---
   group('right panel placeholder content (US3 / FR-007)', () {
-    testWidgets('Data Source shows a field-list shape', (
+    testWidgets('Data Source shows the attached schema as a field tree', (
       WidgetTester tester,
     ) async {
-      await pumpDesigner(tester);
+      const JetDataSchema schema = JetDataSchema(
+        name: 'Invoice',
+        fields: <FieldDef>[FieldDef('customerName', type: JetFieldType.string)],
+      );
+      await pumpDesigner(
+        tester,
+        designer: const JetReportDesigner(dataSchema: schema),
+      );
 
-      // A sample bound field (illustrative sample data, not localized).
-      expect(find.text('CustomerName'), findsOneWidget);
+      // The attached schema's field is shown in the tree.
+      expect(find.text('customerName'), findsOneWidget);
     });
 
     testWidgets('Outline shows an element-tree shape', (

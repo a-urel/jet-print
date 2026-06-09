@@ -52,5 +52,83 @@ void main() {
       expect(FieldDef.inferType(<Object?>[1, 'a']), JetFieldType.unknown);
       expect(FieldDef.inferType(<Object?>[Object()]), JetFieldType.unknown);
     });
+
+    test('never infers the collection type (collections are declared)', () {
+      // A nested list value is not a scalar column, so inference yields unknown;
+      // JetFieldType.collection is set explicitly, never inferred.
+      expect(FieldDef.inferType(<Object?>[<Object?>[]]), JetFieldType.unknown);
+      expect(
+        FieldDef.inferType(<Object?>[
+          <Map<String, Object?>>[<String, Object?>{}],
+        ]),
+        JetFieldType.unknown,
+      );
+    });
+  });
+
+  group('FieldDef (nested collection)', () {
+    test('a collection field carries its own child schema', () {
+      const FieldDef lines = FieldDef(
+        'lines',
+        type: JetFieldType.collection,
+        fields: <FieldDef>[
+          FieldDef('description', type: JetFieldType.string),
+          FieldDef('qty', type: JetFieldType.integer),
+        ],
+      );
+      expect(lines.type, JetFieldType.collection);
+      expect(lines.fields.map((FieldDef f) => f.name), <String>[
+        'description',
+        'qty',
+      ]);
+    });
+
+    test('a scalar field has no child fields by default', () {
+      expect(
+          const FieldDef('total', type: JetFieldType.double).fields, isEmpty);
+    });
+
+    test('an empty collection (no declared children) is valid', () {
+      const FieldDef empty = FieldDef('lines', type: JetFieldType.collection);
+      expect(empty.type, JetFieldType.collection);
+      expect(empty.fields, isEmpty);
+    });
+
+    test('value equality is deep over child fields', () {
+      const FieldDef a = FieldDef(
+        'lines',
+        type: JetFieldType.collection,
+        fields: <FieldDef>[FieldDef('qty', type: JetFieldType.integer)],
+      );
+      const FieldDef same = FieldDef(
+        'lines',
+        type: JetFieldType.collection,
+        fields: <FieldDef>[FieldDef('qty', type: JetFieldType.integer)],
+      );
+      const FieldDef differentChild = FieldDef(
+        'lines',
+        type: JetFieldType.collection,
+        fields: <FieldDef>[FieldDef('qty', type: JetFieldType.double)],
+      );
+      expect(a, same);
+      expect(a.hashCode, same.hashCode);
+      expect(a == differentChild, isFalse);
+    });
+
+    test('nests to arbitrary depth (collection within a collection)', () {
+      const FieldDef invoice = FieldDef(
+        'lines',
+        type: JetFieldType.collection,
+        fields: <FieldDef>[
+          FieldDef(
+            'subLines',
+            type: JetFieldType.collection,
+            fields: <FieldDef>[FieldDef('sku', type: JetFieldType.string)],
+          ),
+        ],
+      );
+      expect(invoice.fields.single.type, JetFieldType.collection);
+      expect(invoice.fields.single.fields.single.name, 'sku');
+    });
   });
 }

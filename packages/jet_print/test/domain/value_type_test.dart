@@ -10,6 +10,7 @@ void main() {
       JetFieldType.double,
       JetFieldType.boolean,
       JetFieldType.dateTime,
+      JetFieldType.collection,
       JetFieldType.unknown,
     ]);
   });

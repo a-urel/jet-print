@@ -88,6 +88,11 @@
     "description": "Right-panel tab caption for the properties panel."
   },
 
+  "dataSourceEmpty": "No data source attached.",
+  "@dataSourceEmpty": {
+    "description": "Data Source panel empty state shown when no data-source structure is attached to the designer (009)."
+  },
+
   "toolboxTextEntry": "Text",
   "@toolboxTextEntry": {
     "description": "Toolbox element: a static or data-bound text element. Shown as an icon-button tooltip."

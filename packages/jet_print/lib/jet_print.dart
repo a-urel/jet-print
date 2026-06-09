@@ -17,6 +17,12 @@
 /// `contracts/designer-layout-api.md` for the authoritative contract.
 library;
 
+// --- Data-source structure for binding (009): the host describes its data
+// source's structure as a [JetDataSchema] of [FieldDef]s (a field may be a
+// nested [JetFieldType.collection]) and attaches it to the designer. Tokens
+// only this iteration — the data-bearing source/cursor stays internal. ---
+export 'src/data/data_schema.dart' show JetDataSchema;
+export 'src/data/field_def.dart' show FieldDef;
 // --- Interactive editing seam (003): the controller + its public vocabulary. ---
 export 'src/designer/canvas/design_tunables.dart' show DesignerToolType;
 export 'src/designer/canvas/resize_handle.dart' show ResizeHandle;

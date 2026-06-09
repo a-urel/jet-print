@@ -25,6 +25,8 @@
   "tabOutline": "Anahat",
   "tabProperties": "Özellikler",
 
+  "dataSourceEmpty": "Veri kaynağı bağlı değil.",
+
   "toolboxTextEntry": "Metin",
   "toolboxShapeEntry": "Şekil",
   "toolboxTableEntry": "Tablo",

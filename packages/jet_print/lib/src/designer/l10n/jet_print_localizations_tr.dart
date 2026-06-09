@@ -69,6 +69,9 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get tabProperties => 'Özellikler';
 
   @override
+  String get dataSourceEmpty => 'Veri kaynağı bağlı değil.';
+
+  @override
   String get toolboxTextEntry => 'Metin';
 
   @override

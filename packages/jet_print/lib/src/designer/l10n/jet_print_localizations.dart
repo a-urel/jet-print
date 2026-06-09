@@ -221,6 +221,12 @@ abstract class JetPrintLocalizations {
   /// **'Properties'**
   String get tabProperties;
 
+  /// Data Source panel empty state shown when no data-source structure is attached to the designer (009).
+  ///
+  /// In en, this message translates to:
+  /// **'No data source attached.'**
+  String get dataSourceEmpty;
+
   /// Toolbox element: a static or data-bound text element. Shown as an icon-button tooltip.
   ///
   /// In en, this message translates to:

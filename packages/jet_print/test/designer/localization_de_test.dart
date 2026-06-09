@@ -18,10 +18,13 @@ void main() {
     expect(find.text('Unbenannter Bericht'), findsOneWidget);
     expect(find.text('Vorschau'), findsOneWidget); // Preview (top-bar action)
     expect(find.text('Datenquelle'), findsWidgets); // tab + panel header
+    // Data Source panel empty state (no schema attached) is localized (US1).
+    expect(find.text('Keine Datenquelle verbunden.'), findsOneWidget);
     // Real translation applied — the English captions are gone, not merely
     // falling back everywhere.
     expect(find.text('Untitled report'), findsNothing);
     expect(find.text('Data Source'), findsNothing);
+    expect(find.text('No data source attached.'), findsNothing);
 
     // Band-type badges on the canvas are localized too (scoped to the canvas so
     // the match is independent of the Outline panel's band names).

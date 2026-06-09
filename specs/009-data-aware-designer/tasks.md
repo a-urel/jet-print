@@ -30,8 +30,8 @@ description: "Task list for 009-data-aware-designer (Invoice MVP — Data-Aware 
 
 **Purpose**: Establish an attributable green baseline; confirm tooling. No new dependencies are required.
 
-- [ ] T001 From repo root, record a clean baseline: `dart format --output=none --set-exit-if-changed .`, `flutter analyze`, and `flutter test packages/jet_print apps/jet_print_playground` all pass — so any failure introduced later is attributable to this feature.
-- [ ] T002 [P] Confirm the gen-l10n pipeline is clean: run `flutter gen-l10n` in `packages/jet_print/` and verify it produces no diff against the current ARBs (de-risks later string additions).
+- [X] T001 From repo root, record a clean baseline: `dart format --output=none --set-exit-if-changed .`, `flutter analyze`, and `flutter test packages/jet_print apps/jet_print_playground` all pass — so any failure introduced later is attributable to this feature.
+- [X] T002 [P] Confirm the gen-l10n pipeline is clean: run `flutter gen-l10n` in `packages/jet_print/` and verify it produces no diff against the current ARBs (de-risks later string additions).
 
 ---
 
@@ -43,18 +43,18 @@ description: "Task list for 009-data-aware-designer (Invoice MVP — Data-Aware 
 
 ### Tests (write first; must fail)
 
-- [ ] T003 [P] Test recursive `FieldDef` + `JetFieldType.collection`: a `collection` field carries child `fields`; deep value-equality; an empty `collection` is valid; `FieldDef.inferType` still returns scalar types only — in `packages/jet_print/test/data/field_def_test.dart`.
-- [ ] T004 [P] Test `JetDataSchema` construction, value-equality, and a nested (collection-of-collection) tree — in `packages/jet_print/test/data/data_schema_test.dart`.
-- [ ] T005 [P] Test that `JetReportDesigner(dataSchema: ...)` provides the schema to descendants via the scope (a probe widget reads it) — in `packages/jet_print/test/designer/designer_schema_scope_test.dart`.
+- [X] T003 [P] Test recursive `FieldDef` + `JetFieldType.collection`: a `collection` field carries child `fields`; deep value-equality; an empty `collection` is valid; `FieldDef.inferType` still returns scalar types only — in `packages/jet_print/test/data/field_def_test.dart`.
+- [X] T004 [P] Test `JetDataSchema` construction, value-equality, and a nested (collection-of-collection) tree — in `packages/jet_print/test/data/data_schema_test.dart`.
+- [X] T005 [P] Test that `JetReportDesigner(dataSchema: ...)` provides the schema to descendants via the scope (a probe widget reads it) — in `packages/jet_print/test/designer/designer_schema_scope_test.dart`.
 
 ### Implementation
 
-- [ ] T006 Add `collection` to `JetFieldType` in `packages/jet_print/lib/src/domain/value_type.dart` (with dartdoc).
-- [ ] T007 Make `FieldDef` recursive — add `final List<FieldDef> fields` (default `const []`), extend equality/`hashCode`/`toString`; document that `fields` is non-empty only for `collection` — in `packages/jet_print/lib/src/data/field_def.dart` (depends on T006).
-- [ ] T008 Create `JetDataSchema` (`name` + `List<FieldDef> fields`, value-equality, dartdoc) in `packages/jet_print/lib/src/data/data_schema.dart` (depends on T007).
-- [ ] T009 Export `FieldDef` and `JetDataSchema` from `packages/jet_print/lib/jet_print.dart` (keep `JetDataSource`/`DataSet`/`DataRow` internal — tokens-only needs structure only).
-- [ ] T010 Add the `dataSchema` (`JetDataSchema?`) param to `JetReportDesigner` and create `DesignerSchemaScope` (`InheritedWidget`) provided in the designer shell so panels/canvas can read it — in `packages/jet_print/lib/src/designer/jet_report_designer.dart` and `packages/jet_print/lib/src/designer/designer_schema_scope.dart` (depends on T008).
-- [ ] T011 Run the architecture tests and confirm `packages/jet_print/test/encapsulation_test.dart` and `packages/jet_print/test/architecture/layer_boundaries_test.dart` stay green with the new exports/types.
+- [X] T006 Add `collection` to `JetFieldType` in `packages/jet_print/lib/src/domain/value_type.dart` (with dartdoc).
+- [X] T007 Make `FieldDef` recursive — add `final List<FieldDef> fields` (default `const []`), extend equality/`hashCode`/`toString`; document that `fields` is non-empty only for `collection` — in `packages/jet_print/lib/src/data/field_def.dart` (depends on T006).
+- [X] T008 Create `JetDataSchema` (`name` + `List<FieldDef> fields`, value-equality, dartdoc) in `packages/jet_print/lib/src/data/data_schema.dart` (depends on T007).
+- [X] T009 Export `FieldDef` and `JetDataSchema` from `packages/jet_print/lib/jet_print.dart` (keep `JetDataSource`/`DataSet`/`DataRow` internal — tokens-only needs structure only).
+- [X] T010 Add the `dataSchema` (`JetDataSchema?`) param to `JetReportDesigner` and create `DesignerSchemaScope` (`InheritedWidget`) provided in the designer shell so panels/canvas can read it — in `packages/jet_print/lib/src/designer/jet_report_designer.dart` and `packages/jet_print/lib/src/designer/designer_schema_scope.dart` (depends on T008).
+- [X] T011 Run the architecture tests and confirm `packages/jet_print/test/encapsulation_test.dart` and `packages/jet_print/test/architecture/layer_boundaries_test.dart` stay green with the new exports/types.
 
 **Checkpoint**: Schema vocabulary is public and reachable inside the designer; stories can begin.
 
@@ -68,14 +68,14 @@ description: "Task list for 009-data-aware-designer (Invoice MVP — Data-Aware 
 
 ### Tests (write first; must fail)
 
-- [ ] T012 [P] [US1] Replace the placeholder assertions in `packages/jet_print/test/designer/data_source_tree_test.dart` (and/or add `data_source_schema_tree_test.dart`) to assert: root dataset name + scalar fields with type indicators; a `collection` field expands to its child fields (≥2 levels); and the empty state (no `dataSchema`) shows zero field names.
-- [ ] T012a [P] [US1] Localization test: with no `dataSchema` attached, the Data Source panel empty-state string renders in en/de/tr and falls back to English for an unsupported locale — extend `packages/jet_print/test/designer/localization_de_test.dart` and `localization_tr_test.dart`. (Precedes the ARB task T015.)
+- [X] T012 [P] [US1] Replace the placeholder assertions in `packages/jet_print/test/designer/data_source_tree_test.dart` (and/or add `data_source_schema_tree_test.dart`) to assert: root dataset name + scalar fields with type indicators; a `collection` field expands to its child fields (≥2 levels); and the empty state (no `dataSchema`) shows zero field names.
+- [X] T012a [P] [US1] Localization test: with no `dataSchema` attached, the Data Source panel empty-state string renders in en/de/tr and falls back to English for an unsupported locale — extend `packages/jet_print/test/designer/localization_de_test.dart` and `localization_tr_test.dart`. (Precedes the ARB task T015.)
 
 ### Implementation
 
-- [ ] T013 [US1] Rewrite `packages/jet_print/lib/src/designer/layout/panels/data_source_panel.dart` to read the `JetDataSchema` from `DesignerSchemaScope` and render a recursive tree (collection fields expandable to children), with per-type icons; remove the `_sampleDatabase` placeholder entirely (depends on T010).
-- [ ] T014 [US1] Add the empty-state body to the Data Source panel (clear, localized message; no fields) in the same file.
-- [ ] T015 [P] [US1] Add the empty-state string to `jet_print_en.arb`/`_de.arb`/`_tr.arb` and run `flutter gen-l10n` — in `packages/jet_print/lib/src/designer/l10n/`.
+- [X] T013 [US1] Rewrite `packages/jet_print/lib/src/designer/layout/panels/data_source_panel.dart` to read the `JetDataSchema` from `DesignerSchemaScope` and render a recursive tree (collection fields expandable to children), with per-type icons; remove the `_sampleDatabase` placeholder entirely (depends on T010).
+- [X] T014 [US1] Add the empty-state body to the Data Source panel (clear, localized message; no fields) in the same file.
+- [X] T015 [P] [US1] Add the empty-state string to `jet_print_en.arb`/`_de.arb`/`_tr.arb` and run `flutter gen-l10n` — in `packages/jet_print/lib/src/designer/l10n/`.
 
 **Checkpoint**: An attached schema (incl. nested collections) is visible; US1 is independently demoable.
 

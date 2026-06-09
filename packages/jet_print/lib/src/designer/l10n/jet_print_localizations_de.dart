@@ -69,6 +69,9 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   String get tabProperties => 'Eigenschaften';
 
   @override
+  String get dataSourceEmpty => 'Keine Datenquelle verbunden.';
+
+  @override
   String get toolboxTextEntry => 'Text';
 
   @override

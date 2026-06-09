@@ -25,6 +25,10 @@ void main() {
     expect(find.text('Untitled report'), findsNothing);
     expect(find.text('Save'), findsNothing);
     expect(find.text('Data Source'), findsNothing);
+    // The Data Source empty state is translated (US1) — the English string is
+    // gone. (Asserting the negative keeps this file's ASCII-only convention;
+    // the German test asserts the positive translation.)
+    expect(find.text('No data source attached.'), findsNothing);
 
     // Band-type badges on the canvas are localized too. Scoped to the canvas
     // (independent of the Outline panel) and asserted on ASCII-only Turkish
