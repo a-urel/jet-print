@@ -106,11 +106,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     Outline panel (or any non-canvas source), the canvas scrolls the element into
     the viewport so the user sees what they selected — a no-op when it is already
     visible. This completes the canvas ↔ Outline ↔ Properties two-way sync.
-  - *Remaining for later increments:* model-driven Outline/Properties panels with
-    two-way selection sync (the controller already exposes everything they need);
-    an align/distribute/z-order top-bar menu (controller ops done); and polish
-    (a11y semantics, design-surface goldens, the 200-element perf smoke, and the
-    tester app's file open/save wiring).
+  - **An "Arrange" menu in the top bar** gathers the selection-wide layout
+    actions: align (left / center / right / top / middle / bottom), distribute
+    (horizontally / vertically), and z-order (bring to front / forward, send
+    backward / to back) — each one undoable. The trigger enables once an element
+    is selected; the align/distribute items further require two or more (a lone
+    element has nothing to align against), while the z-order items act on a single
+    element too.
+  - *Remaining for later increments:* polish (a11y semantics, design-surface
+    goldens, the 200-element perf smoke, and the tester app's file open/save
+    wiring).
 - Report model foundation (spec 003 Part 1): pure-Dart geometry value types
   (`JetSize`/`JetOffset`/`JetEdgeInsets`/`JetRect`), `PageFormat`, the element
   model (`ReportElement`, `TextElement`, `UnknownElement`), `ReportBand`/

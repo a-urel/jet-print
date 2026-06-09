@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../controller/bulk_geometry.dart';
 import '../controller/jet_report_designer_controller.dart';
 import '../designer_scope.dart';
 import '../l10n/jet_print_localizations.dart';
@@ -169,6 +170,10 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
         active: controller.snapEnabled,
         onPressed: () => controller.setSnapEnabled(!controller.snapEnabled),
       ),
+
+      // Arrange group — align / distribute / z-order over the selection (US4).
+      const _Divider(),
+      _ArrangeMenu(controller: controller),
     ];
 
     final List<Widget> actions = <Widget>[
@@ -223,6 +228,137 @@ class _Divider extends StatelessWidget {
         height: 22,
         child: ShadSeparator.vertical(margin: EdgeInsets.zero),
       ),
+    );
+  }
+}
+
+/// The "Arrange" dropdown: align / distribute / z-order actions over the current
+/// selection, wired to the controller's bulk ops (FR-012/FR-013, US4.5–US4.6).
+///
+/// The trigger enables once any element is selected; the align/distribute items
+/// further require two or more (a lone element has nothing to align against),
+/// while the z-order items act on a single element too. Labels are English this
+/// iteration, matching the still-unlocalized panels; their localization is
+/// folded into T078 with the other new affordance strings.
+class _ArrangeMenu extends StatefulWidget {
+  const _ArrangeMenu({required this.controller});
+
+  final JetReportDesignerController controller;
+
+  @override
+  State<_ArrangeMenu> createState() => _ArrangeMenuState();
+}
+
+class _ArrangeMenuState extends State<_ArrangeMenu> {
+  final ShadPopoverController _popover = ShadPopoverController();
+
+  @override
+  void dispose() {
+    _popover.dispose();
+    super.dispose();
+  }
+
+  /// Runs a controller op, then closes the menu.
+  void _run(VoidCallback op) {
+    op();
+    _popover.hide();
+  }
+
+  ShadContextMenuItem _action(
+    String id,
+    IconData icon,
+    String label, {
+    required bool enabled,
+    required VoidCallback op,
+  }) {
+    return ShadContextMenuItem(
+      key: ValueKey<String>('jet_print.designer.arrange.$id'),
+      enabled: enabled,
+      leading: Icon(icon, size: 16),
+      onPressed: () => _run(op),
+      child: Text(label),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final JetReportDesignerController c = widget.controller;
+    final int count = c.selection.ids.length;
+    final bool hasSelection = count > 0;
+    // Aligning/distributing a single element is a no-op, so those need a pair.
+    final bool canAlign = count >= 2;
+
+    return Padding(
+      // ~4px between adjacent buttons (2 + 2), matching the other tool buttons.
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: ShadContextMenu(
+        controller: _popover,
+        items: <Widget>[
+          _action('alignLeft', LucideIcons.alignStartVertical, 'Align left',
+              enabled: canAlign, op: () => c.align(AlignKind.left)),
+          _action('alignCenterHorizontal', LucideIcons.alignCenterVertical,
+              'Align center',
+              enabled: canAlign, op: () => c.align(AlignKind.centerHorizontal)),
+          _action('alignRight', LucideIcons.alignEndVertical, 'Align right',
+              enabled: canAlign, op: () => c.align(AlignKind.right)),
+          _action('alignTop', LucideIcons.alignStartHorizontal, 'Align top',
+              enabled: canAlign, op: () => c.align(AlignKind.top)),
+          _action('alignMiddle', LucideIcons.alignCenterHorizontal,
+              'Align middle',
+              enabled: canAlign, op: () => c.align(AlignKind.middle)),
+          _action('alignBottom', LucideIcons.alignEndHorizontal, 'Align bottom',
+              enabled: canAlign, op: () => c.align(AlignKind.bottom)),
+          const _MenuDivider(),
+          _action(
+              'distributeHorizontal',
+              LucideIcons.alignHorizontalDistributeCenter,
+              'Distribute horizontally',
+              enabled: canAlign,
+              op: () => c.distribute(DistributeAxis.horizontal)),
+          _action('distributeVertical',
+              LucideIcons.alignVerticalDistributeCenter, 'Distribute vertically',
+              enabled: canAlign,
+              op: () => c.distribute(DistributeAxis.vertical)),
+          const _MenuDivider(),
+          _action('bringToFront', LucideIcons.bringToFront, 'Bring to front',
+              enabled: hasSelection, op: c.bringToFront),
+          _action('bringForward', LucideIcons.chevronUp, 'Bring forward',
+              enabled: hasSelection, op: c.bringForward),
+          _action('sendBackward', LucideIcons.chevronDown, 'Send backward',
+              enabled: hasSelection, op: c.sendBackward),
+          _action('sendToBack', LucideIcons.sendToBack, 'Send to back',
+              enabled: hasSelection, op: c.sendToBack),
+        ],
+        // A labelled Semantics wrapper rather than a hover ShadTooltip: a
+        // tooltip overlay would render on top of the just-opened menu. The
+        // menu items are self-describing; this keeps an accessible name.
+        child: Semantics(
+          label: 'Arrange',
+          button: true,
+          child: ShadIconButton.ghost(
+            key: const ValueKey<String>('jet_print.designer.action.arrange'),
+            icon: const Icon(LucideIcons.layoutGrid, size: 16),
+            width: 32,
+            height: 32,
+            padding: EdgeInsets.zero,
+            // Disabled with nothing selected, so it cannot open an empty menu.
+            onPressed: hasSelection ? _popover.toggle : null,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A thin horizontal rule fencing one group of arrange actions from the next.
+class _MenuDivider extends StatelessWidget {
+  const _MenuDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 4),
+      child: ShadSeparator.horizontal(margin: EdgeInsets.zero),
     );
   }
 }

@@ -191,7 +191,7 @@ description: "Task list for Designer Edit Surface — Direct-Manipulation Elemen
 - [x] T062 [US4] Add `selectAll`/`addToSelection`/`toggle`, `delete`, `cut`/`copy`/`paste`/`duplicate`, `bringForward`/`sendBackward`/`bringToFront`/`sendToBack`, `align`/`distribute`, `nudge` methods to the controller in `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart` (depends on T056–T061).
 - [x] T063 [US4] Implement marquee drag (rubber-band rect; enclosed → selection on release) + shift-click add/remove in `packages/jet_print/lib/src/designer/canvas/design_canvas.dart` and `packages/jet_print/lib/src/designer/canvas/selection_overlay.dart` (depends on T062).
 - [x] T064 [US4] Extend the canvas shortcuts with nudge/Shift-nudge, delete, copy/cut/paste/duplicate, select-all, Escape-clear (FR-006) (canvas-focus-scoped) in `packages/jet_print/lib/src/designer/interaction/canvas_shortcuts.dart` (depends on T062).
-- [ ] T065 [US4] Add z-order + align/distribute action affordances (top-bar and/or canvas context menu) wired to the controller in `packages/jet_print/lib/src/designer/layout/designer_top_bar.dart` (depends on T062).
+- [X] T065 [US4] Add z-order + align/distribute action affordances (top-bar and/or canvas context menu) wired to the controller in `packages/jet_print/lib/src/designer/layout/designer_top_bar.dart` (depends on T062).
 
 **Checkpoint**: Bulk operations act on the whole selection and are undoable. US1–US4 functional.
 
