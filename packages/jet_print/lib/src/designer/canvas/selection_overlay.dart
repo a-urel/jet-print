@@ -13,6 +13,7 @@ import '../controller/snapping.dart';
 import '../designer_scope.dart';
 import 'design_time_layout.dart';
 import 'design_tunables.dart';
+import 'diagonal_resize_cursor.dart';
 import 'resize_handle.dart';
 
 /// A stable per-handle key (test seam): `jet_print.designer.handle.<pos>`.
@@ -131,7 +132,11 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
     if (single != null) {
       final JetRect? r = rectFor(single);
       if (r != null) {
-        for (final ResizeHandle position in ResizeHandle.values) {
+        // Edges first, corners last. The 16px hit areas overlap when the element
+        // is small/zoomed out, and the frontmost (last-added) MouseRegion/handle
+        // wins the cursor and the drag — so corners must sit on top of edges to
+        // keep their diagonal cursor (and a diagonal resize) at the corner.
+        for (final ResizeHandle position in _handlePaintOrder) {
           children.add(_handle(controller, single, position, r, colors));
         }
       }
@@ -139,6 +144,19 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
 
     return Stack(children: children);
   }
+
+  /// Handle z-order (back to front): the four edges, then the four corners on
+  /// top, so an overlapping edge hit area never masks a corner.
+  static const List<ResizeHandle> _handlePaintOrder = <ResizeHandle>[
+    ResizeHandle.top,
+    ResizeHandle.right,
+    ResizeHandle.bottom,
+    ResizeHandle.left,
+    ResizeHandle.topLeft,
+    ResizeHandle.topRight,
+    ResizeHandle.bottomRight,
+    ResizeHandle.bottomLeft,
+  ];
 
   List<Widget> _guideWidgets(JetReportDesignerController controller) {
     final List<SnapGuide> guides = controller.activeGuides;
@@ -199,21 +217,24 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
       top: center.y * widget.scale - hit / 2,
       width: hit,
       height: hit,
-      child: GestureDetector(
-        key: handleKey(position),
-        behavior: HitTestBehavior.opaque,
-        onPanStart: (_) => _onHandleStart(controller, id, position),
-        onPanUpdate: (DragUpdateDetails d) => _onHandleUpdate(controller, d),
-        onPanEnd: (_) => controller.commitResize(),
-        onPanCancel: controller.cancelResize,
-        child: Center(
-          child: SizedBox(
-            width: kHandleVisualSize,
-            height: kHandleVisualSize,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: colors.background,
-                border: Border.all(color: _accent, width: 1.5),
+      child: MouseRegion(
+        cursor: resizeCursorForHandle(position),
+        child: GestureDetector(
+          key: handleKey(position),
+          behavior: HitTestBehavior.opaque,
+          onPanStart: (_) => _onHandleStart(controller, id, position),
+          onPanUpdate: (DragUpdateDetails d) => _onHandleUpdate(controller, d),
+          onPanEnd: (_) => controller.commitResize(),
+          onPanCancel: controller.cancelResize,
+          child: Center(
+            child: SizedBox(
+              width: kHandleVisualSize,
+              height: kHandleVisualSize,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: colors.background,
+                  border: Border.all(color: _accent, width: 1.5),
+                ),
               ),
             ),
           ),

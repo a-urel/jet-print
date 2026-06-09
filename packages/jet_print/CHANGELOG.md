@@ -69,6 +69,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     the app chrome follow the light/dark theme; the design-time chrome drawn on
     the page (band separators, band badges, the empty hint) uses a fixed
     paper-relative palette so it stays legible on white in dark mode too.
+  - **Resize handles show directional cursors on hover**: each of the eight
+    handles exposes the matching resize cursor (diagonal `↖↘`/`↗↙` for corners,
+    `↕`/`↔` for edges) so the pointer signals which edges a drag moves. Corners
+    sit above edges in the overlay so an overlapping edge hit-area can't mask the
+    diagonal cursor when zoomed out. On macOS — whose public cursor set has no
+    diagonal — the corners drive the native window-resize `NSCursor` directly, so
+    they look the same as everywhere else.
   - *Remaining for later increments:* model-driven Outline/Properties panels with
     two-way selection sync (the controller already exposes everything they need);
     an align/distribute/z-order top-bar menu (controller ops done); and polish
