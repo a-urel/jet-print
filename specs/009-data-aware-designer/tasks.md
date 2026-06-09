@@ -151,14 +151,14 @@ description: "Task list for 009-data-aware-designer (Invoice MVP — Data-Aware 
 
 ### Tests (write first; must fail)
 
-- [ ] T042 [P] [US4] Test the invoice sample: the schema attaches via the public API only (no `src/` import) and the sample template loads with bound tokens — in `apps/jet_print_playground/test/invoice_sample_test.dart`.
-- [ ] T043 [P] [US4] Golden test: the data-aware invoice **design surface** (bound tokens, master/detail bands) + the populated Data Source panel, in light and dark — in `packages/jet_print/test/designer/goldens/data_aware_invoice_test.dart`.
+- [X] T042 [P] [US4] Test the invoice sample: the schema attaches via the public API only (no `src/` import) and the sample template loads with bound tokens — in `apps/jet_print_playground/test/invoice_sample_test.dart`.
+- [X] T043 [P] [US4] Golden test: the data-aware invoice **design surface** (bound tokens, master/detail bands) + the populated Data Source panel, in light and dark — in `packages/jet_print/test/designer/goldens/data_aware_invoice_test.dart`.
 
 ### Implementation
 
-- [ ] T044 [US4] Create `apps/jet_print_playground/lib/invoice_sample.dart`: the invoice `JetDataSchema` (master fields + nested `lines` collection) and a sample bound `ReportTemplate` (header master fields + a `lines`-bound detail band with line-field tokens) — public API only.
-- [ ] T045 [US4] Wire the sample into `apps/jet_print_playground/lib/main.dart`: pass `dataSchema:` and make the sample template loadable (depends on T044).
-- [ ] T046 [US4] Generate and commit the golden PNGs via `flutter test --update-goldens packages/jet_print`, then re-run without the flag to confirm they pass (depends on T043 and all UI work).
+- [X] T044 [US4] Create `apps/jet_print_playground/lib/invoice_sample.dart`: the invoice `JetDataSchema` (master fields + nested `lines` collection) and a sample bound `ReportTemplate` (header master fields + a `lines`-bound detail band with line-field tokens) — public API only.
+- [X] T045 [US4] Wire the sample into `apps/jet_print_playground/lib/main.dart`: pass `dataSchema:` and make the sample template loadable (depends on T044).
+- [X] T046 [US4] Generate and commit the golden PNGs via `flutter test --update-goldens packages/jet_print`, then re-run without the flag to confirm they pass (depends on T043 and all UI work).
 
 **Checkpoint**: The invoice MVP is demoable end-to-end through the public API.
 
