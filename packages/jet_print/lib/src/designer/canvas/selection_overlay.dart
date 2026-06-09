@@ -11,6 +11,7 @@ import '../controller/jet_report_designer_controller.dart';
 import '../controller/selection.dart';
 import '../controller/snapping.dart';
 import '../designer_scope.dart';
+import '../l10n/jet_print_localizations.dart';
 import 'design_time_layout.dart';
 import 'design_tunables.dart';
 import 'diagonal_resize_cursor.dart';
@@ -87,6 +88,7 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
     if (selection.isEmpty) return const SizedBox.shrink();
 
     final ShadColorScheme colors = ShadTheme.of(context).colorScheme;
+    final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
 
     // Report and band selections get their own minimal chrome (the report is a
     // fixed-format sheet → outline only; a band resizes vertically → one
@@ -94,7 +96,7 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
     if (selection.isReport) return _reportChrome();
     final int? selectedBand = selection.bandIndex;
     if (selectedBand != null) {
-      return _bandChrome(controller, selectedBand, colors);
+      return _bandChrome(controller, selectedBand, colors, l10n);
     }
 
     final JetOffset move = controller.moveDelta ?? const JetOffset(0, 0);
@@ -150,7 +152,7 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
         // wins the cursor and the drag — so corners must sit on top of edges to
         // keep their diagonal cursor (and a diagonal resize) at the corner.
         for (final ResizeHandle position in _handlePaintOrder) {
-          children.add(_handle(controller, single, position, r, colors));
+          children.add(_handle(controller, single, position, r, colors, l10n));
         }
       }
     }
@@ -178,6 +180,7 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
     JetReportDesignerController controller,
     int index,
     ShadColorScheme colors,
+    JetPrintLocalizations l10n,
   ) {
     final JetRect? bandRect = widget.layout.bandRect(index);
     if (bandRect == null) return const SizedBox.shrink();
@@ -193,7 +196,7 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
       _outline(JetRect(
           x: bandRect.x, y: top, width: bandRect.width, height: height)),
       _bandHandle(controller, index, footer, bandRect.x + bandRect.width / 2,
-          edgeY, colors),
+          edgeY, colors, l10n),
     ]);
   }
 
@@ -208,6 +211,7 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
     double centerX,
     double edgeY,
     ShadColorScheme colors,
+    JetPrintLocalizations l10n,
   ) {
     const double hit = kHandleHitSize;
     const double barWidth = 28;
@@ -216,10 +220,15 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
       top: edgeY * widget.scale - hit / 2,
       width: barWidth,
       height: hit,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.resizeUpDown,
-        child: GestureDetector(
-          key: const ValueKey<String>('jet_print.designer.bandHandle'),
+      // One merged semantics node: a named, button-role handle (FR-024).
+      child: MergeSemantics(
+        child: Semantics(
+          label: l10n.resizeBandHandle,
+          button: true,
+          child: MouseRegion(
+            cursor: SystemMouseCursors.resizeUpDown,
+            child: GestureDetector(
+              key: const ValueKey<String>('jet_print.designer.bandHandle'),
           behavior: HitTestBehavior.opaque,
           onPanStart: (_) {
             _bandResizeDelta = Offset.zero;
@@ -245,6 +254,8 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
               ),
             ),
           ),
+        ),
+      ),
         ),
       ),
     );
@@ -314,6 +325,7 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
     ResizeHandle position,
     JetRect pageRect,
     ShadColorScheme colors,
+    JetPrintLocalizations l10n,
   ) {
     final ({double x, double y}) center = _handleCenter(position, pageRect);
     const double hit = kHandleHitSize;
@@ -322,23 +334,31 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
       top: center.y * widget.scale - hit / 2,
       width: hit,
       height: hit,
-      child: MouseRegion(
-        cursor: resizeCursorForHandle(position),
-        child: GestureDetector(
-          key: handleKey(position),
-          behavior: HitTestBehavior.opaque,
-          onPanStart: (_) => _onHandleStart(controller, id, position),
-          onPanUpdate: (DragUpdateDetails d) => _onHandleUpdate(controller, d),
-          onPanEnd: (_) => controller.commitResize(),
-          onPanCancel: controller.cancelResize,
-          child: Center(
-            child: SizedBox(
-              width: kHandleVisualSize,
-              height: kHandleVisualSize,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: colors.background,
-                  border: Border.all(color: _accent, width: 1.5),
+      // One merged semantics node: a directional, button-role handle (FR-024).
+      child: MergeSemantics(
+        child: Semantics(
+          label: _handleLabel(position, l10n),
+          button: true,
+          child: MouseRegion(
+            cursor: resizeCursorForHandle(position),
+            child: GestureDetector(
+              key: handleKey(position),
+              behavior: HitTestBehavior.opaque,
+              onPanStart: (_) => _onHandleStart(controller, id, position),
+              onPanUpdate: (DragUpdateDetails d) =>
+                  _onHandleUpdate(controller, d),
+              onPanEnd: (_) => controller.commitResize(),
+              onPanCancel: controller.cancelResize,
+              child: Center(
+                child: SizedBox(
+                  width: kHandleVisualSize,
+                  height: kHandleVisualSize,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: colors.background,
+                      border: Border.all(color: _accent, width: 1.5),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -346,6 +366,28 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
         ),
       ),
     );
+  }
+
+  /// The localized accessible name for the resize handle at [position].
+  String _handleLabel(ResizeHandle position, JetPrintLocalizations l10n) {
+    switch (position) {
+      case ResizeHandle.topLeft:
+        return l10n.resizeHandleTopLeft;
+      case ResizeHandle.top:
+        return l10n.resizeHandleTop;
+      case ResizeHandle.topRight:
+        return l10n.resizeHandleTopRight;
+      case ResizeHandle.right:
+        return l10n.resizeHandleRight;
+      case ResizeHandle.bottomRight:
+        return l10n.resizeHandleBottomRight;
+      case ResizeHandle.bottom:
+        return l10n.resizeHandleBottom;
+      case ResizeHandle.bottomLeft:
+        return l10n.resizeHandleBottomLeft;
+      case ResizeHandle.left:
+        return l10n.resizeHandleLeft;
+    }
   }
 
   ({double x, double y}) _handleCenter(ResizeHandle position, JetRect r) {

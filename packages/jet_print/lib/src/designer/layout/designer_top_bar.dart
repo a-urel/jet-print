@@ -342,17 +342,21 @@ class _ArrangeMenuState extends State<_ArrangeMenu> {
         // A labelled Semantics wrapper rather than a hover ShadTooltip: a
         // tooltip overlay would render on top of the just-opened menu. The
         // menu items are self-describing; this keeps an accessible name.
-        child: Semantics(
-          label: l10n.actionArrangeTooltip,
-          button: true,
-          child: ShadIconButton.ghost(
-            key: const ValueKey<String>('jet_print.designer.action.arrange'),
-            icon: const Icon(LucideIcons.layoutGrid, size: 16),
-            width: 32,
-            height: 32,
-            padding: EdgeInsets.zero,
-            // Disabled with nothing selected, so it cannot open an empty menu.
-            onPressed: hasSelection ? _popover.toggle : null,
+        // MergeSemantics folds the label onto the button's own node (role +
+        // enabled state) so a screen reader announces a single "Arrange" button.
+        child: MergeSemantics(
+          child: Semantics(
+            label: l10n.actionArrangeTooltip,
+            button: true,
+            child: ShadIconButton.ghost(
+              key: const ValueKey<String>('jet_print.designer.action.arrange'),
+              icon: const Icon(LucideIcons.layoutGrid, size: 16),
+              width: 32,
+              height: 32,
+              padding: EdgeInsets.zero,
+              // Disabled with nothing selected, so it cannot open an empty menu.
+              onPressed: hasSelection ? _popover.toggle : null,
+            ),
           ),
         ),
       ),
@@ -401,13 +405,21 @@ class _IconButton extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: ShadTooltip(
         builder: (BuildContext context) => Text(tooltip),
-        child: ShadIconButton.ghost(
-          key: buttonKey,
-          icon: Icon(icon, size: 16),
-          width: 32,
-          height: 32,
-          padding: EdgeInsets.zero,
-          onPressed: enabled ? onPressed : null,
+        // The tooltip is hover-only; expose it as the button's accessible name
+        // too (the glyph alone is not announced) — FR-024 / SC-008.
+        child: MergeSemantics(
+          child: Semantics(
+            label: tooltip,
+            button: true,
+            child: ShadIconButton.ghost(
+              key: buttonKey,
+              icon: Icon(icon, size: 16),
+              width: 32,
+              height: 32,
+              padding: EdgeInsets.zero,
+              onPressed: enabled ? onPressed : null,
+            ),
+          ),
         ),
       ),
     );

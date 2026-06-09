@@ -24,6 +24,7 @@ import '../controller/jet_report_designer_controller.dart';
 import '../designer_scope.dart';
 import '../interaction/canvas_shortcuts.dart';
 import '../l10n/band_type_label.dart';
+import '../l10n/element_type_label.dart';
 import '../l10n/jet_print_localizations.dart';
 import 'canvas_view_transform.dart';
 import 'design_time_frame.dart';
@@ -670,7 +671,8 @@ class _DesignCanvasState extends State<DesignCanvas> {
               // Per-element regions: accessibility + test hooks. They do not
               // capture pointers (the canvas gesture detector handles hit-testing),
               // so the canvas still owns select/move.
-              ..._elementRegions(controller, layout, scale),
+              ..._elementRegions(controller, layout, scale,
+                  JetPrintLocalizations.of(context)),
               // Selection chrome (outline + handles), on top.
               Positioned.fill(
                 child: DesignerSelectionOverlay(layout: layout, scale: scale),
@@ -766,6 +768,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
     JetReportDesignerController controller,
     DesignTimeLayout layout,
     double scale,
+    JetPrintLocalizations l10n,
   ) {
     final List<Widget> regions = <Widget>[];
     for (final band in controller.template.bands) {
@@ -780,12 +783,18 @@ class _DesignCanvasState extends State<DesignCanvas> {
           width: rect.width * scale,
           height: rect.height * scale,
           // KeyedSubtree carries the GlobalKey used for scroll-into-view; the
-          // Semantics keeps its own stable ValueKey (a11y + test seam).
+          // Semantics keeps its own stable ValueKey (a11y + test seam). The
+          // accessible name is localized (e.g. "Text element heading1").
           child: KeyedSubtree(
             key: regionKey,
             child: Semantics(
               key: ValueKey<String>('jet_print.designer.element.${element.id}'),
-              label: '${element.typeKey} ${element.id}',
+              // `container` makes each element its own semantics node (a screen
+              // reader announces one element per stop) rather than merging the
+              // page's decorative band badges into one giant node.
+              container: true,
+              label: l10n.elementSemanticLabel(
+                  elementTypeLabel(element, l10n), element.id),
               button: true,
               selected: controller.selection.contains(element.id),
               child: const SizedBox.expand(),
