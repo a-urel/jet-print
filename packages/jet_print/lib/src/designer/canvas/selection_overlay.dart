@@ -93,8 +93,9 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
     // divider handle). Neither uses the element outline/handle machinery.
     if (selection.isReport) return _reportChrome();
     final int? selectedBand = selection.bandIndex;
-    if (selectedBand != null)
+    if (selectedBand != null) {
       return _bandChrome(controller, selectedBand, colors);
+    }
 
     final JetOffset move = controller.moveDelta ?? const JetOffset(0, 0);
     final List<Widget> children = <Widget>[];

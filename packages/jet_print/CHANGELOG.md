@@ -88,6 +88,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     only has a height. Dragging it changes the band height (floor-clamped, one
     undoable step); `setBandHeight` exposes the same change numerically. A
     selected report shows an outline only (the sheet is a fixed format).
+  - **The Outline panel is now model-driven** (was static sample content): it
+    renders the live template as a tree (Report root → bands → elements), tapping
+    a row selects that object through the controller (report / band / element),
+    and the row matching the current selection is highlighted (and marked
+    selected for accessibility). The disclosure chevron collapses/expands a
+    branch independently of selection.
   - *Remaining for later increments:* model-driven Outline/Properties panels with
     two-way selection sync (the controller already exposes everything they need);
     an align/distribute/z-order top-bar menu (controller ops done); and polish

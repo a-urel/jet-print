@@ -23,6 +23,7 @@ import '../../domain/report_element.dart';
 import '../controller/jet_report_designer_controller.dart';
 import '../designer_scope.dart';
 import '../interaction/canvas_shortcuts.dart';
+import '../l10n/band_type_label.dart';
 import '../l10n/jet_print_localizations.dart';
 import 'canvas_view_transform.dart';
 import 'design_time_frame.dart';
@@ -706,41 +707,11 @@ class _DesignCanvasState extends State<DesignCanvas> {
         left: rect.x * scale,
         top: rect.y * scale,
         child: IgnorePointer(
-          child: _BandBadge(caption: _bandTypeLabel(bands[i].type, l10n)),
+          child: _BandBadge(caption: bandTypeLabel(bands[i].type, l10n)),
         ),
       ));
     }
     return badges;
-  }
-
-  /// Maps a [BandType] to its localized design-surface caption. A `switch`
-  /// (rather than a map) so a newly added band type is a compile error here
-  /// until it is given a caption.
-  String _bandTypeLabel(BandType type, JetPrintLocalizations l10n) {
-    switch (type) {
-      case BandType.title:
-        return l10n.bandTypeTitle;
-      case BandType.pageHeader:
-        return l10n.bandTypePageHeader;
-      case BandType.columnHeader:
-        return l10n.bandTypeColumnHeader;
-      case BandType.groupHeader:
-        return l10n.bandTypeGroupHeader;
-      case BandType.detail:
-        return l10n.bandTypeDetail;
-      case BandType.groupFooter:
-        return l10n.bandTypeGroupFooter;
-      case BandType.columnFooter:
-        return l10n.bandTypeColumnFooter;
-      case BandType.pageFooter:
-        return l10n.bandTypePageFooter;
-      case BandType.summary:
-        return l10n.bandTypeSummary;
-      case BandType.background:
-        return l10n.bandTypeBackground;
-      case BandType.noData:
-        return l10n.bandTypeNoData;
-    }
   }
 
   List<Widget> _elementRegions(
