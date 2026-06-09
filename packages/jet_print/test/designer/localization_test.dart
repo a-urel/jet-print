@@ -10,6 +10,7 @@
 // locale sidesteps it entirely.
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jet_print/jet_print.dart';
 
 import 'support/designer_harness.dart';
 
@@ -36,5 +37,68 @@ void main() {
     // No raw resource keys leak through.
     expect(find.text('reportTitlePlaceholder'), findsNothing);
     expect(find.text('tabDataSource'), findsNothing);
+  });
+
+  testWidgets('the Arrange menu actions are localized in English (SC-008)', (
+    WidgetTester tester,
+  ) async {
+    final JetReportDesignerController c =
+        await pumpDesignerWith(tester, locale: const Locale('en'));
+    await openArrangeMenu(tester, c);
+
+    expect(find.text('Align left'), findsOneWidget);
+    expect(find.text('Distribute horizontally'), findsOneWidget);
+    expect(find.text('Bring to front'), findsOneWidget);
+    expect(find.text('Send to back'), findsOneWidget);
+    // No raw resource keys leak through any new affordance.
+    expect(find.text('arrangeAlignLeft'), findsNothing);
+    expect(find.text('arrangeBringToFront'), findsNothing);
+  });
+
+  testWidgets(
+      'the Properties inspector is localized in English across every state', (
+    WidgetTester tester,
+  ) async {
+    final JetReportDesignerController c =
+        await pumpDesignerWith(tester, locale: const Locale('en'));
+    c.createElement(DesignerToolType.text,
+        bandIndex: 1, at: const JetOffset(20, 20));
+    await tester.pumpAndSettle();
+    await openPropertiesTab(tester);
+
+    // (1) Element inspector — section labels are upper-cased by SectionLabel.
+    expect(find.text('POSITION'), findsOneWidget);
+    expect(find.text('SIZE'), findsOneWidget);
+    expect(find.text('TEXT'), findsOneWidget);
+    // No raw resource keys leak through.
+    expect(find.text('propertiesPosition'), findsNothing);
+    expect(find.text('PROPERTIESPOSITION'), findsNothing);
+
+    // (2) Report inspector — page section label + verbatim header/margins rows.
+    c.selectReport();
+    await tester.pumpAndSettle();
+    expect(find.text('Report'), findsWidgets); // inspector header
+    expect(find.text('PAGE'), findsOneWidget);
+    expect(find.text('Margins'), findsOneWidget);
+
+    // (3) Band inspector — the height row label (rendered verbatim).
+    c.selectBand(1);
+    await tester.pumpAndSettle();
+    expect(find.text('Height'), findsOneWidget);
+
+    // (4) Empty state — nothing selected.
+    c.clearSelection();
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Select an object to edit its properties.'),
+      findsOneWidget,
+    );
+
+    // (5) Multi-selection — the count summary.
+    c.createElement(DesignerToolType.text,
+        bandIndex: 1, at: const JetOffset(80, 60));
+    c.selectAll();
+    await tester.pumpAndSettle();
+    expect(find.text('2 elements selected'), findsOneWidget);
   });
 }

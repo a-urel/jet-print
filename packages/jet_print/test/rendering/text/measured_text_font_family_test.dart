@@ -13,7 +13,8 @@ void main() {
 
   test('measure reports a registered custom family', () {
     final FontRegistry reg = FontRegistry()..registerDefault();
-    reg.register('Custom', reg.bytesFor(null)); // reuse default bytes under a new name
+    reg.register(
+        'Custom', reg.bytesFor(null)); // reuse default bytes under a new name
     final MetricsTextMeasurer m = MetricsTextMeasurer(reg);
     expect(
       m.measure('A', const JetTextStyle(fontFamily: 'Custom')).fontFamily,

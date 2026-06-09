@@ -17,10 +17,52 @@
 /// `contracts/designer-layout-api.md` for the authoritative contract.
 library;
 
+// --- Interactive editing seam (003): the controller + its public vocabulary. ---
+export 'src/designer/canvas/design_tunables.dart' show DesignerToolType;
+export 'src/designer/canvas/resize_handle.dart' show ResizeHandle;
+export 'src/designer/controller/bulk_geometry.dart'
+    show AlignKind, DistributeAxis;
+export 'src/designer/controller/commands/reorder_command.dart' show ReorderMode;
+export 'src/designer/controller/jet_report_designer_controller.dart'
+    show JetReportDesignerController;
+export 'src/designer/controller/selection.dart' show Selection;
 export 'src/designer/jet_print_placeholder.dart' show JetPrintPlaceholder;
 export 'src/designer/jet_report_designer.dart' show JetReportDesigner;
 // The generated localizations class carries its own `delegate` and
 // `supportedLocales` statics; consumers wire them into their app shell.
 export 'src/designer/l10n/jet_print_localizations.dart'
     show JetPrintLocalizations;
+// --- The ReportTemplate-reachable model graph (003 — required to host, mutate,
+// and serialize a design; supersedes the 002 "no model types" non-goal). ---
+export 'src/domain/elements/barcode_element.dart'
+    show BarcodeElement, BarcodeSymbology;
+export 'src/domain/elements/image_element.dart' show ImageElement;
+export 'src/domain/elements/image_source.dart'
+    show
+        BytesImageSource,
+        FieldImageSource,
+        JetBoxFit,
+        JetImageSource,
+        UrlImageSource;
+export 'src/domain/elements/shape_element.dart' show ShapeElement, ShapeKind;
+export 'src/domain/elements/text_element.dart' show TextElement;
+export 'src/domain/geometry.dart'
+    show JetEdgeInsets, JetOffset, JetRect, JetSize;
+export 'src/domain/page_format.dart' show PageFormat;
+export 'src/domain/report_band.dart' show BandType, ReportBand;
+export 'src/domain/report_element.dart' show ReportElement;
+export 'src/domain/report_group.dart' show ReportGroup;
+export 'src/domain/report_parameter.dart' show ReportParameter;
+export 'src/domain/report_template.dart' show ReportTemplate;
+export 'src/domain/report_variable.dart'
+    show JetCalculation, ReportVariable, VariableResetScope;
+export 'src/domain/serialization/report_format.dart' show JetReportFormat;
+export 'src/domain/serialization/report_format_exception.dart'
+    show ReportFormatException;
+export 'src/domain/styles/box_style.dart' show JetBoxStyle;
+export 'src/domain/styles/color.dart' show JetColor;
+export 'src/domain/styles/text_style.dart'
+    show JetFontWeight, JetTextAlign, JetTextStyle;
+export 'src/domain/unknown_element.dart' show UnknownElement;
+export 'src/domain/value_type.dart' show JetFieldType;
 export 'src/version.dart' show jetPrintVersion;

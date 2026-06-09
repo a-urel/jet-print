@@ -15,11 +15,13 @@ class BarcodeElementRenderer extends ElementRenderer<BarcodeElement> {
   const BarcodeElementRenderer();
 
   @override
-  JetSize measure(BarcodeElement el, RenderContext ctx, JetConstraints constraints) =>
+  JetSize measure(
+          BarcodeElement el, RenderContext ctx, JetConstraints constraints) =>
       JetSize(el.bounds.width, el.bounds.height);
 
   @override
-  void emit(BarcodeElement el, RenderContext ctx, JetRect bounds, FrameBuilder out) {
+  void emit(
+      BarcodeElement el, RenderContext ctx, JetRect bounds, FrameBuilder out) {
     emitPlaceholder(out, bounds, el.symbology.name, ctx, elementId: el.id);
   }
 }

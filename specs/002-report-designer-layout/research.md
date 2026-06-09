@@ -9,17 +9,17 @@ stack already fixed by the scaffold (feature 001).
 
 ---
 
-## D1 — Where the designer shell lives (library vs. tester app)
+## D1 — Where the designer shell lives (library vs. playground app)
 
 - **Decision**: Implement the shell as a new **public library widget** `JetReportDesigner` in
   `packages/jet_print/lib/src/designer/`, exported from the single entry point
-  `lib/jet_print.dart`. The tester app renders it as a consumer.
+  `lib/jet_print.dart`. The playground app renders it as a consumer.
 - **Rationale**: Constitution Principle I (Library-First) makes the library the product and
   every app a consumer that must exercise only the public API. A designer shell built inside
-  the tester app would couple the product's core UI to a non-shipped consumer and violate that
+  the playground app would couple the product's core UI to a non-shipped consumer and violate that
   rule. Placing it in the `designer` seam matches Principle II's layering.
 - **Alternatives considered**:
-  - *Build the layout in the tester app* — rejected: the layout IS the product's designer
+  - *Build the layout in the playground app* — rejected: the layout IS the product's designer
     chrome; it must ship in the library.
   - *New top-level seam for "layout"* — rejected: the `designer` seam already owns
     design-time UI per the scaffold; no new seam is warranted.
@@ -135,9 +135,9 @@ stack already fixed by the scaffold (feature 001).
 
 ---
 
-## D7 — Tester app language toggle (FR-018)
+## D7 — Playground app language toggle (FR-018)
 
-- **Decision**: The tester app's root holds a `Locale` in state (default `en`). It passes
+- **Decision**: The playground app's root holds a `Locale` in state (default `en`). It passes
   `locale`, `localizationsDelegates: [JetPrintLocalizations.delegate,
   GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate,
   GlobalCupertinoLocalizations.delegate]`, and `supportedLocales:
@@ -148,7 +148,7 @@ stack already fixed by the scaffold (feature 001).
   and SC-007, and proves the exported delegate works for a real consumer (Principle I).
 - **Alternatives considered**:
   - *OS-locale only (no in-app control)* — rejected: FR-018 requires a runtime control in the
-    tester app.
+    playground app.
 
 ---
 

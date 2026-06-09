@@ -11,8 +11,8 @@ import 'package:jet_print/src/rendering/text/font_registry.dart';
 import 'package:jet_print/src/rendering/text/metrics_text_measurer.dart';
 
 void main() {
-  final RenderContext ctx =
-      RenderContext(measurer: MetricsTextMeasurer(FontRegistry()..registerDefault()));
+  final RenderContext ctx = RenderContext(
+      measurer: MetricsTextMeasurer(FontRegistry()..registerDefault()));
   const UnknownElementRenderer renderer = UnknownElementRenderer();
 
   UnknownElement makeUnknown() => UnknownElement(

@@ -20,10 +20,14 @@ import 'package:jet_print/src/rendering/text/metrics_text_measurer.dart';
 
 /// A custom element type defined ENTIRELY in test code.
 class StarElement extends ReportElement {
-  const StarElement({required super.id, required super.bounds, required this.points});
+  const StarElement(
+      {required super.id, required super.bounds, required this.points});
   final int points;
   @override
   String get typeKey => 'star';
+  @override
+  StarElement withBounds(JetRect bounds) =>
+      StarElement(id: id, bounds: bounds, points: points);
   @override
   bool operator ==(Object other) =>
       other is StarElement &&
@@ -39,7 +43,8 @@ class StarCodec extends ElementCodec<StarElement> {
   @override
   StarElement fromJson(Map<String, Object?> json) => StarElement(
         id: json['id']! as String,
-        bounds: JetRect.fromJson((json['bounds']! as Map).cast<String, Object?>()),
+        bounds:
+            JetRect.fromJson((json['bounds']! as Map).cast<String, Object?>()),
         points: (json['points']! as num).toInt(),
       );
   @override
@@ -56,19 +61,24 @@ class StarRenderer extends ElementRenderer<StarElement> {
   JetSize measure(StarElement el, RenderContext ctx, JetConstraints c) =>
       JetSize(el.bounds.width, el.bounds.height);
   @override
-  void emit(StarElement el, RenderContext ctx, JetRect bounds, FrameBuilder out) =>
-      out.add(RectPrimitive(bounds: bounds, stroke: JetColor.black, elementId: el.id));
+  void emit(StarElement el, RenderContext ctx, JetRect bounds,
+          FrameBuilder out) =>
+      out.add(RectPrimitive(
+          bounds: bounds, stroke: JetColor.black, elementId: el.id));
 }
 
 void main() {
-  test('custom type round-trips through report_codec AND renders, zero core edits',
+  test(
+      'custom type round-trips through report_codec AND renders, zero core edits',
       () {
     final ElementTypeRegistry reg = ElementTypeRegistry();
     registerBuiltInElementTypes(reg);
     reg.register<StarElement>('star', const StarCodec(), const StarRenderer());
 
     const StarElement star = StarElement(
-        id: 's1', bounds: JetRect(x: 10, y: 20, width: 30, height: 30), points: 5);
+        id: 's1',
+        bounds: JetRect(x: 10, y: 20, width: 30, height: 30),
+        points: 5);
     final ReportTemplate template = ReportTemplate(
       name: 'demo',
       page: PageFormat.a4Portrait,

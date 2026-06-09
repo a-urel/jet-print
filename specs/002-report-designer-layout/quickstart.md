@@ -17,10 +17,10 @@ This resolves the new `flutter_localizations` (SDK) + `intl` deps and triggers g
 (`flutter: generate: true` + `l10n.yaml`) to produce `JetPrintLocalizations` from the ARB
 files under `packages/jet_print/lib/src/designer/l10n/`.
 
-## 2. Run the tester app (macOS desktop)
+## 2. Run the playground app (macOS desktop)
 
 ```bash
-cd apps/jet_print_tester
+cd apps/jet_print_playground
 flutter run -d macos
 ```
 
@@ -41,12 +41,12 @@ You should see the **report designer shell**:
 
 ## 4. Switch theme (light/dark)
 
-Use the existing theme toggle in the tester app. Every region adopts the corresponding shadcn
+Use the existing theme toggle in the playground app. Every region adopts the corresponding shadcn
 theme colors with no unstyled element (FR-008/009 / SC-003).
 
 ## 5. Switch language (en / de / tr)
 
-Use the new **language toggle** in the tester app to cycle English → German → Turkish. Every
+Use the new **language toggle** in the playground app to cycle English → German → Turkish. Every
 visible designer label (top bar title + actions, the three tab captions, toolbox entries, panel
 placeholder labels) updates **without a restart** (FR-018 / SC-007). Selecting an unsupported
 locale falls back to English (no blank or raw-key captions, FR-017).

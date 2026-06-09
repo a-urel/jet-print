@@ -372,7 +372,7 @@ measure→layout→frame path stays platform-agnostic and every dependency is sw
 | III — Test-First | Two IRs make most of the engine pure-data testable; TDD per stage; extension & determinism tests |
 | IV — WYSIWYG | One headless layout → one `PageFrame` → many backends; cross-backend pixel goldens; invoice flagship |
 | V — Versioned Serialization | JSON + `schemaVersion` + ordered migrations + SemVer for package and schema |
-| VI — Documentation & DX | Public symbols carry dartdoc; runnable tester app; CHANGELOG per spec; zero-warning analyzer gate |
+| VI — Documentation & DX | Public symbols carry dartdoc; runnable playground app; CHANGELOG per spec; zero-warning analyzer gate |
 
 ## 14. Open Questions / Future Work
 

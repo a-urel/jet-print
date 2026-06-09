@@ -39,4 +39,71 @@ void main() {
     // English is listed first so unsupported locales resolve to it (FR-017).
     expect(JetPrintLocalizations.supportedLocales.first.languageCode, 'en');
   });
+
+  // --- 003: the model graph + controller + format are reachable and, together,
+  // sufficient to build, mutate, and serialize a design (contracts §7.1). ---
+
+  test('the model graph builds a ReportTemplate from the public surface', () {
+    const ReportTemplate template = ReportTemplate(
+      name: 'API check',
+      page: PageFormat.a4Portrait,
+      bands: <ReportBand>[
+        ReportBand(
+          type: BandType.detail,
+          height: 80,
+          elements: <ReportElement>[
+            TextElement(
+              id: 't1',
+              bounds: JetRect(x: 0, y: 0, width: 100, height: 18),
+              text: 'Hi',
+              style: JetTextStyle(weight: JetFontWeight.bold),
+            ),
+            ShapeElement(
+              id: 's1',
+              bounds: JetRect(x: 0, y: 20, width: 100, height: 0),
+              kind: ShapeKind.line,
+              style: JetBoxStyle(stroke: JetColor.black),
+            ),
+          ],
+        ),
+      ],
+    );
+    expect(template.bands.single.elements.length, 2);
+    // Geometry helpers are reachable.
+    expect(template.bands.single.elements.first.bounds, isA<JetRect>());
+  });
+
+  test('JetReportDesignerController mutates the model and is undoable', () {
+    final JetReportDesignerController controller =
+        JetReportDesignerController();
+    final int before = controller.template.bands.first.elements.length;
+    controller.createElement(
+      DesignerToolType.text,
+      bandIndex: 0,
+      at: const JetOffset(10, 10),
+    );
+    expect(controller.template.bands.first.elements.length, before + 1);
+    expect(controller.selection.isNotEmpty, isTrue);
+    expect(controller.canUndo, isTrue);
+    controller.undo();
+    expect(controller.template.bands.first.elements.length, before);
+    controller.dispose();
+  });
+
+  test('JetReportFormat serializes a mutated design losslessly', () {
+    final JetReportDesignerController controller =
+        JetReportDesignerController();
+    controller.createElement(
+      DesignerToolType.barcode,
+      bandIndex: 0,
+      at: const JetOffset(5, 5),
+    );
+    final String json = JetReportFormat.encodeJson(controller.template);
+    final ReportTemplate reopened = JetReportFormat.decodeJson(json);
+    expect(
+      JetReportFormat.encode(reopened),
+      equals(JetReportFormat.encode(controller.template)),
+    );
+    controller.dispose();
+  });
 }

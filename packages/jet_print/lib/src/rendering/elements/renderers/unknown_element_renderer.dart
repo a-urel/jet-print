@@ -16,11 +16,14 @@ class UnknownElementRenderer extends ElementRenderer<ReportElement> {
   const UnknownElementRenderer();
 
   @override
-  JetSize measure(ReportElement el, RenderContext ctx, JetConstraints constraints) =>
+  JetSize measure(
+          ReportElement el, RenderContext ctx, JetConstraints constraints) =>
       JetSize(el.bounds.width, el.bounds.height);
 
   @override
-  void emit(ReportElement el, RenderContext ctx, JetRect bounds, FrameBuilder out) {
-    emitPlaceholder(out, bounds, 'Unknown: ${el.typeKey}', ctx, elementId: el.id);
+  void emit(
+      ReportElement el, RenderContext ctx, JetRect bounds, FrameBuilder out) {
+    emitPlaceholder(out, bounds, 'Unknown: ${el.typeKey}', ctx,
+        elementId: el.id);
   }
 }

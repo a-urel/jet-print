@@ -31,7 +31,7 @@ existing encapsulation test.
 
 - MUST be a `StatefulWidget` (it owns active-tab and collapse state) with **no required
   parameters** and MUST build under a standard `ShadApp` shell.
-- MUST NOT require host-application state, global singletons, or tester-app code (it reads the
+- MUST NOT require host-application state, global singletons, or playground-app code (it reads the
   ambient `ShadTheme` and `Localizations` only).
 - MUST render five regions — top bar, toolbox, design surface, right tabbed panel, enclosing
   frame — all simultaneously at default desktop width (FR-001, US1).
@@ -55,7 +55,7 @@ existing encapsulation test.
 - MUST be wireable by a consumer via `localizationsDelegates: [JetPrintLocalizations.delegate,
   ...]` and `supportedLocales: JetPrintLocalizations.supportedLocales`.
 
-## Consumer usage (the tester app, and any external consumer)
+## Consumer usage (the playground app, and any external consumer)
 
 ```dart
 import 'package:flutter_localizations/flutter_localizations.dart';

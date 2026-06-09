@@ -16,11 +16,13 @@ class ShapeElementRenderer extends ElementRenderer<ShapeElement> {
   const ShapeElementRenderer();
 
   @override
-  JetSize measure(ShapeElement el, RenderContext ctx, JetConstraints constraints) =>
+  JetSize measure(
+          ShapeElement el, RenderContext ctx, JetConstraints constraints) =>
       JetSize(el.bounds.width, el.bounds.height);
 
   @override
-  void emit(ShapeElement el, RenderContext ctx, JetRect bounds, FrameBuilder out) {
+  void emit(
+      ShapeElement el, RenderContext ctx, JetRect bounds, FrameBuilder out) {
     switch (el.kind) {
       case ShapeKind.rectangle:
         out.add(RectPrimitive(
@@ -35,9 +37,8 @@ class ShapeElementRenderer extends ElementRenderer<ShapeElement> {
         final double top = bounds.y;
         final double right = bounds.x + bounds.width;
         final double bottom = bounds.y + bounds.height;
-        final JetOffset start = el.flipDiagonal
-            ? JetOffset(left, bottom)
-            : JetOffset(left, top);
+        final JetOffset start =
+            el.flipDiagonal ? JetOffset(left, bottom) : JetOffset(left, top);
         final JetOffset end =
             el.flipDiagonal ? JetOffset(right, top) : JetOffset(right, bottom);
         out.add(LinePrimitive(

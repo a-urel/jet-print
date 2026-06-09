@@ -93,7 +93,8 @@ void main() {
 
   test('a growing element does not move its siblings (no reflow)', () {
     final MeasuredBand mb = _measurer().measure(_band(10, <ReportElement>[
-      _text('top', const JetRect(x: 0, y: 0, width: 100, height: 10), 'a\nb\nc'),
+      _text(
+          'top', const JetRect(x: 0, y: 0, width: 100, height: 10), 'a\nb\nc'),
       _text('below', const JetRect(x: 0, y: 5, width: 100, height: 10), 'z'),
     ]));
     final JetRect below = mb.elements

@@ -1,128 +1,149 @@
-// Outline panel tree test.
+// Outline panel tree test (model-driven, T071).
 //
-// The Outline tab presents the report's bands and elements as an indented tree.
-// Like the Data Source tab it dropped its header title and descriptive hint so
-// the tree fills the panel, and it now renders the same chevron + node-icon row
-// shape: every band (branch) shows its own glyph next to the disclosure chevron,
-// and element (leaf) rows reuse the toolbox glyphs so an outline entry and its
-// palette element read as the same thing.
+// The Outline tab renders the live `ReportTemplate` as an indented tree: a
+// Report root, one branch per band (localized band-type caption), and a leaf per
+// element. The current selection is highlighted; tapping a row selects that
+// object (report / band / element) through the controller; the disclosure
+// chevron collapses/expands a branch.
 //
 // These tests drive the public `JetReportDesigner` (Outline is reached by
 // selecting its tab) and never reach into `src/`.
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:jet_print/jet_print.dart';
 
 import 'support/designer_harness.dart';
 
-/// Brings [caption] into view and taps it (the tab bar can scroll when narrow).
-Future<void> _selectTab(WidgetTester tester, String caption) async {
-  final Finder tab = find.text(caption);
+Key _reportRow = const ValueKey<String>('jet_print.designer.outline.report');
+Key _reportToggle =
+    const ValueKey<String>('jet_print.designer.outline.report.toggle');
+Key _bandRow(int i) => ValueKey<String>('jet_print.designer.outline.band.$i');
+Key _bandToggle(int i) =>
+    ValueKey<String>('jet_print.designer.outline.band.$i.toggle');
+Key _elementRow(String id) =>
+    ValueKey<String>('jet_print.designer.outline.element.$id');
+
+Finder _inPanel(String text) =>
+    find.descendant(of: find.byKey(kRightPanelKey), matching: find.text(text));
+
+Future<void> _openOutline(WidgetTester tester) async {
+  final Finder tab = find.text('Outline');
   await tester.ensureVisible(tab);
   await tester.pumpAndSettle();
   await tester.tap(tab);
   await tester.pumpAndSettle();
 }
 
-/// Brings a tree node labelled [text] into view and taps it (toggles a branch).
-Future<void> _tapNode(WidgetTester tester, String text) async {
-  final Finder node = find.text(text);
-  await tester.ensureVisible(node);
-  await tester.pumpAndSettle();
-  await tester.tap(node);
-  await tester.pumpAndSettle();
-}
-
 void main() {
-  group('outline tree', () {
-    testWidgets('shows the report band/element hierarchy', (
-      WidgetTester tester,
-    ) async {
-      await pumpDesigner(tester);
-      await _selectTab(tester, 'Outline');
+  group('outline tree (model-driven)', () {
+    testWidgets('reflects the template: a Report root over each band',
+        (WidgetTester tester) async {
+      await pumpDesignerWith(tester);
+      await _openOutline(tester);
 
-      expect(find.text('Report'), findsOneWidget);
-      expect(find.text('Page Header'), findsOneWidget);
-      expect(find.text('Detail'), findsOneWidget);
-      expect(find.text('Page Footer'), findsOneWidget);
+      // Default template: page header, detail, page footer.
+      expect(find.byKey(_reportRow), findsOneWidget);
+      expect(find.byKey(_bandRow(0)), findsOneWidget);
+      expect(find.byKey(_bandRow(1)), findsOneWidget);
+      expect(find.byKey(_bandRow(2)), findsOneWidget);
+      // The old hard-coded sample content is gone.
+      expect(_inPanel('OrdersTable'), findsNothing);
+      expect(_inPanel('PageInfo'), findsNothing);
     });
 
-    testWidgets('band rows show their band glyph beside the chevron', (
-      WidgetTester tester,
-    ) async {
-      await pumpDesigner(tester);
-      await _selectTab(tester, 'Outline');
+    testWidgets('shows an element created in the model under its band',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openOutline(tester);
+      c.createElement(DesignerToolType.text,
+          bandIndex: 1, at: const JetOffset(10, 10));
+      final String id = c.selection.singleOrNull!;
+      await tester.pumpAndSettle();
 
-      // These band glyphs used to be defined but never rendered (branches drew
-      // only a chevron). They now appear alongside the chevron.
-      expect(find.byIcon(LucideIcons.panelTop), findsOneWidget); // Page Header
-      expect(
-          find.byIcon(LucideIcons.panelBottom), findsOneWidget); // Page Footer
-      // The Report root shares the top bar's report-document glyph (both denote
-      // the report), so it appears in the outline as well as the top bar.
-      expect(find.byIcon(LucideIcons.fileText), findsWidgets);
+      expect(find.byKey(_elementRow(id)), findsOneWidget);
     });
 
-    testWidgets('the Title text element drops the inconsistent tag glyph', (
-      WidgetTester tester,
-    ) async {
-      await pumpDesigner(tester);
-      await _selectTab(tester, 'Outline');
+    testWidgets('tapping a band row selects that band',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openOutline(tester);
 
-      // Title is a text element, so it should reuse the toolbox Text glyph
-      // (`type`), not a one-off `tag` icon. The tag glyph is gone entirely.
-      expect(find.byIcon(LucideIcons.tag), findsNothing);
+      await tester.tap(find.byKey(_bandRow(1)));
+      await tester.pumpAndSettle();
+      expect(c.selection.bandIndex, 1);
     });
 
-    testWidgets('the panel no longer shows a header title or hint', (
-      WidgetTester tester,
-    ) async {
-      await pumpDesigner(tester);
-      await _selectTab(tester, 'Outline');
+    testWidgets('tapping an element row selects that element',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openOutline(tester);
+      c.createElement(DesignerToolType.text,
+          bandIndex: 1, at: const JetOffset(10, 10));
+      final String id = c.selection.singleOrNull!;
+      c.selectReport(); // move selection away
+      await tester.pumpAndSettle();
 
-      expect(
-        find.text("The report's bands and elements appear here as a tree."),
-        findsNothing,
-      );
+      await tester.tap(find.byKey(_elementRow(id)));
+      await tester.pumpAndSettle();
+      expect(c.selection.singleOrNull, id);
     });
 
-    testWidgets('collapsing a band hides its child elements', (
-      WidgetTester tester,
-    ) async {
-      await pumpDesigner(tester);
-      await _selectTab(tester, 'Outline');
+    testWidgets('tapping the Report root selects the report',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openOutline(tester);
+      c.selectBand(0); // move selection away
+      await tester.pumpAndSettle();
 
-      // Bands start expanded, so the Title element is visible under Page Header.
-      expect(find.text('Title'), findsOneWidget);
-
-      await _tapNode(tester, 'Page Header');
-      expect(find.text('Title'), findsNothing);
+      await tester.tap(find.byKey(_reportRow));
+      await tester.pumpAndSettle();
+      expect(c.selection.isReport, isTrue);
     });
 
-    testWidgets('re-expanding a band restores its elements', (
-      WidgetTester tester,
-    ) async {
-      await pumpDesigner(tester);
-      await _selectTab(tester, 'Outline');
+    testWidgets('the row matching the selection is marked selected',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openOutline(tester);
+      c.selectBand(1);
+      await tester.pumpAndSettle();
 
-      await _tapNode(tester, 'Page Header');
-      expect(find.text('Title'), findsNothing);
-
-      await _tapNode(tester, 'Page Header');
-      expect(find.text('Title'), findsOneWidget);
+      final SemanticsHandle handle = tester.ensureSemantics();
+      expect(tester.getSemantics(find.byKey(_bandRow(1))),
+          isSemantics(isSelected: true));
+      expect(tester.getSemantics(find.byKey(_bandRow(0))),
+          isSemantics(isSelected: false));
+      handle.dispose();
     });
 
-    testWidgets('collapsing the report root hides the whole tree', (
-      WidgetTester tester,
-    ) async {
-      await pumpDesigner(tester);
-      await _selectTab(tester, 'Outline');
+    testWidgets('the chevron collapses and re-expands a band',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openOutline(tester);
+      c.createElement(DesignerToolType.text,
+          bandIndex: 1, at: const JetOffset(10, 10));
+      final String id = c.selection.singleOrNull!;
+      await tester.pumpAndSettle();
+      expect(find.byKey(_elementRow(id)), findsOneWidget);
 
-      expect(find.text('Page Header'), findsOneWidget);
+      await tester.tap(find.byKey(_bandToggle(1)));
+      await tester.pumpAndSettle();
+      expect(find.byKey(_elementRow(id)), findsNothing);
 
-      await _tapNode(tester, 'Report');
-      expect(find.text('Page Header'), findsNothing);
-      expect(find.text('Detail'), findsNothing);
-      expect(find.text('PageInfo'), findsNothing);
+      await tester.tap(find.byKey(_bandToggle(1)));
+      await tester.pumpAndSettle();
+      expect(find.byKey(_elementRow(id)), findsOneWidget);
+    });
+
+    testWidgets('collapsing the Report root hides the bands',
+        (WidgetTester tester) async {
+      await pumpDesignerWith(tester);
+      await _openOutline(tester);
+      expect(find.byKey(_bandRow(0)), findsOneWidget);
+
+      await tester.tap(find.byKey(_reportToggle));
+      await tester.pumpAndSettle();
+      expect(find.byKey(_bandRow(0)), findsNothing);
+      expect(find.byKey(_bandRow(2)), findsNothing);
     });
   });
 }

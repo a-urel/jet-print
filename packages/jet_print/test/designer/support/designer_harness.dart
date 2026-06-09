@@ -29,6 +29,12 @@ const Key kRightPanelRailKey =
 const Key kRightPanelExpandKey =
     ValueKey<String>('jet_print.designer.rightPanelExpand');
 
+/// The interactive canvas key (must match `canvas/design_canvas.dart`).
+const Key kDesignCanvasKey = ValueKey<String>('jet_print.designer.canvas');
+
+/// The paper page-surface key (must match `canvas/design_canvas.dart`).
+const Key kDesignPageKey = ValueKey<String>('jet_print.designer.page');
+
 /// A comfortable desktop size at/above the 1024px collapse breakpoint where all
 /// regions render side by side.
 const Size kDesktopSize = Size(1440, 900);
@@ -60,7 +66,7 @@ Future<void> pumpDesigner(
     // delegates load CLDR data via static, async paths whose state leaks across
     // locales within one test isolate (e.g. exercising de then tr) — a framework
     // quirk unrelated to the library. Consumers' full Global* wiring is covered
-    // by the tester app's consumption test.
+    // by the playground app's consumption test.
     localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
       JetPrintLocalizations.delegate,
     ],
@@ -78,4 +84,64 @@ Future<void> pumpDesigner(
 
   await tester.pumpWidget(app);
   await tester.pumpAndSettle();
+}
+
+/// The top-bar Arrange menu trigger key (must match `designer_top_bar.dart`).
+const Key kArrangeButtonKey =
+    ValueKey<String>('jet_print.designer.action.arrange');
+
+/// Creates two elements, selects them, and opens the top-bar **Arrange** menu,
+/// so a test can assert the localized align/distribute/z-order item labels. The
+/// trigger is found by its stable key, so this works in any locale.
+Future<void> openArrangeMenu(
+    WidgetTester tester, JetReportDesignerController c) async {
+  c.createElement(DesignerToolType.text,
+      bandIndex: 1, at: const JetOffset(10, 10));
+  c.createElement(DesignerToolType.text,
+      bandIndex: 1, at: const JetOffset(80, 60));
+  c.selectAll();
+  await tester.pumpAndSettle();
+  await tester.tap(find.byKey(kArrangeButtonKey));
+  await tester.pumpAndSettle();
+}
+
+/// Opens the right panel's **Properties** tab in any locale.
+///
+/// The tab caption is itself localized, so rather than hardcode "Properties"
+/// (which would only work in English) this resolves the live caption from the
+/// tree via the public [JetReportDesigner] context and [JetPrintLocalizations] —
+/// the same string the tab rendered, so the match is exact and locale-agnostic.
+Future<void> openPropertiesTab(WidgetTester tester) async {
+  final JetPrintLocalizations l10n = JetPrintLocalizations.of(
+    tester.element(find.byType(JetReportDesigner)),
+  );
+  final Finder tab = find.text(l10n.tabProperties);
+  await tester.ensureVisible(tab);
+  await tester.pumpAndSettle();
+  await tester.tap(tab);
+  await tester.pumpAndSettle();
+}
+
+/// Pumps the designer bound to a [controller] (created if none is supplied) and
+/// returns it, so interaction tests can both drive and assert the model. The
+/// controller is disposed automatically by the designer only when it created
+/// the controller; here the test owns it, so we dispose on tear-down.
+Future<JetReportDesignerController> pumpDesignerWith(
+  WidgetTester tester, {
+  JetReportDesignerController? controller,
+  Size size = kDesktopSize,
+  Locale? locale,
+  ThemeMode themeMode = ThemeMode.light,
+}) async {
+  final JetReportDesignerController c =
+      controller ?? JetReportDesignerController();
+  addTearDown(c.dispose);
+  await pumpDesigner(
+    tester,
+    size: size,
+    locale: locale,
+    themeMode: themeMode,
+    designer: JetReportDesigner(controller: c),
+  );
+  return c;
 }

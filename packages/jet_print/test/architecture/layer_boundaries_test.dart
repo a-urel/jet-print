@@ -211,14 +211,16 @@ void main() {
         }
       }
       expect(violations, isEmpty,
-          reason: 'rendering/elements must stay headless (no dart:ui/Flutter):\n'
+          reason:
+              'rendering/elements must stay headless (no dart:ui/Flutter):\n'
               '${violations.join('\n')}');
     });
 
-    test('the fill/ seam exists, stays Flutter-free, and imports no sibling '
+    test(
+        'the fill/ seam exists, stays Flutter-free, and imports no sibling '
         'rendering subdir', () {
-      final Directory fillDir = Directory(
-          '${root.path}/packages/jet_print/lib/src/rendering/fill');
+      final Directory fillDir =
+          Directory('${root.path}/packages/jet_print/lib/src/rendering/fill');
       expect(fillDir.existsSync(), isTrue, reason: 'Missing ${fillDir.path}');
       final List<File> fillFiles = fillDir
           .listSync(recursive: true)
@@ -258,8 +260,8 @@ void main() {
     });
 
     test('the layout/ seam exists and stays Flutter-free', () {
-      final Directory layoutDir = Directory(
-          '${root.path}/packages/jet_print/lib/src/rendering/layout');
+      final Directory layoutDir =
+          Directory('${root.path}/packages/jet_print/lib/src/rendering/layout');
       expect(layoutDir.existsSync(), isTrue,
           reason: 'Missing ${layoutDir.path}');
       final List<File> layoutFiles = layoutDir

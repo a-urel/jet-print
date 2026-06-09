@@ -1,8 +1,8 @@
 ---
-description: "Task list for Flutter Library + Tester App Scaffold"
+description: "Task list for Flutter Library + Playground App Scaffold"
 ---
 
-# Tasks: Flutter Library + Tester App Scaffold
+# Tasks: Flutter Library + Playground App Scaffold
 
 **Input**: Design documents from `/specs/001-flutter-library-scaffold/`
 **Prerequisites**: plan.md (required), spec.md (required), research.md, data-model.md, contracts/public-api.md, quickstart.md
@@ -23,7 +23,7 @@ Dart pub workspace monorepo (per plan.md):
 
 - Workspace root: `/Users/ahmeturel/Projects/oss/jet-print/`
 - Library: `packages/jet_print/`
-- Tester app: `apps/jet_print_tester/`
+- Playground app: `apps/jet_print_playground/`
 
 ---
 
@@ -31,10 +31,10 @@ Dart pub workspace monorepo (per plan.md):
 
 **Purpose**: Stand up the workspace skeleton so both packages exist and resolve through one lockfile.
 
-- [X] T001 Create the workspace root manifest `pubspec.yaml` declaring `environment: sdk: ^3.6.0`, `workspace: [packages/jet_print, apps/jet_print_tester]`, and `name: jet_print_workspace`. (FR-006a)
+- [X] T001 Create the workspace root manifest `pubspec.yaml` declaring `environment: sdk: ^3.6.0`, `workspace: [packages/jet_print, apps/jet_print_playground]`, and `name: jet_print_workspace`. (FR-006a)
 - [X] T002 [P] Create the shared strict static-analysis config `analysis_options.yaml` at the workspace root: include `package:flutter_lints/flutter.yaml`, enable strict language modes (`strict-casts`, `strict-inference`, `strict-raw-types`), and set `analyzer.errors:` to promote key lints (e.g. `unused_import`, `dead_code`) to `error` so a clean checkout reports **zero analyzer warnings** (not merely zero errors), satisfying Constitution §VI. (FR-009, SC-003)
 - [X] T003 [P] Create the library package manifest `packages/jet_print/pubspec.yaml` with `name: jet_print`, `version: 0.1.0` (SemVer baseline), `resolution: workspace`, `environment: sdk: ^3.6.0`, and a `flutter:` SDK dependency; then run `flutter pub add shadcn_ui` inside `packages/jet_print/` so the **actual resolved `^x.y.z` constraint** is written (not a placeholder), satisfying FR-012's explicit-constraint requirement. Also create the seeded `packages/jet_print/CHANGELOG.md` with a `## 0.1.0` entry. (FR-001, FR-012)
-- [X] T004 Scaffold the tester app: run `flutter create --template=app --platforms=macos apps/jet_print_tester`, then run `flutter pub add jet_print shadcn_ui` inside `apps/jet_print_tester/` (writes real resolved constraints), and edit `apps/jet_print_tester/pubspec.yaml` to add `resolution: workspace`, set `environment: sdk: ^3.6.0`, and drop the explicit `jet_print` version so it resolves through the workspace. (FR-002, FR-006a)
+- [X] T004 Scaffold the playground app: run `flutter create --template=app --platforms=macos apps/jet_print_playground`, then run `flutter pub add jet_print shadcn_ui` inside `apps/jet_print_playground/` (writes real resolved constraints), and edit `apps/jet_print_playground/pubspec.yaml` to add `resolution: workspace`, set `environment: sdk: ^3.6.0`, and drop the explicit `jet_print` version so it resolves through the workspace. (FR-002, FR-006a)
 - [X] T005 Run `flutter pub get` from the workspace root and confirm a single root `pubspec.lock` is produced resolving every member; commit the lockfile. (FR-006a, SC-002)
 
 ---
@@ -61,7 +61,7 @@ Dart pub workspace monorepo (per plan.md):
 ### Tests for User Story 1 (write FIRST, ensure they FAIL) ⚠️
 
 - [X] T008 [P] [US1] Write the public-API import test `packages/jet_print/test/public_api_test.dart` that imports **only** `package:jet_print/jet_print.dart`, instantiates `JetPrintPlaceholder`, and asserts `jetPrintVersion` is a non-empty `String`. Must fail initially (symbols not yet exported). (US1, SC-001, SC-007)
-- [X] T009 [P] [US1] Write the encapsulation test `packages/jet_print/test/encapsulation_test.dart` that (a) scans all consumer files (library `test/**` and `apps/jet_print_tester/lib/**`) and asserts none import a `package:jet_print/src/` path, **and (b) scans `packages/jet_print/lib/**` and asserts no library file imports `package:jet_print_tester/...` or other host/app code** (FR-011: library MUST NOT depend on tester/host code). (SC-007, FR-011)
+- [X] T009 [P] [US1] Write the encapsulation test `packages/jet_print/test/encapsulation_test.dart` that (a) scans all consumer files (library `test/**` and `apps/jet_print_playground/lib/**`) and asserts none import a `package:jet_print/src/` path, **and (b) scans `packages/jet_print/lib/**` and asserts no library file imports `package:jet_print_playground/...` or other host/app code** (FR-011: library MUST NOT depend on playground/host code). (SC-007, FR-011)
 
 ### Implementation for User Story 1
 
@@ -73,22 +73,22 @@ Dart pub workspace monorepo (per plan.md):
 
 ---
 
-## Phase 4: User Story 2 - Run the tester app and see shadcn-styled output (Priority: P2)
+## Phase 4: User Story 2 - Run the playground app and see shadcn-styled output (Priority: P2)
 
-**Goal**: The tester app launches on macOS and renders `JetPrintPlaceholder` inside a `ShadApp`/`ShadTheme` shell with a working light/dark toggle.
+**Goal**: The playground app launches on macOS and renders `JetPrintPlaceholder` inside a `ShadApp`/`ShadTheme` shell with a working light/dark toggle.
 
-**Independent Test**: Launch the tester app on macOS; confirm the placeholder appears inside a shadcn-themed shell and toggling the theme visibly changes it; confirm the app imports only the public entry point.
+**Independent Test**: Launch the playground app on macOS; confirm the placeholder appears inside a shadcn-themed shell and toggling the theme visibly changes it; confirm the app imports only the public entry point.
 
 ### Tests for User Story 2 (write FIRST, ensure they FAIL) ⚠️
 
-- [X] T013 [US2] Write the consumption widget test `apps/jet_print_tester/test/app_consumes_library_test.dart` that pumps the tester app's root widget, finds exactly one `JetPrintPlaceholder`, and asserts the app is wrapped in a `ShadApp` (theming pipeline present). Must fail initially. (US2, FR-002, FR-005)
+- [X] T013 [US2] Write the consumption widget test `apps/jet_print_playground/test/app_consumes_library_test.dart` that pumps the playground app's root widget, finds exactly one `JetPrintPlaceholder`, and asserts the app is wrapped in a `ShadApp` (theming pipeline present). Must fail initially. (US2, FR-002, FR-005)
 
 ### Implementation for User Story 2
 
-- [X] T014 [US2] Implement `apps/jet_print_tester/lib/main.dart`: a `ShadApp` configured with light & dark `ShadThemeData`, a stateful theme-mode toggle in the UI, and `JetPrintPlaceholder` placed in the widget tree — importing **only** `package:jet_print/jet_print.dart` and `package:shadcn_ui/shadcn_ui.dart`. At entry, fail fast on unsupported platforms (e.g. `if (!Platform.isMacOS) throw UnsupportedError('jet_print_tester targets macOS desktop this iteration')`) so other platforms surface a clear message rather than rendering incorrectly. (FR-002, FR-005, SC-006, spec Edge Cases)
-- [X] T015 [US2] Verify the macOS runner: ensure `apps/jet_print_tester/macos/` exists, run `flutter config --enable-macos-desktop` if needed, then `flutter run -d macos` from `apps/jet_print_tester/` and confirm the themed placeholder renders and the toggle works. (research.md Decision 3, SC-006)
+- [X] T014 [US2] Implement `apps/jet_print_playground/lib/main.dart`: a `ShadApp` configured with light & dark `ShadThemeData`, a stateful theme-mode toggle in the UI, and `JetPrintPlaceholder` placed in the widget tree — importing **only** `package:jet_print/jet_print.dart` and `package:shadcn_ui/shadcn_ui.dart`. At entry, fail fast on unsupported platforms (e.g. `if (!Platform.isMacOS) throw UnsupportedError('jet_print_playground targets macOS desktop this iteration')`) so other platforms surface a clear message rather than rendering incorrectly. (FR-002, FR-005, SC-006, spec Edge Cases)
+- [X] T015 [US2] Verify the macOS runner: ensure `apps/jet_print_playground/macos/` exists, run `flutter config --enable-macos-desktop` if needed, then `flutter run -d macos` from `apps/jet_print_playground/` and confirm the themed placeholder renders and the toggle works. (research.md Decision 3, SC-006)
 
-**Checkpoint**: US1 and US2 both work independently; tester app demonstrates live shadcn theming.
+**Checkpoint**: US1 and US2 both work independently; playground app demonstrates live shadcn theming.
 
 ---
 
@@ -102,7 +102,7 @@ Dart pub workspace monorepo (per plan.md):
 
 - [X] T016 [P] [US3] Write the domain seam test `packages/jet_print/test/domain/domain_test.dart` exercising the domain placeholder type in isolation (no Flutter UI import). (SC-004)
 - [X] T017 [P] [US3] Write the rendering seam test `packages/jet_print/test/rendering/rendering_test.dart` exercising the rendering placeholder type, confirming it depends only on domain. (SC-004)
-- [X] T018 [P] [US3] Write the designer seam test `packages/jet_print/test/designer/designer_test.dart` exercising the designer seam's `JetPrintPlaceholder` independently of the tester app. (SC-004)
+- [X] T018 [P] [US3] Write the designer seam test `packages/jet_print/test/designer/designer_test.dart` exercising the designer seam's `JetPrintPlaceholder` independently of the playground app. (SC-004)
 - [X] T019 [P] [US3] Write the architecture test `packages/jet_print/test/architecture/layer_boundaries_test.dart` that scans `lib/src/domain/**` and asserts no file imports `package:jet_print/src/rendering/...`, `package:jet_print/src/designer/...`, or any Flutter widget/rendering library. (FR-007, SC-005)
 - [X] T020 [P] [US3] Write the placeholder widget + golden test `packages/jet_print/test/jet_print_placeholder_test.dart` that pumps `JetPrintPlaceholder` standalone inside a `ShadApp`, asserts it renders, and includes a `matchesGoldenFile` assertion seeding the WYSIWYG harness. (FR-004, Principle IV)
 
@@ -121,7 +121,7 @@ Dart pub workspace monorepo (per plan.md):
 **Purpose**: Documentation and the end-to-end clean-checkout gate.
 
 - [X] T024 [P] Verify every public symbol (`JetPrintPlaceholder`, `jetPrintVersion`) carries dartdoc and optionally run `dart doc packages/jet_print` to confirm docs generate without warnings. (FR-009, Principle VI)
-- [X] T025 [P] Write the contributor `README.md` at the workspace root documenting install (`flutter pub get`), run (`flutter run -d macos` in the tester), and test (`dart format`, `flutter analyze`, `flutter test`) steps so a new contributor reproduces them from docs alone; **explicitly state that the tester app supports macOS desktop only this iteration**. (FR-010, SC-002, spec Edge Cases)
+- [X] T025 [P] Write the contributor `README.md` at the workspace root documenting install (`flutter pub get`), run (`flutter run -d macos` in the playground), and test (`dart format`, `flutter analyze`, `flutter test`) steps so a new contributor reproduces them from docs alone; **explicitly state that the playground app supports macOS desktop only this iteration**. (FR-010, SC-002, spec Edge Cases)
 - [X] T026 Run the full quickstart gate from the workspace root and confirm all green: `dart format --output=none --set-exit-if-changed .`, `flutter analyze` (zero warnings), `flutter test` (all pass). (SC-003, quickstart.md)
 - [X] T027 [P] Create `.github/workflows/ci.yml` that runs on push/PR: set up Flutter, run `flutter pub get` at the workspace root, then `dart format --output=none --set-exit-if-changed .`, `flutter analyze`, and `flutter test` — mirroring the local gate (T026) so merge gates are enforced in CI. (Constitution §Technology & Quality Standards, §Development Workflow)
 
@@ -185,7 +185,7 @@ Task: "Placeholder widget + golden test in packages/jet_print/test/jet_print_pla
 
 1. Setup + Foundational → skeleton ready.
 2. US1 → consumable library (MVP) → validate.
-3. US2 → running shadcn-themed tester app → validate.
+3. US2 → running shadcn-themed playground app → validate.
 4. US3 → full layered, golden test suite → validate.
 5. Polish → docs + clean-checkout gate (SC-003).
 

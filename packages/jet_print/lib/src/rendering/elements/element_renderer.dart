@@ -24,8 +24,8 @@ abstract class ElementRenderer<E extends ReportElement> {
   /// [constraints] is part of the layout contract that 008 will use for
   /// growth/overflow; the 007a built-in renderers return their natural size and
   /// do not yet clamp to it (spec section 7.1 — constraints are reserved for 008).
-  JetSize measure(
-      covariant ReportElement element, RenderContext ctx, JetConstraints constraints);
+  JetSize measure(covariant ReportElement element, RenderContext ctx,
+      JetConstraints constraints);
 
   /// Appends this element's primitives to [out], positioned within [bounds].
   void emit(covariant ReportElement element, RenderContext ctx, JetRect bounds,

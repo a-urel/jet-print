@@ -1,4 +1,4 @@
-# Phase 1 Data Model: Flutter Library + Tester App Scaffold
+# Phase 1 Data Model: Flutter Library + Playground App Scaffold
 
 **Feature**: `001-flutter-library-scaffold`
 **Date**: 2026-06-05
@@ -21,7 +21,7 @@ The reusable, publishable unit — the product.
 | Version | Declared in `pubspec.yaml` (initial baseline, e.g. `0.1.0`) |
 | Dependency constraints | Flutter SDK + `shadcn_ui` declared with explicit ranges (FR-012) |
 | Workspace role | Member: `resolution: workspace` |
-| Self-containment | MUST NOT import tester-app or host-app code (FR-011) |
+| Self-containment | MUST NOT import playground-app or host-app code (FR-011) |
 
 **Validation rules**: every symbol reachable from `lib/jet_print.dart` is intentional and
 documented (FR-003, SC-007); nothing under `lib/src/` is exported except via the entry point.
@@ -38,13 +38,13 @@ The set of intentionally exported, documented symbols. Formalized in
 | Documentation | Every exported symbol carries dartdoc (Principle VI) |
 | Stability | Future changes follow SemVer (Principle V) |
 
-### Tester (Sample) Application (`jet_print_tester`)
+### Playground (Sample) Application (`jet_print_playground`)
 
 A consumer of the library; keeps the public API honest.
 
 | Attribute | Value / Rule |
 |-----------|--------------|
-| Location | `apps/jet_print_tester/` |
+| Location | `apps/jet_print_playground/` |
 | Dependency on library | Via workspace resolution; imports `package:jet_print/jet_print.dart` only |
 | Theming | Wraps app in `ShadApp` with `ShadThemeData`; supports a light/dark toggle |
 | Target platform | macOS desktop (this iteration) |
@@ -57,7 +57,7 @@ The minimal example widget proving end-to-end consumption + theming.
 | Attribute | Rule |
 |-----------|------|
 | Exported as | A single public widget from `lib/jet_print.dart` |
-| Behavior | Builds and renders standalone (no tester-app dependency, FR-004) |
+| Behavior | Builds and renders standalone (no playground-app dependency, FR-004) |
 | Theme awareness | Reads `ShadTheme` so a theme switch visibly changes it (SC-006) |
 | Tested by | A widget test asserting it builds/renders in isolation |
 
@@ -86,6 +86,6 @@ Serialization (Constitution Principle V) is deferred; only a version baseline is
 workspace root (pubspec.yaml: workspace: [...], one pubspec.lock)
 ├── packages/jet_print  ──(public API: lib/jet_print.dart)──┐
 │     └── lib/src/{domain ← rendering ← designer}           │ consumed via
-└── apps/jet_print_tester ─────────────────────────────────┘ package:jet_print/jet_print.dart
+└── apps/jet_print_playground ─────────────────────────────────┘ package:jet_print/jet_print.dart
         └── ShadApp / ShadTheme renders the Placeholder Component
 ```

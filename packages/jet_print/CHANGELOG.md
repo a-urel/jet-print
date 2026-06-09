@@ -8,6 +8,133 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Designer edit surface (spec 003-designer-edit-surface).** The center surface
+  is now a fully interactive WYSIWYG canvas — create, select, move, resize,
+  multi-select, snap, align/distribute/z-order, undo/redo, zoom/pan, inline text
+  edit, model-driven panels, accessibility, localization, and a host save/open
+  seam. New public surface from the single entry point:
+  - `JetReportDesignerController` (`ChangeNotifier`) — holds the in-memory
+    `ReportTemplate`, the `Selection`, and unlimited session undo/redo over
+    immutable `(template, selection)` snapshots; exposes `open`, `createElement`,
+    `moveBy`, live `begin/update/commit/cancelMove`, `select`/`clearSelection`,
+    `undo`/`redo`. Headless (no file I/O).
+  - `JetReportFormat` — a static facade over the versioned codec
+    (`encode`/`decode`/`encodeJson`/`decodeJson`) with built-in element codecs +
+    migrations pre-wired; lossless round-trip incl. `UnknownElement` and the full
+    parameter/variable/group payload.
+  - The `ReportTemplate`-reachable model graph + geometry/style types, plus the
+    additive `ReportElement.withBounds` / `copyWith` value-copy helpers.
+  - `JetReportDesigner` gains optional `controller` / `initialReport` /
+    `onSaveRequested` / `onOpenRequested` (still `const`-constructible — the 002
+    contract holds).
+  - Canvas: drag-from-toolbox or click-to-place create; click-select with eight
+    resize handles; drag-to-move; fit-to-width zoom transform; per-element
+    accessibility regions. Element appearance is painted through the **unchanged**
+    shared render pipeline (`ElementRenderer.emit` + `CanvasPainter`), cached as a
+    `ui.Picture` (Constitution IV — no parallel draw code).
+  - Undo/redo wired to the top bar (disabled at the history ends) and to
+    canvas-focus-scoped ⌘Z / ⇧⌘Z (Ctrl on non-macOS).
+  - Per-handle **resize** with a 4×4 pt minimum floor, plus **snapping** to the
+    grid, sibling edges/centers, and band/page bounds with live guide lines;
+    Alt/Option bypasses snapping; grid/snap toggles in the top bar.
+  - **Multi-select** (shift-click; marquee rubber-band) and **bulk operations** —
+    delete, z-order (forward/back/to-front/to-back), cut/copy/paste/duplicate
+    (codec-cloned with fresh ids + offset), align (6 ways), distribute, and
+    arrow-key nudge (Shift = 10 pt) — each one undoable.
+  - Numeric geometry + text editing on the controller (`setGeometry` / `setText`)
+    and **inline text editing**: double-click a text element to edit in place
+    (Enter commits, Escape cancels), undoable.
+  - **Zoom / pan / fit**: top-bar zoom in/out, click the zoom % to fit-to-width,
+    ⌘±/⌘0 shortcuts, and trackpad/wheel pan (Ctrl/⌘+scroll zooms), clamped
+    25 %–400 %; placement stays pointer-accurate at every zoom (SC-006).
+  - **Band-type badges**: each band on the canvas carries a small localized
+    caption (Page Header / Detail / Page Footer / …, all eleven `BandType`s) at
+    its top-left corner, so authors always know which band they are editing. The
+    badge is constant-size UI chrome (legible at any zoom) and never captures
+    pointers.
+  - The **page viewport scrolls** when the (paper-sized) page doesn't fit:
+    horizontal + vertical scrollbars appear and the wheel/trackpad scroll the
+    sheet, so the bottom of a full A4 page is always reachable. Drag-to-scroll is
+    intentionally disabled so a pointer drag still moves elements / rubber-band
+    selects; Ctrl/⌘+wheel still zooms. A page smaller than the viewport is
+    centered.
+  - The **design surface is a real, paper-sized sheet**: it spans the page
+    format's full dimensions (A4 portrait by default), flow bands (title / page
+    header / detail / groups / …) stack from the top margin, and the page-/
+    column-footer bands are **anchored to the bottom** of the sheet with an empty
+    flow gap between — true WYSIWYG, the way a rendered page looks. The surface
+    grows if the authored bands exceed the sheet, and a drop in the empty gap
+    snaps to the vertically nearest band.
+  - The **paper page surface is a constant white in every theme** (WYSIWYG —
+    it represents printed paper, and report content is emitted with print colors
+    such as dark text that only read on white). Only the surrounding canvas and
+    the app chrome follow the light/dark theme; the design-time chrome drawn on
+    the page (band separators, band badges, the empty hint) uses a fixed
+    paper-relative palette so it stays legible on white in dark mode too.
+  - **Resize handles show directional cursors on hover**: each of the eight
+    handles exposes the matching resize cursor (diagonal `↖↘`/`↗↙` for corners,
+    `↕`/`↔` for edges) so the pointer signals which edges a drag moves. Corners
+    sit above edges in the overlay so an overlapping edge hit-area can't mask the
+    diagonal cursor when zoomed out. On macOS — whose public cursor set has no
+    diagonal — the corners drive the native window-resize `NSCursor` directly, so
+    they look the same as everywhere else.
+  - **The report (page) and individual bands are now selectable**, not just
+    elements. Clicking a band's empty area selects that band; clicking the paper
+    off any band selects the report; clicking off the paper clears. The selection
+    targets are mutually exclusive. `Selection` gains `Selection.band(i)` /
+    `Selection.report()` with `bandIndex` / `isReport`; the controller gains
+    `selectBand` / `selectReport`.
+  - **Bands resize vertically.** A selected band shows a single divider handle on
+    its growth-facing edge (the bottom for a flow band, the top for a
+    bottom-anchored footer) — no element-style corner/side handles, since a band
+    only has a height. Dragging it changes the band height (floor-clamped, one
+    undoable step); `setBandHeight` exposes the same change numerically. A
+    selected report shows an outline only (the sheet is a fixed format).
+  - **The Outline panel is now model-driven** (was static sample content): it
+    renders the live template as a tree (Report root → bands → elements), tapping
+    a row selects that object through the controller (report / band / element),
+    and the row matching the current selection is highlighted (and marked
+    selected for accessibility). The disclosure chevron collapses/expands a
+    branch independently of selection.
+  - **The Properties panel is now a model-driven, context-aware inspector** (was
+    static sample content): a selected element exposes live **X / Y / W / H**
+    fields (committed through `setGeometry`) and, for a text element, its **text**
+    (`setText`) — each edit one undoable step, with steppers for ±1 nudges and
+    commit on Enter or blur; a selected band exposes its **height**
+    (`setBandHeight`); the report shows read-only page info; and nothing/a
+    multi-selection shows a friendly empty state. Fields reflect the live model,
+    so a canvas move/resize updates the numbers and vice-versa.
+  - **Selecting an element scrolls it into view.** When a selection comes from the
+    Outline panel (or any non-canvas source), the canvas scrolls the element into
+    the viewport so the user sees what they selected — a no-op when it is already
+    visible. This completes the canvas ↔ Outline ↔ Properties two-way sync.
+  - **An "Arrange" menu in the top bar** gathers the selection-wide layout
+    actions: align (left / center / right / top / middle / bottom), distribute
+    (horizontally / vertically), and z-order (bring to front / forward, send
+    backward / to back) — each one undoable. The trigger enables once an element
+    is selected; the align/distribute items further require two or more (a lone
+    element has nothing to align against), while the z-order items act on a single
+    element too.
+  - **Open / Save are wired to the host.** The top bar gains an **Open** action
+    beside **Save**; both call the new `JetReportDesigner.onOpenRequested` /
+    `onSaveRequested` callbacks and render disabled when the host wired none. The
+    library still performs **no** file I/O itself (FR-022) — the playground app
+    implements the host side with `file_selector` + `JetReportFormat`.
+  - **Accessibility.** Every interactive affordance now exposes a localized
+    accessible name and a button role: each canvas element ("Text element …"),
+    all eight resize handles (directional names) and the band-height handle, and
+    the top-bar actions (Arrange, zoom, Open/Save). Element regions are discrete
+    semantics nodes so a screen reader announces one element per stop.
+  - **Localization (en / de / tr).** The Arrange menu, the Properties inspector
+    labels, the Outline root, the Open action, and all the new accessible names
+    are fully localized with English fallback — no raw keys or blank labels
+    (SC-008).
+  - **Fidelity + performance coverage.** Added design-surface goldens
+    (representative elements with a selection shown, light + dark, via the shared
+    render pipeline) and a 200-element multi-select drag performance smoke
+    (SC-007).
+  - This completes the spec-003 designer edit surface; only the merge-gate
+    house-keeping remains.
 - Report model foundation (spec 003 Part 1): pure-Dart geometry value types
   (`JetSize`/`JetOffset`/`JetEdgeInsets`/`JetRect`), `PageFormat`, the element
   model (`ReportElement`, `TextElement`, `UnknownElement`), `ReportBand`/

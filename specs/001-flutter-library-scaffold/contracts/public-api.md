@@ -5,7 +5,7 @@
 
 For a Flutter/Dart library the "interface contract" is the set of symbols re-exported from
 its single public entry point. This document is the authoritative description of that
-surface for the scaffold iteration. The tester app and any future consumer MUST rely only
+surface for the scaffold iteration. The playground app and any future consumer MUST rely only
 on what is listed here.
 
 ## Entry point
@@ -32,7 +32,7 @@ is a contract violation and is what the consumption tests guard against.
 
 - MUST be a `const`-constructible `StatelessWidget` (or equivalent) that builds without any
   ancestor beyond a standard `ShadApp`/`MaterialApp` shell.
-- MUST NOT require host-application state, global singletons, or tester-app code.
+- MUST NOT require host-application state, global singletons, or playground-app code.
 - MUST visibly change appearance when the surrounding `ShadTheme` changes (e.g. light/dark),
   satisfying SC-006.
 - MUST carry dartdoc describing purpose and usage (Principle VI).
@@ -50,7 +50,7 @@ These tests assert the contract above and MUST be written test-first (Principle 
 1. **Public-API import test**: a test that imports *only*
    `package:jet_print/jet_print.dart` and references `JetPrintPlaceholder` +
    `jetPrintVersion`, proving the surface is sufficient (US1 / SC-001).
-2. **Encapsulation test**: a test/grep assertion that no consumer file (tester app +
+2. **Encapsulation test**: a test/grep assertion that no consumer file (playground app +
    library tests acting as consumer) imports a `package:jet_print/src/` path (SC-007).
 3. **Placeholder widget test**: pumps `JetPrintPlaceholder` standalone and asserts it
    renders (FR-004 / US3).

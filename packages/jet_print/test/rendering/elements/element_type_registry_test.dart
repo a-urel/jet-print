@@ -41,12 +41,15 @@ void main() {
             const ShapeElement(id: 's', bounds: r, kind: ShapeKind.rectangle)),
         isA<ShapeElementRenderer>());
     expect(
-        reg.renderers.rendererFor(
-            ImageElement(id: 'i', bounds: r, source: BytesImageSource(Uint8List(0)))),
+        reg.renderers.rendererFor(ImageElement(
+            id: 'i', bounds: r, source: BytesImageSource(Uint8List(0)))),
         isA<ImageElementRenderer>());
     expect(
         reg.renderers.rendererFor(const BarcodeElement(
-            id: 'b', bounds: r, symbology: BarcodeSymbology.code128, data: '1')),
+            id: 'b',
+            bounds: r,
+            symbology: BarcodeSymbology.code128,
+            data: '1')),
         isA<BarcodeElementRenderer>());
   });
 
@@ -69,7 +72,9 @@ void main() {
       const TextElement(id: 't', bounds: r, text: 'x'),
       const ShapeElement(id: 's', bounds: r, kind: ShapeKind.rectangle),
       ImageElement(
-          id: 'i', bounds: r, source: BytesImageSource(Uint8List.fromList(<int>[1, 2]))),
+          id: 'i',
+          bounds: r,
+          source: BytesImageSource(Uint8List.fromList(<int>[1, 2]))),
       const BarcodeElement(
           id: 'b', bounds: r, symbology: BarcodeSymbology.code128, data: '1'),
     ];
@@ -77,8 +82,10 @@ void main() {
       final Map<String, Object?> encoded = reg.codecs.encode(el);
       final ReportElement decoded = reg.codecs.decode(encoded);
       expect(decoded.typeKey, el.typeKey,
-          reason: 'codec for "${el.typeKey}" not wired by registerBuiltInElementTypes');
-      expect(decoded.runtimeType, el.runtimeType); // a real type, not UnknownElement
+          reason:
+              'codec for "${el.typeKey}" not wired by registerBuiltInElementTypes');
+      expect(decoded.runtimeType,
+          el.runtimeType); // a real type, not UnknownElement
     }
   });
 }

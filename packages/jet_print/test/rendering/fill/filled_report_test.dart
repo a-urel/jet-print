@@ -13,7 +13,9 @@ void main() {
   FilledBand band() => FilledBand(
         type: BandType.detail,
         height: 20,
-        elements: const <ReportElement>[TextElement(id: 't', bounds: r, text: 'A')],
+        elements: const <ReportElement>[
+          TextElement(id: 't', bounds: r, text: 'A')
+        ],
         variables: const <String, JetValue>{'total': JetNumber(3)},
       );
 
@@ -22,7 +24,9 @@ void main() {
     final FilledBand other = FilledBand(
       type: BandType.detail,
       height: 20,
-      elements: const <ReportElement>[TextElement(id: 't', bounds: r, text: 'A')],
+      elements: const <ReportElement>[
+        TextElement(id: 't', bounds: r, text: 'A')
+      ],
       variables: const <String, JetValue>{'total': JetNumber(4)}, // differs
     );
     expect(band(), isNot(other));
@@ -43,7 +47,8 @@ void main() {
     expect(() => b.variables['x'] = const JetNull(), throwsUnsupportedError);
   });
 
-  test('variables hash is order-independent (matches order-insensitive equality)',
+  test(
+      'variables hash is order-independent (matches order-insensitive equality)',
       () {
     final FilledBand a = FilledBand(
       type: BandType.detail,
@@ -55,13 +60,17 @@ void main() {
       type: BandType.detail,
       height: 20,
       elements: const <ReportElement>[],
-      variables: <String, JetValue>{'b': const JetNumber(2), 'a': const JetNumber(1)},
+      variables: <String, JetValue>{
+        'b': const JetNumber(2),
+        'a': const JetNumber(1)
+      },
     );
     expect(a, b);
     expect(a.hashCode, b.hashCode);
   });
 
-  test('variables hash stays order-independent with three distinct entries', () {
+  test('variables hash stays order-independent with three distinct entries',
+      () {
     FilledBand make(Map<String, JetValue> vars) => FilledBand(
           type: BandType.detail,
           height: 20,
@@ -96,7 +105,8 @@ void main() {
     expect(band('region') == band(null), isFalse);
   });
 
-  test('FilledBand.group defaults to null and appears in toString when set', () {
+  test('FilledBand.group defaults to null and appears in toString when set',
+      () {
     final FilledBand plain = FilledBand(
         type: BandType.detail,
         height: 10,

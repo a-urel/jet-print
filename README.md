@@ -1,7 +1,7 @@
 # jet-print
 
 A monorepo for **`jet_print`** — a layered, theme-aware Flutter widget library for
-building WYSIWYG report designers — and **`jet_print_tester`**, a macOS desktop app
+building WYSIWYG report designers — and **`jet_print_playground`**, a macOS desktop app
 that consumes the library exactly as an external consumer would.
 
 This is the foundational scaffold: a minimal but real public API, three internal
@@ -20,7 +20,7 @@ jet-print/
 │       ├── domain/              # report model — pure Dart, no UI
 │       ├── rendering/           # layout — depends on domain only
 │       └── designer/            # UI — the placeholder component lives here
-└── apps/jet_print_tester/       # tester app (consumer; macOS desktop only)
+└── apps/jet_print_playground/       # playground app (consumer; macOS desktop only)
     └── lib/main.dart            # ShadApp + light/dark toggle rendering the placeholder
 ```
 
@@ -38,15 +38,15 @@ The whole workspace resolves through a single root lockfile:
 flutter pub get        # run from the repository root
 ```
 
-## Run the tester app (macOS desktop only)
+## Run the playground app (macOS desktop only)
 
-> **Platform note:** the tester app targets **macOS desktop only** this iteration.
+> **Platform note:** the playground app targets **macOS desktop only** this iteration.
 > It fails fast with a clear message on other platforms. The `jet_print` library
 > itself is platform-agnostic.
 
 ```bash
-flutter run -d macos --directory apps/jet_print_tester
-# or:  cd apps/jet_print_tester && flutter run -d macos
+flutter run -d macos --directory apps/jet_print_playground
+# or:  cd apps/jet_print_playground && flutter run -d macos
 ```
 
 You should see `JetPrintPlaceholder` rendered inside a `ShadApp` shell. Use the
@@ -60,7 +60,7 @@ Run from the repository root. These three commands mirror CI exactly:
 ```bash
 dart format --output=none --set-exit-if-changed .                 # formatting is clean
 flutter analyze                                                     # zero analyzer warnings
-flutter test packages/jet_print apps/jet_print_tester              # all tests pass
+flutter test packages/jet_print apps/jet_print_playground              # all tests pass
 ```
 
 > **Why the explicit paths?** `flutter analyze` fans out across all workspace

@@ -49,16 +49,21 @@ void main() {
     ) async {
       await pumpDesigner(tester);
 
-      expect(find.text('100%'), findsOneWidget);
+      // The canvas drives the zoom % (it fits the page to width on load).
+      final Finder zoomLevel = find
+          .byKey(const ValueKey<String>('jet_print.designer.action.zoomLevel'));
+      int pct() =>
+          int.parse(tester.widget<Text>(zoomLevel).data!.replaceAll('%', ''));
 
+      final int initial = pct();
       await tester.tap(find.byIcon(LucideIcons.zoomIn));
       await tester.pumpAndSettle();
-      expect(find.text('110%'), findsOneWidget);
-      expect(find.text('100%'), findsNothing);
+      expect(pct(), greaterThan(initial));
 
+      final int zoomedIn = pct();
       await tester.tap(find.byIcon(LucideIcons.zoomOut));
       await tester.pumpAndSettle();
-      expect(find.text('100%'), findsOneWidget);
+      expect(pct(), lessThan(zoomedIn));
     });
 
     testWidgets('tool buttons are left-aligned; primary actions stay right', (

@@ -38,4 +38,24 @@ class ReportTemplate {
 
   /// Declared groups, outermost first (reset boundaries for variables).
   final List<ReportGroup> groups;
+
+  /// Returns a copy with the given fields replaced. Editing typically replaces
+  /// the [bands] list (or renames); [parameters]/[variables]/[groups] are
+  /// preserved referentially unless explicitly overridden (FR-022 / FR-025).
+  ReportTemplate copyWith({
+    String? name,
+    PageFormat? page,
+    List<ReportBand>? bands,
+    List<ReportParameter>? parameters,
+    List<ReportVariable>? variables,
+    List<ReportGroup>? groups,
+  }) =>
+      ReportTemplate(
+        name: name ?? this.name,
+        page: page ?? this.page,
+        bands: bands ?? this.bands,
+        parameters: parameters ?? this.parameters,
+        variables: variables ?? this.variables,
+        groups: groups ?? this.groups,
+      );
 }

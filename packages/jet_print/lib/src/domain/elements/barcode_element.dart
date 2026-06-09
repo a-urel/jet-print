@@ -1,6 +1,7 @@
 /// A 1D/2D barcode element.
 library;
 
+import '../geometry.dart';
 import '../report_element.dart';
 import '../styles/color.dart';
 
@@ -43,6 +44,15 @@ class BarcodeElement extends ReportElement {
 
   @override
   String get typeKey => 'barcode';
+
+  @override
+  BarcodeElement withBounds(JetRect bounds) => BarcodeElement(
+        id: id,
+        bounds: bounds,
+        symbology: symbology,
+        data: data,
+        color: color,
+      );
 
   @override
   bool operator ==(Object other) =>

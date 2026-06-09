@@ -26,7 +26,8 @@ void main() {
 
   test('emit produces one TextRunPrimitive carrying the resolved family', () {
     final FrameBuilder out = FrameBuilder(PageFormat.a4Portrait);
-    renderer.emit(el, ctx, const JetRect(x: 5, y: 5, width: 40, height: 100), out);
+    renderer.emit(
+        el, ctx, const JetRect(x: 5, y: 5, width: 40, height: 100), out);
     final TextRunPrimitive run =
         out.build().primitives.single as TextRunPrimitive;
     expect(run.fontFamily, 'JetSans');
@@ -51,20 +52,24 @@ void main() {
         .toList();
     final FrameBuilder out = FrameBuilder(PageFormat.a4Portrait);
     // Deliberately WIDER emit bounds: wrapping must still use the authored 40.
-    renderer.emit(el, ctx, const JetRect(x: 5, y: 5, width: 9999, height: 100), out);
+    renderer.emit(
+        el, ctx, const JetRect(x: 5, y: 5, width: 9999, height: 100), out);
     final TextRunPrimitive run =
         out.build().primitives.single as TextRunPrimitive;
     expect(run.lines.map((l) => l.text).toList(), authored);
-    expect(run.lines.length, greaterThan(1)); // sanity: the text actually wrapped at 40
+    expect(run.lines.length,
+        greaterThan(1)); // sanity: the text actually wrapped at 40
   });
 
-  test('measure and emit pin identical line geometry (section 7.1 invariant)', () {
+  test('measure and emit pin identical line geometry (section 7.1 invariant)',
+      () {
     // Directly cross-check the two renderer paths against ONE measurement, so a
     // regression that diverged measure-sizing from emit-wrapping would be caught.
     final MeasuredText measured =
         measurer.measure(el.text, el.style, maxWidth: el.bounds.width);
     final FrameBuilder out = FrameBuilder(PageFormat.a4Portrait);
-    renderer.emit(el, ctx, const JetRect(x: 0, y: 0, width: 40, height: 100), out);
+    renderer.emit(
+        el, ctx, const JetRect(x: 0, y: 0, width: 40, height: 100), out);
     final TextRunPrimitive run =
         out.build().primitives.single as TextRunPrimitive;
     // emit's lines == the lines measure is based on (identical geometry).

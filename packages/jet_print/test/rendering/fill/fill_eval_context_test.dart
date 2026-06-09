@@ -33,16 +33,22 @@ void main() {
     final ReportDiagnostics d = ReportDiagnostics();
     final Set<String> warned = <String>{};
     final FillEvalContext c = ctx(
-        row: rowWith('present', 'v'), diagnostics: d, warned: warned, elementId: 'e1');
+        row: rowWith('present', 'v'),
+        diagnostics: d,
+        warned: warned,
+        elementId: 'e1');
     expect(c.resolveField('missing'), const JetNull());
     expect(c.resolveField('missing'), const JetNull()); // again
-    expect(d.entries.where((e) => e.severity == DiagnosticSeverity.warning).length, 1);
+    expect(
+        d.entries.where((e) => e.severity == DiagnosticSeverity.warning).length,
+        1);
     expect(d.entries.first.elementId, 'e1');
   });
 
   test('a declared field (even null) does not warn', () {
     final ReportDiagnostics d = ReportDiagnostics();
-    final FillEvalContext c = ctx(row: rowWith('present', null), diagnostics: d);
+    final FillEvalContext c =
+        ctx(row: rowWith('present', null), diagnostics: d);
     expect(c.resolveField('present'), const JetNull()); // declared-null
     expect(d.entries, isEmpty);
   });
@@ -54,13 +60,15 @@ void main() {
     expect(d.entries, isEmpty);
   });
 
-  test('a reserved page-scoped variable is recorded; others resolve normally', () {
+  test('a reserved page-scoped variable is recorded; others resolve normally',
+      () {
     final ReportDiagnostics d = ReportDiagnostics();
     final Set<String> pageRefs = <String>{};
     final FillEvalContext c = ctx(diagnostics: d, pageRefs: pageRefs);
     expect(c.resolveVariable('PAGE_NUMBER'), const JetNull());
     expect(pageRefs, contains('PAGE_NUMBER'));
-    expect(c.resolveVariable('other'), const JetNull()); // undeclared, not recorded
+    expect(c.resolveVariable('other'),
+        const JetNull()); // undeclared, not recorded
     expect(pageRefs, isNot(contains('other')));
   });
 
@@ -69,12 +77,21 @@ void main() {
     final Set<String> warned = <String>{};
     // Two separate contexts (as the resolver builds one per element) sharing the
     // same caller-owned warnedFields set: the same missing field warns only once.
-    ctx(row: rowWith('present', 'v'), diagnostics: d, warned: warned, elementId: 'e1')
+    ctx(
+            row: rowWith('present', 'v'),
+            diagnostics: d,
+            warned: warned,
+            elementId: 'e1')
         .resolveField('missing');
-    ctx(row: rowWith('present', 'v'), diagnostics: d, warned: warned, elementId: 'e2')
+    ctx(
+            row: rowWith('present', 'v'),
+            diagnostics: d,
+            warned: warned,
+            elementId: 'e2')
         .resolveField('missing');
     expect(
-        d.entries.where((e) => e.severity == DiagnosticSeverity.warning).length, 1);
+        d.entries.where((e) => e.severity == DiagnosticSeverity.warning).length,
+        1);
   });
 
   test('a declared variable resolves to its value and is not recorded', () {

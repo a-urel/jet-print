@@ -1,7 +1,7 @@
 # Quickstart: jet-print scaffold
 
 **Feature**: `001-flutter-library-scaffold`
-**Goal**: From a fresh clone to a running, shadcn-themed tester app and a green test suite —
+**Goal**: From a fresh clone to a running, shadcn-themed playground app and a green test suite —
 in under 10 minutes (SC-002).
 
 ## Prerequisites
@@ -18,10 +18,10 @@ cd jet-print
 flutter pub get        # resolves every workspace member into one root pubspec.lock
 ```
 
-## 2. Run the tester app (macOS desktop)
+## 2. Run the playground app (macOS desktop)
 
 ```bash
-cd apps/jet_print_tester
+cd apps/jet_print_playground
 flutter run -d macos
 ```
 
@@ -56,7 +56,7 @@ A clean checkout MUST show: formatting clean, analyzer zero errors, all tests gr
 
 ```text
 jet-print/
-├── pubspec.yaml                 # workspace root: workspace: [packages/jet_print, apps/jet_print_tester]
+├── pubspec.yaml                 # workspace root: workspace: [packages/jet_print, apps/jet_print_playground]
 ├── analysis_options.yaml        # shared strict lints
 ├── packages/jet_print/          # the library (the product)
 │   ├── lib/jet_print.dart       # PUBLIC entry point (exports only)
@@ -64,14 +64,14 @@ jet-print/
 │   ├── lib/src/rendering/       # rendering seam (depends on domain only)
 │   ├── lib/src/designer/        # designer/UI seam (placeholder component lives here)
 │   └── test/                    # public-api, per-seam, architecture, widget tests
-└── apps/jet_print_tester/       # tester app (consumer; macOS desktop)
+└── apps/jet_print_playground/       # playground app (consumer; macOS desktop)
     └── lib/main.dart            # ShadApp + theme toggle rendering the placeholder
 ```
 
 ## Troubleshooting
 
 - **`flutter run` can't find a macOS device**: run `flutter config --enable-macos-desktop`
-  then `flutter create --platforms=macos .` inside the tester app if the `macos/` runner is
+  then `flutter create --platforms=macos .` inside the playground app if the `macos/` runner is
   missing.
 - **Version solving failed**: ensure every package's `pubspec.yaml` has `resolution: workspace`
   and an SDK constraint of `^3.6.0` or higher, and that the root lists each member under

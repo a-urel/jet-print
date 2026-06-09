@@ -33,6 +33,15 @@
     "description": "Tooltip for the Export top-bar action."
   },
 
+  "actionOpen": "Open",
+  "@actionOpen": {
+    "description": "Top-bar action: open a saved report from a file (wired to the host's onOpenRequested)."
+  },
+  "actionOpenTooltip": "Open a report",
+  "@actionOpenTooltip": {
+    "description": "Tooltip for the Open top-bar action."
+  },
+
   "actionUndoTooltip": "Undo",
   "@actionUndoTooltip": {
     "description": "Tooltip for the Undo top-bar icon button (history group)."
@@ -48,6 +57,10 @@
   "actionZoomOutTooltip": "Zoom out",
   "@actionZoomOutTooltip": {
     "description": "Tooltip for the Zoom out top-bar icon button (zoom group)."
+  },
+  "actionZoomFitTooltip": "Fit to width",
+  "@actionZoomFitTooltip": {
+    "description": "Tooltip for the zoom-level label, which fits the page to the viewport width when tapped."
   },
   "toggleGridTooltip": "Show grid",
   "@toggleGridTooltip": {
@@ -79,6 +92,10 @@
   "@toolboxTextEntry": {
     "description": "Toolbox element: a static or data-bound text element. Shown as an icon-button tooltip."
   },
+  "toolboxShapeEntry": "Shape",
+  "@toolboxShapeEntry": {
+    "description": "Toolbox element: a line or rectangle shape element."
+  },
   "toolboxTableEntry": "Table",
   "@toolboxTableEntry": {
     "description": "Toolbox element: a tabular layout element."
@@ -101,6 +118,51 @@
     "description": "Hint shown on the empty design surface page so it never reads as a blank void."
   },
 
+  "bandTypeTitle": "Title",
+  "@bandTypeTitle": {
+    "description": "Caption on the design-surface badge for a Title band (printed once at the report start)."
+  },
+  "bandTypePageHeader": "Page Header",
+  "@bandTypePageHeader": {
+    "description": "Caption on the design-surface badge for a Page Header band (repeated atop every page)."
+  },
+  "bandTypeColumnHeader": "Column Header",
+  "@bandTypeColumnHeader": {
+    "description": "Caption on the design-surface badge for a Column Header band."
+  },
+  "bandTypeGroupHeader": "Group Header",
+  "@bandTypeGroupHeader": {
+    "description": "Caption on the design-surface badge for a Group Header band (printed when a group key changes)."
+  },
+  "bandTypeDetail": "Detail",
+  "@bandTypeDetail": {
+    "description": "Caption on the design-surface badge for a Detail band (repeated once per data row)."
+  },
+  "bandTypeGroupFooter": "Group Footer",
+  "@bandTypeGroupFooter": {
+    "description": "Caption on the design-surface badge for a Group Footer band (printed when a group ends)."
+  },
+  "bandTypeColumnFooter": "Column Footer",
+  "@bandTypeColumnFooter": {
+    "description": "Caption on the design-surface badge for a Column Footer band."
+  },
+  "bandTypePageFooter": "Page Footer",
+  "@bandTypePageFooter": {
+    "description": "Caption on the design-surface badge for a Page Footer band (repeated at the bottom of every page)."
+  },
+  "bandTypeSummary": "Summary",
+  "@bandTypeSummary": {
+    "description": "Caption on the design-surface badge for a Summary band (printed once at the report end)."
+  },
+  "bandTypeBackground": "Background",
+  "@bandTypeBackground": {
+    "description": "Caption on the design-surface badge for a Background band (drawn behind every page)."
+  },
+  "bandTypeNoData": "No Data",
+  "@bandTypeNoData": {
+    "description": "Caption on the design-surface badge for a No Data band (printed instead of details when the data set is empty)."
+  },
+
   "expandToolboxTooltip": "Expand toolbox",
   "@expandToolboxTooltip": {
     "description": "Tooltip on the collapsed toolbox rail's expand button (narrow window)."
@@ -116,5 +178,164 @@
   "collapsePanelTooltip": "Collapse panel",
   "@collapsePanelTooltip": {
     "description": "Tooltip on the expanded right-panel overlay's collapse button (narrow window)."
+  },
+
+  "actionArrangeTooltip": "Arrange",
+  "@actionArrangeTooltip": {
+    "description": "Accessible name / tooltip for the top-bar Arrange menu button (align, distribute and z-order actions)."
+  },
+  "arrangeAlignLeft": "Align left",
+  "@arrangeAlignLeft": {
+    "description": "Arrange menu: align the selection's left edges."
+  },
+  "arrangeAlignCenter": "Align center",
+  "@arrangeAlignCenter": {
+    "description": "Arrange menu: center the selection horizontally."
+  },
+  "arrangeAlignRight": "Align right",
+  "@arrangeAlignRight": {
+    "description": "Arrange menu: align the selection's right edges."
+  },
+  "arrangeAlignTop": "Align top",
+  "@arrangeAlignTop": {
+    "description": "Arrange menu: align the selection's top edges."
+  },
+  "arrangeAlignMiddle": "Align middle",
+  "@arrangeAlignMiddle": {
+    "description": "Arrange menu: center the selection vertically."
+  },
+  "arrangeAlignBottom": "Align bottom",
+  "@arrangeAlignBottom": {
+    "description": "Arrange menu: align the selection's bottom edges."
+  },
+  "arrangeDistributeHorizontally": "Distribute horizontally",
+  "@arrangeDistributeHorizontally": {
+    "description": "Arrange menu: space the selection evenly along the horizontal axis."
+  },
+  "arrangeDistributeVertically": "Distribute vertically",
+  "@arrangeDistributeVertically": {
+    "description": "Arrange menu: space the selection evenly along the vertical axis."
+  },
+  "arrangeBringToFront": "Bring to front",
+  "@arrangeBringToFront": {
+    "description": "Arrange menu: move the selection to the very front of the z-order."
+  },
+  "arrangeBringForward": "Bring forward",
+  "@arrangeBringForward": {
+    "description": "Arrange menu: move the selection one step toward the front."
+  },
+  "arrangeSendBackward": "Send backward",
+  "@arrangeSendBackward": {
+    "description": "Arrange menu: move the selection one step toward the back."
+  },
+  "arrangeSendToBack": "Send to back",
+  "@arrangeSendToBack": {
+    "description": "Arrange menu: move the selection to the very back of the z-order."
+  },
+
+  "propertiesPosition": "Position",
+  "@propertiesPosition": {
+    "description": "Properties panel section label for the element's X/Y position."
+  },
+  "propertiesSize": "Size",
+  "@propertiesSize": {
+    "description": "Properties panel section label for the element's width/height (also the report page size)."
+  },
+  "propertiesText": "Text",
+  "@propertiesText": {
+    "description": "Properties panel section label for a text element's content."
+  },
+  "propertiesHeight": "Height",
+  "@propertiesHeight": {
+    "description": "Properties panel field label for a band's height."
+  },
+  "propertiesPage": "Page",
+  "@propertiesPage": {
+    "description": "Properties panel section label for the report page information."
+  },
+  "propertiesMargins": "Margins",
+  "@propertiesMargins": {
+    "description": "Properties panel read-only field label for the report page margins."
+  },
+  "reportLabel": "Report",
+  "@reportLabel": {
+    "description": "The report root: the Outline tree root row and the Properties panel header when the report itself is selected."
+  },
+  "propertiesEmptyHint": "Select an object to edit its properties.",
+  "@propertiesEmptyHint": {
+    "description": "Properties panel empty state shown when nothing is selected."
+  },
+  "propertiesMultiSelected": "{count} elements selected",
+  "@propertiesMultiSelected": {
+    "description": "Properties panel state shown when several elements are selected at once.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "elementTypeText": "Text",
+  "@elementTypeText": {
+    "description": "Element type name (accessibility / outline) for a text element."
+  },
+  "elementTypeShape": "Shape",
+  "@elementTypeShape": {
+    "description": "Element type name (accessibility / outline) for a shape element."
+  },
+  "elementTypeImage": "Image",
+  "@elementTypeImage": {
+    "description": "Element type name (accessibility / outline) for an image element."
+  },
+  "elementTypeBarcode": "Barcode",
+  "@elementTypeBarcode": {
+    "description": "Element type name (accessibility / outline) for a barcode element."
+  },
+  "elementTypeGeneric": "Element",
+  "@elementTypeGeneric": {
+    "description": "Element type name (accessibility / outline) fallback for an unknown element type."
+  },
+  "elementSemanticLabel": "{type} element {id}",
+  "@elementSemanticLabel": {
+    "description": "Accessible name for an element's hit region on the canvas, e.g. 'Text element heading1'.",
+    "placeholders": {
+      "type": { "type": "String" },
+      "id": { "type": "String" }
+    }
+  },
+
+  "resizeHandleTopLeft": "Resize top-left corner",
+  "@resizeHandleTopLeft": {
+    "description": "Accessible name for the top-left element resize handle."
+  },
+  "resizeHandleTop": "Resize top edge",
+  "@resizeHandleTop": {
+    "description": "Accessible name for the top-edge element resize handle."
+  },
+  "resizeHandleTopRight": "Resize top-right corner",
+  "@resizeHandleTopRight": {
+    "description": "Accessible name for the top-right element resize handle."
+  },
+  "resizeHandleRight": "Resize right edge",
+  "@resizeHandleRight": {
+    "description": "Accessible name for the right-edge element resize handle."
+  },
+  "resizeHandleBottomRight": "Resize bottom-right corner",
+  "@resizeHandleBottomRight": {
+    "description": "Accessible name for the bottom-right element resize handle."
+  },
+  "resizeHandleBottom": "Resize bottom edge",
+  "@resizeHandleBottom": {
+    "description": "Accessible name for the bottom-edge element resize handle."
+  },
+  "resizeHandleBottomLeft": "Resize bottom-left corner",
+  "@resizeHandleBottomLeft": {
+    "description": "Accessible name for the bottom-left element resize handle."
+  },
+  "resizeHandleLeft": "Resize left edge",
+  "@resizeHandleLeft": {
+    "description": "Accessible name for the left-edge element resize handle."
+  },
+  "resizeBandHandle": "Resize band height",
+  "@resizeBandHandle": {
+    "description": "Accessible name for the band height resize handle."
   }
 }

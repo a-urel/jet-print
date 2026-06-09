@@ -1,47 +1,121 @@
 import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../domain/report_template.dart';
+import 'controller/jet_report_designer_controller.dart';
+import 'designer_scope.dart';
 import 'l10n/jet_print_localizations.dart';
 import 'layout/designer_right_panel.dart';
 import 'layout/designer_surface.dart';
 import 'layout/designer_toolbox.dart';
 import 'layout/designer_top_bar.dart';
 
-/// The report designer **shell**: the visual workspace that arranges the five
-/// regions of the designer — a top command bar, a left element toolbox, a center
-/// design surface, and a right three-tab context panel (Data Source / Outline /
-/// Properties) — inside one theme-driven frame.
+/// Invoked when the user triggers Save; receives the current [ReportTemplate] to
+/// persist. The library performs no file I/O itself (FR-022) — a host encodes it
+/// (e.g. via `JetReportFormat.encodeJson`) and writes it.
+typedef ReportSaveRequestedCallback = void Function(ReportTemplate current);
+
+/// Invoked when the user triggers Open; a host reads a template (e.g. via
+/// `JetReportFormat.decodeJson`) and calls `controller.open(...)`.
+typedef ReportOpenRequestedCallback = void Function();
+
+/// The report designer **shell**: the visual workspace that arranges the
+/// regions of the designer — a top command bar, a left element toolbox, an
+/// interactive center design surface, and a right three-tab context panel
+/// (Data Source / Outline / Properties) — inside one theme-driven frame.
 ///
-/// This is a **layout-only** iteration. Every control is a non-functional
-/// placeholder: the only live interactions are switching the right-side tabs,
-/// dragging the splitter to resize the right panel (down to an enforced minimum
-/// width), and — when the window is narrower than the collapse breakpoint —
-/// collapsing the right panel to an icon rail that expands back over the surface
-/// on demand. The left toolbox is a compact icon toolbar that stays visible at
-/// every width. There is no data binding, element creation, property editing,
-/// drag-and-drop, or persistence yet.
+/// The center surface is a live WYSIWYG canvas: authors drag toolbox element
+/// types onto bands, then select, move, resize, align, multi-select, reorder,
+/// copy/paste, nudge, delete, and inline-edit text — every edit against an
+/// in-memory [ReportTemplate] held by a [JetReportDesignerController], with
+/// unlimited session undo/redo. Property editing this iteration is geometry +
+/// text only (the full per-type suite is deferred).
 ///
-/// The widget is host-state-free: it requires no parameters and reads only the
-/// ambient [ShadTheme] (so it follows light/dark automatically) and
-/// [JetPrintLocalizations] (so all chrome captions localize). Drop it into any
-/// `ShadApp` that wires [JetPrintLocalizations.delegate]:
+/// Stays drop-in: with no arguments it owns an internal controller over a blank
+/// default design, reading only the ambient [ShadTheme] and
+/// [JetPrintLocalizations]. Supply a [controller] to own the model and drive
+/// save/open (the library performs **no** file I/O itself — FR-022):
 ///
 /// ```dart
+/// final controller = JetReportDesignerController();
 /// ShadApp(
 ///   localizationsDelegates: JetPrintLocalizations.localizationsDelegates,
 ///   supportedLocales: JetPrintLocalizations.supportedLocales,
-///   home: const JetReportDesigner(),
+///   home: JetReportDesigner(
+///     controller: controller,
+///     onSaveRequested: (ReportTemplate t) => writeFile(JetReportFormat.encodeJson(t)),
+///     onOpenRequested: () async => controller.open(JetReportFormat.decodeJson(await readFile())),
+///   ),
 /// );
 /// ```
 class JetReportDesigner extends StatefulWidget {
-  /// Creates the report designer shell. Takes no required parameters.
-  const JetReportDesigner({super.key});
+  /// Creates the report designer. All parameters are optional; with none it
+  /// owns an internal controller over a blank default design (so
+  /// `const JetReportDesigner()` remains valid — the 002 contract).
+  const JetReportDesigner({
+    super.key,
+    this.controller,
+    this.initialReport,
+    this.onSaveRequested,
+    this.onOpenRequested,
+  });
+
+  /// An externally-owned controller. When provided, the host owns its lifecycle
+  /// and [initialReport] is ignored.
+  final JetReportDesignerController? controller;
+
+  /// The design to seed an internally-created controller with (ignored when
+  /// [controller] is given). Null seeds a blank default design.
+  final ReportTemplate? initialReport;
+
+  /// Invoked when the user triggers Save (wired to the top bar).
+  final ReportSaveRequestedCallback? onSaveRequested;
+
+  /// Invoked when the user triggers Open (wired to the top bar).
+  final ReportOpenRequestedCallback? onOpenRequested;
 
   @override
   State<JetReportDesigner> createState() => _JetReportDesignerState();
 }
 
 class _JetReportDesignerState extends State<JetReportDesigner> {
+  late JetReportDesignerController _controller;
+
+  /// Whether this state created (and must dispose) [_controller]. A
+  /// host-supplied controller is owned by the host.
+  bool _ownsController = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _adoptController();
+  }
+
+  @override
+  void didUpdateWidget(JetReportDesigner oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.controller != oldWidget.controller) {
+      if (_ownsController) _controller.dispose();
+      _adoptController();
+    }
+  }
+
+  void _adoptController() {
+    if (widget.controller != null) {
+      _controller = widget.controller!;
+      _ownsController = false;
+    } else {
+      _controller = JetReportDesignerController(template: widget.initialReport);
+      _ownsController = true;
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_ownsController) _controller.dispose();
+    super.dispose();
+  }
+
   /// Below this logical width the right panel collapses to an icon rail
   /// (FR-011). The left toolbox is already a compact icon strip and stays put.
   static const double _breakpoint = 1024;
@@ -67,21 +141,26 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        final Widget shell = _buildShell(context);
-        if (constraints.maxWidth >= _minShellWidth) return shell;
-        // Too narrow: lay the shell out at its minimum width and let the user
-        // reach the off-screen edge by scrolling, rather than overflowing.
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: SizedBox(
-            width: _minShellWidth,
-            height: constraints.maxHeight,
-            child: shell,
-          ),
-        );
-      },
+    // Share the controller with the canvas and panels so a change in any one
+    // rebuilds the others (FR-018).
+    return DesignerScope(
+      controller: _controller,
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          final Widget shell = _buildShell(context);
+          if (constraints.maxWidth >= _minShellWidth) return shell;
+          // Too narrow: lay the shell out at its minimum width and let the user
+          // reach the off-screen edge by scrolling, rather than overflowing.
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: _minShellWidth,
+              height: constraints.maxHeight,
+              child: shell,
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -93,7 +172,17 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          const DesignerTopBar(key: _topBarKey),
+          DesignerTopBar(
+            key: _topBarKey,
+            // Bridge the host callbacks to the top bar: Save hands over the
+            // live template; Open just signals intent (the host reads + calls
+            // controller.open). Null host callbacks ⇒ the actions render
+            // disabled (the library performs no file I/O itself — FR-022).
+            onSave: widget.onSaveRequested == null
+                ? null
+                : () => widget.onSaveRequested!(_controller.template),
+            onOpen: widget.onOpenRequested,
+          ),
           const ShadSeparator.horizontal(margin: EdgeInsets.zero),
           Expanded(
             child: LayoutBuilder(

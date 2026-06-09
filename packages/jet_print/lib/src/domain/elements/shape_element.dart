@@ -1,6 +1,7 @@
 /// A line or rectangle shape element.
 library;
 
+import '../geometry.dart';
 import '../report_element.dart';
 import '../styles/box_style.dart';
 
@@ -37,6 +38,15 @@ class ShapeElement extends ReportElement {
 
   @override
   String get typeKey => 'shape';
+
+  @override
+  ShapeElement withBounds(JetRect bounds) => ShapeElement(
+        id: id,
+        bounds: bounds,
+        kind: kind,
+        style: style,
+        flipDiagonal: flipDiagonal,
+      );
 
   @override
   bool operator ==(Object other) =>

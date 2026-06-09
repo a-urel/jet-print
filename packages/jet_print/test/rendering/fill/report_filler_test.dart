@@ -48,10 +48,14 @@ ReportTemplate template({
       variables: variables,
       groups: groups,
       bands: <ReportBand>[
-        if (title.isNotEmpty) ReportBand(type: BandType.title, height: 10, elements: title),
-        if (detail.isNotEmpty) ReportBand(type: BandType.detail, height: 10, elements: detail),
-        if (summary.isNotEmpty) ReportBand(type: BandType.summary, height: 10, elements: summary),
-        if (noData.isNotEmpty) ReportBand(type: BandType.noData, height: 10, elements: noData),
+        if (title.isNotEmpty)
+          ReportBand(type: BandType.title, height: 10, elements: title),
+        if (detail.isNotEmpty)
+          ReportBand(type: BandType.detail, height: 10, elements: detail),
+        if (summary.isNotEmpty)
+          ReportBand(type: BandType.summary, height: 10, elements: summary),
+        if (noData.isNotEmpty)
+          ReportBand(type: BandType.noData, height: 10, elements: noData),
       ],
     );
 
@@ -68,8 +72,7 @@ void main() {
         <String, Object?>{'name': 'Bob'},
       ]),
     );
-    final List<BandType> types =
-        res.report.bands.map((b) => b.type).toList();
+    final List<BandType> types = res.report.bands.map((b) => b.type).toList();
     expect(types, <BandType>[
       BandType.title,
       BandType.detail,
@@ -90,7 +93,9 @@ void main() {
         summary: <ReportElement>[t('s', expr: r'$V{total}')],
         variables: const <ReportVariable>[
           ReportVariable(
-              name: 'total', expression: r'$F{amount}', calculation: JetCalculation.sum),
+              name: 'total',
+              expression: r'$F{amount}',
+              calculation: JetCalculation.sum),
         ],
       ),
       JetInMemoryDataSource(<Map<String, Object?>>[
@@ -142,7 +147,9 @@ void main() {
         detail: <ReportElement>[t('d', text: '.')],
         variables: const <ReportVariable>[
           ReportVariable(
-              name: 'total', expression: r'$F{typo}', calculation: JetCalculation.sum),
+              name: 'total',
+              expression: r'$F{typo}',
+              calculation: JetCalculation.sum),
         ],
       ),
       JetInMemoryDataSource(<Map<String, Object?>>[
@@ -158,8 +165,12 @@ void main() {
 
   test('page-scoped reference in a detail element is an error', () {
     final FillResult res = ReportFiller().fill(
-      template(detail: <ReportElement>[t('d', text: 'fb', expr: r'$V{PAGE_NUMBER}')]),
-      JetInMemoryDataSource(<Map<String, Object?>>[<String, Object?>{'x': 1}]),
+      template(detail: <ReportElement>[
+        t('d', text: 'fb', expr: r'$V{PAGE_NUMBER}')
+      ]),
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'x': 1}
+      ]),
     );
     expect(res.diagnostics.hasErrors, isTrue);
     expect((res.report.bands[0].elements.single as TextElement).text, 'fb');
@@ -173,10 +184,13 @@ void main() {
           ReportVariable(name: 'v', expression: r'$V{PAGE_NUMBER}'),
         ],
       ),
-      JetInMemoryDataSource(<Map<String, Object?>>[<String, Object?>{'x': 1}]),
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'x': 1}
+      ]),
     );
     expect(res.diagnostics.hasErrors, isTrue);
-    expect(res.diagnostics.entries.any((e) => e.message.contains('variable "v"')),
+    expect(
+        res.diagnostics.entries.any((e) => e.message.contains('variable "v"')),
         isTrue); // site-tagged
   });
 
@@ -188,7 +202,9 @@ void main() {
           ReportGroup(name: 'g', expression: r'$V{PAGE_NUMBER}'),
         ],
       ),
-      JetInMemoryDataSource(<Map<String, Object?>>[<String, Object?>{'x': 1}]),
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'x': 1}
+      ]),
     );
     expect(res.diagnostics.hasErrors, isTrue);
     expect(res.diagnostics.entries.any((e) => e.message.contains('group "g"')),
@@ -197,11 +213,14 @@ void main() {
 
   test('page-scoped reference in a noData element is an error', () {
     final FillResult res = ReportFiller().fill(
-      template(noData: <ReportElement>[t('n', text: 'none', expr: r'$V{PAGE_NUMBER}')]),
+      template(noData: <ReportElement>[
+        t('n', text: 'none', expr: r'$V{PAGE_NUMBER}')
+      ]),
       JetInMemoryDataSource(const <Map<String, Object?>>[]),
     );
     expect(res.diagnostics.hasErrors, isTrue);
-    expect((res.report.bands.single.elements.single as TextElement).text, 'none');
+    expect(
+        (res.report.bands.single.elements.single as TextElement).text, 'none');
   });
 
   test('a malformed variable expression fails fast (throws)', () {
@@ -213,16 +232,20 @@ void main() {
             ReportVariable(name: 'v', expression: r'CONCAT('),
           ],
         ),
-        JetInMemoryDataSource(<Map<String, Object?>>[<String, Object?>{'x': 1}]),
+        JetInMemoryDataSource(<Map<String, Object?>>[
+          <String, Object?>{'x': 1}
+        ]),
       ),
       throwsA(isA<ExpressionException>()),
     );
   });
 
   test('determinism — re-filling identical inputs yields an equal report', () {
-    ReportTemplate make() => template(detail: <ReportElement>[t('d', expr: r'$F{n}')]);
-    JetInMemoryDataSource src() =>
-        JetInMemoryDataSource(<Map<String, Object?>>[<String, Object?>{'n': 'a'}]);
+    ReportTemplate make() =>
+        template(detail: <ReportElement>[t('d', expr: r'$F{n}')]);
+    JetInMemoryDataSource src() => JetInMemoryDataSource(<Map<String, Object?>>[
+          <String, Object?>{'n': 'a'}
+        ]);
     expect(ReportFiller().fill(make(), src()).report,
         ReportFiller().fill(make(), src()).report);
   });
@@ -248,7 +271,9 @@ void main() {
         title: <ReportElement>[t('h', text: 'fb', expr: r'$V{PAGE_NUMBER}')],
         detail: <ReportElement>[t('d', text: '.')],
       ),
-      JetInMemoryDataSource(<Map<String, Object?>>[<String, Object?>{'x': 1}]),
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'x': 1}
+      ]),
     );
     expect(res.diagnostics.hasErrors, isTrue);
     // authored text preserved (not blanked, not !ERR)
@@ -260,13 +285,16 @@ void main() {
       template(
         summary: <ReportElement>[t('s', text: 'fb', expr: r'$V{PAGE_NUMBER}')],
       ),
-      JetInMemoryDataSource(<Map<String, Object?>>[<String, Object?>{'x': 1}]),
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'x': 1}
+      ]),
     );
     expect(res.diagnostics.hasErrors, isTrue);
     expect((res.report.bands.last.elements.single as TextElement).text, 'fb');
   });
 
-  test('single group: header/detail/footer sequence with pre-reset subtotal', () {
+  test('single group: header/detail/footer sequence with pre-reset subtotal',
+      () {
     final ReportTemplate tpl = ReportTemplate(
       name: 'demo',
       page: PageFormat.a4Portrait,
@@ -283,7 +311,9 @@ void main() {
       ],
       bands: <ReportBand>[
         gh('region', expr: r'$F{region}'),
-        ReportBand(type: BandType.detail, height: 10,
+        ReportBand(
+            type: BandType.detail,
+            height: 10,
             elements: <ReportElement>[t('d', expr: r'$V{regionTotal}')]),
         gf('region', expr: r'$V{regionTotal}'),
       ],
@@ -322,7 +352,9 @@ void main() {
       ],
       bands: <ReportBand>[
         gh('region', expr: r'$F{city}'),
-        ReportBand(type: BandType.detail, height: 10,
+        ReportBand(
+            type: BandType.detail,
+            height: 10,
             elements: <ReportElement>[t('d', text: '.')]),
         gf('region', expr: r'$F{city}'),
       ],
@@ -363,7 +395,9 @@ void main() {
       bands: <ReportBand>[
         gh('region', expr: r'$F{region}'),
         gh('city', expr: r'$F{city}'),
-        ReportBand(type: BandType.detail, height: 10,
+        ReportBand(
+            type: BandType.detail,
+            height: 10,
             elements: <ReportElement>[t('d', text: '.')]),
         gf('city', expr: r'$V{cityTotal}'),
         gf('region', expr: r'$V{regionTotal}'),
@@ -414,7 +448,9 @@ void main() {
       bands: <ReportBand>[
         gh('region', text: 'H1'),
         gh('region', text: 'H2'),
-        ReportBand(type: BandType.detail, height: 10,
+        ReportBand(
+            type: BandType.detail,
+            height: 10,
             elements: <ReportElement>[t('d', text: '.')]),
         gf('region', text: 'F1'),
         gf('region', text: 'F2'),
@@ -443,10 +479,14 @@ void main() {
       ],
       bands: <ReportBand>[
         gh('region', text: 'H'),
-        ReportBand(type: BandType.detail, height: 10,
+        ReportBand(
+            type: BandType.detail,
+            height: 10,
             elements: <ReportElement>[t('d', text: '.')]),
         gf('region', text: 'GF'),
-        ReportBand(type: BandType.summary, height: 10,
+        ReportBand(
+            type: BandType.summary,
+            height: 10,
             elements: <ReportElement>[t('s', text: 'SUM')]),
       ],
     );
@@ -473,7 +513,9 @@ void main() {
       ],
       bands: <ReportBand>[
         gh('region', text: 'fb', expr: r'$V{PAGE_NUMBER}'),
-        ReportBand(type: BandType.detail, height: 10,
+        ReportBand(
+            type: BandType.detail,
+            height: 10,
             elements: <ReportElement>[t('d', text: '.')]),
       ],
     );
@@ -484,8 +526,7 @@ void main() {
       ]),
     );
     expect(res.diagnostics.hasErrors, isTrue);
-    expect(
-        (res.report.bands.first.elements.single as TextElement).text, 'fb');
+    expect((res.report.bands.first.elements.single as TextElement).text, 'fb');
   });
 
   test('duplicate group names fail fast (fill throws)', () {
@@ -517,7 +558,9 @@ void main() {
         ReportGroup(name: 'region', expression: r'$F{region}'),
       ],
       bands: <ReportBand>[
-        ReportBand(type: BandType.detail, height: 10,
+        ReportBand(
+            type: BandType.detail,
+            height: 10,
             elements: <ReportElement>[t('d', text: '.')]),
       ],
     );
@@ -532,7 +575,8 @@ void main() {
         <BandType>[BandType.detail, BandType.detail]);
   });
 
-  test('determinism — re-filling a grouped template yields an equal report', () {
+  test('determinism — re-filling a grouped template yields an equal report',
+      () {
     ReportTemplate make() => ReportTemplate(
           name: 'demo',
           page: PageFormat.a4Portrait,
@@ -541,7 +585,9 @@ void main() {
           ],
           bands: <ReportBand>[
             gh('region', expr: r'$F{region}'),
-            ReportBand(type: BandType.detail, height: 10,
+            ReportBand(
+                type: BandType.detail,
+                height: 10,
                 elements: <ReportElement>[t('d', text: '.')]),
             gf('region', text: 'GF'),
           ],
@@ -554,7 +600,8 @@ void main() {
         ReportFiller().fill(make(), src()).report);
   });
 
-  test('noData path with groups declared emits only noData (no group bands)', () {
+  test('noData path with groups declared emits only noData (no group bands)',
+      () {
     final ReportTemplate tpl = ReportTemplate(
       name: 'demo',
       page: PageFormat.a4Portrait,
@@ -563,10 +610,14 @@ void main() {
       ],
       bands: <ReportBand>[
         gh('region', text: 'H'),
-        ReportBand(type: BandType.detail, height: 10,
+        ReportBand(
+            type: BandType.detail,
+            height: 10,
             elements: <ReportElement>[t('d', text: '.')]),
         gf('region', text: 'F'),
-        ReportBand(type: BandType.noData, height: 10,
+        ReportBand(
+            type: BandType.noData,
+            height: 10,
             elements: <ReportElement>[t('n', text: 'ND')]),
       ],
     );
@@ -588,7 +639,9 @@ void main() {
       ],
       bands: <ReportBand>[
         gh('region', text: 'H'),
-        ReportBand(type: BandType.detail, height: 10,
+        ReportBand(
+            type: BandType.detail,
+            height: 10,
             elements: <ReportElement>[t('d', text: '.')]),
         gf('region', text: 'F'),
       ],
@@ -608,25 +661,34 @@ void main() {
     expect(b.last.group, 'region');
   });
 
-  test('fill normalizes params into FilledReport.params (JetValue; stable)', () {
+  test('fill normalizes params into FilledReport.params (JetValue; stable)',
+      () {
     final ReportTemplate tpl = ReportTemplate(
       name: 'demo',
       page: PageFormat.a4Portrait,
       bands: <ReportBand>[
-        ReportBand(type: BandType.detail, height: 10,
+        ReportBand(
+            type: BandType.detail,
+            height: 10,
             elements: <ReportElement>[t('d', text: '.')]),
       ],
     );
     FillResult run() => ReportFiller().fill(
           tpl,
           JetInMemoryDataSource(<Map<String, Object?>>[<String, Object?>{}]),
-          params: <String, Object?>{'n': 3, 's': 'hi', 'bad': <int>[1, 2]},
+          params: <String, Object?>{
+            'n': 3,
+            's': 'hi',
+            'bad': <int>[1, 2]
+          },
         );
     final FilledReport a = run().report;
     expect(a.params['n'], const JetNumber(3));
     expect(a.params['s'], const JetString('hi'));
-    expect(a.params['bad'], isA<JetError>()); // unsupported type -> stable error
-    expect(a, run().report); // normalization is stable -> two fills compare equal
+    expect(
+        a.params['bad'], isA<JetError>()); // unsupported type -> stable error
+    expect(
+        a, run().report); // normalization is stable -> two fills compare equal
   });
 
   test('a page-scoped reference in a group FOOTER element is an error', () {
@@ -637,7 +699,9 @@ void main() {
         ReportGroup(name: 'region', expression: r'$F{region}'),
       ],
       bands: <ReportBand>[
-        ReportBand(type: BandType.detail, height: 10,
+        ReportBand(
+            type: BandType.detail,
+            height: 10,
             elements: <ReportElement>[t('d', text: '.')]),
         gf('region', text: 'fb', expr: r'$V{PAGE_NUMBER}'),
       ],

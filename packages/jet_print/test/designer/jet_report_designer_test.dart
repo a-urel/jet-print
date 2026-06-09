@@ -7,6 +7,7 @@
 // US3 representative-placeholder-content assertions are appended here (T026).
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jet_print/jet_print.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'support/designer_harness.dart';
@@ -124,6 +125,32 @@ void main() {
         find.text('Drag elements from the toolbox onto the page to begin.'),
         findsOneWidget,
       );
+    });
+  });
+
+  // --- 003: backward-compat construction + default-template structure (T034). ---
+  group('JetReportDesigner 003 contract', () {
+    testWidgets('const JetReportDesigner() still constructs and hosts a canvas',
+        (WidgetTester tester) async {
+      await pumpDesigner(
+          tester); // default designer is `const JetReportDesigner()`
+      expect(find.byKey(kSurfaceKey), findsOneWidget);
+      expect(find.byKey(kDesignCanvasKey), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    test('the no-arg controller seeds the default blank band structure', () {
+      final JetReportDesignerController controller =
+          JetReportDesignerController();
+      expect(
+        controller.template.bands.map((ReportBand b) => b.type).toList(),
+        <BandType>[BandType.pageHeader, BandType.detail, BandType.pageFooter],
+      );
+      expect(
+        controller.template.bands.every((ReportBand b) => b.elements.isEmpty),
+        isTrue,
+      );
+      controller.dispose();
     });
   });
 }

@@ -25,13 +25,16 @@ void main() {
     const ReportTemplate tpl = ReportTemplate(
       name: 'demo',
       page: PageFormat.a4Portrait,
-      groups: <ReportGroup>[ReportGroup(name: 'region', expression: r'$F{region}')],
+      groups: <ReportGroup>[
+        ReportGroup(name: 'region', expression: r'$F{region}')
+      ],
       bands: <ReportBand>[
         ReportBand(type: BandType.groupHeader, height: 10, group: 'region'),
       ],
     );
     final ElementCodecRegistry reg = _registry();
-    final ReportTemplate decoded = decodeTemplate(encodeTemplate(tpl, reg), reg);
+    final ReportTemplate decoded =
+        decodeTemplate(encodeTemplate(tpl, reg), reg);
     expect(decoded.bands.single.group, 'region');
   });
 }
