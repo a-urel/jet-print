@@ -30,6 +30,12 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get actionExportTooltip => 'Export the report';
 
   @override
+  String get actionOpen => 'Open';
+
+  @override
+  String get actionOpenTooltip => 'Open a report';
+
+  @override
   String get actionUndoTooltip => 'Undo';
 
   @override

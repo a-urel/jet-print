@@ -22,7 +22,19 @@ import '../l10n/jet_print_localizations.dart';
 class DesignerTopBar extends StatefulWidget {
   /// Creates the designer top bar. Private to the library; composed by
   /// `JetReportDesigner`.
-  const DesignerTopBar({super.key});
+  ///
+  /// [onOpen]/[onSave] back the Open/Save actions; each is null when the host
+  /// wired no corresponding callback, and the action then renders disabled
+  /// (the library performs no file I/O itself — FR-022).
+  const DesignerTopBar({super.key, this.onOpen, this.onSave});
+
+  /// Invoked when the user triggers Open (the host reads a template and calls
+  /// `controller.open`). Null ⇒ the Open action is disabled.
+  final VoidCallback? onOpen;
+
+  /// Invoked when the user triggers Save (the host persists the current
+  /// template). Null ⇒ the Save action is disabled.
+  final VoidCallback? onSave;
 
   @override
   State<DesignerTopBar> createState() => _DesignerTopBarState();
@@ -178,17 +190,28 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
 
     final List<Widget> actions = <Widget>[
       const _Divider(),
+      // Open / Save are wired to the host's persistence callbacks (FR-022);
+      // Preview / Export stay enabled placeholders this iteration (FR-015).
       _ActionButton(
-        icon: LucideIcons.eye,
-        label: l10n.actionPreview,
-        tooltip: l10n.actionPreviewTooltip,
+        icon: LucideIcons.folderOpen,
+        label: l10n.actionOpen,
+        tooltip: l10n.actionOpenTooltip,
         compact: compact,
+        onPressed: widget.onOpen,
       ),
       _ActionButton(
         icon: LucideIcons.save,
         label: l10n.actionSave,
         tooltip: l10n.actionSaveTooltip,
         compact: compact,
+        onPressed: widget.onSave,
+      ),
+      _ActionButton(
+        icon: LucideIcons.eye,
+        label: l10n.actionPreview,
+        tooltip: l10n.actionPreviewTooltip,
+        compact: compact,
+        onPressed: () {},
       ),
       _ActionButton(
         icon: LucideIcons.download,
@@ -196,6 +219,7 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
         tooltip: l10n.actionExportTooltip,
         trailing: LucideIcons.chevronDown,
         compact: compact,
+        onPressed: () {},
       ),
     ];
 
@@ -481,6 +505,7 @@ class _ActionButton extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.tooltip,
+    required this.onPressed,
     this.trailing,
     this.compact = false,
   });
@@ -489,6 +514,10 @@ class _ActionButton extends StatelessWidget {
   final String label;
   final String tooltip;
   final IconData? trailing;
+
+  /// The action handler. A null handler renders the button disabled (e.g. Save
+  /// when the host wired no `onSaveRequested`).
+  final VoidCallback? onPressed;
 
   /// When true the label (and the dropdown chevron) are dropped and only the
   /// glyph shows, so the action fits a narrow bar; the tooltip still names it.
@@ -501,21 +530,30 @@ class _ActionButton extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: ShadTooltip(
         builder: (BuildContext context) => Text(tooltip),
-        child: compact
-            ? ShadIconButton.ghost(
-                icon: Icon(icon, size: 16),
-                width: 32,
-                height: 32,
-                padding: EdgeInsets.zero,
-                onPressed: () {},
-              )
-            : ShadButton.ghost(
-                size: ShadButtonSize.sm,
-                leading: Icon(icon, size: 16),
-                trailing: trailing == null ? null : Icon(trailing, size: 14),
-                onPressed: () {},
-                child: Text(label),
-              ),
+        // Expose the tooltip as the accessible name (the glyph alone is not
+        // announced, and the compact variant has no visible label) — FR-024.
+        child: MergeSemantics(
+          child: Semantics(
+            label: tooltip,
+            button: true,
+            child: compact
+                ? ShadIconButton.ghost(
+                    icon: Icon(icon, size: 16),
+                    width: 32,
+                    height: 32,
+                    padding: EdgeInsets.zero,
+                    onPressed: onPressed,
+                  )
+                : ShadButton.ghost(
+                    size: ShadButtonSize.sm,
+                    leading: Icon(icon, size: 16),
+                    trailing:
+                        trailing == null ? null : Icon(trailing, size: 14),
+                    onPressed: onPressed,
+                    child: Text(label),
+                  ),
+          ),
+        ),
       ),
     );
   }

@@ -30,6 +30,12 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get actionExportTooltip => 'Raporu dışa aktar';
 
   @override
+  String get actionOpen => 'Aç';
+
+  @override
+  String get actionOpenTooltip => 'Rapor aç';
+
+  @override
   String get actionUndoTooltip => 'Geri al';
 
   @override

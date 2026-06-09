@@ -9,6 +9,8 @@
   "actionSaveTooltip": "Bericht speichern",
   "actionExport": "Exportieren",
   "actionExportTooltip": "Bericht exportieren",
+  "actionOpen": "Öffnen",
+  "actionOpenTooltip": "Bericht öffnen",
 
   "actionUndoTooltip": "Rückgängig",
   "actionRedoTooltip": "Wiederholen",

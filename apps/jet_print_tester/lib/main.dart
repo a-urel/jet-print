@@ -1,5 +1,6 @@
-import 'dart:io' show Platform;
+import 'dart:io' show File, Platform;
 
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -90,7 +91,12 @@ class _JetPrintTesterAppState extends State<JetPrintTesterApp> {
 /// Hosts the full-bleed [JetReportDesigner] with a small floating control
 /// cluster (theme + language toggles) layered in the corner so the designer
 /// stays the hero while both runtime switches remain reachable.
-class _TesterHome extends StatelessWidget {
+///
+/// Owns the [JetReportDesignerController] and implements the host side of the
+/// persistence seam (FR-022): Save encodes the live template to a file picked
+/// with `file_selector`, Open decodes a picked file back into the controller.
+/// The library itself performs no file I/O — this is the consumer's job.
+class _TesterHome extends StatefulWidget {
   const _TesterHome({
     required this.isDark,
     required this.localeCode,
@@ -104,10 +110,57 @@ class _TesterHome extends StatelessWidget {
   final VoidCallback onCycleLanguage;
 
   @override
+  State<_TesterHome> createState() => _TesterHomeState();
+}
+
+class _TesterHomeState extends State<_TesterHome> {
+  final JetReportDesignerController _controller = JetReportDesignerController();
+
+  /// The file type the designer reads/writes: a JSON document produced by
+  /// `JetReportFormat.encodeJson`.
+  static const XTypeGroup _reportType = XTypeGroup(
+    label: 'Jet report',
+    extensions: <String>['jetreport', 'json'],
+  );
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  /// Save: encode the current template and write it to a picked location.
+  Future<void> _save(ReportTemplate template) async {
+    final FileSaveLocation? location = await getSaveLocation(
+      acceptedTypeGroups: const <XTypeGroup>[_reportType],
+      suggestedName: 'report.jetreport',
+    );
+    if (location == null) return; // user cancelled
+    await File(location.path)
+        .writeAsString(JetReportFormat.encodeJson(template));
+  }
+
+  /// Open: read a picked file and decode it back into the controller.
+  Future<void> _open() async {
+    final XFile? file = await openFile(
+      acceptedTypeGroups: const <XTypeGroup>[_reportType],
+    );
+    if (file == null) return; // user cancelled
+    final String contents = await file.readAsString();
+    _controller.open(JetReportFormat.decodeJson(contents));
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Stack(
       children: <Widget>[
-        const Positioned.fill(child: JetReportDesigner()),
+        Positioned.fill(
+          child: JetReportDesigner(
+            controller: _controller,
+            onSaveRequested: _save,
+            onOpenRequested: _open,
+          ),
+        ),
         Positioned(
           right: 16,
           bottom: 16,
@@ -117,13 +170,13 @@ class _TesterHome extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 ShadButton.ghost(
-                  onPressed: onToggleTheme,
-                  child: Text(isDark ? 'Light' : 'Dark'),
+                  onPressed: widget.onToggleTheme,
+                  child: Text(widget.isDark ? 'Light' : 'Dark'),
                 ),
                 const SizedBox(width: 8),
                 ShadButton.outline(
-                  onPressed: onCycleLanguage,
-                  child: Text(localeCode.toUpperCase()),
+                  onPressed: widget.onCycleLanguage,
+                  child: Text(widget.localeCode.toUpperCase()),
                 ),
               ],
             ),

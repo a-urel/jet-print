@@ -9,6 +9,8 @@
   "actionSaveTooltip": "Raporu kaydet",
   "actionExport": "Dışa Aktar",
   "actionExportTooltip": "Raporu dışa aktar",
+  "actionOpen": "Aç",
+  "actionOpenTooltip": "Rapor aç",
 
   "actionUndoTooltip": "Geri al",
   "actionRedoTooltip": "Yinele",

@@ -30,7 +30,7 @@ description: "Task list for Designer Edit Surface — Direct-Manipulation Elemen
 **Purpose**: Establish the new folders, the consumer dependency, and the centralized tunables.
 
 - [x] T001 Create the new private designer-seam folders (`controller/`, `controller/commands/`, `canvas/`, `interaction/`) under `packages/jet_print/lib/src/designer/` and the matching test folders (`controller/`, `canvas/`, `interaction/`, `panels/`, `perf/`) under `packages/jet_print/test/designer/`.
-- [ ] T002 [P] Add the `file_selector` dependency (consumer-only) to `apps/jet_print_tester/pubspec.yaml` and run `flutter pub get` from the repo root.
+- [X] T002 [P] Add the `file_selector` dependency (consumer-only) to `apps/jet_print_tester/pubspec.yaml` and run `flutter pub get` from the repo root.
 - [x] T003 [P] Add the behavioral-tunable constants (grid 8 pt, snap 6 px, nudge 1 pt / 10 pt, per-type default sizes, 4×4 pt min size, +8/+8 paste offset, 25 %–400 % zoom, 8 px/16 px handle sizes — research D7) in `packages/jet_print/lib/src/designer/canvas/design_tunables.dart`.
 
 ---
@@ -251,9 +251,9 @@ description: "Task list for Designer Edit Surface — Direct-Manipulation Elemen
 - [X] T079b Attach `Semantics` labels/roles (using the localized strings from T078) to the selection handles in `packages/jet_print/lib/src/designer/canvas/selection_overlay.dart`, the element hit regions in `packages/jet_print/lib/src/designer/canvas/design_canvas.dart`, and the menu/toolbar actions in `packages/jet_print/lib/src/designer/layout/designer_top_bar.dart` (depends on T078). Makes T079a pass.
 - [X] T080 [P] Add design-surface goldens (representative elements with a selection shown, light + dark, via the shared render pipeline — Constitution IV; generate with `flutter test --update-goldens`) in `packages/jet_print/test/designer/goldens/`.
 - [X] T081 [P] Add the 200-element drag perf smoke (a 20-element selection drag within the frame budget, no exceptions — SC-007) in `packages/jet_print/test/designer/perf/large_design_drag_test.dart`.
-- [ ] T082 Wire the tester app to own a `JetReportDesignerController` and implement `onSaveRequested`/`onOpenRequested` via `file_selector` + `JetReportFormat.encodeJson`/`decodeJson` (FR-022 open/save) in `apps/jet_print_tester/lib/main.dart` (research D8).
-- [ ] T083 Wire the top-bar Save/Open actions to `onSaveRequested`/`onOpenRequested` and the grid/snap toggles to the controller in `packages/jet_print/lib/src/designer/layout/designer_top_bar.dart` (depends on T031).
-- [ ] T084 [P] Update the app consumer test to exercise a basic edit → save → reopen path through the public API in `apps/jet_print_tester/test/app_consumes_library_test.dart`.
+- [X] T082 Wire the tester app to own a `JetReportDesignerController` and implement `onSaveRequested`/`onOpenRequested` via `file_selector` + `JetReportFormat.encodeJson`/`decodeJson` (FR-022 open/save) in `apps/jet_print_tester/lib/main.dart` (research D8).
+- [X] T083 Wire the top-bar Save/Open actions to `onSaveRequested`/`onOpenRequested` and the grid/snap toggles to the controller in `packages/jet_print/lib/src/designer/layout/designer_top_bar.dart` (depends on T031).
+- [X] T084 [P] Update the app consumer test to exercise a basic edit → save → reopen path through the public API in `apps/jet_print_tester/test/app_consumes_library_test.dart`.
 - [ ] T085 [P] Add dartdoc to all new public symbols (controller operations; designer params noting geometry + text-only editing this iteration; `JetReportFormat`; model types) and update `packages/jet_print/CHANGELOG.md` (Constitution VI).
 - [ ] T086 Verify the encapsulation + layer-boundary architecture tests still pass (no `package:jet_print/src/...` import leaks; domain stays UI-free) in `packages/jet_print/test/encapsulation_test.dart` and `packages/jet_print/test/architecture/layer_boundaries_test.dart`.
 - [ ] T087 Run the full merge gate from `packages/jet_print`: `flutter gen-l10n`, `flutter analyze` (zero warnings), `dart format --output=none --set-exit-if-changed .`, `flutter test` (all green, no skips); then run the `quickstart.md` §6 acceptance walkthrough.

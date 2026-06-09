@@ -171,7 +171,17 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          const DesignerTopBar(key: _topBarKey),
+          DesignerTopBar(
+            key: _topBarKey,
+            // Bridge the host callbacks to the top bar: Save hands over the
+            // live template; Open just signals intent (the host reads + calls
+            // controller.open). Null host callbacks ⇒ the actions render
+            // disabled (the library performs no file I/O itself — FR-022).
+            onSave: widget.onSaveRequested == null
+                ? null
+                : () => widget.onSaveRequested!(_controller.template),
+            onOpen: widget.onOpenRequested,
+          ),
           const ShadSeparator.horizontal(margin: EdgeInsets.zero),
           Expanded(
             child: LayoutBuilder(

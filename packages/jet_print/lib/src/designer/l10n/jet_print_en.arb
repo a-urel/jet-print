@@ -33,6 +33,15 @@
     "description": "Tooltip for the Export top-bar action."
   },
 
+  "actionOpen": "Open",
+  "@actionOpen": {
+    "description": "Top-bar action: open a saved report from a file (wired to the host's onOpenRequested)."
+  },
+  "actionOpenTooltip": "Open a report",
+  "@actionOpenTooltip": {
+    "description": "Tooltip for the Open top-bar action."
+  },
+
   "actionUndoTooltip": "Undo",
   "@actionUndoTooltip": {
     "description": "Tooltip for the Undo top-bar icon button (history group)."

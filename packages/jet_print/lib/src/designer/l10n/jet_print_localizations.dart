@@ -143,6 +143,18 @@ abstract class JetPrintLocalizations {
   /// **'Export the report'**
   String get actionExportTooltip;
 
+  /// Top-bar action: open a saved report from a file (wired to the host's onOpenRequested).
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get actionOpen;
+
+  /// Tooltip for the Open top-bar action.
+  ///
+  /// In en, this message translates to:
+  /// **'Open a report'**
+  String get actionOpenTooltip;
+
   /// Tooltip for the Undo top-bar icon button (history group).
   ///
   /// In en, this message translates to:
