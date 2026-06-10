@@ -46,7 +46,8 @@ bool _isWhiteBoxSeamTest(File file) {
   return path.contains('/test/domain/') ||
       path.contains('/test/data/') ||
       path.contains('/test/expression/') ||
-      path.contains('/test/rendering/');
+      path.contains('/test/rendering/') ||
+      path.contains('/test/print/');
 }
 
 void main() {

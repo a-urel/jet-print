@@ -345,6 +345,44 @@ void main() {
     });
 
     test(
+        'the print seam (012) is outermost: package:printing lives ONLY in '
+        'lib/src/print/, and no library file imports the print seam', () {
+      final Directory libDir = Directory('${root.path}/packages/jet_print/lib');
+      final Directory printDir =
+          Directory('${root.path}/packages/jet_print/lib/src/print');
+      expect(printDir.existsSync(), isTrue, reason: 'Missing ${printDir.path}');
+      final List<File> libFiles = libDir
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((FileSystemEntity f) => f.path.endsWith('.dart'))
+          .toList();
+      expect(libFiles, isNotEmpty);
+      final List<String> violations = <String>[];
+      for (final File file in libFiles) {
+        final String path = file.path.replaceAll(r'\', '/');
+        final bool inPrintSeam = path.contains('/lib/src/print/');
+        final bool isEntryPoint = path.endsWith('/lib/jet_print.dart');
+        for (final String uri in _directive
+            .allMatches(file.readAsStringSync())
+            .map((Match m) => m.group(1)!)) {
+          if (uri.startsWith('package:printing/') && !inPrintSeam) {
+            violations.add('${file.path} -> $uri (printing outside seam)');
+          }
+          // The print seam is OUTERMOST: only the public entry point may
+          // export it; no other library file may import it.
+          final bool reachesPrintSeam =
+              uri.contains('src/print/') || uri.contains('../print/');
+          if (reachesPrintSeam && !inPrintSeam && !isEntryPoint) {
+            violations.add('${file.path} -> $uri (print seam imported)');
+          }
+        }
+      }
+      expect(violations, isEmpty,
+          reason: 'printing is confined to lib/src/print/ behind the '
+              'presenter abstraction:\n${violations.join('\n')}');
+    });
+
+    test(
         'the public entry point exports the 011 render surface '
         '(engine, options, render IR, diagnostics, data-source API)', () {
       final File entry =
@@ -358,6 +396,7 @@ void main() {
         'src/rendering/engine/render_options.dart',
         'src/rendering/engine/rendered_report.dart',
         'src/rendering/export/jet_report_exporter.dart',
+        'src/print/jet_report_printer.dart',
         'src/rendering/fill/report_diagnostics.dart',
         'src/data/jet_data_source.dart',
         'src/data/in_memory_data_source.dart',

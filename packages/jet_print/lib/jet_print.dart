@@ -81,6 +81,11 @@ export 'src/domain/styles/text_style.dart'
     show JetFontWeight, JetTextAlign, JetTextStyle;
 export 'src/domain/unknown_element.dart' show UnknownElement;
 export 'src/domain/value_type.dart' show JetFieldType;
+// --- Print (012): present the system print dialog for the exported PDF —
+// the one sanctioned exception to the library's headlessness. The presenter
+// seam is injectable; unavailability is a structured exception. ---
+export 'src/print/jet_report_printer.dart'
+    show JetReportPrinter, PrintDialogPresenter, PrintUnavailableException;
 // --- Render engine (011): fill a designed template with real data, paginate
 // lazily, and surface structured render diagnostics. The preview widget
 // consumes the resulting [RenderedReport]. ---
