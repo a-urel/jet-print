@@ -17,10 +17,8 @@ import 'package:flutter/services.dart'
 import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
-import '../../domain/elements/text_element.dart';
 import '../../domain/geometry.dart';
 import '../../domain/report_band.dart';
-import '../../domain/report_element.dart';
 import '../controller/jet_report_designer_controller.dart';
 import '../designer_scope.dart';
 import '../interaction/canvas_shortcuts.dart';
@@ -34,7 +32,6 @@ import 'design_tunables.dart';
 import 'field_drag_data.dart';
 import 'frame_custom_painter.dart';
 import 'hit_testing.dart';
-import 'inline_text_editor.dart';
 import 'selection_overlay.dart';
 
 /// Stable widget key for the interactive canvas (test seam).
@@ -103,12 +100,10 @@ class _DesignCanvasState extends State<DesignCanvas> {
   /// in-progress drag.
   JetOffset? _emptyTapPage;
 
-  /// The id of the text element being inline-edited (double-click), or null.
-  String? _editingId;
-
   /// Manual double-tap detection (avoids a DoubleTapGestureRecognizer, which
   /// would delay single-tap select). Tracks the last tap's position + a reset
-  /// timer; a second tap near it on a text element opens the inline editor.
+  /// timer; a second tap near it on any element brings the Properties
+  /// inspector forward for it.
   Offset? _lastTapPosition;
   Timer? _doubleTapTimer;
   static const Duration _doubleTapWindow = Duration(milliseconds: 300);
@@ -252,15 +247,15 @@ class _DesignCanvasState extends State<DesignCanvas> {
       controller.select(hit);
     }
 
-    // Manual double-tap: a second tap near the first on a text element opens
-    // the inline editor — without a DoubleTapGestureRecognizer delaying the
-    // single-tap select above.
+    // Manual double-tap: a second tap near the first brings the Properties
+    // inspector forward for the tapped element — without a
+    // DoubleTapGestureRecognizer delaying the single-tap select above.
     final bool near = _lastTapPosition != null &&
         (_lastTapPosition! - localPosition).distance < 24;
-    if (near && _findElement(controller, hit) is TextElement) {
+    if (near) {
       _doubleTapTimer?.cancel();
       _lastTapPosition = null;
-      setState(() => _editingId = hit);
+      controller.requestPropertiesFocus();
       return;
     }
     _lastTapPosition = localPosition;
@@ -436,16 +431,6 @@ class _DesignCanvasState extends State<DesignCanvas> {
     _movingSelection = false;
     _panStartPage = null;
     controller.commitMove();
-  }
-
-  ReportElement? _findElement(
-      JetReportDesignerController controller, String id) {
-    for (final band in controller.template.bands) {
-      for (final ReportElement e in band.elements) {
-        if (e.id == id) return e;
-      }
-    }
-    return null;
   }
 
   void _handleDrop(
@@ -713,29 +698,6 @@ class _DesignCanvasState extends State<DesignCanvas> {
                     child:
                         DesignerSelectionOverlay(layout: layout, scale: scale),
                   ),
-                  // Inline text editor over the element being double-click-edited.
-                  if (_editingId case final String editId)
-                    if (layout.elementRect(editId) case final JetRect er)
-                      if (_findElement(controller, editId)
-                          case final TextElement t)
-                        Positioned(
-                          left: er.x * scale,
-                          top: er.y * scale,
-                          width: er.width * scale < 80 ? 80 : er.width * scale,
-                          // Height intentionally unconstrained: the input sizes to
-                          // its natural height (a text element can be shorter than
-                          // the field's minimum).
-                          child: InlineTextEditor(
-                            initialText: t.text,
-                            onCommit: (String value) {
-                              controller.setText(editId, value);
-                              if (mounted) setState(() => _editingId = null);
-                            },
-                            onCancel: () {
-                              if (mounted) setState(() => _editingId = null);
-                            },
-                          ),
-                        ),
                   // Marquee rubber-band, while dragging on empty canvas.
                   if (_marqueeRect case final JetRect m)
                     Positioned(
