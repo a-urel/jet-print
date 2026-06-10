@@ -250,12 +250,15 @@ class _DesignCanvasState extends State<DesignCanvas> {
     // Manual double-tap: a second tap near the first brings the Properties
     // inspector forward for the tapped element — without a
     // DoubleTapGestureRecognizer delaying the single-tap select above.
+    // Shift-taps are multi-selection gestures, not double-taps: the second
+    // shift-tap just toggled the element back OUT of the selection, so a
+    // focus request would land on an empty inspector.
     final bool near = _lastTapPosition != null &&
         (_lastTapPosition! - localPosition).distance < 24;
     if (near) {
       _doubleTapTimer?.cancel();
       _lastTapPosition = null;
-      controller.requestPropertiesFocus();
+      if (!_shiftPressed) controller.requestPropertiesFocus();
       return;
     }
     _lastTapPosition = localPosition;

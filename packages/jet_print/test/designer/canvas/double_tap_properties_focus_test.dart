@@ -1,6 +1,7 @@
 // Double-tapping a report object brings the Properties inspector forward and
 // focuses its most relevant field — Text for a text element, X otherwise.
 // In-place editing is gone (the Properties panel is the only text editor).
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
@@ -115,5 +116,23 @@ void main() {
 
     expect(find.byKey(kRightPanelKey), findsOneWidget);
     expect(_hasFocus(tester, _textField), isTrue);
+  });
+
+  testWidgets('shift+double-tap is a multi-select gesture, not a focus request',
+      (WidgetTester tester) async {
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
+    controller.createElement(DesignerToolType.text,
+        bandIndex: 1, at: const JetOffset(20, 20));
+    await tester.pumpAndSettle();
+    final String id = controller.selection.singleOrNull!;
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await _doubleTapAt(tester, tester.getCenter(_elementFinder(id)));
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pumpAndSettle();
+
+    expect(controller.pendingPropertiesFocus, isFalse);
+    expect(_xField, findsNothing); // right panel stays on Data Source
   });
 }
