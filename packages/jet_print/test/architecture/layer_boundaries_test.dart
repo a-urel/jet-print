@@ -173,13 +173,19 @@ void main() {
               '${violations.join('\n')}');
     });
 
-    test('only paint/canvas_painter.dart imports dart:ui / Flutter UI', () {
+    test(
+        'only paint/canvas_painter.dart and paint/page_rasterizer.dart '
+        'import dart:ui / Flutter UI', () {
       final List<String> violations = <String>[];
       for (final File file in renderingFiles()) {
         final String path = file.path.replaceAll(r'\', '/');
-        final bool isCanvasPainter =
-            path.endsWith('/paint/canvas_painter.dart');
-        // The single sanctioned exception besides the painter (011):
+        // The two declared dart:ui paint backends: the preview's canvas
+        // painter (011) and the PNG rasterizer composing it (012 — PNG
+        // encoding is an engine capability). Nothing else.
+        final bool isDeclaredUiBackend =
+            path.endsWith('/paint/canvas_painter.dart') ||
+                path.endsWith('/paint/page_rasterizer.dart');
+        // The single sanctioned exception besides the painters (011):
         // RenderOptions carries the host's per-render `Locale` — a pure value
         // type from dart:ui with a const constructor. No other dart:ui symbol
         // may be used there, and no other engine file may import dart:ui.
@@ -188,15 +194,16 @@ void main() {
         for (final String uri in _directive
             .allMatches(file.readAsStringSync())
             .map((Match m) => m.group(1)!)) {
-          if (_isFlutterUi(uri) && !isCanvasPainter && !isRenderOptions) {
+          if (_isFlutterUi(uri) && !isDeclaredUiBackend && !isRenderOptions) {
             violations.add('${file.path} -> $uri');
           }
         }
       }
       expect(violations, isEmpty,
-          reason: 'Only CanvasPainter (and RenderOptions, for the Locale '
-              'value type) may import dart:ui; frame/text/report_painter '
-              'must stay headless:\n${violations.join('\n')}');
+          reason: 'Only CanvasPainter + PageRasterizer (and RenderOptions, '
+              'for the Locale value type) may import dart:ui; '
+              'frame/text/report_painter/export must stay headless:\n'
+              '${violations.join('\n')}');
     });
 
     test(
@@ -311,8 +318,8 @@ void main() {
     test(
         'the export/ seam stays pure Dart (012): PDF generation must be '
         'usable headlessly, with no dart:ui or Flutter import', () {
-      final Directory exportDir = Directory(
-          '${root.path}/packages/jet_print/lib/src/rendering/export');
+      final Directory exportDir =
+          Directory('${root.path}/packages/jet_print/lib/src/rendering/export');
       expect(exportDir.existsSync(), isTrue,
           reason: 'Missing ${exportDir.path}');
       final List<File> exportFiles = exportDir

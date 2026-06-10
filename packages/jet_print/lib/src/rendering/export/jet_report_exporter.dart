@@ -7,6 +7,7 @@ library;
 import 'dart:typed_data';
 
 import '../engine/rendered_report.dart';
+import '../paint/page_rasterizer.dart';
 import '../paint/report_painter.dart';
 import '../text/font_registry.dart';
 import 'pdf_painter.dart';
@@ -45,5 +46,33 @@ class JetReportExporter {
       await paintFrame(report.pageAt(i).frame, painter);
     }
     return painter.save();
+  }
+
+  /// Exports one page as a PNG image at [scale].
+  ///
+  /// The page is rasterized through the preview's own paint path (the same
+  /// `CanvasPainter` the on-screen preview uses), so the pixels match the
+  /// preview of that page by construction (FR-006). Output dimensions are
+  /// exactly `round(page.width x scale)` by `round(page.height x scale)`
+  /// pixels (SC-006). For all pages, iterate `0..pageCount-1` in order.
+  ///
+  /// Throws a [RangeError] when [pageIndex] is outside `[0, pageCount)` —
+  /// the same structured error [RenderedReport.pageAt] uses — and an
+  /// [ArgumentError] when [scale] is not strictly positive. Content problems
+  /// never throw (the frame already carries the preview's fallbacks).
+  Future<Uint8List> pageToPng(
+    RenderedReport report,
+    int pageIndex, {
+    double scale = 1.0,
+  }) async {
+    if (pageIndex < 0 || pageIndex >= report.pageCount) {
+      throw RangeError.range(pageIndex, 0, report.pageCount - 1, 'pageIndex');
+    }
+    if (scale <= 0) {
+      throw ArgumentError.value(scale, 'scale', 'must be strictly positive');
+    }
+    final FontRegistry fonts = FontRegistry()..registerDefault();
+    return const PageRasterizer()
+        .rasterize(report.pageAt(pageIndex).frame, fonts, scale: scale);
   }
 }
