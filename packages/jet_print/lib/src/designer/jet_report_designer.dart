@@ -21,6 +21,11 @@ typedef ReportSaveRequestedCallback = void Function(ReportTemplate current);
 /// `JetReportFormat.decodeJson`) and calls `controller.open(...)`.
 typedef ReportOpenRequestedCallback = void Function();
 
+/// Invoked when the user triggers Preview; receives the current
+/// [ReportTemplate] so a host can render it (e.g. via `JetReportEngine`) and
+/// show a `JetReportPreview`.
+typedef ReportPreviewRequestedCallback = void Function(ReportTemplate current);
+
 /// The report designer **shell**: the visual workspace that arranges the
 /// regions of the designer — a top command bar, a left element toolbox, an
 /// interactive center design surface, and a right three-tab context panel
@@ -60,6 +65,7 @@ class JetReportDesigner extends StatefulWidget {
     this.initialReport,
     this.onSaveRequested,
     this.onOpenRequested,
+    this.onPreviewRequested,
     this.dataSchema,
   });
 
@@ -83,6 +89,10 @@ class JetReportDesigner extends StatefulWidget {
 
   /// Invoked when the user triggers Open (wired to the top bar).
   final ReportOpenRequestedCallback? onOpenRequested;
+
+  /// Invoked when the user triggers Preview (wired to the top bar); receives
+  /// the live template to render. Null ⇒ the Preview action renders disabled.
+  final ReportPreviewRequestedCallback? onPreviewRequested;
 
   @override
   State<JetReportDesigner> createState() => _JetReportDesignerState();
@@ -196,6 +206,9 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
                 ? null
                 : () => widget.onSaveRequested!(_controller.template),
             onOpen: widget.onOpenRequested,
+            onPreview: widget.onPreviewRequested == null
+                ? null
+                : () => widget.onPreviewRequested!(_controller.template),
           ),
           const ShadSeparator.horizontal(margin: EdgeInsets.zero),
           Expanded(

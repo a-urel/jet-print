@@ -176,6 +176,8 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
             dataSchema: invoiceSchema,
             onSaveRequested: _save,
             onOpenRequested: _open,
+            // The designer's top-bar Preview action opens the rendered preview.
+            onPreviewRequested: (ReportTemplate _) => _openPreview(),
           ),
         ),
         Positioned(
@@ -186,12 +188,6 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                ShadButton(
-                  key: const ValueKey<String>('playground.preview'),
-                  onPressed: _openPreview,
-                  child: const Text('Preview'),
-                ),
-                const SizedBox(width: 8),
                 ShadButton.ghost(
                   onPressed: widget.onToggleTheme,
                   child: Text(widget.isDark ? 'Light' : 'Dark'),

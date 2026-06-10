@@ -62,8 +62,9 @@ void main() {
     await tester.pumpWidget(const JetPrintPlaygroundApp());
     await tester.pumpAndSettle();
 
-    // The playground's Preview path opens the rendered-invoice example.
-    await tester.tap(find.byKey(const ValueKey<String>('playground.preview')));
+    // The designer's top-bar Preview action opens the rendered-invoice example.
+    await tester.tap(
+        find.byKey(const ValueKey<String>('jet_print.designer.action.preview')));
     await tester.pumpAndSettle();
 
     expect(find.byType(RenderedInvoiceExample), findsOneWidget);

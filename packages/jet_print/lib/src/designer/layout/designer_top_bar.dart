@@ -23,10 +23,10 @@ class DesignerTopBar extends StatefulWidget {
   /// Creates the designer top bar. Private to the library; composed by
   /// `JetReportDesigner`.
   ///
-  /// [onOpen]/[onSave] back the Open/Save actions; each is null when the host
-  /// wired no corresponding callback, and the action then renders disabled
-  /// (the library performs no file I/O itself — FR-022).
-  const DesignerTopBar({super.key, this.onOpen, this.onSave});
+  /// [onOpen]/[onSave]/[onPreview] back the Open/Save/Preview actions; each is
+  /// null when the host wired no corresponding callback, and the action then
+  /// renders disabled (the library performs no file I/O itself — FR-022).
+  const DesignerTopBar({super.key, this.onOpen, this.onSave, this.onPreview});
 
   /// Invoked when the user triggers Open (the host reads a template and calls
   /// `controller.open`). Null ⇒ the Open action is disabled.
@@ -35,6 +35,11 @@ class DesignerTopBar extends StatefulWidget {
   /// Invoked when the user triggers Save (the host persists the current
   /// template). Null ⇒ the Save action is disabled.
   final VoidCallback? onSave;
+
+  /// Invoked when the user triggers Preview (the host opens a rendered preview,
+  /// e.g. via `JetReportEngine` + `JetReportPreview`). Null ⇒ Preview is
+  /// disabled.
+  final VoidCallback? onPreview;
 
   @override
   State<DesignerTopBar> createState() => _DesignerTopBarState();
@@ -191,8 +196,8 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
 
     final List<Widget> actions = <Widget>[
       const _Divider(),
-      // Open / Save are wired to the host's persistence callbacks (FR-022);
-      // Preview / Export stay enabled placeholders this iteration (FR-015).
+      // Open / Save / Preview are wired to the host's callbacks (FR-022);
+      // Export stays an enabled placeholder this iteration (FR-015).
       _ActionButton(
         icon: LucideIcons.folderOpen,
         label: l10n.actionOpen,
@@ -208,11 +213,12 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
         onPressed: widget.onSave,
       ),
       _ActionButton(
+        buttonKey: const ValueKey<String>('jet_print.designer.action.preview'),
         icon: LucideIcons.eye,
         label: l10n.actionPreview,
         tooltip: l10n.actionPreviewTooltip,
         compact: compact,
-        onPressed: () {},
+        onPressed: widget.onPreview,
       ),
       _ActionButton(
         icon: LucideIcons.download,
@@ -509,6 +515,7 @@ class _ActionButton extends StatelessWidget {
     required this.onPressed,
     this.trailing,
     this.compact = false,
+    this.buttonKey,
   });
 
   final IconData icon;
@@ -523,6 +530,9 @@ class _ActionButton extends StatelessWidget {
   /// When true the label (and the dropdown chevron) are dropped and only the
   /// glyph shows, so the action fits a narrow bar; the tooltip still names it.
   final bool compact;
+
+  /// Optional stable key on the inner button (test seam).
+  final Key? buttonKey;
 
   @override
   Widget build(BuildContext context) {
@@ -539,6 +549,7 @@ class _ActionButton extends StatelessWidget {
             button: true,
             child: compact
                 ? ShadIconButton.ghost(
+                    key: buttonKey,
                     icon: Icon(icon, size: 16),
                     width: 32,
                     height: 32,
@@ -546,6 +557,7 @@ class _ActionButton extends StatelessWidget {
                     onPressed: onPressed,
                   )
                 : ShadButton.ghost(
+                    key: buttonKey,
                     size: ShadButtonSize.sm,
                     leading: Icon(icon, size: 16),
                     trailing:

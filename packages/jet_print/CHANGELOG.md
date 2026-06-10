@@ -29,6 +29,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     prev/next + arrow-key navigation, a localized "page X of N" indicator
     (en/de/tr with English fallback), accessible names; pages paint through
     the same `paintFrame`/`CanvasPainter` pipeline as the designer surface.
+  - `JetReportDesigner(onPreviewRequested:)` — the top bar's **Preview**
+    action is now wired to this host callback (receiving the live template),
+    mirroring `onSaveRequested`/`onOpenRequested`; it renders disabled when
+    unwired. The playground opens its rendered-invoice preview from it.
   - The full data-source API is now public: `JetDataSource`,
     `JetInMemoryDataSource`, `JetJsonDataSource`, `JetObjectDataSource<T>`,
     `DataSet`, `DataRow` — the same logical dataset renders byte-identically
