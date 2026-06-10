@@ -391,5 +391,14 @@
   "previewFitToWidth": "Fit to width",
   "@previewFitToWidth": {
     "description": "Accessible name of the preview's page surface, describing its fit-to-width sizing."
+  },
+
+  "previewExport": "Export as PDF",
+  "@previewExport": {
+    "description": "Tooltip + accessible name of the report preview's export toolbar action; the host decides what export means (save dialog, share sheet, upload)."
+  },
+  "previewPrint": "Print",
+  "@previewPrint": {
+    "description": "Tooltip + accessible name of the report preview's print toolbar action."
   }
 }

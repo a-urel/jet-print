@@ -37,7 +37,13 @@ RenderedReport previewLocalizationReport() => const JetReportEngine().render(
 
 /// Pumps a [JetReportPreview] under [locale], wiring only the library's own
 /// synchronous localization delegate (the designer harness precedent).
-Future<void> pumpLocalizedPreview(WidgetTester tester, Locale locale) async {
+/// [withActions] wires no-op export/print callbacks so the 012 toolbar
+/// actions render and their localized names can be asserted.
+Future<void> pumpLocalizedPreview(
+  WidgetTester tester,
+  Locale locale, {
+  bool withActions = false,
+}) async {
   await tester.binding.setSurfaceSize(const Size(800, 600));
   addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.pumpWidget(ShadApp(
@@ -46,7 +52,11 @@ Future<void> pumpLocalizedPreview(WidgetTester tester, Locale locale) async {
       JetPrintLocalizations.delegate,
     ],
     supportedLocales: JetPrintLocalizations.supportedLocales,
-    home: JetReportPreview(report: previewLocalizationReport()),
+    home: JetReportPreview(
+      report: previewLocalizationReport(),
+      onExportPdf: withActions ? () {} : null,
+      onPrint: withActions ? () {} : null,
+    ),
   ));
   await tester.pumpAndSettle();
 }

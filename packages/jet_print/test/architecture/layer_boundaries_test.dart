@@ -415,6 +415,36 @@ void main() {
     });
 
     test(
+        'the 012 export/print public surface matches contract §1 EXACTLY '
+        '(exporter, printer, presenter typedef, exception — nothing more)', () {
+      final String entry =
+          File('${root.path}/packages/jet_print/lib/jet_print.dart')
+              .readAsStringSync();
+      Set<String> shownBy(String uri) {
+        final RegExp re =
+            RegExp("export\\s+'${RegExp.escape(uri)}'\\s+show\\s+([^;]+);");
+        final Match? m = re.firstMatch(entry);
+        expect(m, isNotNull,
+            reason: 'jet_print.dart must export $uri with an explicit '
+                '`show` combinator');
+        return m!
+            .group(1)!
+            .split(',')
+            .map((String s) => s.trim())
+            .where((String s) => s.isNotEmpty)
+            .toSet();
+      }
+
+      expect(shownBy('src/rendering/export/jet_report_exporter.dart'),
+          <String>{'JetReportExporter'});
+      expect(shownBy('src/print/jet_report_printer.dart'), <String>{
+        'JetReportPrinter',
+        'PrintDialogPresenter',
+        'PrintUnavailableException',
+      });
+    });
+
+    test(
         'the render path is read-only over templates: schemaVersion stays 1 '
         '(FR-016)', () {
       // No schema change, no migration: the existing format round-trips

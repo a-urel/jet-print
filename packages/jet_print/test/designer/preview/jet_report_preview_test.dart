@@ -52,12 +52,17 @@ const Key _zoomInKey = ValueKey<String>('jet_print.preview.zoomIn');
 const Key _zoomOutKey = ValueKey<String>('jet_print.preview.zoomOut');
 const Key _zoomLevelKey = ValueKey<String>('jet_print.preview.zoomLevel');
 
+const Key _exportKey = ValueKey<String>('jet_print.preview.export');
+const Key _printKey = ValueKey<String>('jet_print.preview.print');
+
 Future<void> _pumpPreview(
   WidgetTester tester, {
   RenderedReport? report,
   int initialPage = 0,
   Size size = const Size(800, 600),
   VoidCallback? onBack,
+  VoidCallback? onExportPdf,
+  VoidCallback? onPrint,
 }) async {
   await tester.binding.setSurfaceSize(size);
   addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -70,8 +75,22 @@ Future<void> _pumpPreview(
       report: report ?? _report(),
       initialPage: initialPage,
       onBack: onBack,
+      onExportPdf: onExportPdf,
+      onPrint: onPrint,
     ),
   ));
+  await tester.pumpAndSettle();
+}
+
+/// Focuses the button identified by [key] via its internal focus node (the
+/// icon sits inside the button's `Focus`), then activates it with [trigger].
+Future<void> _activateWithKeyboard(
+    WidgetTester tester, Key key, LogicalKeyboardKey trigger) async {
+  final Element icon = tester.element(
+      find.descendant(of: find.byKey(key), matching: find.byType(Icon)));
+  Focus.of(icon).requestFocus();
+  await tester.pump();
+  await tester.sendKeyEvent(trigger);
   await tester.pumpAndSettle();
 }
 
@@ -260,6 +279,72 @@ void main() {
       }
       expect(tester.widget<ShadIconButton>(find.byKey(_zoomOutKey)).onPressed,
           isNull);
+    });
+  });
+
+  group('export/print toolbar actions (012 — contract B8; FR-014/FR-015)', () {
+    testWidgets(
+        'absent (no buttons, no reserved space, no semantics) when both '
+        'callbacks are null — 011 behavior bit-preserved',
+        (WidgetTester tester) async {
+      await _pumpPreview(tester);
+      expect(find.byKey(_exportKey), findsNothing);
+      expect(find.byKey(_printKey), findsNothing);
+      expect(find.bySemanticsLabel('Export as PDF'), findsNothing);
+      expect(find.bySemanticsLabel('Print'), findsNothing);
+    });
+
+    testWidgets(
+        'a non-null onExportPdf adds the export action; tap invokes the '
+        'callback; print stays absent', (WidgetTester tester) async {
+      int exports = 0;
+      await _pumpPreview(tester, onExportPdf: () => exports++);
+      expect(find.byKey(_exportKey), findsOneWidget);
+      expect(find.byKey(_printKey), findsNothing,
+          reason: 'each action appears only with its own callback');
+      expect(find.bySemanticsLabel('Export as PDF'), findsOneWidget,
+          reason: 'localized accessible name (FR-014)');
+      await tester.tap(find.byKey(_exportKey));
+      await tester.pumpAndSettle();
+      expect(exports, 1,
+          reason: 'the library invokes the callback and performs no I/O');
+    });
+
+    testWidgets('a non-null onPrint adds the print action; tap invokes it',
+        (WidgetTester tester) async {
+      int prints = 0;
+      await _pumpPreview(tester, onPrint: () => prints++);
+      expect(find.byKey(_printKey), findsOneWidget);
+      expect(find.byKey(_exportKey), findsNothing);
+      expect(find.bySemanticsLabel('Print'), findsOneWidget);
+      await tester.tap(find.byKey(_printKey));
+      await tester.pumpAndSettle();
+      expect(prints, 1);
+    });
+
+    testWidgets('both callbacks wired -> both actions, independently invoked',
+        (WidgetTester tester) async {
+      int exports = 0;
+      int prints = 0;
+      await _pumpPreview(tester,
+          onExportPdf: () => exports++, onPrint: () => prints++);
+      await tester.tap(find.byKey(_exportKey));
+      await tester.tap(find.byKey(_printKey));
+      await tester.pumpAndSettle();
+      expect(exports, 1);
+      expect(prints, 1);
+    });
+
+    testWidgets('keyboard activation invokes the callbacks (FR-014)',
+        (WidgetTester tester) async {
+      int exports = 0;
+      int prints = 0;
+      await _pumpPreview(tester,
+          onExportPdf: () => exports++, onPrint: () => prints++);
+      await _activateWithKeyboard(tester, _exportKey, LogicalKeyboardKey.enter);
+      expect(exports, 1, reason: 'Enter activates the focused export action');
+      await _activateWithKeyboard(tester, _printKey, LogicalKeyboardKey.enter);
+      expect(prints, 1, reason: 'Enter activates the focused print action');
     });
   });
 }

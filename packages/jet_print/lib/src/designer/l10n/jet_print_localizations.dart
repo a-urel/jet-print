@@ -646,6 +646,18 @@ abstract class JetPrintLocalizations {
   /// In en, this message translates to:
   /// **'Fit to width'**
   String get previewFitToWidth;
+
+  /// Tooltip + accessible name of the report preview's export toolbar action; the host decides what export means (save dialog, share sheet, upload).
+  ///
+  /// In en, this message translates to:
+  /// **'Export as PDF'**
+  String get previewExport;
+
+  /// Tooltip + accessible name of the report preview's print toolbar action.
+  ///
+  /// In en, this message translates to:
+  /// **'Print'**
+  String get previewPrint;
 }
 
 class _JetPrintLocalizationsDelegate

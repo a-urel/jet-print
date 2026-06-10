@@ -288,4 +288,10 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
 
   @override
   String get previewFitToWidth => 'Genişliğe sığdır';
+
+  @override
+  String get previewExport => 'PDF olarak dışa aktar';
+
+  @override
+  String get previewPrint => 'Yazdır';
 }

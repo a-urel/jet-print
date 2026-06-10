@@ -7,10 +7,13 @@ import 'preview_localization_support.dart';
 
 void main() {
   testWidgets('German chrome', (WidgetTester tester) async {
-    await pumpLocalizedPreview(tester, const Locale('de'));
+    await pumpLocalizedPreview(tester, const Locale('de'), withActions: true);
     expect(find.text('Seite 1 von 2'), findsOneWidget);
     expect(find.bySemanticsLabel('Vorherige Seite'), findsOneWidget);
     expect(find.bySemanticsLabel('Nächste Seite'), findsOneWidget);
     expect(find.bySemanticsLabel('An Breite anpassen'), findsOneWidget);
+    // 012 export/print actions (FR-014).
+    expect(find.bySemanticsLabel('Als PDF exportieren'), findsOneWidget);
+    expect(find.bySemanticsLabel('Drucken'), findsOneWidget);
   });
 }

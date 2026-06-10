@@ -58,6 +58,8 @@ class JetReportPreview extends StatefulWidget {
     required this.report,
     this.initialPage = 0,
     this.onBack,
+    this.onExportPdf,
+    this.onPrint,
   });
 
   /// The rendered report to display.
@@ -70,6 +72,21 @@ class JetReportPreview extends StatefulWidget {
   /// Invoked when the user triggers the toolbar's back button (e.g. to return
   /// to the designer). Null ⇒ no back button is shown.
   final VoidCallback? onBack;
+
+  /// Invoked when the user triggers the toolbar's export action (012,
+  /// FR-015). Null ⇒ no export action is shown (the 011 toolbar, unchanged).
+  ///
+  /// The library only invokes the callback — what "export" means (a save
+  /// dialog, a share sheet, an upload) and any busy UI are host concerns;
+  /// hosts typically call `JetReportExporter.toPdf` with the same [report].
+  final VoidCallback? onExportPdf;
+
+  /// Invoked when the user triggers the toolbar's print action (012,
+  /// FR-015). Null ⇒ no print action is shown.
+  ///
+  /// Hosts typically delegate to `JetReportPrinter.printReport` with the
+  /// same [report]; the library itself performs no I/O here.
+  final VoidCallback? onPrint;
 
   @override
   State<JetReportPreview> createState() => _JetReportPreviewState();
@@ -244,6 +261,29 @@ class _JetReportPreviewState extends State<JetReportPreview> {
                               .copyWith(color: colors.foreground),
                         ),
                       ),
+                      // Artifact actions group — export / print (012,
+                      // FR-015): each appears only when its callback is
+                      // wired; with both null the 011 toolbar is unchanged.
+                      if (widget.onExportPdf != null ||
+                          widget.onPrint != null) ...<Widget>[
+                        const _Divider(),
+                        if (widget.onExportPdf != null)
+                          _ToolbarButton(
+                            buttonKey: const ValueKey<String>(
+                                'jet_print.preview.export'),
+                            icon: LucideIcons.fileDown,
+                            label: l10n.previewExport,
+                            onPressed: widget.onExportPdf,
+                          ),
+                        if (widget.onPrint != null)
+                          _ToolbarButton(
+                            buttonKey: const ValueKey<String>(
+                                'jet_print.preview.print'),
+                            icon: LucideIcons.printer,
+                            label: l10n.previewPrint,
+                            onPressed: widget.onPrint,
+                          ),
+                      ],
                       // Zoom group — out / "%" (tap to fit) / in.
                       const _Divider(),
                       _ToolbarButton(

@@ -12,19 +12,27 @@ import 'preview_localization_support.dart';
 
 void main() {
   testWidgets('English chrome (default)', (WidgetTester tester) async {
-    await pumpLocalizedPreview(tester, const Locale('en'));
+    await pumpLocalizedPreview(tester, const Locale('en'), withActions: true);
     expect(find.text('Page 1 of 2'), findsOneWidget);
     expect(find.bySemanticsLabel('Previous page'), findsOneWidget);
     expect(find.bySemanticsLabel('Next page'), findsOneWidget);
     expect(find.bySemanticsLabel('Fit to width'), findsOneWidget);
+    // 012 export/print actions (FR-014).
+    expect(find.bySemanticsLabel('Export as PDF'), findsOneWidget);
+    expect(find.bySemanticsLabel('Print'), findsOneWidget);
   });
 
   testWidgets('an unsupported locale falls back to English (FR-017)',
       (WidgetTester tester) async {
-    await pumpLocalizedPreview(tester, const Locale('fr'));
+    await pumpLocalizedPreview(tester, const Locale('fr'), withActions: true);
     expect(find.text('Page 1 of 2'), findsOneWidget);
     // No raw resource keys leak through.
     expect(find.text('previewPageIndicator'), findsNothing);
     expect(find.bySemanticsLabel('previewNextPage'), findsNothing);
+    // The 012 actions fall back to English too (FR-014).
+    expect(find.bySemanticsLabel('Export as PDF'), findsOneWidget);
+    expect(find.bySemanticsLabel('Print'), findsOneWidget);
+    expect(find.bySemanticsLabel('previewExport'), findsNothing);
+    expect(find.bySemanticsLabel('previewPrint'), findsNothing);
   });
 }

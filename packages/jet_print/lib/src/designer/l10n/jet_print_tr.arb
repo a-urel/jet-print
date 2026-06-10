@@ -105,5 +105,7 @@
   "previewPreviousPage": "Önceki sayfa",
   "previewNextPage": "Sonraki sayfa",
   "previewPageIndicator": "Sayfa {current} / {total}",
-  "previewFitToWidth": "Genişliğe sığdır"
+  "previewFitToWidth": "Genişliğe sığdır",
+  "previewExport": "PDF olarak dışa aktar",
+  "previewPrint": "Yazdır"
 }

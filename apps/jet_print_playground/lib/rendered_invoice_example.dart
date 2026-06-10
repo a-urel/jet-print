@@ -2,10 +2,18 @@
 /// real data for the bound invoice template, render it through the public
 /// engine, and show the paginated preview. The whole integration — data
 /// source + render + preview — is the < 30 lines inside [invoiceDataSource],
-/// [renderInvoice], and [RenderedInvoiceExample.build], all through
+/// [renderInvoice], and [RenderedInvoiceExample], all through
 /// `package:jet_print/jet_print.dart` only.
+///
+/// 012 adds export and print: the report renders ONCE and that single
+/// `RenderedReport` feeds the preview, the PDF bytes (saved via
+/// `file_selector` — host-owned I/O), and the system print dialog (SC-001:
+/// under 10 integration lines beyond the 011 example).
 library;
 
+import 'dart:typed_data';
+
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/widgets.dart';
 import 'package:jet_print/jet_print.dart';
 
@@ -125,8 +133,9 @@ RenderedReport renderInvoice({JetDataSource? source}) =>
     );
 
 /// The on-screen preview of the rendered invoice — prev/next navigation,
-/// "page X of N", zoom, and (when [onBack] is given) a back button.
-class RenderedInvoiceExample extends StatelessWidget {
+/// "page X of N", zoom, a back button (when [onBack] is given), and the 012
+/// export/print toolbar actions wired to the SAME single render.
+class RenderedInvoiceExample extends StatefulWidget {
   /// Creates the rendered-invoice preview example; [onBack] backs the
   /// preview toolbar's back button.
   const RenderedInvoiceExample({super.key, this.onBack});
@@ -135,6 +144,34 @@ class RenderedInvoiceExample extends StatelessWidget {
   final VoidCallback? onBack;
 
   @override
-  Widget build(BuildContext context) =>
-      JetReportPreview(report: renderInvoice(), onBack: onBack);
+  State<RenderedInvoiceExample> createState() => _RenderedInvoiceExampleState();
+}
+
+class _RenderedInvoiceExampleState extends State<RenderedInvoiceExample> {
+  /// Rendered ONCE: this single report feeds the preview, the PDF export,
+  /// and the print job (FR-001) — no re-render per artifact.
+  late final RenderedReport _report = renderInvoice();
+
+  /// Export = save the in-memory PDF bytes wherever the user picks
+  /// (host-owned I/O; the library stays headless).
+  Future<void> _savePdf() async {
+    final Uint8List pdf = await const JetReportExporter().toPdf(_report);
+    final FileSaveLocation? location = await getSaveLocation(
+      acceptedTypeGroups: const <XTypeGroup>[
+        XTypeGroup(label: 'PDF document', extensions: <String>['pdf']),
+      ],
+      suggestedName: 'invoice.pdf',
+    );
+    if (location == null) return; // user cancelled
+    await XFile.fromData(pdf, mimeType: 'application/pdf')
+        .saveTo(location.path);
+  }
+
+  @override
+  Widget build(BuildContext context) => JetReportPreview(
+        report: _report,
+        onBack: widget.onBack,
+        onExportPdf: _savePdf,
+        onPrint: () => const JetReportPrinter().printReport(_report),
+      );
 }

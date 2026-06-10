@@ -288,4 +288,10 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
 
   @override
   String get previewFitToWidth => 'An Breite anpassen';
+
+  @override
+  String get previewExport => 'Als PDF exportieren';
+
+  @override
+  String get previewPrint => 'Drucken';
 }

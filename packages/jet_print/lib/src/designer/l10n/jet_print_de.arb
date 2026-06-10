@@ -105,5 +105,7 @@
   "previewPreviousPage": "Vorherige Seite",
   "previewNextPage": "Nächste Seite",
   "previewPageIndicator": "Seite {current} von {total}",
-  "previewFitToWidth": "An Breite anpassen"
+  "previewFitToWidth": "An Breite anpassen",
+  "previewExport": "Als PDF exportieren",
+  "previewPrint": "Drucken"
 }

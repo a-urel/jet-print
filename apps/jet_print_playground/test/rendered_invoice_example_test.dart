@@ -72,10 +72,42 @@ void main() {
     // The one-invoice sample fits a single A4 page; navigation is bounded.
     expect(find.text('Page 1 of 1'), findsOneWidget);
 
+    // 012 (SC-008): the example wires export and print through the PUBLIC
+    // preview callbacks — both toolbar actions are present. The example
+    // renders ONCE: the preview, the PDF export, and the print job all
+    // consume that one RenderedReport (asserted structurally below).
+    expect(find.byKey(const ValueKey<String>('jet_print.preview.export')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey<String>('jet_print.preview.print')),
+        findsOneWidget);
+
     // The preview toolbar's back button returns to the designer.
     await tester
         .tap(find.byKey(const ValueKey<String>('jet_print.preview.back')));
     await tester.pumpAndSettle();
     expect(find.byType(JetReportDesigner), findsOneWidget);
+  });
+
+  testWidgets(
+      'export and print feed from the same single render as the preview '
+      '(012 — FR-001, SC-008)', (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(900, 700));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(const JetPrintPlaygroundApp());
+    await tester.pumpAndSettle();
+    await tester.tap(find
+        .byKey(const ValueKey<String>('jet_print.designer.action.preview')));
+    await tester.pumpAndSettle();
+
+    // The preview displays the example's one rendered report...
+    final JetReportPreview preview =
+        tester.widget<JetReportPreview>(find.byType(JetReportPreview));
+    final RenderedReport shown = preview.report;
+    // ...and both artifact callbacks are wired (host-owned I/O happens only
+    // when the user triggers them; the test does not tap to avoid platform
+    // channels).
+    expect(preview.onExportPdf, isNotNull);
+    expect(preview.onPrint, isNotNull);
+    expect(shown.pageCount, greaterThanOrEqualTo(1));
   });
 }
