@@ -309,6 +309,35 @@ void main() {
     });
 
     test(
+        'the export/ seam stays pure Dart (012): PDF generation must be '
+        'usable headlessly, with no dart:ui or Flutter import', () {
+      final Directory exportDir = Directory(
+          '${root.path}/packages/jet_print/lib/src/rendering/export');
+      expect(exportDir.existsSync(), isTrue,
+          reason: 'Missing ${exportDir.path}');
+      final List<File> exportFiles = exportDir
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((FileSystemEntity f) => f.path.endsWith('.dart'))
+          .toList();
+      expect(exportFiles, isNotEmpty);
+      final List<String> violations = <String>[];
+      for (final File file in exportFiles) {
+        for (final String uri in _directive
+            .allMatches(file.readAsStringSync())
+            .map((Match m) => m.group(1)!)) {
+          if (_isFlutterUi(uri) || uri.startsWith('package:flutter/')) {
+            violations.add('${file.path} -> $uri');
+          }
+        }
+      }
+      expect(violations, isEmpty,
+          reason: 'rendering/export must stay headless pure Dart '
+              '(package:pdf, package:image, and inward seams only):\n'
+              '${violations.join('\n')}');
+    });
+
+    test(
         'the public entry point exports the 011 render surface '
         '(engine, options, render IR, diagnostics, data-source API)', () {
       final File entry =
@@ -321,6 +350,7 @@ void main() {
         'src/rendering/engine/jet_report_engine.dart',
         'src/rendering/engine/render_options.dart',
         'src/rendering/engine/rendered_report.dart',
+        'src/rendering/export/jet_report_exporter.dart',
         'src/rendering/fill/report_diagnostics.dart',
         'src/data/jet_data_source.dart',
         'src/data/in_memory_data_source.dart',

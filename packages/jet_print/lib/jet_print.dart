@@ -88,6 +88,11 @@ export 'src/rendering/engine/jet_report_engine.dart' show JetReportEngine;
 export 'src/rendering/engine/render_options.dart' show RenderOptions;
 export 'src/rendering/engine/rendered_report.dart'
     show RenderedPage, RenderedReport;
+// --- Export (012): turn the same RenderedReport the preview displays into
+// shareable artifacts — a deterministic PDF document with real selectable
+// text and embedded fonts. Headless: bytes in, bytes out; the host owns
+// saving/sharing. ---
+export 'src/rendering/export/jet_report_exporter.dart' show JetReportExporter;
 export 'src/rendering/fill/report_diagnostics.dart'
     show Diagnostic, DiagnosticSeverity, ReportDiagnostics;
 export 'src/version.dart' show jetPrintVersion;
