@@ -126,12 +126,12 @@ description: "Task list for Render Report — Data-Filled Paginated Preview (Jet
 
 ### Tests for User Story 4 (write FIRST, ensure they FAIL)
 
-- [ ] T029 [P] [US4] Write `packages/jet_print/test/rendering/engine/render_diagnostics_test.dart` (contracts C9/C10 / SC-007; FR-013 full matrix): unknown field, missing parameter, **expression-evaluation error (type mismatch / divide-by-zero)**, empty dataset, and URL-only image each produce a specific `Diagnostic` (with `elementId` where applicable) and a non-crashing best-effort render (empty/placeholder fallback for the offending element; surrounding content renders normally); 0 unhandled crashes across the matrix
+- [X] T029 [P] [US4] Write `packages/jet_print/test/rendering/engine/render_diagnostics_test.dart` (contracts C9/C10 / SC-007; FR-013 full matrix): unknown field, missing parameter, **expression-evaluation error (type mismatch / divide-by-zero)**, empty dataset, and URL-only image each produce a specific `Diagnostic` (with `elementId` where applicable) and a non-crashing best-effort render (empty/placeholder fallback for the offending element; surrounding content renders normally); 0 unhandled crashes across the matrix
 
 ### Implementation for User Story 4
 
-- [ ] T030 [US4] Confirm `RenderedReport.diagnostics` surfaces the merged fill + layout diagnostics in order (in `packages/jet_print/lib/src/rendering/engine/jet_report_engine.dart`) and that per-element fallback (empty/placeholder, URL-only image placeholder) is wired through; adjust the facade merge/fallback only if T029 reveals a gap (internal behavior already exists per research §5/§7)
-- [ ] T031 [P] [US4] Add dartdoc to the promoted diagnostics types (`Diagnostic`, `DiagnosticSeverity`, `ReportDiagnostics`) in `packages/jet_print/lib/src/rendering/fill/report_diagnostics.dart` (FR-013 / FR-019)
+- [X] T030 [US4] Confirm `RenderedReport.diagnostics` surfaces the merged fill + layout diagnostics in order (in `packages/jet_print/lib/src/rendering/engine/jet_report_engine.dart`) and that per-element fallback (empty/placeholder, URL-only image placeholder) is wired through; adjust the facade merge/fallback only if T029 reveals a gap (internal behavior already exists per research §5/§7)
+- [X] T031 [P] [US4] Add dartdoc to the promoted diagnostics types (`Diagnostic`, `DiagnosticSeverity`, `ReportDiagnostics`) in `packages/jet_print/lib/src/rendering/fill/report_diagnostics.dart` (FR-013 / FR-019)
 
 **Checkpoint**: The defined malformed-input matrix produces specific diagnostics and non-crashing renders, surfaced on the public `RenderedReport.diagnostics`.
 

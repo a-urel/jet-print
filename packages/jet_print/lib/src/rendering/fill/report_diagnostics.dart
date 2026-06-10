@@ -1,10 +1,28 @@
-/// Non-fatal issues collected during Fill (spec 007b). The data pass never throws
-/// on a content problem — it records a [Diagnostic] and continues (render-don't-
-/// crash), so a report always produces a paintable result.
+/// Non-fatal issues collected while rendering (spec 007b; public since 011 —
+/// FR-013). The engine never throws on a content problem — it records a
+/// [Diagnostic] and continues (render-don't-crash), so a report always
+/// produces a paintable result. Hosts read the merged collection from
+/// `RenderedReport.diagnostics`: an unknown field, a missing parameter, an
+/// expression-evaluation error, an empty dataset, or an unresolvable image
+/// each yields a specific entry identifying the problem (and the offending
+/// element, where applicable) next to a best-effort render (FR-014/SC-007).
 library;
 
 /// The severity of a [Diagnostic].
-enum DiagnosticSeverity { info, warning, error }
+enum DiagnosticSeverity {
+  /// Expected-but-noteworthy conditions (e.g. an empty dataset rendering the
+  /// noData band).
+  info,
+
+  /// Likely authoring or data mistakes that still render with a fallback
+  /// (e.g. an unknown field rendering blank, a URL-only image rendering a
+  /// placeholder).
+  warning,
+
+  /// Evaluation failures rendered as a visible `!ERR` fallback (e.g. a type
+  /// mismatch or divide-by-zero in an expression).
+  error,
+}
 
 /// One collected issue, optionally tagged with the originating [elementId].
 class Diagnostic {

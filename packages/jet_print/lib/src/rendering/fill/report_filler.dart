@@ -290,6 +290,12 @@ class ReportFiller {
     }
 
     if (!hadRows) {
+      // Surfaced as a diagnostic (011 — FR-013/SC-007): an empty dataset is a
+      // legitimate render (the noData band shows), but the host should be able
+      // to tell it apart from a binding mistake.
+      diagnostics.info(
+          'Data source returned no rows; the noData band renders instead of '
+          'details');
       emit(BandType.noData, null);
     } else {
       // Close every still-open group (inner->outer) with the final snapshot.
