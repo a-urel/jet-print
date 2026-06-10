@@ -45,7 +45,8 @@ void main() {
     expect(c.pendingPropertiesFocus, isTrue);
   });
 
-  test('open() clears a pending request — it must not outlive its document', () {
+  test('open() clears a pending request — it must not outlive its document',
+      () {
     final JetReportDesignerController c = JetReportDesignerController();
     addTearDown(c.dispose);
 

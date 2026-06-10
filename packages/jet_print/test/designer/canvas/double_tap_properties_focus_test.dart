@@ -13,8 +13,8 @@ Finder _elementFinder(String id) =>
 
 final Finder _xField =
     find.byKey(const ValueKey<String>('jet_print.designer.properties.field.x'));
-final Finder _textField = find.byKey(
-    const ValueKey<String>('jet_print.designer.properties.field.text'));
+final Finder _textField = find
+    .byKey(const ValueKey<String>('jet_print.designer.properties.field.text'));
 
 String _textOf(JetReportDesignerController c, String id) => (c.template.bands
         .expand((ReportBand b) => b.elements)

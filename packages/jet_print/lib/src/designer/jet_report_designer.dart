@@ -33,10 +33,12 @@ typedef ReportPreviewRequestedCallback = void Function(ReportTemplate current);
 ///
 /// The center surface is a live WYSIWYG canvas: authors drag toolbox element
 /// types onto bands, then select, move, resize, align, multi-select, reorder,
-/// copy/paste, nudge, delete, and inline-edit text — every edit against an
-/// in-memory [ReportTemplate] held by a [JetReportDesignerController], with
-/// unlimited session undo/redo. Property editing this iteration is geometry +
-/// text only (the full per-type suite is deferred).
+/// copy/paste, nudge, and delete — a double-tap on any element jumps to its
+/// Properties inspector with the most relevant field focused. Every edit runs
+/// against an in-memory [ReportTemplate] held by a
+/// [JetReportDesignerController], with unlimited session undo/redo. Property
+/// editing this iteration is geometry + text only (the full per-type suite is
+/// deferred).
 ///
 /// Stays drop-in: with no arguments it owns an internal controller over a blank
 /// default design, reading only the ambient [ShadTheme] and

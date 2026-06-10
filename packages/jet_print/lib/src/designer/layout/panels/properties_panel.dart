@@ -455,8 +455,7 @@ class _NumberFieldState extends State<_NumberField> {
       TextEditingController(text: _format(widget.value));
   FocusNode? _ownFocus;
 
-  FocusNode get _focus =>
-      widget.focusNode ?? (_ownFocus ??= FocusNode());
+  FocusNode get _focus => widget.focusNode ?? (_ownFocus ??= FocusNode());
 
   @override
   void initState() {
@@ -543,8 +542,7 @@ class _TextFieldState extends State<_TextField> {
       TextEditingController(text: widget.value);
   FocusNode? _ownFocus;
 
-  FocusNode get _focus =>
-      widget.focusNode ?? (_ownFocus ??= FocusNode());
+  FocusNode get _focus => widget.focusNode ?? (_ownFocus ??= FocusNode());
 
   @override
   void initState() {
