@@ -353,12 +353,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 
 - **Designer: double-tap now opens the Properties inspector (in-place editing
-  removed).** Double-tapping any element on the canvas selects it, brings the
+  removed).** Double-tapping anything on the canvas — an element, a band's
+  empty area, or the report (paper off any band) — selects it, brings the
   right panel to the Properties tab (expanding the collapsed narrow-layout
   overlay first when needed), and moves keyboard focus into the most relevant
-  field — Text for a text element, X for everything else. The inline
-  double-click text editor is gone; the Properties panel is the single
-  text-editing surface. New `JetReportDesignerController` members back this:
+  field: Text for a text element, X for any other element, height for a band.
+  The report inspector is read-only, so its double-tap simply brings the pane
+  forward. The inline double-click text editor is gone; the Properties panel
+  is the single text-editing surface. New `JetReportDesignerController` members
+  back this:
   `requestPropertiesFocus()` raises a one-shot UI intent,
   `pendingPropertiesFocus` peeks at it, and `takePropertiesFocus()` consumes
   it (the designer chrome wires these automatically; hosts may call

@@ -131,6 +131,15 @@ Replace `test/designer/canvas/inline_text_edit_test.dart` with
 ## Out of scope
 
 - In-place editing of any kind (explicitly removed).
-- Double-tap behavior for bands / empty paper (unchanged: tap-up selection
-  classification only).
 - Any richer per-type property editors.
+
+## Follow-up (2026-06-10): bands and the report
+
+A later change extended the same intent to the empty-area selection path:
+double-tapping a band's empty area or the report (paper off any band) now also
+brings the Properties inspector forward. Because that selection is classified at
+tap-up (a press may become a marquee drag), the canvas defers the focus request
+to tap-up too, firing it only once a band or the report is actually selected
+(never when the tap clears the selection). The Properties panel focuses the
+band's height field for a band; the report inspector is read-only, so its
+request just brings the pane forward.

@@ -43,32 +43,42 @@ class PropertiesPanel extends StatefulWidget {
 }
 
 class _PropertiesPanelState extends State<PropertiesPanel> {
-  /// Externally-owned focus nodes for the two double-tap focus targets, so a
+  /// Externally-owned focus nodes for the three double-tap focus targets, so a
   /// pending `requestPropertiesFocus` can land keyboard focus (the fields fall
   /// back to private nodes when none is supplied).
   final FocusNode _xFocus = FocusNode(debugLabel: 'jet_print.properties.x');
   final FocusNode _textFocus =
       FocusNode(debugLabel: 'jet_print.properties.text');
+  final FocusNode _bandHeightFocus =
+      FocusNode(debugLabel: 'jet_print.properties.bandHeight');
 
   @override
   void dispose() {
     _xFocus.dispose();
     _textFocus.dispose();
+    _bandHeightFocus.dispose();
     super.dispose();
   }
 
   /// Consumes a pending properties-focus request after this frame settles (so
   /// the target field exists even when the tab body mounted this same frame)
-  /// and moves keyboard focus to the Text field (text element) or the X field
-  /// (any other element). One-shot: `takePropertiesFocus` clears the flag, so
-  /// ordinary rebuilds never re-steal focus. A non-single selection just
-  /// consumes the request — no crash, no stuck flag.
+  /// and moves keyboard focus to the most relevant field: the Text field (text
+  /// element), the X field (any other element), or the height field (a band).
+  /// The report has no editable field, so its request just brings the pane
+  /// forward (the flag is still consumed). One-shot: `takePropertiesFocus`
+  /// clears the flag, so ordinary rebuilds never re-steal focus. A report or
+  /// multi-selection just consumes the request — no crash, no stuck flag.
   void _schedulePendingFocus(JetReportDesignerController controller) {
     if (!controller.pendingPropertiesFocus) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !controller.takePropertiesFocus()) return;
-      final String? id = controller.selection.singleOrNull;
-      if (id == null) return;
+      final selection = controller.selection;
+      if (selection.bandIndex != null) {
+        _bandHeightFocus.requestFocus();
+        return;
+      }
+      final String? id = selection.singleOrNull;
+      if (id == null) return; // report (read-only) or a multi-selection
       final ReportElement? element = _find(controller, id);
       if (element == null) return;
       (element is TextElement ? _textFocus : _xFocus).requestFocus();
@@ -259,6 +269,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
           fieldKey: const ValueKey<String>('$_p.field.bandHeight'),
           prefix: LucideIcons.moveVertical,
           value: height,
+          focusNode: _bandHeightFocus,
           onCommit: (double v) => controller.setBandHeight(index, v),
         ),
       ),

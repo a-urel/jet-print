@@ -15,6 +15,29 @@ final Finder _xField =
     find.byKey(const ValueKey<String>('jet_print.designer.properties.field.x'));
 final Finder _textField = find
     .byKey(const ValueKey<String>('jet_print.designer.properties.field.text'));
+final Finder _bandHeightField = find.byKey(
+    const ValueKey<String>('jet_print.designer.properties.field.bandHeight'));
+
+// Maps a page point (points) to a global screen offset, accounting for the
+// page's position and the live zoom (mirrors band_page_select_test).
+Offset Function(double, double) _pageMapper(
+    WidgetTester tester, JetReportDesignerController controller) {
+  final Offset pageTopLeft = tester.getTopLeft(find.byKey(kDesignPageKey));
+  final double s = controller.viewScale;
+  return (double px, double py) => pageTopLeft + Offset(px * s, py * s);
+}
+
+// The center of band 1 (detail), in page points: below band 0, centered.
+Offset _band1Center(JetReportDesignerController controller) {
+  final PageFormat page = controller.template.page;
+  final JetEdgeInsets margins = page.margins;
+  final double h0 = controller.template.bands[0].height;
+  final double h1 = controller.template.bands[1].height;
+  final double cx =
+      margins.left + (page.width - margins.left - margins.right) / 2;
+  final double cy = margins.top + h0 + h1 / 2;
+  return Offset(cx, cy);
+}
 
 String _textOf(JetReportDesignerController c, String id) => (c.template.bands
         .expand((ReportBand b) => b.elements)
@@ -134,5 +157,72 @@ void main() {
 
     expect(controller.pendingPropertiesFocus, isFalse);
     expect(_xField, findsNothing); // right panel stays on Data Source
+  });
+
+  testWidgets(
+      'double-tapping a band\'s empty area selects it and focuses the height '
+      'field', (WidgetTester tester) async {
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
+    final Offset Function(double, double) at = _pageMapper(tester, controller);
+    final Offset center = _band1Center(controller);
+
+    await _doubleTapAt(tester, at(center.dx, center.dy));
+
+    expect(controller.selection.bandIndex, 1);
+    expect(_hasFocus(tester, _bandHeightField), isTrue);
+  });
+
+  testWidgets(
+      'double-tapping the report (paper, off any band) brings the Properties '
+      'pane forward', (WidgetTester tester) async {
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
+    final Offset Function(double, double) at = _pageMapper(tester, controller);
+    final JetPrintLocalizations l10n = JetPrintLocalizations.of(
+        tester.element(find.byType(JetReportDesigner)));
+
+    // The top-left margin corner: inside the paper, inside no band.
+    await _doubleTapAt(tester, at(2, 2));
+
+    expect(controller.selection.isReport, isTrue);
+    expect(controller.pendingPropertiesFocus, isFalse); // consumed
+    // The Properties tab is now active, showing the report inspector — the
+    // right panel switched away from Data Source. The report has no editable
+    // field, so the pane simply comes forward.
+    expect(find.text(l10n.reportLabel), findsOneWidget);
+  });
+
+  testWidgets(
+      'double-tapping off the paper clears the selection and requests no focus',
+      (WidgetTester tester) async {
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
+    controller.selectReport();
+    await tester.pumpAndSettle();
+    // The muted canvas margin left of the page (off the paper).
+    final Offset canvasTopLeft =
+        tester.getTopLeft(find.byKey(kDesignCanvasKey));
+
+    await _doubleTapAt(tester, canvasTopLeft + const Offset(6, 120));
+
+    expect(controller.selection.isEmpty, isTrue);
+    expect(controller.pendingPropertiesFocus, isFalse);
+  });
+
+  testWidgets('a single tap on a band selects it but requests no focus',
+      (WidgetTester tester) async {
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
+    final Offset Function(double, double) at = _pageMapper(tester, controller);
+    final Offset center = _band1Center(controller);
+
+    await tester.tapAt(at(center.dx, center.dy));
+    // Let the manual double-tap window (300 ms) lapse.
+    await tester.pumpAndSettle(const Duration(milliseconds: 350));
+
+    expect(controller.selection.bandIndex, 1); // selected…
+    expect(_bandHeightField, findsNothing); // …but still on Data Source
+    expect(controller.pendingPropertiesFocus, isFalse);
   });
 }
