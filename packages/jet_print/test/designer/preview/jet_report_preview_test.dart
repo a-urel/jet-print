@@ -70,6 +70,8 @@ void main() {
   testWidgets('shows the first page with a correct "page X of N" indicator',
       (WidgetTester tester) async {
     await _pumpPreview(tester);
+    // The top toolbar carries a "Preview" title beside the navigation group.
+    expect(find.text('Preview'), findsOneWidget);
     expect(find.text('Page 1 of 3'), findsOneWidget);
     expect(find.byKey(_pageKey), findsOneWidget);
     expect(

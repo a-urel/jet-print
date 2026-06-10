@@ -63,6 +63,10 @@ class JetReportPreview extends StatefulWidget {
 }
 
 class _JetReportPreviewState extends State<JetReportPreview> {
+  /// The top toolbar's height, matching the designer top bar (`DesignerTopBar`)
+  /// so the preview reads as the same workspace.
+  static const double _toolbarHeight = 52;
+
   /// Fonts shared between frame recording (the painter resolves glyph bytes
   /// here) and the measurement already baked into the frame, so a glyph is
   /// drawn with the same variant it was measured with.
@@ -160,37 +164,63 @@ class _JetReportPreviewState extends State<JetReportPreview> {
         color: colors.muted,
         child: Column(
           children: <Widget>[
-            // --- Navigation bar: prev / "page X of N" / next. ---
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  _NavButton(
-                    buttonKey: const ValueKey<String>('jet_print.preview.prev'),
-                    icon: LucideIcons.chevronLeft,
-                    label: l10n.previewPreviousPage,
-                    onPressed: _index > 0 ? () => _goTo(_index - 1) : null,
+            // --- Top toolbar: a leading icon + "Preview" title, with the
+            // page-navigation group (prev / "page X of N" / next) clustered on
+            // the trailing edge — styled to match the designer's top bar. ---
+            ColoredBox(
+              color: colors.card,
+              child: SizedBox(
+                height: _toolbarHeight,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Row(
+                    children: <Widget>[
+                      const SizedBox(width: 4),
+                      Icon(LucideIcons.eye,
+                          size: 18, color: colors.mutedForeground),
+                      const SizedBox(width: 10),
+                      // The title flexes (ellipsizes first) so the navigation
+                      // group keeps its room at narrow widths.
+                      Expanded(
+                        child: Text(
+                          l10n.actionPreview,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.large
+                              .copyWith(color: colors.foreground),
+                        ),
+                      ),
+                      const _Divider(),
+                      _NavButton(
+                        buttonKey:
+                            const ValueKey<String>('jet_print.preview.prev'),
+                        icon: LucideIcons.chevronLeft,
+                        label: l10n.previewPreviousPage,
+                        onPressed: _index > 0 ? () => _goTo(_index - 1) : null,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Text(
+                          l10n.previewPageIndicator(_index + 1, _pageCount),
+                          style: theme.textTheme.small
+                              .copyWith(color: colors.foreground),
+                        ),
+                      ),
+                      _NavButton(
+                        buttonKey:
+                            const ValueKey<String>('jet_print.preview.next'),
+                        icon: LucideIcons.chevronRight,
+                        label: l10n.previewNextPage,
+                        onPressed: _index < _pageCount - 1
+                            ? () => _goTo(_index + 1)
+                            : null,
+                      ),
+                    ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Text(
-                      l10n.previewPageIndicator(_index + 1, _pageCount),
-                      style: theme.textTheme.small
-                          .copyWith(color: colors.foreground),
-                    ),
-                  ),
-                  _NavButton(
-                    buttonKey: const ValueKey<String>('jet_print.preview.next'),
-                    icon: LucideIcons.chevronRight,
-                    label: l10n.previewNextPage,
-                    onPressed: _index < _pageCount - 1
-                        ? () => _goTo(_index + 1)
-                        : null,
-                  ),
-                ],
+                ),
               ),
             ),
+            const ShadSeparator.horizontal(margin: EdgeInsets.zero),
             // --- The page, sized fit-to-width (clarification Q3), scrolling
             // vertically when taller than the viewport. ---
             Expanded(
@@ -230,6 +260,24 @@ class _JetReportPreviewState extends State<JetReportPreview> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// A short vertical rule with horizontal breathing room, fencing the toolbar
+/// title off from the navigation group (mirrors the designer top bar's
+/// `_Divider`).
+class _Divider extends StatelessWidget {
+  const _Divider();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 4),
+      child: SizedBox(
+        height: 22,
+        child: ShadSeparator.vertical(margin: EdgeInsets.zero),
       ),
     );
   }
