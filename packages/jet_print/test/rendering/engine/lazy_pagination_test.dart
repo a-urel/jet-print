@@ -85,8 +85,7 @@ class _SpyRenderer extends ElementRenderer<ReportElement> {
   final _EmitCounter _counter;
 
   @override
-  JetSize measure(
-          ReportElement element, RenderContext ctx, JetConstraints c) =>
+  JetSize measure(ReportElement element, RenderContext ctx, JetConstraints c) =>
       _inner.measure(element, ctx, c);
 
   @override
@@ -145,8 +144,7 @@ void main() {
   });
 
   group('lazy == eager (C5)', () {
-    test('each lazily built frame is byte-identical to the eager layout()',
-        () {
+    test('each lazily built frame is byte-identical to the eager layout()', () {
       // Chrome bands exercise the per-page substitution path too.
       final ReportTemplate template = _tpl(bands: <ReportBand>[
         _chromeText(BandType.pageHeader, 'hd', r'"Report"'),
@@ -223,8 +221,7 @@ void main() {
   });
 
   group('facade smoke (C4 via render())', () {
-    test('render().pageAt(0) yields a viewable first page and exact count',
-        () {
+    test('render().pageAt(0) yields a viewable first page and exact count', () {
       final ReportTemplate template = _tpl(bands: <ReportBand>[
         const ReportBand(
           type: BandType.detail,

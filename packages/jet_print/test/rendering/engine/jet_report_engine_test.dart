@@ -82,8 +82,8 @@ void main() {
       final RenderedReport report = const JetReportEngine().render(
         template,
         source,
-        options:
-            const RenderOptions(parameters: <String, Object?>{'printedBy': 'A. Urel'}),
+        options: const RenderOptions(
+            parameters: <String, Object?>{'printedBy': 'A. Urel'}),
       );
       final List<String> runs = _allRuns(report);
       expect(runs, containsAll(<String>['alpha', 'beta', 'gamma']));
@@ -237,19 +237,18 @@ void main() {
               if (p.elementId == id) p.lines.map((TextLine l) => l.text).join(),
         ];
 
-    test('a collection-bound band repeats once per child record with child '
+    test(
+        'a collection-bound band repeats once per child record with child '
         'values resolved', () {
       final RenderedReport report =
           const JetReportEngine().render(invoiceTemplate(), invoiceSource());
       expect(runsFor(report, 'invoiceNo'), <String>['INV-1042']);
       expect(runsFor(report, 'desc'), <String>['Widget', 'Gadget', 'Gizmo']);
-      expect(
-          runsFor(report, 'lineTotal'), <String>['6.0', '12.5', '1.0'],
+      expect(runsFor(report, 'lineTotal'), <String>['6.0', '12.5', '1.0'],
           reason: 'the line-total expression computes per child row');
     });
 
-    test('the invoice total equals the exact sum of line amounts (SC-002)',
-        () {
+    test('the invoice total equals the exact sum of line amounts (SC-002)', () {
       final RenderedReport report =
           const JetReportEngine().render(invoiceTemplate(), invoiceSource());
       final double linesSum = runsFor(report, 'lineTotal')
@@ -320,18 +319,16 @@ void main() {
       expect(runsFor(report, 'sub'), <String>['L1.a', 'L1.b', 'L2.a']);
       // Document order: each line is followed by its own sub-rows.
       final List<String> ordered = <String>[
-        for (final TextRunPrimitive p in report
-            .pageAt(0)
-            .frame
-            .primitives
-            .whereType<TextRunPrimitive>())
+        for (final TextRunPrimitive p
+            in report.pageAt(0).frame.primitives.whereType<TextRunPrimitive>())
           if (p.elementId == 'line' || p.elementId == 'sub')
             p.lines.map((TextLine l) => l.text).join(),
       ];
       expect(ordered, <String>['L1', 'L1.a', 'L1.b', 'L2', 'L2.a']);
     });
 
-    test('a sum variable computes at its reset scope: group subtotal + grand '
+    test(
+        'a sum variable computes at its reset scope: group subtotal + grand '
         'total; group header/footer render at key boundaries', () {
       final ReportTemplate template = const ReportTemplate(
         name: 'groups',

@@ -101,8 +101,7 @@ class _Invoice {
   final List<Map<String, Object?>> lines;
 }
 
-RenderedReport _render(JetDataSource source) =>
-    const JetReportEngine().render(
+RenderedReport _render(JetDataSource source) => const JetReportEngine().render(
       _template(),
       source,
       options: const RenderOptions(
@@ -111,7 +110,8 @@ RenderedReport _render(JetDataSource source) =>
     );
 
 void main() {
-  test('in-memory == JSON == object-backed, incl. a nested collection '
+  test(
+      'in-memory == JSON == object-backed, incl. a nested collection '
       '(SC-006)', () {
     final RenderedReport inMemory =
         _render(JetInMemoryDataSource(_rows, fields: _schema));
@@ -154,11 +154,8 @@ void main() {
     final RenderedReport report =
         _render(JetInMemoryDataSource(_rows, fields: _schema));
     final List<String> runs = <String>[
-      for (final TextRunPrimitive p in report
-          .pageAt(0)
-          .frame
-          .primitives
-          .whereType<TextRunPrimitive>())
+      for (final TextRunPrimitive p
+          in report.pageAt(0).frame.primitives.whereType<TextRunPrimitive>())
         p.lines.map((TextLine l) => l.text).join(),
     ];
     expect(runs, contains('Printed by A. Urel'));

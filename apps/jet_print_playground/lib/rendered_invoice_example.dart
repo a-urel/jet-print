@@ -14,7 +14,8 @@ import 'invoice_sample.dart';
 /// One invoice record with a nested `lines` collection (master/detail),
 /// matching [invoiceSchema]. Use `JetJsonDataSource` for a JSON payload or
 /// `JetObjectDataSource<T>` for domain objects — identical output (SC-006).
-JetDataSource invoiceDataSource() => JetInMemoryDataSource(<Map<String, Object?>>[
+JetDataSource invoiceDataSource() =>
+    JetInMemoryDataSource(<Map<String, Object?>>[
       <String, Object?>{
         'invoiceNo': 'INV-1042',
         'customerName': 'Acme GmbH',
@@ -23,9 +24,24 @@ JetDataSource invoiceDataSource() => JetInMemoryDataSource(<Map<String, Object?>
         'date': '2026-05-12',
         'total': 32.0,
         'lines': <Map<String, Object?>>[
-          <String, Object?>{'description': 'Widget', 'qty': 3, 'unitPrice': 4.5, 'lineTotal': 13.5},
-          <String, Object?>{'description': 'Gadget', 'qty': 1, 'unitPrice': 12.0, 'lineTotal': 12.0},
-          <String, Object?>{'description': 'Sprocket', 'qty': 2, 'unitPrice': 3.25, 'lineTotal': 6.5},
+          <String, Object?>{
+            'description': 'Widget',
+            'qty': 3,
+            'unitPrice': 4.5,
+            'lineTotal': 13.5
+          },
+          <String, Object?>{
+            'description': 'Gadget',
+            'qty': 1,
+            'unitPrice': 12.0,
+            'lineTotal': 12.0
+          },
+          <String, Object?>{
+            'description': 'Sprocket',
+            'qty': 2,
+            'unitPrice': 3.25,
+            'lineTotal': 6.5
+          },
         ],
       },
     ]);
@@ -44,11 +60,26 @@ JetDataSource invoiceJsonDataSource() => JetJsonDataSource.parse(
 /// extractor — renders byte-identically (SC-006).
 JetDataSource invoiceObjectDataSource() => JetObjectDataSource<Invoice>(
       <Invoice>[
-        Invoice('INV-1042', 'Acme GmbH', '2026-05-12', 32.0,
-            <Map<String, Object?>>[
-          <String, Object?>{'description': 'Widget', 'qty': 3, 'unitPrice': 4.5, 'lineTotal': 13.5},
-          <String, Object?>{'description': 'Gadget', 'qty': 1, 'unitPrice': 12.0, 'lineTotal': 12.0},
-          <String, Object?>{'description': 'Sprocket', 'qty': 2, 'unitPrice': 3.25, 'lineTotal': 6.5},
+        Invoice(
+            'INV-1042', 'Acme GmbH', '2026-05-12', 32.0, <Map<String, Object?>>[
+          <String, Object?>{
+            'description': 'Widget',
+            'qty': 3,
+            'unitPrice': 4.5,
+            'lineTotal': 13.5
+          },
+          <String, Object?>{
+            'description': 'Gadget',
+            'qty': 1,
+            'unitPrice': 12.0,
+            'lineTotal': 12.0
+          },
+          <String, Object?>{
+            'description': 'Sprocket',
+            'qty': 2,
+            'unitPrice': 3.25,
+            'lineTotal': 6.5
+          },
         ]),
       ],
       fields: invoiceSchema.fields,
@@ -100,5 +131,6 @@ class RenderedInvoiceExample extends StatelessWidget {
   const RenderedInvoiceExample({super.key});
 
   @override
-  Widget build(BuildContext context) => JetReportPreview(report: renderInvoice());
+  Widget build(BuildContext context) =>
+      JetReportPreview(report: renderInvoice());
 }

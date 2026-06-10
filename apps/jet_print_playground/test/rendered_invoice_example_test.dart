@@ -39,7 +39,8 @@ void main() {
     ds.close();
   });
 
-  test('in-memory, JSON, and object-backed variants render identically '
+  test(
+      'in-memory, JSON, and object-backed variants render identically '
       '(SC-006)', () {
     final RenderedReport inMemory = renderInvoice();
     final RenderedReport json = renderInvoice(source: invoiceJsonDataSource());

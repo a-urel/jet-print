@@ -202,8 +202,8 @@ void main() {
     test(
         'the engine/ facade seam exists and only depends inward '
         '(fill/layout/frame/expression/data/domain)', () {
-      final Directory engineDir = Directory(
-          '${root.path}/packages/jet_print/lib/src/rendering/engine');
+      final Directory engineDir =
+          Directory('${root.path}/packages/jet_print/lib/src/rendering/engine');
       expect(engineDir.existsSync(), isTrue,
           reason: 'Missing ${engineDir.path}');
       final List<File> engineFiles = engineDir
@@ -338,7 +338,8 @@ void main() {
               'missing:\n${missing.join('\n')}');
     });
 
-    test('the render path is read-only over templates: schemaVersion stays 1 '
+    test(
+        'the render path is read-only over templates: schemaVersion stays 1 '
         '(FR-016)', () {
       // No schema change, no migration: the existing format round-trips
       // unchanged. The dedicated round-trip / UnknownElement passthrough

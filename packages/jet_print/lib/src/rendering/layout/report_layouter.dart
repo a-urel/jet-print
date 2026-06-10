@@ -172,7 +172,8 @@ class LazyLayout {
       // chromeExprs or chromeParseFailed. Surface a pre/post-pass drift loudly
       // (visible '!ERR' + diagnostic) instead of silently rendering authored
       // text.
-      diagnostics.error('internal: no compiled chrome expression for "${el.id}"',
+      diagnostics.error(
+          'internal: no compiled chrome expression for "${el.id}"',
           elementId: el.id);
       return TextElement(
           id: el.id, bounds: el.bounds, text: '!ERR', style: el.style);

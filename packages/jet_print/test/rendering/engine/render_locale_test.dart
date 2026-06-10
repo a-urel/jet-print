@@ -87,10 +87,8 @@ void main() {
     final Map<String, Object?> row = <String, Object?>{
       'when': DateTime(2026, 1, 15),
     };
-    expect(_renderedText(dateExpr, row, locale: const Locale('en')),
-        'January');
-    expect(
-        _renderedText(dateExpr, row, locale: const Locale('de')), 'Januar');
+    expect(_renderedText(dateExpr, row, locale: const Locale('en')), 'January');
+    expect(_renderedText(dateExpr, row, locale: const Locale('de')), 'Januar');
     expect(_renderedText(dateExpr, row, locale: const Locale('tr')), 'Ocak');
   });
 

@@ -69,11 +69,8 @@ RenderedReport _render() => const JetReportEngine().render(
 
 List<String> _allRuns(RenderedReport report) => <String>[
       for (int i = 0; i < report.pageCount; i++)
-        for (final TextRunPrimitive p in report
-            .pageAt(i)
-            .frame
-            .primitives
-            .whereType<TextRunPrimitive>())
+        for (final TextRunPrimitive p
+            in report.pageAt(i).frame.primitives.whereType<TextRunPrimitive>())
           p.lines.map((TextLine l) => l.text).join(),
     ];
 
@@ -120,7 +117,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Page 1 of 2'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey<String>('jet_print.preview.next')));
+    await tester
+        .tap(find.byKey(const ValueKey<String>('jet_print.preview.next')));
     await tester.pumpAndSettle();
     expect(find.text('Page 2 of 2'), findsOneWidget);
   });

@@ -8,6 +8,46 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Render engine — data-filled paginated preview (spec 011-render-export).**
+  A host hands a designed template plus actual data to a public engine facade
+  and gets a lazily-paginated, WYSIWYG, on-screen preview. New public surface
+  from the single entry point:
+  - `JetReportEngine` — `render(template, source, {options})` composes the
+    fill pass (expression evaluation, master/detail iteration,
+    variables/aggregates) with the layout pass (pagination, repeated page
+    chrome, `PAGE_NUMBER`/`PAGE_COUNT`). Never throws on malformed data;
+    deterministic over (template, data, parameters, locale).
+  - `RenderOptions` — per-render parameter values plus an **explicit
+    formatting locale** (number/date/currency formatting follows it — never
+    the app UI locale or the ambient `Intl.defaultLocale`).
+  - `RenderedReport` / `RenderedPage` — the render output IR: an exact
+    `pageCount` resolved by a cheap boundary-only pass, **lazy** per-page
+    frame construction with caching (the first page renders without
+    materializing the rest), and merged ordered `diagnostics`. Structured so
+    a future export slice consumes it without rework.
+  - `JetReportPreview` — a read-only, fit-to-width paginated viewer: bounded
+    prev/next + arrow-key navigation, a localized "page X of N" indicator
+    (en/de/tr with English fallback), accessible names; pages paint through
+    the same `paintFrame`/`CanvasPainter` pipeline as the designer surface.
+  - The full data-source API is now public: `JetDataSource`,
+    `JetInMemoryDataSource`, `JetJsonDataSource`, `JetObjectDataSource<T>`,
+    `DataSet`, `DataRow` — the same logical dataset renders byte-identically
+    through all three implementations, including nested collections.
+  - Diagnostics are now public: `Diagnostic`, `DiagnosticSeverity`,
+    `ReportDiagnostics` (which gains `add` for merging). Unknown fields,
+    missing parameters, expression errors, empty datasets, and URL-only
+    images each yield a specific diagnostic plus a best-effort render.
+  - The fill pass now iterates **nested collections**: a detail band bound to
+    a `collectionField` repeats once per child row (children bands nest to
+    arbitrary depth), completing the 009 master/detail authoring seam at
+    render time. Declared template parameter defaults are applied when the
+    host supplies no value.
+  - Internal additive seam: `ReportLayouter.layoutLazy` produces pages on
+    demand; the eager `layout()` is preserved as a thin wrapper over it, so
+    existing rendering output is byte-stable.
+  - The playground gains a runnable **rendered-invoice** example (in-memory,
+    JSON, and object-backed variants) and a Preview path that opens it.
+
 - **Data-aware designer — Invoice MVP (spec 009-data-aware-designer).** The
   designer can now describe, display, and bind to a data source's structure
   (tokens only this iteration — values are not yet filled/rendered). New/changed

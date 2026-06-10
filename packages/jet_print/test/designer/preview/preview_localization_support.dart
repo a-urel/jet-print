@@ -13,7 +13,8 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 RenderedReport previewLocalizationReport() => const JetReportEngine().render(
       const ReportTemplate(
         name: 'l10n',
-        page: PageFormat(width: 200, height: 100, margins: JetEdgeInsets.all(10)),
+        page:
+            PageFormat(width: 200, height: 100, margins: JetEdgeInsets.all(10)),
         bands: <ReportBand>[
           ReportBand(
             type: BandType.detail,

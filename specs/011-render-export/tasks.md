@@ -141,11 +141,11 @@ description: "Task list for Render Report — Data-Filled Paginated Preview (Jet
 
 **Purpose**: Documentation, formatting, and full-suite validation across all stories.
 
-- [ ] T032 [P] Dartdoc completeness pass on every new public symbol (`JetReportEngine`, `RenderOptions`, `RenderedReport`, `RenderedPage`, `JetReportPreview`) per FR-019 / Constitution VI
-- [ ] T033 [P] Update `packages/jet_print/CHANGELOG.md` with the render slice (facade, render IR, lazy seam, per-render locale, public data-source + diagnostics surface, preview widget)
-- [ ] T034 Run `dart format` and `dart analyze` across `packages/jet_print` and `apps/jet_print_playground` from the repo root; resolve to zero warnings
-- [ ] T035 Validate [quickstart.md](quickstart.md) end-to-end (template + data → preview in < 30 lines, SC-008) against the shipped example
-- [ ] T036 Run the full suite `flutter test packages/jet_print apps/jet_print_playground` from the repo root and confirm all unit/widget/golden/performance tests pass (no skipped tests — Constitution III)
+- [X] T032 [P] Dartdoc completeness pass on every new public symbol (`JetReportEngine`, `RenderOptions`, `RenderedReport`, `RenderedPage`, `JetReportPreview`) per FR-019 / Constitution VI
+- [X] T033 [P] Update `packages/jet_print/CHANGELOG.md` with the render slice (facade, render IR, lazy seam, per-render locale, public data-source + diagnostics surface, preview widget)
+- [X] T034 Run `dart format` and `dart analyze` across `packages/jet_print` and `apps/jet_print_playground` from the repo root; resolve to zero warnings
+- [X] T035 Validate [quickstart.md](quickstart.md) end-to-end (template + data → preview in < 30 lines, SC-008) against the shipped example
+- [X] T036 Run the full suite `flutter test packages/jet_print apps/jet_print_playground` from the repo root and confirm all unit/widget/golden/performance tests pass (no skipped tests — Constitution III)
 
 ---
 

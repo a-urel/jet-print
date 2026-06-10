@@ -52,9 +52,9 @@ for (final Diagnostic d in report.diagnostics.entries) {
 
 | You have… | Use | Notes |
 |-----------|-----|-------|
-| In-memory rows (`List<Map>`) | `JetInMemoryDataSource(rows)` | Optional explicit `FieldDef` schema; otherwise inferred. |
-| A JSON payload | `JetJsonDataSource(jsonString)` | Array-of-objects; delegates to in-memory. |
-| Your own domain objects | `JetObjectDataSource<T>(items, schema, extract)` | Lazy per-row field extraction. |
+| In-memory rows (`List<Map>`) | `JetInMemoryDataSource(rows)` | Optional explicit `fields:` schema; otherwise inferred. |
+| A JSON payload | `JetJsonDataSource.parse(jsonString)` | Array-of-objects; delegates to in-memory. |
+| Your own domain objects | `JetObjectDataSource<T>(items, fields: schema, row: extract)` | Lazy per-row field extraction. |
 
 All three produce identical output for the same logical dataset (SC-006). Nested collections (master/detail) are a `collection` `FieldDef` carrying child rows.
 

@@ -36,8 +36,7 @@ class _SpyRenderer extends ElementRenderer<ReportElement> {
   final _EmitCounter _counter;
 
   @override
-  JetSize measure(
-          ReportElement element, RenderContext ctx, JetConstraints c) =>
+  JetSize measure(ReportElement element, RenderContext ctx, JetConstraints c) =>
       _inner.measure(element, ctx, c);
 
   @override
@@ -101,8 +100,7 @@ JetInMemoryDataSource _source(int records) => JetInMemoryDataSource(
 /// emit count after building only page 0.
 int _firstPageEmits(int records) {
   final _EmitCounter counter = _EmitCounter();
-  final FillResult fill =
-      ReportFiller().fill(_template(), _source(records));
+  final FillResult fill = ReportFiller().fill(_template(), _source(records));
   final LazyLayout lazy = ReportLayouter(renderers: _SpyRegistry(counter))
       .layoutLazy(_template(), fill.report);
   expect(counter.emits, 0,

@@ -51,11 +51,8 @@ JetInMemoryDataSource _rows() => JetInMemoryDataSource(<Map<String, Object?>>[
     ]);
 
 Map<String, String> _texts(RenderedReport report) => <String, String>{
-      for (final TextRunPrimitive p in report
-          .pageAt(0)
-          .frame
-          .primitives
-          .whereType<TextRunPrimitive>())
+      for (final TextRunPrimitive p
+          in report.pageAt(0).frame.primitives.whereType<TextRunPrimitive>())
         if (p.elementId != null)
           p.elementId!: p.lines.map((TextLine l) => l.text).join(),
     };
@@ -68,7 +65,8 @@ Diagnostic _diagnosticMatching(RenderedReport report, Pattern pattern) =>
     );
 
 void main() {
-  test('unknown field -> specific warning with elementId + blank fallback, '
+  test(
+      'unknown field -> specific warning with elementId + blank fallback, '
       'surrounding content renders', () {
     final RenderedReport report = const JetReportEngine().render(
       _template(<ReportElement>[
@@ -85,7 +83,8 @@ void main() {
     expect(texts['bad'], '', reason: 'the offending element falls back blank');
   });
 
-  test('missing parameter -> specific diagnostic naming the parameter + '
+  test(
+      'missing parameter -> specific diagnostic naming the parameter + '
       'blank fallback', () {
     final RenderedReport report = const JetReportEngine().render(
       _template(
@@ -183,7 +182,8 @@ void main() {
         reason: 'the noData band renders instead of details');
   });
 
-  test('URL-only image -> diagnostic with elementId + placeholder render, '
+  test(
+      'URL-only image -> diagnostic with elementId + placeholder render, '
       'no I/O (FR-012b/FR-015)', () {
     final RenderedReport report = const JetReportEngine().render(
       _template(<ReportElement>[
@@ -211,7 +211,8 @@ void main() {
     expect(_texts(report)['good'], 'alpha');
   });
 
-  test('the whole matrix at once still renders — 0 unhandled crashes '
+  test(
+      'the whole matrix at once still renders — 0 unhandled crashes '
       '(SC-007), diagnostics merged fill-then-layout in order (FR-013)', () {
     final RenderedReport report = const JetReportEngine().render(
       _template(
@@ -248,11 +249,9 @@ void main() {
     );
     expect(_texts(report)['good'], 'alpha');
 
-    final List<String> messages = report.diagnostics.entries
-        .map((Diagnostic d) => d.message)
-        .toList();
-    int indexOf(Pattern p) =>
-        messages.indexWhere((String m) => m.contains(p));
+    final List<String> messages =
+        report.diagnostics.entries.map((Diagnostic d) => d.message).toList();
+    int indexOf(Pattern p) => messages.indexWhere((String m) => m.contains(p));
     expect(indexOf('missing'), greaterThanOrEqualTo(0));
     expect(indexOf('nope'), greaterThanOrEqualTo(0));
     expect(indexOf('chrome text'), greaterThanOrEqualTo(0));

@@ -60,7 +60,8 @@ Future<void> _pumpPreview(
       JetPrintLocalizations.delegate,
     ],
     supportedLocales: JetPrintLocalizations.supportedLocales,
-    home: JetReportPreview(report: report ?? _report(), initialPage: initialPage),
+    home:
+        JetReportPreview(report: report ?? _report(), initialPage: initialPage),
   ));
   await tester.pumpAndSettle();
 }
@@ -86,8 +87,8 @@ void main() {
     await _pumpPreview(tester);
 
     // Bounded at the first page: prev is disabled.
-    expect(tester.widget<ShadIconButton>(find.byKey(_prevKey)).onPressed,
-        isNull);
+    expect(
+        tester.widget<ShadIconButton>(find.byKey(_prevKey)).onPressed, isNull);
 
     await tester.tap(find.byKey(_nextKey));
     await tester.pumpAndSettle();
@@ -98,8 +99,8 @@ void main() {
     expect(find.text('Page 3 of 3'), findsOneWidget);
 
     // Bounded at the last page: next is disabled and tapping does nothing.
-    expect(tester.widget<ShadIconButton>(find.byKey(_nextKey)).onPressed,
-        isNull);
+    expect(
+        tester.widget<ShadIconButton>(find.byKey(_nextKey)).onPressed, isNull);
     await tester.tap(find.byKey(_nextKey), warnIfMissed: false);
     await tester.pumpAndSettle();
     expect(find.text('Page 3 of 3'), findsOneWidget);
@@ -115,7 +116,8 @@ void main() {
     expect(find.text('Page 3 of 3'), findsOneWidget);
   });
 
-  testWidgets('fit-to-width: the page fills the available width at the page '
+  testWidgets(
+      'fit-to-width: the page fills the available width at the page '
       'aspect ratio', (WidgetTester tester) async {
     await _pumpPreview(tester, size: const Size(700, 500));
     final Size pageSize = tester.getSize(find.byKey(_pageKey));
@@ -158,9 +160,9 @@ void main() {
     );
     await _pumpPreview(tester, report: report);
     expect(find.text('Page 1 of 1'), findsOneWidget);
-    expect(tester.widget<ShadIconButton>(find.byKey(_prevKey)).onPressed,
-        isNull);
-    expect(tester.widget<ShadIconButton>(find.byKey(_nextKey)).onPressed,
-        isNull);
+    expect(
+        tester.widget<ShadIconButton>(find.byKey(_prevKey)).onPressed, isNull);
+    expect(
+        tester.widget<ShadIconButton>(find.byKey(_nextKey)).onPressed, isNull);
   });
 }

@@ -160,9 +160,9 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
   /// template filled with real data, shown in the paginated preview.
   void _openPreview() {
     Navigator.of(context).push(PageRouteBuilder<void>(
-      pageBuilder: (BuildContext context, Animation<double> _,
-              Animation<double> __) =>
-          const _RenderedInvoicePreviewPage(),
+      pageBuilder:
+          (BuildContext context, Animation<double> _, Animation<double> __) =>
+              const _RenderedInvoicePreviewPage(),
     ));
   }
 

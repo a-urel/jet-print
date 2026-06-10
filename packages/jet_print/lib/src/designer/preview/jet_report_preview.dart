@@ -200,7 +200,8 @@ class _JetReportPreviewState extends State<JetReportPreview> {
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
                   child: LayoutBuilder(
-                    builder: (BuildContext context, BoxConstraints constraints) {
+                    builder:
+                        (BuildContext context, BoxConstraints constraints) {
                       final double width = constraints.maxWidth;
                       final double scale = width / frame.page.width;
                       return Container(
