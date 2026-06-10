@@ -20,8 +20,8 @@
 
 **Purpose**: Dependencies and a verified-green baseline before any story begins.
 
-- [ ] T001 Add `pdf: ^3.12.0`, `printing: ^5.14.3`, and `image` (direct — already transitive via `pdf`) to `packages/jet_print/pubspec.yaml` dependencies; run `dart pub get` and confirm the workspace resolves with no version conflicts
-- [ ] T002 Verify the recovered 011 baseline is green before building on it: run `flutter test packages/jet_print apps/jet_print_playground` from the repo root and confirm the full suite (795 tests) passes
+- [X] T001 Add `pdf: ^3.12.0`, `printing: ^5.14.3`, and `image` (direct — already transitive via `pdf`) to `packages/jet_print/pubspec.yaml` dependencies; run `dart pub get` and confirm the workspace resolves with no version conflicts
+- [X] T002 Verify the recovered 011 baseline is green before building on it: run `flutter test packages/jet_print apps/jet_print_playground` from the repo root and confirm the full suite (795 tests) passes
 
 ---
 
