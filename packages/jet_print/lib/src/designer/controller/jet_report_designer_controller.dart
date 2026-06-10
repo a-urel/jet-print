@@ -83,6 +83,7 @@ class JetReportDesignerController extends ChangeNotifier {
   /// Replaces the whole design with [template], clearing history and re-seeding
   /// id assignment past the largest existing suffix (FR-004).
   void open(ReportTemplate template) {
+    _pendingPropertiesFocus = false; // stale intent from the prior document
     _document =
         DesignerDocument(template: template, selection: Selection.empty);
     _history.clear();
@@ -116,6 +117,35 @@ class JetReportDesignerController extends ChangeNotifier {
     if (selection == _document.selection) return;
     _document = _document.withSelection(selection);
     notifyListeners();
+  }
+
+  // --- Properties-focus intent -----------------------------------------------
+  // An ephemeral UI signal, not model state: never serialized, never a history
+  // entry, untouched by undo/redo; cleared by [open] (a request must not outlive its document).
+
+  bool _pendingPropertiesFocus = false;
+
+  /// Whether a [requestPropertiesFocus] is awaiting consumption. Long-lived
+  /// designer chrome (the shell, the right panel) peeks at this to bring the
+  /// Properties inspector forward without claiming the event.
+  bool get pendingPropertiesFocus => _pendingPropertiesFocus;
+
+  /// Asks the designer chrome to bring the Properties inspector forward and
+  /// move keyboard focus into the selected element's most relevant field (the
+  /// canvas calls this on a double-tap). The inspector consumes the request
+  /// via [takePropertiesFocus].
+  void requestPropertiesFocus() {
+    _pendingPropertiesFocus = true;
+    notifyListeners();
+  }
+
+  /// Consumes a pending Properties-focus request: returns whether one was
+  /// pending and clears it. Called once per request by the Properties
+  /// inspector after it moves keyboard focus. Does not notify.
+  bool takePropertiesFocus() {
+    final bool pending = _pendingPropertiesFocus;
+    _pendingPropertiesFocus = false;
+    return pending;
   }
 
   // --- Creation --------------------------------------------------------------

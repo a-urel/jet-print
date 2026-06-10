@@ -366,5 +366,39 @@
   "resizeBandHandle": "Resize band height",
   "@resizeBandHandle": {
     "description": "Accessible name for the band height resize handle."
+  },
+
+  "previewBack": "Back",
+  "@previewBack": {
+    "description": "Tooltip + accessible name of the report preview's back button, which returns to wherever the preview was opened from (the designer)."
+  },
+  "previewPreviousPage": "Previous page",
+  "@previewPreviousPage": {
+    "description": "Tooltip + accessible name of the report preview's previous-page navigation button."
+  },
+  "previewNextPage": "Next page",
+  "@previewNextPage": {
+    "description": "Tooltip + accessible name of the report preview's next-page navigation button."
+  },
+  "previewPageIndicator": "Page {current} of {total}",
+  "@previewPageIndicator": {
+    "description": "The report preview's page-position indicator between the navigation buttons, e.g. 'Page 2 of 5'.",
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "previewFitToWidth": "Fit to width",
+  "@previewFitToWidth": {
+    "description": "Accessible name of the preview's page surface, describing its fit-to-width sizing."
+  },
+
+  "previewExport": "Export as PDF",
+  "@previewExport": {
+    "description": "Tooltip + accessible name of the report preview's export toolbar action; the host decides what export means (save dialog, share sheet, upload)."
+  },
+  "previewPrint": "Print",
+  "@previewPrint": {
+    "description": "Tooltip + accessible name of the report preview's print toolbar action."
   }
 }

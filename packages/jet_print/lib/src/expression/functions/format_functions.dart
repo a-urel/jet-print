@@ -13,10 +13,12 @@ import '../value.dart';
 /// using the ICU [pattern] string. Returns a [JetError] for a missing/invalid
 /// pattern, an unsupported value type, or an unparseable pattern.
 ///
-/// Locale: grouping/decimal symbols follow the ambient `Intl.defaultLocale`
-/// (which falls back to `en_US` when unset), so the same pattern can render
-/// `1,234.50` or `1.234,50` depending on the host. A per-report locale injected
-/// through the evaluation context is a planned enhancement (005b/later).
+/// Locale: grouping/decimal symbols follow `Intl.getCurrentLocale()`. At
+/// render time (011 — FR-012a) the JetReportEngine scopes every fill/layout
+/// pass with `Intl.withLocale(options.locale, ...)`, so FORMAT always sees the
+/// explicit per-render locale — never the app's ambient `Intl.defaultLocale`.
+/// Only outside a render (e.g. evaluating an expression directly in a test)
+/// does the ambient default (falling back to `en_US`) apply.
 void registerFormatFunctions(JetFunctionRegistry registry) {
   registry.register('FORMAT', _format);
 }

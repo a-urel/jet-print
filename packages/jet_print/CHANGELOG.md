@@ -8,6 +8,88 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Export & print — PDF, PNG, and the system print dialog (spec
+  012-export-support).** The same `RenderedReport` the preview displays now
+  turns into shareable artifacts; one render feeds every target. New public
+  surface from the single entry point:
+  - `JetReportExporter` — stateless `const` facade. `toPdf(report)` returns
+    in-memory PDF bytes: every page in order at the template's true physical
+    size (PostScript points), real selectable/searchable text placed at the
+    pre-measured baselines with the measuring fonts embedded, and images at
+    the preview's `computeImageFit` geometry. Byte-deterministic: identical
+    rendered inputs produce byte-identical files (fixed document ID, no
+    timestamp metadata). `pageToPng(report, i, {scale})` rasterizes one page
+    through the preview's own paint path at exactly
+    `round(page × scale)` pixels; out-of-range pages throw `RangeError`,
+    non-positive scales throw `ArgumentError`.
+  - `JetReportPrinter` — `printReport(report, {jobName})` exports the PDF
+    and presents the operating system's print dialog at the template's true
+    page size (the one sanctioned exception to the library's headlessness).
+    Returns `false` on user cancellation (not an error); throws
+    `PrintUnavailableException` where the platform cannot print. The dialog
+    sits behind the injectable `PrintDialogPresenter` seam, so hosts and
+    tests can substitute it without platform channels.
+  - `JetReportPreview` gains optional `onExportPdf` / `onPrint` callbacks:
+    each non-null callback adds a localized (en/de/tr), keyboard-operable
+    toolbar action; with both null the widget is unchanged from 011. The
+    library only invokes the callback — saving/sharing stays host code.
+  - Content problems (empty dataset, unresolved image, failed expression)
+    never fail an export: artifacts show the same fallbacks as the preview,
+    with `report.diagnostics` untouched.
+  - New dependencies: `pdf` (pure-Dart PDF generation), `printing` (system
+    print dialog; confined to the print seam), `image` (raster decoding for
+    PDF embedding). The playground demonstrates save-as-PDF (`file_selector`)
+    and print end-to-end from the preview toolbar; sandboxed macOS hosts
+    need the `com.apple.security.print` entitlement to print.
+
+- **Render engine — data-filled paginated preview (spec 011-render-export).**
+  A host hands a designed template plus actual data to a public engine facade
+  and gets a lazily-paginated, WYSIWYG, on-screen preview. New public surface
+  from the single entry point:
+  - `JetReportEngine` — `render(template, source, {options})` composes the
+    fill pass (expression evaluation, master/detail iteration,
+    variables/aggregates) with the layout pass (pagination, repeated page
+    chrome, `PAGE_NUMBER`/`PAGE_COUNT`). Never throws on malformed data;
+    deterministic over (template, data, parameters, locale).
+  - `RenderOptions` — per-render parameter values plus an **explicit
+    formatting locale** (number/date/currency formatting follows it — never
+    the app UI locale or the ambient `Intl.defaultLocale`).
+  - `RenderedReport` / `RenderedPage` — the render output IR: an exact
+    `pageCount` resolved by a cheap boundary-only pass, **lazy** per-page
+    frame construction with caching (the first page renders without
+    materializing the rest), and merged ordered `diagnostics`. Structured so
+    a future export slice consumes it without rework.
+  - `JetReportPreview` — a read-only paginated viewer with a top toolbar
+    styled to match the designer: the report name as the title, bounded
+    prev/next + arrow-key navigation with a localized "page X of N" indicator
+    (en/de/tr with English fallback), a zoom group (out / tap-% to fit / in;
+    the page scrolls when zoomed past fit-to-width), and an optional back
+    button (`onBack`). Pages paint through the same `paintFrame`/`CanvasPainter`
+    pipeline as the designer surface. `RenderedReport` carries the source
+    template's name as `title` for the toolbar.
+  - `JetReportDesigner(onPreviewRequested:)` — the top bar's **Preview**
+    action is now wired to this host callback (receiving the live template),
+    mirroring `onSaveRequested`/`onOpenRequested`; it renders disabled when
+    unwired. The playground opens its rendered-invoice preview from it.
+  - The full data-source API is now public: `JetDataSource`,
+    `JetInMemoryDataSource`, `JetJsonDataSource`, `JetObjectDataSource<T>`,
+    `DataSet`, `DataRow` — the same logical dataset renders byte-identically
+    through all three implementations, including nested collections.
+  - Diagnostics are now public: `Diagnostic`, `DiagnosticSeverity`,
+    `ReportDiagnostics` (which gains `add` for merging). Unknown fields,
+    missing parameters, expression errors, empty datasets, and URL-only
+    images each yield a specific diagnostic plus a best-effort render.
+  - The fill pass now iterates **nested collections**: a detail band bound to
+    a `collectionField` repeats once per child row (children bands nest to
+    arbitrary depth), completing the 009 master/detail authoring seam at
+    render time. Declared template parameter defaults are applied when the
+    host supplies no value.
+  - Internal additive seam: `ReportLayouter.layoutLazy` produces pages on
+    demand; the eager `layout()` is preserved as a thin wrapper over it, so
+    existing rendering output is byte-stable.
+  - The playground gains a runnable **rendered-invoice** example (in-memory,
+    JSON, and object-backed variants) and a Preview path that opens it.
+
 - **Data-aware designer — Invoice MVP (spec 009-data-aware-designer).** The
   designer can now describe, display, and bind to a data source's structure
   (tokens only this iteration — values are not yet filled/rendered). New/changed
@@ -267,6 +349,23 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   are diagnosed once per element regardless of short-circuiting. Substitution is fixed-bounds (no
   repagination, no chrome box growth); parse/evaluation failures render `!ERR`. The schema is
   unchanged (`FilledReport.params` is internal IR).
+
+### Changed
+
+- **Designer: double-tap now opens the Properties inspector (in-place editing
+  removed).** Double-tapping anything on the canvas — an element, a band's
+  empty area, or the report (paper off any band) — selects it, brings the
+  right panel to the Properties tab (expanding the collapsed narrow-layout
+  overlay first when needed), and moves keyboard focus into the most relevant
+  field: Text for a text element, X for any other element, height for a band.
+  The report inspector is read-only, so its double-tap simply brings the pane
+  forward. The inline double-click text editor is gone; the Properties panel
+  is the single text-editing surface. New `JetReportDesignerController` members
+  back this:
+  `requestPropertiesFocus()` raises a one-shot UI intent,
+  `pendingPropertiesFocus` peeks at it, and `takePropertiesFocus()` consumes
+  it (the designer chrome wires these automatically; hosts may call
+  `requestPropertiesFocus()` to deep-link their own UI into the inspector).
 
 ## 0.1.0
 

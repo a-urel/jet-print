@@ -17,10 +17,8 @@ import 'package:flutter/services.dart'
 import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
-import '../../domain/elements/text_element.dart';
 import '../../domain/geometry.dart';
 import '../../domain/report_band.dart';
-import '../../domain/report_element.dart';
 import '../controller/jet_report_designer_controller.dart';
 import '../designer_scope.dart';
 import '../interaction/canvas_shortcuts.dart';
@@ -34,7 +32,6 @@ import 'design_tunables.dart';
 import 'field_drag_data.dart';
 import 'frame_custom_painter.dart';
 import 'hit_testing.dart';
-import 'inline_text_editor.dart';
 import 'selection_overlay.dart';
 
 /// Stable widget key for the interactive canvas (test seam).
@@ -103,15 +100,19 @@ class _DesignCanvasState extends State<DesignCanvas> {
   /// in-progress drag.
   JetOffset? _emptyTapPage;
 
-  /// The id of the text element being inline-edited (double-click), or null.
-  String? _editingId;
+  /// Whether the pending empty-area tap is the second of a double-tap, so its
+  /// tap-up brings the Properties inspector forward (once it has selected the
+  /// band or report). Paired with [_emptyTapPage]; cleared whenever that is.
+  bool _emptyTapWasDouble = false;
 
   /// Manual double-tap detection (avoids a DoubleTapGestureRecognizer, which
   /// would delay single-tap select). Tracks the last tap's position + a reset
-  /// timer; a second tap near it on a text element opens the inline editor.
+  /// timer; a second tap near it — on an element, a band, or the report —
+  /// brings the Properties inspector forward for whatever it selects.
   Offset? _lastTapPosition;
   Timer? _doubleTapTimer;
   static const Duration _doubleTapWindow = Duration(milliseconds: 300);
+  static const double _doubleTapSlop = 24;
 
   static const double _viewportPadding = 32;
 
@@ -238,34 +239,60 @@ class _DesignCanvasState extends State<DesignCanvas> {
       page,
       slop: kHandleHitSize / 2 / transform.scale,
     );
+
+    // Manual double-tap: a second tap near the first (within the window) brings
+    // the Properties inspector forward for whatever this tap selects — without a
+    // DoubleTapGestureRecognizer delaying the single-tap select.
+    final bool near = _isDoubleTap(localPosition);
+
     if (hit == null) {
-      // Defer band/report/clear classification to tap-up: if this press turns
-      // into a drag (marquee or a band-handle resize) the tap is cancelled and
-      // the selection is left alone. Shift+empty leaves the selection as-is.
+      // Defer band/report/clear classification — and any double-tap focus — to
+      // tap-up: if this press turns into a drag (marquee or a band-handle
+      // resize) the tap is cancelled and the selection is left alone.
+      // Shift+empty leaves the selection as-is.
       _emptyTapPage = _shiftPressed ? null : page;
+      _emptyTapWasDouble = near && !_shiftPressed;
+      _trackTap(localPosition, near: near);
       return;
     }
+
     _emptyTapPage = null;
+    _emptyTapWasDouble = false;
     if (_shiftPressed) {
       controller.toggleSelection(hit); // extend/contract multi-selection
     } else {
       controller.select(hit);
     }
+    // Shift-taps are multi-selection gestures, not double-taps: the second
+    // shift-tap just toggled the element back OUT of the selection, so a focus
+    // request would land on an empty inspector.
+    if (near && !_shiftPressed) controller.requestPropertiesFocus();
+    _trackTap(localPosition, near: near);
+  }
 
-    // Manual double-tap: a second tap near the first on a text element opens
-    // the inline editor — without a DoubleTapGestureRecognizer delaying the
-    // single-tap select above.
-    final bool near = _lastTapPosition != null &&
-        (_lastTapPosition! - localPosition).distance < 24;
-    if (near && _findElement(controller, hit) is TextElement) {
-      _doubleTapTimer?.cancel();
-      _lastTapPosition = null;
-      setState(() => _editingId = hit);
-      return;
-    }
-    _lastTapPosition = localPosition;
+  /// Whether [position] is close enough to the previous tap (still within the
+  /// un-lapsed window) to count as the second tap of a double-tap.
+  bool _isDoubleTap(Offset position) =>
+      _lastTapPosition != null &&
+      (_lastTapPosition! - position).distance < _doubleTapSlop;
+
+  /// Updates double-tap tracking after a tap at [position]: a [near] tap (the
+  /// second of a pair) consumes the anchor so a third tap won't also fire; a far
+  /// tap becomes the new anchor, lapsing after [_doubleTapWindow].
+  void _trackTap(Offset position, {required bool near}) {
     _doubleTapTimer?.cancel();
-    _doubleTapTimer = Timer(_doubleTapWindow, () => _lastTapPosition = null);
+    if (near) {
+      _lastTapPosition = null;
+    } else {
+      _lastTapPosition = position;
+      _doubleTapTimer = Timer(_doubleTapWindow, () => _lastTapPosition = null);
+    }
+  }
+
+  /// Drops a pending empty-area tap (its press became a drag, or was cancelled).
+  void _cancelEmptyTap() {
+    _emptyTapPage = null;
+    _emptyTapWasDouble = false;
   }
 
   /// Tap-up: complete an empty-area tap as a band/report/clear selection. A press
@@ -274,15 +301,24 @@ class _DesignCanvasState extends State<DesignCanvas> {
   void _handleTap(
       JetReportDesignerController controller, DesignTimeLayout layout) {
     final JetOffset? page = _emptyTapPage;
+    final bool wasDouble = _emptyTapWasDouble;
     _emptyTapPage = null;
+    _emptyTapWasDouble = false;
     if (page == null) return;
-    _selectEmptyTarget(page, controller, layout);
+    // A genuine tap on no element selects the band/report (or clears). On a
+    // double-tap, bring the Properties inspector forward for it — but not when
+    // the tap cleared the selection (there is nothing to inspect).
+    if (_selectEmptyTarget(page, controller, layout) && wasDouble) {
+      controller.requestPropertiesFocus();
+    }
   }
 
   /// Classifies an empty (no-element) page point: inside a band → select it;
   /// elsewhere on the paper (margins / flow gap) → select the report; off the
-  /// paper → clear.
-  void _selectEmptyTarget(
+  /// paper → clear. Returns whether it selected a band or the report (false when
+  /// it cleared) — so a double-tap only brings the inspector forward when there
+  /// is something to inspect.
+  bool _selectEmptyTarget(
     JetOffset page,
     JetReportDesignerController controller,
     DesignTimeLayout layout,
@@ -294,7 +330,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
         page.dy <= size.height;
     if (!onPaper) {
       controller.clearSelection();
-      return;
+      return false;
     }
     final int? band = layout.bandAt(page);
     if (band != null) {
@@ -302,6 +338,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
     } else {
       controller.selectReport();
     }
+    return true;
   }
 
   bool get _shiftPressed =>
@@ -361,7 +398,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
     if (hit == null) {
       // Empty-area drag → marquee (rubber-band) selection. Cancel any pending
       // empty-tap classification (this press is a drag, not a tap).
-      _emptyTapPage = null;
+      _cancelEmptyTap();
       _movingSelection = false;
       _marqueeing = true;
       _marqueeStartPage = page;
@@ -436,16 +473,6 @@ class _DesignCanvasState extends State<DesignCanvas> {
     _movingSelection = false;
     _panStartPage = null;
     controller.commitMove();
-  }
-
-  ReportElement? _findElement(
-      JetReportDesignerController controller, String id) {
-    for (final band in controller.template.bands) {
-      for (final ReportElement e in band.elements) {
-        if (e.id == id) return e;
-      }
-    }
-    return null;
   }
 
   void _handleDrop(
@@ -558,7 +585,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
                 onTapDown: (TapDownDetails d) => _handleTapDown(
                     d.localPosition, controller, transform, layout),
                 onTap: () => _handleTap(controller, layout),
-                onTapCancel: () => _emptyTapPage = null,
+                onTapCancel: _cancelEmptyTap,
                 onPanStart: (DragStartDetails d) => _handlePanStart(
                     d.localPosition, controller, transform, layout),
                 onPanUpdate: (DragUpdateDetails d) =>
@@ -713,29 +740,6 @@ class _DesignCanvasState extends State<DesignCanvas> {
                     child:
                         DesignerSelectionOverlay(layout: layout, scale: scale),
                   ),
-                  // Inline text editor over the element being double-click-edited.
-                  if (_editingId case final String editId)
-                    if (layout.elementRect(editId) case final JetRect er)
-                      if (_findElement(controller, editId)
-                          case final TextElement t)
-                        Positioned(
-                          left: er.x * scale,
-                          top: er.y * scale,
-                          width: er.width * scale < 80 ? 80 : er.width * scale,
-                          // Height intentionally unconstrained: the input sizes to
-                          // its natural height (a text element can be shorter than
-                          // the field's minimum).
-                          child: InlineTextEditor(
-                            initialText: t.text,
-                            onCommit: (String value) {
-                              controller.setText(editId, value);
-                              if (mounted) setState(() => _editingId = null);
-                            },
-                            onCancel: () {
-                              if (mounted) setState(() => _editingId = null);
-                            },
-                          ),
-                        ),
                   // Marquee rubber-band, while dragging on empty canvas.
                   if (_marqueeRect case final JetRect m)
                     Positioned(

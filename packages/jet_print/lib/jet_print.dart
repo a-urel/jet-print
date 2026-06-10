@@ -17,12 +17,20 @@
 /// `contracts/designer-layout-api.md` for the authoritative contract.
 library;
 
-// --- Data-source structure for binding (009): the host describes its data
+// --- Data-source API (009 structure + 011 data): the host describes its data
 // source's structure as a [JetDataSchema] of [FieldDef]s (a field may be a
-// nested [JetFieldType.collection]) and attaches it to the designer. Tokens
-// only this iteration — the data-bearing source/cursor stays internal. ---
+// nested [JetFieldType.collection]) and, since 011, supplies actual records
+// through a [JetDataSource] (in-memory, JSON, or object-backed) whose
+// [DataSet] cursor yields [DataRow]s — including nested collections for
+// master/detail. ---
+export 'src/data/data_row.dart' show DataRow;
 export 'src/data/data_schema.dart' show JetDataSchema;
+export 'src/data/data_set.dart' show DataSet;
 export 'src/data/field_def.dart' show FieldDef;
+export 'src/data/in_memory_data_source.dart' show JetInMemoryDataSource;
+export 'src/data/jet_data_source.dart' show JetDataSource;
+export 'src/data/json_data_source.dart' show JetJsonDataSource;
+export 'src/data/object_data_source.dart' show JetObjectDataSource;
 // --- Interactive editing seam (003): the controller + its public vocabulary. ---
 export 'src/designer/canvas/design_tunables.dart' show DesignerToolType;
 export 'src/designer/canvas/resize_handle.dart' show ResizeHandle;
@@ -38,6 +46,8 @@ export 'src/designer/jet_report_designer.dart' show JetReportDesigner;
 // `supportedLocales` statics; consumers wire them into their app shell.
 export 'src/designer/l10n/jet_print_localizations.dart'
     show JetPrintLocalizations;
+// The read-only paginated viewer over a rendered report (011).
+export 'src/designer/preview/jet_report_preview.dart' show JetReportPreview;
 // --- The ReportTemplate-reachable model graph (003 — required to host, mutate,
 // and serialize a design; supersedes the 002 "no model types" non-goal). ---
 export 'src/domain/elements/barcode_element.dart'
@@ -71,4 +81,23 @@ export 'src/domain/styles/text_style.dart'
     show JetFontWeight, JetTextAlign, JetTextStyle;
 export 'src/domain/unknown_element.dart' show UnknownElement;
 export 'src/domain/value_type.dart' show JetFieldType;
+// --- Print (012): present the system print dialog for the exported PDF —
+// the one sanctioned exception to the library's headlessness. The presenter
+// seam is injectable; unavailability is a structured exception. ---
+export 'src/print/jet_report_printer.dart'
+    show JetReportPrinter, PrintDialogPresenter, PrintUnavailableException;
+// --- Render engine (011): fill a designed template with real data, paginate
+// lazily, and surface structured render diagnostics. The preview widget
+// consumes the resulting [RenderedReport]. ---
+export 'src/rendering/engine/jet_report_engine.dart' show JetReportEngine;
+export 'src/rendering/engine/render_options.dart' show RenderOptions;
+export 'src/rendering/engine/rendered_report.dart'
+    show RenderedPage, RenderedReport;
+// --- Export (012): turn the same RenderedReport the preview displays into
+// shareable artifacts — a deterministic PDF document with real selectable
+// text and embedded fonts. Headless: bytes in, bytes out; the host owns
+// saving/sharing. ---
+export 'src/rendering/export/jet_report_exporter.dart' show JetReportExporter;
+export 'src/rendering/fill/report_diagnostics.dart'
+    show Diagnostic, DiagnosticSeverity, ReportDiagnostics;
 export 'src/version.dart' show jetPrintVersion;

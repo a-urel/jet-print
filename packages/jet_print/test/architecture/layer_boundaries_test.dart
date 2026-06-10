@@ -7,6 +7,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jet_print/jet_print.dart';
 
 import '../support/workspace.dart';
 
@@ -172,23 +173,78 @@ void main() {
               '${violations.join('\n')}');
     });
 
-    test('only paint/canvas_painter.dart imports dart:ui / Flutter UI', () {
+    test(
+        'only paint/canvas_painter.dart and paint/page_rasterizer.dart '
+        'import dart:ui / Flutter UI', () {
       final List<String> violations = <String>[];
       for (final File file in renderingFiles()) {
         final String path = file.path.replaceAll(r'\', '/');
-        final bool isCanvasPainter =
-            path.endsWith('/paint/canvas_painter.dart');
+        // The two declared dart:ui paint backends: the preview's canvas
+        // painter (011) and the PNG rasterizer composing it (012 — PNG
+        // encoding is an engine capability). Nothing else.
+        final bool isDeclaredUiBackend =
+            path.endsWith('/paint/canvas_painter.dart') ||
+                path.endsWith('/paint/page_rasterizer.dart');
+        // The single sanctioned exception besides the painters (011):
+        // RenderOptions carries the host's per-render `Locale` — a pure value
+        // type from dart:ui with a const constructor. No other dart:ui symbol
+        // may be used there, and no other engine file may import dart:ui.
+        final bool isRenderOptions =
+            path.endsWith('/engine/render_options.dart');
         for (final String uri in _directive
             .allMatches(file.readAsStringSync())
             .map((Match m) => m.group(1)!)) {
-          if (_isFlutterUi(uri) && !isCanvasPainter) {
+          if (_isFlutterUi(uri) && !isDeclaredUiBackend && !isRenderOptions) {
             violations.add('${file.path} -> $uri');
           }
         }
       }
       expect(violations, isEmpty,
-          reason: 'Only CanvasPainter may import dart:ui; frame/text/'
-              'report_painter must stay headless:\n${violations.join('\n')}');
+          reason: 'Only CanvasPainter + PageRasterizer (and RenderOptions, '
+              'for the Locale value type) may import dart:ui; '
+              'frame/text/report_painter/export must stay headless:\n'
+              '${violations.join('\n')}');
+    });
+
+    test(
+        'the engine/ facade seam exists and only depends inward '
+        '(fill/layout/frame/expression/data/domain)', () {
+      final Directory engineDir =
+          Directory('${root.path}/packages/jet_print/lib/src/rendering/engine');
+      expect(engineDir.existsSync(), isTrue,
+          reason: 'Missing ${engineDir.path}');
+      final List<File> engineFiles = engineDir
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((FileSystemEntity f) => f.path.endsWith('.dart'))
+          .toList();
+      expect(engineFiles, isNotEmpty);
+      final List<String> violations = <String>[];
+      for (final File file in engineFiles) {
+        final String path = file.path.replaceAll(r'\', '/');
+        final bool isRenderOptions = path.endsWith('/render_options.dart');
+        for (final String uri in _directive
+            .allMatches(file.readAsStringSync())
+            .map((Match m) => m.group(1)!)) {
+          // The facade composes fill + layout and wraps frames; it must not
+          // reach the designer seam nor the paint/text/elements siblings, and
+          // (except RenderOptions' Locale) stays Flutter-free.
+          final bool outward = uri.contains('designer') ||
+              uri.contains('../paint/') ||
+              uri.contains('../text/') ||
+              uri.contains('../elements/') ||
+              uri.contains('/rendering/paint/') ||
+              uri.contains('/rendering/text/') ||
+              uri.contains('/rendering/elements/');
+          if (outward || (_isFlutterUi(uri) && !isRenderOptions)) {
+            violations.add('${file.path} -> $uri');
+          }
+        }
+      }
+      expect(violations, isEmpty,
+          reason: 'rendering/engine may depend only inward '
+              '(fill/layout/frame/expression/data/domain):\n'
+              '${violations.join('\n')}');
     });
 
     test('the elements/ seam exists and stays Flutter-free', () {
@@ -257,6 +313,146 @@ void main() {
       expect(violations, isEmpty,
           reason: 'rendering/fill must stay headless and depend only on '
               'domain/data/expression:\n${violations.join('\n')}');
+    });
+
+    test(
+        'the export/ seam stays pure Dart (012): PDF generation must be '
+        'usable headlessly, with no dart:ui or Flutter import', () {
+      final Directory exportDir =
+          Directory('${root.path}/packages/jet_print/lib/src/rendering/export');
+      expect(exportDir.existsSync(), isTrue,
+          reason: 'Missing ${exportDir.path}');
+      final List<File> exportFiles = exportDir
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((FileSystemEntity f) => f.path.endsWith('.dart'))
+          .toList();
+      expect(exportFiles, isNotEmpty);
+      final List<String> violations = <String>[];
+      for (final File file in exportFiles) {
+        for (final String uri in _directive
+            .allMatches(file.readAsStringSync())
+            .map((Match m) => m.group(1)!)) {
+          if (_isFlutterUi(uri) || uri.startsWith('package:flutter/')) {
+            violations.add('${file.path} -> $uri');
+          }
+        }
+      }
+      expect(violations, isEmpty,
+          reason: 'rendering/export must stay headless pure Dart '
+              '(package:pdf, package:image, and inward seams only):\n'
+              '${violations.join('\n')}');
+    });
+
+    test(
+        'the print seam (012) is outermost: package:printing lives ONLY in '
+        'lib/src/print/, and no library file imports the print seam', () {
+      final Directory libDir = Directory('${root.path}/packages/jet_print/lib');
+      final Directory printDir =
+          Directory('${root.path}/packages/jet_print/lib/src/print');
+      expect(printDir.existsSync(), isTrue, reason: 'Missing ${printDir.path}');
+      final List<File> libFiles = libDir
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((FileSystemEntity f) => f.path.endsWith('.dart'))
+          .toList();
+      expect(libFiles, isNotEmpty);
+      final List<String> violations = <String>[];
+      for (final File file in libFiles) {
+        final String path = file.path.replaceAll(r'\', '/');
+        final bool inPrintSeam = path.contains('/lib/src/print/');
+        final bool isEntryPoint = path.endsWith('/lib/jet_print.dart');
+        for (final String uri in _directive
+            .allMatches(file.readAsStringSync())
+            .map((Match m) => m.group(1)!)) {
+          if (uri.startsWith('package:printing/') && !inPrintSeam) {
+            violations.add('${file.path} -> $uri (printing outside seam)');
+          }
+          // The print seam is OUTERMOST: only the public entry point may
+          // export it; no other library file may import it.
+          final bool reachesPrintSeam =
+              uri.contains('src/print/') || uri.contains('../print/');
+          if (reachesPrintSeam && !inPrintSeam && !isEntryPoint) {
+            violations.add('${file.path} -> $uri (print seam imported)');
+          }
+        }
+      }
+      expect(violations, isEmpty,
+          reason: 'printing is confined to lib/src/print/ behind the '
+              'presenter abstraction:\n${violations.join('\n')}');
+    });
+
+    test(
+        'the public entry point exports the 011 render surface '
+        '(engine, options, render IR, diagnostics, data-source API)', () {
+      final File entry =
+          File('${root.path}/packages/jet_print/lib/jet_print.dart');
+      final Set<String> exported = _directive
+          .allMatches(entry.readAsStringSync())
+          .map((Match m) => m.group(1)!)
+          .toSet();
+      const List<String> required = <String>[
+        'src/rendering/engine/jet_report_engine.dart',
+        'src/rendering/engine/render_options.dart',
+        'src/rendering/engine/rendered_report.dart',
+        'src/rendering/export/jet_report_exporter.dart',
+        'src/print/jet_report_printer.dart',
+        'src/rendering/fill/report_diagnostics.dart',
+        'src/data/jet_data_source.dart',
+        'src/data/in_memory_data_source.dart',
+        'src/data/json_data_source.dart',
+        'src/data/object_data_source.dart',
+        'src/data/data_set.dart',
+        'src/data/data_row.dart',
+      ];
+      final List<String> missing = <String>[
+        for (final String uri in required)
+          if (!exported.contains(uri)) uri,
+      ];
+      expect(missing, isEmpty,
+          reason: 'lib/jet_print.dart must export the full 011 surface; '
+              'missing:\n${missing.join('\n')}');
+    });
+
+    test(
+        'the 012 export/print public surface matches contract §1 EXACTLY '
+        '(exporter, printer, presenter typedef, exception — nothing more)', () {
+      final String entry =
+          File('${root.path}/packages/jet_print/lib/jet_print.dart')
+              .readAsStringSync();
+      Set<String> shownBy(String uri) {
+        final RegExp re =
+            RegExp("export\\s+'${RegExp.escape(uri)}'\\s+show\\s+([^;]+);");
+        final Match? m = re.firstMatch(entry);
+        expect(m, isNotNull,
+            reason: 'jet_print.dart must export $uri with an explicit '
+                '`show` combinator');
+        return m!
+            .group(1)!
+            .split(',')
+            .map((String s) => s.trim())
+            .where((String s) => s.isNotEmpty)
+            .toSet();
+      }
+
+      expect(shownBy('src/rendering/export/jet_report_exporter.dart'),
+          <String>{'JetReportExporter'});
+      expect(shownBy('src/print/jet_report_printer.dart'), <String>{
+        'JetReportPrinter',
+        'PrintDialogPresenter',
+        'PrintUnavailableException',
+      });
+    });
+
+    test(
+        'the render path is read-only over templates: schemaVersion stays 1 '
+        '(FR-016)', () {
+      // No schema change, no migration: the existing format round-trips
+      // unchanged. The dedicated round-trip / UnknownElement passthrough
+      // tests cover fidelity; this pins the version constant itself.
+      const ReportTemplate template =
+          ReportTemplate(name: 'fr016', page: PageFormat.a4Portrait);
+      expect(JetReportFormat.encode(template)['schemaVersion'], 1);
     });
 
     test('the layout/ seam exists and stays Flutter-free', () {

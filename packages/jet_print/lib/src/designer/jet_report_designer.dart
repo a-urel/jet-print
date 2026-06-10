@@ -21,6 +21,11 @@ typedef ReportSaveRequestedCallback = void Function(ReportTemplate current);
 /// `JetReportFormat.decodeJson`) and calls `controller.open(...)`.
 typedef ReportOpenRequestedCallback = void Function();
 
+/// Invoked when the user triggers Preview; receives the current
+/// [ReportTemplate] so a host can render it (e.g. via `JetReportEngine`) and
+/// show a `JetReportPreview`.
+typedef ReportPreviewRequestedCallback = void Function(ReportTemplate current);
+
 /// The report designer **shell**: the visual workspace that arranges the
 /// regions of the designer — a top command bar, a left element toolbox, an
 /// interactive center design surface, and a right three-tab context panel
@@ -28,10 +33,12 @@ typedef ReportOpenRequestedCallback = void Function();
 ///
 /// The center surface is a live WYSIWYG canvas: authors drag toolbox element
 /// types onto bands, then select, move, resize, align, multi-select, reorder,
-/// copy/paste, nudge, delete, and inline-edit text — every edit against an
-/// in-memory [ReportTemplate] held by a [JetReportDesignerController], with
-/// unlimited session undo/redo. Property editing this iteration is geometry +
-/// text only (the full per-type suite is deferred).
+/// copy/paste, nudge, and delete — a double-tap on any element jumps to its
+/// Properties inspector with the most relevant field focused. Every edit runs
+/// against an in-memory [ReportTemplate] held by a
+/// [JetReportDesignerController], with unlimited session undo/redo. Property
+/// editing this iteration is geometry + text only (the full per-type suite is
+/// deferred).
 ///
 /// Stays drop-in: with no arguments it owns an internal controller over a blank
 /// default design, reading only the ambient [ShadTheme] and
@@ -60,6 +67,7 @@ class JetReportDesigner extends StatefulWidget {
     this.initialReport,
     this.onSaveRequested,
     this.onOpenRequested,
+    this.onPreviewRequested,
     this.dataSchema,
   });
 
@@ -84,6 +92,10 @@ class JetReportDesigner extends StatefulWidget {
   /// Invoked when the user triggers Open (wired to the top bar).
   final ReportOpenRequestedCallback? onOpenRequested;
 
+  /// Invoked when the user triggers Preview (wired to the top bar); receives
+  /// the live template to render. Null ⇒ the Preview action renders disabled.
+  final ReportPreviewRequestedCallback? onPreviewRequested;
+
   @override
   State<JetReportDesigner> createState() => _JetReportDesignerState();
 }
@@ -105,6 +117,7 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
   void didUpdateWidget(JetReportDesigner oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.controller != oldWidget.controller) {
+      _controller.removeListener(_handlePropertiesFocusRequest);
       if (_ownsController) _controller.dispose();
       _adoptController();
     }
@@ -118,10 +131,12 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
       _controller = JetReportDesignerController(template: widget.initialReport);
       _ownsController = true;
     }
+    _controller.addListener(_handlePropertiesFocusRequest);
   }
 
   @override
   void dispose() {
+    _controller.removeListener(_handlePropertiesFocusRequest);
     if (_ownsController) _controller.dispose();
     super.dispose();
   }
@@ -148,6 +163,23 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
 
   /// Whether the collapsed right panel is currently expanded as an overlay.
   bool _rightOpen = false;
+
+  /// Whether the last laid-out main area was the wide (≥ breakpoint) variant;
+  /// written during build, read by [_handlePropertiesFocusRequest] so a focus
+  /// request only opens the overlay when the panel is actually collapsed.
+  /// Starts false so a request arriving before the first layout is never
+  /// dropped: a spurious early open is harmless in the wide layout (which
+  /// ignores [_rightOpen]), while the reverse would silently lose the request.
+  bool _lastLayoutWide = false;
+
+  /// Opens the collapsed narrow-layout overlay when a Properties-focus request
+  /// arrives, so the panel that must consume it can mount. Peeks only — the
+  /// Properties panel consumes the request.
+  void _handlePropertiesFocusRequest() {
+    if (_lastLayoutWide || _rightOpen) return;
+    if (!_controller.pendingPropertiesFocus) return;
+    setState(() => _rightOpen = true);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -196,12 +228,16 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
                 ? null
                 : () => widget.onSaveRequested!(_controller.template),
             onOpen: widget.onOpenRequested,
+            onPreview: widget.onPreviewRequested == null
+                ? null
+                : () => widget.onPreviewRequested!(_controller.template),
           ),
           const ShadSeparator.horizontal(margin: EdgeInsets.zero),
           Expanded(
             child: LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
                 final bool wide = constraints.maxWidth >= _breakpoint;
+                _lastLayoutWide = wide;
                 return Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[

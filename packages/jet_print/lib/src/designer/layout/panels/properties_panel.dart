@@ -34,9 +34,56 @@ const String _p = 'jet_print.designer.properties';
 /// Every field reflects the live model, so a move/resize on the canvas updates
 /// the numbers here, and an edit here updates the canvas — the two stay in sync
 /// through the shared controller.
-class PropertiesPanel extends StatelessWidget {
+class PropertiesPanel extends StatefulWidget {
   /// Creates the Properties panel body. Private to the library.
   const PropertiesPanel({super.key});
+
+  @override
+  State<PropertiesPanel> createState() => _PropertiesPanelState();
+}
+
+class _PropertiesPanelState extends State<PropertiesPanel> {
+  /// Externally-owned focus nodes for the three double-tap focus targets, so a
+  /// pending `requestPropertiesFocus` can land keyboard focus (the fields fall
+  /// back to private nodes when none is supplied).
+  final FocusNode _xFocus = FocusNode(debugLabel: 'jet_print.properties.x');
+  final FocusNode _textFocus =
+      FocusNode(debugLabel: 'jet_print.properties.text');
+  final FocusNode _bandHeightFocus =
+      FocusNode(debugLabel: 'jet_print.properties.bandHeight');
+
+  @override
+  void dispose() {
+    _xFocus.dispose();
+    _textFocus.dispose();
+    _bandHeightFocus.dispose();
+    super.dispose();
+  }
+
+  /// Consumes a pending properties-focus request after this frame settles (so
+  /// the target field exists even when the tab body mounted this same frame)
+  /// and moves keyboard focus to the most relevant field: the Text field (text
+  /// element), the X field (any other element), or the height field (a band).
+  /// The report has no editable field, so its request just brings the pane
+  /// forward (the flag is still consumed). One-shot: `takePropertiesFocus`
+  /// clears the flag, so ordinary rebuilds never re-steal focus. A report or
+  /// multi-selection just consumes the request — no crash, no stuck flag.
+  void _schedulePendingFocus(JetReportDesignerController controller) {
+    if (!controller.pendingPropertiesFocus) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !controller.takePropertiesFocus()) return;
+      final selection = controller.selection;
+      if (selection.bandIndex != null) {
+        _bandHeightFocus.requestFocus();
+        return;
+      }
+      final String? id = selection.singleOrNull;
+      if (id == null) return; // report (read-only) or a multi-selection
+      final ReportElement? element = _find(controller, id);
+      if (element == null) return;
+      (element is TextElement ? _textFocus : _xFocus).requestFocus();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +92,8 @@ class PropertiesPanel extends StatelessWidget {
     final selection = controller.selection;
     final ShadThemeData theme = ShadTheme.of(context);
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
+
+    _schedulePendingFocus(controller);
 
     final List<Widget> children;
     if (selection.isReport) {
@@ -93,6 +142,7 @@ class PropertiesPanel extends StatelessWidget {
               fieldKey: const ValueKey<String>('$_p.field.x'),
               prefix: LucideIcons.arrowRight,
               value: b.x,
+              focusNode: _xFocus,
               onCommit: (double v) => controller.setGeometry(id, x: v),
             ),
           ),
@@ -136,6 +186,7 @@ class PropertiesPanel extends StatelessWidget {
         _TextField(
           fieldKey: const ValueKey<String>('$_p.field.text'),
           value: element.text,
+          focusNode: _textFocus,
           onCommit: (String v) => controller.setText(id, v),
         ),
         const SizedBox(height: 12),
@@ -218,6 +269,7 @@ class PropertiesPanel extends StatelessWidget {
           fieldKey: const ValueKey<String>('$_p.field.bandHeight'),
           prefix: LucideIcons.moveVertical,
           value: height,
+          focusNode: _bandHeightFocus,
           onCommit: (double v) => controller.setBandHeight(index, v),
         ),
       ),
@@ -393,12 +445,17 @@ class _NumberField extends StatefulWidget {
     required this.prefix,
     required this.value,
     required this.onCommit,
+    this.focusNode,
   });
 
   final Key fieldKey;
   final IconData prefix;
   final double value;
   final ValueChanged<double> onCommit;
+
+  /// An externally-owned focus node (the panel's double-tap focus target);
+  /// null ⇒ the field owns a private one.
+  final FocusNode? focusNode;
 
   @override
   State<_NumberField> createState() => _NumberFieldState();
@@ -407,7 +464,9 @@ class _NumberField extends StatefulWidget {
 class _NumberFieldState extends State<_NumberField> {
   late final TextEditingController _controller =
       TextEditingController(text: _format(widget.value));
-  final FocusNode _focus = FocusNode();
+  FocusNode? _ownFocus;
+
+  FocusNode get _focus => widget.focusNode ?? (_ownFocus ??= FocusNode());
 
   @override
   void initState() {
@@ -418,6 +477,10 @@ class _NumberFieldState extends State<_NumberField> {
   @override
   void didUpdateWidget(_NumberField oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.focusNode != oldWidget.focusNode) {
+      (oldWidget.focusNode ?? _ownFocus)?.removeListener(_onFocusChange);
+      _focus.addListener(_onFocusChange);
+    }
     // Reflect a model change made elsewhere, but never clobber active typing.
     if (!_focus.hasFocus && widget.value != oldWidget.value) {
       _controller.text = _format(widget.value);
@@ -442,7 +505,7 @@ class _NumberFieldState extends State<_NumberField> {
   @override
   void dispose() {
     _focus.removeListener(_onFocusChange);
-    _focus.dispose();
+    _ownFocus?.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -470,11 +533,16 @@ class _TextField extends StatefulWidget {
     required this.fieldKey,
     required this.value,
     required this.onCommit,
+    this.focusNode,
   });
 
   final Key fieldKey;
   final String value;
   final ValueChanged<String> onCommit;
+
+  /// An externally-owned focus node (the panel's double-tap focus target);
+  /// null ⇒ the field owns a private one.
+  final FocusNode? focusNode;
 
   @override
   State<_TextField> createState() => _TextFieldState();
@@ -483,7 +551,9 @@ class _TextField extends StatefulWidget {
 class _TextFieldState extends State<_TextField> {
   late final TextEditingController _controller =
       TextEditingController(text: widget.value);
-  final FocusNode _focus = FocusNode();
+  FocusNode? _ownFocus;
+
+  FocusNode get _focus => widget.focusNode ?? (_ownFocus ??= FocusNode());
 
   @override
   void initState() {
@@ -494,6 +564,10 @@ class _TextFieldState extends State<_TextField> {
   @override
   void didUpdateWidget(_TextField oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.focusNode != oldWidget.focusNode) {
+      (oldWidget.focusNode ?? _ownFocus)?.removeListener(_onFocusChange);
+      _focus.addListener(_onFocusChange);
+    }
     if (!_focus.hasFocus && widget.value != oldWidget.value) {
       _controller.text = widget.value;
     }
@@ -508,7 +582,7 @@ class _TextFieldState extends State<_TextField> {
   @override
   void dispose() {
     _focus.removeListener(_onFocusChange);
-    _focus.dispose();
+    _ownFocus?.dispose();
     _controller.dispose();
     super.dispose();
   }

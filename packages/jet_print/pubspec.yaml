@@ -26,6 +26,14 @@ dependencies:
   # shadcn_ui constraint below was written by `flutter pub add` so it records the
   # real resolved range (not a placeholder), satisfying FR-012.
   shadcn_ui: ^0.54.0
+  # Export slice (spec 012): `pdf` generates the PDF artifact (pure Dart — the
+  # rendering seam stays Flutter-free); `printing` presents the system print
+  # dialog (confined to lib/src/print/ behind a swappable presenter seam);
+  # `image` decodes raster bytes to RGBA for PDF embedding (already transitive
+  # via pdf, declared direct because we import it). All permissively licensed.
+  pdf: ^3.12.0
+  printing: ^5.14.3
+  image: ^4.3.0
 
 dev_dependencies:
   flutter_test:
