@@ -83,6 +83,7 @@ class JetReportDesignerController extends ChangeNotifier {
   /// Replaces the whole design with [template], clearing history and re-seeding
   /// id assignment past the largest existing suffix (FR-004).
   void open(ReportTemplate template) {
+    _pendingPropertiesFocus = false; // stale intent from the prior document
     _document =
         DesignerDocument(template: template, selection: Selection.empty);
     _history.clear();
@@ -120,7 +121,7 @@ class JetReportDesignerController extends ChangeNotifier {
 
   // --- Properties-focus intent -----------------------------------------------
   // An ephemeral UI signal, not model state: never serialized, never a history
-  // entry, untouched by undo/redo/open.
+  // entry, untouched by undo/redo; cleared by [open] (a request must not outlive its document).
 
   bool _pendingPropertiesFocus = false;
 

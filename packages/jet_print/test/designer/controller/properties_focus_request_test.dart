@@ -44,4 +44,14 @@ void main() {
     expect(notifications, 2);
     expect(c.pendingPropertiesFocus, isTrue);
   });
+
+  test('open() clears a pending request — it must not outlive its document', () {
+    final JetReportDesignerController c = JetReportDesignerController();
+    addTearDown(c.dispose);
+
+    c.requestPropertiesFocus();
+    c.open(c.template);
+    expect(c.pendingPropertiesFocus, isFalse);
+    expect(c.takePropertiesFocus(), isFalse);
+  });
 }
