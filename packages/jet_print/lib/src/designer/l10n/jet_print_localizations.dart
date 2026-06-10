@@ -617,6 +617,12 @@ abstract class JetPrintLocalizations {
   /// **'Resize band height'**
   String get resizeBandHandle;
 
+  /// Tooltip + accessible name of the report preview's back button, which returns to wherever the preview was opened from (the designer).
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get previewBack;
+
   /// Tooltip + accessible name of the report preview's previous-page navigation button.
   ///
   /// In en, this message translates to:

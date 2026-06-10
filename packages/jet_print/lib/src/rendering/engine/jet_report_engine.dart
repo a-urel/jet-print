@@ -72,6 +72,7 @@ class JetReportEngine {
       () => ReportLayouter().layoutLazy(template, fill.report),
     );
     return RenderedReport(
+      title: template.name,
       pageCount: lazy.pageCount,
       // Lazy builds run later, outside render()'s scope — re-enter the render
       // locale per build so formatting in page chrome stays deterministic.

@@ -273,6 +273,9 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get resizeBandHandle => 'Bant yüksekliğini değiştir';
 
   @override
+  String get previewBack => 'Geri';
+
+  @override
   String get previewPreviousPage => 'Önceki sayfa';
 
   @override

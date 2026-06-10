@@ -125,12 +125,16 @@ RenderedReport renderInvoice({JetDataSource? source}) =>
     );
 
 /// The on-screen preview of the rendered invoice — prev/next navigation,
-/// "page X of N", fit-to-width.
+/// "page X of N", zoom, and (when [onBack] is given) a back button.
 class RenderedInvoiceExample extends StatelessWidget {
-  /// Creates the rendered-invoice preview example.
-  const RenderedInvoiceExample({super.key});
+  /// Creates the rendered-invoice preview example; [onBack] backs the
+  /// preview toolbar's back button.
+  const RenderedInvoiceExample({super.key, this.onBack});
+
+  /// Invoked by the preview's back button (e.g. to return to the designer).
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) =>
-      JetReportPreview(report: renderInvoice());
+      JetReportPreview(report: renderInvoice(), onBack: onBack);
 }

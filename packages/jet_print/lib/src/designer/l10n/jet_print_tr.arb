@@ -101,6 +101,7 @@
   "resizeHandleLeft": "Boyutlandır, sol kenar",
   "resizeBandHandle": "Bant yüksekliğini değiştir",
 
+  "previewBack": "Geri",
   "previewPreviousPage": "Önceki sayfa",
   "previewNextPage": "Sonraki sayfa",
   "previewPageIndicator": "Sayfa {current} / {total}",

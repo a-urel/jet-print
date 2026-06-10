@@ -25,10 +25,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     frame construction with caching (the first page renders without
     materializing the rest), and merged ordered `diagnostics`. Structured so
     a future export slice consumes it without rework.
-  - `JetReportPreview` — a read-only, fit-to-width paginated viewer: bounded
-    prev/next + arrow-key navigation, a localized "page X of N" indicator
-    (en/de/tr with English fallback), accessible names; pages paint through
-    the same `paintFrame`/`CanvasPainter` pipeline as the designer surface.
+  - `JetReportPreview` — a read-only paginated viewer with a top toolbar
+    styled to match the designer: the report name as the title, bounded
+    prev/next + arrow-key navigation with a localized "page X of N" indicator
+    (en/de/tr with English fallback), a zoom group (out / tap-% to fit / in;
+    the page scrolls when zoomed past fit-to-width), and an optional back
+    button (`onBack`). Pages paint through the same `paintFrame`/`CanvasPainter`
+    pipeline as the designer surface. `RenderedReport` carries the source
+    template's name as `title` for the toolbar.
   - `JetReportDesigner(onPreviewRequested:)` — the top bar's **Preview**
     action is now wired to this host callback (receiving the live template),
     mirroring `onSaveRequested`/`onOpenRequested`; it renders disabled when

@@ -368,6 +368,10 @@
     "description": "Accessible name for the band height resize handle."
   },
 
+  "previewBack": "Back",
+  "@previewBack": {
+    "description": "Tooltip + accessible name of the report preview's back button, which returns to wherever the preview was opened from (the designer)."
+  },
   "previewPreviousPage": "Previous page",
   "@previewPreviousPage": {
     "description": "Tooltip + accessible name of the report preview's previous-page navigation button."

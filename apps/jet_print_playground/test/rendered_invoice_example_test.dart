@@ -63,8 +63,8 @@ void main() {
     await tester.pumpAndSettle();
 
     // The designer's top-bar Preview action opens the rendered-invoice example.
-    await tester.tap(
-        find.byKey(const ValueKey<String>('jet_print.designer.action.preview')));
+    await tester.tap(find
+        .byKey(const ValueKey<String>('jet_print.designer.action.preview')));
     await tester.pumpAndSettle();
 
     expect(find.byType(RenderedInvoiceExample), findsOneWidget);
@@ -72,9 +72,9 @@ void main() {
     // The one-invoice sample fits a single A4 page; navigation is bounded.
     expect(find.text('Page 1 of 1'), findsOneWidget);
 
-    // Back returns to the designer.
+    // The preview toolbar's back button returns to the designer.
     await tester
-        .tap(find.byKey(const ValueKey<String>('playground.preview.back')));
+        .tap(find.byKey(const ValueKey<String>('jet_print.preview.back')));
     await tester.pumpAndSettle();
     expect(find.byType(JetReportDesigner), findsOneWidget);
   });

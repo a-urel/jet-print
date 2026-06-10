@@ -21,7 +21,7 @@ const Key _nextKey = ValueKey<String>('jet_print.preview.next');
 const Key _pageKey = ValueKey<String>('jet_print.preview.page');
 
 ReportTemplate _template() => const ReportTemplate(
-      name: 'preview',
+      name: 'Quarterly Report',
       page: _page,
       bands: <ReportBand>[
         ReportBand(
@@ -47,11 +47,17 @@ RenderedReport _report() => const JetReportEngine().render(
       ]),
     );
 
+const Key _backKey = ValueKey<String>('jet_print.preview.back');
+const Key _zoomInKey = ValueKey<String>('jet_print.preview.zoomIn');
+const Key _zoomOutKey = ValueKey<String>('jet_print.preview.zoomOut');
+const Key _zoomLevelKey = ValueKey<String>('jet_print.preview.zoomLevel');
+
 Future<void> _pumpPreview(
   WidgetTester tester, {
   RenderedReport? report,
   int initialPage = 0,
   Size size = const Size(800, 600),
+  VoidCallback? onBack,
 }) async {
   await tester.binding.setSurfaceSize(size);
   addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -60,8 +66,11 @@ Future<void> _pumpPreview(
       JetPrintLocalizations.delegate,
     ],
     supportedLocales: JetPrintLocalizations.supportedLocales,
-    home:
-        JetReportPreview(report: report ?? _report(), initialPage: initialPage),
+    home: JetReportPreview(
+      report: report ?? _report(),
+      initialPage: initialPage,
+      onBack: onBack,
+    ),
   ));
   await tester.pumpAndSettle();
 }
@@ -70,8 +79,8 @@ void main() {
   testWidgets('shows the first page with a correct "page X of N" indicator',
       (WidgetTester tester) async {
     await _pumpPreview(tester);
-    // The top toolbar carries a "Preview" title beside the navigation group.
-    expect(find.text('Preview'), findsOneWidget);
+    // The top toolbar titles itself with the report's name.
+    expect(find.text('Quarterly Report'), findsOneWidget);
     expect(find.text('Page 1 of 3'), findsOneWidget);
     expect(find.byKey(_pageKey), findsOneWidget);
     expect(
@@ -166,5 +175,91 @@ void main() {
         tester.widget<ShadIconButton>(find.byKey(_prevKey)).onPressed, isNull);
     expect(
         tester.widget<ShadIconButton>(find.byKey(_nextKey)).onPressed, isNull);
+  });
+
+  testWidgets('an unnamed report falls back to the localized "Preview" title',
+      (WidgetTester tester) async {
+    final RenderedReport report = const JetReportEngine().render(
+      const ReportTemplate(name: '', page: _page, bands: <ReportBand>[
+        ReportBand(type: BandType.detail, height: 30),
+      ]),
+      JetInMemoryDataSource(<Map<String, Object?>>[<String, Object?>{}]),
+    );
+    await _pumpPreview(tester, report: report);
+    expect(find.text('Preview'), findsOneWidget);
+  });
+
+  group('back button (FR-018)', () {
+    testWidgets('absent unless onBack is wired', (WidgetTester tester) async {
+      await _pumpPreview(tester);
+      expect(find.byKey(_backKey), findsNothing);
+    });
+
+    testWidgets('shown and invokes onBack when wired; carries its name',
+        (WidgetTester tester) async {
+      int taps = 0;
+      await _pumpPreview(tester, onBack: () => taps++);
+      expect(find.byKey(_backKey), findsOneWidget);
+      expect(find.bySemanticsLabel('Back'), findsOneWidget);
+      await tester.tap(find.byKey(_backKey));
+      await tester.pumpAndSettle();
+      expect(taps, 1);
+    });
+  });
+
+  group('zoom (fit-to-width multiplier)', () {
+    String level(WidgetTester tester) =>
+        tester.widget<Text>(find.byKey(_zoomLevelKey)).data!;
+
+    testWidgets('opens at 100% (fit to width)', (WidgetTester tester) async {
+      await _pumpPreview(tester);
+      expect(level(tester), '100%');
+    });
+
+    testWidgets('zoom in enlarges the page and updates the indicator',
+        (WidgetTester tester) async {
+      await _pumpPreview(tester, size: const Size(800, 600));
+      final double fitWidth = tester.getSize(find.byKey(_pageKey)).width;
+      await tester.tap(find.byKey(_zoomInKey));
+      await tester.pumpAndSettle();
+      expect(level(tester), '125%');
+      expect(tester.getSize(find.byKey(_pageKey)).width, greaterThan(fitWidth));
+    });
+
+    testWidgets('zoom out shrinks the page below fit',
+        (WidgetTester tester) async {
+      await _pumpPreview(tester, size: const Size(800, 600));
+      final double fitWidth = tester.getSize(find.byKey(_pageKey)).width;
+      await tester.tap(find.byKey(_zoomOutKey));
+      await tester.pumpAndSettle();
+      expect(tester.getSize(find.byKey(_pageKey)).width, lessThan(fitWidth));
+    });
+
+    testWidgets('tapping the indicator resets to fit (100%)',
+        (WidgetTester tester) async {
+      await _pumpPreview(tester);
+      await tester.tap(find.byKey(_zoomInKey));
+      await tester.tap(find.byKey(_zoomInKey));
+      await tester.pumpAndSettle();
+      expect(level(tester), isNot('100%'));
+      await tester.tap(find.byKey(_zoomLevelKey));
+      await tester.pumpAndSettle();
+      expect(level(tester), '100%');
+    });
+
+    testWidgets('zoom is bounded: zoom-out disables at the minimum',
+        (WidgetTester tester) async {
+      await _pumpPreview(tester);
+      // 1.0 / 1.25^n reaches the 0.25 floor after enough steps.
+      for (int i = 0; i < 12; i++) {
+        final ShadIconButton out =
+            tester.widget<ShadIconButton>(find.byKey(_zoomOutKey));
+        if (out.onPressed == null) break;
+        await tester.tap(find.byKey(_zoomOutKey));
+        await tester.pumpAndSettle();
+      }
+      expect(tester.widget<ShadIconButton>(find.byKey(_zoomOutKey)).onPressed,
+          isNull);
+    });
   });
 }

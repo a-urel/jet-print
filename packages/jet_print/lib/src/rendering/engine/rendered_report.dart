@@ -36,16 +36,22 @@ class RenderedPage {
 class RenderedReport {
   /// Creates a rendered report over [pageCount] pages whose frames are
   /// produced on demand by [buildFrame], surfacing the diagnostics of
-  /// [diagnosticsSources] merged in order.
+  /// [diagnosticsSources] merged in order. [title] carries the source
+  /// template's name (for display, e.g. the preview toolbar); it defaults to
+  /// empty.
   RenderedReport({
     required this.pageCount,
     required PageFrame Function(int index) buildFrame,
     required List<ReportDiagnostics> diagnosticsSources,
+    this.title = '',
   })  : _buildFrame = buildFrame,
         _sources = List<ReportDiagnostics>.unmodifiable(diagnosticsSources);
 
   /// The total number of pages, exact from the moment of rendering.
   final int pageCount;
+
+  /// The rendered template's name, for display (may be empty).
+  final String title;
 
   final PageFrame Function(int index) _buildFrame;
   final List<ReportDiagnostics> _sources;

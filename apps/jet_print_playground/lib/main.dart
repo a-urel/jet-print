@@ -206,25 +206,13 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
   }
 }
 
-/// Hosts [RenderedInvoiceExample] with a Back affordance over the preview.
+/// Hosts [RenderedInvoiceExample]; the preview toolbar's own back button
+/// returns to the designer.
 class _RenderedInvoicePreviewPage extends StatelessWidget {
   const _RenderedInvoicePreviewPage();
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: <Widget>[
-        const Positioned.fill(child: RenderedInvoiceExample()),
-        Positioned(
-          left: 16,
-          bottom: 16,
-          child: ShadButton.outline(
-            key: const ValueKey<String>('playground.preview.back'),
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Back'),
-          ),
-        ),
-      ],
-    );
+    return RenderedInvoiceExample(onBack: () => Navigator.of(context).pop());
   }
 }

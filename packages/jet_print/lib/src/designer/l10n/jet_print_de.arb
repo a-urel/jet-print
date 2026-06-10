@@ -101,6 +101,7 @@
   "resizeHandleLeft": "Größe ändern, linke Kante",
   "resizeBandHandle": "Bandhöhe ändern",
 
+  "previewBack": "Zurück",
   "previewPreviousPage": "Vorherige Seite",
   "previewNextPage": "Nächste Seite",
   "previewPageIndicator": "Seite {current} von {total}",
