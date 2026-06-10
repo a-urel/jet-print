@@ -105,5 +105,12 @@ Future<bool> _systemPrintDialog(
     onLayout: (_) async => pdfBytes,
     name: jobName,
     format: PdfPageFormat(pageWidthPt, pageHeightPt),
+    // NEVER dynamic: the plugin's macOS dynamic mode blocks the main thread
+    // on a semaphore inside the print operation while waiting for a Dart
+    // reply that can only be delivered on that same thread — the app
+    // freezes before the dialog opens. We have nothing to re-layout anyway:
+    // the exported bytes ARE the artifact whatever paper the dialog picks
+    // (contract B6); pinned by default_presenter_channel_test.dart.
+    dynamicLayout: false,
   );
 }
