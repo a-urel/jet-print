@@ -103,6 +103,7 @@ apps/jet_print_playground/
 packages/jet_print/test/                 # TDD — tests precede implementation
 ├── rendering/engine/
 │   ├── jet_report_engine_test.dart              # NEW: facade fill→layout, params, deterministic output
+│   ├── render_us1_e2e_test.dart                 # NEW: US1 end-to-end via public API (values, page count, nav)
 │   ├── lazy_pagination_test.dart                # NEW: first page without all pages; page-on-demand; PAGE_COUNT
 │   ├── render_locale_test.dart                  # NEW: explicit locale formatting (FR-012a)
 │   └── render_diagnostics_test.dart             # NEW: malformed-input diagnostics, non-crashing (SC-007)
