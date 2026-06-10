@@ -1,0 +1,48 @@
+/// The playground's rendered-invoice example (011 — FR-019 / SC-008): supply
+/// real data for the bound invoice template, render it through the public
+/// engine, and show the paginated preview. The whole integration — data
+/// source + render + preview — is the < 30 lines inside [invoiceDataSource],
+/// [renderInvoice], and [RenderedInvoiceExample.build], all through
+/// `package:jet_print/jet_print.dart` only.
+library;
+
+import 'package:flutter/widgets.dart';
+import 'package:jet_print/jet_print.dart';
+
+import 'invoice_sample.dart';
+
+/// One invoice record with a nested `lines` collection (master/detail),
+/// matching [invoiceSchema]. Use `JetJsonDataSource` for a JSON payload or
+/// `JetObjectDataSource<T>` for domain objects — identical output (SC-006).
+JetDataSource invoiceDataSource() => JetInMemoryDataSource(<Map<String, Object?>>[
+      <String, Object?>{
+        'invoiceNo': 'INV-1042',
+        'customerName': 'Acme GmbH',
+        'date': DateTime(2026, 5, 12),
+        'total': 32.0,
+        'lines': <Map<String, Object?>>[
+          <String, Object?>{'description': 'Widget', 'qty': 3, 'unitPrice': 4.5, 'lineTotal': 13.5},
+          <String, Object?>{'description': 'Gadget', 'qty': 1, 'unitPrice': 12.0, 'lineTotal': 12.0},
+          <String, Object?>{'description': 'Sprocket', 'qty': 2, 'unitPrice': 3.25, 'lineTotal': 6.5},
+        ],
+      },
+    ]);
+
+/// Renders the bound invoice template with the sample data: line items
+/// iterate, master fields fill, and the first page is viewable without
+/// materializing the rest (FR-021).
+RenderedReport renderInvoice() => const JetReportEngine().render(
+      invoiceSampleTemplate(),
+      invoiceDataSource(),
+      options: const RenderOptions(locale: Locale('en')),
+    );
+
+/// The on-screen preview of the rendered invoice — prev/next navigation,
+/// "page X of N", fit-to-width.
+class RenderedInvoiceExample extends StatelessWidget {
+  /// Creates the rendered-invoice preview example.
+  const RenderedInvoiceExample({super.key});
+
+  @override
+  Widget build(BuildContext context) => JetReportPreview(report: renderInvoice());
+}

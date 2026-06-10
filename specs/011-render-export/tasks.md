@@ -85,15 +85,15 @@ description: "Task list for Render Report — Data-Filled Paginated Preview (Jet
 
 ### Tests for User Story 2 (write FIRST, ensure they FAIL)
 
-- [ ] T020 [P] [US2] Add master/detail + aggregate cases to `packages/jet_print/test/rendering/engine/jet_report_engine_test.dart` (contract C2): a collection-bound band repeats once per child record at arbitrary nesting depth with child-field values resolved; a sum variable computes at its reset scope (group + grand total); the invoice total equals the exact sum of line amounts; group header/footer render at key boundaries
-- [ ] T021 [P] [US2] Write `packages/jet_print/test/goldens/rendered_invoice_test.dart` (contracts C2/C6 / SC-003): the data-filled invoice, paginated, in light and dark themes, rendered through the shared pipeline (closes the 009 data-filled-invoice golden deferral)
+- [X] T020 [P] [US2] Add master/detail + aggregate cases to `packages/jet_print/test/rendering/engine/jet_report_engine_test.dart` (contract C2): a collection-bound band repeats once per child record at arbitrary nesting depth with child-field values resolved; a sum variable computes at its reset scope (group + grand total); the invoice total equals the exact sum of line amounts; group header/footer render at key boundaries
+- [X] T021 [P] [US2] Write `packages/jet_print/test/goldens/rendered_invoice_test.dart` (contracts C2/C6 / SC-003): the data-filled invoice, paginated, in light and dark themes, rendered through the shared pipeline (closes the 009 data-filled-invoice golden deferral)
 
 ### Implementation for User Story 2
 
-- [ ] T022 [P] [US2] Create `apps/jet_print_playground/lib/rendered_invoice_example.dart`: build a `JetInMemoryDataSource` invoice (master + nested line-item collection) for the existing `invoice_sample.dart` template, render via `JetReportEngine`, and show `JetReportPreview` — the runnable < 30-line example (FR-019 / SC-008)
-- [ ] T023 [US2] Add a "Preview" path to `apps/jet_print_playground/lib/main.dart` that opens the rendered-invoice example
-- [ ] T024 [US2] Write `apps/jet_print_playground/test/rendered_invoice_example_test.dart`: the example renders + previews the invoice end-to-end (line items appear once, total = sum, navigable preview)
-- [ ] T025 [US2] Generate and commit the invoice golden images (light + dark) referenced by T021 (depends on T021, T022)
+- [X] T022 [P] [US2] Create `apps/jet_print_playground/lib/rendered_invoice_example.dart`: build a `JetInMemoryDataSource` invoice (master + nested line-item collection) for the existing `invoice_sample.dart` template, render via `JetReportEngine`, and show `JetReportPreview` — the runnable < 30-line example (FR-019 / SC-008)
+- [X] T023 [US2] Add a "Preview" path to `apps/jet_print_playground/lib/main.dart` that opens the rendered-invoice example
+- [X] T024 [US2] Write `apps/jet_print_playground/test/rendered_invoice_example_test.dart`: the example renders + previews the invoice end-to-end (line items appear once, total = sum, navigable preview)
+- [X] T025 [US2] Generate and commit the invoice golden images (light + dark) referenced by T021 (depends on T021, T022)
 
 **Checkpoint**: The headline invoice scenario renders correct master/detail + aggregates, with a committed data-filled golden and a runnable playground example.
 

@@ -10,6 +10,10 @@ import 'row_cursor_data_set.dart';
 ///
 /// Because `T` is opaque, the caller supplies both an explicit typed [fields]
 /// schema and a [row] extractor that maps one object to a field-value map.
+/// For master/detail, the extractor returns the child rows as a `List` of
+/// maps under the collection field's name (declared as a
+/// [JetFieldType.collection] `FieldDef` with child fields). The same logical
+/// dataset renders identically through every public source (SC-006).
 /// Mapping is lazy: [row] runs per object during iteration, not eagerly at
 /// construction. [open] ignores its `params`.
 class JetObjectDataSource<T> implements JetDataSource {

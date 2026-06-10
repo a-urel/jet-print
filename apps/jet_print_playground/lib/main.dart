@@ -8,6 +8,7 @@ import 'package:jet_print/jet_print.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'invoice_sample.dart';
+import 'rendered_invoice_example.dart';
 
 void main() {
   // Fail fast on unsupported platforms so a wrong target surfaces a clear
@@ -155,6 +156,16 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
     _controller.open(JetReportFormat.decodeJson(contents));
   }
 
+  /// Preview path (011): open the rendered-invoice example — the invoice
+  /// template filled with real data, shown in the paginated preview.
+  void _openPreview() {
+    Navigator.of(context).push(PageRouteBuilder<void>(
+      pageBuilder: (BuildContext context, Animation<double> _,
+              Animation<double> __) =>
+          const _RenderedInvoicePreviewPage(),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -175,6 +186,12 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
+                ShadButton(
+                  key: const ValueKey<String>('playground.preview'),
+                  onPressed: _openPreview,
+                  child: const Text('Preview'),
+                ),
+                const SizedBox(width: 8),
                 ShadButton.ghost(
                   onPressed: widget.onToggleTheme,
                   child: Text(widget.isDark ? 'Light' : 'Dark'),
@@ -186,6 +203,29 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
                 ),
               ],
             ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Hosts [RenderedInvoiceExample] with a Back affordance over the preview.
+class _RenderedInvoicePreviewPage extends StatelessWidget {
+  const _RenderedInvoicePreviewPage();
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: <Widget>[
+        const Positioned.fill(child: RenderedInvoiceExample()),
+        Positioned(
+          left: 16,
+          bottom: 16,
+          child: ShadButton.outline(
+            key: const ValueKey<String>('playground.preview.back'),
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Back'),
           ),
         ),
       ],
