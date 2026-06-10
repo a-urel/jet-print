@@ -115,6 +115,7 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
   void didUpdateWidget(JetReportDesigner oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.controller != oldWidget.controller) {
+      _controller.removeListener(_handlePropertiesFocusRequest);
       if (_ownsController) _controller.dispose();
       _adoptController();
     }
@@ -128,10 +129,12 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
       _controller = JetReportDesignerController(template: widget.initialReport);
       _ownsController = true;
     }
+    _controller.addListener(_handlePropertiesFocusRequest);
   }
 
   @override
   void dispose() {
+    _controller.removeListener(_handlePropertiesFocusRequest);
     if (_ownsController) _controller.dispose();
     super.dispose();
   }
@@ -158,6 +161,20 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
 
   /// Whether the collapsed right panel is currently expanded as an overlay.
   bool _rightOpen = false;
+
+  /// Whether the last laid-out main area was the wide (≥ breakpoint) variant;
+  /// written during build, read by [_handlePropertiesFocusRequest] so a focus
+  /// request only opens the overlay when the panel is actually collapsed.
+  bool _lastLayoutWide = true;
+
+  /// Opens the collapsed narrow-layout overlay when a Properties-focus request
+  /// arrives, so the panel that must consume it can mount. Peeks only — the
+  /// Properties panel consumes the request.
+  void _handlePropertiesFocusRequest() {
+    if (_lastLayoutWide || _rightOpen) return;
+    if (!_controller.pendingPropertiesFocus) return;
+    setState(() => _rightOpen = true);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -215,6 +232,7 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
             child: LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
                 final bool wide = constraints.maxWidth >= _breakpoint;
+                _lastLayoutWide = wide;
                 return Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[

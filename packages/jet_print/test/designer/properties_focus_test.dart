@@ -31,4 +31,25 @@ void main() {
     expect(_xField, findsOneWidget);
     expect(_textField, findsOneWidget);
   });
+
+  testWidgets(
+      'narrow layout: a focus request opens the overlay on the Properties tab',
+      (WidgetTester tester) async {
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester, size: kNarrowSize);
+    controller.createElement(DesignerToolType.text,
+        bandIndex: 1, at: const JetOffset(20, 20));
+    await tester.pumpAndSettle();
+
+    // Collapsed: the right panel is not in the tree at all, only its rail.
+    expect(find.byKey(kRightPanelKey), findsNothing);
+    expect(find.byKey(kRightPanelRailKey), findsOneWidget);
+
+    controller.requestPropertiesFocus();
+    await tester.pumpAndSettle();
+
+    // The overlay opened and mounted straight onto the Properties tab.
+    expect(find.byKey(kRightPanelKey), findsOneWidget);
+    expect(_xField, findsOneWidget);
+  });
 }
