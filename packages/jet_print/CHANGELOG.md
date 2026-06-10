@@ -8,6 +8,40 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Export & print — PDF, PNG, and the system print dialog (spec
+  012-export-support).** The same `RenderedReport` the preview displays now
+  turns into shareable artifacts; one render feeds every target. New public
+  surface from the single entry point:
+  - `JetReportExporter` — stateless `const` facade. `toPdf(report)` returns
+    in-memory PDF bytes: every page in order at the template's true physical
+    size (PostScript points), real selectable/searchable text placed at the
+    pre-measured baselines with the measuring fonts embedded, and images at
+    the preview's `computeImageFit` geometry. Byte-deterministic: identical
+    rendered inputs produce byte-identical files (fixed document ID, no
+    timestamp metadata). `pageToPng(report, i, {scale})` rasterizes one page
+    through the preview's own paint path at exactly
+    `round(page × scale)` pixels; out-of-range pages throw `RangeError`,
+    non-positive scales throw `ArgumentError`.
+  - `JetReportPrinter` — `printReport(report, {jobName})` exports the PDF
+    and presents the operating system's print dialog at the template's true
+    page size (the one sanctioned exception to the library's headlessness).
+    Returns `false` on user cancellation (not an error); throws
+    `PrintUnavailableException` where the platform cannot print. The dialog
+    sits behind the injectable `PrintDialogPresenter` seam, so hosts and
+    tests can substitute it without platform channels.
+  - `JetReportPreview` gains optional `onExportPdf` / `onPrint` callbacks:
+    each non-null callback adds a localized (en/de/tr), keyboard-operable
+    toolbar action; with both null the widget is unchanged from 011. The
+    library only invokes the callback — saving/sharing stays host code.
+  - Content problems (empty dataset, unresolved image, failed expression)
+    never fail an export: artifacts show the same fallbacks as the preview,
+    with `report.diagnostics` untouched.
+  - New dependencies: `pdf` (pure-Dart PDF generation), `printing` (system
+    print dialog; confined to the print seam), `image` (raster decoding for
+    PDF embedding). The playground demonstrates save-as-PDF (`file_selector`)
+    and print end-to-end from the preview toolbar; sandboxed macOS hosts
+    need the `com.apple.security.print` entitlement to print.
+
 - **Render engine — data-filled paginated preview (spec 011-render-export).**
   A host hands a designed template plus actual data to a public engine facade
   and gets a lazily-paginated, WYSIWYG, on-screen preview. New public surface

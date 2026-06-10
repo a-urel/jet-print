@@ -37,6 +37,10 @@ import '../l10n/jet_print_localizations.dart';
 ///   ([onBack]) sits on the leading edge, with the zoom and page-navigation
 ///   groups on the trailing edge. Chrome is localized (en/de/tr with English
 ///   fallback) and keyboard/accessible-name operable (FR-017/FR-018).
+/// * **Export & print** (012) — optional [onExportPdf]/[onPrint] callbacks
+///   each add a localized toolbar action; with both null the toolbar is
+///   exactly the 011 widget. The library invokes the callback and nothing
+///   else — what export/print means belongs to the host (FR-015).
 /// * **Navigation** — previous/next buttons and the left/right arrow keys move
 ///   one page at a time, bounded at the first/last page; a localized
 ///   "page X of N" indicator sits between them.
