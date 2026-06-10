@@ -122,12 +122,16 @@ class Invoice {
   final List<Map<String, Object?>> lines;
 }
 
-/// Renders the bound invoice template with [source] (defaults to the
-/// in-memory sample): line items iterate, master fields fill, and the first
-/// page is viewable without materializing the rest (FR-021).
-RenderedReport renderInvoice({JetDataSource? source}) =>
+/// Renders [template] (defaults to the bundled invoice sample design) with
+/// [source] (defaults to the in-memory sample data): line items iterate,
+/// master fields fill, and the first page is viewable without materializing
+/// the rest (FR-021).
+RenderedReport renderInvoice({
+  JetDataSource? source,
+  ReportTemplate? template,
+}) =>
     const JetReportEngine().render(
-      invoiceSampleTemplate(),
+      template ?? invoiceSampleTemplate(),
       source ?? invoiceDataSource(),
       options: const RenderOptions(locale: Locale('en')),
     );
@@ -137,11 +141,17 @@ RenderedReport renderInvoice({JetDataSource? source}) =>
 /// export/print toolbar actions wired to the SAME single render.
 class RenderedInvoiceExample extends StatefulWidget {
   /// Creates the rendered-invoice preview example; [onBack] backs the
-  /// preview toolbar's back button.
-  const RenderedInvoiceExample({super.key, this.onBack});
+  /// preview toolbar's back button. Pass the designer's LIVE [template] so
+  /// design edits show up in the preview; null falls back to the bundled
+  /// invoice sample.
+  const RenderedInvoiceExample({super.key, this.onBack, this.template});
 
   /// Invoked by the preview's back button (e.g. to return to the designer).
   final VoidCallback? onBack;
+
+  /// The design to render against the sample invoice data (null = the
+  /// bundled sample design).
+  final ReportTemplate? template;
 
   @override
   State<RenderedInvoiceExample> createState() => _RenderedInvoiceExampleState();
@@ -150,7 +160,7 @@ class RenderedInvoiceExample extends StatefulWidget {
 class _RenderedInvoiceExampleState extends State<RenderedInvoiceExample> {
   /// Rendered ONCE: this single report feeds the preview, the PDF export,
   /// and the print job (FR-001) — no re-render per artifact.
-  late final RenderedReport _report = renderInvoice();
+  late final RenderedReport _report = renderInvoice(template: widget.template);
 
   /// Export = save the in-memory PDF bytes wherever the user picks
   /// (host-owned I/O; the library stays headless).

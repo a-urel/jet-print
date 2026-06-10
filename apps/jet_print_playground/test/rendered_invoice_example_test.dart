@@ -7,8 +7,10 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
+import 'package:jet_print_playground/invoice_sample.dart';
 import 'package:jet_print_playground/main.dart';
 import 'package:jet_print_playground/rendered_invoice_example.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 
 void main() {
   test('the example renders the invoice without any diagnostic', () {
@@ -86,6 +88,28 @@ void main() {
         .tap(find.byKey(const ValueKey<String>('jet_print.preview.back')));
     await tester.pumpAndSettle();
     expect(find.byType(JetReportDesigner), findsOneWidget);
+  });
+
+  testWidgets(
+      'the preview renders the LIVE template the designer hands over — '
+      'design edits show up in the preview', (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(900, 700));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    // Stand-in for a user edit in the designer: the live template differs
+    // from the canned sample (here: its name, which titles the preview bar).
+    final ReportTemplate edited =
+        invoiceSampleTemplate().copyWith(name: 'Edited In Designer');
+    await tester.pumpWidget(ShadApp(
+      localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+        JetPrintLocalizations.delegate,
+      ],
+      supportedLocales: JetPrintLocalizations.supportedLocales,
+      home: RenderedInvoiceExample(template: edited),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Edited In Designer'), findsOneWidget,
+        reason: 'the preview must show the template it was handed, not the '
+            'canned invoice sample');
   });
 
   testWidgets(

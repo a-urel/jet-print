@@ -158,11 +158,11 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
 
   /// Preview path (011): open the rendered-invoice example — the invoice
   /// template filled with real data, shown in the paginated preview.
-  void _openPreview() {
+  void _openPreview(ReportTemplate template) {
     Navigator.of(context).push(PageRouteBuilder<void>(
       pageBuilder:
           (BuildContext context, Animation<double> _, Animation<double> __) =>
-              const _RenderedInvoicePreviewPage(),
+              _RenderedInvoicePreviewPage(template: template),
     ));
   }
 
@@ -176,8 +176,9 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
             dataSchema: invoiceSchema,
             onSaveRequested: _save,
             onOpenRequested: _open,
-            // The designer's top-bar Preview action opens the rendered preview.
-            onPreviewRequested: (ReportTemplate _) => _openPreview(),
+            // The designer's top-bar Preview action opens the rendered
+            // preview of the LIVE template, so edits show up immediately.
+            onPreviewRequested: _openPreview,
           ),
         ),
         Positioned(
@@ -206,13 +207,18 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
   }
 }
 
-/// Hosts [RenderedInvoiceExample]; the preview toolbar's own back button
-/// returns to the designer.
+/// Hosts [RenderedInvoiceExample] over the designer's live [template]; the
+/// preview toolbar's own back button returns to the designer.
 class _RenderedInvoicePreviewPage extends StatelessWidget {
-  const _RenderedInvoicePreviewPage();
+  const _RenderedInvoicePreviewPage({required this.template});
+
+  final ReportTemplate template;
 
   @override
   Widget build(BuildContext context) {
-    return RenderedInvoiceExample(onBack: () => Navigator.of(context).pop());
+    return RenderedInvoiceExample(
+      template: template,
+      onBack: () => Navigator.of(context).pop(),
+    );
   }
 }
