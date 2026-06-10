@@ -17,12 +17,20 @@
 /// `contracts/designer-layout-api.md` for the authoritative contract.
 library;
 
-// --- Data-source structure for binding (009): the host describes its data
+// --- Data-source API (009 structure + 011 data): the host describes its data
 // source's structure as a [JetDataSchema] of [FieldDef]s (a field may be a
-// nested [JetFieldType.collection]) and attaches it to the designer. Tokens
-// only this iteration — the data-bearing source/cursor stays internal. ---
+// nested [JetFieldType.collection]) and, since 011, supplies actual records
+// through a [JetDataSource] (in-memory, JSON, or object-backed) whose
+// [DataSet] cursor yields [DataRow]s — including nested collections for
+// master/detail. ---
+export 'src/data/data_row.dart' show DataRow;
 export 'src/data/data_schema.dart' show JetDataSchema;
+export 'src/data/data_set.dart' show DataSet;
 export 'src/data/field_def.dart' show FieldDef;
+export 'src/data/in_memory_data_source.dart' show JetInMemoryDataSource;
+export 'src/data/jet_data_source.dart' show JetDataSource;
+export 'src/data/json_data_source.dart' show JetJsonDataSource;
+export 'src/data/object_data_source.dart' show JetObjectDataSource;
 // --- Interactive editing seam (003): the controller + its public vocabulary. ---
 export 'src/designer/canvas/design_tunables.dart' show DesignerToolType;
 export 'src/designer/canvas/resize_handle.dart' show ResizeHandle;
@@ -71,4 +79,13 @@ export 'src/domain/styles/text_style.dart'
     show JetFontWeight, JetTextAlign, JetTextStyle;
 export 'src/domain/unknown_element.dart' show UnknownElement;
 export 'src/domain/value_type.dart' show JetFieldType;
+// --- Render engine (011): fill a designed template with real data, paginate
+// lazily, and surface structured render diagnostics. The preview widget
+// consumes the resulting [RenderedReport]. ---
+export 'src/rendering/engine/jet_report_engine.dart' show JetReportEngine;
+export 'src/rendering/engine/render_options.dart' show RenderOptions;
+export 'src/rendering/engine/rendered_report.dart'
+    show RenderedPage, RenderedReport;
+export 'src/rendering/fill/report_diagnostics.dart'
+    show Diagnostic, DiagnosticSeverity, ReportDiagnostics;
 export 'src/version.dart' show jetPrintVersion;

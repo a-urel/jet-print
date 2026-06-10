@@ -32,6 +32,10 @@ class ReportDiagnostics {
   /// The collected diagnostics in insertion order (unmodifiable view).
   List<Diagnostic> get entries => List<Diagnostic>.unmodifiable(_entries);
 
+  /// Appends an already-constructed [diagnostic] — e.g. when merging several
+  /// passes' diagnostics into one ordered collection (011).
+  void add(Diagnostic diagnostic) => _entries.add(diagnostic);
+
   /// Records an informational diagnostic.
   void info(String message, {String? elementId}) => _entries
       .add(Diagnostic(DiagnosticSeverity.info, message, elementId: elementId));
