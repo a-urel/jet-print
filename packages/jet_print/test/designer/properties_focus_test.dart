@@ -12,6 +12,14 @@ final Finder _xField =
 final Finder _textField = find.byKey(
     const ValueKey<String>('jet_print.designer.properties.field.text'));
 
+/// Whether the inspector input under [field] holds keyboard focus. ShadInput
+/// hosts an EditableText; its focus node reflects where typing goes.
+bool _hasFocus(WidgetTester tester, Finder field) {
+  final EditableText editable = tester.widget<EditableText>(
+      find.descendant(of: field, matching: find.byType(EditableText)));
+  return editable.focusNode.hasFocus;
+}
+
 void main() {
   testWidgets('a focus request switches the right panel to the Properties tab',
       (WidgetTester tester) async {
@@ -52,5 +60,51 @@ void main() {
     expect(find.byKey(kRightPanelKey), findsOneWidget);
     expect(_xField, findsOneWidget);
     expect(_textField, findsOneWidget);
+  });
+
+  testWidgets(
+      'a focus request lands keyboard focus in the Text field of a text element '
+      'and is consumed', (WidgetTester tester) async {
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
+    controller.createElement(DesignerToolType.text,
+        bandIndex: 1, at: const JetOffset(20, 20));
+    await tester.pumpAndSettle();
+
+    controller.requestPropertiesFocus();
+    await tester.pumpAndSettle();
+
+    expect(_hasFocus(tester, _textField), isTrue);
+    expect(controller.pendingPropertiesFocus, isFalse); // consumed
+  });
+
+  testWidgets('a focus request targets the X field for a non-text element',
+      (WidgetTester tester) async {
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
+    controller.createElement(DesignerToolType.shape,
+        bandIndex: 1, at: const JetOffset(20, 20));
+    await tester.pumpAndSettle();
+
+    controller.requestPropertiesFocus();
+    await tester.pumpAndSettle();
+
+    expect(_hasFocus(tester, _xField), isTrue);
+    expect(controller.pendingPropertiesFocus, isFalse);
+  });
+
+  testWidgets('narrow layout: the overlay mount also lands field focus',
+      (WidgetTester tester) async {
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester, size: kNarrowSize);
+    controller.createElement(DesignerToolType.text,
+        bandIndex: 1, at: const JetOffset(20, 20));
+    await tester.pumpAndSettle();
+
+    controller.requestPropertiesFocus();
+    await tester.pumpAndSettle();
+
+    expect(_hasFocus(tester, _textField), isTrue);
+    expect(controller.pendingPropertiesFocus, isFalse);
   });
 }
