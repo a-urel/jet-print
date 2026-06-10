@@ -107,12 +107,12 @@ description: "Task list for Render Report — Data-Filled Paginated Preview (Jet
 
 ### Tests for User Story 3 (write FIRST, ensure they FAIL)
 
-- [ ] T026 [P] [US3] Write `packages/jet_print/test/rendering/engine/data_source_parity_test.dart` (contract C8 / SC-006): the same logical dataset (incl. a nested collection) supplied via `JetInMemoryDataSource`, `JetJsonDataSource`, and `JetObjectDataSource<T>` yields byte-identical rendered output; parameter values supplied as a map resolve in expressions/bindings
+- [X] T026 [P] [US3] Write `packages/jet_print/test/rendering/engine/data_source_parity_test.dart` (contract C8 / SC-006): the same logical dataset (incl. a nested collection) supplied via `JetInMemoryDataSource`, `JetJsonDataSource`, and `JetObjectDataSource<T>` yields byte-identical rendered output; parameter values supplied as a map resolve in expressions/bindings
 
 ### Implementation for User Story 3
 
-- [ ] T027 [P] [US3] Add dartdoc to the promoted public data-source types (`JetDataSource`, `JetInMemoryDataSource`, `JetJsonDataSource`, `JetObjectDataSource`, `DataSet`, `DataRow`) describing the public contract and nested-collection (master/detail) usage (FR-011 / FR-019)
-- [ ] T028 [US3] Demonstrate the JSON and object-backed variants in `apps/jet_print_playground/lib/rendered_invoice_example.dart` (or a sibling snippet test) to prove discoverability and the < 30-line integration ceiling for all three sources (SC-008)
+- [X] T027 [P] [US3] Add dartdoc to the promoted public data-source types (`JetDataSource`, `JetInMemoryDataSource`, `JetJsonDataSource`, `JetObjectDataSource`, `DataSet`, `DataRow`) describing the public contract and nested-collection (master/detail) usage (FR-011 / FR-019)
+- [X] T028 [US3] Demonstrate the JSON and object-backed variants in `apps/jet_print_playground/lib/rendered_invoice_example.dart` (or a sibling snippet test) to prove discoverability and the < 30-line integration ceiling for all three sources (SC-008)
 
 **Checkpoint**: All three public data-source variants produce identical output for the same dataset and are documented + demonstrated from the public entry point.
 

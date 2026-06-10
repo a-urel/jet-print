@@ -18,7 +18,9 @@ JetDataSource invoiceDataSource() => JetInMemoryDataSource(<Map<String, Object?>
       <String, Object?>{
         'invoiceNo': 'INV-1042',
         'customerName': 'Acme GmbH',
-        'date': DateTime(2026, 5, 12),
+        // An ISO date string (not DateTime) so the JSON variant can carry the
+        // identical value — all three sources then render byte-identically.
+        'date': '2026-05-12',
         'total': 32.0,
         'lines': <Map<String, Object?>>[
           <String, Object?>{'description': 'Widget', 'qty': 3, 'unitPrice': 4.5, 'lineTotal': 13.5},
@@ -28,12 +30,66 @@ JetDataSource invoiceDataSource() => JetInMemoryDataSource(<Map<String, Object?>
       },
     ]);
 
-/// Renders the bound invoice template with the sample data: line items
-/// iterate, master fields fill, and the first page is viewable without
-/// materializing the rest (FR-021).
-RenderedReport renderInvoice() => const JetReportEngine().render(
+/// The same logical invoice as [invoiceDataSource], supplied as a JSON
+/// payload — renders byte-identically (SC-006).
+JetDataSource invoiceJsonDataSource() => JetJsonDataSource.parse(
+      '[{"invoiceNo":"INV-1042","customerName":"Acme GmbH",'
+      '"date":"2026-05-12","total":32.0,"lines":['
+      '{"description":"Widget","qty":3,"unitPrice":4.5,"lineTotal":13.5},'
+      '{"description":"Gadget","qty":1,"unitPrice":12.0,"lineTotal":12.0},'
+      '{"description":"Sprocket","qty":2,"unitPrice":3.25,"lineTotal":6.5}]}]',
+    );
+
+/// The same logical invoice again, supplied as domain objects with a field
+/// extractor — renders byte-identically (SC-006).
+JetDataSource invoiceObjectDataSource() => JetObjectDataSource<Invoice>(
+      <Invoice>[
+        Invoice('INV-1042', 'Acme GmbH', '2026-05-12', 32.0,
+            <Map<String, Object?>>[
+          <String, Object?>{'description': 'Widget', 'qty': 3, 'unitPrice': 4.5, 'lineTotal': 13.5},
+          <String, Object?>{'description': 'Gadget', 'qty': 1, 'unitPrice': 12.0, 'lineTotal': 12.0},
+          <String, Object?>{'description': 'Sprocket', 'qty': 2, 'unitPrice': 3.25, 'lineTotal': 6.5},
+        ]),
+      ],
+      fields: invoiceSchema.fields,
+      row: (Invoice i) => <String, Object?>{
+        'invoiceNo': i.invoiceNo,
+        'customerName': i.customerName,
+        'date': i.date,
+        'total': i.total,
+        'lines': i.lines,
+      },
+    );
+
+/// A host domain object for the object-backed variant.
+class Invoice {
+  /// Creates an invoice record.
+  const Invoice(
+      this.invoiceNo, this.customerName, this.date, this.total, this.lines);
+
+  /// The invoice number.
+  final String invoiceNo;
+
+  /// The customer display name.
+  final String customerName;
+
+  /// The invoice date (ISO string, matching the other variants).
+  final String date;
+
+  /// The invoice total (sum of line totals).
+  final double total;
+
+  /// The nested line-item collection.
+  final List<Map<String, Object?>> lines;
+}
+
+/// Renders the bound invoice template with [source] (defaults to the
+/// in-memory sample): line items iterate, master fields fill, and the first
+/// page is viewable without materializing the rest (FR-021).
+RenderedReport renderInvoice({JetDataSource? source}) =>
+    const JetReportEngine().render(
       invoiceSampleTemplate(),
-      invoiceDataSource(),
+      source ?? invoiceDataSource(),
       options: const RenderOptions(locale: Locale('en')),
     );
 

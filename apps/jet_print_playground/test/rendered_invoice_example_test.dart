@@ -39,6 +39,20 @@ void main() {
     ds.close();
   });
 
+  test('in-memory, JSON, and object-backed variants render identically '
+      '(SC-006)', () {
+    final RenderedReport inMemory = renderInvoice();
+    final RenderedReport json = renderInvoice(source: invoiceJsonDataSource());
+    final RenderedReport objects =
+        renderInvoice(source: invoiceObjectDataSource());
+    expect(json.pageCount, inMemory.pageCount);
+    expect(objects.pageCount, inMemory.pageCount);
+    for (int i = 0; i < inMemory.pageCount; i++) {
+      expect(json.pageAt(i).frame, inMemory.pageAt(i).frame);
+      expect(objects.pageAt(i).frame, inMemory.pageAt(i).frame);
+    }
+  });
+
   testWidgets('the example opens a navigable paginated preview', (
     WidgetTester tester,
   ) async {
