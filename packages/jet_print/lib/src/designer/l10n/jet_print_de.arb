@@ -99,5 +99,10 @@
   "resizeHandleBottom": "Größe ändern, untere Kante",
   "resizeHandleBottomLeft": "Größe ändern, untere linke Ecke",
   "resizeHandleLeft": "Größe ändern, linke Kante",
-  "resizeBandHandle": "Bandhöhe ändern"
+  "resizeBandHandle": "Bandhöhe ändern",
+
+  "previewPreviousPage": "Vorherige Seite",
+  "previewNextPage": "Nächste Seite",
+  "previewPageIndicator": "Seite {current} von {total}",
+  "previewFitToWidth": "An Breite anpassen"
 }

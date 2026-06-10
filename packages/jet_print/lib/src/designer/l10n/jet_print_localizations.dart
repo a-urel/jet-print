@@ -616,6 +616,30 @@ abstract class JetPrintLocalizations {
   /// In en, this message translates to:
   /// **'Resize band height'**
   String get resizeBandHandle;
+
+  /// Tooltip + accessible name of the report preview's previous-page navigation button.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous page'**
+  String get previewPreviousPage;
+
+  /// Tooltip + accessible name of the report preview's next-page navigation button.
+  ///
+  /// In en, this message translates to:
+  /// **'Next page'**
+  String get previewNextPage;
+
+  /// The report preview's page-position indicator between the navigation buttons, e.g. 'Page 2 of 5'.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {current} of {total}'**
+  String previewPageIndicator(int current, int total);
+
+  /// Accessible name of the preview's page surface, describing its fit-to-width sizing.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit to width'**
+  String get previewFitToWidth;
 }
 
 class _JetPrintLocalizationsDelegate

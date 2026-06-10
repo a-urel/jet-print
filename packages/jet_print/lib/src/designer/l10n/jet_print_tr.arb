@@ -99,5 +99,10 @@
   "resizeHandleBottom": "Boyutlandır, alt kenar",
   "resizeHandleBottomLeft": "Boyutlandır, sol alt köşe",
   "resizeHandleLeft": "Boyutlandır, sol kenar",
-  "resizeBandHandle": "Bant yüksekliğini değiştir"
+  "resizeBandHandle": "Bant yüksekliğini değiştir",
+
+  "previewPreviousPage": "Önceki sayfa",
+  "previewNextPage": "Sonraki sayfa",
+  "previewPageIndicator": "Sayfa {current} / {total}",
+  "previewFitToWidth": "Genişliğe sığdır"
 }

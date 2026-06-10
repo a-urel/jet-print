@@ -366,5 +366,26 @@
   "resizeBandHandle": "Resize band height",
   "@resizeBandHandle": {
     "description": "Accessible name for the band height resize handle."
+  },
+
+  "previewPreviousPage": "Previous page",
+  "@previewPreviousPage": {
+    "description": "Tooltip + accessible name of the report preview's previous-page navigation button."
+  },
+  "previewNextPage": "Next page",
+  "@previewNextPage": {
+    "description": "Tooltip + accessible name of the report preview's next-page navigation button."
+  },
+  "previewPageIndicator": "Page {current} of {total}",
+  "@previewPageIndicator": {
+    "description": "The report preview's page-position indicator between the navigation buttons, e.g. 'Page 2 of 5'.",
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "previewFitToWidth": "Fit to width",
+  "@previewFitToWidth": {
+    "description": "Accessible name of the preview's page surface, describing its fit-to-width sizing."
   }
 }

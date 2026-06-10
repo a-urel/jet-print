@@ -46,6 +46,8 @@ export 'src/designer/jet_report_designer.dart' show JetReportDesigner;
 // `supportedLocales` statics; consumers wire them into their app shell.
 export 'src/designer/l10n/jet_print_localizations.dart'
     show JetPrintLocalizations;
+// The read-only paginated viewer over a rendered report (011).
+export 'src/designer/preview/jet_report_preview.dart' show JetReportPreview;
 // --- The ReportTemplate-reachable model graph (003 — required to host, mutate,
 // and serialize a design; supersedes the 002 "no model types" non-goal). ---
 export 'src/domain/elements/barcode_element.dart'

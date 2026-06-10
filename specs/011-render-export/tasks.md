@@ -63,15 +63,15 @@ description: "Task list for Render Report — Data-Filled Paginated Preview (Jet
 
 ### Tests for User Story 1 (write FIRST, ensure they FAIL)
 
-- [ ] T014 [P] [US1] Write `packages/jet_print/test/designer/preview/jet_report_preview_test.dart` (contracts C6/C11): prev/next navigation bounded at first/last page; "page X of N" indicator; fit-to-width sizing; keyboard-operable with accessible names; the page is painted through the shared `paintFrame`→`CanvasPainter` path over `RenderedPage.frame` (no parallel draw code)
-- [ ] T015 [P] [US1] Write `packages/jet_print/test/designer/preview/preview_localization_test.dart` (contract C11 / FR-017): preview chrome (nav, page indicator, fit-to-width label) renders localized in en/de/tr with English fallback for an unsupported locale
-- [ ] T016 [P] [US1] Write `packages/jet_print/test/rendering/engine/render_us1_e2e_test.dart` (acceptance scenarios 1–5): using only `package:jet_print/jet_print.dart`, render a flat one-band template + one parameter and pump `JetReportPreview`; assert evaluated values appear (zero tokens), the supplied parameter value shows, page count is correct, navigation moves between pages, and re-rendering identical inputs is deterministic
+- [X] T014 [P] [US1] Write `packages/jet_print/test/designer/preview/jet_report_preview_test.dart` (contracts C6/C11): prev/next navigation bounded at first/last page; "page X of N" indicator; fit-to-width sizing; keyboard-operable with accessible names; the page is painted through the shared `paintFrame`→`CanvasPainter` path over `RenderedPage.frame` (no parallel draw code)
+- [X] T015 [P] [US1] Write `packages/jet_print/test/designer/preview/preview_localization_test.dart` (contract C11 / FR-017): preview chrome (nav, page indicator, fit-to-width label) renders localized in en/de/tr with English fallback for an unsupported locale
+- [X] T016 [P] [US1] Write `packages/jet_print/test/rendering/engine/render_us1_e2e_test.dart` (acceptance scenarios 1–5): using only `package:jet_print/jet_print.dart`, render a flat one-band template + one parameter and pump `JetReportPreview`; assert evaluated values appear (zero tokens), the supplied parameter value shows, page count is correct, navigation moves between pages, and re-rendering identical inputs is deterministic
 
 ### Implementation for User Story 1
 
-- [ ] T017 [US1] Add preview chrome strings (nav prev/next, "page X of N", fit-to-width) to `packages/jet_print/lib/src/designer/l10n/jet_print_en.arb`, `jet_print_de.arb`, and `jet_print_tr.arb`, then run `flutter gen-l10n` to regenerate the localizations (edit ARBs only)
-- [ ] T018 [US1] Implement `JetReportPreview` in `packages/jet_print/lib/src/designer/preview/jet_report_preview.dart`: read-only paginated viewer (prev/next bounded, "page X of N", fit-to-width) driving a `CustomPainter` over the shared `paintFrame`→`CanvasPainter` for the current `RenderedPage.frame`; requests pages from the lazy `RenderedReport` (builds on demand); localized chrome + keyboard operation + accessible names (depends on T017 + Foundational)
-- [ ] T019 [US1] Export `JetReportPreview` from `packages/jet_print/lib/jet_print.dart` and add dartdoc (depends on T018)
+- [X] T017 [US1] Add preview chrome strings (nav prev/next, "page X of N", fit-to-width) to `packages/jet_print/lib/src/designer/l10n/jet_print_en.arb`, `jet_print_de.arb`, and `jet_print_tr.arb`, then run `flutter gen-l10n` to regenerate the localizations (edit ARBs only)
+- [X] T018 [US1] Implement `JetReportPreview` in `packages/jet_print/lib/src/designer/preview/jet_report_preview.dart`: read-only paginated viewer (prev/next bounded, "page X of N", fit-to-width) driving a `CustomPainter` over the shared `paintFrame`→`CanvasPainter` for the current `RenderedPage.frame`; requests pages from the lazy `RenderedReport` (builds on demand); localized chrome + keyboard operation + accessible names (depends on T017 + Foundational)
+- [X] T019 [US1] Export `JetReportPreview` from `packages/jet_print/lib/jet_print.dart` and add dartdoc (depends on T018)
 
 **Checkpoint**: A flat designed template fills with real values and displays in a navigable, localized, WYSIWYG preview through the public API only. **MVP deliverable — stop and validate.**
 
