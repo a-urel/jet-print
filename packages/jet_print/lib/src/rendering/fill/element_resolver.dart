@@ -38,6 +38,10 @@ class ElementResolver {
   /// Shared missing-field dedup set.
   final Set<String> warnedFields;
 
+  /// Image elements already diagnosed for a URL-only source, so a band that
+  /// repeats per row warns once per element, not once per instance.
+  final Set<String> _warnedUrlImages = <String>{};
+
   /// Returns the resolved copy of [element].
   ReportElement resolve(
     ReportElement element, {
@@ -51,6 +55,19 @@ class ElementResolver {
     }
     if (element is ImageElement && element.source is FieldImageSource) {
       return _resolveImage(element, row);
+    }
+    if (element is ImageElement && element.source is UrlImageSource) {
+      // FR-012b/FR-015 (011): the library performs no I/O — a URL-only source
+      // cannot resolve to bytes here, so the shared renderer draws a
+      // placeholder and the host is told why.
+      if (_warnedUrlImages.add(element.id)) {
+        diagnostics.warning(
+            'Image "${element.id}" has a URL-only source; the library '
+            'performs no network I/O (supply bytes via the data source or '
+            'embed them) — a placeholder renders',
+            elementId: element.id);
+      }
+      return element;
     }
     return element;
   }

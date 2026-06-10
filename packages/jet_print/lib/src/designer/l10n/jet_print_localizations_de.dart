@@ -271,4 +271,21 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
 
   @override
   String get resizeBandHandle => 'Bandhöhe ändern';
+
+  @override
+  String get previewBack => 'Zurück';
+
+  @override
+  String get previewPreviousPage => 'Vorherige Seite';
+
+  @override
+  String get previewNextPage => 'Nächste Seite';
+
+  @override
+  String previewPageIndicator(int current, int total) {
+    return 'Seite $current von $total';
+  }
+
+  @override
+  String get previewFitToWidth => 'An Breite anpassen';
 }

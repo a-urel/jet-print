@@ -30,17 +30,23 @@ const JetDataSchema invoiceSchema = JetDataSchema(
   ],
 );
 
-/// A sample invoice layout: a title band with master header fields, a
-/// `lines`-bound **detail** band whose elements bind to the line fields, and a
-/// summary band with the master total. All bindings show as design-time tokens.
+/// A sample invoice layout: a static title band, a master-scope **detail**
+/// band with the invoice-level fields, a `lines`-bound **detail** band whose
+/// elements bind to the line fields, and a trailing master-scope detail band
+/// with the invoice total. All bindings show as design-time tokens; rendered
+/// through `JetReportEngine` they fill with real values.
+///
+/// Master fields live in master-scope detail bands (not title/summary): the
+/// render engine gives title/summary no row context by design (007b §5), and
+/// per-invoice bands repeat correctly when the source holds several invoices.
 ReportTemplate invoiceSampleTemplate() => const ReportTemplate(
       name: 'Invoice',
       page: PageFormat.a4Portrait,
       bands: <ReportBand>[
-        // Master header — invoice-level fields (master scope).
+        // Report title — static chrome, printed once.
         ReportBand(
           type: BandType.title,
-          height: 96,
+          height: 40,
           elements: <ReportElement>[
             TextElement(
               id: 'title',
@@ -48,6 +54,14 @@ ReportTemplate invoiceSampleTemplate() => const ReportTemplate(
               text: 'INVOICE',
               style: JetTextStyle(fontSize: 22, weight: JetFontWeight.bold),
             ),
+          ],
+        ),
+        // Master header — invoice-level fields (master scope: repeats once
+        // per invoice record).
+        ReportBand(
+          type: BandType.detail,
+          height: 64,
+          elements: <ReportElement>[
             TextElement(
               id: 'invoiceNo',
               bounds: JetRect(x: 360, y: 4, width: 180, height: 18),
@@ -57,13 +71,13 @@ ReportTemplate invoiceSampleTemplate() => const ReportTemplate(
             ),
             TextElement(
               id: 'customerName',
-              bounds: JetRect(x: 0, y: 44, width: 280, height: 18),
+              bounds: JetRect(x: 0, y: 4, width: 280, height: 18),
               text: 'customerName',
               expression: r'$F{customerName}',
             ),
             TextElement(
               id: 'date',
-              bounds: JetRect(x: 360, y: 44, width: 180, height: 18),
+              bounds: JetRect(x: 360, y: 32, width: 180, height: 18),
               text: 'date',
               style: JetTextStyle(align: JetTextAlign.right),
               expression: r'$F{date}',
@@ -105,9 +119,9 @@ ReportTemplate invoiceSampleTemplate() => const ReportTemplate(
             ),
           ],
         ),
-        // Master summary — the invoice total.
+        // Master total — per-invoice (master scope), after the lines.
         ReportBand(
-          type: BandType.summary,
+          type: BandType.detail,
           height: 40,
           elements: <ReportElement>[
             TextElement(

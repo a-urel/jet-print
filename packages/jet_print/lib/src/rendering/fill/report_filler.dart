@@ -7,6 +7,7 @@ library;
 
 import '../../data/data_row.dart';
 import '../../data/data_set.dart';
+import '../../data/field_def.dart';
 import '../../data/jet_data_source.dart';
 import '../../domain/report_band.dart';
 import '../../domain/report_element.dart';
@@ -158,6 +159,89 @@ class ReportFiller {
       }
     }
 
+    // --- Nested-collection iteration (011 / US2, closing the 009 authoring
+    // seam): a detail band with a `collectionField` repeats once per child
+    // row of the current scope row's collection, and its `children` bands
+    // nest within that child scope — to arbitrary depth. Variables stay
+    // master-scoped: the calculator advances once per cursor row, and every
+    // emitted band (master or child) snapshots its values, so aggregates fold
+    // over the data source's rows, not over nested child rows. ---
+    final Set<String> warnedCollections = <String>{};
+
+    /// The child rows of [scopeRow]'s collection field [name]: the raw list
+    /// value projected onto the field's declared child schema, or onto a
+    /// best-effort inferred schema when none is declared (mirroring
+    /// JetInMemoryDataSource's inference). Malformed shapes degrade to an
+    /// empty list plus a deduped warning (render-don't-crash).
+    List<DataRow> childRowsOf(DataRow scopeRow, String name) {
+      if (!scopeRow.hasField(name)) {
+        if (warnedCollections.add(name)) {
+          diagnostics.warning(
+              'Collection field "$name" is not in the data schema; its band '
+              'emits no rows');
+        }
+        return const <DataRow>[];
+      }
+      final Object? raw = scopeRow.field(name);
+      if (raw == null) return const <DataRow>[]; // an absent collection: empty
+      if (raw is! List) {
+        if (warnedCollections.add(name)) {
+          diagnostics.warning(
+              'Collection field "$name" did not resolve to a collection of '
+              'rows; its band emits no rows');
+        }
+        return const <DataRow>[];
+      }
+      final List<Map<String, Object?>> maps = <Map<String, Object?>>[];
+      for (final Object? entry in raw) {
+        if (entry is Map) {
+          maps.add(entry.map((Object? k, Object? v) =>
+              MapEntry<String, Object?>(k.toString(), v)));
+        } else if (warnedCollections.add('$name#entry')) {
+          diagnostics.warning(
+              'Collection field "$name" contains a non-row entry; it is '
+              'skipped');
+        }
+      }
+      final FieldDef declared = scopeRow.fields.firstWhere(
+        (FieldDef f) => f.name == name,
+        orElse: () => const FieldDef(''),
+      );
+      final List<FieldDef> fields = declared.fields.isNotEmpty
+          ? declared.fields
+          : _inferChildFields(maps);
+      return <DataRow>[
+        for (final Map<String, Object?> m in maps)
+          DataRow(fields: fields, values: <String, Object?>{
+            for (final FieldDef f in fields) f.name: m[f.name],
+          }),
+      ];
+    }
+
+    void emitDataBand(ReportBand band, DataRow scopeRow) {
+      final String? collection = band.collectionField;
+      if (collection == null) {
+        addBand(band, scopeRow, calc.values);
+        for (final ReportBand child in band.children) {
+          emitDataBand(child, scopeRow);
+        }
+        return;
+      }
+      for (final DataRow childRow in childRowsOf(scopeRow, collection)) {
+        addBand(band, childRow, calc.values);
+        for (final ReportBand child in band.children) {
+          emitDataBand(child, childRow);
+        }
+      }
+    }
+
+    void emitDetail(DataRow row) {
+      for (final ReportBand band in template.bands) {
+        if (band.type != BandType.detail) continue;
+        emitDataBand(band, row);
+      }
+    }
+
     void emitGroupHeaders(List<String> names, DataRow? row) {
       for (final String name in names) {
         for (final ReportBand band in groupIndex.headersFor(name)) {
@@ -196,7 +280,7 @@ class ReportFiller {
               brokenInOrder(broken, reversed: true), prevRow, prevValues);
           emitGroupHeaders(brokenInOrder(broken, reversed: false), row);
         }
-        emit(BandType.detail, row);
+        emitDetail(row);
         hadRows = true;
         prevValues = calc.values;
         prevRow = row;
@@ -206,6 +290,12 @@ class ReportFiller {
     }
 
     if (!hadRows) {
+      // Surfaced as a diagnostic (011 — FR-013/SC-007): an empty dataset is a
+      // legitimate render (the noData band shows), but the host should be able
+      // to tell it apart from a binding mistake.
+      diagnostics.info(
+          'Data source returned no rows; the noData band renders instead of '
+          'details');
       emit(BandType.noData, null);
     } else {
       // Close every still-open group (inner->outer) with the final snapshot.
@@ -224,5 +314,31 @@ class ReportFiller {
       ),
       diagnostics: diagnostics,
     );
+  }
+
+  /// Best-effort child schema for a collection whose [FieldDef] declares no
+  /// child fields (e.g. the schema was inferred): the union of all entry keys
+  /// in first-seen order, each typed via [FieldDef.inferType] over that
+  /// column's values — mirroring `JetInMemoryDataSource`'s inference so the
+  /// three public sources stay output-identical (SC-006). A nested list value
+  /// infers [JetFieldType.unknown], but its raw value is preserved on the
+  /// child row, so deeper collection bands still iterate it.
+  static List<FieldDef> _inferChildFields(List<Map<String, Object?>> rows) {
+    final List<String> names = <String>[];
+    final Set<String> seen = <String>{};
+    for (final Map<String, Object?> row in rows) {
+      for (final String key in row.keys) {
+        if (seen.add(key)) names.add(key);
+      }
+    }
+    return <FieldDef>[
+      for (final String name in names)
+        FieldDef(
+          name,
+          type: FieldDef.inferType(
+            rows.map((Map<String, Object?> r) => r[name]),
+          ),
+        ),
+    ];
   }
 }

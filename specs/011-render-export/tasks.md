@@ -23,8 +23,8 @@ description: "Task list for Render Report — Data-Filled Paginated Preview (Jet
 
 **Purpose**: Create the new source/test locations and protect existing goldens before the additive seam lands.
 
-- [ ] T001 Create new source folders `packages/jet_print/lib/src/rendering/engine/` and `packages/jet_print/lib/src/designer/preview/`, plus test folders `packages/jet_print/test/rendering/engine/` and `packages/jet_print/test/designer/preview/`
-- [ ] T002 [P] Establish a green baseline by running `flutter test packages/jet_print apps/jet_print_playground` from the repo root, confirming all existing goldens/tests pass before the additive lazy-pagination seam is introduced (regression guard for Constitution IV)
+- [X] T001 Create new source folders `packages/jet_print/lib/src/rendering/engine/` and `packages/jet_print/lib/src/designer/preview/`, plus test folders `packages/jet_print/test/rendering/engine/` and `packages/jet_print/test/designer/preview/`
+- [X] T002 [P] Establish a green baseline by running `flutter test packages/jet_print apps/jet_print_playground` from the repo root, confirming all existing goldens/tests pass before the additive lazy-pagination seam is introduced (regression guard for Constitution IV)
 
 ---
 
@@ -36,20 +36,20 @@ description: "Task list for Render Report — Data-Filled Paginated Preview (Jet
 
 ### Tests for Foundational (write FIRST, ensure they FAIL)
 
-- [ ] T003 [P] Write `packages/jet_print/test/rendering/engine/lazy_pagination_test.dart` (contract C4/C5): `render(...).pageAt(0)` builds a viewable first page without constructing other pages' frames; `pageAt(i)` builds on demand and caches (re-access returns identical frame); a lazily-built frame is byte-identical to the i-th frame from the preserved eager `layout()` wrapper; `pageCount`/`PAGE_COUNT` resolve correctly via the boundary-only pass
-- [ ] T004 [P] Write `packages/jet_print/test/rendering/engine/performance_test.dart` (contract C4 / SC-009): **binding assertion is structural** — for a 1,000-record dataset, `pageAt(0)` constructs exactly one page's frame (frame-construction count is independent of total page count; the boundary-only pass does not build paint primitives). Capture first-page wall-clock as an **advisory** measurement logged against the reference desktop env (not a hard `< 2 s` gate, to avoid CI flakiness)
-- [ ] T005 [P] Write `packages/jet_print/test/rendering/engine/render_locale_test.dart` (contract C7 / FR-012a): the same template + data rendered under `Locale('en')` vs `Locale('de')`/`Locale('tr')` differ only in number/date/currency formatting; formatting is independent of `Intl.defaultLocale`
-- [ ] T006 [P] Write `packages/jet_print/test/rendering/engine/jet_report_engine_test.dart` (contracts C1/C3): flat detail band bound to N rows shows each row's evaluated value (zero residual `$F{}`/`$P{}`/`$V{}` tokens); a parameter-bound element shows the supplied value; content over one page splits at band boundaries with repeated page header/footer; `pageCount` matches content; identical inputs → byte-identical output (determinism)
-- [ ] T007 [P] Extend `packages/jet_print/test/architecture/layer_boundaries_test.dart` (contract C12): assert the new public exports (`JetReportEngine`, `RenderOptions`, `RenderedReport`, `RenderedPage`, the diagnostics types, the full data-source API) are reachable via `package:jet_print/jet_print.dart` with no `src/` import, and that the `rendering/engine` facade only depends inward (fill/layout/expression/data/domain). Also assert the render path is read-only over templates (FR-016): `schemaVersion` stays `1` and the existing round-trip / `UnknownElement` passthrough tests remain green (no schema change, no migration)
+- [X] T003 [P] Write `packages/jet_print/test/rendering/engine/lazy_pagination_test.dart` (contract C4/C5): `render(...).pageAt(0)` builds a viewable first page without constructing other pages' frames; `pageAt(i)` builds on demand and caches (re-access returns identical frame); a lazily-built frame is byte-identical to the i-th frame from the preserved eager `layout()` wrapper; `pageCount`/`PAGE_COUNT` resolve correctly via the boundary-only pass
+- [X] T004 [P] Write `packages/jet_print/test/rendering/engine/performance_test.dart` (contract C4 / SC-009): **binding assertion is structural** — for a 1,000-record dataset, `pageAt(0)` constructs exactly one page's frame (frame-construction count is independent of total page count; the boundary-only pass does not build paint primitives). Capture first-page wall-clock as an **advisory** measurement logged against the reference desktop env (not a hard `< 2 s` gate, to avoid CI flakiness)
+- [X] T005 [P] Write `packages/jet_print/test/rendering/engine/render_locale_test.dart` (contract C7 / FR-012a): the same template + data rendered under `Locale('en')` vs `Locale('de')`/`Locale('tr')` differ only in number/date/currency formatting; formatting is independent of `Intl.defaultLocale`
+- [X] T006 [P] Write `packages/jet_print/test/rendering/engine/jet_report_engine_test.dart` (contracts C1/C3): flat detail band bound to N rows shows each row's evaluated value (zero residual `$F{}`/`$P{}`/`$V{}` tokens); a parameter-bound element shows the supplied value; content over one page splits at band boundaries with repeated page header/footer; `pageCount` matches content; identical inputs → byte-identical output (determinism)
+- [X] T007 [P] Extend `packages/jet_print/test/architecture/layer_boundaries_test.dart` (contract C12): assert the new public exports (`JetReportEngine`, `RenderOptions`, `RenderedReport`, `RenderedPage`, the diagnostics types, the full data-source API) are reachable via `package:jet_print/jet_print.dart` with no `src/` import, and that the `rendering/engine` facade only depends inward (fill/layout/expression/data/domain). Also assert the render path is read-only over templates (FR-016): `schemaVersion` stays `1` and the existing round-trip / `UnknownElement` passthrough tests remain green (no schema change, no migration)
 
 ### Implementation for Foundational
 
-- [ ] T008 [P] Create `RenderOptions` in `packages/jet_print/lib/src/rendering/engine/render_options.dart` (`Map<String, Object?> parameters` = `{}`, `Locale locale` = `Locale('en')`; FR-012/FR-012a), with dartdoc
-- [ ] T009 Add the additive lazy page-production seam to `packages/jet_print/lib/src/rendering/layout/report_layouter.dart`: an on-demand page producer that reuses all existing measurement/pagination/frame logic; a cheap boundary-only pass that yields page breaks + `pageCount` + `PAGE_COUNT` without building paint primitives; keep the existing eager `layout()` as a thin wrapper over the seam so every existing layouter test/golden stays byte-stable (research §2; Complexity Tracking)
-- [ ] T010 Create `RenderedReport`/`RenderedPage` in `packages/jet_print/lib/src/rendering/engine/rendered_report.dart`: `pageCount`, `pageAt(int)` (lazy build via the T009 seam + cache), `diagnostics`; `RenderedPage` is a thin `{index, frame}` wrapper over the existing `PageFrame` (data-model.md; depends on T009)
-- [ ] T011 [P] Thread the per-render locale through formatting in `packages/jet_print/lib/src/expression/functions/format_functions.dart` and at the engine boundary (scope `NumberFormat`/`DateFormat` to `RenderOptions.locale` across fill + layout, e.g. `Intl.withLocale(locale.toLanguageTag(), ...)`), so formatting never reads the ambient `Intl.defaultLocale` (research §3; FR-012a)
-- [ ] T012 Create the public facade `JetReportEngine` in `packages/jet_print/lib/src/rendering/engine/jet_report_engine.dart`: `render(ReportTemplate, JetDataSource, {RenderOptions options})` composes `ReportFiller.fill(...)` then the lazy layout seam, threads params + locale, merges fill + layout `ReportDiagnostics` in order, and returns a `RenderedReport`; holds no rendering logic; never throws on malformed data (depends on T008, T009, T010, T011)
-- [ ] T013 Add public exports to `packages/jet_print/lib/jet_print.dart`: `JetReportEngine`, `RenderOptions`, `RenderedReport`, `RenderedPage`, the diagnostics types (`Diagnostic`, `DiagnosticSeverity`, `ReportDiagnostics` from `src/rendering/fill/report_diagnostics.dart`), and the full data-source API (`JetDataSource`, `JetInMemoryDataSource`, `JetJsonDataSource`, `JetObjectDataSource`, `DataSet`, `DataRow` from `src/data/`); keep `src/` private (depends on T012; makes T007 pass)
+- [X] T008 [P] Create `RenderOptions` in `packages/jet_print/lib/src/rendering/engine/render_options.dart` (`Map<String, Object?> parameters` = `{}`, `Locale locale` = `Locale('en')`; FR-012/FR-012a), with dartdoc
+- [X] T009 Add the additive lazy page-production seam to `packages/jet_print/lib/src/rendering/layout/report_layouter.dart`: an on-demand page producer that reuses all existing measurement/pagination/frame logic; a cheap boundary-only pass that yields page breaks + `pageCount` + `PAGE_COUNT` without building paint primitives; keep the existing eager `layout()` as a thin wrapper over the seam so every existing layouter test/golden stays byte-stable (research §2; Complexity Tracking)
+- [X] T010 Create `RenderedReport`/`RenderedPage` in `packages/jet_print/lib/src/rendering/engine/rendered_report.dart`: `pageCount`, `pageAt(int)` (lazy build via the T009 seam + cache), `diagnostics`; `RenderedPage` is a thin `{index, frame}` wrapper over the existing `PageFrame` (data-model.md; depends on T009)
+- [X] T011 [P] Thread the per-render locale through formatting in `packages/jet_print/lib/src/expression/functions/format_functions.dart` and at the engine boundary (scope `NumberFormat`/`DateFormat` to `RenderOptions.locale` across fill + layout, e.g. `Intl.withLocale(locale.toLanguageTag(), ...)`), so formatting never reads the ambient `Intl.defaultLocale` (research §3; FR-012a)
+- [X] T012 Create the public facade `JetReportEngine` in `packages/jet_print/lib/src/rendering/engine/jet_report_engine.dart`: `render(ReportTemplate, JetDataSource, {RenderOptions options})` composes `ReportFiller.fill(...)` then the lazy layout seam, threads params + locale, merges fill + layout `ReportDiagnostics` in order, and returns a `RenderedReport`; holds no rendering logic; never throws on malformed data (depends on T008, T009, T010, T011)
+- [X] T013 Add public exports to `packages/jet_print/lib/jet_print.dart`: `JetReportEngine`, `RenderOptions`, `RenderedReport`, `RenderedPage`, the diagnostics types (`Diagnostic`, `DiagnosticSeverity`, `ReportDiagnostics` from `src/rendering/fill/report_diagnostics.dart`), and the full data-source API (`JetDataSource`, `JetInMemoryDataSource`, `JetJsonDataSource`, `JetObjectDataSource`, `DataSet`, `DataRow` from `src/data/`); keep `src/` private (depends on T012; makes T007 pass)
 
 **Checkpoint**: `const JetReportEngine().render(template, source, options: ...)` returns a lazy, locale-aware `RenderedReport` with merged diagnostics, reachable solely through the public entry point. Foundational tests (T003–T007) pass.
 
@@ -63,15 +63,15 @@ description: "Task list for Render Report — Data-Filled Paginated Preview (Jet
 
 ### Tests for User Story 1 (write FIRST, ensure they FAIL)
 
-- [ ] T014 [P] [US1] Write `packages/jet_print/test/designer/preview/jet_report_preview_test.dart` (contracts C6/C11): prev/next navigation bounded at first/last page; "page X of N" indicator; fit-to-width sizing; keyboard-operable with accessible names; the page is painted through the shared `paintFrame`→`CanvasPainter` path over `RenderedPage.frame` (no parallel draw code)
-- [ ] T015 [P] [US1] Write `packages/jet_print/test/designer/preview/preview_localization_test.dart` (contract C11 / FR-017): preview chrome (nav, page indicator, fit-to-width label) renders localized in en/de/tr with English fallback for an unsupported locale
-- [ ] T016 [P] [US1] Write `packages/jet_print/test/rendering/engine/render_us1_e2e_test.dart` (acceptance scenarios 1–5): using only `package:jet_print/jet_print.dart`, render a flat one-band template + one parameter and pump `JetReportPreview`; assert evaluated values appear (zero tokens), the supplied parameter value shows, page count is correct, navigation moves between pages, and re-rendering identical inputs is deterministic
+- [X] T014 [P] [US1] Write `packages/jet_print/test/designer/preview/jet_report_preview_test.dart` (contracts C6/C11): prev/next navigation bounded at first/last page; "page X of N" indicator; fit-to-width sizing; keyboard-operable with accessible names; the page is painted through the shared `paintFrame`→`CanvasPainter` path over `RenderedPage.frame` (no parallel draw code)
+- [X] T015 [P] [US1] Write `packages/jet_print/test/designer/preview/preview_localization_test.dart` (contract C11 / FR-017): preview chrome (nav, page indicator, fit-to-width label) renders localized in en/de/tr with English fallback for an unsupported locale
+- [X] T016 [P] [US1] Write `packages/jet_print/test/rendering/engine/render_us1_e2e_test.dart` (acceptance scenarios 1–5): using only `package:jet_print/jet_print.dart`, render a flat one-band template + one parameter and pump `JetReportPreview`; assert evaluated values appear (zero tokens), the supplied parameter value shows, page count is correct, navigation moves between pages, and re-rendering identical inputs is deterministic
 
 ### Implementation for User Story 1
 
-- [ ] T017 [US1] Add preview chrome strings (nav prev/next, "page X of N", fit-to-width) to `packages/jet_print/lib/src/designer/l10n/jet_print_en.arb`, `jet_print_de.arb`, and `jet_print_tr.arb`, then run `flutter gen-l10n` to regenerate the localizations (edit ARBs only)
-- [ ] T018 [US1] Implement `JetReportPreview` in `packages/jet_print/lib/src/designer/preview/jet_report_preview.dart`: read-only paginated viewer (prev/next bounded, "page X of N", fit-to-width) driving a `CustomPainter` over the shared `paintFrame`→`CanvasPainter` for the current `RenderedPage.frame`; requests pages from the lazy `RenderedReport` (builds on demand); localized chrome + keyboard operation + accessible names (depends on T017 + Foundational)
-- [ ] T019 [US1] Export `JetReportPreview` from `packages/jet_print/lib/jet_print.dart` and add dartdoc (depends on T018)
+- [X] T017 [US1] Add preview chrome strings (nav prev/next, "page X of N", fit-to-width) to `packages/jet_print/lib/src/designer/l10n/jet_print_en.arb`, `jet_print_de.arb`, and `jet_print_tr.arb`, then run `flutter gen-l10n` to regenerate the localizations (edit ARBs only)
+- [X] T018 [US1] Implement `JetReportPreview` in `packages/jet_print/lib/src/designer/preview/jet_report_preview.dart`: read-only paginated viewer (prev/next bounded, "page X of N", fit-to-width) driving a `CustomPainter` over the shared `paintFrame`→`CanvasPainter` for the current `RenderedPage.frame`; requests pages from the lazy `RenderedReport` (builds on demand); localized chrome + keyboard operation + accessible names (depends on T017 + Foundational)
+- [X] T019 [US1] Export `JetReportPreview` from `packages/jet_print/lib/jet_print.dart` and add dartdoc (depends on T018)
 
 **Checkpoint**: A flat designed template fills with real values and displays in a navigable, localized, WYSIWYG preview through the public API only. **MVP deliverable — stop and validate.**
 
@@ -85,15 +85,15 @@ description: "Task list for Render Report — Data-Filled Paginated Preview (Jet
 
 ### Tests for User Story 2 (write FIRST, ensure they FAIL)
 
-- [ ] T020 [P] [US2] Add master/detail + aggregate cases to `packages/jet_print/test/rendering/engine/jet_report_engine_test.dart` (contract C2): a collection-bound band repeats once per child record at arbitrary nesting depth with child-field values resolved; a sum variable computes at its reset scope (group + grand total); the invoice total equals the exact sum of line amounts; group header/footer render at key boundaries
-- [ ] T021 [P] [US2] Write `packages/jet_print/test/goldens/rendered_invoice_test.dart` (contracts C2/C6 / SC-003): the data-filled invoice, paginated, in light and dark themes, rendered through the shared pipeline (closes the 009 data-filled-invoice golden deferral)
+- [X] T020 [P] [US2] Add master/detail + aggregate cases to `packages/jet_print/test/rendering/engine/jet_report_engine_test.dart` (contract C2): a collection-bound band repeats once per child record at arbitrary nesting depth with child-field values resolved; a sum variable computes at its reset scope (group + grand total); the invoice total equals the exact sum of line amounts; group header/footer render at key boundaries
+- [X] T021 [P] [US2] Write `packages/jet_print/test/goldens/rendered_invoice_test.dart` (contracts C2/C6 / SC-003): the data-filled invoice, paginated, in light and dark themes, rendered through the shared pipeline (closes the 009 data-filled-invoice golden deferral)
 
 ### Implementation for User Story 2
 
-- [ ] T022 [P] [US2] Create `apps/jet_print_playground/lib/rendered_invoice_example.dart`: build a `JetInMemoryDataSource` invoice (master + nested line-item collection) for the existing `invoice_sample.dart` template, render via `JetReportEngine`, and show `JetReportPreview` — the runnable < 30-line example (FR-019 / SC-008)
-- [ ] T023 [US2] Add a "Preview" path to `apps/jet_print_playground/lib/main.dart` that opens the rendered-invoice example
-- [ ] T024 [US2] Write `apps/jet_print_playground/test/rendered_invoice_example_test.dart`: the example renders + previews the invoice end-to-end (line items appear once, total = sum, navigable preview)
-- [ ] T025 [US2] Generate and commit the invoice golden images (light + dark) referenced by T021 (depends on T021, T022)
+- [X] T022 [P] [US2] Create `apps/jet_print_playground/lib/rendered_invoice_example.dart`: build a `JetInMemoryDataSource` invoice (master + nested line-item collection) for the existing `invoice_sample.dart` template, render via `JetReportEngine`, and show `JetReportPreview` — the runnable < 30-line example (FR-019 / SC-008)
+- [X] T023 [US2] Add a "Preview" path to `apps/jet_print_playground/lib/main.dart` that opens the rendered-invoice example
+- [X] T024 [US2] Write `apps/jet_print_playground/test/rendered_invoice_example_test.dart`: the example renders + previews the invoice end-to-end (line items appear once, total = sum, navigable preview)
+- [X] T025 [US2] Generate and commit the invoice golden images (light + dark) referenced by T021 (depends on T021, T022)
 
 **Checkpoint**: The headline invoice scenario renders correct master/detail + aggregates, with a committed data-filled golden and a runnable playground example.
 
@@ -107,12 +107,12 @@ description: "Task list for Render Report — Data-Filled Paginated Preview (Jet
 
 ### Tests for User Story 3 (write FIRST, ensure they FAIL)
 
-- [ ] T026 [P] [US3] Write `packages/jet_print/test/rendering/engine/data_source_parity_test.dart` (contract C8 / SC-006): the same logical dataset (incl. a nested collection) supplied via `JetInMemoryDataSource`, `JetJsonDataSource`, and `JetObjectDataSource<T>` yields byte-identical rendered output; parameter values supplied as a map resolve in expressions/bindings
+- [X] T026 [P] [US3] Write `packages/jet_print/test/rendering/engine/data_source_parity_test.dart` (contract C8 / SC-006): the same logical dataset (incl. a nested collection) supplied via `JetInMemoryDataSource`, `JetJsonDataSource`, and `JetObjectDataSource<T>` yields byte-identical rendered output; parameter values supplied as a map resolve in expressions/bindings
 
 ### Implementation for User Story 3
 
-- [ ] T027 [P] [US3] Add dartdoc to the promoted public data-source types (`JetDataSource`, `JetInMemoryDataSource`, `JetJsonDataSource`, `JetObjectDataSource`, `DataSet`, `DataRow`) describing the public contract and nested-collection (master/detail) usage (FR-011 / FR-019)
-- [ ] T028 [US3] Demonstrate the JSON and object-backed variants in `apps/jet_print_playground/lib/rendered_invoice_example.dart` (or a sibling snippet test) to prove discoverability and the < 30-line integration ceiling for all three sources (SC-008)
+- [X] T027 [P] [US3] Add dartdoc to the promoted public data-source types (`JetDataSource`, `JetInMemoryDataSource`, `JetJsonDataSource`, `JetObjectDataSource`, `DataSet`, `DataRow`) describing the public contract and nested-collection (master/detail) usage (FR-011 / FR-019)
+- [X] T028 [US3] Demonstrate the JSON and object-backed variants in `apps/jet_print_playground/lib/rendered_invoice_example.dart` (or a sibling snippet test) to prove discoverability and the < 30-line integration ceiling for all three sources (SC-008)
 
 **Checkpoint**: All three public data-source variants produce identical output for the same dataset and are documented + demonstrated from the public entry point.
 
@@ -126,12 +126,12 @@ description: "Task list for Render Report — Data-Filled Paginated Preview (Jet
 
 ### Tests for User Story 4 (write FIRST, ensure they FAIL)
 
-- [ ] T029 [P] [US4] Write `packages/jet_print/test/rendering/engine/render_diagnostics_test.dart` (contracts C9/C10 / SC-007; FR-013 full matrix): unknown field, missing parameter, **expression-evaluation error (type mismatch / divide-by-zero)**, empty dataset, and URL-only image each produce a specific `Diagnostic` (with `elementId` where applicable) and a non-crashing best-effort render (empty/placeholder fallback for the offending element; surrounding content renders normally); 0 unhandled crashes across the matrix
+- [X] T029 [P] [US4] Write `packages/jet_print/test/rendering/engine/render_diagnostics_test.dart` (contracts C9/C10 / SC-007; FR-013 full matrix): unknown field, missing parameter, **expression-evaluation error (type mismatch / divide-by-zero)**, empty dataset, and URL-only image each produce a specific `Diagnostic` (with `elementId` where applicable) and a non-crashing best-effort render (empty/placeholder fallback for the offending element; surrounding content renders normally); 0 unhandled crashes across the matrix
 
 ### Implementation for User Story 4
 
-- [ ] T030 [US4] Confirm `RenderedReport.diagnostics` surfaces the merged fill + layout diagnostics in order (in `packages/jet_print/lib/src/rendering/engine/jet_report_engine.dart`) and that per-element fallback (empty/placeholder, URL-only image placeholder) is wired through; adjust the facade merge/fallback only if T029 reveals a gap (internal behavior already exists per research §5/§7)
-- [ ] T031 [P] [US4] Add dartdoc to the promoted diagnostics types (`Diagnostic`, `DiagnosticSeverity`, `ReportDiagnostics`) in `packages/jet_print/lib/src/rendering/fill/report_diagnostics.dart` (FR-013 / FR-019)
+- [X] T030 [US4] Confirm `RenderedReport.diagnostics` surfaces the merged fill + layout diagnostics in order (in `packages/jet_print/lib/src/rendering/engine/jet_report_engine.dart`) and that per-element fallback (empty/placeholder, URL-only image placeholder) is wired through; adjust the facade merge/fallback only if T029 reveals a gap (internal behavior already exists per research §5/§7)
+- [X] T031 [P] [US4] Add dartdoc to the promoted diagnostics types (`Diagnostic`, `DiagnosticSeverity`, `ReportDiagnostics`) in `packages/jet_print/lib/src/rendering/fill/report_diagnostics.dart` (FR-013 / FR-019)
 
 **Checkpoint**: The defined malformed-input matrix produces specific diagnostics and non-crashing renders, surfaced on the public `RenderedReport.diagnostics`.
 
@@ -141,11 +141,11 @@ description: "Task list for Render Report — Data-Filled Paginated Preview (Jet
 
 **Purpose**: Documentation, formatting, and full-suite validation across all stories.
 
-- [ ] T032 [P] Dartdoc completeness pass on every new public symbol (`JetReportEngine`, `RenderOptions`, `RenderedReport`, `RenderedPage`, `JetReportPreview`) per FR-019 / Constitution VI
-- [ ] T033 [P] Update `packages/jet_print/CHANGELOG.md` with the render slice (facade, render IR, lazy seam, per-render locale, public data-source + diagnostics surface, preview widget)
-- [ ] T034 Run `dart format` and `dart analyze` across `packages/jet_print` and `apps/jet_print_playground` from the repo root; resolve to zero warnings
-- [ ] T035 Validate [quickstart.md](quickstart.md) end-to-end (template + data → preview in < 30 lines, SC-008) against the shipped example
-- [ ] T036 Run the full suite `flutter test packages/jet_print apps/jet_print_playground` from the repo root and confirm all unit/widget/golden/performance tests pass (no skipped tests — Constitution III)
+- [X] T032 [P] Dartdoc completeness pass on every new public symbol (`JetReportEngine`, `RenderOptions`, `RenderedReport`, `RenderedPage`, `JetReportPreview`) per FR-019 / Constitution VI
+- [X] T033 [P] Update `packages/jet_print/CHANGELOG.md` with the render slice (facade, render IR, lazy seam, per-render locale, public data-source + diagnostics surface, preview widget)
+- [X] T034 Run `dart format` and `dart analyze` across `packages/jet_print` and `apps/jet_print_playground` from the repo root; resolve to zero warnings
+- [X] T035 Validate [quickstart.md](quickstart.md) end-to-end (template + data → preview in < 30 lines, SC-008) against the shipped example
+- [X] T036 Run the full suite `flutter test packages/jet_print apps/jet_print_playground` from the repo root and confirm all unit/widget/golden/performance tests pass (no skipped tests — Constitution III)
 
 ---
 

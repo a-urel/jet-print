@@ -8,6 +8,7 @@ import 'package:jet_print/jet_print.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'invoice_sample.dart';
+import 'rendered_invoice_example.dart';
 
 void main() {
   // Fail fast on unsupported platforms so a wrong target surfaces a clear
@@ -155,6 +156,16 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
     _controller.open(JetReportFormat.decodeJson(contents));
   }
 
+  /// Preview path (011): open the rendered-invoice example — the invoice
+  /// template filled with real data, shown in the paginated preview.
+  void _openPreview() {
+    Navigator.of(context).push(PageRouteBuilder<void>(
+      pageBuilder:
+          (BuildContext context, Animation<double> _, Animation<double> __) =>
+              const _RenderedInvoicePreviewPage(),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -165,6 +176,8 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
             dataSchema: invoiceSchema,
             onSaveRequested: _save,
             onOpenRequested: _open,
+            // The designer's top-bar Preview action opens the rendered preview.
+            onPreviewRequested: (ReportTemplate _) => _openPreview(),
           ),
         ),
         Positioned(
@@ -190,5 +203,16 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
         ),
       ],
     );
+  }
+}
+
+/// Hosts [RenderedInvoiceExample]; the preview toolbar's own back button
+/// returns to the designer.
+class _RenderedInvoicePreviewPage extends StatelessWidget {
+  const _RenderedInvoicePreviewPage();
+
+  @override
+  Widget build(BuildContext context) {
+    return RenderedInvoiceExample(onBack: () => Navigator.of(context).pop());
   }
 }
