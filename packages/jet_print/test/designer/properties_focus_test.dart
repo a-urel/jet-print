@@ -51,5 +51,6 @@ void main() {
     // The overlay opened and mounted straight onto the Properties tab.
     expect(find.byKey(kRightPanelKey), findsOneWidget);
     expect(_xField, findsOneWidget);
+    expect(_textField, findsOneWidget);
   });
 }

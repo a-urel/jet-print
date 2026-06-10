@@ -165,7 +165,10 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
   /// Whether the last laid-out main area was the wide (≥ breakpoint) variant;
   /// written during build, read by [_handlePropertiesFocusRequest] so a focus
   /// request only opens the overlay when the panel is actually collapsed.
-  bool _lastLayoutWide = true;
+  /// Starts false so a request arriving before the first layout is never
+  /// dropped: a spurious early open is harmless in the wide layout (which
+  /// ignores [_rightOpen]), while the reverse would silently lose the request.
+  bool _lastLayoutWide = false;
 
   /// Opens the collapsed narrow-layout overlay when a Properties-focus request
   /// arrives, so the panel that must consume it can mount. Peeks only — the
