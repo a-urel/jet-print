@@ -157,7 +157,8 @@ void main() {
         '${root.path}/packages/jet_print/lib/src/designer/canvas/ruler_metrics.dart');
 
     test('the pure ruler helpers exist (no false green)', () {
-      expect(rulerScale.existsSync(), isTrue, reason: 'Missing ${rulerScale.path}');
+      expect(rulerScale.existsSync(), isTrue,
+          reason: 'Missing ${rulerScale.path}');
       expect(rulerMetrics.existsSync(), isTrue,
           reason: 'Missing ${rulerMetrics.path}');
     });
@@ -176,11 +177,13 @@ void main() {
         }
       }
       expect(violations, isEmpty,
-          reason: 'RulerScale/metrics must stay pure (dart:math + view/geometry '
+          reason:
+              'RulerScale/metrics must stay pure (dart:math + view/geometry '
               'only):\n${violations.join('\n')}');
     });
 
-    test('they carry no coupling to selection-drag or guide state (FR-016)', () {
+    test('they carry no coupling to selection-drag or guide state (FR-016)',
+        () {
       final List<String> violations = <String>[];
       for (final File file in <File>[rulerScale, rulerMetrics]) {
         for (final String uri in _directive

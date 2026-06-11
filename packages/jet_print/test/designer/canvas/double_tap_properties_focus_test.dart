@@ -204,7 +204,8 @@ void main() {
     // the page edge so it stays in the margin regardless of the ruler inset.
     final Offset pageTopLeft = tester.getTopLeft(find.byKey(kDesignPageKey));
 
-    await _doubleTapAt(tester, Offset(pageTopLeft.dx - 8, pageTopLeft.dy + 120));
+    await _doubleTapAt(
+        tester, Offset(pageTopLeft.dx - 8, pageTopLeft.dy + 120));
 
     expect(controller.selection.isEmpty, isTrue);
     expect(controller.pendingPropertiesFocus, isFalse);

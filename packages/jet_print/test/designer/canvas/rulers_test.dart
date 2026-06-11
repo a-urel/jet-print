@@ -41,7 +41,8 @@ bool _hasNumberedMarks(WidgetTester tester, Finder ruler) {
 
 void main() {
   group('rulers — US1 presence (C3.1, C3.5)', () {
-    testWidgets('a horizontal ruler is present at the top and a vertical at left',
+    testWidgets(
+        'a horizontal ruler is present at the top and a vertical at left',
         (WidgetTester tester) async {
       await pumpDesignerWith(tester);
 
@@ -75,7 +76,8 @@ void main() {
 
       expect(find.byKey(_kRulerCorner), findsOneWidget);
       expect(
-        find.descendant(of: find.byKey(_kRulerCorner), matching: find.byType(Text)),
+        find.descendant(
+            of: find.byKey(_kRulerCorner), matching: find.byType(Text)),
         findsNothing,
         reason: 'the corner is blank — no label, no measurement',
       );
@@ -83,7 +85,8 @@ void main() {
   });
 
   group('rulers — US2 toggle visibility (C3.2, C3.3)', () {
-    testWidgets('hiding rulers removes both strips and the canvas reclaims them',
+    testWidgets(
+        'hiding rulers removes both strips and the canvas reclaims them',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
 
@@ -99,9 +102,11 @@ void main() {
       expect(find.byKey(_kVerticalRuler), findsNothing);
       expect(find.byKey(_kRulerCorner), findsNothing);
       // The viewport grows by the strip thickness on each axis (space reclaimed).
-      expect(_viewportExtent(tester, Axis.horizontal) - widthOn, closeTo(20, 1.5),
+      expect(
+          _viewportExtent(tester, Axis.horizontal) - widthOn, closeTo(20, 1.5),
           reason: 'the left strip space is reclaimed');
-      expect(_viewportExtent(tester, Axis.vertical) - heightOn, closeTo(20, 1.5),
+      expect(
+          _viewportExtent(tester, Axis.vertical) - heightOn, closeTo(20, 1.5),
           reason: 'the top strip space is reclaimed');
     });
 

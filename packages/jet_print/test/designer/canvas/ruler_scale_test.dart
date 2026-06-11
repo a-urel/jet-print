@@ -46,7 +46,8 @@ void main() {
   const double pxPerMm100 = kPointsPerMm;
 
   group('RulerScale — monotonic & in-bounds (C1.1)', () {
-    test('ticks strictly increase and stay within [0, lengthPx] at any zoom/pan',
+    test(
+        'ticks strictly increase and stay within [0, lengthPx] at any zoom/pan',
         () {
       for (final double pxPerMm in <double>[
         pxPerMmMin,
@@ -146,7 +147,8 @@ void main() {
   group('RulerScale — subdivisions (C1.6)', () {
     test('minor ticks subdivide the step, carry no label, and clear the floor',
         () {
-      final RulerScale s = _scale(originPx: 0, pxPerMm: pxPerMm100, lengthPx: 600);
+      final RulerScale s =
+          _scale(originPx: 0, pxPerMm: pxPerMm100, lengthPx: 600);
       final List<RulerTick> minors =
           s.ticks.where((RulerTick t) => !t.isMajor).toList();
       expect(minors, isNotEmpty, reason: 'a labelled step should subdivide');
@@ -162,7 +164,8 @@ void main() {
   });
 
   group('RulerScale — origin off-strip (C1.7, FR-009)', () {
-    test('a scrolled-left origin emits only in-bounds ticks with correct labels',
+    test(
+        'a scrolled-left origin emits only in-bounds ticks with correct labels',
         () {
       // Page scrolled so 0 mm is 200 px to the left of the strip start.
       const double pxPerMm = pxPerMm100;
@@ -213,8 +216,8 @@ void main() {
 
   group('RulerScale — degenerate inputs', () {
     test('a zero/negative length or non-positive pxPerMm yields no ticks', () {
-      expect(_scale(originPx: 0, pxPerMm: pxPerMm100, lengthPx: 0).ticks,
-          isEmpty);
+      expect(
+          _scale(originPx: 0, pxPerMm: pxPerMm100, lengthPx: 0).ticks, isEmpty);
       expect(_scale(originPx: 0, pxPerMm: 0, lengthPx: 600).ticks, isEmpty);
     });
   });

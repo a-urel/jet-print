@@ -43,7 +43,8 @@ JetRect? selectionExtent(DesignTimeLayout layout, Selection selection) {
       if (layout.elementRect(id) case final JetRect rect) rect,
   ];
   if (rects.isEmpty) return null;
-  if (rects.length == 1) return rects.first; // exact — no float drift from a sum
+  // A single rect is exact — returning it avoids float drift from maxX − minX.
+  if (rects.length == 1) return rects.first;
 
   double minX = rects.first.x;
   double minY = rects.first.y;

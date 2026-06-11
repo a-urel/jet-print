@@ -146,9 +146,8 @@ class RulerOverlay extends StatelessWidget {
         color: colors.background,
         border: Border(
           // The rule sits on the edge that touches the canvas.
-          bottom: _horizontal
-              ? BorderSide(color: colors.border)
-              : BorderSide.none,
+          bottom:
+              _horizontal ? BorderSide(color: colors.border) : BorderSide.none,
           right:
               _horizontal ? BorderSide.none : BorderSide(color: colors.border),
         ),
@@ -178,7 +177,11 @@ class RulerOverlay extends StatelessWidget {
               if (t.label case final String label) _label(label, t.offsetPx),
             // Hover marker, on top, when the pointer is over the canvas.
             if (markerPx case final double m when m >= 0 && m <= lengthPx)
-              _band(key: kRulerMarkerKey, start: m, extent: 1, color: colors.marker),
+              _band(
+                  key: kRulerMarkerKey,
+                  start: m,
+                  extent: 1,
+                  color: colors.marker),
           ],
         ),
       ),
@@ -207,7 +210,8 @@ class RulerOverlay extends StatelessWidget {
     final Widget fill = ColoredBox(key: key, color: color);
     return _horizontal
         ? Positioned(left: start, width: extent, top: 0, bottom: 0, child: fill)
-        : Positioned(top: start, height: extent, left: 0, right: 0, child: fill);
+        : Positioned(
+            top: start, height: extent, left: 0, right: 0, child: fill);
   }
 
   /// A single numeric label anchored just past its major tick: to the right of

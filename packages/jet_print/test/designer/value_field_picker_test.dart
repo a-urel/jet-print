@@ -50,7 +50,8 @@ Future<String> _selectedText(
 }
 
 void main() {
-  testWidgets('the Value field shows a field-picker button when a schema is '
+  testWidgets(
+      'the Value field shows a field-picker button when a schema is '
       'attached', (WidgetTester tester) async {
     final JetReportDesignerController c =
         await pumpDesignerWith(tester, dataSchema: _schema);
@@ -80,7 +81,8 @@ void main() {
     expect(_pickItem('qty'), findsNothing);
   });
 
-  testWidgets('each picker item shows its field-type glyph (matching the Data '
+  testWidgets(
+      'each picker item shows its field-type glyph (matching the Data '
       'Source pane)', (WidgetTester tester) async {
     final JetReportDesignerController c =
         await pumpDesignerWith(tester, dataSchema: _schema);

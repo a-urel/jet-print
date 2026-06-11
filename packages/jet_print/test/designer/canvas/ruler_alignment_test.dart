@@ -53,10 +53,11 @@ List<(int, double)> _hLabels(WidgetTester tester, Finder ruler) {
 /// the label's character width.
 List<(int, double)> _vLabels(WidgetTester tester, Finder ruler) {
   final List<(int, double)> out = <(int, double)>[];
-  for (final Element box
-      in find.descendant(of: ruler, matching: find.byType(RotatedBox)).evaluate()) {
-    final Finder text =
-        find.descendant(of: find.byWidget(box.widget), matching: find.byType(Text));
+  for (final Element box in find
+      .descendant(of: ruler, matching: find.byType(RotatedBox))
+      .evaluate()) {
+    final Finder text = find.descendant(
+        of: find.byWidget(box.widget), matching: find.byType(Text));
     if (text.evaluate().isEmpty) continue;
     final int? mm = _mm(tester.widget<Text>(text).data);
     if (mm == null) continue;
@@ -148,7 +149,8 @@ void main() {
     for (int i = 1; i < after.length; i++) {
       final double expectedGap = (after[i].$1 - after[i - 1].$1) * pxPerMm;
       expect((after[i].$2 - after[i - 1].$2 - expectedGap).abs(), lessThan(1.0),
-          reason: 'left-ruler spacing drifted from the page scale while panning');
+          reason:
+              'left-ruler spacing drifted from the page scale while panning');
     }
   });
 
@@ -170,8 +172,7 @@ void main() {
     await tester.pumpAndSettle();
 
     _assertHorizontalAligned(tester, c.viewScale);
-    expect(
-        _hLabels(tester, find.byKey(_kHorizontalRuler)).first.$1,
+    expect(_hLabels(tester, find.byKey(_kHorizontalRuler)).first.$1,
         greaterThan(firstBefore),
         reason: 'the top ruler must scroll with the page; first label updates');
   });
