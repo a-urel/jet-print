@@ -677,44 +677,49 @@ class _DesignCanvasState extends State<DesignCanvas> {
               ],
             );
 
-            // Rulers off: no inset, no strips — the canvas keeps the full area.
-            if (!controller.rulersEnabled) return viewportStack;
+            // The viewport always sits inside one stable Stack > Positioned, so
+            // toggling the rulers (which only changes the inset and adds/removes
+            // strips) never reparents the scroll views onto their controllers.
+            final List<Widget> layers = <Widget>[
+              Positioned(
+                left: rulerInset,
+                top: rulerInset,
+                right: 0,
+                bottom: 0,
+                child: viewportStack,
+              ),
+            ];
 
-            // A page point p maps to a strip pixel by p·scale + pageOffset −
-            // scrollOffset; the origin pixel handed to each ruler is the strip
-            // pixel of page-0. (Scroll-driven repaints are wired in US3.)
-            final double pxPerMm = scale * kPointsPerMm;
-            final double originPxX = pageOffset.dx -
-                (_hScroll.hasClients ? _hScroll.offset : 0);
-            final double originPxY = pageOffset.dy -
-                (_vScroll.hasClients ? _vScroll.offset : 0);
-            final RulerColors rulerColors = RulerColors(
-              background: colors.card,
-              tick: colors.mutedForeground,
-              label: colors.mutedForeground,
-              border: colors.border,
-            );
-
-            return Stack(
-              children: <Widget>[
-                Positioned(
-                  left: rulerInset,
-                  top: rulerInset,
-                  right: 0,
-                  bottom: 0,
-                  child: viewportStack,
-                ),
+            if (controller.rulersEnabled) {
+              // A page point p maps to a strip pixel by p·scale + pageOffset −
+              // scrollOffset; the origin handed to each ruler is the strip pixel
+              // of page-0. Zoom/selection repaints arrive via the controller, but
+              // panning is a raw scroll (no controller notify) — so each strip is
+              // wrapped in an AnimatedBuilder on its scroll controller and folds
+              // the LIVE offset, exactly like the scrollbar overlays.
+              final double pxPerMm = scale * kPointsPerMm;
+              final RulerColors rulerColors = RulerColors(
+                background: colors.card,
+                tick: colors.mutedForeground,
+                label: colors.mutedForeground,
+                border: colors.border,
+              );
+              layers.addAll(<Widget>[
                 Positioned(
                   left: rulerInset,
                   top: 0,
                   right: 0,
                   height: kRulerThickness,
-                  child: RulerOverlay(
-                    axis: RulerAxis.horizontal,
-                    originPx: originPxX,
-                    pxPerMm: pxPerMm,
-                    lengthPx: viewport.width,
-                    colors: rulerColors,
+                  child: AnimatedBuilder(
+                    animation: _hScroll,
+                    builder: (BuildContext context, Widget? _) => RulerOverlay(
+                      axis: RulerAxis.horizontal,
+                      originPx: pageOffset.dx -
+                          (_hScroll.hasClients ? _hScroll.offset : 0),
+                      pxPerMm: pxPerMm,
+                      lengthPx: viewport.width,
+                      colors: rulerColors,
+                    ),
                   ),
                 ),
                 Positioned(
@@ -722,12 +727,16 @@ class _DesignCanvasState extends State<DesignCanvas> {
                   top: rulerInset,
                   width: kRulerThickness,
                   bottom: 0,
-                  child: RulerOverlay(
-                    axis: RulerAxis.vertical,
-                    originPx: originPxY,
-                    pxPerMm: pxPerMm,
-                    lengthPx: viewport.height,
-                    colors: rulerColors,
+                  child: AnimatedBuilder(
+                    animation: _vScroll,
+                    builder: (BuildContext context, Widget? _) => RulerOverlay(
+                      axis: RulerAxis.vertical,
+                      originPx: pageOffset.dy -
+                          (_vScroll.hasClients ? _vScroll.offset : 0),
+                      pxPerMm: pxPerMm,
+                      lengthPx: viewport.height,
+                      colors: rulerColors,
+                    ),
                   ),
                 ),
                 Positioned(
@@ -737,8 +746,10 @@ class _DesignCanvasState extends State<DesignCanvas> {
                   height: kRulerThickness,
                   child: RulerCorner(colors: rulerColors),
                 ),
-              ],
-            );
+              ]);
+            }
+
+            return Stack(children: layers);
           },
         ),
       ),

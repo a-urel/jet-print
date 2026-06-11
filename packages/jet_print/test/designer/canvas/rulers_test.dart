@@ -4,6 +4,7 @@
 // the other canvas widget tests locate the page and scrollbars.
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jet_print/jet_print.dart';
 
 import '../support/designer_harness.dart';
 
@@ -13,6 +14,19 @@ const Key _kHorizontalRuler =
 const Key _kVerticalRuler =
     ValueKey<String>('jet_print.designer.ruler.vertical');
 const Key _kRulerCorner = ValueKey<String>('jet_print.designer.ruler.corner');
+
+/// The live viewport dimension of the canvas's scroll view along [axis]. Grows
+/// when the rulers are hidden (the strip space is reclaimed).
+double _viewportExtent(WidgetTester tester, Axis axis) => tester
+    .stateList<ScrollableState>(
+      find.descendant(
+        of: find.byKey(kDesignCanvasKey),
+        matching: find.byType(Scrollable),
+      ),
+    )
+    .firstWhere((ScrollableState s) => s.position.axis == axis)
+    .position
+    .viewportDimension;
 
 /// Whether [finder] resolves to a widget showing at least one numeric label.
 bool _hasNumberedMarks(WidgetTester tester, Finder ruler) {
@@ -65,6 +79,49 @@ void main() {
         findsNothing,
         reason: 'the corner is blank — no label, no measurement',
       );
+    });
+  });
+
+  group('rulers — US2 toggle visibility (C3.2, C3.3)', () {
+    testWidgets('hiding rulers removes both strips and the canvas reclaims them',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+
+      expect(find.byKey(_kHorizontalRuler), findsOneWidget);
+      final double widthOn = _viewportExtent(tester, Axis.horizontal);
+      final double heightOn = _viewportExtent(tester, Axis.vertical);
+
+      c.setRulersEnabled(false);
+      await tester.pumpAndSettle();
+
+      // Both strips and the corner are gone.
+      expect(find.byKey(_kHorizontalRuler), findsNothing);
+      expect(find.byKey(_kVerticalRuler), findsNothing);
+      expect(find.byKey(_kRulerCorner), findsNothing);
+      // The viewport grows by the strip thickness on each axis (space reclaimed).
+      expect(_viewportExtent(tester, Axis.horizontal) - widthOn, closeTo(20, 1.5),
+          reason: 'the left strip space is reclaimed');
+      expect(_viewportExtent(tester, Axis.vertical) - heightOn, closeTo(20, 1.5),
+          reason: 'the top strip space is reclaimed');
+    });
+
+    testWidgets('re-enabling restores both rulers aligned to the canvas edges',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      c.setRulersEnabled(false);
+      await tester.pumpAndSettle();
+      expect(find.byKey(_kHorizontalRuler), findsNothing);
+
+      c.setRulersEnabled(true);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(_kHorizontalRuler), findsOneWidget);
+      expect(find.byKey(_kVerticalRuler), findsOneWidget);
+      final Rect canvas = tester.getRect(find.byKey(kDesignCanvasKey));
+      expect(tester.getRect(find.byKey(_kHorizontalRuler)).top,
+          closeTo(canvas.top, 0.5));
+      expect(tester.getRect(find.byKey(_kVerticalRuler)).left,
+          closeTo(canvas.left, 0.5));
     });
   });
 }

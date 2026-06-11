@@ -95,12 +95,12 @@ toggle on → they reappear aligned. The toggle's highlighted state matches visi
 
 ### Tests for User Story 2 (write first — must FAIL) ⚠️
 
-- [ ] T012 [P] [US2] Extend the top-bar test (C3.4: activating the ruler toggle flips `controller.rulersEnabled`; the toggle's `active` styling equals `controller.rulersEnabled` at all times, mirroring the grid/snap toggle assertions) in `packages/jet_print/test/designer/top_bar_test.dart`
-- [ ] T013 [P] [US2] Extend the rulers widget test (C3.2–3: with `rulersEnabled == false` both ruler strips are absent and the viewport reclaims the strip space; flipping back to `true` restores both rulers aligned with the page) in `packages/jet_print/test/designer/canvas/rulers_test.dart`
+- [X] T012 [P] [US2] Extend the top-bar test (C3.4: activating the ruler toggle flips `controller.rulersEnabled`; the toggle's `active` styling equals `controller.rulersEnabled` at all times, mirroring the grid/snap toggle assertions) in `packages/jet_print/test/designer/top_bar_test.dart`
+- [X] T013 [P] [US2] Extend the rulers widget test (C3.2–3: with `rulersEnabled == false` both ruler strips are absent and the viewport reclaims the strip space; flipping back to `true` restores both rulers aligned with the page) in `packages/jet_print/test/designer/canvas/rulers_test.dart`
 
 ### Implementation for User Story 2
 
-- [ ] T014 [US2] Rewire the ruler toggle in `packages/jet_print/lib/src/designer/layout/designer_top_bar.dart` to read `controller.rulersEnabled` for its active state and call `controller.setRulersEnabled(...)` on tap; delete the dead local `_ruler` field → makes T012, T013 pass
+- [X] T014 [US2] Rewire the ruler toggle in `packages/jet_print/lib/src/designer/layout/designer_top_bar.dart` to read `controller.rulersEnabled` for its active state and call `controller.setRulersEnabled(...)` on tap; delete the dead local `_ruler` field → makes T012, T013 pass
 
 **Checkpoint**: US1 + US2 together = the minimum viable feature (rulers appear correctly AND are controllable).
 
@@ -117,11 +117,11 @@ levels a known element edge still lines up with its mm mark; label density stays
 
 ### Tests for User Story 3 (write first — must FAIL) ⚠️
 
-- [ ] T015 [P] [US3] Write FAILING alignment widget test (C4: at default zoom an element edge projects to `edge·scale + pageOffset − scrollOffset` with the matching mm at that pixel; after `zoomIn()`/`zoomOut()` the edge still aligns and labelled spacing re-steps yet stays ≥ minimum; after scrolling `_vScroll`/`_hScroll` both rulers shift with the page and first-visible labels update; no drift within one subdivision across several zoom×scroll combos) in `packages/jet_print/test/designer/canvas/ruler_alignment_test.dart`, mirroring `zoom_pan_test.dart` / `page_scroll_test.dart`
+- [X] T015 [P] [US3] Write FAILING alignment widget test (C4: at default zoom an element edge projects to `edge·scale + pageOffset − scrollOffset` with the matching mm at that pixel; after `zoomIn()`/`zoomOut()` the edge still aligns and labelled spacing re-steps yet stays ≥ minimum; after scrolling `_vScroll`/`_hScroll` both rulers shift with the page and first-visible labels update; no drift within one subdivision across several zoom×scroll combos) in `packages/jet_print/test/designer/canvas/ruler_alignment_test.dart`, mirroring `zoom_pan_test.dart` / `page_scroll_test.dart`
 
 ### Implementation for User Story 3
 
-- [ ] T016 [US3] In `packages/jet_print/lib/src/designer/canvas/design_canvas.dart`, drive the ruler overlays from the **live** `viewScale`, centering `pageOffset`, and the `_vScroll`/`_hScroll` offsets (wrap in the same `AnimatedBuilder`-on-scroll-controller + controller-notify pattern as the scrollbar overlays) so `originPx` folds the scroll offset and the scale re-steps on zoom → makes T015 pass
+- [X] T016 [US3] In `packages/jet_print/lib/src/designer/canvas/design_canvas.dart`, drive the ruler overlays from the **live** `viewScale`, centering `pageOffset`, and the `_vScroll`/`_hScroll` offsets (wrap in the same `AnimatedBuilder`-on-scroll-controller + controller-notify pattern as the scrollbar overlays) so `originPx` folds the scroll offset and the scale re-steps on zoom → makes T015 pass
 
 **Checkpoint**: Rulers are trustworthy at every zoom and pan position.
 
