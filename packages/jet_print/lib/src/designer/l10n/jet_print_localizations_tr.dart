@@ -202,6 +202,9 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get formatHint => 'örn. #,##0.00';
 
   @override
+  String get formatPresetPickerTooltip => 'Biçim ön ayarı seç';
+
+  @override
   String get formatPresetNone => 'Yok';
 
   @override

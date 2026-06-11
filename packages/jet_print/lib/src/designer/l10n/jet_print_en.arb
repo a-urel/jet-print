@@ -270,6 +270,10 @@
   "@formatHint": {
     "description": "Placeholder for the format input (an ICU number/date pattern) (013)."
   },
+  "formatPresetPickerTooltip": "Choose a format preset",
+  "@formatPresetPickerTooltip": {
+    "description": "Accessible label/tooltip for the Format field's preset-picker suffix button (013)."
+  },
   "formatPresetNone": "None",
   "@formatPresetNone": {
     "description": "Format preset that clears the format (unformatted) (013)."

@@ -76,6 +76,7 @@
   "valueFieldPickerTooltip": "Veri alanı ekle",
   "propertiesFormat": "Biçim",
   "formatHint": "örn. #,##0.00",
+  "formatPresetPickerTooltip": "Biçim ön ayarı seç",
   "formatPresetNone": "Yok",
   "formatPresetInteger": "Tam sayı",
   "formatPresetDecimal": "Ondalık",

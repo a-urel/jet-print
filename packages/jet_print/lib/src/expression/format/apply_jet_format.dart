@@ -34,7 +34,29 @@ JetString? tryJetFormat(JetValue value, String pattern) {
 /// [pattern], a type the pattern does not fit, or a malformed pattern all leave
 /// [value] unchanged (never an error token); a number/date with a valid pattern
 /// becomes the formatted [JetString].
+///
+/// One coercion is specific to the property (not [tryJetFormat]/`FORMAT`): when
+/// the pattern is a **date** pattern and the value is a string that parses as an
+/// ISO date, it is formatted as a date. This lets a field declared `dateTime`
+/// but supplied as an ISO string (common with JSON data) still honor a date
+/// format — a non-date string is left unchanged, so nothing else is affected.
 JetValue applyJetFormat(JetValue value, String pattern) {
   if (pattern.isEmpty) return value;
-  return tryJetFormat(value, pattern) ?? value;
+  return tryJetFormat(_coerceForFormat(value, pattern), pattern) ?? value;
+}
+
+/// Any ICU date-field letter — the signal that a pattern is a date pattern (the
+/// number presets/patterns use only `# 0 , . ¤ % E`, none of these letters).
+final RegExp _datePatternLetter =
+    RegExp('[GyYuUrQqMLwWdDFgEecabBhHKkmsSAzZOvVXx]');
+
+/// For the property's date-string convenience: a string value under a date
+/// pattern that parses as an ISO date becomes a [JetDate]; everything else is
+/// returned untouched (so number patterns and non-date strings are unaffected).
+JetValue _coerceForFormat(JetValue value, String pattern) {
+  if (value is JetString && _datePatternLetter.hasMatch(pattern)) {
+    final DateTime? parsed = DateTime.tryParse(value.value.trim());
+    if (parsed != null) return JetDate(parsed);
+  }
+  return value;
 }

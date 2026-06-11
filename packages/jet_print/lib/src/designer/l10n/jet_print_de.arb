@@ -76,6 +76,7 @@
   "valueFieldPickerTooltip": "Datenfeld einfügen",
   "propertiesFormat": "Format",
   "formatHint": "z. B. #,##0.00",
+  "formatPresetPickerTooltip": "Formatvorlage wählen",
   "formatPresetNone": "Keine",
   "formatPresetInteger": "Ganzzahl",
   "formatPresetDecimal": "Dezimal",

@@ -202,6 +202,9 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   String get formatHint => 'z. B. #,##0.00';
 
   @override
+  String get formatPresetPickerTooltip => 'Formatvorlage wählen';
+
+  @override
   String get formatPresetNone => 'Keine';
 
   @override

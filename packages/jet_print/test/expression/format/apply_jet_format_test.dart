@@ -35,4 +35,28 @@ void main() {
     expect(applyJetFormat(const JetNull(), '#,##0'), const JetNull());
     expect(applyJetFormat(const JetBool(true), '#,##0'), const JetBool(true));
   });
+
+  test('a date pattern over an ISO date-string formats it as a date', () {
+    // A field declared dateTime but supplied as an ISO string (common with
+    // JSON data) still honors a date format on the label property.
+    expect(applyJetFormat(const JetString('2026-05-12'), 'yyyy-MM-dd HH:mm'),
+        const JetString('2026-05-12 00:00'));
+  });
+
+  test('a non-date string with a date pattern is left unchanged', () {
+    expect(applyJetFormat(const JetString('Paid in full'), 'yyyy-MM-dd'),
+        const JetString('Paid in full'));
+  });
+
+  test('a numeric pattern never coerces a date-looking string', () {
+    expect(applyJetFormat(const JetString('2026-05-12'), '#,##0.00'),
+        const JetString('2026-05-12'));
+  });
+
+  test('FORMAT semantics are unchanged — tryJetFormat does not parse strings',
+      () {
+    // The coercion is scoped to the label property (applyJetFormat); the shared
+    // tryJetFormat used by FORMAT(...) still returns null for a string.
+    expect(tryJetFormat(const JetString('2026-05-12'), 'yyyy-MM-dd'), isNull);
+  });
 }

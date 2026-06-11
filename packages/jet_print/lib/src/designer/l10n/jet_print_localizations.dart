@@ -485,6 +485,12 @@ abstract class JetPrintLocalizations {
   /// **'e.g. #,##0.00'**
   String get formatHint;
 
+  /// Accessible label/tooltip for the Format field's preset-picker suffix button (013).
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a format preset'**
+  String get formatPresetPickerTooltip;
+
   /// Format preset that clears the format (unformatted) (013).
   ///
   /// In en, this message translates to:

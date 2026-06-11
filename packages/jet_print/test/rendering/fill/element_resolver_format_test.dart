@@ -65,4 +65,18 @@ void main() {
             as TextElement;
     expect(out.text, 'Ada');
   });
+
+  test('a date pattern formats an ISO date-string field value', () {
+    // The data source supplies the date as an ISO string (e.g. from JSON); the
+    // label's date format still applies (013 — format-driven date parse).
+    const TextElement el = TextElement(
+        id: 't',
+        bounds: _r,
+        text: '',
+        expression: r'$F{date}',
+        format: 'yyyy-MM-dd HH:mm');
+    final TextElement out = _resolver().resolve(el,
+        row: _row(<String, Object?>{'date': '2026-05-12'})) as TextElement;
+    expect(out.text, '2026-05-12 00:00');
+  });
 }
