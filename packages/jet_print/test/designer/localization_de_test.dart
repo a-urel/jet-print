@@ -10,6 +10,22 @@ import 'package:jet_print/jet_print.dart';
 import 'support/designer_harness.dart';
 
 void main() {
+  // C6 (spec 014): German groups thousands with a dot (1.000) and the ruler
+  // toggle tooltip is localized.
+  testWidgets('ruler labels group thousands in German; toggle tooltip localized',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c = await pumpDesignerWith(tester,
+        size: const Size(2400, 800), locale: const Locale('de'));
+    c.setViewScale(0.25);
+    await tester.pumpAndSettle();
+
+    expect(find.text('1.000'), findsWidgets,
+        reason: 'German groups thousands with a dot');
+    final JetPrintLocalizations l10n =
+        JetPrintLocalizations.of(tester.element(find.byType(JetReportDesigner)));
+    expect(l10n.toggleRulerTooltip, 'Lineale anzeigen');
+  });
+
   testWidgets('German captions render under the de locale', (
     WidgetTester tester,
   ) async {

@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 import 'package:jet_print/src/designer/canvas/design_time_layout.dart';
 import 'package:jet_print/src/designer/canvas/ruler_metrics.dart';
-import 'package:jet_print/src/designer/controller/selection.dart';
 
 /// A two-band template (page header + detail) with two detail elements at known
 /// band-relative positions, for exercising `selectionExtent`.
@@ -100,7 +99,8 @@ void main() {
       expect(selectionExtent(layout, Selection.of(const <String>['ghost'])),
           isNull);
       // A real element mixed with a ghost still yields the real one's rect.
-      expect(selectionExtent(layout, Selection.of(const <String>['a', 'ghost'])),
+      expect(
+          selectionExtent(layout, Selection.of(const <String>['a', 'ghost'])),
           layout.elementRect('a'));
     });
   });

@@ -8,6 +8,25 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Canvas rulers (spec 014-canvas-rulers).** The design canvas now shows a
+  horizontal ruler along the top and a vertical ruler down the left, calibrated
+  in **millimetres** from the page's physical top-left corner (0,0):
+  - Marks stay locked to true page positions across the full zoom range and while
+    panning, with an adaptive "nice-step" labelled interval (1/2/5 ladder) so
+    labels never crowd or vanish, plus finer unlabelled subdivisions. Labels are
+    localized to the active locale's number grouping (en/de/tr).
+  - A thin marker tracks the pointer on both rulers, and the current selection's
+    **union bounding box** is highlighted as one combined span per ruler
+    (single element, multi-selection, or band), updating on move/resize and
+    clearing on deselect.
+  - Rulers are shown/hidden by the existing top-bar ruler toggle and are **on by
+    default**. Two methods are added to `JetReportDesignerController`,
+    `rulersEnabled` / `setRulersEnabled`, mirroring the grid/snap pair; ruler
+    visibility is a per-session view preference and is never serialized.
+  - Rulers are design-time chrome only — they never flow through the render
+    pipeline, so preview, export, and saved templates are completely unaffected
+    (no model, codec, or `schemaVersion` change).
+
 - **Simplified label value & format properties (spec
   013-label-value-format).** The label (text element) Properties panel now has a
   single **Value** field in place of the separate Text and Binding inputs, plus a

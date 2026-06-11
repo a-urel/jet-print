@@ -152,8 +152,8 @@ void main() {
     testWidgets('the ruler toggle drives rulersEnabled and reflects its state',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
-      final Finder toggle = find
-          .byKey(const ValueKey<String>('jet_print.designer.toggle.ruler'));
+      final Finder toggle =
+          find.byKey(const ValueKey<String>('jet_print.designer.toggle.ruler'));
       ShadButtonVariant variant() =>
           tester.widget<ShadIconButton>(toggle).variant;
 

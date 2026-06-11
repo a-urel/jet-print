@@ -145,6 +145,64 @@ void main() {
     });
   });
 
+  group('layer boundaries — designer ruler helpers (014)', () {
+    // The pure measurement seam: RulerScale/RulerTick + the points↔mm and
+    // selection-extent metrics. They must stay Flutter-/rendering-free (C7.2,
+    // FR-016) and carry NO coupling to selection-drag or guide state, so
+    // draggable alignment guides can be layered on later without touching the
+    // measurement model. They depend only on dart:math + view/geometry inputs.
+    final File rulerScale = File(
+        '${root.path}/packages/jet_print/lib/src/designer/canvas/ruler_scale.dart');
+    final File rulerMetrics = File(
+        '${root.path}/packages/jet_print/lib/src/designer/canvas/ruler_metrics.dart');
+
+    test('the pure ruler helpers exist (no false green)', () {
+      expect(rulerScale.existsSync(), isTrue, reason: 'Missing ${rulerScale.path}');
+      expect(rulerMetrics.existsSync(), isTrue,
+          reason: 'Missing ${rulerMetrics.path}');
+    });
+
+    test('they import no rendering/Flutter-UI library', () {
+      final List<String> violations = <String>[];
+      for (final File file in <File>[rulerScale, rulerMetrics]) {
+        for (final String uri in _directive
+            .allMatches(file.readAsStringSync())
+            .map((Match m) => m.group(1)!)) {
+          if (_isFlutterUi(uri) ||
+              uri.startsWith('package:flutter/') ||
+              uri.contains('rendering')) {
+            violations.add('${file.path} -> $uri');
+          }
+        }
+      }
+      expect(violations, isEmpty,
+          reason: 'RulerScale/metrics must stay pure (dart:math + view/geometry '
+              'only):\n${violations.join('\n')}');
+    });
+
+    test('they carry no coupling to selection-drag or guide state (FR-016)', () {
+      final List<String> violations = <String>[];
+      for (final File file in <File>[rulerScale, rulerMetrics]) {
+        for (final String uri in _directive
+            .allMatches(file.readAsStringSync())
+            .map((Match m) => m.group(1)!)) {
+          // The measurement model may read the current Selection + layout, but
+          // must not reach drag/snap/guide/command machinery — that coupling is
+          // what would block adding draggable guides later.
+          if (uri.contains('snapping') ||
+              uri.contains('guide') ||
+              uri.contains('/commands/') ||
+              uri.contains('command')) {
+            violations.add('${file.path} -> $uri');
+          }
+        }
+      }
+      expect(violations, isEmpty,
+          reason: 'the measurement model must not couple to drag/guide state:\n'
+              '${violations.join('\n')}');
+    });
+  });
+
   group('layer boundaries — rendering seam', () {
     final Directory renderingDir =
         Directory('${root.path}/packages/jet_print/lib/src/rendering');
