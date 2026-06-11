@@ -61,7 +61,8 @@ void main() {
 
       expect(c.rulersEnabled, isFalse);
       expect(c.gridEnabled, isTrue, reason: 'rulers must not touch the grid');
-      expect(c.snapEnabled, isTrue, reason: 'rulers must not touch snapping');
+      // Snapping is off by default; toggling rulers must leave it unchanged.
+      expect(c.snapEnabled, isFalse, reason: 'rulers must not touch snapping');
     });
   });
 

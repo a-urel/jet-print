@@ -17,7 +17,7 @@ void main() {
   testWidgets('JetReportDesigner matches its light golden', (
     WidgetTester tester,
   ) async {
-    await pumpDesignerWith(tester, rulers: false);
+    await pumpDesignerWith(tester, rulers: false, grid: false);
 
     await expectLater(
       find.byType(JetReportDesigner),
@@ -28,7 +28,8 @@ void main() {
   testWidgets('JetReportDesigner matches its dark golden', (
     WidgetTester tester,
   ) async {
-    await pumpDesignerWith(tester, themeMode: ThemeMode.dark, rulers: false);
+    await pumpDesignerWith(tester,
+        themeMode: ThemeMode.dark, rulers: false, grid: false);
 
     await expectLater(
       find.byType(JetReportDesigner),

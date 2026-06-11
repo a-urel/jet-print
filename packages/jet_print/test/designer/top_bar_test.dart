@@ -171,5 +171,62 @@ void main() {
       expect(c.rulersEnabled, isTrue);
       expect(variant(), ShadButtonVariant.secondary);
     });
+
+    // 015 (C5.1): the grid toggle flips `gridEnabled` (visibility only) and
+    // reflects its state, WITHOUT touching `snapEnabled` — the two tools are
+    // independent (FR-010).
+    testWidgets('the grid toggle drives gridEnabled and leaves snap untouched',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      final Finder toggle =
+          find.byKey(const ValueKey<String>('jet_print.designer.toggle.grid'));
+      ShadButtonVariant variant() =>
+          tester.widget<ShadIconButton>(toggle).variant;
+
+      // Grid is on by default; snap is off by default.
+      expect(c.gridEnabled, isTrue);
+      expect(c.snapEnabled, isFalse);
+      expect(variant(), ShadButtonVariant.secondary);
+
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+      expect(c.gridEnabled, isFalse);
+      expect(c.snapEnabled, isFalse, reason: 'grid toggle must not touch snap');
+      expect(variant(), ShadButtonVariant.ghost);
+
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+      expect(c.gridEnabled, isTrue);
+      expect(c.snapEnabled, isFalse);
+      expect(variant(), ShadButtonVariant.secondary);
+    });
+
+    // 015 (C5.2): the snap (magnet) toggle flips `snapEnabled` and reflects its
+    // state, WITHOUT touching `gridEnabled` (FR-010).
+    testWidgets('the snap toggle drives snapEnabled and leaves grid untouched',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      final Finder toggle =
+          find.byKey(const ValueKey<String>('jet_print.designer.toggle.snap'));
+      ShadButtonVariant variant() =>
+          tester.widget<ShadIconButton>(toggle).variant;
+
+      // Snap is off by default → ghost; grid is on.
+      expect(c.snapEnabled, isFalse);
+      expect(c.gridEnabled, isTrue);
+      expect(variant(), ShadButtonVariant.ghost);
+
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+      expect(c.snapEnabled, isTrue);
+      expect(c.gridEnabled, isTrue, reason: 'snap toggle must not touch grid');
+      expect(variant(), ShadButtonVariant.secondary);
+
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+      expect(c.snapEnabled, isFalse);
+      expect(c.gridEnabled, isTrue);
+      expect(variant(), ShadButtonVariant.ghost);
+    });
   });
 }

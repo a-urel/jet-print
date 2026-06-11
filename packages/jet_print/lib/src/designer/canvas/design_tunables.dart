@@ -26,9 +26,27 @@ enum DesignerToolType {
   barcode,
 }
 
-/// Grid spacing, in points. When the grid is enabled, moved/resized geometry
-/// snaps to integer multiples of this value (FR-011).
-const double kGridStep = 8;
+/// Grid/snap spacing, in **millimetres** — the unit of record for this decision
+/// (spec 015 / D2). Drives both the visible alignment grid and the snap step, so
+/// they share one source of truth and align with the mm rulers.
+const double kGridStepMm = 5;
+
+/// Grid/snap spacing, in **points**: `kGridStepMm · 72/25.4 ≈ 14.173`. Consumed
+/// by `snapping.dart` (snap candidates) and the canvas `_GridPainter` (drawn
+/// lines), so a drawn line always lands on a snap target (true WYSIWYG). The
+/// `72/25.4` factor mirrors `kPointsPerMm` in `ruler_metrics.dart`; it is inlined
+/// here to keep this pure-data file free of any canvas-seam import (D2).
+const double kGridStep = kGridStepMm * 72 / 25.4;
+
+/// Minimum on-screen gap, in device pixels, between two drawn grid lines. Below
+/// it, `gridLineOffsets` coarsens the step (then hides the grid) so the grid
+/// never smears into a solid fill when zoomed out (spec 015 / FR-006 / D4).
+const double kGridMinLineGapPx = 4;
+
+/// Maximum coarsening multiplier for the visible grid. Past it (an effective
+/// step beyond `kGridMaxCoarsenFactor · kGridStepMm = 20 mm`), the grid HIDES
+/// rather than drawing ever-coarser lines (spec 015 / FR-006 / D4).
+const int kGridMaxCoarsenFactor = 4;
 
 /// Snap activation distance, expressed in **screen pixels**. The canvas
 /// converts it to points using the live zoom so the "magnetism" feels the same

@@ -59,7 +59,12 @@ bool _isWhiteBoxSeamTest(File file) {
       // modules deliberately isolated from Flutter so the tricky math is
       // unit-testable; their unit tests are white-box (Principle III).
       path.endsWith('/test/designer/canvas/ruler_scale_test.dart') ||
-      path.endsWith('/test/designer/canvas/ruler_metrics_test.dart');
+      path.endsWith('/test/designer/canvas/ruler_metrics_test.dart') ||
+      // Grid & snap (015): `gridLineOffsets` (and the grid/snap tunables it
+      // shares with the snap geometry) is an unexported `src/` helper kept
+      // Flutter-free so the adaptive-density math is unit-testable; its unit
+      // test is white-box (Principle III).
+      path.endsWith('/test/designer/canvas/grid_geometry_test.dart');
 }
 
 void main() {

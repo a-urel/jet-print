@@ -255,7 +255,10 @@ class JetReportDesignerController extends ChangeNotifier {
               height: b.height),
           siblings: _siblingBounds(loc.bandIndex, single),
           bandBox: _bandBox(loc.bandIndex),
-          grid: _gridEnabled,
+          // Grid snapping is governed solely by the snap tool now (D3): we are
+          // already inside the `_snapEnabled` guard, so feed the grid candidates
+          // unconditionally. `_gridEnabled` controls only the grid's VISIBILITY.
+          grid: true,
           gridStep: kGridStep,
           threshold: threshold,
         );
@@ -298,27 +301,33 @@ class JetReportDesignerController extends ChangeNotifier {
   // --- Resize ----------------------------------------------------------------
 
   bool _gridEnabled = true;
-  bool _snapEnabled = true;
+  bool _snapEnabled = false;
   bool _rulersEnabled = true;
   String? _resizeId;
   ResizeHandle? _resizeHandle;
   JetRect? _resizeStart;
   JetRect? _resizePreview;
 
-  /// Whether grid snapping is active (top-bar toggle; default on, FR-011).
+  /// Whether the alignment grid is **drawn** on the canvas (top-bar toggle;
+  /// default on, FR-014). Visibility only — since 015 this no longer gates
+  /// snapping (the magnet does). All four grid/snap combinations are valid, and
+  /// elements snap to the grid even when it is hidden (FR-010). Never serialized.
   bool get gridEnabled => _gridEnabled;
 
-  /// Whether snapping (grid + sibling + band) is active (default on, FR-011).
+  /// Whether snapping is active — the **sole** gate for all snapping (grid +
+  /// sibling + band) during move/resize (default **off**; the magnet must be
+  /// switched on to snap, FR-008/FR-010).
   bool get snapEnabled => _snapEnabled;
 
-  /// Toggles grid snapping.
+  /// Shows or hides the alignment grid (visibility only; does not affect
+  /// snapping). A no-op when [value] already matches.
   void setGridEnabled(bool value) {
     if (_gridEnabled == value) return;
     _gridEnabled = value;
     notifyListeners();
   }
 
-  /// Toggles all snapping.
+  /// Toggles all snapping (grid + sibling + band).
   void setSnapEnabled(bool value) {
     if (_snapEnabled == value) return;
     _snapEnabled = value;
@@ -382,7 +391,9 @@ class JetReportDesignerController extends ChangeNotifier {
         handle,
         siblings: _siblingBounds(loc.bandIndex, id),
         bandBox: _bandBox(loc.bandIndex),
-        grid: _gridEnabled,
+        // Decoupled (D3): grid snapping follows the snap tool only — we are
+        // inside the `_snapEnabled` guard — while `_gridEnabled` is visibility.
+        grid: true,
         gridStep: kGridStep,
         threshold: threshold,
       );

@@ -206,6 +206,38 @@ void main() {
     });
   });
 
+  group('layer boundaries — designer grid helper (015)', () {
+    // The pure grid-line geometry (`gridLineOffsets`): the adaptive-density math
+    // for the visible alignment grid. Like the ruler helpers it must stay
+    // Flutter-/rendering-/domain-free (the step/gap/cap are injected by the
+    // painter, contract C6.2), so it is unit-testable without a widget.
+    final File gridGeometry = File(
+        '${root.path}/packages/jet_print/lib/src/designer/canvas/grid_geometry.dart');
+
+    test('the pure grid helper exists (no false green)', () {
+      expect(gridGeometry.existsSync(), isTrue,
+          reason: 'Missing ${gridGeometry.path}');
+    });
+
+    test('it imports no Flutter/rendering/domain library', () {
+      final List<String> violations = <String>[];
+      for (final String uri in _directive
+          .allMatches(gridGeometry.readAsStringSync())
+          .map((Match m) => m.group(1)!)) {
+        if (_isFlutterUi(uri) ||
+            uri.startsWith('package:flutter/') ||
+            uri.contains('rendering') ||
+            uri.contains('domain')) {
+          violations.add('${gridGeometry.path} -> $uri');
+        }
+      }
+      expect(violations, isEmpty,
+          reason:
+              'gridLineOffsets must stay pure (no Flutter/rendering/domain; '
+              'tunables are injected by the caller):\n${violations.join('\n')}');
+    });
+  });
+
   group('layer boundaries — rendering seam', () {
     final Directory renderingDir =
         Directory('${root.path}/packages/jet_print/lib/src/rendering');

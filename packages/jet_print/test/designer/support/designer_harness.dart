@@ -134,6 +134,7 @@ Future<JetReportDesignerController> pumpDesignerWith(
   ThemeMode themeMode = ThemeMode.light,
   JetDataSchema? dataSchema,
   bool rulers = true,
+  bool grid = true,
 }) async {
   final JetReportDesignerController c =
       controller ?? JetReportDesignerController();
@@ -142,6 +143,10 @@ Future<JetReportDesignerController> pumpDesignerWith(
   // (un-inset) viewport, so a rulers-off pump reproduces the pre-rulers layout
   // byte-for-byte — which is why the design-surface goldens pass `rulers: false`.
   if (!rulers) c.setRulersEnabled(false);
+  // The alignment grid (015) is on by default, but the pre-grid canvas goldens
+  // lock element/band appearance only — they pass `grid: false` so their images
+  // stay byte-identical (the grid-on appearance gets its own dedicated golden).
+  if (!grid) c.setGridEnabled(false);
   await pumpDesigner(
     tester,
     size: size,

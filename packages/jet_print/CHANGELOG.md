@@ -8,6 +8,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Grid & snap helper tools (spec 015-grid-snap-tools).** The two remaining
+  design-canvas helper tools now behave as their top-bar icons promise:
+  - A light **5 mm alignment grid** is drawn as backmost design-time chrome on
+    each band, registered to the band's content origin so every drawn line lands
+    exactly on a snap target (true WYSIWYG). It is **on by default**, toggled by
+    the existing grid button, stays page-registered through zoom/pan, and
+    adaptively coarsens then hides when zoomed far out so it never smears into a
+    solid fill.
+  - The grid is design-time chrome only — like the rulers it never flows through
+    the render pipeline, so preview, export, print, and saved templates are
+    completely unaffected (no model, codec, or `schemaVersion` change).
+
 - **Canvas rulers (spec 014-canvas-rulers).** The design canvas now shows a
   horizontal ruler along the top and a vertical ruler down the left, calibrated
   in **millimetres** from the page's physical top-left corner (0,0):
@@ -399,6 +411,22 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   unchanged (`FilledReport.params` is internal IR).
 
 ### Changed
+
+- **Grid snap step is now 5 mm (was 8 pt)** (spec 015-grid-snap-tools) so the
+  snap grid coincides with the new visible grid and the millimetre rulers. This
+  affects **new** interactive placements only; stored report coordinates are
+  untouched.
+- **Grid visibility is decoupled from grid snapping** (spec 015-grid-snap-tools).
+  The grid button now controls only whether the grid is **drawn**; snapping
+  (grid + sibling + band) is governed solely by the magnet/snap toggle. Elements
+  snap to the 5 mm grid even when the grid is hidden, and all four grid/snap
+  on-off combinations are valid. `JetReportDesignerController.gridEnabled` /
+  `setGridEnabled` keep their signatures but now mean *visibility only*.
+- **Snapping now defaults to off.** The grid is still shown by default, but the
+  magnet/snap toggle starts off — switch it on to snap. (`snapEnabled` defaults
+  to `false`.)
+- **Top bar: the ruler toggle moved to the left of the view-toggle group**, so
+  the order is now ruler, grid, snap.
 
 - **Designer: double-tap now opens the Properties inspector (in-place editing
   removed).** Double-tapping anything on the canvas — an element, a band's
