@@ -139,13 +139,13 @@ deselect clears it; pointer-exit clears the marker.
 
 ### Tests for User Story 4 (write first — must FAIL) ⚠️
 
-- [ ] T017 [P] [US4] Extend the ruler-metrics test (C2.3–7: `selectionExtent` returns a single element's page-absolute rect; the union min/max rect for a multi-selection; the band rect for a band; `null` for report/empty; result is independent of selection insertion order) in `packages/jet_print/test/designer/canvas/ruler_metrics_test.dart`
-- [ ] T018 [P] [US4] Write FAILING tracking widget test (C5: hover places a marker at pointer X on the top ruler and Y on the left ruler; pointer-exit clears both; single-selection highlights left→right on top and top→bottom on left; multi/band highlights one combined union span; move/resize updates the span; deselect clears it; a selection exceeding page edges is clamped to the strip) in `packages/jet_print/test/designer/canvas/ruler_tracking_test.dart`
+- [X] T017 [P] [US4] Extend the ruler-metrics test (C2.3–7: `selectionExtent` returns a single element's page-absolute rect; the union min/max rect for a multi-selection; the band rect for a band; `null` for report/empty; result is independent of selection insertion order) in `packages/jet_print/test/designer/canvas/ruler_metrics_test.dart`
+- [X] T018 [P] [US4] Write FAILING tracking widget test (C5: hover places a marker at pointer X on the top ruler and Y on the left ruler; pointer-exit clears both; single-selection highlights left→right on top and top→bottom on left; multi/band highlights one combined union span; move/resize updates the span; deselect clears it; a selection exceeding page edges is clamped to the strip) in `packages/jet_print/test/designer/canvas/ruler_tracking_test.dart`
 
 ### Implementation for User Story 4
 
-- [ ] T019 [US4] Implement `selectionExtent(DesignTimeLayout, Selection) → JetRect?` (union bbox of selected element rects; band rect for a band; `null` for report/empty) in `packages/jet_print/lib/src/designer/canvas/ruler_metrics.dart` → makes T017 pass
-- [ ] T020 [US4] In `packages/jet_print/lib/src/designer/canvas/design_canvas.dart`, add a hover `MouseRegion` writing pointer page-coords into a `_hoverPage` `ValueNotifier<JetOffset?>` (cleared on exit), and feed both the hover marker and the per-build `selectionExtent(...)` highlight (clamped to the strip) into the ruler painters behind a `RepaintBoundary` so only the strips repaint → makes T018 pass
+- [X] T019 [US4] Implement `selectionExtent(DesignTimeLayout, Selection) → JetRect?` (union bbox of selected element rects; band rect for a band; `null` for report/empty) in `packages/jet_print/lib/src/designer/canvas/ruler_metrics.dart` → makes T017 pass
+- [X] T020 [US4] In `packages/jet_print/lib/src/designer/canvas/design_canvas.dart`, add a hover `MouseRegion` writing pointer page-coords into a `_hoverPage` `ValueNotifier<JetOffset?>` (cleared on exit), and feed both the hover marker and the per-build `selectionExtent(...)` highlight (clamped to the strip) into the ruler painters behind a `RepaintBoundary` so only the strips repaint → makes T018 pass
 
 **Checkpoint**: All four user stories are independently functional.
 

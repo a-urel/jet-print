@@ -26,6 +26,13 @@ const Key kVerticalRulerKey =
 /// Stable key for the blank corner box at the rulers' intersection (test seam).
 const Key kRulerCornerKey = ValueKey<String>('jet_print.designer.ruler.corner');
 
+/// Stable key for a ruler's hover marker (test seam; present on each strip).
+const Key kRulerMarkerKey = ValueKey<String>('jet_print.designer.ruler.marker');
+
+/// Stable key for a ruler's selection-extent highlight (test seam; per strip).
+const Key kRulerHighlightKey =
+    ValueKey<String>('jet_print.designer.ruler.highlight');
+
 /// Which edge a ruler runs along.
 enum RulerAxis {
   /// The top ruler — measures the page's horizontal (x) axis.
@@ -44,6 +51,8 @@ class RulerColors {
     required this.tick,
     required this.label,
     required this.border,
+    required this.marker,
+    required this.highlight,
   });
 
   /// Strip fill.
@@ -57,6 +66,12 @@ class RulerColors {
 
   /// The 1px rule between the strip and the canvas.
   final Color border;
+
+  /// The hover position marker (a thin line tracking the pointer).
+  final Color marker;
+
+  /// The selection-extent highlight band (translucent fill).
+  final Color highlight;
 }
 
 /// One ruler strip: a [RulerScale] rendered as tick lines + millimetre labels.
@@ -72,6 +87,9 @@ class RulerOverlay extends StatelessWidget {
     required this.pxPerMm,
     required this.lengthPx,
     required this.colors,
+    this.markerPx,
+    this.highlightStartPx,
+    this.highlightEndPx,
     super.key,
   });
 
@@ -89,6 +107,14 @@ class RulerOverlay extends StatelessWidget {
 
   /// Resolved chrome palette.
   final RulerColors colors;
+
+  /// Strip offset of the hover marker, or `null` when the pointer is away.
+  final double? markerPx;
+
+  /// Strip offsets of the selection-extent span (start ≤ end), or `null` when
+  /// nothing is selected. Clamped to the strip before drawing.
+  final double? highlightStartPx;
+  final double? highlightEndPx;
 
   /// Major-tick line length, in px (minor ticks are half).
   static const double _majorTickLength = 7;
@@ -131,6 +157,14 @@ class RulerOverlay extends StatelessWidget {
         child: Stack(
           clipBehavior: Clip.hardEdge,
           children: <Widget>[
+            // Selection-extent highlight, beneath the ticks and marker.
+            if (_highlightSpan() case (final double start, final double end))
+              _band(
+                key: kRulerHighlightKey,
+                start: start,
+                extent: end - start,
+                color: colors.highlight,
+              ),
             Positioned.fill(
               child: CustomPaint(
                 painter: _RulerLinesPainter(
@@ -142,10 +176,38 @@ class RulerOverlay extends StatelessWidget {
             ),
             for (final RulerTick t in ticks)
               if (t.label case final String label) _label(label, t.offsetPx),
+            // Hover marker, on top, when the pointer is over the canvas.
+            if (markerPx case final double m when m >= 0 && m <= lengthPx)
+              _band(key: kRulerMarkerKey, start: m, extent: 1, color: colors.marker),
           ],
         ),
       ),
     );
+  }
+
+  /// The selection-extent span clamped to `[0, lengthPx]`, or null when nothing
+  /// is selected or the span lies entirely off-strip.
+  (double, double)? _highlightSpan() {
+    final double? rawStart = highlightStartPx;
+    final double? rawEnd = highlightEndPx;
+    if (rawStart == null || rawEnd == null) return null;
+    final double start = rawStart.clamp(0.0, lengthPx);
+    final double end = rawEnd.clamp(0.0, lengthPx);
+    return end > start ? (start, end) : null;
+  }
+
+  /// A band along the strip (used for both the highlight and the 1px marker):
+  /// spans `[start, start+extent]` on the main axis, full thickness on the cross.
+  Widget _band({
+    required Key key,
+    required double start,
+    required double extent,
+    required Color color,
+  }) {
+    final Widget fill = ColoredBox(key: key, color: color);
+    return _horizontal
+        ? Positioned(left: start, width: extent, top: 0, bottom: 0, child: fill)
+        : Positioned(top: start, height: extent, left: 0, right: 0, child: fill);
   }
 
   /// A single numeric label anchored just past its major tick: to the right of
