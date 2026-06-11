@@ -8,6 +8,35 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Simplified label value & format properties (spec
+  013-label-value-format).** The label (text element) Properties panel now has a
+  single **Value** field in place of the separate Text and Binding inputs, plus a
+  new **Format** field:
+  - The Value field recognizes three forms — a whole-value `[fieldName]` simple
+    binding, a `{ … }` advanced template mixing `[field]` tokens, literal text,
+    and functions (e.g. `{upper[name]}`, `{[firstName] [lastName]}`), and
+    otherwise literal text (with a `\` escape for literal brackets/braces). It
+    shows a stored binding exactly as the canvas token, and presents a
+    legacy/out-of-grammar expression read-only so it is never lost. Bindings stay
+    single-sourced in `TextElement.expression`; the template is a pure
+    string↔string projection over the existing expression parser (no parallel
+    render path).
+  - A new optional `TextElement.format` (additive, no schema-version bump) — an
+    ICU number/date pattern applied to the resolved value at render time through
+    a shared `applyJetFormat` helper (the same logic behind the `FORMAT`
+    function, so they cannot drift). The Format field offers seven quick-pick
+    presets (None, Integer, Decimal, Currency, Percent, Date, Date & time); a
+    pattern that does not fit the value or is malformed falls back to the
+    unformatted value.
+  - A binding to a field absent from the active data source renders a localized
+    `#ERROR` token in schema-aware contexts (designer/preview). `RenderOptions`
+    gains two additive fields — `knownFields` (`Set<String>?`, the data source's
+    declared field names) and `unresolvedFieldToken` (default `#ERROR`); when
+    `knownFields` is supplied, a binding outside it renders the token, otherwise
+    behavior is unchanged. The token is a plain string so the headless render
+    layer stays Flutter-free; a host with a `BuildContext` passes a localized
+    value.
+  - New Properties-panel strings localized en/de/tr with English fallback.
 - **Export & print — PDF, PNG, and the system print dialog (spec
   012-export-support).** The same `RenderedReport` the preview displays now
   turns into shareable artifacts; one render feeds every target. New public

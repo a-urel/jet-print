@@ -69,10 +69,12 @@ void main() {
     // (1) Element inspector — section labels are upper-cased by SectionLabel.
     expect(find.text('POSITION'), findsOneWidget);
     expect(find.text('SIZE'), findsOneWidget);
-    expect(find.text('TEXT'), findsOneWidget);
+    expect(find.text('VALUE'), findsOneWidget); // unified value field (013)
+    expect(find.text('FORMAT'), findsOneWidget); // format property (013)
     // No raw resource keys leak through.
     expect(find.text('propertiesPosition'), findsNothing);
     expect(find.text('PROPERTIESPOSITION'), findsNothing);
+    expect(find.text('propertiesValue'), findsNothing);
 
     // (2) Report inspector — page section label + verbatim header/margins rows.
     c.selectReport();

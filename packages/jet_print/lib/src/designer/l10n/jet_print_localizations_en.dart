@@ -187,6 +187,45 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get propertiesText => 'Text';
 
   @override
+  String get propertiesValue => 'Value';
+
+  @override
+  String get valueFieldHint => '[field] or text';
+
+  @override
+  String get valueFieldPickerTooltip => 'Insert a data field';
+
+  @override
+  String get propertiesFormat => 'Format';
+
+  @override
+  String get formatHint => 'e.g. #,##0.00';
+
+  @override
+  String get formatPresetNone => 'None';
+
+  @override
+  String get formatPresetInteger => 'Integer';
+
+  @override
+  String get formatPresetDecimal => 'Decimal';
+
+  @override
+  String get formatPresetCurrency => 'Currency';
+
+  @override
+  String get formatPresetPercent => 'Percent';
+
+  @override
+  String get formatPresetDate => 'Date';
+
+  @override
+  String get formatPresetDateTime => 'Date & time';
+
+  @override
+  String get errorUnresolvedToken => '#ERROR';
+
+  @override
   String get propertiesBinding => 'Binding';
 
   @override

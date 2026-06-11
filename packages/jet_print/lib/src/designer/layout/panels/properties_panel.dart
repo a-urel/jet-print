@@ -14,8 +14,10 @@ import '../../../domain/report_element.dart';
 import '../../controller/jet_report_designer_controller.dart';
 import '../../designer_schema_scope.dart';
 import '../../designer_scope.dart';
+import '../../format_presets.dart';
 import '../../l10n/band_type_label.dart';
 import '../../l10n/jet_print_localizations.dart';
+import '../../template/value_template_compiler.dart';
 import '../region_chrome.dart';
 
 /// Stable test-seam key prefix for the inspector's fields and empty state.
@@ -182,26 +184,30 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
       ),
       if (element is TextElement) ...<Widget>[
         const SizedBox(height: 12),
-        SectionLabel(l10n.propertiesText),
-        _TextField(
-          fieldKey: const ValueKey<String>('$_p.field.text'),
-          value: element.text,
+        SectionLabel(l10n.propertiesValue),
+        _ValueField(
+          fieldKey: const ValueKey<String>('$_p.field.value'),
+          display: element.expression == null
+              ? ValueDisplay(element.text)
+              : reverseCompile(element.expression!),
+          placeholder: l10n.valueFieldHint,
           focusNode: _textFocus,
-          onCommit: (String v) => controller.setText(id, v),
-        ),
-        const SizedBox(height: 12),
-        SectionLabel(l10n.propertiesBinding),
-        _BindingField(
-          fieldKey: const ValueKey<String>('$_p.field.binding'),
-          value: element.expression ?? '',
-          placeholder: l10n.bindingExpressionHint,
-          clearTooltip: l10n.bindingClearTooltip,
-          onSet: (String v) => controller.setBinding(id, v),
-          onClear: () => controller.clearBinding(id),
+          fields: _valueFieldNames(schema, controller, id),
+          pickerTooltip: l10n.valueFieldPickerTooltip,
+          onCommit: (String v) => controller.setValue(id, v),
         ),
         if (element.expression case final String expr
             when _unresolved(schema, controller, id, expression: expr))
           _UnresolvedHint(message: l10n.bindingUnresolved),
+        const SizedBox(height: 12),
+        SectionLabel(l10n.propertiesFormat),
+        _FormatField(
+          fieldKey: const ValueKey<String>('$_p.field.format'),
+          value: element.format ?? '',
+          placeholder: l10n.formatHint,
+          presets: formatPresets(l10n),
+          onCommit: (String v) => controller.setFormat(id, v),
+        ),
       ],
       // Image binding: a field picker only (no expression) — FR-013 / U1.
       if (element is ImageElement) ...<Widget>[
@@ -222,6 +228,26 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                 _unresolved(schema, controller, id, imageField: s.field))
           _UnresolvedHint(message: l10n.bindingUnresolved),
       ],
+    ];
+  }
+
+  /// The scalar field names the Value field's picker offers for [elementId]:
+  /// every field in the element's band scope except nested collections (a label
+  /// binds a single value, not a whole collection). Empty when no schema is
+  /// attached or the element sits in no resolvable band — the picker button then
+  /// hides, leaving the plain free-text value field.
+  List<String> _valueFieldNames(
+    JetDataSchema? schema,
+    JetReportDesignerController controller,
+    String elementId,
+  ) {
+    if (schema == null) return const <String>[];
+    final List<int>? path = bandPathOfElement(controller.template, elementId);
+    if (path == null) return const <String>[];
+    return <String>[
+      for (final FieldDef f
+          in fieldsInScopeAt(schema, controller.template, path))
+        if (f.type != JetFieldType.collection) f.name,
     ];
   }
 
@@ -527,17 +553,32 @@ class _NumberFieldState extends State<_NumberField> {
   }
 }
 
-/// A text inspector field bound to a model string [value]; commits on Enter/blur.
-class _TextField extends StatefulWidget {
-  const _TextField({
+/// The unified value field (013): one input for a text element's literal text or
+/// its `[field]`/`{ … }` binding, shown exactly as the canvas token. It commits
+/// the raw text on Enter/blur — the controller parses the three forms. A binding
+/// that is outside the template grammar (legacy/exotic) is shown read-only via
+/// [ValueDisplay.editable] so it is never silently lost (013 / FR-006a).
+class _ValueField extends StatefulWidget {
+  const _ValueField({
     required this.fieldKey,
-    required this.value,
+    required this.display,
+    required this.placeholder,
+    required this.fields,
+    required this.pickerTooltip,
     required this.onCommit,
     this.focusNode,
   });
 
   final Key fieldKey;
-  final String value;
+  final ValueDisplay display;
+  final String placeholder;
+
+  /// The in-scope data-source field names offered by the suffix picker; empty
+  /// ⇒ no picker button (no schema attached, or nothing in scope).
+  final List<String> fields;
+
+  /// Accessible label / tooltip for the suffix picker button.
+  final String pickerTooltip;
   final ValueChanged<String> onCommit;
 
   /// An externally-owned focus node (the panel's double-tap focus target);
@@ -545,12 +586,13 @@ class _TextField extends StatefulWidget {
   final FocusNode? focusNode;
 
   @override
-  State<_TextField> createState() => _TextFieldState();
+  State<_ValueField> createState() => _ValueFieldState();
 }
 
-class _TextFieldState extends State<_TextField> {
+class _ValueFieldState extends State<_ValueField> {
   late final TextEditingController _controller =
-      TextEditingController(text: widget.value);
+      TextEditingController(text: widget.display.text);
+  final ShadPopoverController _picker = ShadPopoverController();
   FocusNode? _ownFocus;
 
   FocusNode get _focus => widget.focusNode ?? (_ownFocus ??= FocusNode());
@@ -562,26 +604,35 @@ class _TextFieldState extends State<_TextField> {
   }
 
   @override
-  void didUpdateWidget(_TextField oldWidget) {
+  void didUpdateWidget(_ValueField oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.focusNode != oldWidget.focusNode) {
       (oldWidget.focusNode ?? _ownFocus)?.removeListener(_onFocusChange);
       _focus.addListener(_onFocusChange);
     }
-    if (!_focus.hasFocus && widget.value != oldWidget.value) {
-      _controller.text = widget.value;
+    if (!_focus.hasFocus && widget.display.text != oldWidget.display.text) {
+      _controller.text = widget.display.text;
     }
   }
 
   void _onFocusChange() {
-    if (!_focus.hasFocus && _controller.text != widget.value) {
+    if (!_focus.hasFocus && _controller.text != widget.display.text) {
       widget.onCommit(_controller.text);
     }
+  }
+
+  /// Inserts [field] as a `[field]` binding — the same token a user could type —
+  /// then closes the picker. The controller parses it to `$F{field}` in one
+  /// undoable edit, so the field input and the picker share one code path.
+  void _pick(String field) {
+    _picker.hide();
+    widget.onCommit('[$field]');
   }
 
   @override
   void dispose() {
     _focus.removeListener(_onFocusChange);
+    _picker.dispose();
     _ownFocus?.dispose();
     _controller.dispose();
     super.dispose();
@@ -593,7 +644,158 @@ class _TextFieldState extends State<_TextField> {
       key: widget.fieldKey,
       controller: _controller,
       focusNode: _focus,
+      readOnly: !widget.display.editable,
+      placeholder: Text(widget.placeholder),
       onSubmitted: widget.onCommit,
+      trailing: widget.fields.isEmpty
+          ? null
+          : _FieldPicker(
+              controller: _picker,
+              fields: widget.fields,
+              tooltip: widget.pickerTooltip,
+              onPick: _pick,
+            ),
+    );
+  }
+}
+
+/// The Value field's suffix affordance: a small database glyph that drops down a
+/// menu of the in-scope data-source [fields]; choosing one inserts it as a
+/// `[field]` binding through [onPick]. Hidden entirely when no fields are in
+/// scope, so the plain value field stands alone.
+class _FieldPicker extends StatelessWidget {
+  const _FieldPicker({
+    required this.controller,
+    required this.fields,
+    required this.tooltip,
+    required this.onPick,
+  });
+
+  final ShadPopoverController controller;
+  final List<String> fields;
+  final String tooltip;
+  final ValueChanged<String> onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    final ShadColorScheme colors = ShadTheme.of(context).colorScheme;
+    return ShadContextMenu(
+      controller: controller,
+      items: <Widget>[
+        for (final String field in fields)
+          ShadContextMenuItem(
+            key: ValueKey<String>('$_p.field.value.pick.$field'),
+            leading: const Icon(LucideIcons.braces, size: 16),
+            onPressed: () => onPick(field),
+            child: Text(field),
+          ),
+      ],
+      child: Semantics(
+        label: tooltip,
+        button: true,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: controller.toggle,
+          child: Icon(
+            LucideIcons.database,
+            key: const ValueKey<String>('$_p.field.value.pick'),
+            size: 14,
+            color: colors.mutedForeground,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The Format field (013): a free-text ICU pattern bound to `TextElement.format`,
+/// committed on Enter/blur, plus a row of quick-pick [presets] that fill the
+/// pattern in. Empty clears the format (unformatted).
+class _FormatField extends StatefulWidget {
+  const _FormatField({
+    required this.fieldKey,
+    required this.value,
+    required this.placeholder,
+    required this.presets,
+    required this.onCommit,
+  });
+
+  final Key fieldKey;
+  final String value;
+  final String placeholder;
+  final List<FormatPreset> presets;
+  final ValueChanged<String> onCommit;
+
+  @override
+  State<_FormatField> createState() => _FormatFieldState();
+}
+
+class _FormatFieldState extends State<_FormatField> {
+  late final TextEditingController _controller =
+      TextEditingController(text: widget.value);
+  final FocusNode _focus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _focus.addListener(_onFocusChange);
+  }
+
+  @override
+  void didUpdateWidget(_FormatField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_focus.hasFocus && widget.value != oldWidget.value) {
+      _controller.text = widget.value;
+    }
+  }
+
+  void _onFocusChange() {
+    if (!_focus.hasFocus && _controller.text != widget.value) {
+      widget.onCommit(_controller.text);
+    }
+  }
+
+  void _applyPreset(FormatPreset preset) {
+    _controller.text = preset.pattern;
+    widget.onCommit(preset.pattern);
+  }
+
+  @override
+  void dispose() {
+    _focus.removeListener(_onFocusChange);
+    _focus.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        ShadInput(
+          key: widget.fieldKey,
+          controller: _controller,
+          focusNode: _focus,
+          placeholder: Text(widget.placeholder),
+          onSubmitted: widget.onCommit,
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: <Widget>[
+            for (final FormatPreset preset in widget.presets)
+              ShadButton.outline(
+                key:
+                    ValueKey<String>('$_p.field.format.preset.${preset.label}'),
+                size: ShadButtonSize.sm,
+                onPressed: () => _applyPreset(preset),
+                child: Text(preset.label),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }

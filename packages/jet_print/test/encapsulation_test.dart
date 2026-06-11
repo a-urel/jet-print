@@ -47,7 +47,13 @@ bool _isWhiteBoxSeamTest(File file) {
       path.contains('/test/data/') ||
       path.contains('/test/expression/') ||
       path.contains('/test/rendering/') ||
-      path.contains('/test/print/');
+      path.contains('/test/print/') ||
+      // Designer-internal seams (013): the value-field template compiler and the
+      // design-time binding token are unexported `src/` modules; their unit
+      // tests are white-box. The wider designer widget tests still use the
+      // public API only.
+      path.contains('/test/designer/template/') ||
+      path.endsWith('/test/designer/binding_token_test.dart');
 }
 
 void main() {

@@ -19,11 +19,13 @@ import 'dart:ui' show Locale;
 /// )
 /// ```
 class RenderOptions {
-  /// Creates render options; both fields have neutral defaults so
+  /// Creates render options; every field has a neutral default so
   /// `render(template, source)` works without any options.
   const RenderOptions({
     this.parameters = const <String, Object?>{},
     this.locale = const Locale('en'),
+    this.knownFields,
+    this.unresolvedFieldToken = '#ERROR',
   });
 
   /// Host-supplied parameter values keyed by parameter name, resolved by
@@ -47,4 +49,19 @@ class RenderOptions {
   /// from `package:intl/date_symbol_data_local.dart`) before rendering; number
   /// formatting needs no initialization.
   final Locale locale;
+
+  /// The field names the active data source declares (013 / FR-007).
+  ///
+  /// When supplied (a schema-aware render — e.g. the designer preview, which
+  /// knows the attached schema), a text binding that references a field outside
+  /// this set renders [unresolvedFieldToken] instead of resolving empty. Leaving
+  /// it null renders such a binding empty, exactly as before — so existing
+  /// headless renders never change (SC-005).
+  final Set<String>? knownFields;
+
+  /// The text rendered for a binding to a field absent from [knownFields]
+  /// (013 / FR-007); ignored when [knownFields] is null. Defaults to the literal
+  /// `#ERROR`; a host with a `BuildContext` passes a localized value (e.g.
+  /// `JetPrintLocalizations.of(context).errorUnresolvedToken`).
+  final String unresolvedFieldToken;
 }

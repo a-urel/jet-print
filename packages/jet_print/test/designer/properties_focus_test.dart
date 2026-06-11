@@ -10,7 +10,7 @@ import 'support/designer_harness.dart';
 final Finder _xField =
     find.byKey(const ValueKey<String>('jet_print.designer.properties.field.x'));
 final Finder _textField = find
-    .byKey(const ValueKey<String>('jet_print.designer.properties.field.text'));
+    .byKey(const ValueKey<String>('jet_print.designer.properties.field.value'));
 
 /// Whether the inspector input under [field] holds keyboard focus. ShadInput
 /// hosts an EditableText; its focus node reflects where typing goes.

@@ -73,7 +73,7 @@ void main() {
     // (1) Element inspector — Turkish section labels (upper-cased).
     expect(find.text('KONUM'), findsOneWidget); // Position → Konum
     expect(find.text('BOYUT'), findsOneWidget); // Size → Boyut
-    expect(find.text('METIN'), findsOneWidget); // Text → Metin
+    expect(find.text('DEĞER'), findsOneWidget); // Value → Değer (013)
     // The English captions are gone — a real translation, not a fallback.
     expect(find.text('POSITION'), findsNothing);
     expect(find.text('SIZE'), findsNothing);

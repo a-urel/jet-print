@@ -130,11 +130,28 @@ RenderedReport renderInvoice({
   JetDataSource? source,
   ReportTemplate? template,
 }) =>
-    const JetReportEngine().render(
+    JetReportEngine().render(
       template ?? invoiceSampleTemplate(),
       source ?? invoiceDataSource(),
-      options: const RenderOptions(locale: Locale('en')),
+      // Schema-aware render (013 / FR-007): naming the data source's fields lets
+      // a binding to an unknown field show `#ERROR` instead of resolving empty.
+      // The sample binds only declared fields, so nothing flags — it shows how a
+      // host wires it. A host with a BuildContext can also pass a localized
+      // token via RenderOptions.unresolvedFieldToken.
+      options: RenderOptions(
+        locale: const Locale('en'),
+        knownFields: _schemaFieldNames(invoiceSchema.fields),
+      ),
     );
+
+/// The flat set of every field name the schema declares, top-level and nested
+/// (so collection-scoped bindings like `$F{lineTotal}` are recognized too).
+Set<String> _schemaFieldNames(List<FieldDef> fields) => <String>{
+      for (final FieldDef f in fields) ...<String>{
+        f.name,
+        ..._schemaFieldNames(f.fields),
+      },
+    };
 
 /// The on-screen preview of the rendered invoice — prev/next navigation,
 /// "page X of N", zoom, a back button (when [onBack] is given), and the 012

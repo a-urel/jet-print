@@ -14,7 +14,7 @@ Finder _elementFinder(String id) =>
 final Finder _xField =
     find.byKey(const ValueKey<String>('jet_print.designer.properties.field.x'));
 final Finder _textField = find
-    .byKey(const ValueKey<String>('jet_print.designer.properties.field.text'));
+    .byKey(const ValueKey<String>('jet_print.designer.properties.field.value'));
 final Finder _bandHeightField = find.byKey(
     const ValueKey<String>('jet_print.designer.properties.field.bandHeight'));
 

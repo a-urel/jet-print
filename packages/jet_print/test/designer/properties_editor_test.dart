@@ -105,20 +105,23 @@ void main() {
       expect(_bounds(c, id).width, greaterThan(before));
     });
 
-    testWidgets('a text element exposes an editable text field',
+    testWidgets('a text element exposes a single editable value field',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openProperties(tester);
       final String id = await _addText(tester, c);
 
-      expect(_field('text'), findsOneWidget);
-      await tester.enterText(_editable('text'), 'Hello');
+      expect(_field('value'), findsOneWidget);
+      // The two-field Text + Binding pair is gone (013 / FR-001, SC-001).
+      expect(_field('text'), findsNothing);
+      expect(_field('binding'), findsNothing);
+      await tester.enterText(_editable('value'), 'Hello');
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
       expect(_text(c, id), 'Hello');
     });
 
-    testWidgets('a non-text element has no text field',
+    testWidgets('a non-text element has no value field',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openProperties(tester);
@@ -127,7 +130,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(_field('x'), findsOneWidget); // geometry still shown
-      expect(_field('text'), findsNothing);
+      expect(_field('value'), findsNothing);
     });
 
     testWidgets('the fields reflect a model change made elsewhere',
