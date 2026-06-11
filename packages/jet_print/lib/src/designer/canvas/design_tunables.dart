@@ -79,3 +79,37 @@ const Map<DesignerToolType, JetSize> kDefaultElementSize =
   DesignerToolType.image: JetSize(96, 96),
   DesignerToolType.barcode: JetSize(96, 48),
 };
+
+// --- Rulers (spec 014) -------------------------------------------------------
+// Fixed chrome along the canvas's top + left edges, calibrated in millimetres
+// from the page's physical corner (0,0). Like the grid/snap tunables above,
+// these are concrete single values (not ranges) so the pure `RulerScale`'s tick
+// thresholds are deterministic and unit-testable (research D3/D8).
+
+/// Strip thickness, in screen pixels, of each ruler (and the blank corner box).
+/// Fixed UI chrome (like the scrollbars), so it never scales with zoom; drives
+/// the canvas viewport inset when rulers are enabled (research D8).
+const double kRulerThickness = 20;
+
+/// Minimum gap, in screen pixels, between two **labelled** ticks. The nice-step
+/// ladder picks the smallest step whose on-screen spacing clears this, so labels
+/// never crowd or overlap at any zoom (research D3 / SC-004).
+const double kRulerMinLabelGapPx = 56;
+
+/// The ascending "nice number" ladder, in millimetres, of candidate **labelled**
+/// step intervals. The scale picks the smallest entry whose `step·pxPerMm`
+/// clears [kRulerMinLabelGapPx]; the top entry clamps an extreme zoom-out
+/// (research D3).
+const List<int> kRulerStepLadderMm = <int>[
+  1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, //
+];
+
+/// How many minor subdivisions a labelled step is divided into (so a 10 mm step
+/// shows ticks every 2 mm). Subdivision stops refining once the minor spacing
+/// would fall below [kRulerMinMinorGapPx] (research D3).
+const int kRulerMinorDivisions = 5;
+
+/// Minimum gap, in screen pixels, between **minor** subdivision ticks. At max
+/// zoom this floors subdivision near ~1 mm so minor ticks never smear together
+/// (research D3 extreme-zoom clamp).
+const double kRulerMinMinorGapPx = 6;

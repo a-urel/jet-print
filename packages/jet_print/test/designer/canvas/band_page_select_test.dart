@@ -61,10 +61,10 @@ void main() {
     await tester.pump();
     expect(controller.selection.isEmpty, isFalse);
 
-    // The muted canvas margin left of the page (off the paper).
-    final Offset canvasTopLeft =
-        tester.getTopLeft(find.byKey(kDesignCanvasKey));
-    await tester.tapAt(canvasTopLeft + const Offset(6, 120));
+    // The muted canvas margin just left of the page (off the paper). Anchored to
+    // the page edge so it stays in the margin regardless of the ruler inset.
+    final Offset pageTopLeft = tester.getTopLeft(find.byKey(kDesignPageKey));
+    await tester.tapAt(Offset(pageTopLeft.dx - 8, pageTopLeft.dy + 120));
     await tester.pumpAndSettle();
 
     expect(controller.selection.isEmpty, isTrue);

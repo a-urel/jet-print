@@ -12,10 +12,12 @@ import 'package:jet_print/jet_print.dart';
 import '../support/designer_harness.dart';
 
 void main() {
+  // Rulers are pinned by widget tests, not goldens (decision V1); pump them off
+  // so the shell golden stays byte-identical to its pre-rulers baseline.
   testWidgets('JetReportDesigner matches its light golden', (
     WidgetTester tester,
   ) async {
-    await pumpDesigner(tester);
+    await pumpDesignerWith(tester, rulers: false);
 
     await expectLater(
       find.byType(JetReportDesigner),
@@ -26,7 +28,7 @@ void main() {
   testWidgets('JetReportDesigner matches its dark golden', (
     WidgetTester tester,
   ) async {
-    await pumpDesigner(tester, themeMode: ThemeMode.dark);
+    await pumpDesignerWith(tester, themeMode: ThemeMode.dark, rulers: false);
 
     await expectLater(
       find.byType(JetReportDesigner),

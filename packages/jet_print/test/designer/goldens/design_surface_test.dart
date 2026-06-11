@@ -36,7 +36,10 @@ void main() {
   testWidgets('the design surface matches its light golden', (
     WidgetTester tester,
   ) async {
-    final JetReportDesignerController c = await pumpDesignerWith(tester);
+    // Rulers are pinned by widget tests, not goldens (decision V1); pump them off
+    // so this surface golden stays byte-identical and isolates element rendering.
+    final JetReportDesignerController c =
+        await pumpDesignerWith(tester, rulers: false);
     await _seedSurface(tester, c);
 
     await expectLater(
@@ -48,8 +51,8 @@ void main() {
   testWidgets('the design surface matches its dark golden', (
     WidgetTester tester,
   ) async {
-    final JetReportDesignerController c =
-        await pumpDesignerWith(tester, themeMode: ThemeMode.dark);
+    final JetReportDesignerController c = await pumpDesignerWith(tester,
+        themeMode: ThemeMode.dark, rulers: false);
     await _seedSurface(tester, c);
 
     await expectLater(

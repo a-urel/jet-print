@@ -88,10 +88,10 @@ void main() {
     // Created element is auto-selected → 8 resize handles render.
     expect(_handleFinder, findsNWidgets(8));
 
-    // Empty-click inside the canvas (the muted margin left of the page) clears.
-    final Offset canvasTopLeft =
-        tester.getTopLeft(find.byKey(kDesignCanvasKey));
-    await tester.tapAt(canvasTopLeft + const Offset(6, 120));
+    // Empty-click in the muted margin just left of the page clears. Anchored to
+    // the page edge so it stays in the margin regardless of the ruler inset.
+    final Offset pageTopLeft = tester.getTopLeft(find.byKey(kDesignPageKey));
+    await tester.tapAt(Offset(pageTopLeft.dx - 8, pageTopLeft.dy + 120));
     await tester.pumpAndSettle();
     expect(controller.selection.isEmpty, isTrue);
     expect(_handleFinder, findsNothing);

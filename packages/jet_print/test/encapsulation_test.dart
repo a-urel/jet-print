@@ -53,7 +53,13 @@ bool _isWhiteBoxSeamTest(File file) {
       // tests are white-box. The wider designer widget tests still use the
       // public API only.
       path.contains('/test/designer/template/') ||
-      path.endsWith('/test/designer/binding_token_test.dart');
+      path.endsWith('/test/designer/binding_token_test.dart') ||
+      // Canvas-rulers (014): the pure measurement helpers (RulerScale/RulerTick
+      // and the points↔mm + selection-extent metrics) are unexported `src/`
+      // modules deliberately isolated from Flutter so the tricky math is
+      // unit-testable; their unit tests are white-box (Principle III).
+      path.endsWith('/test/designer/canvas/ruler_scale_test.dart') ||
+      path.endsWith('/test/designer/canvas/ruler_metrics_test.dart');
 }
 
 void main() {

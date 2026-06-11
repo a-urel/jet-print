@@ -299,6 +299,7 @@ class JetReportDesignerController extends ChangeNotifier {
 
   bool _gridEnabled = true;
   bool _snapEnabled = true;
+  bool _rulersEnabled = true;
   String? _resizeId;
   ResizeHandle? _resizeHandle;
   JetRect? _resizeStart;
@@ -321,6 +322,21 @@ class JetReportDesignerController extends ChangeNotifier {
   void setSnapEnabled(bool value) {
     if (_snapEnabled == value) return;
     _snapEnabled = value;
+    notifyListeners();
+  }
+
+  /// Whether the measurement rulers are shown along the canvas's top and left
+  /// edges (top-bar toggle; default on, FR-017). A per-session view preference —
+  /// like [gridEnabled]/[snapEnabled], it is never serialized into the report.
+  /// The canvas reads it to inset its viewport and draw the strips; the top bar
+  /// reads it for the ruler toggle's active state.
+  bool get rulersEnabled => _rulersEnabled;
+
+  /// Shows or hides the rulers. A no-op when [value] already matches (so the
+  /// toggle never churns listeners); otherwise notifies.
+  void setRulersEnabled(bool value) {
+    if (_rulersEnabled == value) return;
+    _rulersEnabled = value;
     notifyListeners();
   }
 

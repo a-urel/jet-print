@@ -32,6 +32,8 @@ import 'design_tunables.dart';
 import 'field_drag_data.dart';
 import 'frame_custom_painter.dart';
 import 'hit_testing.dart';
+import 'ruler_metrics.dart';
+import 'ruler_overlay.dart';
 import 'selection_overlay.dart';
 
 /// Stable widget key for the interactive canvas (test seam).
@@ -542,7 +544,15 @@ class _DesignCanvasState extends State<DesignCanvas> {
         focusNode: _focusNode,
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
-            final Size viewport = constraints.biggest;
+            // Rulers are fixed chrome along the top + left edges: when enabled,
+            // the scroll viewport is inset by their thickness, so the page area
+            // the canvas lays out and fits is the full area minus the strips.
+            final double rulerInset =
+                controller.rulersEnabled ? kRulerThickness : 0;
+            final Size viewport = Size(
+              math.max(0, constraints.biggest.width - rulerInset),
+              math.max(0, constraints.biggest.height - rulerInset),
+            );
             // Apply the initial fit-to-width once, and again whenever a fit is
             // requested — off the build path (it mutates the controller + scroll).
             if (!_viewInitialized ||
@@ -621,7 +631,9 @@ class _DesignCanvasState extends State<DesignCanvas> {
             // scrollbars are drawn as a fixed overlay pinned to the viewport edges
             // (a horizontal bar nested inside the vertical scroll view would scroll
             // away with the content). Both are driven by the same controllers.
-            return Stack(
+            // The scroll viewport + its scrollbar overlays, as one unit so the
+            // rulers can inset it without disturbing the scrollbar geometry.
+            final Widget viewportStack = Stack(
               children: <Widget>[
                 ScrollConfiguration(
                   behavior: const _CanvasScrollBehavior(),
@@ -662,6 +674,69 @@ class _DesignCanvasState extends State<DesignCanvas> {
                       color: thumbColor,
                     ),
                   ),
+              ],
+            );
+
+            // Rulers off: no inset, no strips — the canvas keeps the full area.
+            if (!controller.rulersEnabled) return viewportStack;
+
+            // A page point p maps to a strip pixel by p·scale + pageOffset −
+            // scrollOffset; the origin pixel handed to each ruler is the strip
+            // pixel of page-0. (Scroll-driven repaints are wired in US3.)
+            final double pxPerMm = scale * kPointsPerMm;
+            final double originPxX = pageOffset.dx -
+                (_hScroll.hasClients ? _hScroll.offset : 0);
+            final double originPxY = pageOffset.dy -
+                (_vScroll.hasClients ? _vScroll.offset : 0);
+            final RulerColors rulerColors = RulerColors(
+              background: colors.card,
+              tick: colors.mutedForeground,
+              label: colors.mutedForeground,
+              border: colors.border,
+            );
+
+            return Stack(
+              children: <Widget>[
+                Positioned(
+                  left: rulerInset,
+                  top: rulerInset,
+                  right: 0,
+                  bottom: 0,
+                  child: viewportStack,
+                ),
+                Positioned(
+                  left: rulerInset,
+                  top: 0,
+                  right: 0,
+                  height: kRulerThickness,
+                  child: RulerOverlay(
+                    axis: RulerAxis.horizontal,
+                    originPx: originPxX,
+                    pxPerMm: pxPerMm,
+                    lengthPx: viewport.width,
+                    colors: rulerColors,
+                  ),
+                ),
+                Positioned(
+                  left: 0,
+                  top: rulerInset,
+                  width: kRulerThickness,
+                  bottom: 0,
+                  child: RulerOverlay(
+                    axis: RulerAxis.vertical,
+                    originPx: originPxY,
+                    pxPerMm: pxPerMm,
+                    lengthPx: viewport.height,
+                    colors: rulerColors,
+                  ),
+                ),
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  width: kRulerThickness,
+                  height: kRulerThickness,
+                  child: RulerCorner(colors: rulerColors),
+                ),
               ],
             );
           },
