@@ -53,10 +53,18 @@ class ReportFiller {
   }
 
   /// Fills [template] over [source] (with [params]) into a [FillResult].
+  ///
+  /// When [knownFields] is supplied (a schema-aware render — e.g. the designer
+  /// preview), a text binding to a field outside that set resolves to
+  /// [unresolvedFieldToken] (013 / FR-007); the caller passes a localized token.
+  /// Omitting [knownFields] leaves behavior unchanged (a missing field resolves
+  /// empty), so existing headless renders never regress (SC-005).
   FillResult fill(
     ReportTemplate template,
     JetDataSource source, {
     Map<String, Object?> params = const <String, Object?>{},
+    Set<String>? knownFields,
+    String unresolvedFieldToken = '#ERROR',
   }) {
     final ReportDiagnostics diagnostics = ReportDiagnostics();
     final Set<String> warnedFields = <String>{};
@@ -73,6 +81,8 @@ class ReportFiller {
       functions: _functions,
       diagnostics: diagnostics,
       warnedFields: warnedFields,
+      knownFields: knownFields,
+      unresolvedFieldToken: unresolvedFieldToken,
     );
 
     EvalContext contextFactory({

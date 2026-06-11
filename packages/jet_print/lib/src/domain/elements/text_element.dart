@@ -18,6 +18,7 @@ class TextElement extends ReportElement {
     required this.text,
     this.style = JetTextStyle.fallback,
     this.expression,
+    this.format,
   });
 
   /// The literal text to render (the resolved value after Fill, or the authored
@@ -30,11 +31,15 @@ class TextElement extends ReportElement {
   /// Optional data-binding expression (005a). Null for static text.
   final String? expression;
 
+  /// Optional display format (013) — an ICU number/date pattern applied to the
+  /// resolved value at render time. Null/empty means the value is shown as-is.
+  final String? format;
+
   @override
   String get typeKey => 'text';
 
   /// Returns a copy with the given fields replaced; all others (incl.
-  /// [expression]) are preserved (FR-019 / FR-025).
+  /// [expression] and [format]) are preserved (FR-019 / FR-025 / 013).
   TextElement copyWith({String? text, JetTextStyle? style, JetRect? bounds}) =>
       TextElement(
         id: id,
@@ -42,6 +47,7 @@ class TextElement extends ReportElement {
         text: text ?? this.text,
         style: style ?? this.style,
         expression: expression,
+        format: format,
       );
 
   @override
@@ -54,12 +60,14 @@ class TextElement extends ReportElement {
       other.bounds == bounds &&
       other.text == text &&
       other.style == style &&
-      other.expression == expression;
+      other.expression == expression &&
+      other.format == format;
 
   @override
-  int get hashCode => Object.hash(id, bounds, text, style, expression);
+  int get hashCode => Object.hash(id, bounds, text, style, expression, format);
 
   @override
   String toString() => 'TextElement($id, "$text"'
-      '${expression == null ? '' : ', expr: "$expression"'})';
+      '${expression == null ? '' : ', expr: "$expression"'}'
+      '${format == null ? '' : ', fmt: "$format"'})';
 }

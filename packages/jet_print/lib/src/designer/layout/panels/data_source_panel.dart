@@ -5,6 +5,7 @@ import '../../../data/data_schema.dart';
 import '../../../data/field_def.dart';
 import '../../canvas/field_drag_data.dart';
 import '../../designer_schema_scope.dart';
+import '../../field_type_glyph.dart';
 import '../../l10n/jet_print_localizations.dart';
 import '../region_chrome.dart';
 
@@ -57,7 +58,7 @@ Widget _datasetNode(JetDataSchema schema) {
 Widget _fieldNode(FieldDef field, int depth) {
   if (field.type == JetFieldType.collection) {
     return TreeBranch(
-      icon: _glyphFor(JetFieldType.collection),
+      icon: fieldTypeGlyph(JetFieldType.collection),
       label: field.name,
       depth: depth,
       // Collections start collapsed so deep structures don't flood the panel;
@@ -70,17 +71,6 @@ Widget _fieldNode(FieldDef field, int depth) {
   }
   return _FieldRow(field: field, depth: depth);
 }
-
-/// The glyph that signals a field's [JetFieldType] at a glance.
-IconData _glyphFor(JetFieldType type) => switch (type) {
-      JetFieldType.string => LucideIcons.type,
-      JetFieldType.integer => LucideIcons.hash,
-      JetFieldType.double => LucideIcons.calculator,
-      JetFieldType.boolean => LucideIcons.toggleLeft,
-      JetFieldType.dateTime => LucideIcons.calendarClock,
-      JetFieldType.collection => LucideIcons.list,
-      JetFieldType.unknown => LucideIcons.circleHelp,
-    };
 
 /// A short, technical type caption shown trailing a leaf field (not localized —
 /// these are type tokens, like SQL types, not UI chrome). Empty for `unknown`.
@@ -115,7 +105,8 @@ class _FieldRow extends StatelessWidget {
       ),
       child: Row(
         children: <Widget>[
-          Icon(_glyphFor(field.type), size: 14, color: colors.mutedForeground),
+          Icon(fieldTypeGlyph(field.type),
+              size: 14, color: colors.mutedForeground),
           const SizedBox(width: 8),
           Expanded(
             child: Text(

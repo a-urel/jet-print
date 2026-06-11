@@ -49,6 +49,7 @@ class SetTextBindingCommand extends EditCommand {
                     text: e.text,
                     style: e.style,
                     expression: expression,
+                    format: e.format,
                   )
                 else
                   e,

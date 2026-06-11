@@ -90,6 +90,9 @@ Future<void> _pump(WidgetTester tester, ThemeMode mode) async {
     controller: JetReportDesignerController(template: _template()),
     themeMode: mode,
     dataSchema: _schema,
+    // Rulers are pinned by widget tests, not goldens (decision V1) — off here so
+    // the invoice golden stays byte-identical and snapshots only the report.
+    rulers: false,
   );
 }
 

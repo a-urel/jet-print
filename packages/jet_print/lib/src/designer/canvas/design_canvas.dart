@@ -9,6 +9,7 @@ import 'package:flutter/gestures.dart'
     show
         GestureBinding,
         PointerDeviceKind,
+        PointerHoverEvent,
         PointerPanZoomUpdateEvent,
         PointerScrollEvent,
         PointerSignalEvent;
@@ -32,6 +33,8 @@ import 'design_tunables.dart';
 import 'field_drag_data.dart';
 import 'frame_custom_painter.dart';
 import 'hit_testing.dart';
+import 'ruler_metrics.dart';
+import 'ruler_overlay.dart';
 import 'selection_overlay.dart';
 
 /// Stable widget key for the interactive canvas (test seam).
@@ -132,6 +135,11 @@ class _DesignCanvasState extends State<DesignCanvas> {
   final ScrollController _vScroll = ScrollController();
   final ScrollController _hScroll = ScrollController();
 
+  /// The pointer's current page position (points) while hovering the canvas, or
+  /// null on exit. Only the ruler strips listen to it, so a hover repaints two
+  /// thin overlays — never the cached page picture (research D5).
+  final ValueNotifier<JetOffset?> _hoverPage = ValueNotifier<JetOffset?>(null);
+
   /// A stable per-element key on each element's hit region, so a selection from
   /// another surface (the Outline/Properties panels) can scroll it into view.
   final Map<String, GlobalKey> _elementKeys = <String, GlobalKey>{};
@@ -187,6 +195,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
     _focusNode.dispose();
     _vScroll.dispose();
     _hScroll.dispose();
+    _hoverPage.dispose();
     super.dispose();
   }
 
@@ -542,7 +551,15 @@ class _DesignCanvasState extends State<DesignCanvas> {
         focusNode: _focusNode,
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
-            final Size viewport = constraints.biggest;
+            // Rulers are fixed chrome along the top + left edges: when enabled,
+            // the scroll viewport is inset by their thickness, so the page area
+            // the canvas lays out and fits is the full area minus the strips.
+            final double rulerInset =
+                controller.rulersEnabled ? kRulerThickness : 0;
+            final Size viewport = Size(
+              math.max(0, constraints.biggest.width - rulerInset),
+              math.max(0, constraints.biggest.height - rulerInset),
+            );
             // Apply the initial fit-to-width once, and again whenever a fit is
             // requested — off the build path (it mutates the controller + scroll).
             if (!_viewInitialized ||
@@ -575,10 +592,19 @@ class _DesignCanvasState extends State<DesignCanvas> {
             final bool hScrollable = contentW > viewport.width + 0.5;
             final Color thumbColor = colors.foreground.withValues(alpha: 0.4);
 
+            // Track the pointer's page position for the ruler markers via the
+            // Listener's own onPointerHover. A MouseRegion in this subtree would
+            // swallow trackpad pan-zoom scrolling, so exit-clearing is handled by
+            // a MouseRegion wrapping the whole canvas (outside the gesture path).
+            // The notifier is private to the rulers, so a hover never rebuilds
+            // the canvas (research D5).
             final Widget content = Listener(
               onPointerSignal: (PointerSignalEvent event) =>
                   _handlePointerSignal(event, controller),
               onPointerPanZoomUpdate: _handlePanZoomUpdate,
+              onPointerHover: (PointerHoverEvent e) => _hoverPage.value =
+                  transform.screenToPage(
+                      JetOffset(e.localPosition.dx, e.localPosition.dy)),
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 supportedDevices: _interactionDevices,
@@ -621,7 +647,9 @@ class _DesignCanvasState extends State<DesignCanvas> {
             // scrollbars are drawn as a fixed overlay pinned to the viewport edges
             // (a horizontal bar nested inside the vertical scroll view would scroll
             // away with the content). Both are driven by the same controllers.
-            return Stack(
+            // The scroll viewport + its scrollbar overlays, as one unit so the
+            // rulers can inset it without disturbing the scrollbar geometry.
+            final Widget viewportStack = Stack(
               children: <Widget>[
                 ScrollConfiguration(
                   behavior: const _CanvasScrollBehavior(),
@@ -663,6 +691,126 @@ class _DesignCanvasState extends State<DesignCanvas> {
                     ),
                   ),
               ],
+            );
+
+            // The viewport always sits inside one stable Stack > Positioned, so
+            // toggling the rulers (which only changes the inset and adds/removes
+            // strips) never reparents the scroll views onto their controllers.
+            final List<Widget> layers = <Widget>[
+              Positioned(
+                left: rulerInset,
+                top: rulerInset,
+                right: 0,
+                bottom: 0,
+                child: viewportStack,
+              ),
+            ];
+
+            if (controller.rulersEnabled) {
+              // A page point p maps to a strip pixel by p·scale + pageOffset −
+              // scrollOffset; the origin handed to each ruler is the strip pixel
+              // of page-0. Zoom/selection repaints arrive via the controller, but
+              // panning is a raw scroll (no controller notify) and hover is in a
+              // private notifier — so each strip is wrapped in an AnimatedBuilder
+              // on (its scroll controller + the hover notifier), behind a
+              // RepaintBoundary, so a pointer move repaints only the strip.
+              final double pxPerMm = scale * kPointsPerMm;
+              // The selection's union extent (page points), recomputed per build
+              // so it tracks move/resize for free; null clears the highlight.
+              final JetRect? extent =
+                  selectionExtent(layout, controller.selection);
+              final RulerColors rulerColors = RulerColors(
+                background: colors.card,
+                tick: colors.mutedForeground,
+                label: colors.mutedForeground,
+                border: colors.border,
+                marker: colors.primary,
+                highlight: colors.primary.withValues(alpha: 0.18),
+              );
+              layers.addAll(<Widget>[
+                Positioned(
+                  left: rulerInset,
+                  top: 0,
+                  right: 0,
+                  height: kRulerThickness,
+                  child: RepaintBoundary(
+                    child: AnimatedBuilder(
+                      animation:
+                          Listenable.merge(<Listenable>[_hScroll, _hoverPage]),
+                      builder: (BuildContext context, Widget? _) {
+                        final double originPx = pageOffset.dx -
+                            (_hScroll.hasClients ? _hScroll.offset : 0);
+                        final JetOffset? hover = _hoverPage.value;
+                        return RulerOverlay(
+                          axis: RulerAxis.horizontal,
+                          originPx: originPx,
+                          pxPerMm: pxPerMm,
+                          lengthPx: viewport.width,
+                          colors: rulerColors,
+                          markerPx: hover == null
+                              ? null
+                              : originPx + hover.dx * scale,
+                          highlightStartPx: extent == null
+                              ? null
+                              : originPx + extent.x * scale,
+                          highlightEndPx: extent == null
+                              ? null
+                              : originPx + (extent.x + extent.width) * scale,
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 0,
+                  top: rulerInset,
+                  width: kRulerThickness,
+                  bottom: 0,
+                  child: RepaintBoundary(
+                    child: AnimatedBuilder(
+                      animation:
+                          Listenable.merge(<Listenable>[_vScroll, _hoverPage]),
+                      builder: (BuildContext context, Widget? _) {
+                        final double originPx = pageOffset.dy -
+                            (_vScroll.hasClients ? _vScroll.offset : 0);
+                        final JetOffset? hover = _hoverPage.value;
+                        return RulerOverlay(
+                          axis: RulerAxis.vertical,
+                          originPx: originPx,
+                          pxPerMm: pxPerMm,
+                          lengthPx: viewport.height,
+                          colors: rulerColors,
+                          markerPx: hover == null
+                              ? null
+                              : originPx + hover.dy * scale,
+                          highlightStartPx: extent == null
+                              ? null
+                              : originPx + extent.y * scale,
+                          highlightEndPx: extent == null
+                              ? null
+                              : originPx + (extent.y + extent.height) * scale,
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  width: kRulerThickness,
+                  height: kRulerThickness,
+                  child: RulerCorner(colors: rulerColors),
+                ),
+              ]);
+            }
+
+            // A thin exit-only MouseRegion around the whole canvas clears the
+            // hover marker when the pointer leaves (it carries no onHover, so it
+            // does not interfere with trackpad pan-zoom inside).
+            return MouseRegion(
+              opaque: false,
+              onExit: (_) => _hoverPage.value = null,
+              child: Stack(children: layers),
             );
           },
         ),

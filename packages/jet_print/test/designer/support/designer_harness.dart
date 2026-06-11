@@ -133,10 +133,15 @@ Future<JetReportDesignerController> pumpDesignerWith(
   Locale? locale,
   ThemeMode themeMode = ThemeMode.light,
   JetDataSchema? dataSchema,
+  bool rulers = true,
 }) async {
   final JetReportDesignerController c =
       controller ?? JetReportDesignerController();
   addTearDown(c.dispose);
+  // Disabling BEFORE the first pump matters: the initial fit-to-width reads the
+  // (un-inset) viewport, so a rulers-off pump reproduces the pre-rulers layout
+  // byte-for-byte — which is why the design-surface goldens pass `rulers: false`.
+  if (!rulers) c.setRulersEnabled(false);
   await pumpDesigner(
     tester,
     size: size,

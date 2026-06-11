@@ -11,6 +11,7 @@ import '../../domain/report_element.dart';
 import '../../domain/report_template.dart';
 import '../canvas/design_tunables.dart';
 import '../canvas/resize_handle.dart';
+import '../template/value_template_compiler.dart';
 import 'bulk_geometry.dart';
 import 'clipboard.dart';
 import 'commands/clipboard_command.dart';
@@ -22,7 +23,9 @@ import 'commands/resize_command.dart';
 import 'commands/set_band_collection_command.dart';
 import 'commands/set_band_height_command.dart';
 import 'commands/set_binding_command.dart';
+import 'commands/set_format_command.dart';
 import 'commands/set_text_command.dart';
+import 'commands/set_value_command.dart';
 import 'default_template.dart';
 import 'designer_document.dart';
 import 'edit_command.dart';
@@ -296,6 +299,7 @@ class JetReportDesignerController extends ChangeNotifier {
 
   bool _gridEnabled = true;
   bool _snapEnabled = true;
+  bool _rulersEnabled = true;
   String? _resizeId;
   ResizeHandle? _resizeHandle;
   JetRect? _resizeStart;
@@ -318,6 +322,21 @@ class JetReportDesignerController extends ChangeNotifier {
   void setSnapEnabled(bool value) {
     if (_snapEnabled == value) return;
     _snapEnabled = value;
+    notifyListeners();
+  }
+
+  /// Whether the measurement rulers are shown along the canvas's top and left
+  /// edges (top-bar toggle; default on, FR-017). A per-session view preference —
+  /// like [gridEnabled]/[snapEnabled], it is never serialized into the report.
+  /// The canvas reads it to inset its viewport and draw the strips; the top bar
+  /// reads it for the ruler toggle's active state.
+  bool get rulersEnabled => _rulersEnabled;
+
+  /// Shows or hides the rulers. A no-op when [value] already matches (so the
+  /// toggle never churns listeners); otherwise notifies.
+  void setRulersEnabled(bool value) {
+    if (_rulersEnabled == value) return;
+    _rulersEnabled = value;
     notifyListeners();
   }
 
@@ -533,6 +552,31 @@ class JetReportDesignerController extends ChangeNotifier {
   /// (US2 / FR-012). No-op for a non-text or absent id, or when already static.
   void clearBinding(String id) {
     _commit(SetTextBindingCommand(id: id, expression: null));
+  }
+
+  /// Sets the [TextElement] [id] from the unified value field's [raw] text (013).
+  ///
+  /// Parses the three forms — a `[field]` simple binding, a `{ … }` template, or
+  /// literal text (with `\` escapes) — and applies the result as a single
+  /// undoable edit (FR-001/002/003/005). No-op for a non-text or absent id.
+  void setValue(String id, String raw) {
+    final ({int bandIndex, ReportElement element})? loc = _locate(id);
+    if (loc == null || loc.element is! TextElement) return;
+    final TextElement el = loc.element as TextElement;
+    switch (parseValueField(raw)) {
+      case LiteralValue(text: final String text):
+        _commit(SetValueCommand(id: id, text: text, expression: null));
+      case BindingValue(expression: final String expression):
+        // Keep the element's literal text as a fallback; the binding drives it.
+        _commit(SetValueCommand(id: id, text: el.text, expression: expression));
+    }
+  }
+
+  /// Sets the [TextElement] [id]'s display [format] (013) — an ICU pattern, or an
+  /// empty string to clear it. One undoable step; no-op for a non-text/absent id
+  /// or an unchanged format.
+  void setFormat(String id, String format) {
+    _commit(SetFormatCommand(id: id, format: format.isEmpty ? null : format));
   }
 
   /// Binds the [ImageElement] [id] to read its picture from the data [field]

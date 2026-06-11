@@ -8,6 +8,54 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Canvas rulers (spec 014-canvas-rulers).** The design canvas now shows a
+  horizontal ruler along the top and a vertical ruler down the left, calibrated
+  in **millimetres** from the page's physical top-left corner (0,0):
+  - Marks stay locked to true page positions across the full zoom range and while
+    panning, with an adaptive "nice-step" labelled interval (1/2/5 ladder) so
+    labels never crowd or vanish, plus finer unlabelled subdivisions. Labels are
+    localized to the active locale's number grouping (en/de/tr).
+  - A thin marker tracks the pointer on both rulers, and the current selection's
+    **union bounding box** is highlighted as one combined span per ruler
+    (single element, multi-selection, or band), updating on move/resize and
+    clearing on deselect.
+  - Rulers are shown/hidden by the existing top-bar ruler toggle and are **on by
+    default**. Two methods are added to `JetReportDesignerController`,
+    `rulersEnabled` / `setRulersEnabled`, mirroring the grid/snap pair; ruler
+    visibility is a per-session view preference and is never serialized.
+  - Rulers are design-time chrome only — they never flow through the render
+    pipeline, so preview, export, and saved templates are completely unaffected
+    (no model, codec, or `schemaVersion` change).
+
+- **Simplified label value & format properties (spec
+  013-label-value-format).** The label (text element) Properties panel now has a
+  single **Value** field in place of the separate Text and Binding inputs, plus a
+  new **Format** field:
+  - The Value field recognizes three forms — a whole-value `[fieldName]` simple
+    binding, a `{ … }` advanced template mixing `[field]` tokens, literal text,
+    and functions (e.g. `{upper[name]}`, `{[firstName] [lastName]}`), and
+    otherwise literal text (with a `\` escape for literal brackets/braces). It
+    shows a stored binding exactly as the canvas token, and presents a
+    legacy/out-of-grammar expression read-only so it is never lost. Bindings stay
+    single-sourced in `TextElement.expression`; the template is a pure
+    string↔string projection over the existing expression parser (no parallel
+    render path).
+  - A new optional `TextElement.format` (additive, no schema-version bump) — an
+    ICU number/date pattern applied to the resolved value at render time through
+    a shared `applyJetFormat` helper (the same logic behind the `FORMAT`
+    function, so they cannot drift). The Format field offers seven quick-pick
+    presets (None, Integer, Decimal, Currency, Percent, Date, Date & time); a
+    pattern that does not fit the value or is malformed falls back to the
+    unformatted value.
+  - A binding to a field absent from the active data source renders a localized
+    `#ERROR` token in schema-aware contexts (designer/preview). `RenderOptions`
+    gains two additive fields — `knownFields` (`Set<String>?`, the data source's
+    declared field names) and `unresolvedFieldToken` (default `#ERROR`); when
+    `knownFields` is supplied, a binding outside it renders the token, otherwise
+    behavior is unchanged. The token is a plain string so the headless render
+    layer stays Flutter-free; a host with a `BuildContext` passes a localized
+    value.
+  - New Properties-panel strings localized en/de/tr with English fallback.
 - **Export & print — PDF, PNG, and the system print dialog (spec
   012-export-support).** The same `RenderedReport` the preview displays now
   turns into shareable artifacts; one render feeds every target. New public

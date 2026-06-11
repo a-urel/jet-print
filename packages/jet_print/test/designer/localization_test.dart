@@ -15,6 +15,31 @@ import 'package:jet_print/jet_print.dart';
 import 'support/designer_harness.dart';
 
 void main() {
+  // C6 (spec 014): ruler mm labels follow the active locale's number grouping,
+  // and the ruler toggle tooltip resolves via the existing key.
+  testWidgets(
+      'ruler labels group thousands in English; toggle tooltip localized',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c = await pumpDesignerWith(tester,
+        size: const Size(2400, 800), locale: const Locale('en'));
+    c.setViewScale(0.25); // zoom out so the strip reaches 1,000 mm
+    await tester.pumpAndSettle();
+
+    expect(find.text('1,000'), findsWidgets,
+        reason: 'English groups thousands with a comma');
+    final JetPrintLocalizations l10n = JetPrintLocalizations.of(
+        tester.element(find.byType(JetReportDesigner)));
+    expect(l10n.toggleRulerTooltip, 'Show rulers');
+  });
+
+  testWidgets('an unsupported locale falls back to the English ruler tooltip',
+      (WidgetTester tester) async {
+    await pumpDesigner(tester, locale: const Locale('fr'));
+    final JetPrintLocalizations l10n = JetPrintLocalizations.of(
+        tester.element(find.byType(JetReportDesigner)));
+    expect(l10n.toggleRulerTooltip, 'Show rulers');
+  });
+
   testWidgets('English captions render (default locale)', (
     WidgetTester tester,
   ) async {
@@ -69,10 +94,12 @@ void main() {
     // (1) Element inspector — section labels are upper-cased by SectionLabel.
     expect(find.text('POSITION'), findsOneWidget);
     expect(find.text('SIZE'), findsOneWidget);
-    expect(find.text('TEXT'), findsOneWidget);
+    expect(find.text('VALUE'), findsOneWidget); // unified value field (013)
+    expect(find.text('FORMAT'), findsOneWidget); // format property (013)
     // No raw resource keys leak through.
     expect(find.text('propertiesPosition'), findsNothing);
     expect(find.text('PROPERTIESPOSITION'), findsNothing);
+    expect(find.text('propertiesValue'), findsNothing);
 
     // (2) Report inspector — page section label + verbatim header/margins rows.
     c.selectReport();

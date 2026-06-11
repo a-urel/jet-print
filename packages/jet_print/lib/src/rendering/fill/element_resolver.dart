@@ -15,6 +15,7 @@ import '../../domain/elements/text_element.dart';
 import '../../domain/report_element.dart';
 import '../../expression/expression.dart';
 import '../../expression/expression_exception.dart';
+import '../../expression/format/apply_jet_format.dart';
 import '../../expression/function_registry.dart';
 import '../../expression/value.dart';
 import 'fill_eval_context.dart';
@@ -23,10 +24,19 @@ import 'report_diagnostics.dart';
 /// Resolves elements against a row + variables, recording diagnostics.
 class ElementResolver {
   /// Creates a resolver sharing [diagnostics] and the [warnedFields] dedup set.
+  ///
+  /// In a **schema-aware** context the caller supplies [knownFields] (the names
+  /// declared by the active data source). A text binding that references a field
+  /// outside that set resolves to [unresolvedFieldToken] (013 / FR-007). When
+  /// [knownFields] is null (a headless render with no declared schema) behavior
+  /// is unchanged — a missing field resolves empty — so existing reports never
+  /// regress (013 / SC-005).
   ElementResolver({
     required this.functions,
     required this.diagnostics,
     Set<String>? warnedFields,
+    this.knownFields,
+    this.unresolvedFieldToken = '#ERROR',
   }) : warnedFields = warnedFields ?? <String>{};
 
   /// The function registry for expression evaluation.
@@ -37,6 +47,15 @@ class ElementResolver {
 
   /// Shared missing-field dedup set.
   final Set<String> warnedFields;
+
+  /// The field names declared by the active data source, or null when the
+  /// render is not schema-aware (see the constructor).
+  final Set<String>? knownFields;
+
+  /// The text rendered for a binding to a field absent from [knownFields].
+  /// Defaults to the literal `#ERROR`; the designer/preview pass a localized
+  /// value so the render layer never imports l10n (Constitution II).
+  final String unresolvedFieldToken;
 
   /// Image elements already diagnosed for a URL-only source, so a band that
   /// repeats per row warns once per element, not once per instance.
@@ -89,15 +108,37 @@ class ElementResolver {
       pageRefs: pageRefs,
       elementId: el.id,
     );
-    final JetValue value;
+    final Expression parsed;
     try {
-      value = Expression.parse(el.expression!).evaluate(ctx);
+      parsed = Expression.parse(el.expression!);
     } on ExpressionException catch (e) {
       diagnostics.error('Expression parse failed: ${e.message}',
           elementId: el.id);
       return TextElement(
           id: el.id, bounds: el.bounds, text: '!ERR', style: el.style);
     }
+    // Schema-aware unresolved-binding check (013 / FR-007): a reference to a
+    // field the data source does not declare renders the (localizable) token.
+    final Set<String>? known = knownFields;
+    if (known != null) {
+      final List<String> missing = <String>[
+        for (final String f in parsed.references.fields)
+          if (!known.contains(f)) f,
+      ];
+      if (missing.isNotEmpty) {
+        if (warnedFields.add(missing.first)) {
+          diagnostics.warning(
+              'Field(s) ${missing.join(', ')} are not in the data source',
+              elementId: el.id);
+        }
+        return TextElement(
+            id: el.id,
+            bounds: el.bounds,
+            text: unresolvedFieldToken,
+            style: el.style);
+      }
+    }
+    final JetValue value = parsed.evaluate(ctx);
     if (pageRefs.isNotEmpty) {
       diagnostics.error(
         'Page-scoped variable(s) ${pageRefs.join(', ')} are only allowed in '
@@ -111,10 +152,17 @@ class ElementResolver {
     if (value is JetError) {
       diagnostics.error('Expression error: ${value.message}', elementId: el.id);
     }
+    // Apply the label's display format (013 / FR-011): a non-empty pattern that
+    // does not fit the value's type, or is malformed, leaves the value unchanged
+    // (FR-012) — never an error token.
+    final String? format = el.format;
+    final JetValue formatted = (format != null && format.isNotEmpty)
+        ? applyJetFormat(value, format)
+        : value;
     return TextElement(
         id: el.id,
         bounds: el.bounds,
-        text: jetStringify(value),
+        text: jetStringify(formatted),
         style: el.style);
   }
 

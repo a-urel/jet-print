@@ -65,7 +65,13 @@ class JetReportEngine {
         _effectiveParameters(template, options, paramDiagnostics);
     final FillResult fill = _withLocale(
       localeTag,
-      () => ReportFiller().fill(template, source, params: params),
+      () => ReportFiller().fill(
+        template,
+        source,
+        params: params,
+        knownFields: options.knownFields,
+        unresolvedFieldToken: options.unresolvedFieldToken,
+      ),
     );
     final LazyLayout lazy = _withLocale(
       localeTag,

@@ -11,6 +11,7 @@
 // Drives the public `JetReportDesigner` and never reaches into `src/`.
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jet_print/jet_print.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'support/designer_harness.dart';
@@ -143,6 +144,32 @@ void main() {
       expect(find.byIcon(LucideIcons.download), findsOneWidget);
       // The title yields its space to the tools when compact.
       expect(find.text('Untitled report'), findsNothing);
+    });
+
+    // US2 (C3.4): the ruler toggle is wired to the controller exactly like the
+    // grid/snap toggles — it flips `rulersEnabled` and its active styling
+    // (secondary vs ghost) tracks that flag at every step.
+    testWidgets('the ruler toggle drives rulersEnabled and reflects its state',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      final Finder toggle =
+          find.byKey(const ValueKey<String>('jet_print.designer.toggle.ruler'));
+      ShadButtonVariant variant() =>
+          tester.widget<ShadIconButton>(toggle).variant;
+
+      // Default on → active (secondary) styling.
+      expect(c.rulersEnabled, isTrue);
+      expect(variant(), ShadButtonVariant.secondary);
+
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+      expect(c.rulersEnabled, isFalse);
+      expect(variant(), ShadButtonVariant.ghost);
+
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+      expect(c.rulersEnabled, isTrue);
+      expect(variant(), ShadButtonVariant.secondary);
     });
   });
 }

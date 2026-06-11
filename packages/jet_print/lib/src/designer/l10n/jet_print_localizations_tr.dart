@@ -187,6 +187,48 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get propertiesText => 'Metin';
 
   @override
+  String get propertiesValue => 'Değer';
+
+  @override
+  String get valueFieldHint => '[alan] veya metin';
+
+  @override
+  String get valueFieldPickerTooltip => 'Veri alanı ekle';
+
+  @override
+  String get propertiesFormat => 'Biçim';
+
+  @override
+  String get formatHint => 'örn. #,##0.00';
+
+  @override
+  String get formatPresetPickerTooltip => 'Biçim ön ayarı seç';
+
+  @override
+  String get formatPresetNone => 'Yok';
+
+  @override
+  String get formatPresetInteger => 'Tam sayı';
+
+  @override
+  String get formatPresetDecimal => 'Ondalık';
+
+  @override
+  String get formatPresetCurrency => 'Para birimi';
+
+  @override
+  String get formatPresetPercent => 'Yüzde';
+
+  @override
+  String get formatPresetDate => 'Tarih';
+
+  @override
+  String get formatPresetDateTime => 'Tarih ve saat';
+
+  @override
+  String get errorUnresolvedToken => '#HATA';
+
+  @override
   String get propertiesBinding => 'Bağlantı';
 
   @override

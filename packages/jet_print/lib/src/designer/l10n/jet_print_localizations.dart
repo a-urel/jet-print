@@ -455,6 +455,90 @@ abstract class JetPrintLocalizations {
   /// **'Text'**
   String get propertiesText;
 
+  /// Properties panel section label for a text element's unified value (literal text or a [field]/{ … } binding) (013).
+  ///
+  /// In en, this message translates to:
+  /// **'Value'**
+  String get propertiesValue;
+
+  /// Placeholder for the unified value input — a [field] token, a { … } template, or literal text (013).
+  ///
+  /// In en, this message translates to:
+  /// **'[field] or text'**
+  String get valueFieldHint;
+
+  /// Accessible label / tooltip for the value input's suffix button that opens the data-source field picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert a data field'**
+  String get valueFieldPickerTooltip;
+
+  /// Properties panel section label for a text element's number/date display format (013).
+  ///
+  /// In en, this message translates to:
+  /// **'Format'**
+  String get propertiesFormat;
+
+  /// Placeholder for the format input (an ICU number/date pattern) (013).
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. #,##0.00'**
+  String get formatHint;
+
+  /// Accessible label/tooltip for the Format field's preset-picker suffix button (013).
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a format preset'**
+  String get formatPresetPickerTooltip;
+
+  /// Format preset that clears the format (unformatted) (013).
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get formatPresetNone;
+
+  /// Format preset for a grouped integer, e.g. 1,234 (013).
+  ///
+  /// In en, this message translates to:
+  /// **'Integer'**
+  String get formatPresetInteger;
+
+  /// Format preset for a grouped number with two decimals, e.g. 1,234.50 (013).
+  ///
+  /// In en, this message translates to:
+  /// **'Decimal'**
+  String get formatPresetDecimal;
+
+  /// Format preset for a currency amount (013).
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get formatPresetCurrency;
+
+  /// Format preset for a percentage (013).
+  ///
+  /// In en, this message translates to:
+  /// **'Percent'**
+  String get formatPresetPercent;
+
+  /// Format preset for a date, e.g. 2026-06-11 (013).
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get formatPresetDate;
+
+  /// Format preset for a date and time, e.g. 2026-06-11 14:30 (013).
+  ///
+  /// In en, this message translates to:
+  /// **'Date & time'**
+  String get formatPresetDateTime;
+
+  /// Rendered in place of a binding whose field is not in the data source (013 / FR-007).
+  ///
+  /// In en, this message translates to:
+  /// **'#ERROR'**
+  String get errorUnresolvedToken;
+
   /// Properties panel section label for an element's data binding (009).
   ///
   /// In en, this message translates to:

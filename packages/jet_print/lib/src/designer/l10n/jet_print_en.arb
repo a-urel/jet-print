@@ -250,6 +250,62 @@
   "@propertiesText": {
     "description": "Properties panel section label for a text element's content."
   },
+  "propertiesValue": "Value",
+  "@propertiesValue": {
+    "description": "Properties panel section label for a text element's unified value (literal text or a [field]/{ … } binding) (013)."
+  },
+  "valueFieldHint": "[field] or text",
+  "@valueFieldHint": {
+    "description": "Placeholder for the unified value input — a [field] token, a { … } template, or literal text (013)."
+  },
+  "valueFieldPickerTooltip": "Insert a data field",
+  "@valueFieldPickerTooltip": {
+    "description": "Accessible label / tooltip for the value input's suffix button that opens the data-source field picker."
+  },
+  "propertiesFormat": "Format",
+  "@propertiesFormat": {
+    "description": "Properties panel section label for a text element's number/date display format (013)."
+  },
+  "formatHint": "e.g. #,##0.00",
+  "@formatHint": {
+    "description": "Placeholder for the format input (an ICU number/date pattern) (013)."
+  },
+  "formatPresetPickerTooltip": "Choose a format preset",
+  "@formatPresetPickerTooltip": {
+    "description": "Accessible label/tooltip for the Format field's preset-picker suffix button (013)."
+  },
+  "formatPresetNone": "None",
+  "@formatPresetNone": {
+    "description": "Format preset that clears the format (unformatted) (013)."
+  },
+  "formatPresetInteger": "Integer",
+  "@formatPresetInteger": {
+    "description": "Format preset for a grouped integer, e.g. 1,234 (013)."
+  },
+  "formatPresetDecimal": "Decimal",
+  "@formatPresetDecimal": {
+    "description": "Format preset for a grouped number with two decimals, e.g. 1,234.50 (013)."
+  },
+  "formatPresetCurrency": "Currency",
+  "@formatPresetCurrency": {
+    "description": "Format preset for a currency amount (013)."
+  },
+  "formatPresetPercent": "Percent",
+  "@formatPresetPercent": {
+    "description": "Format preset for a percentage (013)."
+  },
+  "formatPresetDate": "Date",
+  "@formatPresetDate": {
+    "description": "Format preset for a date, e.g. 2026-06-11 (013)."
+  },
+  "formatPresetDateTime": "Date & time",
+  "@formatPresetDateTime": {
+    "description": "Format preset for a date and time, e.g. 2026-06-11 14:30 (013)."
+  },
+  "errorUnresolvedToken": "#ERROR",
+  "@errorUnresolvedToken": {
+    "description": "Rendered in place of a binding whose field is not in the data source (013 / FR-007)."
+  },
   "propertiesBinding": "Binding",
   "@propertiesBinding": {
     "description": "Properties panel section label for an element's data binding (009)."

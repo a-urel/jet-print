@@ -1,9 +1,8 @@
 /// Built-in FORMAT function for the expression engine (spec 005a).
 library;
 
-import 'package:intl/intl.dart';
-
 import '../eval_context.dart';
+import '../format/apply_jet_format.dart';
 import '../function_registry.dart';
 import '../value.dart';
 
@@ -30,16 +29,12 @@ JetValue _format(List<JetValue> args, EvalContext ctx) {
   if (pattern is! JetString) {
     return const JetError('FORMAT pattern must be a string');
   }
-  try {
-    return switch (value) {
-      JetNumber(value: final double v) =>
-        JetString(NumberFormat(pattern.value).format(v)),
-      JetDate(value: final DateTime v) =>
-        JetString(DateFormat(pattern.value).format(v)),
-      _ => const JetError('FORMAT expects a number or date as its first '
-          'argument'),
-    };
-  } on FormatException catch (e) {
-    return JetError('FORMAT failed: ${e.message}');
+  if (value is! JetNumber && value is! JetDate) {
+    return const JetError(
+        'FORMAT expects a number or date as its first argument');
   }
+  // Delegates the actual formatting to the shared core so FORMAT and the label
+  // `format` property never drift; a null here means a malformed pattern.
+  return tryJetFormat(value, pattern.value) ??
+      JetError('FORMAT failed: invalid pattern "${pattern.value}"');
 }

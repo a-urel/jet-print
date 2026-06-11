@@ -109,6 +109,7 @@ ReportTemplate invoiceSampleTemplate() => const ReportTemplate(
               text: 'unitPrice',
               style: JetTextStyle(align: JetTextAlign.right),
               expression: r'$F{unitPrice}',
+              format: '#,##0.00',
             ),
             TextElement(
               id: 'lineTotal',
@@ -116,6 +117,7 @@ ReportTemplate invoiceSampleTemplate() => const ReportTemplate(
               text: 'lineTotal',
               style: JetTextStyle(align: JetTextAlign.right),
               expression: r'$F{lineTotal}',
+              format: '#,##0.00',
             ),
           ],
         ),
@@ -138,6 +140,7 @@ ReportTemplate invoiceSampleTemplate() => const ReportTemplate(
               style: JetTextStyle(
                   align: JetTextAlign.right, weight: JetFontWeight.bold),
               expression: r'$F{total}',
+              format: '#,##0.00',
             ),
           ],
         ),

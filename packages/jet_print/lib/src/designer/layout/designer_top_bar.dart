@@ -48,8 +48,6 @@ class DesignerTopBar extends StatefulWidget {
 class _DesignerTopBarState extends State<DesignerTopBar> {
   static const double _height = 52;
 
-  bool _ruler = true;
-
   /// Below this width the labelled actions collapse to icon-only buttons and the
   /// title yields its space, so the dense command groups keep fitting.
   static const double _compactWidth = 920;
@@ -176,10 +174,11 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
         onPressed: () => controller.setGridEnabled(!controller.gridEnabled),
       ),
       _ToggleButton(
+        buttonKey: const ValueKey<String>('jet_print.designer.toggle.ruler'),
         icon: LucideIcons.ruler,
         tooltip: l10n.toggleRulerTooltip,
-        active: _ruler,
-        onPressed: () => setState(() => _ruler = !_ruler),
+        active: controller.rulersEnabled,
+        onPressed: () => controller.setRulersEnabled(!controller.rulersEnabled),
       ),
       _ToggleButton(
         buttonKey: const ValueKey<String>('jet_print.designer.toggle.snap'),
