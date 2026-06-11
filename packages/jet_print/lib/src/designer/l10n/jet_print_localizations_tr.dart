@@ -187,7 +187,7 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get propertiesText => 'Metin';
 
   @override
-  String get propertiesBinding => 'Bağlama';
+  String get propertiesBinding => 'Bağlantı';
 
   @override
   String get bindingExpressionHint => 'Alan veya ifade';
@@ -196,7 +196,7 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get bindingImageFieldHint => 'Alan adı';
 
   @override
-  String get bindingClearTooltip => 'Bağlamayı temizle';
+  String get bindingClearTooltip => 'Bağlantıyı temizle';
 
   @override
   String get bindingCollectionHint => 'Koleksiyon alanı';
