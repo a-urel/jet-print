@@ -44,6 +44,7 @@ void main() {
       (WidgetTester tester) async {
     final JetReportDesignerController controller =
         await pumpDesignerWith(tester);
+    controller.setSnapEnabled(true); // snapping is off by default
     await tester.tap(_toolFinder(DesignerToolType.shape));
     await tester.pumpAndSettle();
     final String id = controller.selection.singleOrNull!;
@@ -62,12 +63,19 @@ void main() {
     expect(_guideBox, findsNothing); // guide cleared on commit
   });
 
-  testWidgets('Alt bypasses snapping (no guide)', (WidgetTester tester) async {
+  testWidgets(
+      'Alt bypasses snapping for the drag without flipping toggles '
+      '(C4.5)', (WidgetTester tester) async {
     final JetReportDesignerController controller =
         await pumpDesignerWith(tester);
+    controller.setSnapEnabled(true); // snapping is off by default
     await tester.tap(_toolFinder(DesignerToolType.shape));
     await tester.pumpAndSettle();
     final String id = controller.selection.singleOrNull!;
+    // Both tools are on; the bypass must suspend snapping for THIS drag only,
+    // leaving the persistent toggle state untouched (FR-013).
+    expect(controller.snapEnabled, isTrue);
+    expect(controller.gridEnabled, isTrue);
 
     controller.beginResize(id, ResizeHandle.right);
     controller.updateResize(const JetOffset(5, 0),
@@ -75,6 +83,9 @@ void main() {
     await tester.pump();
     expect(controller.activeGuides, isEmpty);
     expect(_guideBox, findsNothing);
+    // Toggle state is unchanged — the bypass is a transient modifier, not a flip.
+    expect(controller.snapEnabled, isTrue);
+    expect(controller.gridEnabled, isTrue);
     controller.cancelResize();
   });
 }

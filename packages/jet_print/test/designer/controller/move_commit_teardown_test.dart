@@ -21,8 +21,11 @@ void main() {
     final JetReportDesignerController c = JetReportDesignerController();
     addTearDown(c.dispose);
 
-    // Band-edge snapping only (grid off) makes the guide deterministic.
-    c.setGridEnabled(false);
+    // Snapping governs the guide (the magnet alone, since 015's decoupling —
+    // grid visibility is irrelevant here); it is off by default, so turn it on.
+    // The pin below puts the left edge on the band edge, which coincides with
+    // grid line 0, so the snap that raises the guide is deterministic.
+    c.setSnapEnabled(true);
     c.createElement(DesignerToolType.text,
         bandIndex: 0, at: const JetOffset(0, 0));
     final String id = c.selection.singleOrNull!;

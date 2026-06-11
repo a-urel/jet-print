@@ -167,18 +167,18 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
       // View-toggle group.
       const _Divider(),
       _ToggleButton(
-        buttonKey: const ValueKey<String>('jet_print.designer.toggle.grid'),
-        icon: LucideIcons.grid2x2,
-        tooltip: l10n.toggleGridTooltip,
-        active: controller.gridEnabled,
-        onPressed: () => controller.setGridEnabled(!controller.gridEnabled),
-      ),
-      _ToggleButton(
         buttonKey: const ValueKey<String>('jet_print.designer.toggle.ruler'),
         icon: LucideIcons.ruler,
         tooltip: l10n.toggleRulerTooltip,
         active: controller.rulersEnabled,
         onPressed: () => controller.setRulersEnabled(!controller.rulersEnabled),
+      ),
+      _ToggleButton(
+        buttonKey: const ValueKey<String>('jet_print.designer.toggle.grid'),
+        icon: LucideIcons.grid2x2,
+        tooltip: l10n.toggleGridTooltip,
+        active: controller.gridEnabled,
+        onPressed: () => controller.setGridEnabled(!controller.gridEnabled),
       ),
       _ToggleButton(
         buttonKey: const ValueKey<String>('jet_print.designer.toggle.snap'),

@@ -13,10 +13,11 @@ void main() {
   testWidgets('bound text shows a token and a bound image a placeholder', (
     WidgetTester tester,
   ) async {
-    // Rulers are design-time chrome outside the render pipeline; pumping with
-    // them off keeps this element-rendering golden byte-identical to before.
+    // Rulers and the alignment grid are design-time chrome outside the render
+    // pipeline; pumping with them off keeps this element-rendering golden
+    // byte-identical to before.
     final JetReportDesignerController c =
-        await pumpDesignerWith(tester, rulers: false);
+        await pumpDesignerWith(tester, rulers: false, grid: false);
 
     // A data-bound text element (token-rendered) and a field-bound image.
     c.createBoundElement(

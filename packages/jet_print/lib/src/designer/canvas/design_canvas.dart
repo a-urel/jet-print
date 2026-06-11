@@ -32,6 +32,7 @@ import 'design_time_layout.dart';
 import 'design_tunables.dart';
 import 'field_drag_data.dart';
 import 'frame_custom_painter.dart';
+import 'grid_geometry.dart';
 import 'hit_testing.dart';
 import 'ruler_metrics.dart';
 import 'ruler_overlay.dart';
@@ -42,6 +43,9 @@ const Key kDesignCanvasKey = ValueKey<String>('jet_print.designer.canvas');
 
 /// Stable widget key for the paper page surface (test seam).
 const Key kDesignPageKey = ValueKey<String>('jet_print.designer.page');
+
+/// Stable widget key for the backmost alignment-grid layer (test seam, 015).
+const Key kDesignGridKey = ValueKey<String>('jet_print.designer.grid');
 
 // --- Paper palette -----------------------------------------------------------
 // The design surface represents a sheet of printed paper, so it (and the
@@ -54,6 +58,9 @@ const Color _paperColor = Color(0xFFFFFFFF);
 const Color _paperBorderColor = Color(0xFFE2E8F0); // slate-200
 const Color _paperShadowColor = Color(0x1A000000); // black 10%
 const Color _bandSeparatorColor = Color(0x14000000); // black 8%
+// The alignment grid is paper chrome, lighter than the band separators so it
+// recedes behind content (FR-003 / research D7).
+const Color _gridColor = Color(0x0D000000); // black ~5%
 const Color _badgeBackgroundColor = Color(0xFFF1F5F9); // slate-100
 const Color _badgeForegroundColor = Color(0xFF64748B); // slate-500
 const Color _badgeBorderColor = Color(0xFFE2E8F0); // slate-200
@@ -854,6 +861,23 @@ class _DesignCanvasState extends State<DesignCanvas> {
               ),
               child: Stack(
                 children: <Widget>[
+                  // Backmost: the 5 mm alignment grid (design-only chrome, drawn
+                  // per band at the snap step so a drawn line lands on a snap
+                  // target). Constructed only when visible; sits behind band
+                  // chrome, elements, and all overlays so it never obscures
+                  // content (FR-003 / D5). Absent from preview/export by
+                  // construction — it is not in the shared render pipeline.
+                  if (controller.gridEnabled)
+                    Positioned.fill(
+                      key: kDesignGridKey,
+                      child: CustomPaint(
+                        painter: _GridPainter(
+                          layout: layout,
+                          scale: scale,
+                          color: _gridColor,
+                        ),
+                      ),
+                    ),
                   // Band-structure chrome (design-only; not element appearance).
                   Positioned.fill(
                     child: CustomPaint(
@@ -1096,6 +1120,67 @@ class _CanvasScrollbar extends StatelessWidget {
 /// visible on the design surface. This is design-time chrome (band boundaries),
 /// not element appearance, so it is drawn directly rather than through the
 /// shared element pipeline.
+/// Paints the 5 mm alignment grid as backmost design-time chrome (spec 015).
+///
+/// Per band, it draws vertical lines at [gridLineOffsets] of the band width and
+/// horizontal lines at [gridLineOffsets] of the band height — each offset
+/// measured from the band's content origin and scaled to pixels — clipped to the
+/// band rect. Because the offsets are exact multiples of [kGridStep] (the same
+/// step the snap geometry uses), every drawn line lands on a snap target. The
+/// helper coarsens then hides the grid at low zoom so it never smears into a
+/// solid fill. Like [_BandChromePainter] this draws directly on the page's
+/// scaled surface, outside the shared render pipeline — so it is never present
+/// in preview/export (FR-016).
+class _GridPainter extends CustomPainter {
+  const _GridPainter({
+    required this.layout,
+    required this.scale,
+    required this.color,
+  });
+
+  final DesignTimeLayout layout;
+  final double scale;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint line = Paint()
+      ..color = color
+      ..strokeWidth = 1;
+    for (final JetRect band in layout.bandRects) {
+      final double left = band.x * scale;
+      final double top = band.y * scale;
+      final double right = (band.x + band.width) * scale;
+      final double bottom = (band.y + band.height) * scale;
+      final Rect bandRect = Rect.fromLTRB(left, top, right, bottom);
+
+      canvas.save();
+      canvas.clipRect(bandRect);
+      // Vertical lines: multiples of the step across the band width, from the
+      // band's left content edge.
+      for (final double x in gridLineOffsets(band.width, kGridStep, scale,
+          kGridMinLineGapPx, kGridMaxCoarsenFactor)) {
+        final double px = left + x * scale;
+        canvas.drawLine(Offset(px, top), Offset(px, bottom), line);
+      }
+      // Horizontal lines: multiples of the step down the band height, from the
+      // band's top content edge.
+      for (final double y in gridLineOffsets(band.height, kGridStep, scale,
+          kGridMinLineGapPx, kGridMaxCoarsenFactor)) {
+        final double py = top + y * scale;
+        canvas.drawLine(Offset(left, py), Offset(right, py), line);
+      }
+      canvas.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(_GridPainter oldDelegate) =>
+      oldDelegate.scale != scale ||
+      oldDelegate.layout != layout ||
+      oldDelegate.color != color;
+}
+
 class _BandChromePainter extends CustomPainter {
   const _BandChromePainter({
     required this.layout,
