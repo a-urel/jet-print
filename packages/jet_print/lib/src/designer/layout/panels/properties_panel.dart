@@ -14,6 +14,7 @@ import '../../../domain/report_element.dart';
 import '../../controller/jet_report_designer_controller.dart';
 import '../../designer_schema_scope.dart';
 import '../../designer_scope.dart';
+import '../../field_type_glyph.dart';
 import '../../format_presets.dart';
 import '../../l10n/band_type_label.dart';
 import '../../l10n/jet_print_localizations.dart';
@@ -192,7 +193,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
               : reverseCompile(element.expression!),
           placeholder: l10n.valueFieldHint,
           focusNode: _textFocus,
-          fields: _valueFieldNames(schema, controller, id),
+          fields: _valueFieldChoices(schema, controller, id),
           pickerTooltip: l10n.valueFieldPickerTooltip,
           onCommit: (String v) => controller.setValue(id, v),
         ),
@@ -231,23 +232,24 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     ];
   }
 
-  /// The scalar field names the Value field's picker offers for [elementId]:
-  /// every field in the element's band scope except nested collections (a label
-  /// binds a single value, not a whole collection). Empty when no schema is
-  /// attached or the element sits in no resolvable band — the picker button then
-  /// hides, leaving the plain free-text value field.
-  List<String> _valueFieldNames(
+  /// The scalar fields the Value field's picker offers for [elementId]: every
+  /// field in the element's band scope except nested collections (a label binds
+  /// a single value, not a whole collection). Each carries its [FieldDef.type]
+  /// so the picker can show the same type glyph as the Data Source tree. Empty
+  /// when no schema is attached or the element sits in no resolvable band — the
+  /// picker button then hides, leaving the plain free-text value field.
+  List<FieldDef> _valueFieldChoices(
     JetDataSchema? schema,
     JetReportDesignerController controller,
     String elementId,
   ) {
-    if (schema == null) return const <String>[];
+    if (schema == null) return const <FieldDef>[];
     final List<int>? path = bandPathOfElement(controller.template, elementId);
-    if (path == null) return const <String>[];
-    return <String>[
+    if (path == null) return const <FieldDef>[];
+    return <FieldDef>[
       for (final FieldDef f
           in fieldsInScopeAt(schema, controller.template, path))
-        if (f.type != JetFieldType.collection) f.name,
+        if (f.type != JetFieldType.collection) f,
     ];
   }
 
@@ -573,9 +575,9 @@ class _ValueField extends StatefulWidget {
   final ValueDisplay display;
   final String placeholder;
 
-  /// The in-scope data-source field names offered by the suffix picker; empty
-  /// ⇒ no picker button (no schema attached, or nothing in scope).
-  final List<String> fields;
+  /// The in-scope data-source fields offered by the suffix picker; empty ⇒ no
+  /// picker button (no schema attached, or nothing in scope).
+  final List<FieldDef> fields;
 
   /// Accessible label / tooltip for the suffix picker button.
   final String pickerTooltip;
@@ -661,8 +663,9 @@ class _ValueFieldState extends State<_ValueField> {
 
 /// The Value field's suffix affordance: a small database glyph that drops down a
 /// menu of the in-scope data-source [fields]; choosing one inserts it as a
-/// `[field]` binding through [onPick]. Hidden entirely when no fields are in
-/// scope, so the plain value field stands alone.
+/// `[field]` binding through [onPick]. Each item carries the field's type glyph
+/// (the same mapping the Data Source tree uses), so a field reads identically in
+/// both places. Hidden entirely when no fields are in scope.
 class _FieldPicker extends StatelessWidget {
   const _FieldPicker({
     required this.controller,
@@ -672,7 +675,7 @@ class _FieldPicker extends StatelessWidget {
   });
 
   final ShadPopoverController controller;
-  final List<String> fields;
+  final List<FieldDef> fields;
   final String tooltip;
   final ValueChanged<String> onPick;
 
@@ -682,12 +685,12 @@ class _FieldPicker extends StatelessWidget {
     return ShadContextMenu(
       controller: controller,
       items: <Widget>[
-        for (final String field in fields)
+        for (final FieldDef field in fields)
           ShadContextMenuItem(
-            key: ValueKey<String>('$_p.field.value.pick.$field'),
-            leading: const Icon(LucideIcons.braces, size: 16),
-            onPressed: () => onPick(field),
-            child: Text(field),
+            key: ValueKey<String>('$_p.field.value.pick.${field.name}'),
+            leading: Icon(fieldTypeGlyph(field.type), size: 16),
+            onPressed: () => onPick(field.name),
+            child: Text(field.name),
           ),
       ],
       child: Semantics(

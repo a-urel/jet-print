@@ -5,6 +5,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'support/designer_harness.dart';
 
@@ -77,6 +78,31 @@ void main() {
     expect(_pickItem('total'), findsOneWidget);
     expect(_pickItem('lines'), findsNothing);
     expect(_pickItem('qty'), findsNothing);
+  });
+
+  testWidgets('each picker item shows its field-type glyph (matching the Data '
+      'Source pane)', (WidgetTester tester) async {
+    final JetReportDesignerController c =
+        await pumpDesignerWith(tester, dataSchema: _schema);
+    await _selectedText(tester, c);
+
+    await tester.tap(find.byKey(_pickKey));
+    await tester.pumpAndSettle();
+
+    // string → type glyph; double → calculator glyph — the same mapping the
+    // Data Source tree uses, so a field reads identically in both places.
+    expect(
+      find.descendant(
+          of: _pickItem('customerName'),
+          matching: find.byIcon(LucideIcons.type)),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+          of: _pickItem('total'),
+          matching: find.byIcon(LucideIcons.calculator)),
+      findsOneWidget,
+    );
   });
 
   testWidgets('choosing a field binds the element as a single undoable edit',
