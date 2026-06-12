@@ -10,6 +10,7 @@ import 'package:flutter/gestures.dart'
         GestureBinding,
         PointerDeviceKind,
         PointerHoverEvent,
+        PointerMoveEvent,
         PointerPanZoomUpdateEvent,
         PointerScrollEvent,
         PointerSignalEvent;
@@ -20,6 +21,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../domain/geometry.dart';
 import '../../domain/report_band.dart';
+import '../../domain/report_template.dart';
 import '../controller/jet_report_designer_controller.dart';
 import '../designer_scope.dart';
 import '../interaction/canvas_shortcuts.dart';
@@ -85,7 +87,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
   final GlobalKey _pageKey = GlobalKey();
 
   ui.Picture? _picture;
-  int _renderedRevision = -1;
+  int _renderedFrameVersion = -1;
   bool _building = false;
 
   /// Whether the initial fit-to-width has been applied, and the fit-request
@@ -206,16 +208,22 @@ class _DesignCanvasState extends State<DesignCanvas> {
     super.dispose();
   }
 
-  /// Re-records the committed frame off the build path (the element renderers
-  /// run here, never on a pan/zoom/drag frame). Coalesces rapid edits: only one
-  /// record runs at a time, and it re-checks for newer changes on completion.
+  /// Re-records the displayed frame off the build path (the element renderers
+  /// run here, never on a raw pan/zoom frame). The frame follows the live drag:
+  /// it is recorded from [JetReportDesignerController.displayTemplate] (the
+  /// committed model plus any in-progress move/resize) and keyed on
+  /// `frameVersion` (which ticks on every drag preview), so a drag re-records in
+  /// realtime. Coalesces rapid edits: only one record runs at a time, and it
+  /// re-checks for newer changes on completion — so a fast drag drops
+  /// intermediate frames instead of queuing a record per pointer move.
   void _maybeRebuild(JetReportDesignerController controller) {
-    if (_building || controller.revision == _renderedRevision) return;
+    if (_building || controller.frameVersion == _renderedFrameVersion) return;
     _building = true;
-    final int revision = controller.revision;
-    final DesignTimeLayout layout = DesignTimeLayout.of(controller.template);
+    final int version = controller.frameVersion;
+    final ReportTemplate template = controller.displayTemplate;
+    final DesignTimeLayout layout = DesignTimeLayout.of(template);
     _frameBuilder
-        .recordFrame(_frameBuilder.build(controller.template, layout))
+        .recordFrame(_frameBuilder.build(template, layout))
         .then((ui.Picture picture) {
       _building = false;
       if (!mounted) {
@@ -225,7 +233,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
       setState(() {
         _picture?.dispose();
         _picture = picture;
-        _renderedRevision = revision;
+        _renderedFrameVersion = version;
       });
       _maybeRebuild(controller); // coalesce any change that arrived meanwhile
     });
@@ -540,12 +548,30 @@ class _DesignCanvasState extends State<DesignCanvas> {
   Widget build(BuildContext context) {
     final JetReportDesignerController controller = DesignerScope.of(context);
     final ShadColorScheme colors = ShadTheme.of(context).colorScheme;
+    // Two layouts, split by role. The committed [layout] drives click hit-testing
+    // and the selection overlay (which builds its previews by *adding* the live
+    // move/resize delta to committed positions — feeding it the already-moved
+    // geometry would double-count). The [displayLayout] reflects any in-progress
+    // drag (move/resize/band-resize) and draws everything that represents the
+    // model — the cached picture, grid, band separators, badges, hit regions — so
+    // they reflow together in realtime. Idle (and during element move/resize,
+    // which never changes band geometry) the two are identical; only a band
+    // resize makes them diverge, which is exactly where the reflow is wanted. When
+    // idle, `displayTemplate` is the same template instance, so the layout is
+    // reused rather than recomputed.
     final DesignTimeLayout layout = DesignTimeLayout.of(controller.template);
+    final ReportTemplate displayed = controller.displayTemplate;
+    final DesignTimeLayout displayLayout =
+        identical(displayed, controller.template)
+            ? layout
+            : DesignTimeLayout.of(displayed);
     final bool isEmpty =
         !controller.template.bands.any((band) => band.elements.isNotEmpty);
 
-    // Re-record the committed picture when the model changes (off the build path).
-    if (controller.revision != _renderedRevision) {
+    // Re-record the displayed picture whenever the displayed frame changes (off
+    // the build path) — a committed edit or a live move/resize preview, both of
+    // which tick `frameVersion`.
+    if (controller.frameVersion != _renderedFrameVersion) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _maybeRebuild(controller);
       });
@@ -600,18 +626,27 @@ class _DesignCanvasState extends State<DesignCanvas> {
             final Color thumbColor = colors.foreground.withValues(alpha: 0.4);
 
             // Track the pointer's page position for the ruler markers via the
-            // Listener's own onPointerHover. A MouseRegion in this subtree would
-            // swallow trackpad pan-zoom scrolling, so exit-clearing is handled by
-            // a MouseRegion wrapping the whole canvas (outside the gesture path).
-            // The notifier is private to the rulers, so a hover never rebuilds
-            // the canvas (research D5).
+            // Listener's own onPointerHover (no button) and onPointerMove (button
+            // down). Hover events stop firing once a drag begins, so without the
+            // move handler the marker would freeze exactly while moving/resizing;
+            // a raw Listener still sees every pointer-move over its subtree
+            // regardless of which gesture won the arena, so the marker tracks the
+            // pointer through a body move, a resize handle, or a band drag alike.
+            // A MouseRegion in this subtree would swallow trackpad pan-zoom
+            // scrolling, so exit-clearing is handled by a MouseRegion wrapping the
+            // whole canvas (outside the gesture path). The notifier is private to
+            // the rulers, so a pointer move never rebuilds the canvas (D5).
+            void trackPointer(Offset localPosition) =>
+                _hoverPage.value = transform.screenToPage(
+                    JetOffset(localPosition.dx, localPosition.dy));
             final Widget content = Listener(
               onPointerSignal: (PointerSignalEvent event) =>
                   _handlePointerSignal(event, controller),
               onPointerPanZoomUpdate: _handlePanZoomUpdate,
-              onPointerHover: (PointerHoverEvent e) => _hoverPage.value =
-                  transform.screenToPage(
-                      JetOffset(e.localPosition.dx, e.localPosition.dy)),
+              onPointerHover: (PointerHoverEvent e) =>
+                  trackPointer(e.localPosition),
+              onPointerMove: (PointerMoveEvent e) =>
+                  trackPointer(e.localPosition),
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 supportedDevices: _interactionDevices,
@@ -637,8 +672,8 @@ class _DesignCanvasState extends State<DesignCanvas> {
                           top: pageOffset.dy,
                           width: pageW,
                           height: pageH,
-                          child: _buildPage(
-                              controller, layout, scale, colors, isEmpty),
+                          child: _buildPage(controller, layout, displayLayout,
+                              scale, colors, isEmpty),
                         ),
                       ],
                     ),
@@ -724,8 +759,12 @@ class _DesignCanvasState extends State<DesignCanvas> {
               final double pxPerMm = scale * kPointsPerMm;
               // The selection's union extent (page points), recomputed per build
               // so it tracks move/resize for free; null clears the highlight.
+              // Measured against the *displayed* layout (committed model plus any
+              // in-progress element move/resize), so the ruler highlight follows
+              // the drag in realtime rather than snapping on mouse-up. Idle, the
+              // displayed layout equals the committed one, so this is unchanged.
               final JetRect? extent =
-                  selectionExtent(layout, controller.selection);
+                  selectionExtent(displayLayout, controller.selection);
               final RulerColors rulerColors = RulerColors(
                 background: colors.card,
                 tick: colors.mutedForeground,
@@ -828,6 +867,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
   Widget _buildPage(
     JetReportDesignerController controller,
     DesignTimeLayout layout,
+    DesignTimeLayout displayLayout,
     double scale,
     ShadColorScheme colors,
     bool isEmpty,
@@ -872,7 +912,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
                       key: kDesignGridKey,
                       child: CustomPaint(
                         painter: _GridPainter(
-                          layout: layout,
+                          layout: displayLayout,
                           scale: scale,
                           color: _gridColor,
                         ),
@@ -882,7 +922,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
                   Positioned.fill(
                     child: CustomPaint(
                       painter: _BandChromePainter(
-                        layout: layout,
+                        layout: displayLayout,
                         scale: scale,
                         separatorColor: _bandSeparatorColor,
                       ),
@@ -891,21 +931,22 @@ class _DesignCanvasState extends State<DesignCanvas> {
                   // Band-type captions, one per band, anchored at each band's
                   // top-left corner. Drawn below element appearance so an element
                   // sharing the corner visually wins; they never capture pointers.
-                  ..._bandBadges(controller, layout, scale),
+                  ..._bandBadges(controller, displayLayout, scale),
                   // Element appearance via the shared render pipeline (cached).
                   Positioned.fill(
                     child: CustomPaint(
                       painter: FrameCustomPainter(
                         picture: _picture,
                         scale: scale,
-                        revision: _renderedRevision,
+                        revision: _renderedFrameVersion,
                       ),
                     ),
                   ),
                   // Per-element regions: accessibility + test hooks. They do not
                   // capture pointers (the canvas gesture detector handles hit-testing),
-                  // so the canvas still owns select/move.
-                  ..._elementRegions(controller, layout, scale,
+                  // so the canvas still owns select/move. Drawn from the display
+                  // layout so the hit regions ride along with the live picture.
+                  ..._elementRegions(controller, displayLayout, scale,
                       JetPrintLocalizations.of(context)),
                   // Selection chrome (outline + handles), on top.
                   Positioned.fill(

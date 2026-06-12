@@ -83,6 +83,54 @@ class JetReportDesignerController extends ChangeNotifier {
   /// it to decide when to rebuild its cached frame (D5).
   int get revision => _history.revision;
 
+  /// Bumped on every live drag-preview change (move/resize/band-resize update,
+  /// commit, and cancel), so [frameVersion] ticks while the committed [revision]
+  /// stays put — the canvas re-records its cached picture from [displayTemplate]
+  /// in realtime during a drag, without a single mid-drag history entry.
+  int _frameSerial = 0;
+
+  /// The version of the *displayed* frame: it changes on any committed edit (via
+  /// [revision]) **and** on any live drag-preview change (via [_frameSerial]), so
+  /// the canvas re-records its cached picture whenever what should be on screen
+  /// changes — including mid-drag, when [revision] alone would not move.
+  int get frameVersion => revision + _frameSerial;
+
+  /// The template the canvas should paint: the committed [template], or — while a
+  /// move, element-resize, or band-resize drag is in progress — that template
+  /// with the live drag baked in, so the design follows the pointer in realtime
+  /// instead of snapping into place on mouse-up. The committed model is untouched
+  /// until commit (one undo step per drag); this is a pure, throwaway projection
+  /// rebuilt from the same [MoveCommand] / [ResizeCommand] / [SetBandHeightCommand]
+  /// that commit uses, so the live frame and the committed frame are
+  /// pixel-identical for the same geometry.
+  ///
+  /// A band resize reflows every band below it, so the canvas must lay out its
+  /// chrome (separators, grid, badges) from *this* template — not the committed
+  /// one — to keep the chrome in step with the live picture (see the canvas's
+  /// display-vs-committed layout split).
+  ReportTemplate get displayTemplate {
+    final JetOffset? move = _moveDelta;
+    if (move != null && (move.dx != 0 || move.dy != 0)) {
+      final Map<String, JetRect> targets = _clampedMoveTargets(move);
+      if (targets.isNotEmpty) {
+        return MoveCommand(targets).apply(_document).template;
+      }
+    }
+    final String? rid = _resizeId;
+    final JetRect? preview = _resizePreview;
+    if (rid != null && preview != null) {
+      return ResizeCommand(id: rid, bounds: preview).apply(_document).template;
+    }
+    final int? bIndex = _bandResizeIndex;
+    final double? height = _bandResizePreviewHeight;
+    if (bIndex != null && height != null) {
+      return SetBandHeightCommand(bandIndex: bIndex, height: height)
+          .apply(_document)
+          .template;
+    }
+    return _document.template;
+  }
+
   /// Replaces the whole design with [template], clearing history and re-seeding
   /// id assignment past the largest existing suffix (FR-004).
   void open(ReportTemplate template) {
@@ -268,6 +316,7 @@ class JetReportDesignerController extends ChangeNotifier {
       }
     }
     _moveDelta = effective;
+    _frameSerial++;
     notifyListeners();
   }
 
@@ -278,6 +327,7 @@ class JetReportDesignerController extends ChangeNotifier {
     _moveDelta = null;
     _guides = const <SnapGuide>[];
     _activeBand = null;
+    _frameSerial++; // the drag's preview frame is gone; re-record the committed one
     bool committed = false;
     if (delta != null && (delta.dx != 0 || delta.dy != 0)) {
       final Map<String, JetRect> targets = _clampedMoveTargets(delta);
@@ -295,6 +345,7 @@ class JetReportDesignerController extends ChangeNotifier {
     _moveDelta = null;
     _guides = const <SnapGuide>[];
     _activeBand = null;
+    _frameSerial++;
     notifyListeners();
   }
 
@@ -404,6 +455,7 @@ class JetReportDesignerController extends ChangeNotifier {
     }
     _resizePreview = clampToBand(resized,
         _document.template.bands[loc.bandIndex], _document.template.page);
+    _frameSerial++;
     notifyListeners();
   }
 
@@ -417,6 +469,7 @@ class JetReportDesignerController extends ChangeNotifier {
     _resizePreview = null;
     _guides = const <SnapGuide>[];
     _activeBand = null;
+    _frameSerial++;
     bool committed = false;
     if (id != null && preview != null) {
       final ({int bandIndex, ReportElement element})? loc = _locate(id);
@@ -438,6 +491,7 @@ class JetReportDesignerController extends ChangeNotifier {
     _resizePreview = null;
     _guides = const <SnapGuide>[];
     _activeBand = null;
+    _frameSerial++;
     notifyListeners();
   }
 
@@ -484,6 +538,7 @@ class JetReportDesignerController extends ChangeNotifier {
     if (start == null) return;
     final double next = start + heightDelta;
     _bandResizePreviewHeight = next < kMinBandHeight ? kMinBandHeight : next;
+    _frameSerial++;
     notifyListeners();
   }
 
@@ -495,6 +550,7 @@ class JetReportDesignerController extends ChangeNotifier {
     _bandResizeIndex = null;
     _bandResizeStartHeight = null;
     _bandResizePreviewHeight = null;
+    _frameSerial++; // the preview frame is gone; re-record the committed one
     bool committed = false;
     if (index != null && preview != null) {
       committed = _applyBandHeight(index, preview);
@@ -509,6 +565,7 @@ class JetReportDesignerController extends ChangeNotifier {
     _bandResizeIndex = null;
     _bandResizeStartHeight = null;
     _bandResizePreviewHeight = null;
+    _frameSerial++;
     notifyListeners();
   }
 
