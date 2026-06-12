@@ -179,4 +179,30 @@ void main() {
     await _enterPreview(tester);
     expect(renders, 2, reason: 'changed template ⇒ a fresh render');
   });
+
+  testWidgets('a failed render reports the error and clears the spinner',
+      (WidgetTester tester) async {
+    final JetReportDesignerController controller =
+        JetReportDesignerController(template: _template());
+    addTearDown(controller.dispose);
+    await _pumpWorkspace(
+      tester,
+      controller: controller,
+      renderReport: (ReportTemplate t) => throw StateError('render failed'),
+    );
+
+    await tester.tap(find.byKey(_modePreviewKey));
+    await tester.pump(); // loading shown; render scheduled
+    expect(find.byKey(_loadingKey), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 1)); // render runs → throws
+    // The failure is reported via FlutterError.reportError (not an uncaught
+    // zone error); consume it so the test does not fail on the expected error.
+    expect(tester.takeException(), isStateError);
+    // The spinner is cleared (not stuck) and switching back still works.
+    expect(find.byKey(_loadingKey), findsNothing);
+    await tester.tap(find.byKey(_modeDesignerKey));
+    await tester.pump();
+    expect(find.byKey(_surfaceKey), findsOneWidget);
+  });
 }

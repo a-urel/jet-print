@@ -122,14 +122,33 @@ class _JetReportWorkspaceState extends State<JetReportWorkspace> {
     // render() blocks the UI thread (a zero-delay timer, not a microtask, so it
     // runs after the current frame is drawn).
     await Future<void>.delayed(Duration.zero);
-    final RenderedReport report =
-        await Future<RenderedReport>.sync(() => widget.renderReport(template));
-    if (!mounted || seq != _renderSeq) return;
-    setState(() {
-      _report = report;
-      _lastRendered = template;
-      _rendering = false;
-    });
+    RenderedReport? report;
+    FlutterErrorDetails? failure;
+    try {
+      report =
+          await Future<RenderedReport>.sync(() => widget.renderReport(template));
+    } catch (error, stack) {
+      failure = FlutterErrorDetails(
+        exception: error,
+        stack: stack,
+        library: 'jet_print',
+        context: ErrorDescription('while rendering the report preview'),
+      );
+    }
+    if (mounted && seq == _renderSeq) {
+      setState(() {
+        if (report != null) {
+          _report = report;
+          _lastRendered = template;
+        }
+        _rendering = false;
+      });
+    }
+    // A failed render is surfaced through Flutter's error reporting (logged in
+    // debug, routed to the host's FlutterError.onError) instead of escaping as
+    // an uncaught async error — and the spinner above is cleared so it never
+    // hangs. The cached report/template are left intact on failure.
+    if (failure != null) FlutterError.reportError(failure);
   }
 
   @override
