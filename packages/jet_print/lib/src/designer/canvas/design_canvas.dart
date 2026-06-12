@@ -9,11 +9,13 @@ import 'package:flutter/gestures.dart'
     show
         GestureBinding,
         PointerDeviceKind,
+        PointerDownEvent,
         PointerHoverEvent,
         PointerMoveEvent,
         PointerPanZoomUpdateEvent,
         PointerScrollEvent,
-        PointerSignalEvent;
+        PointerSignalEvent,
+        kSecondaryButton;
 import 'package:flutter/services.dart'
     show HardwareKeyboard, LogicalKeyboardKey;
 import 'package:flutter/widgets.dart';
@@ -28,6 +30,7 @@ import '../interaction/canvas_shortcuts.dart';
 import '../l10n/band_type_label.dart';
 import '../l10n/element_type_label.dart';
 import '../l10n/jet_print_localizations.dart';
+import '../platform_shortcut.dart';
 import 'canvas_view_transform.dart';
 import 'design_time_frame.dart';
 import 'design_time_layout.dart';
@@ -294,6 +297,33 @@ class _DesignCanvasState extends State<DesignCanvas> {
     _trackTap(localPosition, near: near);
   }
 
+  /// Resolves the selection on a secondary (right) button press, BEFORE the
+  /// context menu opens, so the menu acts on what was clicked (FR-010). Runs from
+  /// a raw [Listener] (which sees the pointer-down ahead of the gesture arena, so
+  /// the resulting `notifyListeners` rebuilds the menu's enabled states against
+  /// the just-updated selection — `ShadContextMenuRegion` opens the menu itself):
+  ///
+  ///  * hit an element NOT in the selection → select just that element;
+  ///  * hit an element already in the (multi-)selection → keep the selection;
+  ///  * hit empty canvas → leave the selection unchanged (never deselects).
+  void _handleSecondaryTapDown(
+    Offset localPosition,
+    JetReportDesignerController controller,
+    CanvasViewTransform transform,
+    DesignTimeLayout layout,
+  ) {
+    final JetOffset page =
+        transform.screenToPage(JetOffset(localPosition.dx, localPosition.dy));
+    final String? hit = hitTestElement(
+      controller.template,
+      layout,
+      page,
+      slop: kHandleHitSize / 2 / transform.scale,
+    );
+    if (hit == null) return; // empty canvas: keep the current selection
+    if (!controller.selection.contains(hit)) controller.select(hit);
+  }
+
   /// Whether [position] is close enough to the previous tap (still within the
   /// un-lapsed window) to count as the second tap of a double-tap.
   bool _isDoubleTap(Offset position) =>
@@ -544,10 +574,61 @@ class _DesignCanvasState extends State<DesignCanvas> {
     );
   }
 
+  /// The canvas right-click menu: Cut / Copy / Paste / — / Duplicate / Delete,
+  /// built from the same `ShadContextMenuItem` the Arrange menu uses (FR-002).
+  /// Cut/Copy/Duplicate/Delete enable on [JetReportDesignerController.canCopy]
+  /// and Paste on `canPaste` — the same predicates the toolbar reads, so the two
+  /// surfaces cannot diverge (FR-005a, FR-012). Each item invokes the matching
+  /// controller op and the menu closes on tap (FR-003, FR-011). The trailing
+  /// shortcut hint reuses the platform glyph helper (⌘/Ctrl+); Delete has no
+  /// modifier, so it carries no trailing glyph (FR-014a).
+  List<Widget> _contextMenuItems(
+    JetReportDesignerController controller,
+    JetPrintLocalizations l10n,
+  ) {
+    ShadContextMenuItem item(
+      String id,
+      IconData icon,
+      String label,
+      String shortcutLetter, {
+      required bool enabled,
+      required VoidCallback op,
+    }) {
+      final String hint = shortcutHint(shortcutLetter);
+      return ShadContextMenuItem(
+        key: ValueKey<String>('jet_print.designer.menu.$id'),
+        enabled: enabled,
+        leading: Icon(icon, size: 16),
+        trailing: hint.isEmpty ? null : Text(hint),
+        onPressed: op,
+        child: Text(label),
+      );
+    }
+
+    final bool canCopy = controller.canCopy;
+    return <Widget>[
+      item('cut', LucideIcons.scissors, l10n.actionCutTooltip, 'X',
+          enabled: canCopy, op: controller.cut),
+      item('copy', LucideIcons.copy, l10n.actionCopyTooltip, 'C',
+          enabled: canCopy, op: controller.copy),
+      item('paste', LucideIcons.clipboard, l10n.actionPasteTooltip, 'V',
+          enabled: controller.canPaste, op: controller.paste),
+      const Padding(
+        padding: EdgeInsets.symmetric(vertical: 4),
+        child: ShadSeparator.horizontal(margin: EdgeInsets.zero),
+      ),
+      item('duplicate', LucideIcons.copyPlus, l10n.menuDuplicate, 'D',
+          enabled: canCopy, op: controller.duplicate),
+      item('delete', LucideIcons.trash2, l10n.menuDelete, '',
+          enabled: canCopy, op: controller.delete),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final JetReportDesignerController controller = DesignerScope.of(context);
     final ShadColorScheme colors = ShadTheme.of(context).colorScheme;
+    final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
     // Two layouts, split by role. The committed [layout] drives click hit-testing
     // and the selection overlay (which builds its previews by *adding* the live
     // move/resize delta to committed positions — feeding it the already-moved
@@ -647,35 +728,57 @@ class _DesignCanvasState extends State<DesignCanvas> {
                   trackPointer(e.localPosition),
               onPointerMove: (PointerMoveEvent e) =>
                   trackPointer(e.localPosition),
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                supportedDevices: _interactionDevices,
-                onTapDown: (TapDownDetails d) => _handleTapDown(
-                    d.localPosition, controller, transform, layout),
-                onTap: () => _handleTap(controller, layout),
-                onTapCancel: _cancelEmptyTap,
-                onPanStart: (DragStartDetails d) => _handlePanStart(
-                    d.localPosition, controller, transform, layout),
-                onPanUpdate: (DragUpdateDetails d) =>
-                    _handlePanUpdate(d.localPosition, controller, transform),
-                onPanEnd: (DragEndDetails d) =>
-                    _handlePanEnd(controller, layout),
-                child: SizedBox(
-                  width: contentW,
-                  height: contentH,
-                  child: ColoredBox(
-                    color: colors.muted,
-                    child: Stack(
-                      children: <Widget>[
-                        Positioned(
-                          left: pageOffset.dx,
-                          top: pageOffset.dy,
-                          width: pageW,
-                          height: pageH,
-                          child: _buildPage(controller, layout, displayLayout,
-                              scale, colors, isEmpty),
-                        ),
-                      ],
+              // Resolve selection on a secondary (right) button press, before the
+              // ShadContextMenuRegion opens the menu (FR-010). A raw Listener sees
+              // the down event ahead of the gesture arena, so the selection (and
+              // its notify) is in place by the time the menu paints its items.
+              onPointerDown: (PointerDownEvent e) {
+                if (e.buttons == kSecondaryButton) {
+                  _handleSecondaryTapDown(
+                      e.localPosition, controller, transform, layout);
+                }
+              },
+              // The right-click menu wraps the canvas gesture layer. It sits
+              // ABOVE the canvas GestureDetector so the (deeper) canvas detector
+              // wins the primary-tap/pan arena — select, marquee and drag keep
+              // working — while secondary-click (which the canvas detector
+              // ignores) falls through to the region to open the menu. Selection
+              // is resolved first by the Listener's secondary onPointerDown
+              // (FR-010); the region then opens the menu at the pointer.
+              child: ShadContextMenuRegion(
+                key: const ValueKey<String>(
+                    'jet_print.designer.canvas.contextMenu'),
+                items: _contextMenuItems(controller, l10n),
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  supportedDevices: _interactionDevices,
+                  onTapDown: (TapDownDetails d) => _handleTapDown(
+                      d.localPosition, controller, transform, layout),
+                  onTap: () => _handleTap(controller, layout),
+                  onTapCancel: _cancelEmptyTap,
+                  onPanStart: (DragStartDetails d) => _handlePanStart(
+                      d.localPosition, controller, transform, layout),
+                  onPanUpdate: (DragUpdateDetails d) =>
+                      _handlePanUpdate(d.localPosition, controller, transform),
+                  onPanEnd: (DragEndDetails d) =>
+                      _handlePanEnd(controller, layout),
+                  child: SizedBox(
+                    width: contentW,
+                    height: contentH,
+                    child: ColoredBox(
+                      color: colors.muted,
+                      child: Stack(
+                        children: <Widget>[
+                          Positioned(
+                            left: pageOffset.dx,
+                            top: pageOffset.dy,
+                            width: pageW,
+                            height: pageH,
+                            child: _buildPage(controller, layout, displayLayout,
+                                scale, colors, isEmpty),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

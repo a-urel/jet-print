@@ -21,6 +21,12 @@
   "toggleRulerTooltip": "Cetvelleri göster",
   "toggleSnapTooltip": "Izgaraya hizala",
 
+  "actionCutTooltip": "Kes",
+  "actionCopyTooltip": "Kopyala",
+  "actionPasteTooltip": "Yapıştır",
+  "menuDuplicate": "Çoğalt",
+  "menuDelete": "Sil",
+
   "tabDataSource": "Veri Kaynağı",
   "tabOutline": "Anahat",
   "tabProperties": "Özellikler",

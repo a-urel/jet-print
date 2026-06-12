@@ -60,6 +60,21 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get toggleSnapTooltip => 'Izgaraya hizala';
 
   @override
+  String get actionCutTooltip => 'Kes';
+
+  @override
+  String get actionCopyTooltip => 'Kopyala';
+
+  @override
+  String get actionPasteTooltip => 'Yapıştır';
+
+  @override
+  String get menuDuplicate => 'Çoğalt';
+
+  @override
+  String get menuDelete => 'Sil';
+
+  @override
   String get tabDataSource => 'Veri Kaynağı';
 
   @override

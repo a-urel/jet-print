@@ -8,6 +8,27 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Clipboard operations in the designer UI (spec 016-clipboard-operations).**
+  The designer's cut/copy/paste — until now keyboard-only — become
+  mouse-reachable through two new surfaces, both built into `JetReportDesigner`
+  with zero host wiring:
+  - A fenced **Cut / Copy / Paste** icon-button group joins the top bar, right
+    after Undo/Redo. Cut/Copy enable when elements are selected; Paste enables
+    the moment the clipboard has content. Tooltips are localized (en/de/tr) and
+    carry the platform keyboard shortcut (⌘ on Apple, Ctrl+ elsewhere).
+  - A net-new **canvas context menu** (Cut, Copy, Paste, Duplicate, Delete) opens
+    on right-click. It resolves selection before opening — right-clicking an
+    unselected element selects it, a multi-selection is preserved, and an empty
+    right-click never deselects — and shows each item's shortcut hint.
+  - Both surfaces invoke the existing controller clipboard ops (no second
+    clipboard) and read the same two predicates, so they can never diverge. Two
+    additive controller getters, `canCopy` and `canPaste`, mirror the existing
+    `canUndo`/`canRedo` idiom; `copy()` now notifies listeners (without creating
+    an undo entry) so Paste re-enables immediately after a mouse Copy.
+  - Invocation surfaces only — no model, codec, `schemaVersion`, or render-path
+    change, so saved files and preview/export/print output stay byte-identical
+    and the keyboard shortcuts keep working unchanged.
+
 - **Grid & snap helper tools (spec 015-grid-snap-tools).** The two remaining
   design-canvas helper tools now behave as their top-bar icons promise:
   - A light **5 mm alignment grid** is drawn as backmost design-time chrome on

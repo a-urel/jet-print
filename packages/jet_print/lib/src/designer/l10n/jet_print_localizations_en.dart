@@ -60,6 +60,21 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get toggleSnapTooltip => 'Snap to grid';
 
   @override
+  String get actionCutTooltip => 'Cut';
+
+  @override
+  String get actionCopyTooltip => 'Copy';
+
+  @override
+  String get actionPasteTooltip => 'Paste';
+
+  @override
+  String get menuDuplicate => 'Duplicate';
+
+  @override
+  String get menuDelete => 'Delete';
+
+  @override
   String get tabDataSource => 'Data Source';
 
   @override

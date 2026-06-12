@@ -21,6 +21,12 @@
   "toggleRulerTooltip": "Lineale anzeigen",
   "toggleSnapTooltip": "Am Raster ausrichten",
 
+  "actionCutTooltip": "Ausschneiden",
+  "actionCopyTooltip": "Kopieren",
+  "actionPasteTooltip": "Einfügen",
+  "menuDuplicate": "Duplizieren",
+  "menuDelete": "Löschen",
+
   "tabDataSource": "Datenquelle",
   "tabOutline": "Gliederung",
   "tabProperties": "Eigenschaften",

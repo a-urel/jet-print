@@ -90,6 +90,32 @@ void main() {
     controller.dispose();
   });
 
+  test('the controller exposes canCopy / canPaste clipboard predicates (016)',
+      () {
+    // The two clipboard UI surfaces (toolbar + canvas context menu) bind their
+    // enablement to these two getters, mirroring the existing canUndo/canRedo
+    // idiom — a reviewed, additive public surface (Constitution I / FR-012).
+    final JetReportDesignerController controller =
+        JetReportDesignerController();
+    // Empty document: nothing selected, nothing on the clipboard.
+    expect(controller.canCopy, isFalse);
+    expect(controller.canPaste, isFalse);
+
+    controller.createElement(
+      DesignerToolType.text,
+      bandIndex: 0,
+      at: const JetOffset(10, 10),
+    );
+    // The new element is auto-selected, so Cut/Copy become available.
+    expect(controller.canCopy, isTrue);
+    expect(controller.canPaste, isFalse);
+
+    controller.copy();
+    // A Copy fills the clipboard → Paste available; selection intact.
+    expect(controller.canPaste, isTrue);
+    controller.dispose();
+  });
+
   test('JetReportFormat serializes a mutated design losslessly', () {
     final JetReportDesignerController controller =
         JetReportDesignerController();

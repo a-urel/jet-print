@@ -9,12 +9,42 @@
 // iteration); the primary actions remain non-functional placeholders.
 //
 // Drives the public `JetReportDesigner` and never reaches into `src/`.
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'support/designer_harness.dart';
+
+// --- Clipboard-group helpers (016 / US1 / C2) ---
+const Key _cutKey = ValueKey<String>('jet_print.designer.action.cut');
+const Key _copyKey = ValueKey<String>('jet_print.designer.action.copy');
+const Key _pasteKey = ValueKey<String>('jet_print.designer.action.paste');
+
+ReportTemplate _oneElementFixture() => const ReportTemplate(
+      name: 'F',
+      page: PageFormat.a4Portrait,
+      bands: <ReportBand>[
+        ReportBand(
+          type: BandType.detail,
+          height: 300,
+          elements: <ReportElement>[
+            TextElement(
+                id: 'a',
+                bounds: JetRect(x: 10, y: 10, width: 20, height: 10),
+                text: 'a'),
+          ],
+        ),
+      ],
+    );
+
+int _elementCount(JetReportDesignerController c) => c.template.bands
+    .fold<int>(0, (int n, ReportBand b) => n + b.elements.length);
+
+/// True iff the icon button keyed [key] is disabled (its `onPressed` is null).
+bool _disabled(WidgetTester tester, Key key) =>
+    tester.widget<ShadIconButton>(find.byKey(key)).onPressed == null;
 
 void main() {
   group('designer top bar', () {
@@ -227,6 +257,123 @@ void main() {
       expect(c.snapEnabled, isFalse);
       expect(c.gridEnabled, isTrue);
       expect(variant(), ShadButtonVariant.ghost);
+    });
+  });
+
+  // 016 (C2 / US1): a fenced Cut / Copy / Paste icon-button group, fully
+  // mouse-operable, with enablement bound to canCopy/canPaste and localized
+  // tooltips carrying the platform shortcut glyph.
+  group('designer top bar — clipboard group', () {
+    testWidgets('presents Cut, Copy and Paste buttons', (
+      WidgetTester tester,
+    ) async {
+      await pumpDesignerWith(tester);
+      expect(find.byKey(_cutKey), findsOneWidget);
+      expect(find.byKey(_copyKey), findsOneWidget);
+      expect(find.byKey(_pasteKey), findsOneWidget);
+    });
+
+    testWidgets(
+        'nothing selected ⇒ Cut & Copy disabled; empty ⇒ Paste disabled',
+        (WidgetTester tester) async {
+      // Blank document: no selection, empty clipboard (SC-003).
+      await pumpDesignerWith(tester);
+      expect(_disabled(tester, _cutKey), isTrue);
+      expect(_disabled(tester, _copyKey), isTrue);
+      expect(_disabled(tester, _pasteKey), isTrue);
+    });
+
+    testWidgets('select ⇒ Copy enabled; tap Copy ⇒ Paste re-enables reactively',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = JetReportDesignerController()
+        ..open(_oneElementFixture());
+      await pumpDesignerWith(tester, controller: c);
+
+      // Selecting an element enables Cut/Copy; Paste still disabled (empty).
+      c.select('a');
+      await tester.pumpAndSettle();
+      expect(_disabled(tester, _copyKey), isFalse);
+      expect(_disabled(tester, _cutKey), isFalse);
+      expect(_disabled(tester, _pasteKey), isTrue);
+
+      // A mouse Copy must re-enable Paste with NO further interaction — this is
+      // the D1 notify path flowing through DesignerScope's InheritedNotifier.
+      await tester.tap(find.byKey(_copyKey));
+      await tester.pumpAndSettle();
+      expect(_disabled(tester, _pasteKey), isFalse);
+    });
+
+    testWidgets('mouse-only Copy then Paste inserts a selected offset copy',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = JetReportDesignerController()
+        ..open(_oneElementFixture());
+      await pumpDesignerWith(tester, controller: c);
+      c.select('a');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(_copyKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(_pasteKey));
+      await tester.pumpAndSettle();
+
+      // Element count +1 and the pasted copy is the new selection (SC-001).
+      expect(_elementCount(c), 2);
+      expect(c.selection.singleOrNull, isNotNull);
+      expect(c.selection.singleOrNull, isNot('a'));
+    });
+
+    testWidgets('Cut removes the element; Paste re-inserts it',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = JetReportDesignerController()
+        ..open(_oneElementFixture());
+      await pumpDesignerWith(tester, controller: c);
+      c.select('a');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(_cutKey)); // Acceptance 1.2
+      await tester.pumpAndSettle();
+      expect(_elementCount(c), 0);
+
+      await tester.tap(find.byKey(_pasteKey));
+      await tester.pumpAndSettle();
+      expect(_elementCount(c), 1);
+    });
+
+    testWidgets('Cut then Undo restores the document in a single step',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = JetReportDesignerController()
+        ..open(_oneElementFixture());
+      await pumpDesignerWith(tester, controller: c);
+      c.select('a');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(_cutKey));
+      await tester.pumpAndSettle();
+      expect(_elementCount(c), 0);
+
+      // A single Undo restores the cut element (Acceptance 1.5).
+      await tester.tap(
+          find.byKey(const ValueKey<String>('jet_print.designer.action.undo')));
+      await tester.pumpAndSettle();
+      expect(_elementCount(c), 1);
+    });
+
+    testWidgets(
+        'tooltips carry the localized label and platform shortcut glyph',
+        (WidgetTester tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+      await pumpDesignerWith(tester);
+      // The _IconButton exposes its tooltip as the button's accessible name, so
+      // it is observable without hovering. On Apple platforms the glyph is ⌘.
+      final String cut = tester.getSemantics(find.byKey(_cutKey)).label;
+      final String copy = tester.getSemantics(find.byKey(_copyKey)).label;
+      final String paste = tester.getSemantics(find.byKey(_pasteKey)).label;
+      // Reset the override before the test body ends — the binding asserts no
+      // foundation debug var is left set (addTearDown would run too late).
+      debugDefaultTargetPlatformOverride = null;
+      expect(cut, allOf(contains('Cut'), contains('⌘X')));
+      expect(copy, allOf(contains('Copy'), contains('⌘C')));
+      expect(paste, allOf(contains('Paste'), contains('⌘V')));
     });
   });
 }
