@@ -8,6 +8,34 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Visual shape gallery in the Properties pane (spec 020-shape-gallery).** When a
+  single shape element is selected, the Properties panel now shows a **Shape**
+  section with eight thumbnails — line, rectangle, **ellipse, triangle, diamond,
+  pentagon, hexagon, star** — drawn through the same geometry the renderer uses,
+  so the picker icon is exactly what the canvas, preview, and export produce. The
+  active form is highlighted; a single click switches the shape's form in one
+  undoable step, preserving its bounds and fill/stroke. Re-picking the active form
+  is a no-op (no history, no notification).
+  - New public surface is additive and minimal: six new `ShapeKind` values
+    (`ellipse`, `triangle`, `diamond`, `pentagon`, `hexagon`, `star`),
+    `JetReportDesignerController.setShapeKind(String, ShapeKind)` (one undoable,
+    notifying step), and `ShapeElement.copyWith(...)` plus an optional
+    `unknownForm` field on the already-public immutable type. The geometry
+    (`shapePath`), the `SetShapeKindCommand`, and the gallery widget stay private.
+  - **Rendering fidelity (WYSIWYG):** every closed form emits a single
+    `PathPrimitive` from one shared `shapePath`, so canvas, preview, and PDF/PNG
+    export agree with no forked render path and no new painter code. The ellipse
+    is a smooth 64-segment inscribed polygon (no curve primitive needed).
+  - **Lossless forward-compatible serialization:** `kReportSchemaVersion` stays
+    **1** with no migration. Known forms are wire-identical to before, so
+    pre-feature reports load byte-for-byte unchanged. A form a *newer* version
+    added loads as a rectangle while preserving the original name in
+    `unknownForm`, and re-saves it — a lossless round-trip. A deliberate pick
+    clears the preserved name.
+  - The section label and all eight form names are localized in en/de/tr; each
+    thumbnail is a keyboard-reachable button exposing its localized accessible
+    name and selected state.
+
 - **Editable report Name in Report properties.** When the report is selected, the
   Properties panel now leads with a primary **Name** field that edits the report
   (template) name through the existing `JetReportDesignerController.rename` — one

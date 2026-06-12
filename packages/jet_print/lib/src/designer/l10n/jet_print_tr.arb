@@ -149,5 +149,15 @@
   "modeDesigner": "Tasarım",
   "modePreview": "Önizleme",
   "actionRenameTooltip": "Raporu yeniden adlandır",
-  "renameFieldLabel": "Rapor adı"
+  "renameFieldLabel": "Rapor adı",
+
+  "propertiesShape": "Şekil",
+  "shapeFormLine": "Çizgi",
+  "shapeFormRectangle": "Dikdörtgen",
+  "shapeFormEllipse": "Elips",
+  "shapeFormTriangle": "Üçgen",
+  "shapeFormDiamond": "Eşkenar dörtgen",
+  "shapeFormPentagon": "Beşgen",
+  "shapeFormHexagon": "Altıgen",
+  "shapeFormStar": "Yıldız"
 }

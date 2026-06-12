@@ -414,4 +414,31 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
 
   @override
   String get renameFieldLabel => 'Berichtsname';
+
+  @override
+  String get propertiesShape => 'Form';
+
+  @override
+  String get shapeFormLine => 'Linie';
+
+  @override
+  String get shapeFormRectangle => 'Rechteck';
+
+  @override
+  String get shapeFormEllipse => 'Ellipse';
+
+  @override
+  String get shapeFormTriangle => 'Dreieck';
+
+  @override
+  String get shapeFormDiamond => 'Raute';
+
+  @override
+  String get shapeFormPentagon => 'Fünfeck';
+
+  @override
+  String get shapeFormHexagon => 'Sechseck';
+
+  @override
+  String get shapeFormStar => 'Stern';
 }

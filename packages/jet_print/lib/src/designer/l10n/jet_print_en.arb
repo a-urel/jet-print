@@ -562,5 +562,42 @@
   "renameFieldLabel": "Report name",
   "@renameFieldLabel": {
     "description": "Accessible label for the inline report-name edit field opened by the rename affordance in the unified toolbar (017)."
+  },
+
+  "propertiesShape": "Shape",
+  "@propertiesShape": {
+    "description": "Properties panel section label for the shape form gallery shown when a shape element is selected (020)."
+  },
+  "shapeFormLine": "Line",
+  "@shapeFormLine": {
+    "description": "Shape gallery thumbnail name: a straight line across the element's box (020)."
+  },
+  "shapeFormRectangle": "Rectangle",
+  "@shapeFormRectangle": {
+    "description": "Shape gallery thumbnail name: a rectangle filling the element's box (020)."
+  },
+  "shapeFormEllipse": "Ellipse",
+  "@shapeFormEllipse": {
+    "description": "Shape gallery thumbnail name: an ellipse inscribed in the element's box (020)."
+  },
+  "shapeFormTriangle": "Triangle",
+  "@shapeFormTriangle": {
+    "description": "Shape gallery thumbnail name: a triangle, apex at top-centre (020)."
+  },
+  "shapeFormDiamond": "Diamond",
+  "@shapeFormDiamond": {
+    "description": "Shape gallery thumbnail name: a diamond touching the four edge midpoints (020)."
+  },
+  "shapeFormPentagon": "Pentagon",
+  "@shapeFormPentagon": {
+    "description": "Shape gallery thumbnail name: a regular, point-up pentagon (020)."
+  },
+  "shapeFormHexagon": "Hexagon",
+  "@shapeFormHexagon": {
+    "description": "Shape gallery thumbnail name: a regular, point-up hexagon (020)."
+  },
+  "shapeFormStar": "Star",
+  "@shapeFormStar": {
+    "description": "Shape gallery thumbnail name: a five-point, point-up star (020)."
   }
 }

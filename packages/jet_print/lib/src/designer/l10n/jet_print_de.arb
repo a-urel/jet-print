@@ -149,5 +149,15 @@
   "modeDesigner": "Designer",
   "modePreview": "Vorschau",
   "actionRenameTooltip": "Bericht umbenennen",
-  "renameFieldLabel": "Berichtsname"
+  "renameFieldLabel": "Berichtsname",
+
+  "propertiesShape": "Form",
+  "shapeFormLine": "Linie",
+  "shapeFormRectangle": "Rechteck",
+  "shapeFormEllipse": "Ellipse",
+  "shapeFormTriangle": "Dreieck",
+  "shapeFormDiamond": "Raute",
+  "shapeFormPentagon": "Fünfeck",
+  "shapeFormHexagon": "Sechseck",
+  "shapeFormStar": "Stern"
 }

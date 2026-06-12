@@ -103,4 +103,45 @@ void main() {
     );
     sem.dispose();
   });
+
+  // --- Shape gallery thumbnails (020 / C9.1–C9.2 / FR-012) ------------------
+  testWidgets(
+      'each gallery thumbnail is a named, role-tagged, activatable button',
+      (WidgetTester tester) async {
+    final SemanticsHandle sem = tester.ensureSemantics();
+    final JetReportDesignerController c = await pumpDesignerWith(tester);
+    c.createElement(DesignerToolType.shape,
+        bandIndex: 1,
+        at: const JetOffset(20, 20)); // a rectangle, auto-selected
+    await tester.pumpAndSettle();
+    await openPropertiesTab(tester);
+
+    Finder thumb(String name) => find
+        .byKey(ValueKey<String>('jet_print.designer.properties.shape.$name'));
+
+    // The active form (rectangle) is a selected button carrying its localized
+    // name and a tap action — reachable and activatable without a mouse.
+    expect(
+      tester.getSemantics(thumb('rectangle')),
+      isSemantics(
+        label: 'Rectangle',
+        isButton: true,
+        isSelected: true,
+        hasTapAction: true,
+        hasEnabledState: true,
+        isEnabled: true,
+      ),
+    );
+    // A non-active form is a named, unselected, activatable button.
+    expect(
+      tester.getSemantics(thumb('hexagon')),
+      isSemantics(
+        label: 'Hexagon',
+        isButton: true,
+        isSelected: false,
+        hasTapAction: true,
+      ),
+    );
+    sem.dispose();
+  });
 }

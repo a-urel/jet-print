@@ -898,6 +898,60 @@ abstract class JetPrintLocalizations {
   /// In en, this message translates to:
   /// **'Report name'**
   String get renameFieldLabel;
+
+  /// Properties panel section label for the shape form gallery shown when a shape element is selected (020).
+  ///
+  /// In en, this message translates to:
+  /// **'Shape'**
+  String get propertiesShape;
+
+  /// Shape gallery thumbnail name: a straight line across the element's box (020).
+  ///
+  /// In en, this message translates to:
+  /// **'Line'**
+  String get shapeFormLine;
+
+  /// Shape gallery thumbnail name: a rectangle filling the element's box (020).
+  ///
+  /// In en, this message translates to:
+  /// **'Rectangle'**
+  String get shapeFormRectangle;
+
+  /// Shape gallery thumbnail name: an ellipse inscribed in the element's box (020).
+  ///
+  /// In en, this message translates to:
+  /// **'Ellipse'**
+  String get shapeFormEllipse;
+
+  /// Shape gallery thumbnail name: a triangle, apex at top-centre (020).
+  ///
+  /// In en, this message translates to:
+  /// **'Triangle'**
+  String get shapeFormTriangle;
+
+  /// Shape gallery thumbnail name: a diamond touching the four edge midpoints (020).
+  ///
+  /// In en, this message translates to:
+  /// **'Diamond'**
+  String get shapeFormDiamond;
+
+  /// Shape gallery thumbnail name: a regular, point-up pentagon (020).
+  ///
+  /// In en, this message translates to:
+  /// **'Pentagon'**
+  String get shapeFormPentagon;
+
+  /// Shape gallery thumbnail name: a regular, point-up hexagon (020).
+  ///
+  /// In en, this message translates to:
+  /// **'Hexagon'**
+  String get shapeFormHexagon;
+
+  /// Shape gallery thumbnail name: a five-point, point-up star (020).
+  ///
+  /// In en, this message translates to:
+  /// **'Star'**
+  String get shapeFormStar;
 }
 
 class _JetPrintLocalizationsDelegate
