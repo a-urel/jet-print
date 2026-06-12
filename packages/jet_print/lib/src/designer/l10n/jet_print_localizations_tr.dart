@@ -271,6 +271,51 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get propertiesMargins => 'Kenar boşlukları';
 
   @override
+  String get propertiesPaper => 'Kağıt';
+
+  @override
+  String get propertiesCustom => 'Özel';
+
+  @override
+  String get propertiesWidth => 'Genişlik';
+
+  @override
+  String get paperPickerTooltip => 'Kağıt boyutu seçin';
+
+  @override
+  String get orientationPortrait => 'Dikey';
+
+  @override
+  String get orientationLandscape => 'Yatay';
+
+  @override
+  String get marginPresetNormal => 'Normal';
+
+  @override
+  String get marginPresetNarrow => 'Dar';
+
+  @override
+  String get marginPresetWide => 'Geniş';
+
+  @override
+  String get marginPresetNone => 'Yok';
+
+  @override
+  String get marginPickerTooltip => 'Kenar boşluklarını seçin';
+
+  @override
+  String get propertiesMarginLeft => 'Sol';
+
+  @override
+  String get propertiesMarginTop => 'Üst';
+
+  @override
+  String get propertiesMarginRight => 'Sağ';
+
+  @override
+  String get propertiesMarginBottom => 'Alt';
+
+  @override
   String get reportLabel => 'Rapor';
 
   @override

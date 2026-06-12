@@ -149,6 +149,36 @@ void main() {
     controller.dispose();
   });
 
+  // --- 018: editable page properties add exactly three public symbols — the
+  // undoable controller mutator setPageFormat and copyWith on the two already-
+  // public immutable value types. The paper/margin presets, recognition, clamp,
+  // and the SetPageFormatCommand all stay private (not reachable from here).
+
+  test('PageFormat.copyWith and JetEdgeInsets.copyWith are public (018)', () {
+    const PageFormat base = PageFormat.a4Portrait;
+    final PageFormat letter = base.copyWith(width: 612, height: 792).copyWith(
+          margins: const JetEdgeInsets.all(14.17).copyWith(left: 50),
+        );
+    expect(letter.width, 612);
+    expect(letter.margins.left, 50);
+    expect(letter.margins.right, 14.17);
+  });
+
+  test('JetReportDesignerController.setPageFormat is the additive 018 mutator',
+      () {
+    final JetReportDesignerController controller =
+        JetReportDesignerController();
+    final PageFormat before = controller.template.page;
+    controller.setPageFormat(
+        before.copyWith(width: before.height, height: before.width));
+    expect(controller.template.page.width, before.height);
+    // Undoable in a single step, like every other edit.
+    expect(controller.canUndo, isTrue);
+    controller.undo();
+    expect(controller.template.page, before);
+    controller.dispose();
+  });
+
   test('JetReportPreview exposes the additive onRename callback (017)', () {
     final RenderedReport report = const JetReportEngine().render(
       const ReportTemplate(

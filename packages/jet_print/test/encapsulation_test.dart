@@ -64,7 +64,13 @@ bool _isWhiteBoxSeamTest(File file) {
       // shares with the snap geometry) is an unexported `src/` helper kept
       // Flutter-free so the adaptive-density math is unit-testable; its unit
       // test is white-box (Principle III).
-      path.endsWith('/test/designer/canvas/grid_geometry_test.dart');
+      path.endsWith('/test/designer/canvas/grid_geometry_test.dart') ||
+      // Paper & margin presets (018): the standard-size / margin recognition
+      // helpers are unexported `src/` pure functions (the `format_presets.dart`
+      // precedent — preset identity is derived for display, never persisted);
+      // their unit tests are white-box (Principle III).
+      path.endsWith('/test/designer/paper_presets_test.dart') ||
+      path.endsWith('/test/designer/margin_presets_test.dart');
 }
 
 void main() {

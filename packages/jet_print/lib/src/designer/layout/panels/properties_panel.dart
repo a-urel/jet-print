@@ -10,6 +10,7 @@ import '../../../domain/elements/image_source.dart';
 import '../../../domain/elements/shape_element.dart';
 import '../../../domain/elements/text_element.dart';
 import '../../../domain/geometry.dart';
+import '../../../domain/page_format.dart';
 import '../../../domain/report_element.dart';
 import '../../controller/jet_report_designer_controller.dart';
 import '../../designer_schema_scope.dart';
@@ -18,6 +19,8 @@ import '../../field_type_glyph.dart';
 import '../../format_presets.dart';
 import '../../l10n/band_type_label.dart';
 import '../../l10n/jet_print_localizations.dart';
+import '../../margin_presets.dart';
+import '../../paper_presets.dart';
 import '../../template/value_template_compiler.dart';
 import '../region_chrome.dart';
 
@@ -60,6 +63,12 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
       FocusNode(debugLabel: 'jet_print.properties.text');
   final FocusNode _bandHeightFocus =
       FocusNode(debugLabel: 'jet_print.properties.bandHeight');
+
+  /// Whether the user has put the paper-type picker into **Custom** mode,
+  /// revealing the width/height fields. View-only state (never serialized): the
+  /// page itself may match a preset's dimensions yet still be edited as Custom.
+  /// The custom fields also appear whenever the live page matches no preset.
+  bool _customPaper = false;
 
   @override
   void dispose() {
@@ -357,23 +366,181 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     ShadThemeData theme,
     JetPrintLocalizations l10n,
   ) {
-    final page = controller.template.page;
-    String pt(double v) => v.round().toString();
+    final PageFormat page = controller.template.page;
+    final PaperMatch paper = recognizePaper(page);
+    final MarginMatch margin = recognizeMargin(page.margins);
+    final bool landscape = page.width > page.height;
+    // The page is edited as Custom when it matches no preset, or when the user
+    // explicitly chose Custom from the picker (revealing the W/H fields).
+    final bool customMode = paper.isCustom || _customPaper;
     return <Widget>[
       _Header(
           icon: LucideIcons.fileText, title: l10n.reportLabel, theme: theme),
       const SizedBox(height: 14),
       SectionLabel(l10n.propertiesPage),
-      _ReadonlyRow(
-          label: l10n.propertiesSize,
-          value: '${pt(page.width)} × ${pt(page.height)} pt'),
-      _ReadonlyRow(
-        label: l10n.propertiesMargins,
-        value: '${pt(page.margins.left)} · ${pt(page.margins.top)} · '
-            '${pt(page.margins.right)} · ${pt(page.margins.bottom)}',
+      const SizedBox(height: 8),
+      // Paper type: named by the matching preset (or Custom), resizing the page
+      // through setPageFormat while preserving the current margins (US1).
+      _LabeledRow(
+        label: l10n.propertiesPaper,
+        child: _PresetDropdown(
+          fieldKey: const ValueKey<String>('$_p.field.paper'),
+          label: customMode ? l10n.propertiesCustom : paper.name!,
+          tooltip: l10n.paperPickerTooltip,
+          options: <_DropdownOption>[
+            for (final PaperPreset preset in kPaperPresets)
+              _DropdownOption(
+                optionKey:
+                    ValueKey<String>('$_p.field.paper.option.${preset.name}'),
+                label: preset.name,
+                selected: !customMode && paper.name == preset.name,
+                onPick: () {
+                  setState(() => _customPaper = false);
+                  controller.setPageFormat(applyPaper(preset,
+                      landscape: landscape, margins: page.margins));
+                },
+              ),
+            // Custom: keep the current dimensions but reveal the W/H fields so
+            // the user can type exact values (US3).
+            _DropdownOption(
+              optionKey:
+                  const ValueKey<String>('$_p.field.paper.option.Custom'),
+              label: l10n.propertiesCustom,
+              selected: customMode,
+              onPick: () => setState(() => _customPaper = true),
+            ),
+          ],
+        ),
       ),
+      const SizedBox(height: 12),
+      // Orientation: derived from width vs height; toggling swaps them (US3).
+      _OrientationToggle(
+        landscape: landscape,
+        portraitLabel: l10n.orientationPortrait,
+        landscapeLabel: l10n.orientationLandscape,
+        onChanged: (bool wantLandscape) {
+          if (wantLandscape == landscape) return;
+          controller.setPageFormat(
+              page.copyWith(width: page.height, height: page.width));
+        },
+      ),
+      const SizedBox(height: 12),
+      _PagePreview(page: page),
+      // Custom width/height: shown only in Custom mode (US3). The controller
+      // clamps a sub-minimum dimension; the field reverts non-numeric input.
+      if (customMode) ...<Widget>[
+        const SizedBox(height: 8),
+        _LabeledRow(
+          label: l10n.propertiesWidth,
+          child: _NumberField(
+            fieldKey: const ValueKey<String>('$_p.field.pageWidth'),
+            prefix: LucideIcons.moveHorizontal,
+            value: page.width,
+            onCommit: (double v) => controller
+                .setPageFormat(controller.template.page.copyWith(width: v)),
+          ),
+        ),
+        _LabeledRow(
+          label: l10n.propertiesHeight,
+          child: _NumberField(
+            fieldKey: const ValueKey<String>('$_p.field.pageHeight'),
+            prefix: LucideIcons.moveVertical,
+            value: page.height,
+            onCommit: (double v) => controller
+                .setPageFormat(controller.template.page.copyWith(height: v)),
+          ),
+        ),
+      ],
+      // Margins: a preset picker that writes all four sides, plus per-side
+      // fields. Editing any side yields an uneven set that reads Custom (US2).
+      const SizedBox(height: 14),
+      SectionLabel(l10n.propertiesMargins),
+      const SizedBox(height: 4),
+      _PresetDropdown(
+        fieldKey: const ValueKey<String>('$_p.field.marginPreset'),
+        label: margin.isCustom
+            ? l10n.propertiesCustom
+            : _marginPresetLabel(margin.kind!, l10n),
+        tooltip: l10n.marginPickerTooltip,
+        options: <_DropdownOption>[
+          for (final MarginPreset preset in kMarginPresets)
+            _DropdownOption(
+              optionKey: ValueKey<String>(
+                  '$_p.field.marginPreset.option.${preset.kind.name}'),
+              label: _marginPresetLabel(preset.kind, l10n),
+              selected: margin.kind == preset.kind,
+              onPick: () => controller.setPageFormat(controller.template.page
+                  .copyWith(margins: JetEdgeInsets.all(preset.value))),
+            ),
+        ],
+      ),
+      const SizedBox(height: 8),
+      _marginSideRow(
+          controller,
+          'marginLeft',
+          l10n.propertiesMarginLeft,
+          LucideIcons.arrowLeft,
+          page.margins.left,
+          (JetEdgeInsets m, double v) => m.copyWith(left: v)),
+      _marginSideRow(
+          controller,
+          'marginTop',
+          l10n.propertiesMarginTop,
+          LucideIcons.arrowUp,
+          page.margins.top,
+          (JetEdgeInsets m, double v) => m.copyWith(top: v)),
+      _marginSideRow(
+          controller,
+          'marginRight',
+          l10n.propertiesMarginRight,
+          LucideIcons.arrowRight,
+          page.margins.right,
+          (JetEdgeInsets m, double v) => m.copyWith(right: v)),
+      _marginSideRow(
+          controller,
+          'marginBottom',
+          l10n.propertiesMarginBottom,
+          LucideIcons.arrowDown,
+          page.margins.bottom,
+          (JetEdgeInsets m, double v) => m.copyWith(bottom: v)),
     ];
   }
+
+  /// One per-side margin row: a labelled [_NumberField] that commits the edited
+  /// side through `setPageFormat`, composing the next margins from the live page
+  /// so concurrent edits never race on a stale capture. [edit] applies the typed
+  /// value to the right side; the field reverts invalid input to the last valid.
+  Widget _marginSideRow(
+    JetReportDesignerController controller,
+    String keySuffix,
+    String label,
+    IconData prefix,
+    double value,
+    JetEdgeInsets Function(JetEdgeInsets margins, double value) edit,
+  ) {
+    return _LabeledRow(
+      label: label,
+      child: _NumberField(
+        fieldKey: ValueKey<String>('$_p.field.$keySuffix'),
+        prefix: prefix,
+        value: value,
+        onCommit: (double v) {
+          final PageFormat p = controller.template.page;
+          controller.setPageFormat(p.copyWith(margins: edit(p.margins, v)));
+        },
+      ),
+    );
+  }
+
+  /// The localized display name for a margin [kind].
+  String _marginPresetLabel(
+          MarginPresetKind kind, JetPrintLocalizations l10n) =>
+      switch (kind) {
+        MarginPresetKind.normal => l10n.marginPresetNormal,
+        MarginPresetKind.narrow => l10n.marginPresetNarrow,
+        MarginPresetKind.wide => l10n.marginPresetWide,
+        MarginPresetKind.none => l10n.marginPresetNone,
+      };
 
   ReportElement? _find(JetReportDesignerController controller, String id) {
     for (final band in controller.template.bands) {
@@ -463,34 +630,259 @@ class _LabeledRow extends StatelessWidget {
   }
 }
 
-/// A read-only [label]/[value] row for informational properties (e.g. page size).
-class _ReadonlyRow extends StatelessWidget {
-  const _ReadonlyRow({required this.label, required this.value});
+/// The Office-style page sample in the PAGE section (018): a proportional sheet
+/// drawn at the live page's aspect ratio, with a guide rectangle marking the
+/// content area (the page inset by its margins). Purely schematic inspector
+/// chrome — it reads the same [PageFormat] the canvas/preview/export render, so
+/// it always agrees with them, but it is **not** itself a report renderer. It
+/// rebuilds whenever the page changes (size, orientation, or a margin).
+class _PagePreview extends StatelessWidget {
+  const _PagePreview({required this.page});
 
+  final PageFormat page;
+
+  // The preview depicts physical paper, so it uses a fixed light palette in
+  // both themes (a page reads as paper, not as the dark inspector surface) —
+  // like a print-preview thumbnail.
+  static const Color _paper = Color(0xFFFFFFFF);
+  static const Color _paperBorder = Color(0xFFCBD5E1); // slate-300
+  static const Color _guideColor = Color(0xFF64748B); // slate-500
+
+  @override
+  Widget build(BuildContext context) {
+    // Guard against a degenerate page (the controller clamps to a positive
+    // page, but a raw model could be malformed) so the aspect ratio is finite.
+    final double aspect =
+        (page.width <= 0 || page.height <= 0) ? 1.0 : page.width / page.height;
+    return SizedBox(
+      key: const ValueKey<String>('$_p.pagePreview'),
+      height: 150,
+      child: Center(
+        child: AspectRatio(
+          aspectRatio: aspect,
+          child: LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) {
+              final double sheetW = constraints.maxWidth;
+              final double sheetH = constraints.maxHeight;
+              // The margins map to the same fractions of the scaled sheet, so
+              // the guide insets track the real content area proportionally.
+              final double l = sheetW * page.margins.left / page.width;
+              final double t = sheetH * page.margins.top / page.height;
+              final double r = sheetW * page.margins.right / page.width;
+              final double b = sheetH * page.margins.bottom / page.height;
+              return Stack(
+                children: <Widget>[
+                  // The paper sheet.
+                  Positioned.fill(
+                    child: Container(
+                      key: const ValueKey<String>('$_p.pagePreview.sheet'),
+                      decoration: BoxDecoration(
+                        color: _paper,
+                        border: Border.all(color: _paperBorder),
+                        borderRadius: BorderRadius.circular(2),
+                        boxShadow: const <BoxShadow>[
+                          BoxShadow(
+                            color: Color(0x33000000),
+                            blurRadius: 4,
+                            offset: Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // The visible margin chrome: faint shading over the margin
+                  // band and a dashed frame around the printable content area,
+                  // so even small margins read clearly.
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: _PagePreviewPainter(
+                        page: page,
+                        guideColor: _guideColor,
+                      ),
+                    ),
+                  ),
+                  // A transparent box sized to the content area — the stable
+                  // test seam for the guide insets (the painter draws the chrome).
+                  Positioned(
+                    left: l,
+                    top: t,
+                    right: r,
+                    bottom: b,
+                    child: const SizedBox.expand(
+                      key: ValueKey<String>('$_p.pagePreview.guide'),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Paints the page preview's margin chrome over the sheet: a faint wash over the
+/// margin band and a dashed frame around the printable content area, both scaled
+/// from the live [PageFormat]'s margins. Schematic only — the canvas/preview/
+/// export remain the source of truth for the actual render.
+class _PagePreviewPainter extends CustomPainter {
+  const _PagePreviewPainter({required this.page, required this.guideColor});
+
+  final PageFormat page;
+  final Color guideColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double l = size.width * page.margins.left / page.width;
+    final double t = size.height * page.margins.top / page.height;
+    final double r = size.width * page.margins.right / page.width;
+    final double b = size.height * page.margins.bottom / page.height;
+    final Rect content = Rect.fromLTRB(l, t, size.width - r, size.height - b);
+    if (content.width <= 0 || content.height <= 0) return;
+
+    // Wash the margin band (the sheet minus the content area) so the printable
+    // area stands out even when the margins are small.
+    final Path band = Path.combine(
+      PathOperation.difference,
+      Path()..addRect(Offset.zero & size),
+      Path()..addRect(content),
+    );
+    canvas.drawPath(band, Paint()..color = const Color(0x14000000));
+
+    // Dashed frame around the content area — the margin guide.
+    final Paint guide = Paint()
+      ..color = guideColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    _dashedRect(canvas, content, guide);
+  }
+
+  void _dashedRect(Canvas canvas, Rect rect, Paint paint) {
+    _dashedLine(canvas, rect.topLeft, rect.topRight, paint);
+    _dashedLine(canvas, rect.topRight, rect.bottomRight, paint);
+    _dashedLine(canvas, rect.bottomRight, rect.bottomLeft, paint);
+    _dashedLine(canvas, rect.bottomLeft, rect.topLeft, paint);
+  }
+
+  void _dashedLine(Canvas canvas, Offset a, Offset b, Paint paint) {
+    const double dash = 3, gap = 2;
+    final double total = (b - a).distance;
+    if (total <= 0) return;
+    final Offset dir = (b - a) / total;
+    double d = 0;
+    while (d < total) {
+      final double end = (d + dash) < total ? d + dash : total;
+      canvas.drawLine(a + dir * d, a + dir * end, paint);
+      d += dash + gap;
+    }
+  }
+
+  @override
+  bool shouldRepaint(_PagePreviewPainter old) =>
+      old.page != page || old.guideColor != guideColor;
+}
+
+/// One entry in a [_PresetDropdown]: a stable [optionKey], its display [label],
+/// whether it is the current [selected] value (shows a check), and the [onPick]
+/// to run when chosen.
+class _DropdownOption {
+  const _DropdownOption({
+    required this.optionKey,
+    required this.label,
+    required this.selected,
+    required this.onPick,
+  });
+
+  final Key optionKey;
   final String label;
-  final String value;
+  final bool selected;
+  final VoidCallback onPick;
+}
+
+/// A compact Office-style picker for the PAGE section: an outlined trigger
+/// showing the current [label] with a chevron, that drops down a menu of
+/// [options]. Reused for the paper-type and margin-preset pickers. The trigger
+/// carries [fieldKey]; each option carries its own key, so widget tests can open
+/// the menu and choose a specific entry. [tooltip] is the accessible name.
+class _PresetDropdown extends StatefulWidget {
+  const _PresetDropdown({
+    required this.fieldKey,
+    required this.label,
+    required this.tooltip,
+    required this.options,
+  });
+
+  final Key fieldKey;
+  final String label;
+  final String tooltip;
+  final List<_DropdownOption> options;
+
+  @override
+  State<_PresetDropdown> createState() => _PresetDropdownState();
+}
+
+class _PresetDropdownState extends State<_PresetDropdown> {
+  final ShadPopoverController _menu = ShadPopoverController();
+
+  @override
+  void dispose() {
+    _menu.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final ShadThemeData theme = ShadTheme.of(context);
     final ShadColorScheme colors = theme.colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: <Widget>[
-          SizedBox(
-            width: 64,
-            child: Text(
-              label,
-              style:
-                  theme.textTheme.muted.copyWith(color: colors.mutedForeground),
+    return ShadContextMenu(
+      controller: _menu,
+      items: <Widget>[
+        for (final _DropdownOption option in widget.options)
+          ShadContextMenuItem(
+            key: option.optionKey,
+            leading: Icon(
+              LucideIcons.check,
+              size: 16,
+              color: option.selected ? colors.foreground : colors.background,
+            ),
+            onPressed: () {
+              _menu.hide();
+              option.onPick();
+            },
+            child: Text(option.label),
+          ),
+      ],
+      child: Semantics(
+        label: widget.tooltip,
+        button: true,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: _menu.toggle,
+          child: Container(
+            key: widget.fieldKey,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            decoration: BoxDecoration(
+              color: colors.background,
+              border: Border.all(color: colors.border),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    widget.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.small,
+                  ),
+                ),
+                Icon(LucideIcons.chevronDown,
+                    size: 14, color: colors.mutedForeground),
+              ],
             ),
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(value, style: theme.textTheme.small),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -555,11 +947,18 @@ class _NumberFieldState extends State<_NumberField> {
 
   void _commit() {
     final double? parsed = double.tryParse(_controller.text.trim());
-    if (parsed != null) {
-      widget.onCommit(parsed);
-    } else {
+    if (parsed == null) {
       _controller.text = _format(widget.value); // reject unparseable input
+      return;
     }
+    // Ignore a re-commit that only reflects display rounding — e.g. blurring a
+    // field showing the rounded "28.4" form of a 28.35 model value would
+    // otherwise drift it to 28.4. Below display precision, there is no edit.
+    if (_format(parsed) == _format(widget.value)) {
+      _controller.text = _format(widget.value);
+      return;
+    }
+    widget.onCommit(parsed);
   }
 
   void _bump(double delta) => widget.onCommit(widget.value + delta);
@@ -584,6 +983,109 @@ class _NumberFieldState extends State<_NumberField> {
       trailing: _Stepper(
         onIncrement: () => _bump(1),
         onDecrement: () => _bump(-1),
+      ),
+    );
+  }
+}
+
+/// The orientation toggle in the PAGE section (018): a two-segment
+/// Portrait | Landscape control in the iOS-style tray (mirroring the workspace
+/// mode switch). The active segment reads as a raised tile and is inert;
+/// selecting the other emits [onChanged] with the requested orientation, which
+/// the panel turns into a width/height swap. Orientation is derived from the
+/// page (never stored), so the active segment always reflects the live page.
+class _OrientationToggle extends StatelessWidget {
+  const _OrientationToggle({
+    required this.landscape,
+    required this.portraitLabel,
+    required this.landscapeLabel,
+    required this.onChanged,
+  });
+
+  final bool landscape;
+  final String portraitLabel;
+  final String landscapeLabel;
+
+  /// Fires with the requested orientation (`true` = landscape) when the inactive
+  /// segment is selected.
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final ShadThemeData theme = ShadTheme.of(context);
+    final ShadColorScheme colors = theme.colorScheme;
+    return Container(
+      key: const ValueKey<String>('$_p.field.orientation'),
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        color: colors.muted,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: colors.border),
+      ),
+      child: Row(
+        children: <Widget>[
+          _segment(
+            theme: theme,
+            segmentKey:
+                const ValueKey<String>('$_p.field.orientation.portrait'),
+            label: portraitLabel,
+            active: !landscape,
+            onTap: () => onChanged(false),
+          ),
+          const SizedBox(width: 2),
+          _segment(
+            theme: theme,
+            segmentKey:
+                const ValueKey<String>('$_p.field.orientation.landscape'),
+            label: landscapeLabel,
+            active: landscape,
+            onTap: () => onChanged(true),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _segment({
+    required ShadThemeData theme,
+    required Key segmentKey,
+    required String label,
+    required bool active,
+    required VoidCallback onTap,
+  }) {
+    final ShadColorScheme colors = theme.colorScheme;
+    return Expanded(
+      child: Semantics(
+        selected: active,
+        button: true,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: active ? null : onTap, // selecting the active mode is a no-op
+          child: Container(
+            key: segmentKey,
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            decoration: BoxDecoration(
+              color: active ? colors.background : const Color(0x00000000),
+              borderRadius: BorderRadius.circular(6),
+              boxShadow: active
+                  ? const <BoxShadow>[
+                      BoxShadow(
+                        color: Color(0x1F000000),
+                        blurRadius: 2,
+                        offset: Offset(0, 1),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.small.copyWith(
+                color: active ? colors.foreground : colors.mutedForeground,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

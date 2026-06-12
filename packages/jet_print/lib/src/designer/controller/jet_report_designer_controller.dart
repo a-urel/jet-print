@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import '../../domain/elements/shape_element.dart';
 import '../../domain/elements/text_element.dart';
 import '../../domain/geometry.dart';
+import '../../domain/page_format.dart';
 import '../../domain/report_band.dart';
 import '../../domain/report_element.dart';
 import '../../domain/report_template.dart';
@@ -24,6 +25,7 @@ import 'commands/set_band_collection_command.dart';
 import 'commands/set_band_height_command.dart';
 import 'commands/set_binding_command.dart';
 import 'commands/set_format_command.dart';
+import 'commands/set_page_format_command.dart';
 import 'commands/set_template_name_command.dart';
 import 'commands/set_text_command.dart';
 import 'commands/set_value_command.dart';
@@ -34,6 +36,7 @@ import 'edit_history.dart';
 import 'element_bounds.dart';
 import 'element_clone.dart';
 import 'element_id_factory.dart';
+import 'page_format_clamp.dart';
 import 'selection.dart';
 import 'snapping.dart';
 
@@ -594,6 +597,22 @@ class JetReportDesignerController extends ChangeNotifier {
     final double clamped = height < kMinBandHeight ? kMinBandHeight : height;
     if (clamped == _document.template.bands[index].height) return false;
     return _commit(SetBandHeightCommand(bandIndex: index, height: clamped));
+  }
+
+  /// Sets the report's page [format] — size and/or margins — as one undoable,
+  /// notifying step (018 / FR-006/FR-007).
+  ///
+  /// The Properties panel composes the next [PageFormat] from the live one
+  /// (apply a paper preset, swap width/height for orientation, set one margin
+  /// side via `copyWith`) and hands the whole value over; this method
+  /// [clampPageFormat]s it first so every produced page keeps a positive content
+  /// area (FR-009), then commits it. Routed through `_commit`, so a page equal
+  /// to the current one records no history and notifies no listener (FR-007),
+  /// undo restores the exact prior page, and elements are never repositioned
+  /// (FR-013). Canvas, preview, and export all read `template.page`, so the one
+  /// notification propagates the change everywhere (WYSIWYG).
+  void setPageFormat(PageFormat format) {
+    _commit(SetPageFormatCommand(clampPageFormat(format)));
   }
 
   // --- Numeric geometry + text (Properties / inline) -------------------------

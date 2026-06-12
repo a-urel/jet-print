@@ -103,7 +103,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Rapor'), findsWidgets); // Report (header)
     expect(find.text('SAYFA'), findsOneWidget); // Page (section)
-    expect(find.text('Kenar boşlukları'), findsOneWidget); // Margins (row)
+    expect(find.text('Kağıt'), findsOneWidget); // Paper row (018)
     expect(find.text('PAGE'), findsNothing);
 
     // (3) Band inspector — the height row label (verbatim).

@@ -62,6 +62,23 @@ void main() {
               <String, Object?>{'l': 1, 't': 2, 'r': 3, 'b': 4}),
           const JetEdgeInsets(left: 1, top: 2, right: 3, bottom: 4));
     });
+    test('copyWith replaces only the named side, preserving the others', () {
+      const JetEdgeInsets base =
+          JetEdgeInsets(left: 1, top: 2, right: 3, bottom: 4);
+      expect(base.copyWith(left: 50),
+          const JetEdgeInsets(left: 50, top: 2, right: 3, bottom: 4));
+      expect(base.copyWith(top: 50),
+          const JetEdgeInsets(left: 1, top: 50, right: 3, bottom: 4));
+      expect(base.copyWith(right: 50),
+          const JetEdgeInsets(left: 1, top: 2, right: 50, bottom: 4));
+      expect(base.copyWith(bottom: 50),
+          const JetEdgeInsets(left: 1, top: 2, right: 3, bottom: 50));
+    });
+    test('copyWith with no arguments returns an equal value', () {
+      const JetEdgeInsets base =
+          JetEdgeInsets(left: 1, top: 2, right: 3, bottom: 4);
+      expect(base.copyWith(), base);
+    });
   });
 
   group('JetRect', () {

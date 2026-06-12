@@ -94,7 +94,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Bericht'), findsWidgets); // Report (header)
     expect(find.text('SEITE'), findsOneWidget); // Page (section)
-    expect(find.text('Ränder'), findsOneWidget); // Margins (row)
+    expect(find.text('Papier'), findsOneWidget); // Paper row (018)
     expect(find.text('PAGE'), findsNothing);
     expect(find.text('Report'), findsNothing);
 

@@ -8,6 +8,26 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Editable paper type & margins in Report properties (spec 018-paper-margin-properties).**
+  The Properties panel's **PAGE** section is now an editable, Microsoft
+  Office–style page setup: a live page-sample thumbnail (a proportional sheet
+  with margin guides), a **paper-type** picker (A4 / A3 / A5 / Letter / Legal /
+  Custom, recognized by name in either orientation), a **Portrait | Landscape**
+  toggle, **Custom** width/height fields (shown for a custom size), a margin
+  **preset** picker (Normal / Narrow / Wide / None) and editable per-side
+  left/top/right/bottom fields.
+  - New public surface is additive and minimal:
+    `JetReportDesignerController.setPageFormat(PageFormat)` (one undoable,
+    notifying step that clamps to a usable page so the content area stays
+    positive), plus `PageFormat.copyWith(...)` and `JetEdgeInsets.copyWith(...)`
+    on the existing immutable value types. Paper/margin presets, recognition,
+    the clamp, and the page-preview are private.
+  - Canvas, preview, and export all read the one `template.page`, so a size /
+    orientation / margin change shows identically in all three (WYSIWYG). Preset
+    identity and orientation are **derived for display, never serialized** —
+    `kReportSchemaVersion` stays **1**, no migration, old templates load
+    unchanged. New labels are localized in en/de/tr.
+
 - Added `JetReportWorkspace`: a keep-alive designer↔preview workspace. Both
   views stay mounted so switching modes is instant (no canvas re-record), and
   the preview renders behind a loading indicator (`ShadProgress`, overridable

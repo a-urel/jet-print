@@ -271,6 +271,51 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get propertiesMargins => 'Margins';
 
   @override
+  String get propertiesPaper => 'Paper';
+
+  @override
+  String get propertiesCustom => 'Custom';
+
+  @override
+  String get propertiesWidth => 'Width';
+
+  @override
+  String get paperPickerTooltip => 'Choose a paper size';
+
+  @override
+  String get orientationPortrait => 'Portrait';
+
+  @override
+  String get orientationLandscape => 'Landscape';
+
+  @override
+  String get marginPresetNormal => 'Normal';
+
+  @override
+  String get marginPresetNarrow => 'Narrow';
+
+  @override
+  String get marginPresetWide => 'Wide';
+
+  @override
+  String get marginPresetNone => 'None';
+
+  @override
+  String get marginPickerTooltip => 'Choose margins';
+
+  @override
+  String get propertiesMarginLeft => 'Left';
+
+  @override
+  String get propertiesMarginTop => 'Top';
+
+  @override
+  String get propertiesMarginRight => 'Right';
+
+  @override
+  String get propertiesMarginBottom => 'Bottom';
+
+  @override
   String get reportLabel => 'Report';
 
   @override
