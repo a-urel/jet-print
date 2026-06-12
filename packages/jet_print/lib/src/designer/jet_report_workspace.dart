@@ -125,8 +125,8 @@ class _JetReportWorkspaceState extends State<JetReportWorkspace> {
     RenderedReport? report;
     FlutterErrorDetails? failure;
     try {
-      report =
-          await Future<RenderedReport>.sync(() => widget.renderReport(template));
+      report = await Future<RenderedReport>.sync(
+          () => widget.renderReport(template));
     } catch (error, stack) {
       failure = FlutterErrorDetails(
         exception: error,
@@ -242,7 +242,8 @@ class _LoadingScaffold extends StatelessWidget {
             actions: (BuildContext context, bool compact) => const <Widget>[],
           ),
           const ShadSeparator.horizontal(margin: EdgeInsets.zero),
-          if (showIndicator) loadingBuilder?.call(context) ?? const _LoadingBar(),
+          if (showIndicator)
+            loadingBuilder?.call(context) ?? const _LoadingBar(),
         ],
       ),
     );

@@ -8,7 +8,8 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 const PageFormat _page =
     PageFormat(width: 200, height: 100, margins: JetEdgeInsets.all(10));
 
-const Key _modeDesignerKey = ValueKey<String>('jet_print.toolbar.mode.designer');
+const Key _modeDesignerKey =
+    ValueKey<String>('jet_print.toolbar.mode.designer');
 const Key _modePreviewKey = ValueKey<String>('jet_print.toolbar.mode.preview');
 const Key _loadingKey = ValueKey<String>('jet_print.workspace.loading');
 const Key _surfaceKey = ValueKey<String>('jet_print.designer.surface');
@@ -73,7 +74,8 @@ Future<JetReportWorkspace> _pumpWorkspace(
 Future<void> _enterPreview(WidgetTester tester) async {
   await tester.tap(find.byKey(_modePreviewKey));
   await tester.pump(); // mode → preview; loading shown; render scheduled
-  await tester.pump(const Duration(milliseconds: 1)); // fire the zero-delay timer
+  await tester
+      .pump(const Duration(milliseconds: 1)); // fire the zero-delay timer
   await tester.pumpAndSettle(); // report ready → preview records its page
 }
 
@@ -221,9 +223,11 @@ void main() {
     );
     await _enterPreview(tester);
 
-    await tester.tap(find.byKey(const ValueKey<String>('jet_print.preview.export')));
+    await tester
+        .tap(find.byKey(const ValueKey<String>('jet_print.preview.export')));
     await tester.pump();
-    await tester.tap(find.byKey(const ValueKey<String>('jet_print.preview.print')));
+    await tester
+        .tap(find.byKey(const ValueKey<String>('jet_print.preview.print')));
     await tester.pump();
 
     expect(exported, isNotNull);

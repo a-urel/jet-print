@@ -8,6 +8,39 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Added `JetReportWorkspace`: a keep-alive designer↔preview workspace. Both
+  views stay mounted so switching modes is instant (no canvas re-record), and
+  the preview renders behind a loading indicator (`ShadProgress`, overridable
+  via `loadingBuilder`) so the first large-data render gives visible feedback
+  instead of a frozen frame. A failed render is reported via
+  `FlutterError.reportError` and clears the indicator. Export/print receive the
+  current `RenderedReport`.
+
+- **Unified context-switching toolbar (spec 017-unified-toolbar).** The designer
+  and the report preview now read as *one toolbar that changes by context*: a
+  single shared shell renders the report name (left) and a two-segment
+  **Designer | Preview** mode switch (center), identical in both modes, while
+  each mode fills the right slot with its own actions.
+  - The mode switch reuses the existing switch events — selecting **Preview**
+    from the designer fires `onPreviewRequested`, selecting **Designer** from
+    the preview fires `onBack` — so existing hosts get the switch for free and
+    the host keeps ownership of the actual swap. The inactive segment is enabled
+    only when its callback is wired. Each segment carries an expressive glyph
+    (a drafting **pencil-ruler** for Designer, a **page-under-magnifier** for
+    Preview), and the leading file icon is the same in both modes so the shared
+    region reads as one bar.
+  - The report name is shown **read-only** in the toolbar (the inline-rename
+    affordance is no longer surfaced there). Renaming stays available to hosts
+    through `JetReportDesignerController.rename(String)` (a single undoable step)
+    and the `JetReportPreview.onRename` hook, to be surfaced from the host's own
+    UI.
+  - The designer's right slot leads with the **Open / Save** file actions
+    (ahead of the editing commands); **Export** is offered only in the preview,
+    where the rendered artifact exists.
+  - New localized chrome (`modeDesigner`, `modePreview`) in en/de/tr. No
+    render-path or serialization change: `kReportSchemaVersion` stays `1` and
+    report goldens are byte-identical.
+
 - **Clipboard operations in the designer UI (spec 016-clipboard-operations).**
   The designer's cut/copy/paste — until now keyboard-only — become
   mouse-reachable through two new surfaces, both built into `JetReportDesigner`
