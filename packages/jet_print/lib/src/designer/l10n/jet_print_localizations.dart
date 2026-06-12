@@ -203,6 +203,36 @@ abstract class JetPrintLocalizations {
   /// **'Snap to grid'**
   String get toggleSnapTooltip;
 
+  /// Label for the Cut clipboard action — toolbar tooltip and context-menu item. The keyboard-shortcut hint (e.g. ⌘X / Ctrl+X) is composed in code, not in this string.
+  ///
+  /// In en, this message translates to:
+  /// **'Cut'**
+  String get actionCutTooltip;
+
+  /// Label for the Copy clipboard action — toolbar tooltip and context-menu item. The keyboard-shortcut hint (e.g. ⌘C / Ctrl+C) is composed in code, not in this string.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get actionCopyTooltip;
+
+  /// Label for the Paste clipboard action — toolbar tooltip and context-menu item. The keyboard-shortcut hint (e.g. ⌘V / Ctrl+V) is composed in code, not in this string.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste'**
+  String get actionPasteTooltip;
+
+  /// Context-menu item: duplicate the selection in place (fresh ids, offset copy). Menu-only; the shortcut hint (⌘D / Ctrl+D) is composed in code.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate'**
+  String get menuDuplicate;
+
+  /// Context-menu item: delete the selection. Menu-only; the Delete-key hint has no modifier glyph.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get menuDelete;
+
   /// Right-panel tab caption for the data source / fields panel (default-active tab).
   ///
   /// In en, this message translates to:

@@ -75,6 +75,27 @@
     "description": "Tooltip for the snap-to-grid view-toggle in the top bar."
   },
 
+  "actionCutTooltip": "Cut",
+  "@actionCutTooltip": {
+    "description": "Label for the Cut clipboard action — toolbar tooltip and context-menu item. The keyboard-shortcut hint (e.g. ⌘X / Ctrl+X) is composed in code, not in this string."
+  },
+  "actionCopyTooltip": "Copy",
+  "@actionCopyTooltip": {
+    "description": "Label for the Copy clipboard action — toolbar tooltip and context-menu item. The keyboard-shortcut hint (e.g. ⌘C / Ctrl+C) is composed in code, not in this string."
+  },
+  "actionPasteTooltip": "Paste",
+  "@actionPasteTooltip": {
+    "description": "Label for the Paste clipboard action — toolbar tooltip and context-menu item. The keyboard-shortcut hint (e.g. ⌘V / Ctrl+V) is composed in code, not in this string."
+  },
+  "menuDuplicate": "Duplicate",
+  "@menuDuplicate": {
+    "description": "Context-menu item: duplicate the selection in place (fresh ids, offset copy). Menu-only; the shortcut hint (⌘D / Ctrl+D) is composed in code."
+  },
+  "menuDelete": "Delete",
+  "@menuDelete": {
+    "description": "Context-menu item: delete the selection. Menu-only; the Delete-key hint has no modifier glyph."
+  },
+
   "tabDataSource": "Data Source",
   "@tabDataSource": {
     "description": "Right-panel tab caption for the data source / fields panel (default-active tab)."

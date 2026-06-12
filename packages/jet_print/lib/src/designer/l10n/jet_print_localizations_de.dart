@@ -60,6 +60,21 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   String get toggleSnapTooltip => 'Am Raster ausrichten';
 
   @override
+  String get actionCutTooltip => 'Ausschneiden';
+
+  @override
+  String get actionCopyTooltip => 'Kopieren';
+
+  @override
+  String get actionPasteTooltip => 'Einfügen';
+
+  @override
+  String get menuDuplicate => 'Duplizieren';
+
+  @override
+  String get menuDelete => 'Löschen';
+
+  @override
   String get tabDataSource => 'Datenquelle';
 
   @override

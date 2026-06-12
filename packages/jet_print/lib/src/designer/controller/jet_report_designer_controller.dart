@@ -79,6 +79,19 @@ class JetReportDesignerController extends ChangeNotifier {
   /// Whether a [redo] is available (drives top-bar enablement, US3.4).
   bool get canRedo => _history.canRedo;
 
+  /// Whether the current selection can be cut, copied, duplicated or deleted —
+  /// true iff one or more elements are selected (a band/report selection holds
+  /// no element ids). Both clipboard UI surfaces gate Cut/Copy/Duplicate/Delete
+  /// on this single predicate so they cannot diverge (016 / FR-004, FR-005a,
+  /// FR-012).
+  bool get canCopy => _document.selection.ids.isNotEmpty;
+
+  /// Whether there is clipboard content to paste — true once the session's first
+  /// [copy] or [cut] has filled the in-memory clipboard, and true thereafter
+  /// (the clipboard never re-empties). Gates Paste on both UI surfaces (016 /
+  /// FR-005, FR-012).
+  bool get canPaste => !_clipboard.isEmpty;
+
   /// A monotonically increasing model-revision counter; the canvas painter uses
   /// it to decide when to rebuild its cached frame (D5).
   int get revision => _history.revision;
@@ -764,10 +777,20 @@ class JetReportDesignerController extends ChangeNotifier {
     _commit(ReorderCommand(_document.selection.ids.toSet(), mode));
   }
 
-  /// Copies the selection to the in-memory clipboard (no history; FR-015).
+  /// Copies the selection to the in-memory clipboard (FR-015).
+  ///
+  /// A Copy changes derived UI-enablement state ([canPaste] flips `false→true`)
+  /// but is **not** a history entry (FR-009) — so it [notifyListeners] to rebuild
+  /// the clipboard controls (Paste re-enables after a mouse Copy) WITHOUT routing
+  /// through [_commit]. This intentional split between "notify the UI" and
+  /// "commit to history" is unique to Copy; every other mutating op does both
+  /// through `_commit` (016 / research D1). No-op (no notify) when the selection
+  /// holds no elements, so an empty Copy never churns listeners.
   void copy() {
     final List<ClipboardEntry> entries = _collectSelected();
-    if (entries.isNotEmpty) _clipboard.set(entries);
+    if (entries.isEmpty) return;
+    _clipboard.set(entries);
+    notifyListeners();
   }
 
   /// Cuts: copies the selection, then deletes it (one undoable step).

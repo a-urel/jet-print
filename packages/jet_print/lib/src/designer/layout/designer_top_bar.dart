@@ -5,6 +5,7 @@ import '../controller/bulk_geometry.dart';
 import '../controller/jet_report_designer_controller.dart';
 import '../designer_scope.dart';
 import '../l10n/jet_print_localizations.dart';
+import '../platform_shortcut.dart';
 
 /// The designer's top strip: a command bar modelled on desktop report designers
 /// such as DevExpress, Telerik and Stimulsoft. A document title sits on the
@@ -53,8 +54,11 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
   static const double _compactWidth = 920;
 
   /// Below this width even the compact bar can't fit, so it scrolls
-  /// horizontally instead of overflowing.
-  static const double _scrollWidth = 560;
+  /// horizontally instead of overflowing. Sized above the compact bar's natural
+  /// width (history + clipboard + zoom + view-toggle + arrange groups, plus the
+  /// four primary actions) so the group cluster scrolls rather than overflowing
+  /// the `Expanded` left region at the designer's minimum shell width (016).
+  static const double _scrollWidth = 700;
 
   @override
   Widget build(BuildContext context) {
@@ -132,6 +136,33 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
         tooltip: l10n.actionRedoTooltip,
         enabled: controller.canRedo,
         onPressed: controller.redo,
+      ),
+
+      // Clipboard group — Cut/Copy/Paste, the conventional editing cluster beside
+      // History. Enablement is bound to the same canCopy/canPaste predicates the
+      // context menu reads (FR-012), so the two surfaces cannot diverge; tooltips
+      // carry the platform shortcut hint (FR-001, FR-004, FR-005, FR-014).
+      const _Divider(),
+      _IconButton(
+        buttonKey: const ValueKey<String>('jet_print.designer.action.cut'),
+        icon: LucideIcons.scissors,
+        tooltip: labelWithShortcut(l10n.actionCutTooltip, 'X'),
+        enabled: controller.canCopy,
+        onPressed: controller.cut,
+      ),
+      _IconButton(
+        buttonKey: const ValueKey<String>('jet_print.designer.action.copy'),
+        icon: LucideIcons.copy,
+        tooltip: labelWithShortcut(l10n.actionCopyTooltip, 'C'),
+        enabled: controller.canCopy,
+        onPressed: controller.copy,
+      ),
+      _IconButton(
+        buttonKey: const ValueKey<String>('jet_print.designer.action.paste'),
+        icon: LucideIcons.clipboard,
+        tooltip: labelWithShortcut(l10n.actionPasteTooltip, 'V'),
+        enabled: controller.canPaste,
+        onPressed: controller.paste,
       ),
 
       // Zoom group — driven by the controller's view state; tap the % to fit.
