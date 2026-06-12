@@ -165,7 +165,8 @@ void main() {
   });
 
   test('JetReportWorkspace is constructible from the public surface', () {
-    final JetReportDesignerController controller = JetReportDesignerController();
+    final JetReportDesignerController controller =
+        JetReportDesignerController();
     addTearDown(controller.dispose);
     final JetReportWorkspace workspace = JetReportWorkspace(
       controller: controller,

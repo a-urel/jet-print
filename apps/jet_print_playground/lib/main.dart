@@ -167,7 +167,8 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
       suggestedName: 'invoice.pdf',
     );
     if (location == null) return; // user cancelled
-    await XFile.fromData(pdf, mimeType: 'application/pdf').saveTo(location.path);
+    await XFile.fromData(pdf, mimeType: 'application/pdf')
+        .saveTo(location.path);
   }
 
   @override

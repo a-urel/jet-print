@@ -67,8 +67,8 @@ void main() {
     // The unified toolbar's Preview mode-switch segment switches the workspace
     // into preview, which renders the live template into a JetReportPreview
     // (017 / keep-alive workspace).
-    await tester.tap(find
-        .byKey(const ValueKey<String>('jet_print.toolbar.mode.preview')));
+    await tester.tap(
+        find.byKey(const ValueKey<String>('jet_print.toolbar.mode.preview')));
     await tester.pumpAndSettle();
 
     expect(find.byType(JetReportPreview), findsOneWidget);
@@ -121,8 +121,8 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(const JetPrintPlaygroundApp());
     await tester.pumpAndSettle();
-    await tester.tap(find
-        .byKey(const ValueKey<String>('jet_print.toolbar.mode.preview')));
+    await tester.tap(
+        find.byKey(const ValueKey<String>('jet_print.toolbar.mode.preview')));
     await tester.pumpAndSettle();
 
     // The preview displays the example's one rendered report...
