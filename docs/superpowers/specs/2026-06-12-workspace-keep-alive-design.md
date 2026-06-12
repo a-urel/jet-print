@@ -74,7 +74,7 @@ JetReportWorkspace({
   The host still performs all I/O.
 - `WorkspaceMode` **stays private** — the workspace always opens in designer
   mode, so no enum is exported.
-- **Net new public symbols: exactly `JetReportWorkspace`.** The callback
+- **Net new public symbols: `JetReportWorkspace` plus the `ReportRenderCallback` typedef.** The callback
   typedefs (`ReportSaveRequestedCallback`, `ReportOpenRequestedCallback`) are
   reused; `ValueChanged` / `FutureOr` / `WidgetBuilder` are platform types.
 

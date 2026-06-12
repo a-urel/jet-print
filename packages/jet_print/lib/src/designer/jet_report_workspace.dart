@@ -190,18 +190,20 @@ class _JetReportWorkspaceState extends State<JetReportWorkspace> {
           widget.onExportPdf == null ? null : () => widget.onExportPdf!(report),
       onPrint: widget.onPrint == null ? null : () => widget.onPrint!(report),
     );
-    if (!(active && _rendering)) return preview;
-    // A re-render is in flight while the previous report is still visible: keep
-    // the pages and overlay the indicator just under the toolbar (no blank flash).
+    // The preview is always the first child of a Stack so its element (and its
+    // cached page picture) survives a re-render toggle without remounting. When a
+    // re-render is in flight over the previous report, an indicator is overlaid
+    // just under the toolbar — the old pages stay visible (no blank flash).
     return Stack(
       children: <Widget>[
         preview,
-        Positioned(
-          left: 0,
-          right: 0,
-          top: UnifiedTopBar.height,
-          child: widget.loadingBuilder?.call(context) ?? const _LoadingBar(),
-        ),
+        if (active && _rendering)
+          Positioned(
+            left: 0,
+            right: 0,
+            top: UnifiedTopBar.height,
+            child: widget.loadingBuilder?.call(context) ?? const _LoadingBar(),
+          ),
       ],
     );
   }
