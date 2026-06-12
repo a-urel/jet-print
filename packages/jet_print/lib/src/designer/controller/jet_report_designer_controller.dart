@@ -24,6 +24,7 @@ import 'commands/set_band_collection_command.dart';
 import 'commands/set_band_height_command.dart';
 import 'commands/set_binding_command.dart';
 import 'commands/set_format_command.dart';
+import 'commands/set_template_name_command.dart';
 import 'commands/set_text_command.dart';
 import 'commands/set_value_command.dart';
 import 'default_template.dart';
@@ -621,6 +622,15 @@ class JetReportDesignerController extends ChangeNotifier {
   void setText(String id, String text) {
     _commit(SetTextCommand(id: id, text: text));
   }
+
+  /// Renames the report to [name] as a single undoable step (017 / FR-008).
+  ///
+  /// The name is stored verbatim: an empty or whitespace-only name is kept as
+  /// `''`, and the UI shows the localized placeholder for an empty name
+  /// (FR-010). Renaming to the current name is a no-op — it records no history
+  /// entry and notifies no listeners. The new name appears on [template], which
+  /// is the value a host persists on save.
+  void rename(String name) => _commit(SetTemplateNameCommand(name));
 
   /// Binds the [TextElement] [id] to [expression] (a `$F{}`/`$P{}`/`$V{}`
   /// string), as one undoable step (US2 / FR-009). No-op for a non-text or

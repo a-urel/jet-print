@@ -23,6 +23,8 @@ import '../../rendering/paint/report_painter.dart';
 import '../../rendering/text/font_registry.dart';
 import '../canvas/frame_custom_painter.dart';
 import '../l10n/jet_print_localizations.dart';
+import '../layout/unified_top_bar.dart';
+import '../layout/workspace_mode_switch.dart';
 
 /// A read-only paginated viewer for a [RenderedReport] (FR-008), with a top
 /// toolbar styled to match the designer.
@@ -64,6 +66,7 @@ class JetReportPreview extends StatefulWidget {
     this.onBack,
     this.onExportPdf,
     this.onPrint,
+    this.onRename,
   });
 
   /// The rendered report to display.
@@ -92,15 +95,17 @@ class JetReportPreview extends StatefulWidget {
   /// same [report]; the library itself performs no I/O here.
   final VoidCallback? onPrint;
 
+  /// Reserved hook for renaming the report from the preview (017, FR-008). The
+  /// preview no longer surfaces an inline-rename affordance in its toolbar — the
+  /// host drives renaming from its own UI — but this callback stays available so
+  /// a host can wire it to the same `controller.rename` that backs the designer.
+  final ValueChanged<String>? onRename;
+
   @override
   State<JetReportPreview> createState() => _JetReportPreviewState();
 }
 
 class _JetReportPreviewState extends State<JetReportPreview> {
-  /// The top toolbar's height, matching the designer top bar (`DesignerTopBar`)
-  /// so the preview reads as the same workspace.
-  static const double _toolbarHeight = 52;
-
   /// Zoom is a multiplier on the fit-to-width scale: `1.0` fits the page to the
   /// viewport width (the default), values above 1 enlarge it (and the page
   /// scrolls horizontally), values below shrink it. Bounded and stepped like a
@@ -115,6 +120,11 @@ class _JetReportPreviewState extends State<JetReportPreview> {
   final FontRegistry _fonts = FontRegistry()..registerDefault();
 
   late int _index;
+
+  /// The name shown in the toolbar, taken from the immutable
+  /// [RenderedReport.title]; re-seeded whenever the host hands in a fresh report
+  /// (e.g. after a rename + re-render).
+  late String _displayedName;
 
   /// The fit-to-width zoom multiplier (see [_minZoom]/[_maxZoom]); `1.0` fits.
   double _zoom = 1.0;
@@ -134,6 +144,7 @@ class _JetReportPreviewState extends State<JetReportPreview> {
   void initState() {
     super.initState();
     _index = widget.initialPage.clamp(0, _pageCount - 1);
+    _displayedName = widget.report.title;
     _record();
   }
 
@@ -142,6 +153,9 @@ class _JetReportPreviewState extends State<JetReportPreview> {
     super.didUpdateWidget(oldWidget);
     if (!identical(oldWidget.report, widget.report)) {
       _index = _index.clamp(0, _pageCount - 1);
+      // A fresh report (e.g. the host re-rendered after a rename) re-seeds the
+      // displayed name from its title.
+      _displayedName = widget.report.title;
       _record();
     }
   }
@@ -210,17 +224,92 @@ class _JetReportPreviewState extends State<JetReportPreview> {
     return KeyEventResult.ignored;
   }
 
+  /// The preview's right-slot actions (017 / FR-011): export / print (each only
+  /// when its callback is wired), the zoom group, then the page-navigation
+  /// group. The preview's buttons are already icon-only, so [compact] is unused.
+  List<Widget> _toolbarActions(BuildContext context, bool compact) {
+    final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
+    final ShadThemeData theme = ShadTheme.of(context);
+    final ShadColorScheme colors = theme.colorScheme;
+
+    return <Widget>[
+      // Artifact actions — export / print (012, FR-015): each appears only when
+      // its callback is wired; with both null the group is absent (011 parity).
+      if (widget.onExportPdf != null || widget.onPrint != null) ...<Widget>[
+        if (widget.onExportPdf != null)
+          _ToolbarButton(
+            buttonKey: const ValueKey<String>('jet_print.preview.export'),
+            icon: LucideIcons.fileDown,
+            label: l10n.previewExport,
+            onPressed: widget.onExportPdf,
+          ),
+        if (widget.onPrint != null)
+          _ToolbarButton(
+            buttonKey: const ValueKey<String>('jet_print.preview.print'),
+            icon: LucideIcons.printer,
+            label: l10n.previewPrint,
+            onPressed: widget.onPrint,
+          ),
+        const _Divider(),
+      ],
+      // Zoom group — out / "%" (tap to fit) / in.
+      _ToolbarButton(
+        buttonKey: const ValueKey<String>('jet_print.preview.zoomOut'),
+        icon: LucideIcons.zoomOut,
+        label: l10n.actionZoomOutTooltip,
+        onPressed: _zoom > _minZoom ? _zoomOut : null,
+      ),
+      ShadTooltip(
+        builder: (BuildContext context) => Text(l10n.actionZoomFitTooltip),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: _resetZoom,
+          child: SizedBox(
+            width: 46,
+            child: Text(
+              '${(_zoom * 100).round()}%',
+              key: const ValueKey<String>('jet_print.preview.zoomLevel'),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.small.copyWith(color: colors.foreground),
+            ),
+          ),
+        ),
+      ),
+      _ToolbarButton(
+        buttonKey: const ValueKey<String>('jet_print.preview.zoomIn'),
+        icon: LucideIcons.zoomIn,
+        label: l10n.actionZoomInTooltip,
+        onPressed: _zoom < _maxZoom ? _zoomIn : null,
+      ),
+      // Page-navigation group — prev / "page X of N" / next.
+      const _Divider(),
+      _ToolbarButton(
+        buttonKey: const ValueKey<String>('jet_print.preview.prev'),
+        icon: LucideIcons.chevronLeft,
+        label: l10n.previewPreviousPage,
+        onPressed: _index > 0 ? () => _goTo(_index - 1) : null,
+      ),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Text(
+          l10n.previewPageIndicator(_index + 1, _pageCount),
+          style: theme.textTheme.small.copyWith(color: colors.foreground),
+        ),
+      ),
+      _ToolbarButton(
+        buttonKey: const ValueKey<String>('jet_print.preview.next'),
+        icon: LucideIcons.chevronRight,
+        label: l10n.previewNextPage,
+        onPressed: _index < _pageCount - 1 ? () => _goTo(_index + 1) : null,
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
     final ShadThemeData theme = ShadTheme.of(context);
     final ShadColorScheme colors = theme.colorScheme;
-
-    // The report name titles the bar; fall back to the localized "Preview"
-    // label when the template is unnamed.
-    final String title = widget.report.title.trim().isEmpty
-        ? l10n.actionPreview
-        : widget.report.title;
 
     return Focus(
       autofocus: true,
@@ -229,130 +318,31 @@ class _JetReportPreviewState extends State<JetReportPreview> {
         color: colors.muted,
         child: Column(
           children: <Widget>[
-            // --- Top toolbar: an optional back button + report name on the
-            // leading edge; a zoom group and the page-navigation group on the
-            // trailing edge — styled to match the designer's top bar. ---
-            ColoredBox(
-              color: colors.card,
-              child: SizedBox(
-                height: _toolbarHeight,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Row(
-                    children: <Widget>[
-                      const SizedBox(width: 4),
-                      if (widget.onBack != null) ...<Widget>[
-                        _ToolbarButton(
-                          buttonKey:
-                              const ValueKey<String>('jet_print.preview.back'),
-                          icon: LucideIcons.arrowLeft,
-                          label: l10n.previewBack,
-                          onPressed: widget.onBack,
-                        ),
-                        const _Divider(),
-                      ],
-                      Icon(LucideIcons.eye,
-                          size: 18, color: colors.mutedForeground),
-                      const SizedBox(width: 10),
-                      // The title flexes (ellipsizes first) so the trailing
-                      // groups keep their room at narrow widths.
-                      Expanded(
-                        child: Text(
-                          title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.large
-                              .copyWith(color: colors.foreground),
-                        ),
-                      ),
-                      // Artifact actions group — export / print (012,
-                      // FR-015): each appears only when its callback is
-                      // wired; with both null the 011 toolbar is unchanged.
-                      if (widget.onExportPdf != null ||
-                          widget.onPrint != null) ...<Widget>[
-                        const _Divider(),
-                        if (widget.onExportPdf != null)
-                          _ToolbarButton(
-                            buttonKey: const ValueKey<String>(
-                                'jet_print.preview.export'),
-                            icon: LucideIcons.fileDown,
-                            label: l10n.previewExport,
-                            onPressed: widget.onExportPdf,
-                          ),
-                        if (widget.onPrint != null)
-                          _ToolbarButton(
-                            buttonKey: const ValueKey<String>(
-                                'jet_print.preview.print'),
-                            icon: LucideIcons.printer,
-                            label: l10n.previewPrint,
-                            onPressed: widget.onPrint,
-                          ),
-                      ],
-                      // Zoom group — out / "%" (tap to fit) / in.
-                      const _Divider(),
-                      _ToolbarButton(
-                        buttonKey:
-                            const ValueKey<String>('jet_print.preview.zoomOut'),
-                        icon: LucideIcons.zoomOut,
-                        label: l10n.actionZoomOutTooltip,
-                        onPressed: _zoom > _minZoom ? _zoomOut : null,
-                      ),
-                      ShadTooltip(
-                        builder: (BuildContext context) =>
-                            Text(l10n.actionZoomFitTooltip),
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: _resetZoom,
-                          child: SizedBox(
-                            width: 46,
-                            child: Text(
-                              '${(_zoom * 100).round()}%',
-                              key: const ValueKey<String>(
-                                  'jet_print.preview.zoomLevel'),
-                              textAlign: TextAlign.center,
-                              style: theme.textTheme.small
-                                  .copyWith(color: colors.foreground),
-                            ),
-                          ),
-                        ),
-                      ),
-                      _ToolbarButton(
-                        buttonKey:
-                            const ValueKey<String>('jet_print.preview.zoomIn'),
-                        icon: LucideIcons.zoomIn,
-                        label: l10n.actionZoomInTooltip,
-                        onPressed: _zoom < _maxZoom ? _zoomIn : null,
-                      ),
-                      // Page-navigation group — prev / "page X of N" / next.
-                      const _Divider(),
-                      _ToolbarButton(
-                        buttonKey:
-                            const ValueKey<String>('jet_print.preview.prev'),
-                        icon: LucideIcons.chevronLeft,
-                        label: l10n.previewPreviousPage,
-                        onPressed: _index > 0 ? () => _goTo(_index - 1) : null,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: Text(
-                          l10n.previewPageIndicator(_index + 1, _pageCount),
-                          style: theme.textTheme.small
-                              .copyWith(color: colors.foreground),
-                        ),
-                      ),
-                      _ToolbarButton(
-                        buttonKey:
-                            const ValueKey<String>('jet_print.preview.next'),
-                        icon: LucideIcons.chevronRight,
-                        label: l10n.previewNextPage,
-                        onPressed: _index < _pageCount - 1
-                            ? () => _goTo(_index + 1)
-                            : null,
-                      ),
-                    ],
-                  ),
-                ),
+            // --- Top toolbar (017): the report name (leading) + the
+            // Designer|Preview mode switch (center) are the shared shell's own
+            // regions, positionally identical to the designer (FR-001). The
+            // right slot carries the preview's own export/print, zoom and
+            // page-navigation groups (FR-011). The old standalone back button is
+            // folded into the switch's Designer segment, which emits the
+            // existing onBack switch request. ---
+            UnifiedTopBar(
+              // The leading glyph names the report document, identical to the
+              // designer's leading icon so the shared region matches in both
+              // modes (the preview/inspect cue now lives on the mode switch).
+              leadingIcon: LucideIcons.fileText,
+              name: _displayedName,
+              // The preview's actions are already icon-only and the name
+              // ellipsizes to fit; below this width the export/print + zoom +
+              // page-nav groups plus the labelled mode switch no longer fit in
+              // the longest locale (de/tr), so the whole bar scrolls instead of
+              // overflowing (the `compact` flag is unused by the preview).
+              compactWidth: 880,
+              scrollWidth: 880,
+              center: WorkspaceModeSwitch(
+                mode: WorkspaceMode.preview,
+                onSwitchRequested: widget.onBack,
               ),
+              actions: _toolbarActions,
             ),
             const ShadSeparator.horizontal(margin: EdgeInsets.zero),
             // --- The page, sized fit-to-width times the zoom factor: centered

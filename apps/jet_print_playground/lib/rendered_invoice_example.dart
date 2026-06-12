@@ -161,7 +161,12 @@ class RenderedInvoiceExample extends StatefulWidget {
   /// preview toolbar's back button. Pass the designer's LIVE [template] so
   /// design edits show up in the preview; null falls back to the bundled
   /// invoice sample.
-  const RenderedInvoiceExample({super.key, this.onBack, this.template});
+  const RenderedInvoiceExample({
+    super.key,
+    this.onBack,
+    this.template,
+    this.onRename,
+  });
 
   /// Invoked by the preview's back button (e.g. to return to the designer).
   final VoidCallback? onBack;
@@ -169,6 +174,10 @@ class RenderedInvoiceExample extends StatefulWidget {
   /// The design to render against the sample invoice data (null = the
   /// bundled sample design).
   final ReportTemplate? template;
+
+  /// Invoked when the report is renamed from the preview toolbar (017); the
+  /// host routes it to the same `controller.rename` the designer uses.
+  final ValueChanged<String>? onRename;
 
   @override
   State<RenderedInvoiceExample> createState() => _RenderedInvoiceExampleState();
@@ -200,5 +209,6 @@ class _RenderedInvoiceExampleState extends State<RenderedInvoiceExample> {
         onBack: widget.onBack,
         onExportPdf: _savePdf,
         onPrint: () => const JetReportPrinter().printReport(_report),
+        onRename: widget.onRename,
       );
 }

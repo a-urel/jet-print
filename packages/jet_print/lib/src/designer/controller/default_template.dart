@@ -10,9 +10,10 @@ import '../../domain/report_template.dart';
 ///
 /// This is what `JetReportDesignerController()` and `const JetReportDesigner()`
 /// seed from so the widget is drop-in with no arguments (contracts §2). The name
-/// is a plain placeholder; the host renames via the model.
+/// is intentionally empty so the unified toolbar shows the *localized* "untitled"
+/// placeholder for a fresh report (FR-010); the host renames via the model.
 ReportTemplate defaultBlankTemplate() => const ReportTemplate(
-      name: 'Untitled report',
+      name: '',
       page: PageFormat.a4Portrait,
       bands: <ReportBand>[
         ReportBand(type: BandType.pageHeader, height: 64),

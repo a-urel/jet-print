@@ -6,6 +6,8 @@ import '../controller/jet_report_designer_controller.dart';
 import '../designer_scope.dart';
 import '../l10n/jet_print_localizations.dart';
 import '../platform_shortcut.dart';
+import 'unified_top_bar.dart';
+import 'workspace_mode_switch.dart';
 
 /// The designer's top strip: a command bar modelled on desktop report designers
 /// such as DevExpress, Telerik and Stimulsoft. A document title sits on the
@@ -47,79 +49,70 @@ class DesignerTopBar extends StatefulWidget {
 }
 
 class _DesignerTopBarState extends State<DesignerTopBar> {
-  static const double _height = 52;
+  /// Below this width the labelled primary actions collapse to icon-only so the
+  /// dense command cluster (≈731px labelled) keeps fitting beside the name +
+  /// mode switch as the name ellipsizes.
+  static const double _compactWidth = 1300;
 
-  /// Below this width the labelled actions collapse to icon-only buttons and the
-  /// title yields its space, so the dense command groups keep fitting.
-  static const double _compactWidth = 920;
-
-  /// Below this width even the compact bar can't fit, so it scrolls
-  /// horizontally instead of overflowing. Sized above the compact bar's natural
-  /// width (history + clipboard + zoom + view-toggle + arrange groups, plus the
-  /// four primary actions) so the group cluster scrolls rather than overflowing
-  /// the `Expanded` left region at the designer's minimum shell width (016).
-  static const double _scrollWidth = 700;
+  /// Below this width the whole bar scrolls horizontally so the name + switch
+  /// stay reachable rather than overflowing. Sized so the compact (icon-only)
+  /// cluster always fits above it, in every locale.
+  static const double _scrollWidth = 1040;
 
   @override
   Widget build(BuildContext context) {
-    final ShadColorScheme colors = ShadTheme.of(context).colorScheme;
+    final JetReportDesignerController controller = DesignerScope.of(context);
 
-    return ColoredBox(
-      color: colors.card,
-      child: SizedBox(
-        height: _height,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints constraints) {
-              final double width = constraints.maxWidth;
-              final bool compact = width < _compactWidth;
-              final bool scrollable = width < _scrollWidth;
-              final Widget bar =
-                  _buildBar(context, compact: compact, scrollable: scrollable);
-              if (!scrollable) return bar;
-              // Final safety net: keep every control reachable by scrolling
-              // rather than overflowing at extreme widths.
-              return SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: SizedBox(height: _height, child: bar),
-              );
-            },
-          ),
-        ),
+    // Compose the shared shell: the report name (leading) + the mode switch
+    // (center) are the shell's own regions — positionally identical to the
+    // preview (FR-001) — and the designer's command groups fill the right slot.
+    return UnifiedTopBar(
+      leadingIcon: LucideIcons.fileText,
+      name: controller.template.name,
+      compactWidth: _compactWidth,
+      scrollWidth: _scrollWidth,
+      // The Preview segment of the switch IS the old Preview action: selecting
+      // it emits the host's `onPreview` switch request (FR-002, research D2).
+      center: WorkspaceModeSwitch(
+        mode: WorkspaceMode.designer,
+        onSwitchRequested: widget.onPreview,
       ),
+      actions: (BuildContext context, bool compact) =>
+          _actions(context, controller, compact),
     );
   }
 
-  /// Builds the bar's content. When [scrollable] the children keep their natural
-  /// width (no flex) so they can be scrolled; otherwise the left cluster expands
-  /// to pin the primary actions to the right edge. When [compact] the title is
-  /// dropped and the primary actions render icon-only.
-  Widget _buildBar(
-    BuildContext context, {
-    required bool compact,
-    required bool scrollable,
-  }) {
+  /// The designer's right-slot command groups (FR-011): the Open / Save file
+  /// actions first (like a File menu, ahead of the editing commands), then
+  /// history, clipboard, zoom, view toggles and arrange. Each group is fenced by
+  /// a [_Divider]; the file actions render icon-only when [compact].
+  List<Widget> _actions(
+    BuildContext context,
+    JetReportDesignerController controller,
+    bool compact,
+  ) {
     final ShadThemeData theme = ShadTheme.of(context);
     final ShadColorScheme colors = theme.colorScheme;
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
-    final JetReportDesignerController controller = DesignerScope.of(context);
 
-    final List<Widget> leftChildren = <Widget>[
-      const SizedBox(width: 4),
-      Icon(LucideIcons.fileText, size: 18, color: colors.mutedForeground),
-      const SizedBox(width: 10),
-      // The title is the left cluster's only flexible child (when shown), so it
-      // ellipsizes first; it is dropped entirely once compact to free room.
-      if (!compact)
-        Flexible(
-          child: Text(
-            l10n.reportTitlePlaceholder,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.large.copyWith(color: colors.foreground),
-          ),
-        ),
+    return <Widget>[
+      // File group — Open / Save are wired to the host's callbacks (FR-022) and
+      // lead the bar, ahead of the editing commands. Export is not offered in
+      // the designer; it lives in the preview where the artifact exists (017).
+      _ActionButton(
+        icon: LucideIcons.folderOpen,
+        label: l10n.actionOpen,
+        tooltip: l10n.actionOpenTooltip,
+        compact: compact,
+        onPressed: widget.onOpen,
+      ),
+      _ActionButton(
+        icon: LucideIcons.save,
+        label: l10n.actionSave,
+        tooltip: l10n.actionSaveTooltip,
+        compact: compact,
+        onPressed: widget.onSave,
+      ),
 
       // History group — wired to the controller, disabled at the ends (US3.4).
       const _Divider(),
@@ -223,56 +216,6 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
       const _Divider(),
       _ArrangeMenu(controller: controller),
     ];
-
-    final List<Widget> actions = <Widget>[
-      const _Divider(),
-      // Open / Save / Preview are wired to the host's callbacks (FR-022);
-      // Export stays an enabled placeholder this iteration (FR-015).
-      _ActionButton(
-        icon: LucideIcons.folderOpen,
-        label: l10n.actionOpen,
-        tooltip: l10n.actionOpenTooltip,
-        compact: compact,
-        onPressed: widget.onOpen,
-      ),
-      _ActionButton(
-        icon: LucideIcons.save,
-        label: l10n.actionSave,
-        tooltip: l10n.actionSaveTooltip,
-        compact: compact,
-        onPressed: widget.onSave,
-      ),
-      _ActionButton(
-        buttonKey: const ValueKey<String>('jet_print.designer.action.preview'),
-        icon: LucideIcons.eye,
-        label: l10n.actionPreview,
-        tooltip: l10n.actionPreviewTooltip,
-        compact: compact,
-        onPressed: widget.onPreview,
-      ),
-      _ActionButton(
-        icon: LucideIcons.download,
-        label: l10n.actionExport,
-        tooltip: l10n.actionExportTooltip,
-        trailing: LucideIcons.chevronDown,
-        compact: compact,
-        onPressed: () {},
-      ),
-    ];
-
-    if (scrollable) {
-      // No flex children: everything keeps its natural width so it can scroll.
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[...leftChildren, ...actions],
-      );
-    }
-    return Row(
-      children: <Widget>[
-        Expanded(child: Row(children: leftChildren)),
-        ...actions,
-      ],
-    );
   }
 }
 
@@ -534,24 +477,20 @@ class _ToggleButton extends StatelessWidget {
   }
 }
 
-/// A labelled primary action (icon + caption, optional [trailing] chevron for a
-/// dropdown affordance). Its `onPressed` is a deliberate no-op this iteration
-/// (FR-015) but it renders as enabled so the bar reads as a real toolbar.
+/// A labelled primary action (icon + caption) such as Open / Save. A null
+/// `onPressed` renders it disabled (the host wired no callback).
 class _ActionButton extends StatelessWidget {
   const _ActionButton({
     required this.icon,
     required this.label,
     required this.tooltip,
     required this.onPressed,
-    this.trailing,
     this.compact = false,
-    this.buttonKey,
   });
 
   final IconData icon;
   final String label;
   final String tooltip;
-  final IconData? trailing;
 
   /// The action handler. A null handler renders the button disabled (e.g. Save
   /// when the host wired no `onSaveRequested`).
@@ -560,9 +499,6 @@ class _ActionButton extends StatelessWidget {
   /// When true the label (and the dropdown chevron) are dropped and only the
   /// glyph shows, so the action fits a narrow bar; the tooltip still names it.
   final bool compact;
-
-  /// Optional stable key on the inner button (test seam).
-  final Key? buttonKey;
 
   @override
   Widget build(BuildContext context) {
@@ -579,7 +515,6 @@ class _ActionButton extends StatelessWidget {
             button: true,
             child: compact
                 ? ShadIconButton.ghost(
-                    key: buttonKey,
                     icon: Icon(icon, size: 16),
                     width: 32,
                     height: 32,
@@ -587,11 +522,8 @@ class _ActionButton extends StatelessWidget {
                     onPressed: onPressed,
                   )
                 : ShadButton.ghost(
-                    key: buttonKey,
                     size: ShadButtonSize.sm,
                     leading: Icon(icon, size: 16),
-                    trailing:
-                        trailing == null ? null : Icon(trailing, size: 14),
                     onPressed: onPressed,
                     child: Text(label),
                   ),

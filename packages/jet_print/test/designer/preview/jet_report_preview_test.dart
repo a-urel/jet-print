@@ -47,7 +47,19 @@ RenderedReport _report() => const JetReportEngine().render(
       ]),
     );
 
-const Key _backKey = ValueKey<String>('jet_print.preview.back');
+// --- Unified-toolbar mode switch (017 / US1 / C2). In the preview shell the
+// Designer segment replaces the old standalone back button; selecting it emits
+// the existing onBack switch request. ---
+const Key _modeDesignerKey =
+    ValueKey<String>('jet_print.toolbar.mode.designer');
+const Key _modePreviewKey = ValueKey<String>('jet_print.toolbar.mode.preview');
+
+ShadButtonVariant _segmentVariant(WidgetTester tester, Key key) =>
+    tester.widget<ShadButton>(find.byKey(key)).variant;
+
+bool _segmentDisabled(WidgetTester tester, Key key) =>
+    tester.widget<ShadButton>(find.byKey(key)).onPressed == null;
+
 const Key _zoomInKey = ValueKey<String>('jet_print.preview.zoomIn');
 const Key _zoomOutKey = ValueKey<String>('jet_print.preview.zoomOut');
 const Key _zoomLevelKey = ValueKey<String>('jet_print.preview.zoomLevel');
@@ -114,7 +126,10 @@ void main() {
 
   testWidgets('next/prev navigate one page at a time, bounded at the ends',
       (WidgetTester tester) async {
-    await _pumpPreview(tester);
+    // Wide enough that the 017 mode switch + viewing actions fit without the
+    // toolbar entering its horizontal-scroll regime (< 880 px), so the
+    // page-navigation buttons stay on-screen and tappable.
+    await _pumpPreview(tester, size: const Size(1000, 600));
 
     // Bounded at the first page: prev is disabled.
     expect(
@@ -196,8 +211,11 @@ void main() {
         tester.widget<ShadIconButton>(find.byKey(_nextKey)).onPressed, isNull);
   });
 
-  testWidgets('an unnamed report falls back to the localized "Preview" title',
+  testWidgets(
+      'an unnamed report shows the shared "Untitled report" placeholder (017)',
       (WidgetTester tester) async {
+    // The unified shell renders one placeholder in both modes (FR-006, parity)
+    // — the designer's reportTitlePlaceholder, not the old preview-only label.
     final RenderedReport report = const JetReportEngine().render(
       const ReportTemplate(name: '', page: _page, bands: <ReportBand>[
         ReportBand(type: BandType.detail, height: 30),
@@ -205,24 +223,53 @@ void main() {
       JetInMemoryDataSource(<Map<String, Object?>>[<String, Object?>{}]),
     );
     await _pumpPreview(tester, report: report);
-    expect(find.text('Preview'), findsOneWidget);
+    final Text nameText = tester.widget<Text>(
+        find.byKey(const ValueKey<String>('jet_print.toolbar.name')));
+    expect(nameText.data, 'Untitled report');
   });
 
-  group('back button (FR-018)', () {
-    testWidgets('absent unless onBack is wired', (WidgetTester tester) async {
-      await _pumpPreview(tester);
-      expect(find.byKey(_backKey), findsNothing);
+  // 017 (US1 / C2): the preview hosts the same two-segment mode switch. Preview
+  // is the active segment; selecting Designer emits the existing onBack switch
+  // request (the standalone back button is gone, folded into the switch).
+  group('mode switch (017 / US1)', () {
+    testWidgets('renders the two-segment switch with Preview active', (
+      WidgetTester tester,
+    ) async {
+      await _pumpPreview(tester, onBack: () {});
+      expect(find.byKey(_modeDesignerKey), findsOneWidget);
+      expect(find.byKey(_modePreviewKey), findsOneWidget);
+      expect(_segmentVariant(tester, _modePreviewKey),
+          ShadButtonVariant.secondary);
+      expect(
+          _segmentVariant(tester, _modeDesignerKey), ShadButtonVariant.ghost);
     });
 
-    testWidgets('shown and invokes onBack when wired; carries its name',
-        (WidgetTester tester) async {
+    testWidgets('the Designer segment is disabled when onBack is null', (
+      WidgetTester tester,
+    ) async {
+      await _pumpPreview(tester); // no onBack
+      expect(_segmentDisabled(tester, _modeDesignerKey), isTrue);
+    });
+
+    testWidgets('selecting Designer fires onBack once (C2.3)', (
+      WidgetTester tester,
+    ) async {
       int taps = 0;
       await _pumpPreview(tester, onBack: () => taps++);
-      expect(find.byKey(_backKey), findsOneWidget);
-      expect(find.bySemanticsLabel('Back'), findsOneWidget);
-      await tester.tap(find.byKey(_backKey));
+      expect(_segmentDisabled(tester, _modeDesignerKey), isFalse);
+      await tester.tap(find.byKey(_modeDesignerKey));
       await tester.pumpAndSettle();
       expect(taps, 1);
+    });
+
+    testWidgets('selecting the already-active Preview segment is a no-op', (
+      WidgetTester tester,
+    ) async {
+      int backs = 0;
+      await _pumpPreview(tester, onBack: () => backs++);
+      await tester.tap(find.byKey(_modePreviewKey), warnIfMissed: false);
+      await tester.pumpAndSettle();
+      expect(backs, 0);
     });
   });
 
@@ -345,6 +392,38 @@ void main() {
       expect(exports, 1, reason: 'Enter activates the focused export action');
       await _activateWithKeyboard(tester, _printKey, LogicalKeyboardKey.enter);
       expect(prints, 1, reason: 'Enter activates the focused print action');
+    });
+  });
+
+  // 017 (US3 / C5.2 / SC-005): the preview's right slot carries the viewing
+  // actions exclusively — none of the designer's editing-only actions appear.
+  group('preview — mode-specific actions (017 / US3)', () {
+    testWidgets('the right slot shows the viewing actions (C5.2)', (
+      WidgetTester tester,
+    ) async {
+      await _pumpPreview(tester, onExportPdf: () {}, onPrint: () {});
+      expect(find.byKey(_exportKey), findsOneWidget);
+      expect(find.byKey(_printKey), findsOneWidget);
+      expect(find.byKey(_zoomInKey), findsOneWidget);
+      expect(find.byKey(_zoomOutKey), findsOneWidget);
+      expect(find.byKey(_prevKey), findsOneWidget);
+      expect(find.byKey(_nextKey), findsOneWidget);
+    });
+
+    testWidgets('no designer-only signature action is present (SC-005)', (
+      WidgetTester tester,
+    ) async {
+      await _pumpPreview(tester, onExportPdf: () {}, onPrint: () {});
+      // Undo/redo and the editing groups are designer-only.
+      expect(
+          find.byKey(const ValueKey<String>('jet_print.designer.action.undo')),
+          findsNothing);
+      expect(
+          find.byKey(const ValueKey<String>('jet_print.designer.action.redo')),
+          findsNothing);
+      expect(
+          find.byKey(const ValueKey<String>('jet_print.designer.action.cut')),
+          findsNothing);
     });
   });
 }
