@@ -106,7 +106,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Report'), findsWidgets); // inspector header
     expect(find.text('PAGE'), findsOneWidget);
-    expect(find.text('Margins'), findsOneWidget);
+    expect(find.text('Paper'), findsOneWidget); // editable paper-type row (018)
 
     // (3) Band inspector — the height row label (rendered verbatim).
     c.selectBand(1);

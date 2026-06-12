@@ -101,6 +101,22 @@ class JetEdgeInsets {
   /// Inset from the bottom edge, in points.
   final double bottom;
 
+  /// Returns a copy with the named sides replaced and the rest preserved — so
+  /// the Properties panel can edit a single margin (e.g. left) without naming
+  /// the other three. Additive only; serialization is unaffected.
+  JetEdgeInsets copyWith({
+    double? left,
+    double? top,
+    double? right,
+    double? bottom,
+  }) =>
+      JetEdgeInsets(
+        left: left ?? this.left,
+        top: top ?? this.top,
+        right: right ?? this.right,
+        bottom: bottom ?? this.bottom,
+      );
+
   /// Serializes to a JSON-safe map.
   Map<String, Object?> toJson() =>
       <String, Object?>{'l': left, 't': top, 'r': right, 'b': bottom};

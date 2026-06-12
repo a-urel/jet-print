@@ -37,6 +37,20 @@ class PageFormat {
   /// Page margins, in points.
   final JetEdgeInsets margins;
 
+  /// Returns a copy with the given fields replaced and the rest preserved.
+  ///
+  /// Additive only — no new field, and serialization is unaffected. The designer
+  /// composes a page edit by `copyWith`-ing the live page (swap width/height for
+  /// orientation, set [margins], change one dimension) and handing the result to
+  /// `JetReportDesignerController.setPageFormat`, which clamps and commits it.
+  PageFormat copyWith(
+          {double? width, double? height, JetEdgeInsets? margins}) =>
+      PageFormat(
+        width: width ?? this.width,
+        height: height ?? this.height,
+        margins: margins ?? this.margins,
+      );
+
   /// Serializes to a JSON-safe map.
   Map<String, Object?> toJson() => <String, Object?>{
         'width': width,

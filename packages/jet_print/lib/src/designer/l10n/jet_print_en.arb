@@ -363,9 +363,77 @@
   "@propertiesMargins": {
     "description": "Properties panel read-only field label for the report page margins."
   },
+  "propertiesPaper": "Paper",
+  "@propertiesPaper": {
+    "description": "Properties panel label for the paper-size picker in the PAGE section (018)."
+  },
+  "propertiesCustom": "Custom",
+  "@propertiesCustom": {
+    "description": "Paper-size / margin value shown when the page matches no standard preset (018)."
+  },
+  "propertiesWidth": "Width",
+  "@propertiesWidth": {
+    "description": "Properties panel field label for a custom page width (018)."
+  },
+  "paperPickerTooltip": "Choose a paper size",
+  "@paperPickerTooltip": {
+    "description": "Accessible label for the paper-size picker button (018)."
+  },
+  "orientationPortrait": "Portrait",
+  "@orientationPortrait": {
+    "description": "Page orientation: taller than wide (018)."
+  },
+  "orientationLandscape": "Landscape",
+  "@orientationLandscape": {
+    "description": "Page orientation: wider than tall (018)."
+  },
+  "marginPresetNormal": "Normal",
+  "@marginPresetNormal": {
+    "description": "Margin preset name: the ~1 cm default on all four sides (018)."
+  },
+  "marginPresetNarrow": "Narrow",
+  "@marginPresetNarrow": {
+    "description": "Margin preset name: ~0.5 cm on all four sides (018)."
+  },
+  "marginPresetWide": "Wide",
+  "@marginPresetWide": {
+    "description": "Margin preset name: ~2 cm on all four sides (018)."
+  },
+  "marginPresetNone": "None",
+  "@marginPresetNone": {
+    "description": "Margin preset name: zero margins, flush to the page edge (018)."
+  },
+  "marginPickerTooltip": "Choose margins",
+  "@marginPickerTooltip": {
+    "description": "Accessible label for the margin-preset picker button (018)."
+  },
+  "propertiesMarginLeft": "Left",
+  "@propertiesMarginLeft": {
+    "description": "Properties panel field label for the left page margin (018)."
+  },
+  "propertiesMarginTop": "Top",
+  "@propertiesMarginTop": {
+    "description": "Properties panel field label for the top page margin (018)."
+  },
+  "propertiesMarginRight": "Right",
+  "@propertiesMarginRight": {
+    "description": "Properties panel field label for the right page margin (018)."
+  },
+  "propertiesMarginBottom": "Bottom",
+  "@propertiesMarginBottom": {
+    "description": "Properties panel field label for the bottom page margin (018)."
+  },
   "reportLabel": "Report",
   "@reportLabel": {
     "description": "The report root: the Outline tree root row and the Properties panel header when the report itself is selected."
+  },
+  "propertiesName": "Name",
+  "@propertiesName": {
+    "description": "Properties panel section label for the report's primary Name property (the report/template name)."
+  },
+  "reportNameHint": "Report name",
+  "@reportNameHint": {
+    "description": "Placeholder shown in the report Name field when the report has no name yet."
   },
   "propertiesEmptyHint": "Select an object to edit its properties.",
   "@propertiesEmptyHint": {

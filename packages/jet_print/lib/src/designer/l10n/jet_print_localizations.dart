@@ -623,11 +623,113 @@ abstract class JetPrintLocalizations {
   /// **'Margins'**
   String get propertiesMargins;
 
+  /// Properties panel label for the paper-size picker in the PAGE section (018).
+  ///
+  /// In en, this message translates to:
+  /// **'Paper'**
+  String get propertiesPaper;
+
+  /// Paper-size / margin value shown when the page matches no standard preset (018).
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get propertiesCustom;
+
+  /// Properties panel field label for a custom page width (018).
+  ///
+  /// In en, this message translates to:
+  /// **'Width'**
+  String get propertiesWidth;
+
+  /// Accessible label for the paper-size picker button (018).
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a paper size'**
+  String get paperPickerTooltip;
+
+  /// Page orientation: taller than wide (018).
+  ///
+  /// In en, this message translates to:
+  /// **'Portrait'**
+  String get orientationPortrait;
+
+  /// Page orientation: wider than tall (018).
+  ///
+  /// In en, this message translates to:
+  /// **'Landscape'**
+  String get orientationLandscape;
+
+  /// Margin preset name: the ~1 cm default on all four sides (018).
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get marginPresetNormal;
+
+  /// Margin preset name: ~0.5 cm on all four sides (018).
+  ///
+  /// In en, this message translates to:
+  /// **'Narrow'**
+  String get marginPresetNarrow;
+
+  /// Margin preset name: ~2 cm on all four sides (018).
+  ///
+  /// In en, this message translates to:
+  /// **'Wide'**
+  String get marginPresetWide;
+
+  /// Margin preset name: zero margins, flush to the page edge (018).
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get marginPresetNone;
+
+  /// Accessible label for the margin-preset picker button (018).
+  ///
+  /// In en, this message translates to:
+  /// **'Choose margins'**
+  String get marginPickerTooltip;
+
+  /// Properties panel field label for the left page margin (018).
+  ///
+  /// In en, this message translates to:
+  /// **'Left'**
+  String get propertiesMarginLeft;
+
+  /// Properties panel field label for the top page margin (018).
+  ///
+  /// In en, this message translates to:
+  /// **'Top'**
+  String get propertiesMarginTop;
+
+  /// Properties panel field label for the right page margin (018).
+  ///
+  /// In en, this message translates to:
+  /// **'Right'**
+  String get propertiesMarginRight;
+
+  /// Properties panel field label for the bottom page margin (018).
+  ///
+  /// In en, this message translates to:
+  /// **'Bottom'**
+  String get propertiesMarginBottom;
+
   /// The report root: the Outline tree root row and the Properties panel header when the report itself is selected.
   ///
   /// In en, this message translates to:
   /// **'Report'**
   String get reportLabel;
+
+  /// Properties panel section label for the report's primary Name property (the report/template name).
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get propertiesName;
+
+  /// Placeholder shown in the report Name field when the report has no name yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Report name'**
+  String get reportNameHint;
 
   /// Properties panel empty state shown when nothing is selected.
   ///
