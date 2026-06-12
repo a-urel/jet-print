@@ -47,6 +47,31 @@ void main() {
           closeTo(target.dy, 1.5));
     });
 
+    testWidgets('the marker tracks the pointer during a drag (button down)',
+        (WidgetTester tester) async {
+      await pumpDesignerWith(tester);
+      final Rect page = tester.getRect(find.byKey(kDesignPageKey));
+      final Offset start = page.center;
+      final Offset end = start + const Offset(40, 30);
+
+      // A button-down drag emits onPointerMove (not onPointerHover), so this
+      // exercises the path that keeps the marker live while moving/resizing.
+      final TestGesture g =
+          await tester.startGesture(start, kind: PointerDeviceKind.mouse);
+      addTearDown(() => g.up());
+      await g.moveTo(end);
+      await tester.pump();
+
+      expect(_in(_kHorizontalRuler, _kMarker), findsOneWidget);
+      expect(_in(_kVerticalRuler, _kMarker), findsOneWidget);
+      expect(tester.getRect(_in(_kHorizontalRuler, _kMarker)).center.dx,
+          closeTo(end.dx, 1.5),
+          reason: 'the top-ruler marker follows the pointer X during a drag');
+      expect(tester.getRect(_in(_kVerticalRuler, _kMarker)).center.dy,
+          closeTo(end.dy, 1.5),
+          reason: 'the left-ruler marker follows the pointer Y during a drag');
+    });
+
     testWidgets('the marker clears when the pointer leaves the canvas',
         (WidgetTester tester) async {
       await pumpDesignerWith(tester);
@@ -118,6 +143,65 @@ void main() {
       expect(tester.getRect(_in(_kHorizontalRuler, _kHighlight)).left,
           greaterThan(before),
           reason: 'the highlight tracks the moved selection');
+    });
+
+    testWidgets('a LIVE move updates the highlight in realtime, before commit',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      c.createElement(DesignerToolType.shape,
+          bandIndex: 1, at: const JetOffset(30, 30));
+      await tester.pumpAndSettle();
+      final double before =
+          tester.getRect(_in(_kHorizontalRuler, _kHighlight)).left;
+
+      // Drag in progress — no commitMove() yet.
+      c.beginMove();
+      c.updateMove(const JetOffset(60, 0));
+      await tester.pump();
+
+      expect(tester.getRect(_in(_kHorizontalRuler, _kHighlight)).left,
+          greaterThan(before),
+          reason:
+              'the highlight follows the drag, not just the committed move');
+    });
+
+    testWidgets('a LIVE resize grows the highlight in realtime, before commit',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      c.createElement(DesignerToolType.shape,
+          bandIndex: 1, at: const JetOffset(30, 30));
+      await tester.pumpAndSettle();
+      final String id = c.selection.singleOrNull!;
+      final double widthBefore =
+          tester.getRect(_in(_kHorizontalRuler, _kHighlight)).width;
+
+      // Resize drag in progress — no commitResize() yet.
+      c.beginResize(id, ResizeHandle.bottomRight);
+      c.updateResize(const JetOffset(50, 0));
+      await tester.pump();
+
+      expect(tester.getRect(_in(_kHorizontalRuler, _kHighlight)).width,
+          greaterThan(widthBefore),
+          reason:
+              'the highlight grows with a live resize, not just on mouse-up');
+    });
+
+    testWidgets('a live band resize grows the band highlight on the left ruler',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      c.selectBand(0);
+      await tester.pumpAndSettle();
+      final double before =
+          tester.getRect(_in(_kVerticalRuler, _kHighlight)).height;
+
+      // Band-resize drag in progress — no commitBandResize() yet.
+      c.beginBandResize(0);
+      c.updateBandResize(50);
+      await tester.pump();
+
+      expect(tester.getRect(_in(_kVerticalRuler, _kHighlight)).height,
+          greaterThan(before),
+          reason: 'the band span reflows live, before mouse-up');
     });
 
     testWidgets('clearing the selection removes the highlight (C5.6)',
