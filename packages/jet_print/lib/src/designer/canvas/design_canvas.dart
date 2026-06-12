@@ -53,13 +53,17 @@ const Key kDesignPageKey = ValueKey<String>('jet_print.designer.page');
 const Key kDesignGridKey = ValueKey<String>('jet_print.designer.grid');
 
 // --- Paper palette -----------------------------------------------------------
-// The design surface represents a sheet of printed paper, so it (and the
-// design-time chrome drawn on it) is painted with a constant, theme-independent
-// "paper" palette in every theme. The report content is emitted with print
-// colors (e.g. dark text), which only read correctly on white — so a dark page
-// in dark mode would both look wrong and hide content. Only the surrounding
-// canvas and the app chrome follow the light/dark theme.
+// The design surface represents a sheet of printed paper, so the design-time
+// chrome drawn on it (border, shadow, grid, badges) uses a constant,
+// theme-independent palette in every theme. The page fill itself is the one
+// exception: pure white in light mode, but a *slight* gray (slate-200) in dark
+// mode so the sheet does not glare against the dark canvas. It stays light
+// enough that the dark print content emitted onto it (e.g. dark text) still
+// reads correctly — a genuinely dark page would hide that content. The actual
+// exported/printed artifact is always white (that is the render pipeline, not
+// this chrome). Only the surrounding canvas and app chrome follow the theme.
 const Color _paperColor = Color(0xFFFFFFFF);
+const Color _paperColorDark = Color(0xFFE2E8F0); // slate-200 (dark-mode sheet)
 const Color _paperBorderColor = Color(0xFFE2E8F0); // slate-200
 const Color _paperShadowColor = Color(0x1A000000); // black 10%
 const Color _bandSeparatorColor = Color(0x14000000); // black 8%
@@ -986,15 +990,19 @@ class _DesignCanvasState extends State<DesignCanvas> {
               CanvasViewTransform(scale: scale), layout);
         },
         builder: (BuildContext context, _, __) {
+          // Pure white in light mode; a slight gray (slate-200) in dark mode so
+          // the sheet does not glare against the dark canvas (the chrome below
+          // stays fixed — it reads on either light fill).
+          final bool dark = ShadTheme.of(context).brightness == Brightness.dark;
           return KeyedSubtree(
             key: _pageKey,
             child: DecoratedBox(
               key: kDesignPageKey,
-              decoration: const BoxDecoration(
-                color: _paperColor,
-                border:
-                    Border.fromBorderSide(BorderSide(color: _paperBorderColor)),
-                boxShadow: <BoxShadow>[
+              decoration: BoxDecoration(
+                color: dark ? _paperColorDark : _paperColor,
+                border: const Border.fromBorderSide(
+                    BorderSide(color: _paperBorderColor)),
+                boxShadow: const <BoxShadow>[
                   BoxShadow(
                     color: _paperShadowColor,
                     blurRadius: 12,

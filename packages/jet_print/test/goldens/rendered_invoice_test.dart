@@ -3,9 +3,10 @@
 // Closes the golden the 009 plan deferred to "the render slice": the invoice
 // with REAL VALUES (master fields + iterated line items + total), paginated,
 // shown in JetReportPreview — light and dark — through the shared
-// paintFrame -> CanvasPainter pipeline. The page paper stays white in both
-// themes (the preview shows the printable artifact); only the chrome follows
-// the theme. Public API only; regenerate with `--update-goldens`.
+// paintFrame -> CanvasPainter pipeline. The preview sheet is white in light mode
+// and a slight gray (slate-200) in dark mode so it does not glare; the dark
+// print content stays legible on it (the exported artifact is always white).
+// Public API only; regenerate with `--update-goldens`.
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';

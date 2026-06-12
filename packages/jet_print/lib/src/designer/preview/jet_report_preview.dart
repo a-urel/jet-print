@@ -382,11 +382,14 @@ class _JetReportPreviewState extends State<JetReportPreview> {
                                 width: pageWidth,
                                 height: pageHeight,
                                 decoration: BoxDecoration(
-                                  // The paper itself stays white in every app
-                                  // theme — the preview shows the printable
-                                  // artifact, not a themed widget (WYSIWYG;
-                                  // the goldens pin this).
-                                  color: const Color(0xFFFFFFFF),
+                                  // Pure white in light mode; a slight gray
+                                  // (slate-200) in dark mode so the sheet does
+                                  // not glare against the dark surround. The
+                                  // exported/printed artifact is always white —
+                                  // that is the render pipeline, not this view.
+                                  color: theme.brightness == Brightness.dark
+                                      ? const Color(0xFFE2E8F0)
+                                      : const Color(0xFFFFFFFF),
                                   border: Border.all(color: colors.border),
                                 ),
                                 child: CustomPaint(

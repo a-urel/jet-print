@@ -1,7 +1,8 @@
-// The design surface represents a sheet of printed paper, so it MUST stay white
-// in every theme — the report content is emitted with print colors (e.g. dark
-// text) that only read correctly on white, so a theme-tinted (dark) page would
-// look wrong and hide content. Drives the public designer only.
+// The design surface represents a sheet of printed paper. In light mode it is
+// pure white; in dark mode it is a slight gray (slate-200) so the sheet does not
+// glare against the dark canvas while dark print content stays legible. (The
+// actual exported/printed artifact is always white — that is the render
+// pipeline, not this design-time chrome.)
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -21,8 +22,10 @@ void main() {
     expect(_pageColor(tester), const Color(0xFFFFFFFF));
   });
 
-  testWidgets('the page stays white in dark mode', (WidgetTester tester) async {
+  testWidgets('the page is a slight gray (slate-200) in dark mode', (
+    WidgetTester tester,
+  ) async {
     await pumpDesigner(tester, themeMode: ThemeMode.dark);
-    expect(_pageColor(tester), const Color(0xFFFFFFFF));
+    expect(_pageColor(tester), const Color(0xFFE2E8F0));
   });
 }
