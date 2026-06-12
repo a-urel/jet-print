@@ -427,6 +427,14 @@
   "@reportLabel": {
     "description": "The report root: the Outline tree root row and the Properties panel header when the report itself is selected."
   },
+  "propertiesName": "Name",
+  "@propertiesName": {
+    "description": "Properties panel section label for the report's primary Name property (the report/template name)."
+  },
+  "reportNameHint": "Report name",
+  "@reportNameHint": {
+    "description": "Placeholder shown in the report Name field when the report has no name yet."
+  },
   "propertiesEmptyHint": "Select an object to edit its properties.",
   "@propertiesEmptyHint": {
     "description": "Properties panel empty state shown when nothing is selected."

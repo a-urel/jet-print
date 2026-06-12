@@ -319,6 +319,12 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get reportLabel => 'Rapor';
 
   @override
+  String get propertiesName => 'Ad';
+
+  @override
+  String get reportNameHint => 'Rapor adı';
+
+  @override
   String get propertiesEmptyHint =>
       'Özelliklerini düzenlemek için bir nesne seçin.';
 

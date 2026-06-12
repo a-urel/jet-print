@@ -719,6 +719,18 @@ abstract class JetPrintLocalizations {
   /// **'Report'**
   String get reportLabel;
 
+  /// Properties panel section label for the report's primary Name property (the report/template name).
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get propertiesName;
+
+  /// Placeholder shown in the report Name field when the report has no name yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Report name'**
+  String get reportNameHint;
+
   /// Properties panel empty state shown when nothing is selected.
   ///
   /// In en, this message translates to:

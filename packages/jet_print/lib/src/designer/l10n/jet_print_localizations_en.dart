@@ -319,6 +319,12 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get reportLabel => 'Report';
 
   @override
+  String get propertiesName => 'Name';
+
+  @override
+  String get reportNameHint => 'Report name';
+
+  @override
   String get propertiesEmptyHint => 'Select an object to edit its properties.';
 
   @override

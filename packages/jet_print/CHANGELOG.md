@@ -8,6 +8,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Editable report Name in Report properties.** When the report is selected, the
+  Properties panel now leads with a primary **Name** field that edits the report
+  (template) name through the existing `JetReportDesignerController.rename` — one
+  undoable step, kept in sync with the toolbar's inline rename. A blank entry
+  reverts, so the report always keeps a name. No new public surface or schema
+  change; the label is localized in en/de/tr.
+
 - **Editable paper type & margins in Report properties (spec 018-paper-margin-properties).**
   The Properties panel's **PAGE** section is now an editable, Microsoft
   Office–style page setup: a live page-sample thumbnail (a proportional sheet

@@ -116,6 +116,8 @@
   "propertiesMarginRight": "Rechts",
   "propertiesMarginBottom": "Unten",
   "reportLabel": "Bericht",
+  "propertiesName": "Name",
+  "reportNameHint": "Berichtsname",
   "propertiesEmptyHint": "Wählen Sie ein Objekt, um seine Eigenschaften zu bearbeiten.",
   "propertiesMultiSelected": "{count} Elemente ausgewählt",
 

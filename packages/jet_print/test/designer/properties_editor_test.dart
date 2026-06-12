@@ -210,6 +210,56 @@ void main() {
     });
   });
 
+  group('properties — report name', () {
+    testWidgets('the report exposes its name as an editable primary field',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c =
+          JetReportDesignerController(template: _pageTemplate(595.28, 841.89));
+      await pumpDesignerWith(tester, controller: c);
+      await _openProperties(tester);
+      c.selectReport();
+      await tester.pumpAndSettle();
+
+      // The Name field is present and reflects the live template name.
+      expect(_field('reportName'), findsOneWidget);
+      expect(_valueIn('reportName', 'Page'), findsOneWidget);
+    });
+
+    testWidgets('editing the Name renames the report (one undoable step)',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c =
+          JetReportDesignerController(template: _pageTemplate(595.28, 841.89));
+      await pumpDesignerWith(tester, controller: c);
+      await _openProperties(tester);
+      c.selectReport();
+      await tester.pumpAndSettle();
+
+      await tester.enterText(_editable('reportName'), 'Invoice');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(c.template.name, 'Invoice');
+
+      // Exactly one history entry: undo restores the prior name.
+      c.undo();
+      expect(c.template.name, 'Page');
+    });
+
+    testWidgets('a blank Name reverts, keeping the report named',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c =
+          JetReportDesignerController(template: _pageTemplate(595.28, 841.89));
+      await pumpDesignerWith(tester, controller: c);
+      await _openProperties(tester);
+      c.selectReport();
+      await tester.pumpAndSettle();
+
+      await tester.enterText(_editable('reportName'), '   ');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(c.template.name, 'Page', reason: 'blank entry is not committed');
+    });
+  });
+
   group('properties — page (US1 paper type)', () {
     testWidgets(
         'PAGE names the paper type and shows the preview, no selection '

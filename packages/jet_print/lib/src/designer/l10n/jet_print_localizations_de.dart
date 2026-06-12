@@ -319,6 +319,12 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   String get reportLabel => 'Bericht';
 
   @override
+  String get propertiesName => 'Name';
+
+  @override
+  String get reportNameHint => 'Berichtsname';
+
+  @override
   String get propertiesEmptyHint =>
       'Wählen Sie ein Objekt, um seine Eigenschaften zu bearbeiten.';
 

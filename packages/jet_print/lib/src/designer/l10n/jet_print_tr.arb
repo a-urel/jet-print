@@ -116,6 +116,8 @@
   "propertiesMarginRight": "Sağ",
   "propertiesMarginBottom": "Alt",
   "reportLabel": "Rapor",
+  "propertiesName": "Ad",
+  "reportNameHint": "Rapor adı",
   "propertiesEmptyHint": "Özelliklerini düzenlemek için bir nesne seçin.",
   "propertiesMultiSelected": "{count} öğe seçildi",
 

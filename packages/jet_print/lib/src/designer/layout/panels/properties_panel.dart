@@ -377,6 +377,17 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
       _Header(
           icon: LucideIcons.fileText, title: l10n.reportLabel, theme: theme),
       const SizedBox(height: 14),
+      // The report's primary identity: its name, committed through `rename` as
+      // one undoable step. A blank entry reverts so the report stays named.
+      SectionLabel(l10n.propertiesName),
+      const SizedBox(height: 8),
+      _TextInput(
+        fieldKey: const ValueKey<String>('$_p.field.reportName'),
+        value: controller.template.name,
+        placeholder: l10n.reportNameHint,
+        onCommit: controller.rename,
+      ),
+      const SizedBox(height: 14),
       SectionLabel(l10n.propertiesPage),
       const SizedBox(height: 8),
       // Paper type: named by the matching preset (or Custom), resizing the page
@@ -884,6 +895,82 @@ class _PresetDropdownState extends State<_PresetDropdown> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// A plain single-line text field bound to a model string [value], committing
+/// the trimmed text on Enter or blur — each commit one undoable model edit. Used
+/// for the report's primary Name property. A blank entry reverts to the current
+/// value (the report keeps a name); while the field is focused the live value is
+/// never written over the user's in-progress text.
+class _TextInput extends StatefulWidget {
+  const _TextInput({
+    required this.fieldKey,
+    required this.value,
+    required this.placeholder,
+    required this.onCommit,
+  });
+
+  final Key fieldKey;
+  final String value;
+  final String placeholder;
+  final ValueChanged<String> onCommit;
+
+  @override
+  State<_TextInput> createState() => _TextInputState();
+}
+
+class _TextInputState extends State<_TextInput> {
+  late final TextEditingController _controller =
+      TextEditingController(text: widget.value);
+  final FocusNode _focus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _focus.addListener(_onFocusChange);
+  }
+
+  @override
+  void didUpdateWidget(_TextInput oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reflect a model change made elsewhere (undo, rename via the toolbar), but
+    // never clobber active typing.
+    if (!_focus.hasFocus && widget.value != oldWidget.value) {
+      _controller.text = widget.value;
+    }
+  }
+
+  void _onFocusChange() {
+    if (!_focus.hasFocus) _commit();
+  }
+
+  void _commit() {
+    final String text = _controller.text.trim();
+    if (text.isEmpty) {
+      _controller.text = widget.value; // keep the report named
+      return;
+    }
+    if (text != widget.value) widget.onCommit(text);
+  }
+
+  @override
+  void dispose() {
+    _focus.removeListener(_onFocusChange);
+    _focus.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ShadInput(
+      key: widget.fieldKey,
+      controller: _controller,
+      focusNode: _focus,
+      placeholder: Text(widget.placeholder),
+      onSubmitted: (_) => _commit(),
     );
   }
 }
