@@ -772,6 +772,30 @@ abstract class JetPrintLocalizations {
   /// In en, this message translates to:
   /// **'Print'**
   String get previewPrint;
+
+  /// Label + accessible name for the Designer segment of the unified toolbar's two-segment Designer|Preview workspace-mode switch (017).
+  ///
+  /// In en, this message translates to:
+  /// **'Designer'**
+  String get modeDesigner;
+
+  /// Label + accessible name for the Preview segment of the unified toolbar's two-segment Designer|Preview workspace-mode switch (017).
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get modePreview;
+
+  /// Tooltip + accessible name for the inline-rename affordance beside the report name in the unified toolbar (017).
+  ///
+  /// In en, this message translates to:
+  /// **'Rename report'**
+  String get actionRenameTooltip;
+
+  /// Accessible label for the inline report-name edit field opened by the rename affordance in the unified toolbar (017).
+  ///
+  /// In en, this message translates to:
+  /// **'Report name'**
+  String get renameFieldLabel;
 }
 
 class _JetPrintLocalizationsDelegate

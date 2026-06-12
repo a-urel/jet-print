@@ -127,5 +127,10 @@
   "previewPageIndicator": "Sayfa {current} / {total}",
   "previewFitToWidth": "Genişliğe sığdır",
   "previewExport": "PDF olarak dışa aktar",
-  "previewPrint": "Yazdır"
+  "previewPrint": "Yazdır",
+
+  "modeDesigner": "Tasarım",
+  "modePreview": "Önizleme",
+  "actionRenameTooltip": "Raporu yeniden adlandır",
+  "renameFieldLabel": "Rapor adı"
 }

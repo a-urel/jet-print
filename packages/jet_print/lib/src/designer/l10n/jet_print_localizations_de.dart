@@ -351,4 +351,16 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
 
   @override
   String get previewPrint => 'Drucken';
+
+  @override
+  String get modeDesigner => 'Designer';
+
+  @override
+  String get modePreview => 'Vorschau';
+
+  @override
+  String get actionRenameTooltip => 'Bericht umbenennen';
+
+  @override
+  String get renameFieldLabel => 'Berichtsname';
 }

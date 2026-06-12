@@ -127,5 +127,10 @@
   "previewPageIndicator": "Seite {current} von {total}",
   "previewFitToWidth": "An Breite anpassen",
   "previewExport": "Als PDF exportieren",
-  "previewPrint": "Drucken"
+  "previewPrint": "Drucken",
+
+  "modeDesigner": "Designer",
+  "modePreview": "Vorschau",
+  "actionRenameTooltip": "Bericht umbenennen",
+  "renameFieldLabel": "Berichtsname"
 }

@@ -351,4 +351,16 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
 
   @override
   String get previewPrint => 'Yazdır';
+
+  @override
+  String get modeDesigner => 'Tasarım';
+
+  @override
+  String get modePreview => 'Önizleme';
+
+  @override
+  String get actionRenameTooltip => 'Raporu yeniden adlandır';
+
+  @override
+  String get renameFieldLabel => 'Rapor adı';
 }

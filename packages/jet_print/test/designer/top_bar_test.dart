@@ -22,6 +22,38 @@ const Key _cutKey = ValueKey<String>('jet_print.designer.action.cut');
 const Key _copyKey = ValueKey<String>('jet_print.designer.action.copy');
 const Key _pasteKey = ValueKey<String>('jet_print.designer.action.paste');
 
+// --- Unified-toolbar mode switch (017 / US1 / C2) ---
+const Key _nameKey = ValueKey<String>('jet_print.toolbar.name');
+const Key _modeSwitchKey = ValueKey<String>('jet_print.toolbar.modeSwitch');
+const Key _modeDesignerKey =
+    ValueKey<String>('jet_print.toolbar.mode.designer');
+const Key _modePreviewKey = ValueKey<String>('jet_print.toolbar.mode.preview');
+
+/// The active mode segment renders filled (secondary); the inactive one renders
+/// ghost — the same variant proxy the view-toggle tests use for on/off state.
+ShadButtonVariant _segmentVariant(WidgetTester tester, Key key) =>
+    tester.widget<ShadButton>(find.byKey(key)).variant;
+
+bool _segmentDisabled(WidgetTester tester, Key key) =>
+    tester.widget<ShadButton>(find.byKey(key)).onPressed == null;
+
+/// Pumps the designer bound to [controller] with an optional
+/// [onPreviewRequested], so the mode-switch tests can observe the switch
+/// request without the harness owning the callback.
+Future<void> _pumpDesignerWithPreview(
+  WidgetTester tester,
+  JetReportDesignerController controller, {
+  void Function(ReportTemplate current)? onPreviewRequested,
+}) async {
+  await pumpDesigner(
+    tester,
+    designer: JetReportDesigner(
+      controller: controller,
+      onPreviewRequested: onPreviewRequested,
+    ),
+  );
+}
+
 ReportTemplate _oneElementFixture() => const ReportTemplate(
       name: 'F',
       page: PageFormat.a4Portrait,
@@ -55,8 +87,10 @@ void main() {
 
       expect(find.text('Untitled report'), findsOneWidget);
       expect(find.text('Preview'), findsOneWidget);
+      expect(find.text('Open'), findsOneWidget);
       expect(find.text('Save'), findsOneWidget);
-      expect(find.text('Export'), findsOneWidget);
+      // Export is no longer offered in the designer (it lives in the preview).
+      expect(find.text('Export'), findsNothing);
     });
 
     testWidgets('shows history, zoom and view-toggle command groups', (
@@ -97,21 +131,30 @@ void main() {
       expect(pct(), lessThan(zoomedIn));
     });
 
-    testWidgets('tool buttons are left-aligned; primary actions stay right', (
+    // 017: the unified layout puts the report name on the leading edge and the
+    // mode switch beside it; ALL mode-specific actions (tools + primary) now
+    // live in the right slot, to the right of the switch and pinned to the edge.
+    testWidgets('name + switch lead; mode actions sit to their right', (
       WidgetTester tester,
     ) async {
       await pumpDesigner(tester);
 
-      final double mid = kDesktopSize.width / 2;
-      // The tool groups sit on the left, next to the title…
+      final Rect nameRect = tester.getRect(find.byKey(_nameKey));
+      final Rect switchRect = tester.getRect(find.byKey(_modeSwitchKey));
+      // Name precedes the switch on the leading edge.
+      expect(nameRect.right, lessThanOrEqualTo(switchRect.left + 0.5));
+      // The action groups sit to the right of the switch (the right slot)…
+      expect(tester.getCenter(find.byIcon(LucideIcons.undo2)).dx,
+          greaterThan(switchRect.right));
+      expect(tester.getCenter(find.byIcon(LucideIcons.grid2x2)).dx,
+          greaterThan(switchRect.right));
+      // …and the trailing action (the Arrange menu) pins to the right edge.
       expect(
-          tester.getCenter(find.byIcon(LucideIcons.undo2)).dx, lessThan(mid));
-      expect(
-        tester.getCenter(find.byIcon(LucideIcons.grid2x2)).dx,
-        lessThan(mid),
-      );
-      // …while the primary actions remain on the right edge.
-      expect(tester.getCenter(find.text('Export')).dx, greaterThan(mid));
+          tester
+              .getCenter(find.byKey(
+                  const ValueKey<String>('jet_print.designer.action.arrange')))
+              .dx,
+          greaterThan(kDesktopSize.width / 2));
     });
 
     testWidgets('adjacent tool buttons are separated by ~4px', (
@@ -162,18 +205,22 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('collapses action labels to icons and hides title when narrow',
+    // 017 (C6.2): when narrow the action LABELS collapse to icons, but the name
+    // region and the mode switch are never the regions that collapse — they stay
+    // visible and reachable.
+    testWidgets('collapses action labels to icons but keeps name + switch',
         (WidgetTester tester) async {
       await pumpDesigner(tester, size: const Size(700, 760));
 
-      // Labels disappear, but the action glyphs (and tooltips) remain.
-      expect(find.text('Preview'), findsNothing);
+      // File-action labels disappear, but their glyphs remain.
+      expect(find.text('Open'), findsNothing);
       expect(find.text('Save'), findsNothing);
-      expect(find.text('Export'), findsNothing);
-      expect(find.byIcon(LucideIcons.eye), findsOneWidget);
-      expect(find.byIcon(LucideIcons.download), findsOneWidget);
-      // The title yields its space to the tools when compact.
-      expect(find.text('Untitled report'), findsNothing);
+      expect(find.byIcon(LucideIcons.folderOpen), findsOneWidget);
+      expect(find.byIcon(LucideIcons.save), findsOneWidget);
+      // The name region and the mode switch stay put (C6.2).
+      expect(find.text('Untitled report'), findsOneWidget);
+      expect(find.byKey(_modeDesignerKey), findsOneWidget);
+      expect(find.byKey(_modePreviewKey), findsOneWidget);
     });
 
     // US2 (C3.4): the ruler toggle is wired to the controller exactly like the
@@ -374,6 +421,136 @@ void main() {
       expect(cut, allOf(contains('Cut'), contains('⌘X')));
       expect(copy, allOf(contains('Copy'), contains('⌘C')));
       expect(paste, allOf(contains('Paste'), contains('⌘V')));
+    });
+  });
+
+  // 017 (US1 / C2): the designer hosts the unified toolbar's two-segment
+  // Designer|Preview mode switch. Designer is the active segment; selecting
+  // Preview emits the host switch-request via the existing onPreviewRequested.
+  group('designer top bar — mode switch (017 / US1)', () {
+    testWidgets('renders the two-segment switch with Designer active', (
+      WidgetTester tester,
+    ) async {
+      final JetReportDesignerController c = JetReportDesignerController();
+      addTearDown(c.dispose);
+      await _pumpDesignerWithPreview(tester, c, onPreviewRequested: (_) {});
+
+      expect(find.byKey(_modeDesignerKey), findsOneWidget);
+      expect(find.byKey(_modePreviewKey), findsOneWidget);
+      // Active = filled (secondary); inactive = ghost (C2.1).
+      expect(_segmentVariant(tester, _modeDesignerKey),
+          ShadButtonVariant.secondary);
+      expect(_segmentVariant(tester, _modePreviewKey), ShadButtonVariant.ghost);
+    });
+
+    testWidgets('tapping Preview fires onPreviewRequested(template) once', (
+      WidgetTester tester,
+    ) async {
+      final JetReportDesignerController c = JetReportDesignerController();
+      addTearDown(c.dispose);
+      int calls = 0;
+      ReportTemplate? got;
+      await _pumpDesignerWithPreview(tester, c,
+          onPreviewRequested: (ReportTemplate t) {
+        calls++;
+        got = t;
+      });
+
+      await tester.tap(find.byKey(_modePreviewKey));
+      await tester.pumpAndSettle();
+      expect(calls, 1);
+      expect(identical(got, c.template), isTrue,
+          reason: 'the live template is handed to the host (C2.2)');
+    });
+
+    testWidgets(
+        'the Preview segment is disabled when onPreviewRequested is null',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = JetReportDesignerController();
+      addTearDown(c.dispose);
+      await _pumpDesignerWithPreview(tester, c); // no callback
+
+      expect(_segmentDisabled(tester, _modePreviewKey), isTrue);
+    });
+
+    testWidgets('tapping the already-active Designer segment is a no-op (C2.5)',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = JetReportDesignerController();
+      addTearDown(c.dispose);
+      int calls = 0;
+      await _pumpDesignerWithPreview(tester, c,
+          onPreviewRequested: (_) => calls++);
+
+      await tester.tap(find.byKey(_modeDesignerKey), warnIfMissed: false);
+      await tester.pumpAndSettle();
+      expect(calls, 0, reason: 'the active segment performs no switch');
+    });
+
+    // 017 (FR-005 / SC-002 / C2.4): a switch request must NOT mutate the
+    // controller — the host owns the swap; edits, history and selection survive.
+    testWidgets('a switch request never mutates the controller', (
+      WidgetTester tester,
+    ) async {
+      final JetReportDesignerController c = JetReportDesignerController()
+        ..open(_oneElementFixture());
+      addTearDown(c.dispose);
+      await _pumpDesignerWithPreview(tester, c, onPreviewRequested: (_) {});
+
+      // Make an undoable edit and select the element.
+      c.select('a');
+      c.nudge(5, 0);
+      await tester.pumpAndSettle();
+      final ReportTemplate beforeTemplate = c.template;
+      final bool undoBefore = c.canUndo;
+      final bool redoBefore = c.canRedo;
+      final Selection selectionBefore = c.selection;
+
+      await tester.tap(find.byKey(_modePreviewKey));
+      await tester.pumpAndSettle();
+
+      expect(identical(c.template, beforeTemplate), isTrue,
+          reason: 'the switch request leaves the model untouched (FR-005)');
+      expect(c.canUndo, undoBefore);
+      expect(c.canRedo, redoBefore);
+      expect(c.selection, selectionBefore);
+    });
+  });
+
+  // 017 (US3 / C5.1 / SC-005): the designer's right slot carries the editing
+  // actions exclusively — none of the preview's viewing-only actions appear.
+  group('designer top bar — mode-specific actions (017 / US3)', () {
+    testWidgets('the right slot shows the editing actions (C5.1)', (
+      WidgetTester tester,
+    ) async {
+      await pumpDesignerWith(tester);
+      // Open/save file actions, history, clipboard, zoom, view toggles, arrange.
+      expect(find.byIcon(LucideIcons.undo2), findsOneWidget);
+      expect(find.byIcon(LucideIcons.redo2), findsOneWidget);
+      expect(find.byKey(_cutKey), findsOneWidget);
+      expect(find.byKey(_pasteKey), findsOneWidget);
+      expect(find.byIcon(LucideIcons.zoomIn), findsOneWidget);
+      expect(
+          find.byKey(const ValueKey<String>('jet_print.designer.toggle.grid')),
+          findsOneWidget);
+      expect(
+          find.byKey(
+              const ValueKey<String>('jet_print.designer.action.arrange')),
+          findsOneWidget);
+      expect(find.text('Open'), findsOneWidget);
+      expect(find.text('Save'), findsOneWidget);
+    });
+
+    testWidgets('no preview-only signature action is present (SC-005)', (
+      WidgetTester tester,
+    ) async {
+      await pumpDesignerWith(tester);
+      // Page navigation is a preview-only affordance — it must not leak here.
+      expect(find.byKey(const ValueKey<String>('jet_print.preview.prev')),
+          findsNothing);
+      expect(find.byKey(const ValueKey<String>('jet_print.preview.next')),
+          findsNothing);
+      expect(find.byKey(const ValueKey<String>('jet_print.preview.print')),
+          findsNothing);
     });
   });
 }

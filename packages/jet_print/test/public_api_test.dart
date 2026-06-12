@@ -132,4 +132,49 @@ void main() {
     );
     controller.dispose();
   });
+
+  // --- 017: the unified toolbar adds exactly two public symbols — an undoable
+  // controller mutator and an optional preview callback. The mode switch reuses
+  // the already-public onPreviewRequested/onBack; everything else stays private.
+
+  test('JetReportDesignerController.rename is the additive 017 mutator', () {
+    final JetReportDesignerController controller =
+        JetReportDesignerController();
+    controller.rename('Renamed report');
+    expect(controller.template.name, 'Renamed report');
+    // Undoable in a single step, like every other edit.
+    controller.undo();
+    expect(controller.template.name, '',
+        reason: 'a fresh design starts with an empty (placeholder) name');
+    controller.dispose();
+  });
+
+  test('JetReportPreview exposes the additive onRename callback (017)', () {
+    final RenderedReport report = const JetReportEngine().render(
+      const ReportTemplate(
+        name: 'X',
+        page: PageFormat.a4Portrait,
+        bands: <ReportBand>[ReportBand(type: BandType.detail, height: 20)],
+      ),
+      JetInMemoryDataSource(const <Map<String, Object?>>[<String, Object?>{}]),
+    );
+    final JetReportPreview preview =
+        JetReportPreview(report: report, onRename: (String _) {});
+    expect(preview.onRename, isNotNull);
+    expect(preview, isA<Widget>());
+  });
+
+  test('JetReportWorkspace is constructible from the public surface', () {
+    final JetReportDesignerController controller =
+        JetReportDesignerController();
+    addTearDown(controller.dispose);
+    final JetReportWorkspace workspace = JetReportWorkspace(
+      controller: controller,
+      renderReport: (ReportTemplate t) => const JetReportEngine().render(
+        t,
+        JetInMemoryDataSource(const <Map<String, Object?>>[]),
+      ),
+    );
+    expect(workspace, isA<Widget>());
+  });
 }

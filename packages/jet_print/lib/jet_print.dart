@@ -41,7 +41,14 @@ export 'src/designer/controller/jet_report_designer_controller.dart'
     show JetReportDesignerController;
 export 'src/designer/controller/selection.dart' show Selection;
 export 'src/designer/jet_print_placeholder.dart' show JetPrintPlaceholder;
-export 'src/designer/jet_report_designer.dart' show JetReportDesigner;
+export 'src/designer/jet_report_designer.dart'
+    show
+        JetReportDesigner,
+        ReportSaveRequestedCallback,
+        ReportOpenRequestedCallback,
+        ReportPreviewRequestedCallback;
+export 'src/designer/jet_report_workspace.dart'
+    show JetReportWorkspace, ReportRenderCallback;
 // The generated localizations class carries its own `delegate` and
 // `supportedLocales` statics; consumers wire them into their app shell.
 export 'src/designer/l10n/jet_print_localizations.dart'

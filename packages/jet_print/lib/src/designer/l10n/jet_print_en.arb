@@ -477,5 +477,22 @@
   "previewPrint": "Print",
   "@previewPrint": {
     "description": "Tooltip + accessible name of the report preview's print toolbar action."
+  },
+
+  "modeDesigner": "Designer",
+  "@modeDesigner": {
+    "description": "Label + accessible name for the Designer segment of the unified toolbar's two-segment Designer|Preview workspace-mode switch (017)."
+  },
+  "modePreview": "Preview",
+  "@modePreview": {
+    "description": "Label + accessible name for the Preview segment of the unified toolbar's two-segment Designer|Preview workspace-mode switch (017)."
+  },
+  "actionRenameTooltip": "Rename report",
+  "@actionRenameTooltip": {
+    "description": "Tooltip + accessible name for the inline-rename affordance beside the report name in the unified toolbar (017)."
+  },
+  "renameFieldLabel": "Report name",
+  "@renameFieldLabel": {
+    "description": "Accessible label for the inline report-name edit field opened by the rename affordance in the unified toolbar (017)."
   }
 }
