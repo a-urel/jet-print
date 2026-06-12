@@ -205,4 +205,30 @@ void main() {
     await tester.pump();
     expect(find.byKey(_surfaceKey), findsOneWidget);
   });
+
+  testWidgets('export and print fire with the current rendered report',
+      (WidgetTester tester) async {
+    RenderedReport? exported;
+    RenderedReport? printed;
+    final JetReportDesignerController controller =
+        JetReportDesignerController(template: _template());
+    addTearDown(controller.dispose);
+    await _pumpWorkspace(
+      tester,
+      controller: controller,
+      onExportPdf: (RenderedReport r) => exported = r,
+      onPrint: (RenderedReport r) => printed = r,
+    );
+    await _enterPreview(tester);
+
+    await tester.tap(find.byKey(const ValueKey<String>('jet_print.preview.export')));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey<String>('jet_print.preview.print')));
+    await tester.pump();
+
+    expect(exported, isNotNull);
+    expect(printed, same(exported),
+        reason: 'both actions act on the single current rendered report');
+    expect(exported!.pageCount, 3);
+  });
 }
