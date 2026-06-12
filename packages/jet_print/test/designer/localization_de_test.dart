@@ -122,4 +122,23 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('2 Elemente ausgewählt'), findsOneWidget);
   });
+
+  // 020 / C9.3 — the Shape section label and the eight form names are German.
+  testWidgets('the shape gallery strings are localized in German (020)', (
+    WidgetTester tester,
+  ) async {
+    await pumpDesigner(tester, locale: const Locale('de'));
+    final JetPrintLocalizations l10n = JetPrintLocalizations.of(
+        tester.element(find.byType(JetReportDesigner)));
+
+    expect(l10n.propertiesShape, 'Form');
+    expect(l10n.shapeFormLine, 'Linie');
+    expect(l10n.shapeFormRectangle, 'Rechteck');
+    expect(l10n.shapeFormEllipse, 'Ellipse');
+    expect(l10n.shapeFormTriangle, 'Dreieck');
+    expect(l10n.shapeFormDiamond, 'Raute');
+    expect(l10n.shapeFormPentagon, 'Fünfeck');
+    expect(l10n.shapeFormHexagon, 'Sechseck');
+    expect(l10n.shapeFormStar, 'Stern');
+  });
 }

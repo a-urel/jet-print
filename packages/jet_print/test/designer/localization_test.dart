@@ -128,4 +128,24 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('2 elements selected'), findsOneWidget);
   });
+
+  // 020 / C9.3 — the Shape section label and the eight form names resolve in
+  // English (the de/tr variants are checked in their own isolate files).
+  testWidgets('the shape gallery strings are localized in English (020)', (
+    WidgetTester tester,
+  ) async {
+    await pumpDesigner(tester, locale: const Locale('en'));
+    final JetPrintLocalizations l10n = JetPrintLocalizations.of(
+        tester.element(find.byType(JetReportDesigner)));
+
+    expect(l10n.propertiesShape, 'Shape');
+    expect(l10n.shapeFormLine, 'Line');
+    expect(l10n.shapeFormRectangle, 'Rectangle');
+    expect(l10n.shapeFormEllipse, 'Ellipse');
+    expect(l10n.shapeFormTriangle, 'Triangle');
+    expect(l10n.shapeFormDiamond, 'Diamond');
+    expect(l10n.shapeFormPentagon, 'Pentagon');
+    expect(l10n.shapeFormHexagon, 'Hexagon');
+    expect(l10n.shapeFormStar, 'Star');
+  });
 }

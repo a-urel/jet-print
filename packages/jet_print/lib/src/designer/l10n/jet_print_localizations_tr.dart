@@ -414,4 +414,31 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
 
   @override
   String get renameFieldLabel => 'Rapor adı';
+
+  @override
+  String get propertiesShape => 'Şekil';
+
+  @override
+  String get shapeFormLine => 'Çizgi';
+
+  @override
+  String get shapeFormRectangle => 'Dikdörtgen';
+
+  @override
+  String get shapeFormEllipse => 'Elips';
+
+  @override
+  String get shapeFormTriangle => 'Üçgen';
+
+  @override
+  String get shapeFormDiamond => 'Eşkenar dörtgen';
+
+  @override
+  String get shapeFormPentagon => 'Beşgen';
+
+  @override
+  String get shapeFormHexagon => 'Altıgen';
+
+  @override
+  String get shapeFormStar => 'Yıldız';
 }

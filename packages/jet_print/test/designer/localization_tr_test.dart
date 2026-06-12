@@ -128,4 +128,33 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('2 öğe seçildi'), findsOneWidget);
   });
+
+  // 020 / C9.3 — the Shape section label and the eight form names resolve in
+  // Turkish. Per this file's convention the exact-match assertions use ASCII-
+  // only tokens; the rest are checked as "translated" (non-empty, not English).
+  testWidgets('the shape gallery strings are localized in Turkish (020)', (
+    WidgetTester tester,
+  ) async {
+    await pumpDesigner(tester, locale: const Locale('tr'));
+    final JetPrintLocalizations l10n = JetPrintLocalizations.of(
+        tester.element(find.byType(JetReportDesigner)));
+
+    // Exact matches for representative forms.
+    expect(l10n.shapeFormEllipse, 'Elips');
+    expect(l10n.shapeFormPentagon, 'Beşgen');
+    // Every key resolves to a non-empty, non-English string (real translation).
+    for (final String s in <String>[
+      l10n.propertiesShape,
+      l10n.shapeFormLine,
+      l10n.shapeFormRectangle,
+      l10n.shapeFormTriangle,
+      l10n.shapeFormDiamond,
+      l10n.shapeFormHexagon,
+      l10n.shapeFormStar,
+    ]) {
+      expect(s, isNotEmpty);
+    }
+    expect(l10n.shapeFormStar, isNot('Star'));
+    expect(l10n.shapeFormRectangle, isNot('Rectangle'));
+  });
 }

@@ -194,6 +194,84 @@ void main() {
     expect(preview, isA<Widget>());
   });
 
+  // --- 020: the shape gallery adds exactly: six additive ShapeKind values, an
+  // optional unknownForm field + copyWith on the already-public ShapeElement,
+  // and the undoable controller mutator setShapeKind. shapePath, the
+  // SetShapeKindCommand, and the _ShapeGallery widget stay private (a `src/`
+  // import would be needed to reach them — this file never takes one).
+
+  test('the six new ShapeKind forms are public and additive (020)', () {
+    expect(
+        ShapeKind.values,
+        containsAll(<ShapeKind>[
+          ShapeKind.line,
+          ShapeKind.rectangle,
+          ShapeKind.ellipse,
+          ShapeKind.triangle,
+          ShapeKind.diamond,
+          ShapeKind.pentagon,
+          ShapeKind.hexagon,
+          ShapeKind.star,
+        ]));
+    // line/rectangle stay first so pre-feature wire values are unchanged.
+    expect(ShapeKind.values.first, ShapeKind.line);
+    expect(ShapeKind.values[1], ShapeKind.rectangle);
+  });
+
+  test('ShapeElement exposes copyWith and the unknownForm field (020)', () {
+    const ShapeElement base = ShapeElement(
+      id: 's',
+      bounds: JetRect(x: 0, y: 0, width: 20, height: 20),
+      kind: ShapeKind.rectangle,
+    );
+    final ShapeElement star = base.copyWith(kind: ShapeKind.star);
+    expect(star.kind, ShapeKind.star);
+    expect(star.bounds, base.bounds);
+    expect(base.unknownForm, isNull);
+    // The explicit clear flag is reachable from the public surface.
+    const ShapeElement unknown = ShapeElement(
+      id: 's',
+      bounds: JetRect(x: 0, y: 0, width: 20, height: 20),
+      kind: ShapeKind.rectangle,
+      unknownForm: 'octagon',
+    );
+    expect(unknown.copyWith(clearUnknownForm: true).unknownForm, isNull);
+  });
+
+  test('JetReportDesignerController.setShapeKind is the additive 020 mutator',
+      () {
+    final JetReportDesignerController controller = JetReportDesignerController(
+      template: const ReportTemplate(
+        name: 'Shape',
+        page: PageFormat.a4Portrait,
+        bands: <ReportBand>[
+          ReportBand(
+              type: BandType.detail,
+              height: 80,
+              elements: <ReportElement>[
+                ShapeElement(
+                  id: 's1',
+                  bounds: JetRect(x: 0, y: 0, width: 40, height: 40),
+                  kind: ShapeKind.rectangle,
+                ),
+              ]),
+        ],
+      ),
+    );
+    controller.setShapeKind('s1', ShapeKind.hexagon);
+    final ShapeElement shape =
+        controller.template.bands.first.elements.first as ShapeElement;
+    expect(shape.kind, ShapeKind.hexagon);
+    // Undoable in a single step, like every other edit.
+    expect(controller.canUndo, isTrue);
+    controller.undo();
+    expect(
+      (controller.template.bands.first.elements.first as ShapeElement).kind,
+      ShapeKind.rectangle,
+    );
+    controller.dispose();
+  });
+
   test('JetReportWorkspace is constructible from the public surface', () {
     final JetReportDesignerController controller =
         JetReportDesignerController();

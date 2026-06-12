@@ -31,6 +31,24 @@ Finder _paperOption(String name) =>
 Finder _marginOption(String kind) =>
     find.byKey(ValueKey<String>('$_p.field.marginPreset.option.$kind'));
 
+// --- Shape gallery (020) seams ---
+/// The gallery thumbnail for a shape form, by its [ShapeKind.name].
+Finder _shapeThumb(String name) =>
+    find.byKey(ValueKey<String>('$_p.shape.$name'));
+
+/// The seven forms the gallery offers, in roster order (C1.4). `line` is a valid
+/// ShapeKind but is intentionally NOT offered — a diagonal is not a useful
+/// authoring primitive (a rule is a thin rectangle).
+const List<String> _shapeForms = <String>[
+  'rectangle',
+  'ellipse',
+  'triangle',
+  'diamond',
+  'pentagon',
+  'hexagon',
+  'star',
+];
+
 /// The left margin-guide inset in the preview (guide left minus sheet left), the
 /// testable expression of the live left margin's proportion.
 double _previewLeftInset(WidgetTester tester) {
@@ -82,6 +100,20 @@ Future<String> _addText(WidgetTester tester, JetReportDesignerController c,
   await tester.pumpAndSettle();
   return id;
 }
+
+/// Adds a default (rectangle) shape, selects it, and returns its id (020).
+Future<String> _addShape(WidgetTester tester, JetReportDesignerController c,
+    {JetOffset at = const JetOffset(20, 30)}) async {
+  c.createElement(DesignerToolType.shape, bandIndex: 1, at: at);
+  final String id = c.selection.singleOrNull!;
+  await tester.pumpAndSettle();
+  return id;
+}
+
+ShapeElement _shapeOf(JetReportDesignerController c, String id) =>
+    c.template.bands
+        .expand((ReportBand b) => b.elements)
+        .firstWhere((ReportElement e) => e.id == id) as ShapeElement;
 
 void main() {
   group('properties — empty state', () {
@@ -468,6 +500,134 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(c.template.page.width, 300, reason: 'invalid input is rejected');
+    });
+  });
+
+  // --- Shape gallery (020 / US1) -------------------------------------------
+  group('properties — shape gallery', () {
+    testWidgets('shows the Shape section with the seven closed forms (C1.1)',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      await _addShape(tester, c);
+
+      for (final String form in _shapeForms) {
+        expect(_shapeThumb(form), findsOneWidget, reason: '$form thumbnail');
+      }
+      // The legacy diagonal line is not offered as an authoring form.
+      expect(_shapeThumb('line'), findsNothing);
+    });
+
+    testWidgets('no gallery for a text element (C1.2 / FR-010)',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      await _addText(tester, c);
+
+      expect(_shapeThumb('rectangle'), findsNothing);
+      expect(_shapeThumb('hexagon'), findsNothing);
+    });
+
+    testWidgets('no gallery with nothing or several selected (C1.3 / FR-010)',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      // Nothing selected.
+      expect(_shapeThumb('rectangle'), findsNothing);
+      // Multi-selection: two shapes selected together fall through to empty.
+      await _addShape(tester, c, at: const JetOffset(10, 10));
+      await _addShape(tester, c, at: const JetOffset(120, 10));
+      c.selectAll();
+      await tester.pumpAndSettle();
+      expect(_shapeThumb('rectangle'), findsNothing);
+    });
+
+    testWidgets('the active form is the only highlighted thumbnail (C2.1)',
+        (WidgetTester tester) async {
+      final SemanticsHandle sem = tester.ensureSemantics();
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      await _addShape(tester, c); // a rectangle
+
+      for (final String form in _shapeForms) {
+        expect(
+          tester.getSemantics(_shapeThumb(form)),
+          isSemantics(isSelected: form == 'rectangle'),
+          reason: 'only the active rectangle is highlighted, not $form',
+        );
+      }
+      sem.dispose();
+    });
+
+    testWidgets('an unknown-form shape highlights nothing (C2.2 / FR-009)',
+        (WidgetTester tester) async {
+      final SemanticsHandle sem = tester.ensureSemantics();
+      // A shape loaded with an unrecognized form renders as rectangle but must
+      // not present rectangle as a deliberate choice.
+      final JetReportDesignerController c = JetReportDesignerController(
+        template: ReportTemplate(
+          name: 'U',
+          page: PageFormat.a4Portrait,
+          bands: const <ReportBand>[
+            ReportBand(
+                type: BandType.detail,
+                height: 120,
+                elements: <ReportElement>[
+                  ShapeElement(
+                    id: 's',
+                    bounds: JetRect(x: 5, y: 5, width: 60, height: 40),
+                    kind: ShapeKind.rectangle,
+                    unknownForm: 'octagon',
+                  ),
+                ]),
+          ],
+        ),
+      );
+      await pumpDesignerWith(tester, controller: c);
+      await _openProperties(tester);
+      c.select('s');
+      await tester.pumpAndSettle();
+
+      for (final String form in _shapeForms) {
+        expect(
+          tester.getSemantics(_shapeThumb(form)),
+          isSemantics(isSelected: false),
+          reason: '$form must not be highlighted for an unknown form',
+        );
+      }
+      sem.dispose();
+    });
+
+    testWidgets(
+        'clicking a thumbnail changes the form, preserving the box '
+        '(C3.1–C3.3)', (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      final String id = await _addShape(tester, c);
+      final JetRect before = _shapeOf(c, id).bounds;
+      final JetBoxStyle style = _shapeOf(c, id).style;
+
+      await tester.tap(_shapeThumb('hexagon'));
+      await tester.pumpAndSettle();
+
+      expect(_shapeOf(c, id).kind, ShapeKind.hexagon);
+      expect(_shapeOf(c, id).bounds, before, reason: 'geometry preserved');
+      expect(_shapeOf(c, id).style, style, reason: 'style preserved');
+    });
+
+    testWidgets('a shape can switch between forms and back via the UI (C5.3)',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      final String id = await _addShape(tester, c); // a rectangle
+
+      await tester.tap(_shapeThumb('star'));
+      await tester.pumpAndSettle();
+      expect(_shapeOf(c, id).kind, ShapeKind.star);
+
+      await tester.tap(_shapeThumb('rectangle'));
+      await tester.pumpAndSettle();
+      expect(_shapeOf(c, id).kind, ShapeKind.rectangle);
     });
   });
 }

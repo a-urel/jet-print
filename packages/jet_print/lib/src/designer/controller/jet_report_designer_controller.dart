@@ -26,6 +26,7 @@ import 'commands/set_band_height_command.dart';
 import 'commands/set_binding_command.dart';
 import 'commands/set_format_command.dart';
 import 'commands/set_page_format_command.dart';
+import 'commands/set_shape_kind_command.dart';
 import 'commands/set_template_name_command.dart';
 import 'commands/set_text_command.dart';
 import 'commands/set_value_command.dart';
@@ -688,6 +689,16 @@ class JetReportDesignerController extends ChangeNotifier {
   void setFormat(String id, String format) {
     _commit(SetFormatCommand(id: id, format: format.isEmpty ? null : format));
   }
+
+  /// Changes the form of the [ShapeElement] [id] to [kind] as one undoable step
+  /// (020 / FR-004), preserving the element's bounds and fill/stroke.
+  ///
+  /// Picking the already-active form is a no-op: it records no history entry and
+  /// notifies no listener (FR-005). Switching off a [ShapeKind.line] resets the
+  /// line-only diagonal flip, and any deliberate pick clears a preserved
+  /// unrecognized form name (FR-009). No-op for a non-shape or absent id.
+  void setShapeKind(String id, ShapeKind kind) =>
+      _commit(SetShapeKindCommand(id: id, kind: kind));
 
   /// Binds the [ImageElement] [id] to read its picture from the data [field]
   /// (US2 / FR-013). No-op for a non-image or absent id, or when already bound
