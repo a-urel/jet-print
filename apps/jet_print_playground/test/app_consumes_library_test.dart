@@ -13,13 +13,13 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 void main() {
   testWidgets(
-    'root widget renders one JetReportDesigner inside a ShadApp',
+    'root widget renders a JetReportWorkspace wrapping the designer',
     (WidgetTester tester) async {
       await tester.pumpWidget(const JetPrintPlaygroundApp());
 
-      // The shadcn theming pipeline is present...
       expect(find.byType(ShadApp), findsOneWidget);
-      // ...and the library's designer shell is consumed exactly once.
+      expect(find.byType(JetReportWorkspace), findsOneWidget);
+      // The workspace opens in designer mode, so its designer is on-screen.
       expect(find.byType(JetReportDesigner), findsOneWidget);
     },
   );
@@ -29,13 +29,13 @@ void main() {
     (WidgetTester tester) async {
       await tester.pumpWidget(const JetPrintPlaygroundApp());
 
-      final JetReportDesigner designer =
-          tester.widget<JetReportDesigner>(find.byType(JetReportDesigner));
-      expect(designer.controller, isNotNull,
+      final JetReportWorkspace workspace =
+          tester.widget<JetReportWorkspace>(find.byType(JetReportWorkspace));
+      expect(workspace.controller, isNotNull,
           reason: 'the app owns the controller');
-      expect(designer.onSaveRequested, isNotNull,
+      expect(workspace.onSaveRequested, isNotNull,
           reason: 'Save is wired to a host persistence callback');
-      expect(designer.onOpenRequested, isNotNull,
+      expect(workspace.onOpenRequested, isNotNull,
           reason: 'Open is wired to a host persistence callback');
     },
   );

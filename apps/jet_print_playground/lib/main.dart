@@ -1,4 +1,5 @@
 import 'dart:io' show File, Platform;
+import 'dart:typed_data';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart' show ThemeMode;
@@ -156,14 +157,17 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
     _controller.open(JetReportFormat.decodeJson(contents));
   }
 
-  /// Preview path (011): open the rendered-invoice example — the invoice
-  /// template filled with real data, shown in the paginated preview.
-  void _openPreview(ReportTemplate template) {
-    Navigator.of(context).push(PageRouteBuilder<void>(
-      pageBuilder:
-          (BuildContext context, Animation<double> _, Animation<double> __) =>
-              _RenderedInvoicePreviewPage(template: template),
-    ));
+  /// Export the rendered report as a PDF to a picked location (host-owned I/O).
+  Future<void> _exportPdf(RenderedReport report) async {
+    final Uint8List pdf = await const JetReportExporter().toPdf(report);
+    final FileSaveLocation? location = await getSaveLocation(
+      acceptedTypeGroups: const <XTypeGroup>[
+        XTypeGroup(label: 'PDF document', extensions: <String>['pdf']),
+      ],
+      suggestedName: 'invoice.pdf',
+    );
+    if (location == null) return; // user cancelled
+    await XFile.fromData(pdf, mimeType: 'application/pdf').saveTo(location.path);
   }
 
   @override
@@ -171,14 +175,18 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
     return Stack(
       children: <Widget>[
         Positioned.fill(
-          child: JetReportDesigner(
+          child: JetReportWorkspace(
             controller: _controller,
             dataSchema: invoiceSchema,
+            // Render the LIVE template against the bundled sample data so design
+            // edits show up on the next preview entry.
+            renderReport: (ReportTemplate template) =>
+                renderInvoice(template: template),
             onSaveRequested: _save,
             onOpenRequested: _open,
-            // The designer's top-bar Preview action opens the rendered
-            // preview of the LIVE template, so edits show up immediately.
-            onPreviewRequested: _openPreview,
+            onExportPdf: _exportPdf,
+            onPrint: (RenderedReport report) =>
+                const JetReportPrinter().printReport(report),
           ),
         ),
         Positioned(
@@ -203,22 +211,6 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// Hosts [RenderedInvoiceExample] over the designer's live [template]; the
-/// preview toolbar's own back button returns to the designer.
-class _RenderedInvoicePreviewPage extends StatelessWidget {
-  const _RenderedInvoicePreviewPage({required this.template});
-
-  final ReportTemplate template;
-
-  @override
-  Widget build(BuildContext context) {
-    return RenderedInvoiceExample(
-      template: template,
-      onBack: () => Navigator.of(context).pop(),
     );
   }
 }

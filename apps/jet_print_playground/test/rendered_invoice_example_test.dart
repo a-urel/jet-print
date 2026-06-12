@@ -64,12 +64,13 @@ void main() {
     await tester.pumpWidget(const JetPrintPlaygroundApp());
     await tester.pumpAndSettle();
 
-    // The designer's top-bar Preview action opens the rendered-invoice example.
+    // The unified toolbar's Preview mode-switch segment switches the workspace
+    // into preview, which renders the live template into a JetReportPreview
+    // (017 / keep-alive workspace).
     await tester.tap(find
-        .byKey(const ValueKey<String>('jet_print.designer.action.preview')));
+        .byKey(const ValueKey<String>('jet_print.toolbar.mode.preview')));
     await tester.pumpAndSettle();
 
-    expect(find.byType(RenderedInvoiceExample), findsOneWidget);
     expect(find.byType(JetReportPreview), findsOneWidget);
     // The one-invoice sample fits a single A4 page; navigation is bounded.
     expect(find.text('Page 1 of 1'), findsOneWidget);
@@ -83,9 +84,10 @@ void main() {
     expect(find.byKey(const ValueKey<String>('jet_print.preview.print')),
         findsOneWidget);
 
-    // The preview toolbar's back button returns to the designer.
-    await tester
-        .tap(find.byKey(const ValueKey<String>('jet_print.preview.back')));
+    // The unified toolbar's Designer mode-switch segment returns to the
+    // designer (it emits the preview's onBack switch request) (017).
+    await tester.tap(
+        find.byKey(const ValueKey<String>('jet_print.toolbar.mode.designer')));
     await tester.pumpAndSettle();
     expect(find.byType(JetReportDesigner), findsOneWidget);
   });
@@ -120,7 +122,7 @@ void main() {
     await tester.pumpWidget(const JetPrintPlaygroundApp());
     await tester.pumpAndSettle();
     await tester.tap(find
-        .byKey(const ValueKey<String>('jet_print.designer.action.preview')));
+        .byKey(const ValueKey<String>('jet_print.toolbar.mode.preview')));
     await tester.pumpAndSettle();
 
     // The preview displays the example's one rendered report...
