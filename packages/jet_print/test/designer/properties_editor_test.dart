@@ -115,6 +115,16 @@ ShapeElement _shapeOf(JetReportDesignerController c, String id) =>
         .expand((ReportBand b) => b.elements)
         .firstWhere((ReportElement e) => e.id == id) as ShapeElement;
 
+JetTextStyle _textStyleOf(JetReportDesignerController c, String id) =>
+    (c.template.bands
+            .expand((ReportBand b) => b.elements)
+            .firstWhere((ReportElement e) => e.id == id) as TextElement)
+        .style;
+
+/// The controller's history revision — unchanged across an interaction ⇔ that
+/// interaction recorded no undo entry (no-op commits must not pollute history).
+int _undoDepth(JetReportDesignerController c) => c.revision;
+
 void main() {
   group('properties — empty state', () {
     testWidgets('shows a hint and no geometry fields when nothing is selected',
@@ -500,6 +510,70 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(c.template.page.width, 300, reason: 'invalid input is rejected');
+    });
+  });
+
+  // --- Number-field clamping (021 / foundational, contract C4) --------------
+  //
+  // The clamp contract is parameterized over the two ranged fields this feature
+  // introduces: font size [4, 144] (here) and outline width [0, 20] (in the
+  // shape-appearance group). Both ride the same _NumberField primitive.
+  group('properties — number-field clamping (C4)', () {
+    testWidgets('an out-of-range font size commits the clamped bound',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      final String id = await _addText(tester, c);
+
+      await tester.enterText(_editable('fontSize'), '500');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(_textStyleOf(c, id).fontSize, 144, reason: 'clamped to max');
+
+      await tester.enterText(_editable('fontSize'), '1');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(_textStyleOf(c, id).fontSize, 4, reason: 'clamped to min');
+    });
+
+    testWidgets('non-numeric input is rejected, restored, and not committed',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      final String id = await _addText(tester, c);
+      final int undoDepthBefore = _undoDepth(c);
+
+      await tester.enterText(_editable('fontSize'), 'abc');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      expect(_textStyleOf(c, id).fontSize, 12, reason: 'invalid is rejected');
+      expect(find.text('abc'), findsNothing);
+      expect(_valueIn('fontSize', '12'), findsOneWidget,
+          reason: 'the field restores the last valid value');
+      expect(_undoDepth(c), undoDepthBefore, reason: 'no history entry');
+    });
+
+    testWidgets('the stepper at a bound stays at the bound as a no-op',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      final String id = await _addText(tester, c);
+
+      await tester.enterText(_editable('fontSize'), '144');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(_textStyleOf(c, id).fontSize, 144);
+      final int undoDepthBefore = _undoDepth(c);
+
+      await tester.tap(find.descendant(
+          of: _field('fontSize'),
+          matching: find.byIcon(LucideIcons.chevronUp)));
+      await tester.pumpAndSettle();
+
+      expect(_textStyleOf(c, id).fontSize, 144, reason: 'stays at the bound');
+      expect(_undoDepth(c), undoDepthBefore,
+          reason: 'a bound-stuck bump records no history');
     });
   });
 

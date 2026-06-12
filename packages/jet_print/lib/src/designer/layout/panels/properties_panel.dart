@@ -990,6 +990,11 @@ class _TextInputState extends State<_TextInput> {
 /// each commit a single undoable model edit. While the field is focused the
 /// live value is not written over the user's in-progress text; an out-of-range
 /// commit is reconciled by the model's clamp on the next rebuild.
+///
+/// With [min]/[max] set, a typed out-of-range value commits the clamped bound
+/// (the field shows the bound, not the rejected text) and a stepper bump past a
+/// bound is a no-op — no commit, no history entry (021 / C4). Non-numeric input
+/// is always rejected and the last valid value restored, with no commit.
 class _NumberField extends StatefulWidget {
   const _NumberField({
     required this.fieldKey,
@@ -997,6 +1002,8 @@ class _NumberField extends StatefulWidget {
     required this.value,
     required this.onCommit,
     this.focusNode,
+    this.min,
+    this.max,
   });
 
   final Key fieldKey;
@@ -1007,6 +1014,13 @@ class _NumberField extends StatefulWidget {
   /// An externally-owned focus node (the panel's double-tap focus target);
   /// null ⇒ the field owns a private one.
   final FocusNode? focusNode;
+
+  /// Inclusive lower bound for committed values; null ⇒ unbounded (the
+  /// pre-021 X/Y/W/H behavior).
+  final double? min;
+
+  /// Inclusive upper bound for committed values; null ⇒ unbounded.
+  final double? max;
 
   @override
   State<_NumberField> createState() => _NumberFieldState();
@@ -1048,17 +1062,32 @@ class _NumberFieldState extends State<_NumberField> {
       _controller.text = _format(widget.value); // reject unparseable input
       return;
     }
+    final double next = _clamp(parsed);
     // Ignore a re-commit that only reflects display rounding — e.g. blurring a
     // field showing the rounded "28.4" form of a 28.35 model value would
     // otherwise drift it to 28.4. Below display precision, there is no edit.
-    if (_format(parsed) == _format(widget.value)) {
+    // An out-of-range entry that clamps back to the current value lands here
+    // too: the field restores, and no history entry is recorded (C4).
+    if (_format(next) == _format(widget.value)) {
       _controller.text = _format(widget.value);
       return;
     }
-    widget.onCommit(parsed);
+    if (next != parsed) _controller.text = _format(next); // show the bound
+    widget.onCommit(next);
   }
 
-  void _bump(double delta) => widget.onCommit(widget.value + delta);
+  void _bump(double delta) {
+    final double next = _clamp(widget.value + delta);
+    if (next == widget.value) return; // stuck at a bound: no-op, no history
+    widget.onCommit(next);
+  }
+
+  double _clamp(double v) {
+    double next = v;
+    if (widget.min case final double min when next < min) next = min;
+    if (widget.max case final double max when next > max) next = max;
+    return next;
+  }
 
   @override
   void dispose() {
