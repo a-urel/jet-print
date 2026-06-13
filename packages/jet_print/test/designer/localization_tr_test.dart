@@ -80,6 +80,7 @@ void main() {
     // matched on their exact translated strings (including accented characters):
     // the strings are taken verbatim from the tr ARB, so the source and the
     // rendered Text share one normalization and the match is exact.
+    final SemanticsHandle sem = tester.ensureSemantics();
     final JetReportDesignerController c =
         await pumpDesignerWith(tester, locale: const Locale('tr'));
     c.createElement(DesignerToolType.text,
@@ -103,7 +104,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Rapor'), findsWidgets); // Report (header)
     expect(find.text('SAYFA'), findsOneWidget); // Page (section)
-    expect(find.text('Kağıt'), findsOneWidget); // Paper row (018)
+    // The paper-type row is label-less; its picker carries the localized name.
+    expect(
+        tester
+            .getSemantics(find.byKey(const ValueKey<String>(
+                'jet_print.designer.properties.field.paper')))
+            .label,
+        contains('Kağıt boyutu seçin'));
     expect(find.text('PAGE'), findsNothing);
 
     // (3) Band inspector — the height row label (verbatim).
@@ -127,6 +134,7 @@ void main() {
     c.selectAll();
     await tester.pumpAndSettle();
     expect(find.text('2 öğe seçildi'), findsOneWidget);
+    sem.dispose();
   });
 
   // 020 / C9.3 — the Shape section label and the eight form names resolve in
@@ -181,15 +189,21 @@ void main() {
         ],
       ),
     );
+    final SemanticsHandle sem = tester.ensureSemantics();
     await pumpDesignerWith(tester, controller: c, locale: const Locale('tr'));
     await openPropertiesTab(tester);
     c.select('t');
     await tester.pumpAndSettle();
 
-    // The 'Yazı tipi' family-row label renders as typed; the section caption
-    // is upper-cased by SectionLabel.
-    expect(find.text('Yazı tipi'), findsOneWidget);
-    expect(find.text('Boyut'), findsOneWidget);
-    expect(find.text('Renk'), findsOneWidget);
+    // The font row dropped its visible left labels — the family, size and
+    // color controls now carry the localized strings as accessible names.
+    const String f = 'jet_print.designer.properties.field';
+    expect(tester.getSemantics(find.byKey(const ValueKey<String>('$f.fontFamily'))).label,
+        contains('Yazı tipi seç'));
+    expect(tester.getSemantics(find.byKey(const ValueKey<String>('$f.fontSize'))).label,
+        contains('Boyut'));
+    expect(tester.getSemantics(find.byKey(const ValueKey<String>('$f.textColor'))).label,
+        contains('Renk seç'));
+    sem.dispose();
   });
 }

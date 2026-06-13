@@ -35,6 +35,15 @@ const List<PaperPreset> kPaperPresets = <PaperPreset>[
   PaperPreset('Legal', 612.0, 1008.0),
 ];
 
+/// A preset's display label: its universal name plus its size in whole
+/// millimetres, e.g. `A4 (210 × 297 mm)`. Points convert at 25.4/72 mm/pt and
+/// round to whole millimetres (standard sizes are whole-mm by definition; ANSI
+/// sizes round cleanly too). The name stays unlocalized; mm is a universal unit.
+String paperPresetLabel(PaperPreset p) =>
+    '${p.name} (${_ptToMm(p.portraitWidth)} × ${_ptToMm(p.portraitHeight)} mm)';
+
+int _ptToMm(double pt) => (pt * 25.4 / 72).round();
+
 /// The result of [recognizePaper]: either a named [preset] match or [isCustom].
 class PaperMatch {
   /// A match against the standard [preset].
@@ -47,6 +56,12 @@ class PaperMatch {
 
   /// The matched standard size's name, or null when [isCustom].
   String? get name => _preset?.name;
+
+  /// The matched size's display label (name + mm), or null when [isCustom].
+  String? get label {
+    final PaperPreset? p = _preset;
+    return p == null ? null : paperPresetLabel(p);
+  }
 
   /// Whether the page matches no standard size.
   bool get isCustom => _preset == null;

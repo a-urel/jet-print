@@ -76,6 +76,7 @@ void main() {
   testWidgets('the Properties inspector is localized under the de locale', (
     WidgetTester tester,
   ) async {
+    final SemanticsHandle sem = tester.ensureSemantics();
     final JetReportDesignerController c =
         await pumpDesignerWith(tester, locale: const Locale('de'));
     c.createElement(DesignerToolType.text,
@@ -94,7 +95,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Bericht'), findsWidgets); // Report (header)
     expect(find.text('SEITE'), findsOneWidget); // Page (section)
-    expect(find.text('Papier'), findsOneWidget); // Paper row (018)
+    // The paper-type row is label-less; its picker carries the localized name.
+    expect(
+        tester
+            .getSemantics(find.byKey(const ValueKey<String>(
+                'jet_print.designer.properties.field.paper')))
+            .label,
+        contains('Papierformat wählen'));
     expect(find.text('PAGE'), findsNothing);
     expect(find.text('Report'), findsNothing);
 
@@ -121,6 +128,7 @@ void main() {
     c.selectAll();
     await tester.pumpAndSettle();
     expect(find.text('2 Elemente ausgewählt'), findsOneWidget);
+    sem.dispose();
   });
 
   // 020 / C9.3 — the Shape section label and the eight form names are German.
@@ -165,6 +173,7 @@ void main() {
         ],
       ),
     );
+    final SemanticsHandle sem = tester.ensureSemantics();
     await pumpDesignerWith(tester, controller: c, locale: const Locale('de'));
     await openPropertiesTab(tester);
     c.select('t');
@@ -172,8 +181,15 @@ void main() {
 
     // The section caption renders upper-cased (SectionLabel convention).
     expect(find.text('SCHRIFT'), findsOneWidget);
-    expect(find.text('Schriftart'), findsOneWidget);
-    expect(find.text('Größe'), findsOneWidget);
-    expect(find.text('Farbe'), findsOneWidget);
+    // The font row dropped its visible left labels — the family, size and
+    // color controls now carry the localized strings as accessible names.
+    const String f = 'jet_print.designer.properties.field';
+    expect(tester.getSemantics(find.byKey(const ValueKey<String>('$f.fontFamily'))).label,
+        contains('Schriftart wählen'));
+    expect(tester.getSemantics(find.byKey(const ValueKey<String>('$f.fontSize'))).label,
+        contains('Größe'));
+    expect(tester.getSemantics(find.byKey(const ValueKey<String>('$f.textColor'))).label,
+        contains('Farbe wählen'));
+    sem.dispose();
   });
 }

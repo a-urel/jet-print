@@ -84,6 +84,7 @@ void main() {
       'the Properties inspector is localized in English across every state', (
     WidgetTester tester,
   ) async {
+    final SemanticsHandle sem = tester.ensureSemantics();
     final JetReportDesignerController c =
         await pumpDesignerWith(tester, locale: const Locale('en'));
     c.createElement(DesignerToolType.text,
@@ -106,7 +107,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Report'), findsWidgets); // inspector header
     expect(find.text('PAGE'), findsOneWidget);
-    expect(find.text('Paper'), findsOneWidget); // editable paper-type row (018)
+    // The paper-type row is label-less; its picker carries the localized name.
+    expect(
+        tester
+            .getSemantics(find.byKey(const ValueKey<String>(
+                'jet_print.designer.properties.field.paper')))
+            .label,
+        contains('Choose a paper size'));
 
     // (3) Band inspector — the height row label (rendered verbatim).
     c.selectBand(1);
@@ -127,6 +134,7 @@ void main() {
     c.selectAll();
     await tester.pumpAndSettle();
     expect(find.text('2 elements selected'), findsOneWidget);
+    sem.dispose();
   });
 
   // 020 / C9.3 — the Shape section label and the eight form names resolve in
