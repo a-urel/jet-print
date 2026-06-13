@@ -156,6 +156,13 @@ class _DesignCanvasState extends State<DesignCanvas> {
   final ScrollController _vScroll = ScrollController();
   final ScrollController _hScroll = ScrollController();
 
+  /// Explicit handle on the right-click menu so a primary press anywhere on the
+  /// canvas dismisses it. The region's own tap-to-hide loses the gesture arena
+  /// to the (deliberately deeper) canvas detector, and the region's child sits
+  /// inside the menu's TapRegion group — so without this, a click on empty
+  /// canvas left the menu open while a click on the chrome closed it.
+  final ShadContextMenuController _contextMenu = ShadContextMenuController();
+
   /// The pointer's current page position (points) while hovering the canvas, or
   /// null on exit. Only the ruler strips listen to it, so a hover repaints two
   /// thin overlays — never the cached page picture (research D5).
@@ -220,6 +227,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
   void dispose() {
     _boundController?.removeListener(_handleSelectionForScroll);
     _doubleTapTimer?.cancel();
+    _contextMenu.dispose();
     _picture?.dispose();
     _focusNode.dispose();
     _vScroll.dispose();
@@ -753,6 +761,11 @@ class _DesignCanvasState extends State<DesignCanvas> {
                 if (e.buttons == kSecondaryButton) {
                   _handleSecondaryTapDown(
                       e.localPosition, controller, transform, layout);
+                } else if (_contextMenu.isOpen) {
+                  // Dismiss the open menu on any primary press over the canvas
+                  // (the raw Listener fires regardless of who wins the gesture
+                  // arena); the press then acts on the canvas as usual.
+                  _contextMenu.hide();
                 }
               },
               // The right-click menu wraps the canvas gesture layer. It sits
@@ -765,6 +778,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
               child: ShadContextMenuRegion(
                 key: const ValueKey<String>(
                     'jet_print.designer.canvas.contextMenu'),
+                controller: _contextMenu,
                 items: _contextMenuItems(controller, l10n),
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,

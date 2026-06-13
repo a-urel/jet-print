@@ -180,6 +180,44 @@ void main() {
     expect(_elementCount(c), before, reason: 'no document change on dismiss');
   });
 
+  testWidgets('primary-click on empty CANVAS dismisses the menu (FR-011)',
+      (WidgetTester tester) async {
+    // Regression: shadcn's region hides itself in its own onTapDown, but the
+    // canvas GestureDetector (deliberately deeper) wins the primary-tap arena,
+    // so a click on the canvas — unlike one on the chrome — left the menu open.
+    final JetReportDesignerController c = await _pump(tester);
+    final int before = _elementCount(c);
+
+    await _secondaryTapElement(tester, 'a');
+    expect(find.byKey(_cutKey), findsOneWidget);
+
+    // Tap (primary) an empty canvas spot — same margin point the
+    // right-click-empty helper uses.
+    final Offset pageTopLeft = tester.getTopLeft(find.byKey(kDesignPageKey));
+    await tester.tapAt(Offset(pageTopLeft.dx - 8, pageTopLeft.dy + 120));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(_cutKey), findsNothing, reason: 'menu dismissed');
+    expect(_elementCount(c), before, reason: 'no document change on dismiss');
+  });
+
+  testWidgets('primary-click on another element dismisses and selects it',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c = await _pump(tester);
+
+    // Open on the LOWER element so the popover (which extends downward from
+    // the click) cannot cover the element we click next.
+    await _secondaryTapElement(tester, 'b');
+    expect(find.byKey(_cutKey), findsOneWidget);
+
+    await tester.tapAt(tester.getCenter(_elementFinder('a')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(_cutKey), findsNothing, reason: 'menu dismissed');
+    expect(c.selection.singleOrNull, 'a',
+        reason: 'the dismissing click still acts on the canvas');
+  });
+
   testWidgets('menu Duplicate inserts a selected offset copy in one step (2.5)',
       (WidgetTester tester) async {
     final JetReportDesignerController c = await _pump(tester);
