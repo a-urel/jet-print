@@ -8,7 +8,7 @@ void main() {
   test('measure reports the default family when the style names none', () {
     final FontRegistry reg = FontRegistry()..registerDefault();
     final MetricsTextMeasurer m = MetricsTextMeasurer(reg);
-    expect(m.measure('A', JetTextStyle.fallback).fontFamily, 'JetSans');
+    expect(m.measure('A', JetTextStyle.fallback).fontFamily, 'Default');
   });
 
   test('measure reports a registered custom family', () {
@@ -27,7 +27,7 @@ void main() {
     final MetricsTextMeasurer m = MetricsTextMeasurer(reg);
     expect(
       m.measure('A', const JetTextStyle(fontFamily: 'Nope')).fontFamily,
-      'JetSans',
+      'Default',
     );
   });
 }

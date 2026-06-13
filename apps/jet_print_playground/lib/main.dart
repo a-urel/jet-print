@@ -6,12 +6,15 @@ import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:jet_print/jet_print.dart';
+import 'package:jet_print_google_fonts/jet_print_google_fonts.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'invoice_sample.dart';
 import 'rendered_invoice_example.dart';
 
-void main() {
+Future<void> main() async {
+  // Loading the bundled font assets needs the binding up before runApp.
+  WidgetsFlutterBinding.ensureInitialized();
   // Fail fast on unsupported platforms so a wrong target surfaces a clear
   // message instead of rendering incorrectly (spec Edge Cases). The library is
   // platform-agnostic; only this playground app pins macOS desktop this iteration.
@@ -20,7 +23,10 @@ void main() {
       'jet_print_playground targets macOS desktop this iteration.',
     );
   }
-  runApp(const JetPrintPlaygroundApp());
+  // 022 + Google-Fonts catalog: a curated, offline set of real OFL families,
+  // loaded BEFORE building anything and handed as the SAME list to the designer
+  // (picker + canvas) and the render callback (preview + PDF + PNG).
+  runApp(JetPrintPlaygroundApp(fonts: await loadGoogleFonts()));
 }
 
 /// Root widget of the playground app.
@@ -31,8 +37,14 @@ void main() {
 /// rendering [JetReportDesigner] and wiring [JetPrintLocalizations] exactly as
 /// an external consumer would.
 class JetPrintPlaygroundApp extends StatefulWidget {
-  /// Creates the playground app root.
-  const JetPrintPlaygroundApp({super.key});
+  /// Creates the playground app root over the host-registered [fonts].
+  const JetPrintPlaygroundApp(
+      {super.key, this.fonts = const <JetFontFamily>[]});
+
+  /// The host-contributed fonts, passed to BOTH the workspace (picker + canvas)
+  /// and the render callback (preview + export) — the single shared list that
+  /// makes the designer and the rendered output agree (FR-012).
+  final List<JetFontFamily> fonts;
 
   @override
   State<JetPrintPlaygroundApp> createState() => _JetPrintPlaygroundAppState();
@@ -85,6 +97,7 @@ class _JetPrintPlaygroundAppState extends State<JetPrintPlaygroundApp> {
       home: _PlaygroundHome(
         isDark: _isDark,
         localeCode: _locale.languageCode,
+        fonts: widget.fonts,
         onToggleTheme: _toggleTheme,
         onCycleLanguage: _cycleLanguage,
       ),
@@ -104,12 +117,14 @@ class _PlaygroundHome extends StatefulWidget {
   const _PlaygroundHome({
     required this.isDark,
     required this.localeCode,
+    required this.fonts,
     required this.onToggleTheme,
     required this.onCycleLanguage,
   });
 
   final bool isDark;
   final String localeCode;
+  final List<JetFontFamily> fonts;
   final VoidCallback onToggleTheme;
   final VoidCallback onCycleLanguage;
 
@@ -179,10 +194,17 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
           child: JetReportWorkspace(
             controller: _controller,
             dataSchema: invoiceSchema,
+            // The SAME host-font list reaches the designer picker/canvas here
+            // and the engine via renderReport below (FR-012).
+            fonts: widget.fonts,
+            // Offer only the Google-Fonts catalog; the built-in Default stays
+            // as the silent render fallback but is hidden from the picker (022).
+            showBuiltInFonts: false,
             // Render the LIVE template against the bundled sample data so design
-            // edits show up on the next preview entry.
+            // edits show up on the next preview entry — with the host fonts, so
+            // preview/PDF/PNG match the canvas.
             renderReport: (ReportTemplate template) =>
-                renderInvoice(template: template),
+                renderInvoice(template: template, fonts: widget.fonts),
             onSaveRequested: _save,
             onOpenRequested: _open,
             onExportPdf: _exportPdf,

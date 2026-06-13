@@ -19,11 +19,8 @@ void main() {
             loads.add((bytes, fontFamily)),
       );
 
-      expect(loads.map(((Uint8List, String?) l) => l.$2), <String>[
-        'JetSans__normal',
-        'JetSerif__normal',
-        'JetMono__normal',
-      ]);
+      expect(loads.map(((Uint8List, String?) l) => l.$2),
+          <String>['Default__normal']);
       for (final (Uint8List bytes, String? name) in loads) {
         final String family = name!.substring(0, name.indexOf('__'));
         expect(identical(bytes, reg.bytesFor(family)), isTrue,

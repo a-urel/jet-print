@@ -129,6 +129,7 @@ class Invoice {
 RenderedReport renderInvoice({
   JetDataSource? source,
   ReportTemplate? template,
+  List<JetFontFamily> fonts = const <JetFontFamily>[],
 }) =>
     JetReportEngine().render(
       template ?? invoiceSampleTemplate(),
@@ -138,9 +139,14 @@ RenderedReport renderInvoice({
       // The sample binds only declared fields, so nothing flags — it shows how a
       // host wires it. A host with a BuildContext can also pass a localized
       // token via RenderOptions.unresolvedFieldToken.
+      //
+      // 022 / FR-012: the host's [fonts] flow to the engine here, so the
+      // preview/PDF/PNG render in the registered family — the SAME list the
+      // workspace hands the designer picker.
       options: RenderOptions(
         locale: const Locale('en'),
         knownFields: _schemaFieldNames(invoiceSchema.fields),
+        fonts: fonts,
       ),
     );
 

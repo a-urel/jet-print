@@ -29,7 +29,7 @@ void main() {
 
     final TextRunPrimitive label = prims[1] as TextRunPrimitive;
     expect(label.lines.single.text, 'image');
-    expect(label.fontFamily, 'JetSans');
+    expect(label.fontFamily, 'Default');
     expect(label.elementId, 'img1');
   });
 }

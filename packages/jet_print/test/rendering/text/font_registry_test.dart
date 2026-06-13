@@ -91,78 +91,44 @@ void main() {
     });
   });
 
-  // --- 021 follow-up: bundled serif and mono families, so the picker offers a
-  // real choice out of the box (and unavailable-family handling is testable).
-  group('registerDefault — bundled JetSerif and JetMono families', () {
-    test('enumerates the three bundled families, default first', () {
+  // --- Default is the only bundled family (spec 022: hosts add the rest).
+  group('registerDefault — bundles only the Default family', () {
+    test('enumerates exactly the Default family', () {
       final FontRegistry reg = FontRegistry()..registerDefault();
-      expect(reg.families, <String>[
-        FontRegistry.defaultFamily,
-        FontRegistry.serifFamily,
-        FontRegistry.monoFamily,
-      ]);
+      expect(reg.families, <String>[FontRegistry.defaultFamily]);
     });
 
-    test('each family resolves to its own byte source', () {
+    test('Default ships all four faces (no regular fallback among them)', () {
       final FontRegistry reg = FontRegistry()..registerDefault();
-      final sans = reg.bytesFor(null);
-      final serif = reg.bytesFor(FontRegistry.serifFamily);
-      final mono = reg.bytesFor(FontRegistry.monoFamily);
-      expect(identical(serif, sans), isFalse);
-      expect(identical(mono, sans), isFalse);
-      expect(identical(mono, serif), isFalse);
-      expect(reg.resolveFamily(FontRegistry.serifFamily),
-          FontRegistry.serifFamily);
-      expect(
-          reg.resolveFamily(FontRegistry.monoFamily), FontRegistry.monoFamily);
-    });
-
-    test('serif and mono each ship all four faces (no regular fallback)', () {
-      final FontRegistry reg = FontRegistry()..registerDefault();
-      for (final String family in <String>[
-        FontRegistry.serifFamily,
-        FontRegistry.monoFamily,
-      ]) {
-        final regular = reg.bytesFor(family);
-        final bold = reg.bytesFor(family, weight: JetFontWeight.bold);
-        final italic = reg.bytesFor(family, italic: true);
-        final boldItalic =
-            reg.bytesFor(family, weight: JetFontWeight.bold, italic: true);
-        expect(identical(bold, regular), isFalse, reason: '$family bold');
-        expect(identical(italic, regular), isFalse, reason: '$family italic');
-        expect(identical(boldItalic, bold), isFalse,
-            reason: '$family bold italic');
-      }
+      final regular = reg.bytesFor(null);
+      final bold = reg.bytesFor(null, weight: JetFontWeight.bold);
+      final italic = reg.bytesFor(null, italic: true);
+      final boldItalic =
+          reg.bytesFor(null, weight: JetFontWeight.bold, italic: true);
+      expect(identical(bold, regular), isFalse, reason: 'bold');
+      expect(identical(italic, regular), isFalse, reason: 'italic');
+      expect(identical(boldItalic, bold), isFalse, reason: 'bold italic');
     });
 
     test('every bundled face parses metrics', () {
       final FontRegistry reg = FontRegistry()..registerDefault();
-      for (final String family in <String>[
-        FontRegistry.serifFamily,
-        FontRegistry.monoFamily,
+      for (final (JetFontWeight, bool) v in <(JetFontWeight, bool)>[
+        (JetFontWeight.normal, false),
+        (JetFontWeight.bold, false),
+        (JetFontWeight.normal, true),
+        (JetFontWeight.bold, true),
       ]) {
-        for (final (JetFontWeight, bool) v in <(JetFontWeight, bool)>[
-          (JetFontWeight.normal, false),
-          (JetFontWeight.bold, false),
-          (JetFontWeight.normal, true),
-          (JetFontWeight.bold, true),
-        ]) {
-          final m = reg.metricsFor(family, weight: v.$1, italic: v.$2);
-          expect(m.unitsPerEm, greaterThan(0), reason: '$family $v');
-        }
+        final m = reg.metricsFor(null, weight: v.$1, italic: v.$2);
+        expect(m.unitsPerEm, greaterThan(0), reason: '$v');
       }
     });
   });
 
   // --- 021 format properties: family enumeration for the picker -------------
   group('families (021 / US1 / FR-001)', () {
-    test('lists the bundled families for a default-only registry', () {
+    test('lists the bundled family for a default-only registry', () {
       final FontRegistry reg = FontRegistry()..registerDefault();
-      expect(reg.families, <String>[
-        FontRegistry.defaultFamily,
-        FontRegistry.serifFamily,
-        FontRegistry.monoFamily,
-      ]);
+      expect(reg.families, <String>[FontRegistry.defaultFamily]);
     });
 
     test('lists the default first, then others in insertion order', () {
@@ -170,7 +136,7 @@ void main() {
       final FontRegistry source = FontRegistry()..registerDefault();
       final bytes = source.bytesFor(null);
       reg.register('Zebra', bytes); // registered BEFORE the default
-      reg.registerDefault(bytes: bytes); // single-face seam: JetSans only
+      reg.registerDefault(bytes: bytes); // single-face seam: Default only
       reg.register('Alpha', bytes);
       expect(
           reg.families, <String>[FontRegistry.defaultFamily, 'Zebra', 'Alpha'],

@@ -8,6 +8,32 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Host & system fonts in font pickers (spec 022-host-fonts).** A host can now
+  contribute its own fonts, selectable in every designer picker and rendered
+  byte-identically across canvas, preview, PDF, and PNG:
+  - **Two bytes-in value types:** `JetFontFace` (`{bytes, weight, italic}`,
+    value-equal by bytes identity) and `JetFontFamily` (`{name, faces}`). A
+    family **validates its faces eagerly and synchronously** at construction —
+    it requires at least a regular face, parses every face, and rejects an
+    empty/malformed/regular-less/duplicate-slot family — so a bad font is caught
+    where it is assembled, never later inside a widget `build()` or a `render()`.
+  - **`FontFormatException` is now exported** — the single detectable rejection
+    type.
+  - **Two host touch-points, one shared list:** `RenderOptions.fonts` (threaded
+    through the render chain) and `fonts` on `JetReportDesigner` /
+    `JetReportWorkspace` (the designer picker + canvas). Pass the **same**
+    `List<JetFontFamily>` to both. Duplicate family names resolve
+    last-registration-wins; missing bold/italic fall back to regular; built-ins
+    are listed first, then host families in the order supplied.
+  - **WYSIWYG by construction:** `JetReportEngine.render` builds **one**
+    `FontRegistry` (defaults + host families), measures with it, and carries it
+    on the returned `RenderedReport`; the preview, the PDF/PNG exporter, and the
+    printer read it off the report instead of building a parallel default-only
+    registry — they gain **no** new parameter. `FontRegistry` stays internal.
+  - **No schema change:** reports still store only the font-family *name*
+    (`schemaVersion` unchanged). A report naming a font absent in the session
+    opens without error, renders in a fallback, shows the name marked
+    unavailable in the picker, preserves it on save, and still exports.
 - **Format properties — font & color editors (spec 021-format-properties).** The
   Properties panel now edits the style the model already carries, per element
   type:
@@ -43,23 +69,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     a missing id, or a wrong element type. The editors, commands, underline
     helper, and `FontRegistry` (including its new internal `families` getter)
     stay private.
-  - **The bundled default font now ships all four faces.** `JetSans` (a Latin
-    subset of Noto Sans, OFL 1.1) previously embedded only the Regular face, so
-    a Bold/Italic edit changed the model but not the glyphs. The registry now
-    pre-registers Regular, **Bold, Italic, and Bold Italic** subsets covering
-    the identical codepoint set, so B/I/U edits are visible on canvas, preview,
-    and export alike. Intermediate weights (`medium`/`semiBold`) still resolve
-    to Regular until dedicated faces exist. (~89 KB additional embedded font
-    data; the PDF exporter embeds each face once per document, only when used.)
-  - **Two more bundled families: `JetSerif` and `JetMono`.** Latin subsets of
-    Noto Serif and JetBrains Mono (both OFL 1.1), each in all four faces, so
-    the family picker offers a real choice out of the box and a family edit
-    stays WYSIWYG across canvas, preview, and export — every entry point builds
-    its registry through the same `registerDefault()`. The designer also
-    preloads each family's Regular face into the engine at mount, so picker
-    options preview in their own typeface before the canvas has ever painted
-    that family. (~243 KB additional embedded font data; PDFs still embed only
-    the faces a document actually uses.)
+  - **One bundled font, all four faces.** The library now ships a single
+    built-in family — **`Default`** (a Latin subset of Noto Sans, OFL 1.1) — in
+    Regular, **Bold, Italic, and Bold Italic** subsets covering one codepoint
+    set, so B/I/U edits are visible on canvas, preview, and export alike.
+    Intermediate weights (`medium`/`semiBold`) resolve to Regular via the
+    fallback chain. `Default` is the always-resolvable render fallback (FR-006):
+    text with no/unknown family always renders. The designer preloads its
+    Regular face into the engine at mount so picker options preview in their own
+    typeface before the canvas has painted them. Every other family is
+    contributed by the host (see above) — the library bundles no serif or
+    monospaced font of its own. (~112 KB embedded font data; the PDF exporter
+    embeds each face once per document, only when used.)
   - **Canvas right-click menu now dismisses on a primary click anywhere on the
     canvas.** It previously closed only when clicking the surrounding chrome,
     because the canvas gesture layer consumed the tap before the menu's own

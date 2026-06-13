@@ -79,7 +79,7 @@ void main() {
         () async {
       final PdfInspector pdf =
           PdfInspector(await exporter.toPdf(invoiceReport()));
-      // The invoice uses JetSans normal AND bold; the bundled default ships
+      // The invoice uses Default normal AND bold; the bundled default ships
       // real variant faces (021 follow-up), so those are two distinct byte
       // sources — each embedded exactly once, however many runs use them.
       expect(pdf.embeddedFontProgramCount, 2,

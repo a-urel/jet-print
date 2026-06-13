@@ -9,6 +9,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
+import 'support/test_fonts.dart';
+
 void main() {
   test('jetPrintVersion is exposed as a non-empty String', () {
     expect(jetPrintVersion, isA<String>());
@@ -425,5 +427,65 @@ void main() {
       ),
     );
     expect(workspace, isA<Widget>());
+  });
+
+  // --- 022: host fonts add exactly two public value types, the re-exported
+  // FontFormatException, RenderOptions.fonts, and a `fonts` param on the
+  // designer + workspace. `FontRegistry` and the registry carried on
+  // RenderedReport stay INTERNAL — they are deliberately absent from the export
+  // list, so this file cannot even name them (the comment is the contract). ---
+
+  test('JetFontFace / JetFontFamily are exported and validate eagerly (022)',
+      () {
+    final JetFontFace face = JetFontFace(bytes: validRegularFontBytes());
+    expect(face.weight, JetFontWeight.normal);
+    expect(face.italic, isFalse);
+    final JetFontFamily family =
+        JetFontFamily(name: 'Acme Brand', faces: <JetFontFace>[face]);
+    expect(family.name, 'Acme Brand');
+    // The re-exported FontFormatException is the detectable rejection type.
+    expect(
+      () => JetFontFamily(
+          name: 'Bad',
+          faces: <JetFontFace>[JetFontFace(bytes: malformedFontBytes())]),
+      throwsA(isA<FontFormatException>()),
+    );
+  });
+
+  test('RenderOptions.fonts is an additive field defaulting to empty (022)',
+      () {
+    expect(const RenderOptions().fonts, isEmpty);
+    final RenderOptions withFonts = RenderOptions(fonts: <JetFontFamily>[
+      JetFontFamily(
+          name: 'Acme Brand',
+          faces: <JetFontFace>[JetFontFace(bytes: validRegularFontBytes())]),
+    ]);
+    expect(withFonts.fonts, hasLength(1));
+  });
+
+  test('JetReportDesigner and JetReportWorkspace accept a fonts param (022)',
+      () {
+    final List<JetFontFamily> fonts = <JetFontFamily>[
+      JetFontFamily(
+          name: 'Acme Brand',
+          faces: <JetFontFace>[JetFontFace(bytes: validRegularFontBytes())]),
+    ];
+    expect(JetReportDesigner(fonts: fonts, showBuiltInFonts: false),
+        isA<Widget>());
+    final JetReportDesignerController controller =
+        JetReportDesignerController();
+    addTearDown(controller.dispose);
+    expect(
+      JetReportWorkspace(
+        controller: controller,
+        fonts: fonts,
+        showBuiltInFonts: false,
+        renderReport: (ReportTemplate t) => const JetReportEngine().render(
+          t,
+          JetInMemoryDataSource(const <Map<String, Object?>>[]),
+        ),
+      ),
+      isA<Widget>(),
+    );
   });
 }

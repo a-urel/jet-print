@@ -10,20 +10,27 @@ import '../rendering/text/font_registry.dart';
 /// the family set the picker enumerates is provably the set the canvas
 /// measures and paints with (021 / research §1 — WYSIWYG by construction).
 ///
-/// The registry itself stays **internal**: no public host-registration seam
-/// opens here, because a designer-only family would silently fall back in
-/// preview/export (Constitution IV). When a host-font seam lands as its own
-/// feature, this scope is where the designer side picks it up.
+/// The registry itself stays **internal**; host fonts reach it via
+/// `JetReportDesigner.fonts` (022), which the designer layers on top of the
+/// built-in defaults before building this scope.
 class DesignerFontScope extends InheritedWidget {
   /// Shares [fonts] with [child].
   const DesignerFontScope({
     required this.fonts,
     required super.child,
+    this.showBuiltIns = true,
     super.key,
   });
 
   /// The designer's font registry (default font pre-registered).
   final FontRegistry fonts;
+
+  /// Whether the bundled built-in Default family is offered as a **selectable
+  /// option** in the family picker (022). It is always present in [fonts] —
+  /// Default is the render fallback — so this only
+  /// controls picker visibility, never resolvability. Defaults to true
+  /// (backward-compatible).
+  final bool showBuiltIns;
 
   /// The nearest registry above [context]. Falls back to a fresh default-only
   /// registry when no scope is present (e.g. a panel pumped in isolation) —
@@ -32,7 +39,16 @@ class DesignerFontScope extends InheritedWidget {
       context.dependOnInheritedWidgetOfExactType<DesignerFontScope>()?.fonts ??
       (FontRegistry()..registerDefault());
 
+  /// Whether the picker should offer the built-in families above [context]
+  /// (defaults to true when no scope is present).
+  static bool showBuiltInsOf(BuildContext context) =>
+      context
+          .dependOnInheritedWidgetOfExactType<DesignerFontScope>()
+          ?.showBuiltIns ??
+      true;
+
   @override
   bool updateShouldNotify(DesignerFontScope oldWidget) =>
-      !identical(oldWidget.fonts, fonts);
+      !identical(oldWidget.fonts, fonts) ||
+      oldWidget.showBuiltIns != showBuiltIns;
 }

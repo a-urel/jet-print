@@ -971,6 +971,12 @@ abstract class JetPrintLocalizations {
   /// **'Choose font family'**
   String get fontFamilyPickerTooltip;
 
+  /// Picker label shown when an element uses the renderer default font and the built-in families are hidden from the picker (022).
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get fontFamilyDefault;
+
   /// Picker entry for a stored font family that is not registered with the designer: the name is preserved but renders with the default font until repicked (021).
   ///
   /// In en, this message translates to:

@@ -452,6 +452,9 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get fontFamilyPickerTooltip => 'Yazı tipi seç';
 
   @override
+  String get fontFamilyDefault => 'Varsayılan';
+
+  @override
   String fontFamilyUnavailable(String family) {
     return '$family (kullanılamıyor)';
   }

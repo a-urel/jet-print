@@ -107,4 +107,11 @@ export 'src/rendering/engine/rendered_report.dart'
 export 'src/rendering/export/jet_report_exporter.dart' show JetReportExporter;
 export 'src/rendering/fill/report_diagnostics.dart'
     show Diagnostic, DiagnosticSeverity, ReportDiagnostics;
+// --- Host fonts (022): the bytes-in value types a host uses to contribute its
+// own fonts, plus the (now-public) exception their eager validation throws.
+// `FontRegistry` stays internal — the render chain carries it. Pass the same
+// `List<JetFontFamily>` to `JetReportDesigner`/`JetReportWorkspace.fonts` and
+// to `RenderOptions.fonts`. ---
+export 'src/rendering/text/font_format_exception.dart' show FontFormatException;
+export 'src/rendering/text/jet_font.dart' show JetFontFace, JetFontFamily;
 export 'src/version.dart' show jetPrintVersion;

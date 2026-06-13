@@ -116,8 +116,10 @@ class _JetReportPreviewState extends State<JetReportPreview> {
 
   /// Fonts shared between frame recording (the painter resolves glyph bytes
   /// here) and the measurement already baked into the frame, so a glyph is
-  /// drawn with the same variant it was measured with.
-  final FontRegistry _fonts = FontRegistry()..registerDefault();
+  /// drawn with the same variant it was measured with. Read off the carried
+  /// `RenderedReport` (022) — the registry the engine measured with, including
+  /// any host fonts — never a freshly default-only build (Principle IV).
+  FontRegistry get _fonts => widget.report.fonts;
 
   late int _index;
 

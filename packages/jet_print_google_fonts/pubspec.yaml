@@ -1,0 +1,66 @@
+name: jet_print_google_fonts
+description: >-
+  A curated, offline catalog of open-source (Google Fonts) families for the
+  jet_print report library. Bundles Latin + Latin-Extended subset faces as
+  assets and produces the List<JetFontFamily> jet_print's font seam consumes —
+  no runtime network, deterministic PDF export.
+version: 0.1.0
+publish_to: none
+
+# Workspace member; resolved once at the repo root.
+resolution: workspace
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # The library whose JetFontFace/JetFontFamily/JetFontWeight this package builds.
+  jet_print:
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  # Bundled subset font faces + their license texts. Consumers receive these
+  # transitively; no host wiring needed. NOTE: Flutter asset directory entries
+  # are NOT recursive — each family subdirectory must be listed explicitly. The
+  # growth tool (tool/fetch_google_fonts.dart) regenerates this block.
+  assets:
+    - assets/fonts/Arvo/
+    - assets/fonts/Barlow/
+    - assets/fonts/Bitter/
+    - assets/fonts/Cabin/
+    - assets/fonts/Crimson Text/
+    - assets/fonts/DM Sans/
+    - assets/fonts/EB Garamond/
+    - assets/fonts/Fira Sans/
+    - assets/fonts/Inter/
+    - assets/fonts/JetBrains Mono/
+    - assets/fonts/Karla/
+    - assets/fonts/Lato/
+    - assets/fonts/Libre Baskerville/
+    - assets/fonts/Libre Franklin/
+    - assets/fonts/Lora/
+    - assets/fonts/Manrope/
+    - assets/fonts/Merriweather/
+    - assets/fonts/Montserrat/
+    - assets/fonts/Mulish/
+    - assets/fonts/Noto Sans/
+    - assets/fonts/Noto Serif/
+    - assets/fonts/Nunito/
+    - assets/fonts/Open Sans/
+    - assets/fonts/PT Serif/
+    - assets/fonts/Playfair Display/
+    - assets/fonts/Poppins/
+    - assets/fonts/Raleway/
+    - assets/fonts/Roboto/
+    - assets/fonts/Roboto Slab/
+    - assets/fonts/Rubik/
+    - assets/fonts/Source Sans 3/
+    - assets/fonts/Spectral/
+    - assets/fonts/Work Sans/
+    - assets/licenses/

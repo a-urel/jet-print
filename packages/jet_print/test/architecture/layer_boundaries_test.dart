@@ -301,7 +301,7 @@ void main() {
 
     test(
         'the engine/ facade seam exists and only depends inward '
-        '(fill/layout/frame/expression/data/domain)', () {
+        '(fill/layout/frame/text/expression/data/domain)', () {
       final Directory engineDir =
           Directory('${root.path}/packages/jet_print/lib/src/rendering/engine');
       expect(engineDir.existsSync(), isTrue,
@@ -320,14 +320,19 @@ void main() {
             .allMatches(file.readAsStringSync())
             .map((Match m) => m.group(1)!)) {
           // The facade composes fill + layout and wraps frames; it must not
-          // reach the designer seam nor the paint/text/elements siblings, and
+          // reach the designer seam nor the paint/elements siblings, and
           // (except RenderOptions' Locale) stays Flutter-free.
+          //
+          // text/ is the one allowed sibling (022): the engine owns the per-
+          // render FontRegistry build (registerDefault + host families) and
+          // measures with a MetricsTextMeasurer over it, carrying that registry
+          // on RenderedReport — the same pure-Dart text sublayer layout/ already
+          // depends on. It is inward (text → domain only), Flutter-free, and
+          // keeps export/preview WYSIWYG by construction (Principle IV).
           final bool outward = uri.contains('designer') ||
               uri.contains('../paint/') ||
-              uri.contains('../text/') ||
               uri.contains('../elements/') ||
               uri.contains('/rendering/paint/') ||
-              uri.contains('/rendering/text/') ||
               uri.contains('/rendering/elements/');
           if (outward || (_isFlutterUi(uri) && !isRenderOptions)) {
             violations.add('${file.path} -> $uri');
@@ -336,7 +341,7 @@ void main() {
       }
       expect(violations, isEmpty,
           reason: 'rendering/engine may depend only inward '
-              '(fill/layout/frame/expression/data/domain):\n'
+              '(fill/layout/frame/text/expression/data/domain):\n'
               '${violations.join('\n')}');
     });
 

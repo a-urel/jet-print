@@ -352,27 +352,47 @@ class _FontFamilyRow extends StatelessWidget {
     required this.fonts,
     required this.style,
     required this.onCommit,
+    this.showBuiltIns = true,
   });
 
   final FontRegistry fonts;
   final JetTextStyle style;
   final ValueChanged<JetTextStyle> onCommit;
 
+  /// Whether the built-in Default family is offered as an option (022).
+  final bool showBuiltIns;
+
   @override
   Widget build(BuildContext context) {
     final ShadThemeData theme = ShadTheme.of(context);
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
+    // `families` (full set, incl. built-ins) backs availability/effective
+    // checks; `options` is what the picker offers — built-ins filtered out when
+    // hidden (022). Default stays resolvable as the fallback either way.
     final List<String> families = fonts.families;
+    const Set<String> builtIns = <String>{FontRegistry.defaultFamily};
+    final List<String> options = showBuiltIns
+        ? families
+        : <String>[
+            for (final String f in families)
+              if (!builtIns.contains(f)) f,
+          ];
     final String? stored = style.fontFamily;
     final bool unavailable = stored != null && !families.contains(stored);
     final String effective = stored ?? FontRegistry.defaultFamily;
+    // With built-ins hidden, a value that resolves to one (most commonly the
+    // null "renderer default" → "Default") shows the localized "Default" label
+    // rather than the raw family name in the UI (022).
+    final bool showAsDefault = !showBuiltIns && builtIns.contains(effective);
 
     return _PresetDropdown(
       fieldKey: const ValueKey<String>('$_p.field.fontFamily'),
-      label: unavailable ? l10n.fontFamilyUnavailable(stored) : effective,
+      label: unavailable
+          ? l10n.fontFamilyUnavailable(stored)
+          : (showAsDefault ? l10n.fontFamilyDefault : effective),
       tooltip: l10n.fontFamilyPickerTooltip,
       options: <_DropdownOption>[
-        for (final String family in families)
+        for (final String family in options)
           _DropdownOption(
             optionKey: ValueKey<String>('$_p.field.fontFamily.option.$family'),
             label: family,

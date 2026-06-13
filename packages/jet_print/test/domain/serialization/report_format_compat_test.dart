@@ -15,7 +15,7 @@ const String _preFeatureReportJson =
     '"bands":[{"type":"pageHeader","height":120.0,"elements":['
     '{"type":"text","id":"styled-text",'
     '"bounds":{"x":10.0,"y":10.0,"w":200.0,"h":24.0},"text":"INVOICE",'
-    '"style":{"fontFamily":"JetSans","fontSize":20.0,"weight":"semiBold",'
+    '"style":{"fontFamily":"Helvetica","fontSize":20.0,"weight":"semiBold",'
     '"italic":true,"color":"#80FF8800","align":"justify"}},'
     '{"type":"text","id":"plain-text",'
     '"bounds":{"x":10.0,"y":40.0,"w":200.0,"h":16.0},'
@@ -47,7 +47,7 @@ void main() {
       final List<ReportElement> elements = decoded.bands.single.elements;
 
       final TextElement styled = elements[0] as TextElement;
-      expect(styled.style.fontFamily, 'JetSans');
+      expect(styled.style.fontFamily, 'Helvetica');
       expect(styled.style.weight, JetFontWeight.semiBold);
       expect(styled.style.color, const JetColor(0x80FF8800));
       expect(styled.style.align, JetTextAlign.justify);
