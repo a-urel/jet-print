@@ -1,0 +1,32 @@
+name: jet_print_google_fonts
+description: >-
+  A curated, offline catalog of open-source (Google Fonts) families for the
+  jet_print report library. Bundles Latin + Latin-Extended subset faces as
+  assets and produces the List<JetFontFamily> jet_print's font seam consumes —
+  no runtime network, deterministic PDF export.
+version: 0.1.0
+publish_to: none
+
+# Workspace member; resolved once at the repo root.
+resolution: workspace
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # The library whose JetFontFace/JetFontFamily/JetFontWeight this package builds.
+  jet_print:
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  # Bundled subset font faces + their license texts (populated by Task 7 and the
+  # growth tool). Consumers receive these transitively; no host wiring needed.
+  assets:
+    - assets/fonts/
+    - assets/licenses/
