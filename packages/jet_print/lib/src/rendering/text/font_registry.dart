@@ -29,10 +29,26 @@ class FontRegistry {
         _FontEntry(bytes, parseTtfMetrics(bytes));
   }
 
-  /// Registers the bundled default under [defaultFamily]. Pass [bytes] to
-  /// override (e.g. tests); otherwise the embedded font is used.
-  void registerDefault({Uint8List? bytes}) =>
-      register(defaultFamily, bytes ?? kDefaultFontBytes);
+  /// Registers the bundled default under [defaultFamily]: all four embedded
+  /// Noto Sans faces (Regular, Bold, Italic, Bold Italic), so a Bold/Italic
+  /// edit changes glyphs everywhere this registry feeds — canvas, preview,
+  /// and export alike. Intermediate weights (`medium`/`semiBold`) have no
+  /// bundled face and resolve to Regular via the fallback chain.
+  ///
+  /// Pass [bytes] to override with a single Regular face (the test seam);
+  /// the variant faces are then not registered and every lookup falls back
+  /// to the override.
+  void registerDefault({Uint8List? bytes}) {
+    if (bytes != null) {
+      register(defaultFamily, bytes);
+      return;
+    }
+    register(defaultFamily, kDefaultFontBytes);
+    register(defaultFamily, kDefaultFontBoldBytes, weight: JetFontWeight.bold);
+    register(defaultFamily, kDefaultFontItalicBytes, italic: true);
+    register(defaultFamily, kDefaultFontBoldItalicBytes,
+        weight: JetFontWeight.bold, italic: true);
+  }
 
   /// Whether the default font has been registered.
   bool get hasDefault =>

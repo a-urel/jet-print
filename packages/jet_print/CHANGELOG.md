@@ -43,6 +43,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     a missing id, or a wrong element type. The editors, commands, underline
     helper, and `FontRegistry` (including its new internal `families` getter)
     stay private.
+  - **The bundled default font now ships all four faces.** `JetSans` (a Latin
+    subset of Noto Sans, OFL 1.1) previously embedded only the Regular face, so
+    a Bold/Italic edit changed the model but not the glyphs. The registry now
+    pre-registers Regular, **Bold, Italic, and Bold Italic** subsets covering
+    the identical codepoint set, so B/I/U edits are visible on canvas, preview,
+    and export alike. Intermediate weights (`medium`/`semiBold`) still resolve
+    to Regular until dedicated faces exist. (~89 KB additional embedded font
+    data; the PDF exporter embeds each face once per document, only when used.)
   - **Serialization:** `kReportSchemaVersion` stays **1**, no migration.
     `underline` is additive-optional; all existing omission rules are unchanged,
     and pre-feature reports load and re-save **byte-identically** (pinned by a
