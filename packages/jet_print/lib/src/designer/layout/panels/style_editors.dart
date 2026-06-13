@@ -352,17 +352,35 @@ class _FontFamilyRow extends StatelessWidget {
     required this.fonts,
     required this.style,
     required this.onCommit,
+    this.showBuiltIns = true,
   });
 
   final FontRegistry fonts;
   final JetTextStyle style;
   final ValueChanged<JetTextStyle> onCommit;
 
+  /// Whether the built-in JetSans/JetSerif/JetMono are offered as options (022).
+  final bool showBuiltIns;
+
   @override
   Widget build(BuildContext context) {
     final ShadThemeData theme = ShadTheme.of(context);
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
+    // `families` (full set, incl. built-ins) backs availability/effective
+    // checks; `options` is what the picker offers — built-ins filtered out when
+    // hidden (022). JetSans stays resolvable as the fallback either way.
     final List<String> families = fonts.families;
+    const Set<String> builtIns = <String>{
+      FontRegistry.defaultFamily,
+      FontRegistry.serifFamily,
+      FontRegistry.monoFamily,
+    };
+    final List<String> options = showBuiltIns
+        ? families
+        : <String>[
+            for (final String f in families)
+              if (!builtIns.contains(f)) f,
+          ];
     final String? stored = style.fontFamily;
     final bool unavailable = stored != null && !families.contains(stored);
     final String effective = stored ?? FontRegistry.defaultFamily;
@@ -372,7 +390,7 @@ class _FontFamilyRow extends StatelessWidget {
       label: unavailable ? l10n.fontFamilyUnavailable(stored) : effective,
       tooltip: l10n.fontFamilyPickerTooltip,
       options: <_DropdownOption>[
-        for (final String family in families)
+        for (final String family in options)
           _DropdownOption(
             optionKey: ValueKey<String>('$_p.field.fontFamily.option.$family'),
             label: family,

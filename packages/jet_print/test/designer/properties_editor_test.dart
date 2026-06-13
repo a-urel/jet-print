@@ -15,6 +15,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../support/test_fonts.dart';
 import 'support/designer_harness.dart';
 
 const String _p = 'jet_print.designer.properties';
@@ -161,6 +162,40 @@ Future<JetReportDesignerController> _pumpStyledText(
   await tester.pumpAndSettle();
   return c;
 }
+
+/// Like [_pumpStyledText] but builds the designer with host [fonts] (022 / US1),
+/// so the family picker enumerates them. The external controller is disposed on
+/// tear-down (the designer never disposes a host-owned controller).
+Future<JetReportDesignerController> _pumpStyledTextWithFonts(
+  WidgetTester tester,
+  JetTextStyle style,
+  List<JetFontFamily> fonts, {
+  bool showBuiltInFonts = true,
+}) async {
+  final JetReportDesignerController c = _styledTextController(style);
+  addTearDown(c.dispose);
+  await pumpDesigner(
+    tester,
+    designer: JetReportDesigner(
+      controller: c,
+      fonts: fonts,
+      showBuiltInFonts: showBuiltInFonts,
+    ),
+  );
+  await _openProperties(tester);
+  c.select('t');
+  await tester.pumpAndSettle();
+  return c;
+}
+
+/// A one-family host font list ("Acme Brand", regular only) built from the
+/// shared JetSerif test bytes.
+List<JetFontFamily> _brandFonts() => <JetFontFamily>[
+      JetFontFamily(
+        name: 'Acme Brand',
+        faces: <JetFontFace>[JetFontFace(bytes: validRegularFontBytes())],
+      ),
+    ];
 
 /// The semantics of the Font-section control at key suffix [name].
 SemanticsNode _semanticsOf(WidgetTester tester, String name) =>
@@ -749,6 +784,93 @@ void main() {
       await tester.pumpAndSettle();
       expect(_textStyleOf(c, 't').fontFamily, 'Unknown Family');
       expect(_textStyleOf(c, 't').weight, JetFontWeight.bold);
+    });
+
+    testWidgets(
+        'an unregistered family survives a save (never silently swapped) '
+        '(C11 / US2)', (WidgetTester tester) async {
+      final JetReportDesignerController c = await _pumpStyledText(
+          tester, const JetTextStyle(fontFamily: 'Unknown Family'));
+
+      // An unrelated edit, then the host's save path (encode the live template).
+      await tester.tap(_field('bold'));
+      await tester.pumpAndSettle();
+      final String json = JetReportFormat.encodeJson(c.template);
+      expect(json, contains('Unknown Family'),
+          reason: 'the stored family name is preserved on save (SC-003)');
+      // And decoding brings it back unchanged.
+      expect(
+          JetReportFormat.decodeJson(json)
+              .bands
+              .first
+              .elements
+              .whereType<TextElement>()
+              .single
+              .style
+              .fontFamily,
+          'Unknown Family');
+    });
+  });
+
+  group('properties — host family in the picker (C10 / US1)', () {
+    testWidgets(
+        'lists the host family after the built-ins, previewed in its own '
+        'typeface, and applying it is one undoable commit',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await _pumpStyledTextWithFonts(
+          tester, const JetTextStyle(), _brandFonts());
+
+      await tester.tap(_field('fontFamily'));
+      await tester.pumpAndSettle();
+
+      final Finder acme = _field('fontFamily.option.Acme Brand');
+      expect(acme, findsOneWidget);
+      // Built-ins precede the host family (the families order; C5).
+      expect(
+          tester.getTopLeft(acme).dy,
+          greaterThan(
+              tester.getTopLeft(_field('fontFamily.option.JetSans')).dy),
+          reason: 'the host family is listed after the built-ins');
+      // Previewed in its own typeface.
+      final Text label = tester
+          .widget<Text>(find.descendant(of: acme, matching: find.byType(Text)));
+      expect(label.style?.fontFamily, 'Acme Brand',
+          reason: 'the option previews in its own typeface');
+
+      await tester.tap(acme);
+      await tester.pumpAndSettle();
+      expect(_textStyleOf(c, 't').fontFamily, 'Acme Brand',
+          reason: 'applying commits the host family name');
+      c.undo();
+      expect(_textStyleOf(c, 't').fontFamily, isNull,
+          reason: 'one-step undo restores the prior (default) family');
+    });
+
+    testWidgets(
+        'showBuiltInFonts: false hides JetSans/JetSerif/JetMono but keeps the '
+        'host family (022)', (WidgetTester tester) async {
+      await _pumpStyledTextWithFonts(
+          tester, const JetTextStyle(), _brandFonts(),
+          showBuiltInFonts: false);
+
+      await tester.tap(_field('fontFamily'));
+      await tester.pumpAndSettle();
+
+      expect(_field('fontFamily.option.Acme Brand'), findsOneWidget,
+          reason: 'the host catalog family is still offered');
+      expect(_field('fontFamily.option.JetSans'), findsNothing);
+      expect(_field('fontFamily.option.JetSerif'), findsNothing);
+      expect(_field('fontFamily.option.JetMono'), findsNothing);
+    });
+
+    testWidgets('built-ins are shown by default (backward-compatible)',
+        (WidgetTester tester) async {
+      await _pumpStyledTextWithFonts(
+          tester, const JetTextStyle(), _brandFonts());
+      await tester.tap(_field('fontFamily'));
+      await tester.pumpAndSettle();
+      expect(_field('fontFamily.option.JetSans'), findsOneWidget);
+      expect(_field('fontFamily.option.Acme Brand'), findsOneWidget);
     });
   });
 

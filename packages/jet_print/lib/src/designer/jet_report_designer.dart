@@ -6,6 +6,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../data/data_schema.dart';
 import '../domain/report_template.dart';
 import '../rendering/text/font_registry.dart';
+import '../rendering/text/jet_font.dart';
 import 'controller/jet_report_designer_controller.dart';
 import 'designer_font_scope.dart';
 import 'designer_schema_scope.dart';
@@ -74,6 +75,8 @@ class JetReportDesigner extends StatefulWidget {
     this.onOpenRequested,
     this.onPreviewRequested,
     this.dataSchema,
+    this.fonts = const <JetFontFamily>[],
+    this.showBuiltInFonts = true,
   });
 
   /// An externally-owned controller. When provided, the host owns its lifecycle
@@ -101,6 +104,26 @@ class JetReportDesigner extends StatefulWidget {
   /// the live template to render. Null ⇒ the Preview action renders disabled.
   final ReportPreviewRequestedCallback? onPreviewRequested;
 
+  /// Host-contributed font families the designer makes selectable (022 / FR-002).
+  ///
+  /// Each face is the bytes the host hands in. They are added to the designer's
+  /// one hoisted registry **after** the bundled defaults
+  /// (last-registration-wins), so the family picker lists them after the
+  /// built-ins (previewed in their own typeface) and the canvas measures and
+  /// paints with them. Register **before** building the designer; the empty
+  /// default keeps the designer built-ins-only (SC-005).
+  ///
+  /// Pass the **same** `List<JetFontFamily>` here and to `RenderOptions.fonts`
+  /// (the render the preview/export consume) so design == preview == export.
+  final List<JetFontFamily> fonts;
+
+  /// Whether the bundled built-in families (JetSans/JetSerif/JetMono) appear as
+  /// selectable options in the family picker (022). Defaults to `true`. Set
+  /// `false` when you supply your own [fonts] catalog and want only those
+  /// offered — JetSans still resolves as the silent render fallback, so text
+  /// with no/unknown family always renders; it is just hidden from the picker.
+  final bool showBuiltInFonts;
+
   @override
   State<JetReportDesigner> createState() => _JetReportDesignerState();
 }
@@ -111,7 +134,8 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
   /// The designer's ONE font registry, hoisted here (021 / research §1) so the
   /// canvas frame builder and the Properties panel's family picker share the
   /// same family set — what the picker offers is exactly what the canvas
-  /// measures and paints with.
+  /// measures and paints with. The bundled defaults first, then the host
+  /// [JetReportDesigner.fonts] (022, last-registration-wins).
   final FontRegistry _fonts = FontRegistry()..registerDefault();
 
   /// Whether this state created (and must dispose) [_controller]. A
@@ -121,6 +145,10 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
   @override
   void initState() {
     super.initState();
+    // Layer the host families on top of the bundled defaults (022 / FR-002),
+    // last-registration-wins — before any build, so the picker and canvas see
+    // them and `preloadUiFontFamilies` below previews them in their own type.
+    _fonts.registerHostFonts(widget.fonts);
     _adoptController();
     // Make every registered family's Regular face available to the engine up
     // front, so the family picker previews each option in its own typeface
@@ -206,6 +234,7 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
       dataSchema: widget.dataSchema,
       child: DesignerFontScope(
         fonts: _fonts,
+        showBuiltIns: widget.showBuiltInFonts,
         child: DesignerScope(
           controller: _controller,
           child: LayoutBuilder(

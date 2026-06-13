@@ -255,6 +255,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                 label: l10n.fontFamilyLabel,
                 child: _FontFamilyRow(
                   fonts: DesignerFontScope.of(context),
+                  showBuiltIns: DesignerFontScope.showBuiltInsOf(context),
                   style: element.style,
                   onCommit: (JetTextStyle next) =>
                       controller.setTextStyle(id, next),

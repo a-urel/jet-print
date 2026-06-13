@@ -16,6 +16,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../data/data_schema.dart';
 import '../domain/report_template.dart';
 import '../rendering/engine/rendered_report.dart';
+import '../rendering/text/jet_font.dart';
 import 'controller/jet_report_designer_controller.dart';
 import 'jet_report_designer.dart';
 import 'layout/unified_top_bar.dart';
@@ -55,6 +56,8 @@ class JetReportWorkspace extends StatefulWidget {
     this.onExportPdf,
     this.onPrint,
     this.loadingBuilder,
+    this.fonts = const <JetFontFamily>[],
+    this.showBuiltInFonts = true,
   });
 
   /// The model + undo history shared with the designer canvas and panels.
@@ -83,6 +86,19 @@ class JetReportWorkspace extends StatefulWidget {
   /// Builds the indicator shown while a render is in flight; null ⇒ a themed
   /// indeterminate progress bar.
   final WidgetBuilder? loadingBuilder;
+
+  /// Host-contributed font families, forwarded to the nested
+  /// [JetReportDesigner.fonts] (022). The preview/export side picks up the same
+  /// fonts via the host's [renderReport] callback (`RenderOptions.fonts`) — so
+  /// pass the **same** `List<JetFontFamily>` to both for design == preview ==
+  /// export.
+  final List<JetFontFamily> fonts;
+
+  /// Forwarded to [JetReportDesigner.showBuiltInFonts] (022): whether the
+  /// built-in JetSans/JetSerif/JetMono appear in the family picker. Defaults to
+  /// `true`; set `false` to offer only your [fonts] catalog (JetSans stays the
+  /// silent render fallback).
+  final bool showBuiltInFonts;
 
   @override
   State<JetReportWorkspace> createState() => _JetReportWorkspaceState();
@@ -160,6 +176,8 @@ class _JetReportWorkspaceState extends State<JetReportWorkspace> {
         JetReportDesigner(
           controller: widget.controller,
           dataSchema: widget.dataSchema,
+          fonts: widget.fonts,
+          showBuiltInFonts: widget.showBuiltInFonts,
           onSaveRequested: widget.onSaveRequested,
           onOpenRequested: widget.onOpenRequested,
           onPreviewRequested: _enterPreview,
