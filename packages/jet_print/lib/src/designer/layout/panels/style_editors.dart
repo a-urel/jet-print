@@ -381,7 +381,9 @@ class _FontFamilyRow extends StatelessWidget {
             // form the designer actually loads glyphs under).
             labelStyle: theme.textTheme.small.copyWith(
               fontFamily: family,
-              fontFamilyFallback: <String>['${family}__normal'],
+              fontFamilyFallback: <String>[
+                uiFontFamily(family, JetFontWeight.normal, false),
+              ],
             ),
             selected: !unavailable && effective == family,
             onPick: () => onCommit(style.copyWith(

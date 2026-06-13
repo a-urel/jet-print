@@ -19,6 +19,7 @@ import '../../../domain/styles/text_style.dart';
 import '../../../rendering/elements/shape_path.dart';
 import '../../../rendering/frame/primitive.dart';
 import '../../../rendering/text/font_registry.dart';
+import '../../../rendering/text/ui_font_family.dart';
 import '../../controller/jet_report_designer_controller.dart';
 import '../../designer_font_scope.dart';
 import '../../designer_schema_scope.dart';

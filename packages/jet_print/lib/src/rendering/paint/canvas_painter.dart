@@ -13,6 +13,7 @@ import '../../domain/styles/text_style.dart';
 import '../frame/page_frame.dart';
 import '../frame/primitive.dart';
 import '../text/font_registry.dart';
+import '../text/ui_font_family.dart';
 import '../text/underline_metrics.dart';
 import 'image_fit.dart';
 import 'report_painter.dart';
@@ -49,18 +50,13 @@ class CanvasPainter implements ReportPainter {
 
   Future<void> _ensureFont(
       String family, JetFontWeight weight, bool italic) async {
-    final String uiFamily = _uiFamily(family, weight, italic);
+    final String uiFamily = uiFontFamily(family, weight, italic);
     if (_loadedFamilies.contains(uiFamily)) return;
     final Uint8List bytes =
         _registry.bytesFor(family, weight: weight, italic: italic);
     await _loadFont(bytes, fontFamily: uiFamily);
     _loadedFamilies.add(uiFamily);
   }
-
-  /// A `dart:ui` family name unique to the (family, weight, italic) variant, so
-  /// distinct variant bytes never collide under one name.
-  static String _uiFamily(String family, JetFontWeight weight, bool italic) =>
-      '${family}__${weight.name}${italic ? '_italic' : ''}';
 
   @override
   void beginPage(PageFormat format) {}
@@ -71,7 +67,7 @@ class CanvasPainter implements ReportPainter {
   @override
   void drawTextRun(TextRunPrimitive p) {
     final String uiFamily =
-        _uiFamily(p.fontFamily, p.style.weight, p.style.italic);
+        uiFontFamily(p.fontFamily, p.style.weight, p.style.italic);
     final ui.Color color = ui.Color(p.style.color.argb);
     for (final line in p.lines) {
       if (line.text.isEmpty) continue;

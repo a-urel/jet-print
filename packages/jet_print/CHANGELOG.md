@@ -51,6 +51,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     and export alike. Intermediate weights (`medium`/`semiBold`) still resolve
     to Regular until dedicated faces exist. (~89 KB additional embedded font
     data; the PDF exporter embeds each face once per document, only when used.)
+  - **Two more bundled families: `JetSerif` and `JetMono`.** Latin subsets of
+    Noto Serif and JetBrains Mono (both OFL 1.1), each in all four faces, so
+    the family picker offers a real choice out of the box and a family edit
+    stays WYSIWYG across canvas, preview, and export — every entry point builds
+    its registry through the same `registerDefault()`. The designer also
+    preloads each family's Regular face into the engine at mount, so picker
+    options preview in their own typeface before the canvas has ever painted
+    that family. (~243 KB additional embedded font data; PDFs still embed only
+    the faces a document actually uses.)
+  - **Canvas right-click menu now dismisses on a primary click anywhere on the
+    canvas.** It previously closed only when clicking the surrounding chrome,
+    because the canvas gesture layer consumed the tap before the menu's own
+    dismiss handler saw it. The dismissing click still acts on the canvas —
+    selecting or deselecting as usual — and changes no document state.
   - **Serialization:** `kReportSchemaVersion` stays **1**, no migration.
     `underline` is additive-optional; all existing omission rules are unchanged,
     and pre-feature reports load and re-save **byte-identically** (pinned by a

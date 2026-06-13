@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
@@ -8,6 +10,7 @@ import 'controller/jet_report_designer_controller.dart';
 import 'designer_font_scope.dart';
 import 'designer_schema_scope.dart';
 import 'designer_scope.dart';
+import 'font_preload.dart';
 import 'l10n/jet_print_localizations.dart';
 import 'layout/designer_right_panel.dart';
 import 'layout/designer_surface.dart';
@@ -119,6 +122,11 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
   void initState() {
     super.initState();
     _adoptController();
+    // Make every registered family's Regular face available to the engine up
+    // front, so the family picker previews each option in its own typeface
+    // even before the canvas has painted that family. Fire-and-forget: when a
+    // face lands, the engine's system-fonts notification re-renders text.
+    unawaited(preloadUiFontFamilies(_fonts));
   }
 
   @override

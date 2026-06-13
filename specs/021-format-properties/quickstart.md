@@ -14,8 +14,8 @@ flutter run -d macos --target apps/jet_print_playground/lib/main.dart
 
 1. Drop a **text** element on the canvas; select it → Properties tab shows a **Font** section
    with family, size, B/I/U, color, and alignment bound to current values.
-2. Family select lists the registered families (built-in `JetSans` today), each previewed in
-   its own typeface — pick one; canvas re-renders immediately.
+2. Family select lists the registered families (built-in `JetSans`, `JetSerif`, and
+   `JetMono`), each previewed in its own typeface — pick one; canvas re-renders immediately.
 3. Size: type `36` + Enter → text grows. Type `500` → clamps to `144`. Type `abc` → rejected,
    previous value restored.
 4. Toggle **B**, **I**, **U** — each press updates canvas instantly and shows active state.
