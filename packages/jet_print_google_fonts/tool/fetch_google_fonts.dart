@@ -47,7 +47,11 @@ Future<void> main() async {
       final File raw = File('${outDir.path}/.${face.suffix}.full.ttf');
       await raw.writeAsBytes(await _getBytes(client, Uri.parse(m.group(1)!)));
       final String out = '${outDir.path}/${_fileName(name, face.suffix)}';
-      final ProcessResult sub = Process.runSync('pyftsubset', <String>[
+      // fontTools' subsetter (== pyftsubset). Invoked as a module so it works
+      // whether or not the `pyftsubset` CLI is on PATH (`pip install fonttools`).
+      final ProcessResult sub = Process.runSync('python3', <String>[
+        '-m',
+        'fontTools.subset',
         raw.path,
         '--unicodes=$_unicodes',
         '--output-file=$out',
@@ -55,8 +59,7 @@ Future<void> main() async {
         '--desubroutinize',
       ]);
       if (sub.exitCode != 0) {
-        stderr.writeln(
-            'pyftsubset failed for $name ${face.suffix}: ${sub.stderr}');
+        stderr.writeln('subset failed for $name ${face.suffix}: ${sub.stderr}');
       }
       raw.deleteSync();
     }
@@ -68,8 +71,39 @@ Future<void> main() async {
     stdout.writeln('Fetched + subset: $name ($license)');
   }
   _regenerateCatalog();
-  stdout.writeln('Regenerated lib/src/google_font_catalog.dart. '
+  _regeneratePubspecAssets();
+  stdout.writeln('Regenerated google_font_catalog.dart + pubspec assets. '
       'Review licenses, run `flutter test packages/jet_print_google_fonts`, commit.');
+}
+
+/// Rewrites the pubspec `flutter: assets:` list with one entry per family
+/// directory (Flutter asset dir entries are NOT recursive — each subdirectory
+/// must be listed) plus the licenses directory. Keeps everything up to and
+/// including the `  assets:` line, then re-emits the list (which sits at EOF).
+void _regeneratePubspecAssets() {
+  final File f = File('pubspec.yaml');
+  final List<String> lines = f.readAsLinesSync();
+  final int idx = lines.indexWhere((String l) => l.trimRight() == '  assets:');
+  if (idx < 0) {
+    stderr
+        .writeln('No `  assets:` block in pubspec.yaml; skipping asset regen.');
+    return;
+  }
+  final List<Directory> fams = Directory('assets/fonts')
+      .listSync()
+      .whereType<Directory>()
+      .toList()
+    ..sort((Directory a, Directory b) => a.path.compareTo(b.path));
+  final StringBuffer out = StringBuffer();
+  for (int i = 0; i <= idx; i++) {
+    out.writeln(lines[i]);
+  }
+  for (final Directory d in fams) {
+    out.writeln(
+        '    - assets/fonts/${d.path.split(Platform.pathSeparator).last}/');
+  }
+  out.writeln('    - assets/licenses/');
+  f.writeAsStringSync(out.toString());
 }
 
 String _fileName(String family, String suffix) =>
@@ -78,6 +112,15 @@ String _fileName(String family, String suffix) =>
 /// Re-emits google_font_catalog.dart from whatever families exist under
 /// assets/fonts/ (seed + fetched), in directory-sort order.
 void _regenerateCatalog() {
+  // License per family: from curated_families.dart, with the OFL seed families
+  // (Noto Sans/Serif, JetBrains Mono) defaulting to OFL-1.1.
+  final Map<String, String> licenseOf = <String, String>{
+    'Noto Sans': 'OFL-1.1',
+    'Noto Serif': 'OFL-1.1',
+    'JetBrains Mono': 'OFL-1.1',
+    for (final (String name, String license, String _) in curatedFamilies)
+      name: license,
+  };
   final List<Directory> families = Directory('assets/fonts')
       .listSync()
       .whereType<Directory>()
@@ -100,7 +143,7 @@ const List<GoogleFontEntry> googleFontCatalog = <GoogleFontEntry>[
     final String name = fam.path.split(Platform.pathSeparator).last;
     out.writeln('  GoogleFontEntry(');
     out.writeln("    name: '$name',");
-    out.writeln("    license: 'OFL-1.1', // maintainer: verify per family");
+    out.writeln("    license: '${licenseOf[name] ?? 'OFL-1.1'}',");
     out.writeln('    faceAssets: <FontFaceSlot, String>{');
     for (final ({String suffix, int weight, bool italic, String jetWeight}) face
         in _faces) {
