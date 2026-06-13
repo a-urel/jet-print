@@ -853,6 +853,14 @@ void main() {
           tester, const JetTextStyle(), _brandFonts(),
           showBuiltInFonts: false);
 
+      // The trigger shows a neutral "Default" for the null-family element —
+      // never the internal "JetSans" name.
+      expect(
+          find.descendant(
+              of: _field('fontFamily'), matching: find.text('Default')),
+          findsOneWidget);
+      expect(find.textContaining('JetSans'), findsNothing);
+
       await tester.tap(_field('fontFamily'));
       await tester.pumpAndSettle();
 

@@ -451,6 +451,9 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get fontFamilyPickerTooltip => 'Choose font family';
 
   @override
+  String get fontFamilyDefault => 'Default';
+
+  @override
   String fontFamilyUnavailable(String family) {
     return '$family (unavailable)';
   }

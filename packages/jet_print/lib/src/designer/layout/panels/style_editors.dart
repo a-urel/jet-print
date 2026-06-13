@@ -384,10 +384,16 @@ class _FontFamilyRow extends StatelessWidget {
     final String? stored = style.fontFamily;
     final bool unavailable = stored != null && !families.contains(stored);
     final String effective = stored ?? FontRegistry.defaultFamily;
+    // With built-ins hidden, a value that resolves to one (most commonly the
+    // null "renderer default" → JetSans) shows a neutral "Default" label rather
+    // than leaking the internal "Jet*" name into the UI (022).
+    final bool showAsDefault = !showBuiltIns && builtIns.contains(effective);
 
     return _PresetDropdown(
       fieldKey: const ValueKey<String>('$_p.field.fontFamily'),
-      label: unavailable ? l10n.fontFamilyUnavailable(stored) : effective,
+      label: unavailable
+          ? l10n.fontFamilyUnavailable(stored)
+          : (showAsDefault ? l10n.fontFamilyDefault : effective),
       tooltip: l10n.fontFamilyPickerTooltip,
       options: <_DropdownOption>[
         for (final String family in options)

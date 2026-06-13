@@ -164,6 +164,7 @@
   "propertiesFont": "Schrift",
   "fontFamilyLabel": "Schriftart",
   "fontFamilyPickerTooltip": "Schriftart wählen",
+  "fontFamilyDefault": "Standard",
   "fontFamilyUnavailable": "{family} (nicht verfügbar)",
   "fontSizeLabel": "Größe",
   "fontBoldTooltip": "Fett",

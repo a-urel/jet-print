@@ -613,6 +613,10 @@
   "@fontFamilyPickerTooltip": {
     "description": "Accessible name for the font-family picker trigger (021)."
   },
+  "fontFamilyDefault": "Default",
+  "@fontFamilyDefault": {
+    "description": "Picker label shown when an element uses the renderer default font and the built-in families are hidden from the picker (022)."
+  },
   "fontFamilyUnavailable": "{family} (unavailable)",
   "@fontFamilyUnavailable": {
     "description": "Picker entry for a stored font family that is not registered with the designer: the name is preserved but renders with the default font until repicked (021).",

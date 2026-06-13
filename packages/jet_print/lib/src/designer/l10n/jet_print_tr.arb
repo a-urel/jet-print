@@ -164,6 +164,7 @@
   "propertiesFont": "Yazı Tipi",
   "fontFamilyLabel": "Yazı tipi",
   "fontFamilyPickerTooltip": "Yazı tipi seç",
+  "fontFamilyDefault": "Varsayılan",
   "fontFamilyUnavailable": "{family} (kullanılamıyor)",
   "fontSizeLabel": "Boyut",
   "fontBoldTooltip": "Kalın",
