@@ -71,9 +71,15 @@ const Color _bandSeparatorColor = Color(0x14000000); // black 8%
 // The alignment grid is paper chrome, lighter than the band separators so it
 // recedes behind content (FR-003 / research D7).
 const Color _gridColor = Color(0x0D000000); // black ~5%
-const Color _badgeBackgroundColor = Color(0xFFF1F5F9); // slate-100
-const Color _badgeForegroundColor = Color(0xFF64748B); // slate-500
-const Color _badgeBorderColor = Color(0xFFE2E8F0); // slate-200
+// Band-type badges use a cool indigo tint so they read as designer annotations,
+// distinct from element content. Fixed (not theme-derived) like the rest of the
+// paper chrome, so they stay legible on the white sheet in any theme.
+const Color _badgeBackgroundColor = Color(0xFFEEF2FF); // indigo-50
+const Color _badgeForegroundColor = Color(0xFF4F46E5); // indigo-600
+const Color _badgeBorderColor = Color(0xFFC7D2FE); // indigo-200
+// The empty-canvas hint keeps the neutral slate it always had — it is a paper
+// prompt, not a band annotation.
+const Color _emptyHintColor = Color(0xFF64748B); // slate-500
 
 /// The live design surface: it paints element *appearance* through the shared
 /// render pipeline (cached as a `ui.Picture`) and layers direct-manipulation
@@ -1129,9 +1135,12 @@ class _DesignCanvasState extends State<DesignCanvas> {
     );
   }
 
-  /// One badge per band, anchored at the band's top-left corner. The badge size
-  /// is constant (UI chrome), so captions stay legible at any zoom; only the
-  /// anchor position scales with the view.
+  /// One badge per band, anchored at the page's left edge and each band's top.
+  /// Anchoring at the page edge (left: 0) rather than the content margin keeps
+  /// the caption in the empty left-margin gutter so it never sits on top of the
+  /// first element (which starts at the margin). The badge size is constant (UI
+  /// chrome), so captions stay legible at any zoom; only the top anchor scales
+  /// with the view.
   List<Widget> _bandBadges(
     JetReportDesignerController controller,
     DesignTimeLayout layout,
@@ -1147,7 +1156,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
         // Keyed by index so duplicate band types (e.g. several group headers)
         // never produce a duplicate key.
         key: ValueKey<String>('jet_print.designer.bandBadge.$i'),
-        left: rect.x * scale,
+        left: 0,
         top: rect.y * scale,
         child: IgnorePointer(
           child: _BandBadge(caption: bandTypeLabel(bands[i].type, l10n)),
@@ -1416,7 +1425,7 @@ class _BandBadge extends StatelessWidget {
         child: Text(
           caption,
           style: const TextStyle(
-            fontSize: 10,
+            fontSize: 9,
             height: 1.2,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.2,
@@ -1442,13 +1451,12 @@ class _EmptyHint extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        const Icon(LucideIcons.filePlus,
-            size: 32, color: _badgeForegroundColor),
+        const Icon(LucideIcons.filePlus, size: 32, color: _emptyHintColor),
         const SizedBox(height: 12),
         Text(
           message,
           textAlign: TextAlign.center,
-          style: const TextStyle(color: _badgeForegroundColor),
+          style: const TextStyle(color: _emptyHintColor),
         ),
       ],
     );
