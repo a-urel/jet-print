@@ -30,38 +30,76 @@ const JetDataSchema invoiceSchema = JetDataSchema(
   ],
 );
 
-/// A sample invoice layout: a static title band, a master-scope **detail**
-/// band with the invoice-level fields, a `lines`-bound **detail** band whose
-/// elements bind to the line fields, and a trailing master-scope detail band
-/// with the invoice total. All bindings show as design-time tokens; rendered
-/// through `JetReportEngine` they fill with real values.
+/// A sample invoice layout: one invoice per group, grouped on `invoiceNo`, so
+/// each invoice gets its own data-bound header and footer. It exercises the
+/// distinction between *page chrome* and *per-record* bands:
 ///
-/// Master fields live in master-scope detail bands (not title/summary): the
-/// render engine gives title/summary no row context by design (007b §5), and
-/// per-invoice bands repeat correctly when the source holds several invoices.
+/// * **page header** ([BandType.pageHeader]) — a static running title. Page
+///   chrome: the layouter substitutes it against a page-scoped context with no
+///   data row, so it can hold static text and `PAGE_NUMBER`/`PAGE_COUNT` only —
+///   **never** `$F{}` fields (the engine would render them blank and raise a
+///   diagnostic).
+/// * **group header** ([BandType.groupHeader], group `invoice`) — the
+///   per-invoice header: the "INVOICE" heading, the invoice number, customer,
+///   and date, plus the line-item column labels. Group bands **do** get the
+///   current row, so these `$F{}` fields fill — this is the band that does what
+///   a "header that shows the customer" needs.
+/// * **detail** ([BandType.detail], bound to `lines`) — repeats once per line
+///   item.
+/// * **group footer** ([BandType.groupFooter], group `invoice`) — the
+///   per-invoice footer with the subtotal (`$F{total}`); also data-bound.
+/// * **page footer** ([BandType.pageFooter]) — page chrome again: a
+///   `Page N of M` line built from the page-scoped `PAGE_NUMBER`/`PAGE_COUNT`.
+///
+/// The `invoice` group sets `startNewPage` so each invoice begins on its own
+/// page (and `keepTogether` so a single invoice never splits across a page
+/// boundary).
+///
+/// All bindings show as design-time tokens; rendered through `JetReportEngine`
+/// they fill with real values.
 ReportTemplate invoiceSampleTemplate() => const ReportTemplate(
       name: 'Invoice',
       page: PageFormat.a4Portrait,
+      // One group per invoice: the key changes on every master row, so the
+      // group header/footer bracket each invoice's lines.
+      groups: <ReportGroup>[
+        ReportGroup(
+          name: 'invoice',
+          expression: r'$F{invoiceNo}',
+          keepTogether: true,
+          // Each invoice starts on its own page (the first does not force a
+          // leading blank page).
+          startNewPage: true,
+        ),
+      ],
       bands: <ReportBand>[
-        // Report title — static chrome, printed once.
+        // Page header — page chrome (static only; no row context). A running
+        // title repeated at the top of every page.
         ReportBand(
-          type: BandType.title,
-          height: 40,
+          type: BandType.pageHeader,
+          height: 20,
           elements: <ReportElement>[
             TextElement(
-              id: 'title',
+              id: 'runningTitle',
+              bounds: JetRect(x: 0, y: 2, width: 300, height: 14),
+              text: 'Invoices',
+              style: JetTextStyle(fontSize: 9, color: JetColor(0xFF888888)),
+            ),
+          ],
+        ),
+        // Group header — the per-invoice header. Group bands carry the current
+        // row, so the invoice number, customer, and date all fill.
+        ReportBand(
+          type: BandType.groupHeader,
+          group: 'invoice',
+          height: 80,
+          elements: <ReportElement>[
+            TextElement(
+              id: 'heading',
               bounds: JetRect(x: 0, y: 0, width: 200, height: 28),
               text: 'INVOICE',
               style: JetTextStyle(fontSize: 22, weight: JetFontWeight.bold),
             ),
-          ],
-        ),
-        // Master header — invoice-level fields (master scope: repeats once
-        // per invoice record).
-        ReportBand(
-          type: BandType.detail,
-          height: 64,
-          elements: <ReportElement>[
             TextElement(
               id: 'invoiceNo',
               bounds: JetRect(x: 360, y: 4, width: 180, height: 18),
@@ -71,16 +109,44 @@ ReportTemplate invoiceSampleTemplate() => const ReportTemplate(
             ),
             TextElement(
               id: 'customerName',
-              bounds: JetRect(x: 0, y: 4, width: 280, height: 18),
+              bounds: JetRect(x: 0, y: 34, width: 300, height: 18),
               text: 'customerName',
               expression: r'$F{customerName}',
             ),
             TextElement(
               id: 'date',
-              bounds: JetRect(x: 360, y: 32, width: 180, height: 18),
+              bounds: JetRect(x: 360, y: 34, width: 180, height: 18),
               text: 'date',
               style: JetTextStyle(align: JetTextAlign.right),
               expression: r'$F{date}',
+            ),
+            // Column labels, aligned to the `lines` detail band below.
+            TextElement(
+              id: 'colDescription',
+              bounds: JetRect(x: 0, y: 60, width: 260, height: 16),
+              text: 'Description',
+              style: JetTextStyle(weight: JetFontWeight.bold),
+            ),
+            TextElement(
+              id: 'colQty',
+              bounds: JetRect(x: 270, y: 60, width: 50, height: 16),
+              text: 'Qty',
+              style: JetTextStyle(
+                  align: JetTextAlign.right, weight: JetFontWeight.bold),
+            ),
+            TextElement(
+              id: 'colUnitPrice',
+              bounds: JetRect(x: 330, y: 60, width: 90, height: 16),
+              text: 'Unit Price',
+              style: JetTextStyle(
+                  align: JetTextAlign.right, weight: JetFontWeight.bold),
+            ),
+            TextElement(
+              id: 'colAmount',
+              bounds: JetRect(x: 430, y: 60, width: 110, height: 16),
+              text: 'Amount',
+              style: JetTextStyle(
+                  align: JetTextAlign.right, weight: JetFontWeight.bold),
             ),
           ],
         ),
@@ -121,26 +187,46 @@ ReportTemplate invoiceSampleTemplate() => const ReportTemplate(
             ),
           ],
         ),
-        // Master total — per-invoice (master scope), after the lines.
+        // Group footer — the per-invoice subtotal (data-bound, like the header).
         ReportBand(
-          type: BandType.detail,
-          height: 40,
+          type: BandType.groupFooter,
+          group: 'invoice',
+          height: 32,
           elements: <ReportElement>[
             TextElement(
-              id: 'totalLabel',
-              bounds: JetRect(x: 330, y: 10, width: 90, height: 18),
-              text: 'Total',
+              id: 'subtotalLabel',
+              bounds: JetRect(x: 330, y: 8, width: 90, height: 18),
+              text: 'Subtotal',
               style: JetTextStyle(
                   align: JetTextAlign.right, weight: JetFontWeight.bold),
             ),
             TextElement(
-              id: 'total',
-              bounds: JetRect(x: 430, y: 10, width: 110, height: 18),
+              id: 'subtotal',
+              bounds: JetRect(x: 430, y: 8, width: 110, height: 18),
               text: 'total',
               style: JetTextStyle(
                   align: JetTextAlign.right, weight: JetFontWeight.bold),
               expression: r'$F{total}',
               format: '#,##0.00',
+            ),
+          ],
+        ),
+        // Page footer — page chrome: a `Page N of M` line from the page-scoped
+        // PAGE_NUMBER/PAGE_COUNT variables (no data row needed).
+        ReportBand(
+          type: BandType.pageFooter,
+          height: 20,
+          elements: <ReportElement>[
+            TextElement(
+              id: 'pageNumber',
+              bounds: JetRect(x: 0, y: 2, width: 540, height: 14),
+              text: 'Page',
+              style: JetTextStyle(
+                  fontSize: 9,
+                  color: JetColor(0xFF888888),
+                  align: JetTextAlign.right),
+              expression:
+                  r'"Page " + $V{PAGE_NUMBER} + " of " + $V{PAGE_COUNT}',
             ),
           ],
         ),

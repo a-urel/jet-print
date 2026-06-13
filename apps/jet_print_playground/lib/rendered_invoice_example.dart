@@ -19,9 +19,10 @@ import 'package:jet_print/jet_print.dart';
 
 import 'invoice_sample.dart';
 
-/// One invoice record with a nested `lines` collection (master/detail),
-/// matching [invoiceSchema]. Use `JetJsonDataSource` for a JSON payload or
-/// `JetObjectDataSource<T>` for domain objects — identical output (SC-006).
+/// Three invoice records, each with a nested `lines` collection
+/// (master/detail), matching [invoiceSchema]. Use `JetJsonDataSource` for a
+/// JSON payload or `JetObjectDataSource<T>` for domain objects — identical
+/// output (SC-006). Each record's `total` equals the sum of its line totals.
 JetDataSource invoiceDataSource() =>
     JetInMemoryDataSource(<Map<String, Object?>>[
       <String, Object?>{
@@ -52,19 +53,74 @@ JetDataSource invoiceDataSource() =>
           },
         ],
       },
+      <String, Object?>{
+        'invoiceNo': 'INV-1043',
+        'customerName': 'Globex SARL',
+        'date': '2026-05-14',
+        'total': 14.5,
+        'lines': <Map<String, Object?>>[
+          <String, Object?>{
+            'description': 'Bolt',
+            'qty': 10,
+            'unitPrice': 0.75,
+            'lineTotal': 7.5
+          },
+          <String, Object?>{
+            'description': 'Nut',
+            'qty': 10,
+            'unitPrice': 0.5,
+            'lineTotal': 5.0
+          },
+          <String, Object?>{
+            'description': 'Washer',
+            'qty': 20,
+            'unitPrice': 0.1,
+            'lineTotal': 2.0
+          },
+        ],
+      },
+      <String, Object?>{
+        'invoiceNo': 'INV-1044',
+        'customerName': 'Initech Ltd',
+        'date': '2026-05-19',
+        'total': 175.0,
+        'lines': <Map<String, Object?>>[
+          <String, Object?>{
+            'description': 'Consulting',
+            'qty': 2,
+            'unitPrice': 50.0,
+            'lineTotal': 100.0
+          },
+          <String, Object?>{
+            'description': 'Onboarding',
+            'qty': 1,
+            'unitPrice': 75.0,
+            'lineTotal': 75.0
+          },
+        ],
+      },
     ]);
 
-/// The same logical invoice as [invoiceDataSource], supplied as a JSON
+/// The same logical invoices as [invoiceDataSource], supplied as a JSON
 /// payload — renders byte-identically (SC-006).
 JetDataSource invoiceJsonDataSource() => JetJsonDataSource.parse(
       '[{"invoiceNo":"INV-1042","customerName":"Acme GmbH",'
       '"date":"2026-05-12","total":32.0,"lines":['
       '{"description":"Widget","qty":3,"unitPrice":4.5,"lineTotal":13.5},'
       '{"description":"Gadget","qty":1,"unitPrice":12.0,"lineTotal":12.0},'
-      '{"description":"Sprocket","qty":2,"unitPrice":3.25,"lineTotal":6.5}]}]',
+      '{"description":"Sprocket","qty":2,"unitPrice":3.25,"lineTotal":6.5}]},'
+      '{"invoiceNo":"INV-1043","customerName":"Globex SARL",'
+      '"date":"2026-05-14","total":14.5,"lines":['
+      '{"description":"Bolt","qty":10,"unitPrice":0.75,"lineTotal":7.5},'
+      '{"description":"Nut","qty":10,"unitPrice":0.5,"lineTotal":5.0},'
+      '{"description":"Washer","qty":20,"unitPrice":0.1,"lineTotal":2.0}]},'
+      '{"invoiceNo":"INV-1044","customerName":"Initech Ltd",'
+      '"date":"2026-05-19","total":175.0,"lines":['
+      '{"description":"Consulting","qty":2,"unitPrice":50.0,"lineTotal":100.0},'
+      '{"description":"Onboarding","qty":1,"unitPrice":75.0,"lineTotal":75.0}]}]',
     );
 
-/// The same logical invoice again, supplied as domain objects with a field
+/// The same logical invoices again, supplied as domain objects with a field
 /// extractor — renders byte-identically (SC-006).
 JetDataSource invoiceObjectDataSource() => JetObjectDataSource<Invoice>(
       <Invoice>[
@@ -87,6 +143,42 @@ JetDataSource invoiceObjectDataSource() => JetObjectDataSource<Invoice>(
             'qty': 2,
             'unitPrice': 3.25,
             'lineTotal': 6.5
+          },
+        ]),
+        Invoice('INV-1043', 'Globex SARL', '2026-05-14',
+            14.5, <Map<String, Object?>>[
+          <String, Object?>{
+            'description': 'Bolt',
+            'qty': 10,
+            'unitPrice': 0.75,
+            'lineTotal': 7.5
+          },
+          <String, Object?>{
+            'description': 'Nut',
+            'qty': 10,
+            'unitPrice': 0.5,
+            'lineTotal': 5.0
+          },
+          <String, Object?>{
+            'description': 'Washer',
+            'qty': 20,
+            'unitPrice': 0.1,
+            'lineTotal': 2.0
+          },
+        ]),
+        Invoice('INV-1044', 'Initech Ltd', '2026-05-19',
+            175.0, <Map<String, Object?>>[
+          <String, Object?>{
+            'description': 'Consulting',
+            'qty': 2,
+            'unitPrice': 50.0,
+            'lineTotal': 100.0
+          },
+          <String, Object?>{
+            'description': 'Onboarding',
+            'qty': 1,
+            'unitPrice': 75.0,
+            'lineTotal': 75.0
           },
         ]),
       ],

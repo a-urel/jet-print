@@ -15,7 +15,9 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 void main() {
   test('the example renders the invoice without any diagnostic', () {
     final RenderedReport report = renderInvoice();
-    expect(report.pageCount, greaterThanOrEqualTo(1));
+    // The invoice group sets startNewPage, so each of the three invoices lands
+    // on its own page.
+    expect(report.pageCount, 3);
     expect(report.pageAt(0).frame, isNotNull);
     expect(
       report.diagnostics.entries,
@@ -25,19 +27,24 @@ void main() {
     );
   });
 
-  test('the sample data is consistent: total equals the sum of line totals',
+  test('every sample invoice is consistent: total equals its line-total sum',
       () {
     final DataSet ds = invoiceDataSource().open();
-    expect(ds.moveNext(), isTrue);
-    final DataRow invoice = ds.current;
-    final List<Object?> lines = invoice.field('lines')! as List<Object?>;
-    expect(lines, hasLength(3), reason: 'each line item appears once');
-    final double sum = lines
-        .cast<Map<String, Object?>>()
-        .map((Map<String, Object?> l) => (l['lineTotal']! as num).toDouble())
-        .fold(0, (double a, double b) => a + b);
-    expect(invoice.field('total'), sum);
-    expect(ds.moveNext(), isFalse);
+    int count = 0;
+    while (ds.moveNext()) {
+      final DataRow invoice = ds.current;
+      final List<Object?> lines = invoice.field('lines')! as List<Object?>;
+      expect(lines, isNotEmpty, reason: 'each invoice carries line items');
+      final double sum = lines
+          .cast<Map<String, Object?>>()
+          .map((Map<String, Object?> l) => (l['lineTotal']! as num).toDouble())
+          .fold(0, (double a, double b) => a + b);
+      expect(invoice.field('total'), sum,
+          reason: 'invoice ${invoice.field('invoiceNo')}: total must equal the '
+              'sum of its line totals');
+      count++;
+    }
+    expect(count, 3, reason: 'the sample now carries three invoices');
     ds.close();
   });
 
@@ -72,8 +79,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(JetReportPreview), findsOneWidget);
-    // The one-invoice sample fits a single A4 page; navigation is bounded.
-    expect(find.text('Page 1 of 1'), findsOneWidget);
+    // The sample opens on the first page; the total page count depends on how
+    // the three invoices paginate, so assert the "Page 1 of N" indicator
+    // without pinning N.
+    expect(find.textContaining('Page 1 of '), findsOneWidget);
 
     // 012 (SC-008): the example wires export and print through the PUBLIC
     // preview callbacks — both toolbar actions are present. The example
