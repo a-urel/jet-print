@@ -117,10 +117,10 @@ class JetReportDesigner extends StatefulWidget {
   /// (the render the preview/export consume) so design == preview == export.
   final List<JetFontFamily> fonts;
 
-  /// Whether the bundled built-in families (JetSans/JetSerif/JetMono) appear as
-  /// selectable options in the family picker (022). Defaults to `true`. Set
+  /// Whether the bundled built-in Default family appears as a selectable
+  /// option in the family picker (022). Defaults to `true`. Set
   /// `false` when you supply your own [fonts] catalog and want only those
-  /// offered — JetSans still resolves as the silent render fallback, so text
+  /// offered — Default still resolves as the silent render fallback, so text
   /// with no/unknown family always renders; it is just hidden from the picker.
   final bool showBuiltInFonts;
 

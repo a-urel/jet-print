@@ -9,6 +9,8 @@ library;
 
 import 'dart:ui' show Locale;
 
+import '../text/jet_font.dart';
+
 /// The per-render inputs of a [JetReportEngine.render] call, separate from the
 /// template: the values that may change on every render of the same design.
 ///
@@ -26,6 +28,7 @@ class RenderOptions {
     this.locale = const Locale('en'),
     this.knownFields,
     this.unresolvedFieldToken = '#ERROR',
+    this.fonts = const <JetFontFamily>[],
   });
 
   /// Host-supplied parameter values keyed by parameter name, resolved by
@@ -64,4 +67,19 @@ class RenderOptions {
   /// `#ERROR`; a host with a `BuildContext` passes a localized value (e.g.
   /// `JetPrintLocalizations.of(context).errorUnresolvedToken`).
   final String unresolvedFieldToken;
+
+  /// Host-contributed font families available to this render (022 / FR-003).
+  ///
+  /// The faces are the bytes the host hands in. The engine builds **one**
+  /// `FontRegistry` (the bundled defaults, then these families
+  /// last-registration-wins) and attaches it to the returned `RenderedReport`,
+  /// so the preview, PDF/PNG export, and print paths all measure and paint from
+  /// the identical bytes — WYSIWYG by construction (Principle IV). Register
+  /// **before** rendering; the empty default reproduces today's behavior
+  /// exactly (SC-005).
+  ///
+  /// Pass the **same** `List<JetFontFamily>` here and to
+  /// `JetReportDesigner.fonts`/`JetReportWorkspace.fonts` so the designer picker
+  /// and the render chain offer and resolve the same families.
+  final List<JetFontFamily> fonts;
 }

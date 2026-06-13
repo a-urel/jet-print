@@ -9,7 +9,6 @@ import 'dart:typed_data';
 import '../engine/rendered_report.dart';
 import '../paint/page_rasterizer.dart';
 import '../paint/report_painter.dart';
-import '../text/font_registry.dart';
 import 'pdf_painter.dart';
 
 /// Turns a rendered report into shareable artifacts — the export-side
@@ -37,11 +36,10 @@ class JetReportExporter {
   /// Identical rendered inputs produce byte-identical output (FR-007): the
   /// export path reads no clock, randomness, or ambient locale.
   Future<Uint8List> toPdf(RenderedReport report) async {
-    // A per-export registry with the bundled default — exactly the registry
-    // construction the preview paints with, so measure/draw/embed all share
-    // one byte source.
-    final FontRegistry fonts = FontRegistry()..registerDefault();
-    final PdfPainter painter = PdfPainter(fonts);
+    // The registry the engine measured with, carried on the report (022) —
+    // including any host fonts — so measure/draw/embed all share one byte
+    // source and the PDF matches the preview exactly (Principle IV).
+    final PdfPainter painter = PdfPainter(report.fonts);
     for (int i = 0; i < report.pageCount; i++) {
       await paintFrame(report.pageAt(i).frame, painter);
     }
@@ -71,8 +69,7 @@ class JetReportExporter {
     if (scale <= 0) {
       throw ArgumentError.value(scale, 'scale', 'must be strictly positive');
     }
-    final FontRegistry fonts = FontRegistry()..registerDefault();
     return const PageRasterizer()
-        .rasterize(report.pageAt(pageIndex).frame, fonts, scale: scale);
+        .rasterize(report.pageAt(pageIndex).frame, report.fonts, scale: scale);
   }
 }

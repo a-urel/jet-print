@@ -13,15 +13,25 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jet_print/src/data/in_memory_data_source.dart';
+import 'package:jet_print/src/data/jet_data_source.dart';
 import 'package:jet_print/src/domain/elements/image_source.dart';
 import 'package:jet_print/src/domain/elements/shape_element.dart';
+import 'package:jet_print/src/domain/elements/text_element.dart';
 import 'package:jet_print/src/domain/geometry.dart';
 import 'package:jet_print/src/domain/page_format.dart';
+import 'package:jet_print/src/domain/report_band.dart';
+import 'package:jet_print/src/domain/report_element.dart';
+import 'package:jet_print/src/domain/report_template.dart';
 import 'package:jet_print/src/domain/styles/box_style.dart';
 import 'package:jet_print/src/domain/styles/color.dart';
 import 'package:jet_print/src/domain/styles/text_style.dart';
 import 'package:jet_print/src/rendering/elements/render_context.dart';
 import 'package:jet_print/src/rendering/elements/renderers/shape_element_renderer.dart';
+import 'package:jet_print/src/rendering/engine/jet_report_engine.dart';
+import 'package:jet_print/src/rendering/engine/render_options.dart';
+import 'package:jet_print/src/rendering/engine/rendered_report.dart';
+import 'package:jet_print/src/rendering/export/jet_report_exporter.dart';
 import 'package:jet_print/src/rendering/export/pdf_painter.dart';
 import 'package:jet_print/src/rendering/frame/frame_builder.dart';
 import 'package:jet_print/src/rendering/frame/page_frame.dart';
@@ -29,10 +39,12 @@ import 'package:jet_print/src/rendering/frame/primitive.dart';
 import 'package:jet_print/src/rendering/paint/image_fit.dart';
 import 'package:jet_print/src/rendering/paint/report_painter.dart';
 import 'package:jet_print/src/rendering/text/font_registry.dart';
+import 'package:jet_print/src/rendering/text/jet_font.dart';
 import 'package:jet_print/src/rendering/text/metrics_text_measurer.dart';
 import 'package:jet_print/src/rendering/text/text_measurer.dart';
 import 'package:jet_print/src/rendering/text/underline_metrics.dart';
 
+import '../../support/test_fonts.dart';
 import 'support/export_fixtures.dart';
 import 'support/pdf_inspector.dart';
 
@@ -405,6 +417,85 @@ void main() {
       expect(pdf.pageCount, 2);
       expect(pdf.textOnPage(0), contains('one'));
       expect(pdf.textOnPage(1), contains('two'));
+    });
+  });
+
+  // --- Export reads the carried registry (022 — contracts C8 & C12) --------
+  group('export — carried host registry (C8/C12)', () {
+    // Two text elements, BOTH in the host family, so a correct byte-keyed
+    // embed produces exactly one font program for the family.
+    ReportTemplate hostTemplate() => const ReportTemplate(
+          name: 'Host',
+          page: PageFormat(
+              width: 300, height: 200, margins: JetEdgeInsets.all(10)),
+          bands: <ReportBand>[
+            ReportBand(
+              type: BandType.detail,
+              height: 60,
+              elements: <ReportElement>[
+                TextElement(
+                  id: 'a',
+                  bounds: JetRect(x: 0, y: 0, width: 240, height: 20),
+                  text: 'Acme heading',
+                  style: JetTextStyle(fontFamily: 'Acme Brand'),
+                ),
+                TextElement(
+                  id: 'b',
+                  bounds: JetRect(x: 0, y: 24, width: 240, height: 20),
+                  text: 'Acme body',
+                  style: JetTextStyle(fontFamily: 'Acme Brand'),
+                ),
+              ],
+            ),
+          ],
+        );
+
+    JetDataSource source() => JetInMemoryDataSource(
+        const <Map<String, Object?>>[<String, Object?>{}]);
+
+    RenderedReport renderHost(
+            {List<JetFontFamily> fonts = const <JetFontFamily>[]}) =>
+        const JetReportEngine().render(hostTemplate(), source(),
+            options: RenderOptions(fonts: fonts));
+
+    List<JetFontFamily> brand() => <JetFontFamily>[
+          JetFontFamily(
+            name: 'Acme Brand',
+            faces: <JetFontFace>[JetFontFace(bytes: validRegularFontBytes())],
+          ),
+        ];
+
+    test(
+        'a host-family report exports text that uses the host face (not the '
+        'default) and stays real/selectable', () async {
+      final Uint8List hostBytes =
+          await const JetReportExporter().toPdf(renderHost(fonts: brand()));
+      final Uint8List defaultBytes =
+          await const JetReportExporter().toPdf(renderHost());
+
+      final PdfInspector host = PdfInspector(hostBytes);
+      expect(host.allText, containsAll(<String>['Acme heading', 'Acme body']),
+          reason: 'PDF text stays real/selectable (FR-004)');
+      expect(host.hasTextObjectsOn(0), isTrue);
+      // The host font flows to export: the embedded program differs from the
+      // default-only export of the same template/data.
+      expect(hostBytes, isNot(orderedEquals(defaultBytes)),
+          reason: 'export read report.fonts, not a default-only registry');
+    });
+
+    test('a host face used twice embeds exactly one font program (C12)',
+        () async {
+      final PdfInspector pdf = PdfInspector(
+          await const JetReportExporter().toPdf(renderHost(fonts: brand())));
+      expect(pdf.embeddedFontProgramCount, 1,
+          reason: 'byte-keyed cache embeds the host face once per document');
+    });
+
+    test('a default-only report is unchanged (deterministic, SC-005)',
+        () async {
+      final Uint8List a = await const JetReportExporter().toPdf(renderHost());
+      final Uint8List b = await const JetReportExporter().toPdf(renderHost());
+      expect(a, orderedEquals(b));
     });
   });
 }

@@ -359,7 +359,7 @@ class _FontFamilyRow extends StatelessWidget {
   final JetTextStyle style;
   final ValueChanged<JetTextStyle> onCommit;
 
-  /// Whether the built-in JetSans/JetSerif/JetMono are offered as options (022).
+  /// Whether the built-in Default family is offered as an option (022).
   final bool showBuiltIns;
 
   @override
@@ -368,13 +368,9 @@ class _FontFamilyRow extends StatelessWidget {
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
     // `families` (full set, incl. built-ins) backs availability/effective
     // checks; `options` is what the picker offers — built-ins filtered out when
-    // hidden (022). JetSans stays resolvable as the fallback either way.
+    // hidden (022). Default stays resolvable as the fallback either way.
     final List<String> families = fonts.families;
-    const Set<String> builtIns = <String>{
-      FontRegistry.defaultFamily,
-      FontRegistry.serifFamily,
-      FontRegistry.monoFamily,
-    };
+    const Set<String> builtIns = <String>{FontRegistry.defaultFamily};
     final List<String> options = showBuiltIns
         ? families
         : <String>[
@@ -385,8 +381,8 @@ class _FontFamilyRow extends StatelessWidget {
     final bool unavailable = stored != null && !families.contains(stored);
     final String effective = stored ?? FontRegistry.defaultFamily;
     // With built-ins hidden, a value that resolves to one (most commonly the
-    // null "renderer default" → JetSans) shows a neutral "Default" label rather
-    // than leaking the internal "Jet*" name into the UI (022).
+    // null "renderer default" → "Default") shows the localized "Default" label
+    // rather than the raw family name in the UI (022).
     final bool showAsDefault = !showBuiltIns && builtIns.contains(effective);
 
     return _PresetDropdown(

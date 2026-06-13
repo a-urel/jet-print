@@ -10,14 +10,14 @@ import 'package:jet_print/src/rendering/text/ui_font_family.dart';
 void main() {
   group('uiFontFamily', () {
     test('mangles (family, weight, italic) into a unique engine name', () {
-      expect(uiFontFamily('JetSans', JetFontWeight.normal, false),
-          'JetSans__normal');
+      expect(uiFontFamily('Default', JetFontWeight.normal, false),
+          'Default__normal');
       expect(
-          uiFontFamily('JetSans', JetFontWeight.bold, false), 'JetSans__bold');
-      expect(uiFontFamily('JetSans', JetFontWeight.normal, true),
-          'JetSans__normal_italic');
-      expect(uiFontFamily('JetSerif', JetFontWeight.bold, true),
-          'JetSerif__bold_italic');
+          uiFontFamily('Default', JetFontWeight.bold, false), 'Default__bold');
+      expect(uiFontFamily('Default', JetFontWeight.normal, true),
+          'Default__normal_italic');
+      expect(uiFontFamily('Roboto', JetFontWeight.bold, true),
+          'Roboto__bold_italic');
     });
   });
 }

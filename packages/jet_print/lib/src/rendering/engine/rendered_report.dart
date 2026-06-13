@@ -6,6 +6,7 @@ library;
 
 import '../fill/report_diagnostics.dart';
 import '../frame/page_frame.dart';
+import '../text/font_registry.dart';
 
 /// One paginated unit of a [RenderedReport]: the zero-based page [index] and
 /// the page's positioned-primitive [frame].
@@ -44,14 +45,27 @@ class RenderedReport {
     required PageFrame Function(int index) buildFrame,
     required List<ReportDiagnostics> diagnosticsSources,
     this.title = '',
+    FontRegistry? fonts,
   })  : _buildFrame = buildFrame,
-        _sources = List<ReportDiagnostics>.unmodifiable(diagnosticsSources);
+        _sources = List<ReportDiagnostics>.unmodifiable(diagnosticsSources),
+        fonts = fonts ?? (FontRegistry()..registerDefault());
 
   /// The total number of pages, exact from the moment of rendering.
   final int pageCount;
 
   /// The rendered template's name, for display (may be empty).
   final String title;
+
+  /// The font registry this report was measured with (022 — INTERNAL).
+  ///
+  /// `JetReportEngine.render` builds one registry (the bundled defaults plus
+  /// any `RenderOptions.fonts`) and attaches it here, so the preview, the
+  /// PDF/PNG exporter, and the printer paint and embed from the **same** bytes
+  /// layout was measured with — they read this instead of building a parallel
+  /// default-only registry (Principle IV). [FontRegistry] is unexported, so
+  /// this is not part of the public API; constructed directly it defaults to a
+  /// bundled-default-only registry (today's behavior).
+  final FontRegistry fonts;
 
   final PageFrame Function(int index) _buildFrame;
   final List<ReportDiagnostics> _sources;

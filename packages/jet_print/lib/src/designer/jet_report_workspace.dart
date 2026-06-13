@@ -95,8 +95,8 @@ class JetReportWorkspace extends StatefulWidget {
   final List<JetFontFamily> fonts;
 
   /// Forwarded to [JetReportDesigner.showBuiltInFonts] (022): whether the
-  /// built-in JetSans/JetSerif/JetMono appear in the family picker. Defaults to
-  /// `true`; set `false` to offer only your [fonts] catalog (JetSans stays the
+  /// built-in Default family appears in the family picker. Defaults to
+  /// `true`; set `false` to offer only your [fonts] catalog (Default stays the
   /// silent render fallback).
   final bool showBuiltInFonts;
 

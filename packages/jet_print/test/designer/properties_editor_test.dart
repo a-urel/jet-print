@@ -189,7 +189,7 @@ Future<JetReportDesignerController> _pumpStyledTextWithFonts(
 }
 
 /// A one-family host font list ("Acme Brand", regular only) built from the
-/// shared JetSerif test bytes.
+/// shared test-fixture font bytes.
 List<JetFontFamily> _brandFonts() => <JetFontFamily>[
       JetFontFamily(
         name: 'Acme Brand',
@@ -752,11 +752,11 @@ void main() {
       await tester.pumpAndSettle();
 
       // The default registry holds exactly the bundled default family.
-      final Finder option = _field('fontFamily.option.JetSans');
+      final Finder option = _field('fontFamily.option.Default');
       expect(option, findsOneWidget);
       final Text label = tester.widget<Text>(
           find.descendant(of: option, matching: find.byType(Text)));
-      expect(label.style?.fontFamily, 'JetSans',
+      expect(label.style?.fontFamily, 'Default',
           reason: 'each item previews in its own typeface');
 
       await tester.tap(option);
@@ -829,7 +829,7 @@ void main() {
       expect(
           tester.getTopLeft(acme).dy,
           greaterThan(
-              tester.getTopLeft(_field('fontFamily.option.JetSans')).dy),
+              tester.getTopLeft(_field('fontFamily.option.Default')).dy),
           reason: 'the host family is listed after the built-ins');
       // Previewed in its own typeface.
       final Text label = tester
@@ -847,28 +847,25 @@ void main() {
     });
 
     testWidgets(
-        'showBuiltInFonts: false hides JetSans/JetSerif/JetMono but keeps the '
+        'showBuiltInFonts: false hides the built-in Default but keeps the '
         'host family (022)', (WidgetTester tester) async {
       await _pumpStyledTextWithFonts(
           tester, const JetTextStyle(), _brandFonts(),
           showBuiltInFonts: false);
 
-      // The trigger shows a neutral "Default" for the null-family element —
-      // never the internal "JetSans" name.
+      // The trigger shows the neutral localized "Default" for the null-family
+      // element rather than a built-in family name.
       expect(
           find.descendant(
               of: _field('fontFamily'), matching: find.text('Default')),
           findsOneWidget);
-      expect(find.textContaining('JetSans'), findsNothing);
 
       await tester.tap(_field('fontFamily'));
       await tester.pumpAndSettle();
 
       expect(_field('fontFamily.option.Acme Brand'), findsOneWidget,
           reason: 'the host catalog family is still offered');
-      expect(_field('fontFamily.option.JetSans'), findsNothing);
-      expect(_field('fontFamily.option.JetSerif'), findsNothing);
-      expect(_field('fontFamily.option.JetMono'), findsNothing);
+      expect(_field('fontFamily.option.Default'), findsNothing);
     });
 
     testWidgets('built-ins are shown by default (backward-compatible)',
@@ -877,7 +874,7 @@ void main() {
           tester, const JetTextStyle(), _brandFonts());
       await tester.tap(_field('fontFamily'));
       await tester.pumpAndSettle();
-      expect(_field('fontFamily.option.JetSans'), findsOneWidget);
+      expect(_field('fontFamily.option.Default'), findsOneWidget);
       expect(_field('fontFamily.option.Acme Brand'), findsOneWidget);
     });
 

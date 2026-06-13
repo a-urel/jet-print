@@ -197,9 +197,8 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
             // The SAME host-font list reaches the designer picker/canvas here
             // and the engine via renderReport below (FR-012).
             fonts: widget.fonts,
-            // Offer only the Google-Fonts catalog; the built-in JetSans/Serif/
-            // Mono stay as the silent render fallback but are hidden from the
-            // picker (022).
+            // Offer only the Google-Fonts catalog; the built-in Default stays
+            // as the silent render fallback but is hidden from the picker (022).
             showBuiltInFonts: false,
             // Render the LIVE template against the bundled sample data so design
             // edits show up on the next preview entry — with the host fonts, so

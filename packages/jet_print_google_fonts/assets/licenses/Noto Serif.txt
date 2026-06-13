@@ -1,8 +1,8 @@
 The bundled fonts and their copyright notices:
 
-  * JetSans, JetSerif (modified Latin subsets of Noto Sans and Noto Serif):
+  * Noto Sans, Noto Serif (Latin subsets):
     Copyright 2018 The Noto Project Authors (github.com/googlei18n/noto-fonts)
-  * JetMono (modified Latin subset of JetBrains Mono):
+  * JetBrains Mono (Latin subset):
     Copyright 2020 The JetBrains Mono Project Authors
     (https://github.com/JetBrains/JetBrainsMono)
 

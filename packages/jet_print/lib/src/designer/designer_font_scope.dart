@@ -25,9 +25,9 @@ class DesignerFontScope extends InheritedWidget {
   /// The designer's font registry (default font pre-registered).
   final FontRegistry fonts;
 
-  /// Whether the bundled built-in families (JetSans/JetSerif/JetMono) are
-  /// offered as **selectable options** in the family picker (022). They are
-  /// always present in [fonts] — JetSans is the render fallback — so this only
+  /// Whether the bundled built-in Default family is offered as a **selectable
+  /// option** in the family picker (022). It is always present in [fonts] —
+  /// Default is the render fallback — so this only
   /// controls picker visibility, never resolvability. Defaults to true
   /// (backward-compatible).
   final bool showBuiltIns;

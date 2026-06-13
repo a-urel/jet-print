@@ -30,7 +30,7 @@ void main() {
         el, ctx, const JetRect(x: 5, y: 5, width: 40, height: 100), out);
     final TextRunPrimitive run =
         out.build().primitives.single as TextRunPrimitive;
-    expect(run.fontFamily, 'JetSans');
+    expect(run.fontFamily, 'Default');
     expect(run.style, el.style);
     expect(run.elementId, 't');
     expect(run.bounds, const JetRect(x: 5, y: 5, width: 40, height: 100));

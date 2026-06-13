@@ -1,5 +1,5 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-specs/021-format-properties/plan.md
+specs/022-host-fonts/plan.md
 <!-- SPECKIT END -->

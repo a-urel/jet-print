@@ -12,6 +12,8 @@ import '../../domain/report_template.dart';
 import '../fill/report_diagnostics.dart';
 import '../fill/report_filler.dart';
 import '../layout/report_layouter.dart';
+import '../text/font_registry.dart';
+import '../text/metrics_text_measurer.dart';
 import 'render_options.dart';
 import 'rendered_report.dart';
 
@@ -60,6 +62,13 @@ class JetReportEngine {
   }) {
     final String localeTag =
         Intl.canonicalizedLocale(options.locale.toLanguageTag());
+    // One registry per render: the bundled defaults, then host families
+    // (last-registration-wins). It drives layout MEASUREMENT and is carried on
+    // the returned report so preview/export/print paint from the identical
+    // bytes — never a second default-only build (Principle IV / 022 C7/C8).
+    final FontRegistry fonts = FontRegistry()
+      ..registerDefault()
+      ..registerHostFonts(options.fonts);
     final ReportDiagnostics paramDiagnostics = ReportDiagnostics();
     final Map<String, Object?> params =
         _effectiveParameters(template, options, paramDiagnostics);
@@ -75,11 +84,13 @@ class JetReportEngine {
     );
     final LazyLayout lazy = _withLocale(
       localeTag,
-      () => ReportLayouter().layoutLazy(template, fill.report),
+      () => ReportLayouter(measurer: MetricsTextMeasurer(fonts))
+          .layoutLazy(template, fill.report),
     );
     return RenderedReport(
       title: template.name,
       pageCount: lazy.pageCount,
+      fonts: fonts,
       // Lazy builds run later, outside render()'s scope — re-enter the render
       // locale per build so formatting in page chrome stays deterministic.
       buildFrame: (int index) =>

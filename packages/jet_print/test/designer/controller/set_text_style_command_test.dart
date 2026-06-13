@@ -32,7 +32,7 @@ const TextElement _element = TextElement(
 );
 
 const JetTextStyle _next = JetTextStyle(
-  fontFamily: 'JetSans',
+  fontFamily: 'Default',
   fontSize: 24,
   weight: JetFontWeight.bold,
   italic: true,

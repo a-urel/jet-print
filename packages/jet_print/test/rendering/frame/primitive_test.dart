@@ -16,14 +16,14 @@ void main() {
       bounds: const JetRect(x: 1, y: 2, width: 30, height: 13),
       lines: const <TextLine>[line],
       style: JetTextStyle.fallback,
-      fontFamily: 'JetSans',
+      fontFamily: 'Default',
       elementId: 'e1',
     );
     final TextRunPrimitive b = TextRunPrimitive(
       bounds: const JetRect(x: 1, y: 2, width: 30, height: 13),
       lines: const <TextLine>[line],
       style: JetTextStyle.fallback,
-      fontFamily: 'JetSans',
+      fontFamily: 'Default',
       elementId: 'e1',
     );
     expect(a, b);

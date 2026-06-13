@@ -23,10 +23,10 @@ void main() {
         lines: <TextLine>[l],
         size: JetSize(6.39, 13.62),
         firstAscent: 10.69,
-        fontFamily: 'JetSans');
+        fontFamily: 'Default');
     expect(m.lines.single, l);
     expect(m.size, const JetSize(6.39, 13.62));
     expect(m.firstAscent, 10.69);
-    expect(m.fontFamily, 'JetSans');
+    expect(m.fontFamily, 'Default');
   });
 }

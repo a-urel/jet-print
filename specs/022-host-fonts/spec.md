@@ -22,6 +22,14 @@ everywhere a report is shown or produced. A secondary, optional capability lets 
 surface fonts already installed on the end user's operating system, with the portability
 trade-offs that entails.
 
+## Clarifications
+
+### Session 2026-06-13
+
+- Q: When does font registration take effect relative to a designer being on screen? → A: Before-build contract — the host registers fonts before a designer is constructed; the registry is read at construction time, and registrations made while a designer is already on screen are not guaranteed to appear until it is rebuilt.
+- Q: How should the system resolve a duplicate registration of the same family name? → A: Last registration wins — a later registration of the same family/face replaces the earlier face data, yielding exactly one picker entry; the built-in default family remains protected and cannot be removed.
+- Q: In what form does the host supply font data for each face when registering? → A: In-memory bytes — the host hands raw font bytes per face (source-agnostic: assets, bundled files, network, or disk all reduce to bytes); the host owns sourcing and licensing.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Host application contributes its own fonts (Priority: P1)
@@ -105,23 +113,26 @@ renders in a fallback font.
 ### Edge Cases
 
 - **Duplicate registration**: The host registers a family name that already exists (a built-in
-  name, or the same custom name twice). The system MUST resolve this deterministically (last
-  registration wins for that family/face, or first wins) — see FR-009 — and never end up with
-  an ambiguous or doubled picker entry.
+  name, or the same custom name twice). The system MUST resolve this deterministically with
+  last-registration-wins — see FR-009 — and never end up with an ambiguous or doubled picker
+  entry.
 - **Partial faces**: A family is registered with some faces missing (e.g. regular + bold but no
   italic). Applying a missing face falls back per existing rules; the picker still lists the
   family once.
 - **Invalid or empty font data**: The host attempts to register a family with unreadable or
   empty font data. The system MUST reject that registration in a way the host can detect,
   without corrupting the picker or crashing the designer.
-- **Registration after the designer is already shown**: Fonts are registered (or an OS-font
-  option toggled) while a designer is already on screen. The behavior MUST be defined — either
-  pickers reflect the change, or the documented contract is that registration happens before
-  the designer is built.
+- **Registration after the designer is already shown**: Fonts are registered while a designer is
+  already on screen. The documented contract is **register-before-build**: the registry is read
+  when a designer is constructed, so a registration made after a designer is already displayed is
+  not guaranteed to appear in its pickers until that designer is rebuilt. Hosts register their
+  fonts at startup, before showing the designer.
 - **Empty registration set**: The host registers nothing. The picker still lists the built-in
   families and works exactly as today.
-- **Very large font sets** (relevant to User Story 3): An OS exposes hundreds of font families.
-  The picker MUST remain usable (e.g. scannable/scrollable, not visibly degraded).
+- **Very large font sets** (deferred — relevant to a future OS-font feature, see "Resolved
+  Scope Decision"): an OS could expose hundreds of font families. The picker would need to
+  remain usable (e.g. scannable/scrollable, not visibly degraded); it inherits the existing
+  scrollable picker from spec 021. Not exercised by this feature, which is host-registered fonts only.
 - **Report shared as a template file**: A saved report carries the font *name* it references,
   not the font itself. Re-opening it elsewhere relies on that font being registered/available
   there; otherwise User Story 2 applies. (Exported PDFs embed the faces they use and are
@@ -133,7 +144,10 @@ renders in a fallback font.
 
 - **FR-001**: The system MUST provide a supported, documented way for a host application to
   register one or more named font families with the report engine, supplying the font data for
-  each family's faces (at minimum a regular face; optionally bold, italic, and bold-italic).
+  each family's faces as **in-memory bytes** (at minimum a regular face; optionally bold, italic,
+  and bold-italic). The host is responsible for sourcing those bytes (from bundled assets, the
+  filesystem, network, etc.) and for the right to use them; the library does not load fonts from a
+  path or asset key on the host's behalf.
 - **FR-002**: Registered font families MUST appear in every font-family picker in the designer,
   listed alongside the built-in families and previewed in their own typeface where possible.
 - **FR-003**: A font family applied to a text element MUST render identically on the design
@@ -156,8 +170,10 @@ renders in a fallback font.
   across sessions (e.g. built-in families first, then host-registered families in the order the
   host registered them), so the list does not reshuffle unexpectedly between openings.
 - **FR-009**: The system MUST resolve duplicate or repeated registrations of the same family
-  name deterministically and document the rule, yielding exactly one picker entry per family
-  name.
+  name deterministically using a **last-registration-wins** rule (a later registration of the
+  same family/face replaces the earlier face data), yielding exactly one picker entry per family
+  name, and MUST document this rule. The built-in default family remains protected per FR-006 and
+  cannot be removed by registration.
 - **FR-010**: The system MUST reject a registration whose font data is missing, empty, or
   unreadable in a way the host can detect, without corrupting other registrations or the picker.
 - **FR-011**: The library MUST NOT enumerate or load fonts from the end user's operating system;
@@ -198,8 +214,8 @@ renders in a fallback font.
   where that font is not registered, preserves the stored font name, and renders text in a
   fallback font; saving does not lose the original font name.
 - **SC-004**: Every font picker in the designer lists the complete available set (built-in +
-  host-registered, plus OS fonts only when the host opted in) — never a stale subset — with
-  each family previewed in its own typeface.
+  host-registered) — never a stale subset — with each family previewed in its own typeface.
+  (OS fonts are deferred to a future feature — see "Resolved Scope Decision".)
 - **SC-005**: With no host registration and no OS opt-in, the designer behaves exactly as it
   does today (built-in families only), confirming the capability is purely additive and the
   library remains self-contained by default.
