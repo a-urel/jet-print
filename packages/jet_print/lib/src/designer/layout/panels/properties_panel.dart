@@ -13,7 +13,9 @@ import '../../../domain/elements/shape_element.dart';
 import '../../../domain/elements/text_element.dart';
 import '../../../domain/geometry.dart';
 import '../../../domain/page_format.dart';
+import '../../../domain/report_band.dart';
 import '../../../domain/report_element.dart';
+import '../../../domain/report_group.dart';
 import '../../../domain/styles/color.dart';
 import '../../../domain/styles/text_style.dart';
 import '../../../rendering/elements/shape_path.dart';
@@ -512,6 +514,8 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     JetDataSchema? schema,
   ) {
     final double height = controller.template.bands[index].height;
+    final ReportGroup? group =
+        _groupOfBand(controller, controller.template.bands[index]);
     return <Widget>[
       _Header(
         icon: LucideIcons.rows3,
@@ -544,7 +548,35 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
         onSet: (String v) => controller.setBandCollection(<int>[index], v),
         onClear: () => controller.setBandCollection(<int>[index], null),
       ),
+      // Group bands expose their group's pagination flag (023). Shown only for a
+      // group header/footer whose group is declared.
+      if (group != null) ...<Widget>[
+        const SizedBox(height: 12),
+        SectionLabel(l10n.propertiesGroup),
+        ShadSwitch(
+          key: const ValueKey<String>('$_p.field.groupNewPage'),
+          value: group.startNewPage,
+          onChanged: (bool v) => controller.setGroupStartNewPage(group.name, v),
+          label: Text(l10n.propertiesGroupNewPage),
+        ),
+      ],
     ];
+  }
+
+  /// The declared group a group header/footer band references, or null when the
+  /// band is not a group band or names no declared group (023).
+  ReportGroup? _groupOfBand(
+    JetReportDesignerController controller,
+    ReportBand band,
+  ) {
+    if (band.type != BandType.groupHeader &&
+        band.type != BandType.groupFooter) {
+      return null;
+    }
+    for (final ReportGroup g in controller.template.groups) {
+      if (g.name == band.group) return g;
+    }
+    return null;
   }
 
   /// The collection fields a top-level band can iterate (US3 / FR-015): every

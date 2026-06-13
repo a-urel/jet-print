@@ -331,6 +331,14 @@
   "@propertiesBinding": {
     "description": "Properties panel section label for an element's data binding (009)."
   },
+  "propertiesGroup": "Group",
+  "@propertiesGroup": {
+    "description": "Properties panel section label for the selected group band's group settings (023)."
+  },
+  "propertiesGroupNewPage": "Start on new page",
+  "@propertiesGroupNewPage": {
+    "description": "Properties panel toggle label: start each group instance on a new page (023)."
+  },
   "bindingExpressionHint": "Field or expression",
   "@bindingExpressionHint": {
     "description": "Placeholder for the text binding input (a field reference or a full expression)."

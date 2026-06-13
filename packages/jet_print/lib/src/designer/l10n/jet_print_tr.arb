@@ -92,6 +92,8 @@
   "formatPresetDateTime": "Tarih ve saat",
   "errorUnresolvedToken": "#HATA",
   "propertiesBinding": "Bağlantı",
+  "propertiesGroup": "Grup",
+  "propertiesGroupNewPage": "Yeni sayfa başlat",
   "bindingExpressionHint": "Alan veya ifade",
   "bindingImageFieldHint": "Alan adı",
   "bindingClearTooltip": "Bağlantıyı temizle",
