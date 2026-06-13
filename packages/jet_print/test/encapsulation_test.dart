@@ -70,7 +70,12 @@ bool _isWhiteBoxSeamTest(File file) {
       // precedent — preset identity is derived for display, never persisted);
       // their unit tests are white-box (Principle III).
       path.endsWith('/test/designer/paper_presets_test.dart') ||
-      path.endsWith('/test/designer/margin_presets_test.dart');
+      path.endsWith('/test/designer/margin_presets_test.dart') ||
+      // Bundled-font preload (021 follow-up): the designer-mount engine
+      // preload is an unexported `src/` helper with an injectable loader so
+      // the family/byte wiring is unit-testable without dart:ui; its unit
+      // test is white-box (Principle III).
+      path.endsWith('/test/designer/font_preload_test.dart');
 }
 
 void main() {

@@ -272,6 +272,147 @@ void main() {
     controller.dispose();
   });
 
+  // --- 021: format properties — the additions ride already-public types:
+  // JetTextStyle.underline + copyWith, JetBoxStyle.copyWith, and the three
+  // style mutators on the controller. `lib/jet_print.dart` needs NO new export
+  // line, and the designer's FontRegistry stays internal: it is deliberately
+  // absent from the export list (research §1 — a designer-only font seam would
+  // silently break preview/export WYSIWYG), so it cannot even be named here. ---
+
+  test('JetTextStyle exposes underline and a sentinel-based copyWith (021)',
+      () {
+    const JetTextStyle base =
+        JetTextStyle(fontFamily: 'Inter', underline: true);
+    expect(base.underline, isTrue);
+    // Omitting fontFamily preserves it; explicit null clears it.
+    expect(base.copyWith(fontSize: 9).fontFamily, 'Inter');
+    expect(base.copyWith(fontFamily: null).fontFamily, isNull);
+    expect(base.copyWith(underline: false).underline, isFalse);
+  });
+
+  test('JetReportDesignerController.setTextStyle restyles a text element (021)',
+      () {
+    final JetReportDesignerController controller = JetReportDesignerController(
+      template: const ReportTemplate(
+        name: 'API check',
+        page: PageFormat.a4Portrait,
+        bands: <ReportBand>[
+          ReportBand(
+              type: BandType.detail,
+              height: 80,
+              elements: <ReportElement>[
+                TextElement(
+                  id: 't1',
+                  bounds: JetRect(x: 0, y: 0, width: 100, height: 18),
+                  text: 'Hi',
+                ),
+              ]),
+        ],
+      ),
+    );
+    controller.setTextStyle(
+        't1',
+        const JetTextStyle()
+            .copyWith(weight: JetFontWeight.bold, underline: true));
+    final TextElement text =
+        controller.template.bands.first.elements.first as TextElement;
+    expect(text.style.weight, JetFontWeight.bold);
+    expect(text.style.underline, isTrue);
+    // Undoable in a single step, like every other edit.
+    expect(controller.canUndo, isTrue);
+    controller.undo();
+    expect(
+      (controller.template.bands.first.elements.first as TextElement)
+          .style
+          .underline,
+      isFalse,
+    );
+    controller.dispose();
+  });
+
+  test('JetBoxStyle exposes a sentinel-based copyWith (021)', () {
+    const JetBoxStyle base = JetBoxStyle(
+        fill: JetColor(0x3300FF00), stroke: JetColor.black, strokeWidth: 2);
+    // Omitting preserves; explicit null clears (None states, FR-007/FR-008).
+    expect(base.copyWith(strokeWidth: 5).fill, base.fill);
+    expect(base.copyWith(fill: null).fill, isNull);
+    expect(base.copyWith(stroke: null).stroke, isNull);
+  });
+
+  test('JetReportDesignerController.setShapeStyle restyles a shape (021)', () {
+    final JetReportDesignerController controller = JetReportDesignerController(
+      template: const ReportTemplate(
+        name: 'API check',
+        page: PageFormat.a4Portrait,
+        bands: <ReportBand>[
+          ReportBand(
+              type: BandType.detail,
+              height: 80,
+              elements: <ReportElement>[
+                ShapeElement(
+                  id: 's1',
+                  bounds: JetRect(x: 0, y: 0, width: 40, height: 40),
+                  kind: ShapeKind.rectangle,
+                  style: JetBoxStyle(stroke: JetColor.black),
+                ),
+              ]),
+        ],
+      ),
+    );
+    controller.setShapeStyle(
+        's1',
+        const JetBoxStyle(stroke: JetColor.black)
+            .copyWith(fill: const JetColor(0x3300FF00), strokeWidth: 3));
+    final ShapeElement shape =
+        controller.template.bands.first.elements.first as ShapeElement;
+    expect(shape.style.fill, const JetColor(0x3300FF00));
+    expect(shape.style.strokeWidth, 3);
+    expect(controller.canUndo, isTrue);
+    controller.undo();
+    expect(
+      (controller.template.bands.first.elements.first as ShapeElement)
+          .style
+          .fill,
+      isNull,
+    );
+    controller.dispose();
+  });
+
+  test('JetReportDesignerController.setBarcodeColor recolors a barcode (021)',
+      () {
+    final JetReportDesignerController controller = JetReportDesignerController(
+      template: const ReportTemplate(
+        name: 'API check',
+        page: PageFormat.a4Portrait,
+        bands: <ReportBand>[
+          ReportBand(
+              type: BandType.detail,
+              height: 80,
+              elements: <ReportElement>[
+                BarcodeElement(
+                  id: 'b1',
+                  bounds: JetRect(x: 0, y: 0, width: 40, height: 40),
+                  symbology: BarcodeSymbology.qrCode,
+                  data: '42',
+                ),
+              ]),
+        ],
+      ),
+    );
+    controller.setBarcodeColor('b1', const JetColor(0xFF1E40AF));
+    expect(
+      (controller.template.bands.first.elements.first as BarcodeElement).color,
+      const JetColor(0xFF1E40AF),
+    );
+    expect(controller.canUndo, isTrue);
+    controller.undo();
+    expect(
+      (controller.template.bands.first.elements.first as BarcodeElement).color,
+      JetColor.black,
+    );
+    controller.dispose();
+  });
+
   test('JetReportWorkspace is constructible from the public surface', () {
     final JetReportDesignerController controller =
         JetReportDesignerController();

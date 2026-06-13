@@ -79,9 +79,10 @@ void main() {
         () async {
       final PdfInspector pdf =
           PdfInspector(await exporter.toPdf(invoiceReport()));
-      // The invoice uses JetSans normal AND bold, but the registry resolves
-      // bold to the same default bytes — one embedded program, reused.
-      expect(pdf.embeddedFontProgramCount, 1,
+      // The invoice uses JetSans normal AND bold; the bundled default ships
+      // real variant faces (021 follow-up), so those are two distinct byte
+      // sources — each embedded exactly once, however many runs use them.
+      expect(pdf.embeddedFontProgramCount, 2,
           reason: 'embed each resolved font byte source exactly once per '
               'document (FR-005), never once per run');
     });

@@ -441,4 +441,111 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
 
   @override
   String get shapeFormStar => 'Stern';
+
+  @override
+  String get propertiesFont => 'Schrift';
+
+  @override
+  String get fontFamilyLabel => 'Schriftart';
+
+  @override
+  String get fontFamilyPickerTooltip => 'Schriftart wählen';
+
+  @override
+  String fontFamilyUnavailable(String family) {
+    return '$family (nicht verfügbar)';
+  }
+
+  @override
+  String get fontSizeLabel => 'Größe';
+
+  @override
+  String get fontBoldTooltip => 'Fett';
+
+  @override
+  String get fontItalicTooltip => 'Kursiv';
+
+  @override
+  String get fontUnderlineTooltip => 'Unterstrichen';
+
+  @override
+  String get alignLeftTooltip => 'Linksbündig';
+
+  @override
+  String get alignCenterTooltip => 'Zentriert';
+
+  @override
+  String get alignRightTooltip => 'Rechtsbündig';
+
+  @override
+  String get propertiesColor => 'Farbe';
+
+  @override
+  String get colorPickerTooltip => 'Farbe wählen';
+
+  @override
+  String get colorHexLabel => 'Hex';
+
+  @override
+  String get colorNone => 'Keine';
+
+  @override
+  String get swatchBlack => 'Schwarz';
+
+  @override
+  String get swatchWhite => 'Weiß';
+
+  @override
+  String get swatchGray => 'Grau';
+
+  @override
+  String get swatchSilver => 'Silber';
+
+  @override
+  String get swatchRed => 'Rot';
+
+  @override
+  String get swatchOrange => 'Orange';
+
+  @override
+  String get swatchAmber => 'Bernstein';
+
+  @override
+  String get swatchYellow => 'Gelb';
+
+  @override
+  String get swatchGreen => 'Grün';
+
+  @override
+  String get swatchEmerald => 'Smaragd';
+
+  @override
+  String get swatchTeal => 'Petrol';
+
+  @override
+  String get swatchCyan => 'Cyan';
+
+  @override
+  String get swatchBlue => 'Blau';
+
+  @override
+  String get swatchIndigo => 'Indigo';
+
+  @override
+  String get swatchViolet => 'Violett';
+
+  @override
+  String get swatchPink => 'Rosa';
+
+  @override
+  String get propertiesAppearance => 'Darstellung';
+
+  @override
+  String get propertiesFill => 'Füllung';
+
+  @override
+  String get propertiesOutline => 'Kontur';
+
+  @override
+  String get propertiesOutlineWidth => 'Breite';
 }

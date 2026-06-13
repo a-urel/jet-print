@@ -8,6 +8,7 @@
 //     localized accessible name and are focus-reachable buttons (no mouse).
 //
 // Drives the public `JetReportDesigner` only.
+import 'package:flutter/rendering.dart' show SemanticsNode;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
@@ -143,5 +144,160 @@ void main() {
       ),
     );
     sem.dispose();
+  });
+
+  // --- Font section controls (021 / C12 / FR-016) ---------------------------
+  group('Font section a11y (021)', () {
+    Finder field(String name) => find
+        .byKey(ValueKey<String>('jet_print.designer.properties.field.$name'));
+
+    Future<JetReportDesignerController> pumpWithText(
+        WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      c.createElement(DesignerToolType.text,
+          bandIndex: 1, at: const JetOffset(20, 20));
+      await tester.pumpAndSettle();
+      await openPropertiesTab(tester);
+      return c;
+    }
+
+    testWidgets(
+        'the B/I/U toggles are named, role-tagged, stateful, activatable '
+        'buttons', (WidgetTester tester) async {
+      final SemanticsHandle sem = tester.ensureSemantics();
+      await pumpWithText(tester);
+
+      const Map<String, String> names = <String, String>{
+        'bold': 'Bold',
+        'italic': 'Italic',
+        'underline': 'Underline',
+      };
+      for (final MapEntry<String, String> entry in names.entries) {
+        expect(
+          tester.getSemantics(field(entry.key)),
+          isSemantics(
+            label: entry.value,
+            isButton: true,
+            isSelected: false,
+            hasTapAction: true,
+          ),
+          reason: '${entry.key} announces "${entry.value}"',
+        );
+      }
+      sem.dispose();
+    });
+
+    testWidgets('an active toggle reports its selected state',
+        (WidgetTester tester) async {
+      final SemanticsHandle sem = tester.ensureSemantics();
+      await pumpWithText(tester);
+
+      await tester.tap(field('underline'));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getSemantics(field('underline')),
+        isSemantics(label: 'Underline', isButton: true, isSelected: true),
+      );
+      sem.dispose();
+    });
+
+    testWidgets(
+        'the alignment segments are named buttons; the inactive ones are '
+        'activatable', (WidgetTester tester) async {
+      final SemanticsHandle sem = tester.ensureSemantics();
+      await pumpWithText(tester);
+
+      // Left is the default — active and announced.
+      expect(
+        tester.getSemantics(field('align.left')),
+        isSemantics(label: 'Align left', isButton: true, isSelected: true),
+      );
+      // Center/right are unselected and tappable.
+      expect(
+        tester.getSemantics(field('align.center')),
+        isSemantics(
+          label: 'Align center',
+          isButton: true,
+          isSelected: false,
+          hasTapAction: true,
+        ),
+      );
+      expect(
+        tester.getSemantics(field('align.right')),
+        isSemantics(
+          label: 'Align right',
+          isButton: true,
+          isSelected: false,
+          hasTapAction: true,
+        ),
+      );
+      sem.dispose();
+    });
+
+    testWidgets(
+        'the color trigger and palette swatches are named, activatable '
+        'buttons', (WidgetTester tester) async {
+      final SemanticsHandle sem = tester.ensureSemantics();
+      await pumpWithText(tester);
+
+      // The trigger merges its current value into the accessible label
+      // ("Choose color\n#000000") — the name AND the state are announced.
+      final SemanticsNode trigger = tester.getSemantics(field('textColor'));
+      expect(trigger, isSemantics(isButton: true, hasTapAction: true));
+      expect(trigger.label, contains('Choose color'));
+
+      await tester.tap(field('textColor'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.getSemantics(field('textColor.swatch.red')),
+        isSemantics(label: 'Red', isButton: true, hasTapAction: true),
+      );
+      sem.dispose();
+    });
+
+    testWidgets('the family picker trigger is a named, activatable button',
+        (WidgetTester tester) async {
+      final SemanticsHandle sem = tester.ensureSemantics();
+      await pumpWithText(tester);
+
+      // The merged label carries the accessible name plus the current family.
+      final SemanticsNode trigger = tester.getSemantics(field('fontFamily'));
+      expect(trigger, isSemantics(isButton: true, hasTapAction: true));
+      expect(trigger.label, contains('Choose font family'));
+      sem.dispose();
+    });
+  });
+
+  // --- Appearance section controls (021 / US2 / C12) ------------------------
+  group('Appearance section a11y (021)', () {
+    Finder field(String name) => find
+        .byKey(ValueKey<String>('jet_print.designer.properties.field.$name'));
+
+    testWidgets(
+        'the fill/outline triggers and the None entry are named, activatable '
+        'buttons', (WidgetTester tester) async {
+      final SemanticsHandle sem = tester.ensureSemantics();
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      c.createElement(DesignerToolType.shape,
+          bandIndex: 1, at: const JetOffset(20, 20));
+      await tester.pumpAndSettle();
+      await openPropertiesTab(tester);
+
+      for (final String name in <String>['fill', 'stroke']) {
+        final SemanticsNode trigger = tester.getSemantics(field(name));
+        expect(trigger, isSemantics(isButton: true, hasTapAction: true),
+            reason: '$name trigger is an activatable button');
+        expect(trigger.label, contains('Choose color'));
+      }
+
+      await tester.tap(field('fill'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.getSemantics(field('fill.none')),
+        isSemantics(label: 'None', isButton: true, hasTapAction: true),
+      );
+      sem.dispose();
+    });
   });
 }

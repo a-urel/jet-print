@@ -32,4 +32,44 @@ void main() {
       expect(const JetBoxStyle(strokeWidth: 3) == JetBoxStyle.none, isFalse);
     });
   });
+
+  // --- 021 format properties: sentinel-based copyWith -----------------------
+  group('JetBoxStyle.copyWith (021 / US2)', () {
+    const JetBoxStyle base = JetBoxStyle(
+      fill: JetColor(0x3300FF00),
+      stroke: JetColor(0xFF112233),
+      strokeWidth: 2.5,
+    );
+
+    test('with no arguments returns an equal style', () {
+      expect(base.copyWith(), base);
+    });
+
+    test('omitting fill/stroke preserves them', () {
+      final JetBoxStyle next = base.copyWith(strokeWidth: 7);
+      expect(next.fill, base.fill);
+      expect(next.stroke, base.stroke);
+      expect(next.strokeWidth, 7);
+    });
+
+    test('an explicit null clears fill ("no fill")', () {
+      final JetBoxStyle next = base.copyWith(fill: null);
+      expect(next.fill, isNull);
+      expect(next.stroke, base.stroke, reason: 'stroke untouched');
+      expect(next.strokeWidth, base.strokeWidth);
+    });
+
+    test('an explicit null clears stroke ("no outline")', () {
+      final JetBoxStyle next = base.copyWith(stroke: null);
+      expect(next.stroke, isNull);
+      expect(next.fill, base.fill, reason: 'fill untouched');
+    });
+
+    test('replaces fill/stroke with new colors', () {
+      final JetBoxStyle next = base.copyWith(
+          fill: const JetColor(0xFFEF4444), stroke: const JetColor(0xFF000000));
+      expect(next.fill, const JetColor(0xFFEF4444));
+      expect(next.stroke, const JetColor(0xFF000000));
+    });
+  });
 }

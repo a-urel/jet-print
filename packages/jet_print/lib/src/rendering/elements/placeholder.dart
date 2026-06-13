@@ -20,24 +20,33 @@ const JetTextStyle _placeholderStyle =
 
 /// Appends an outline [RectPrimitive] over [bounds] followed by a measured
 /// [label] [TextRunPrimitive], both tagged with [elementId].
+///
+/// [color] tints the outline and the label — the barcode placeholder passes
+/// the element's bar color so a color edit is visible and WYSIWYG-consistent
+/// before real symbology rendering lands (021 / research §8). Omitted, the
+/// placeholder keeps its muted grey (image-missing, unknown element).
 void emitPlaceholder(
   FrameBuilder out,
   JetRect bounds,
   String label,
   RenderContext ctx, {
   String? elementId,
+  JetColor color = _placeholderColor,
 }) {
   out.add(RectPrimitive(
     bounds: bounds,
-    stroke: _placeholderColor,
+    stroke: color,
     elementId: elementId,
   ));
+  final JetTextStyle style = color == _placeholderColor
+      ? _placeholderStyle
+      : JetTextStyle(fontSize: _placeholderStyle.fontSize, color: color);
   final MeasuredText m =
-      ctx.measurer.measure(label, _placeholderStyle, maxWidth: bounds.width);
+      ctx.measurer.measure(label, style, maxWidth: bounds.width);
   out.add(TextRunPrimitive(
     bounds: bounds,
     lines: m.lines,
-    style: _placeholderStyle,
+    style: style,
     fontFamily: m.fontFamily,
     elementId: elementId,
   ));

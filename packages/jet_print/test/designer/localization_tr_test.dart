@@ -157,4 +157,39 @@ void main() {
     expect(l10n.shapeFormStar, isNot('Star'));
     expect(l10n.shapeFormRectangle, isNot('Rectangle'));
   });
+
+  // 021 / C12 — the Font-section strings are Turkish.
+  testWidgets('the Font section strings are localized in Turkish (021)', (
+    WidgetTester tester,
+  ) async {
+    final JetReportDesignerController c = JetReportDesignerController(
+      template: ReportTemplate(
+        name: 'Styled',
+        page: PageFormat.a4Portrait,
+        bands: const <ReportBand>[
+          ReportBand(
+            type: BandType.detail,
+            height: 120,
+            elements: <ReportElement>[
+              TextElement(
+                id: 't',
+                bounds: JetRect(x: 10, y: 10, width: 160, height: 24),
+                text: 'Merhaba',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+    await pumpDesignerWith(tester, controller: c, locale: const Locale('tr'));
+    await openPropertiesTab(tester);
+    c.select('t');
+    await tester.pumpAndSettle();
+
+    // The 'Yazı tipi' family-row label renders as typed; the section caption
+    // is upper-cased by SectionLabel.
+    expect(find.text('Yazı tipi'), findsOneWidget);
+    expect(find.text('Boyut'), findsOneWidget);
+    expect(find.text('Renk'), findsOneWidget);
+  });
 }

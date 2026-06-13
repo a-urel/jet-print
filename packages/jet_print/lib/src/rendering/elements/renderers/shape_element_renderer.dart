@@ -26,16 +26,25 @@ class ShapeElementRenderer extends ElementRenderer<ShapeElement> {
   @override
   void emit(
       ShapeElement el, RenderContext ctx, JetRect bounds, FrameBuilder out) {
+    // The ONE stroke-width-0 seam (021 / C7, research §6): at width 0 the
+    // outline is not emitted on any path, while the stored stroke color stays
+    // on the style so stepping the width back restores it. Handled here once —
+    // zero painter changes, parity across canvas/preview/export.
+    final JetColor? stroke = el.style.strokeWidth > 0 ? el.style.stroke : null;
     switch (el.kind) {
       case ShapeKind.rectangle:
         out.add(RectPrimitive(
           bounds: bounds,
           fill: el.style.fill,
-          stroke: el.style.stroke,
+          stroke: stroke,
           strokeWidth: el.style.strokeWidth,
           elementId: el.id,
         ));
       case ShapeKind.line:
+        // A line's stroke IS the shape: a zero-width LinePrimitive would
+        // still paint a hairline in both backends, so emit nothing. A stroke
+        // with no color keeps its default-black design-time render (020).
+        if (el.style.strokeWidth <= 0) return;
         final double left = bounds.x;
         final double top = bounds.y;
         final double right = bounds.x + bounds.width;
@@ -64,7 +73,7 @@ class ShapeElementRenderer extends ElementRenderer<ShapeElement> {
           bounds: bounds,
           commands: shapePath(el.kind, bounds),
           fill: el.style.fill,
-          stroke: el.style.stroke,
+          stroke: stroke,
           strokeWidth: el.style.strokeWidth,
           elementId: el.id,
         ));

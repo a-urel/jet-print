@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
@@ -12,9 +14,14 @@ import '../../../domain/elements/text_element.dart';
 import '../../../domain/geometry.dart';
 import '../../../domain/page_format.dart';
 import '../../../domain/report_element.dart';
+import '../../../domain/styles/color.dart';
+import '../../../domain/styles/text_style.dart';
 import '../../../rendering/elements/shape_path.dart';
 import '../../../rendering/frame/primitive.dart';
+import '../../../rendering/text/font_registry.dart';
+import '../../../rendering/text/ui_font_family.dart';
 import '../../controller/jet_report_designer_controller.dart';
+import '../../designer_font_scope.dart';
 import '../../designer_schema_scope.dart';
 import '../../designer_scope.dart';
 import '../../field_type_glyph.dart';
@@ -25,6 +32,8 @@ import '../../margin_presets.dart';
 import '../../paper_presets.dart';
 import '../../template/value_template_compiler.dart';
 import '../region_chrome.dart';
+
+part 'style_editors.dart';
 
 /// Stable test-seam key prefix for the inspector's fields and empty state.
 const String _p = 'jet_print.designer.properties';
@@ -229,6 +238,71 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
           pickerTooltip: l10n.formatPresetPickerTooltip,
           onCommit: (String v) => controller.setFormat(id, v),
         ),
+        const SizedBox(height: 12),
+        // Font section (021 / US1): every editor reads the element's effective
+        // style and commits one whole-style copyWith through setTextStyle —
+        // one undoable step per committed change (FR-013). Keyed by element id
+        // so a selection switch rebuilds the editors, discarding uncommitted
+        // input (C9).
+        KeyedSubtree(
+          key: ValueKey<String>('$_p.font.$id'),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              SectionLabel(l10n.propertiesFont),
+              const SizedBox(height: 4),
+              _LabeledRow(
+                label: l10n.fontFamilyLabel,
+                child: _FontFamilyRow(
+                  fonts: DesignerFontScope.of(context),
+                  style: element.style,
+                  onCommit: (JetTextStyle next) =>
+                      controller.setTextStyle(id, next),
+                ),
+              ),
+              _LabeledRow(
+                label: l10n.fontSizeLabel,
+                child: _NumberField(
+                  fieldKey: const ValueKey<String>('$_p.field.fontSize'),
+                  prefix: LucideIcons.aLargeSmall,
+                  value: element.style.fontSize,
+                  min: 4,
+                  max: 144,
+                  onCommit: (double v) => controller.setTextStyle(
+                      id, element.style.copyWith(fontSize: v)),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: <Widget>[
+                  _StyleToggleGroup(
+                    style: element.style,
+                    onCommit: (JetTextStyle next) =>
+                        controller.setTextStyle(id, next),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _AlignSegments(
+                      align: element.style.align,
+                      onCommit: (JetTextAlign a) => controller.setTextStyle(
+                          id, element.style.copyWith(align: a)),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              _LabeledRow(
+                label: l10n.propertiesColor,
+                child: _ColorField(
+                  keyBase: '$_p.field.textColor',
+                  value: element.style.color,
+                  onCommit: (JetColor? c) => controller.setTextStyle(
+                      id, element.style.copyWith(color: c)),
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
       // Image binding: a field picker only (no expression) — FR-013 / U1.
       if (element is ImageElement) ...<Widget>[
@@ -249,6 +323,24 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                 _unresolved(schema, controller, id, imageField: s.field))
           _UnresolvedHint(message: l10n.bindingUnresolved),
       ],
+      // Barcode color (021 / US3): the shared color editor — no None, bars
+      // always have a color — bound to BarcodeElement.color through one
+      // setBarcodeColor commit per pick (C8). The placeholder rendering (and
+      // later the real bars) reflects it on canvas/preview/export.
+      if (element is BarcodeElement) ...<Widget>[
+        const SizedBox(height: 12),
+        KeyedSubtree(
+          key: ValueKey<String>('$_p.barcode.$id'),
+          child: _LabeledRow(
+            label: l10n.propertiesColor,
+            child: _ColorField(
+              keyBase: '$_p.field.barcodeColor',
+              value: element.color,
+              onCommit: (JetColor? c) => controller.setBarcodeColor(id, c!),
+            ),
+          ),
+        ),
+      ],
       // Shape gallery: pick the form from a visual roster (020 / FR-001/002).
       // Shape-gated, so it is absent for text/image/barcode and for no/multi
       // selection (the latter fall through to the empty state before this runs).
@@ -256,6 +348,55 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
         const SizedBox(height: 12),
         SectionLabel(l10n.propertiesShape),
         _ShapeGallery(controller: controller, element: element),
+        const SizedBox(height: 12),
+        // Appearance section (021 / US2): fill (closed forms only — a line has
+        // no interior), outline color with None, and outline width 0–20 (0
+        // hides the outline, the color stays remembered). Each commit is one
+        // copyWith + one setShapeStyle = one undo step (FR-013). Keyed by
+        // element id so a selection switch discards uncommitted input (C9).
+        KeyedSubtree(
+          key: ValueKey<String>('$_p.appearance.$id'),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              SectionLabel(l10n.propertiesAppearance),
+              const SizedBox(height: 4),
+              if (element.kind != ShapeKind.line)
+                _LabeledRow(
+                  label: l10n.propertiesFill,
+                  child: _ColorField(
+                    keyBase: '$_p.field.fill',
+                    value: element.style.fill,
+                    allowNone: true,
+                    onCommit: (JetColor? c) => controller.setShapeStyle(
+                        id, element.style.copyWith(fill: c)),
+                  ),
+                ),
+              _LabeledRow(
+                label: l10n.propertiesOutline,
+                child: _ColorField(
+                  keyBase: '$_p.field.stroke',
+                  value: element.style.stroke,
+                  allowNone: true,
+                  onCommit: (JetColor? c) => controller.setShapeStyle(
+                      id, element.style.copyWith(stroke: c)),
+                ),
+              ),
+              _LabeledRow(
+                label: l10n.propertiesOutlineWidth,
+                child: _NumberField(
+                  fieldKey: const ValueKey<String>('$_p.field.strokeWidth'),
+                  prefix: LucideIcons.ruler,
+                  value: element.style.strokeWidth,
+                  min: 0,
+                  max: 20,
+                  onCommit: (double v) => controller.setShapeStyle(
+                      id, element.style.copyWith(strokeWidth: v)),
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     ];
   }
@@ -813,12 +954,18 @@ class _DropdownOption {
     required this.label,
     required this.selected,
     required this.onPick,
+    this.labelStyle,
   });
 
   final Key optionKey;
   final String label;
   final bool selected;
   final VoidCallback onPick;
+
+  /// An optional style for the option's label — the family picker previews
+  /// each font family in its own typeface (021 / C3). Null inherits the
+  /// menu's default item style.
+  final TextStyle? labelStyle;
 }
 
 /// A compact Office-style picker for the PAGE section: an outlined trigger
@@ -871,7 +1018,7 @@ class _PresetDropdownState extends State<_PresetDropdown> {
               _menu.hide();
               option.onPick();
             },
-            child: Text(option.label),
+            child: Text(option.label, style: option.labelStyle),
           ),
       ],
       child: Semantics(
@@ -990,6 +1137,11 @@ class _TextInputState extends State<_TextInput> {
 /// each commit a single undoable model edit. While the field is focused the
 /// live value is not written over the user's in-progress text; an out-of-range
 /// commit is reconciled by the model's clamp on the next rebuild.
+///
+/// With [min]/[max] set, a typed out-of-range value commits the clamped bound
+/// (the field shows the bound, not the rejected text) and a stepper bump past a
+/// bound is a no-op — no commit, no history entry (021 / C4). Non-numeric input
+/// is always rejected and the last valid value restored, with no commit.
 class _NumberField extends StatefulWidget {
   const _NumberField({
     required this.fieldKey,
@@ -997,6 +1149,8 @@ class _NumberField extends StatefulWidget {
     required this.value,
     required this.onCommit,
     this.focusNode,
+    this.min,
+    this.max,
   });
 
   final Key fieldKey;
@@ -1007,6 +1161,13 @@ class _NumberField extends StatefulWidget {
   /// An externally-owned focus node (the panel's double-tap focus target);
   /// null ⇒ the field owns a private one.
   final FocusNode? focusNode;
+
+  /// Inclusive lower bound for committed values; null ⇒ unbounded (the
+  /// pre-021 X/Y/W/H behavior).
+  final double? min;
+
+  /// Inclusive upper bound for committed values; null ⇒ unbounded.
+  final double? max;
 
   @override
   State<_NumberField> createState() => _NumberFieldState();
@@ -1048,17 +1209,32 @@ class _NumberFieldState extends State<_NumberField> {
       _controller.text = _format(widget.value); // reject unparseable input
       return;
     }
+    final double next = _clamp(parsed);
     // Ignore a re-commit that only reflects display rounding — e.g. blurring a
     // field showing the rounded "28.4" form of a 28.35 model value would
     // otherwise drift it to 28.4. Below display precision, there is no edit.
-    if (_format(parsed) == _format(widget.value)) {
+    // An out-of-range entry that clamps back to the current value lands here
+    // too: the field restores, and no history entry is recorded (C4).
+    if (_format(next) == _format(widget.value)) {
       _controller.text = _format(widget.value);
       return;
     }
-    widget.onCommit(parsed);
+    if (next != parsed) _controller.text = _format(next); // show the bound
+    widget.onCommit(next);
   }
 
-  void _bump(double delta) => widget.onCommit(widget.value + delta);
+  void _bump(double delta) {
+    final double next = _clamp(widget.value + delta);
+    if (next == widget.value) return; // stuck at a bound: no-op, no history
+    widget.onCommit(next);
+  }
+
+  double _clamp(double v) {
+    double next = v;
+    if (widget.min case final double min when next < min) next = min;
+    if (widget.max case final double max when next > max) next = max;
+    return next;
+  }
 
   @override
   void dispose() {

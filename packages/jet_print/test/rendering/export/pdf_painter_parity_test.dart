@@ -14,11 +14,16 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/domain/elements/image_source.dart';
+import 'package:jet_print/src/domain/elements/shape_element.dart';
 import 'package:jet_print/src/domain/geometry.dart';
 import 'package:jet_print/src/domain/page_format.dart';
+import 'package:jet_print/src/domain/styles/box_style.dart';
 import 'package:jet_print/src/domain/styles/color.dart';
 import 'package:jet_print/src/domain/styles/text_style.dart';
+import 'package:jet_print/src/rendering/elements/render_context.dart';
+import 'package:jet_print/src/rendering/elements/renderers/shape_element_renderer.dart';
 import 'package:jet_print/src/rendering/export/pdf_painter.dart';
+import 'package:jet_print/src/rendering/frame/frame_builder.dart';
 import 'package:jet_print/src/rendering/frame/page_frame.dart';
 import 'package:jet_print/src/rendering/frame/primitive.dart';
 import 'package:jet_print/src/rendering/paint/image_fit.dart';
@@ -26,6 +31,7 @@ import 'package:jet_print/src/rendering/paint/report_painter.dart';
 import 'package:jet_print/src/rendering/text/font_registry.dart';
 import 'package:jet_print/src/rendering/text/metrics_text_measurer.dart';
 import 'package:jet_print/src/rendering/text/text_measurer.dart';
+import 'package:jet_print/src/rendering/text/underline_metrics.dart';
 
 import 'support/export_fixtures.dart';
 import 'support/pdf_inspector.dart';
@@ -137,6 +143,75 @@ void main() {
       expect(_tdRe.allMatches(content).length, nonEmpty,
           reason: 'blank lines draw nothing (but still occupy vertical space '
               'via the following lines\' baselines)');
+    });
+  });
+
+  group('text — underline parity (021 / US1 / C11)', () {
+    test(
+        'an underlined run strokes one line segment per text line at the '
+        'shared underlineFor geometry', () async {
+      const JetTextStyle style = JetTextStyle(fontSize: 12, underline: true);
+      final MeasuredText measured = measurer.measure('Hi', style);
+      const JetRect bounds = JetRect(x: 10, y: 20, width: 120, height: 40);
+      final (_, String content) = await _paint(<FramePrimitive>[
+        TextRunPrimitive(
+          bounds: bounds,
+          lines: measured.lines,
+          style: style,
+          fontFamily: measured.fontFamily,
+        ),
+      ], fonts: fonts);
+
+      final ({double offset, double thickness}) m = underlineFor(12);
+      final TextLine line = measured.lines.single;
+      final double y = _pageHeight - (bounds.y + line.baseline + m.offset);
+
+      final Match seg = _lineRe.firstMatch(content)!;
+      expect(double.parse(seg.group(1)!), closeTo(bounds.x, 0.001),
+          reason: 'segment starts at the aligned dx');
+      expect(double.parse(seg.group(2)!), closeTo(y, 0.001),
+          reason: 'segment sits underlineFor().offset below the baseline');
+      expect(double.parse(seg.group(3)!), closeTo(bounds.x + line.width, 0.001),
+          reason: 'segment spans the measured line width');
+      expect(double.parse(seg.group(4)!), closeTo(y, 0.001),
+          reason: 'the segment is horizontal');
+      final Match width = RegExp(r'([\d.]+)\s+w\b').firstMatch(content)!;
+      expect(double.parse(width.group(1)!), closeTo(m.thickness, 0.001),
+          reason: 'stroke width = underlineFor().thickness');
+    });
+
+    test('a non-underlined run strokes no line segment', () async {
+      const JetTextStyle style = JetTextStyle(fontSize: 12);
+      final MeasuredText measured = measurer.measure('Hi', style);
+      final (_, String content) = await _paint(<FramePrimitive>[
+        TextRunPrimitive(
+          bounds: const JetRect(x: 10, y: 20, width: 120, height: 40),
+          lines: measured.lines,
+          style: style,
+          fontFamily: measured.fontFamily,
+        ),
+      ], fonts: fonts);
+      expect(_lineRe.hasMatch(content), isFalse);
+    });
+
+    test('an underlined centered run places the segment at the aligned dx',
+        () async {
+      const JetTextStyle style = JetTextStyle(
+          fontSize: 12, underline: true, align: JetTextAlign.center);
+      final MeasuredText measured = measurer.measure('Hi', style);
+      const JetRect bounds = JetRect(x: 10, y: 20, width: 120, height: 40);
+      final (_, String content) = await _paint(<FramePrimitive>[
+        TextRunPrimitive(
+          bounds: bounds,
+          lines: measured.lines,
+          style: style,
+          fontFamily: measured.fontFamily,
+        ),
+      ], fonts: fonts);
+      final double extra = bounds.width - measured.lines.single.width;
+      final Match seg = _lineRe.firstMatch(content)!;
+      expect(double.parse(seg.group(1)!), closeTo(bounds.x + extra / 2, 0.001),
+          reason: 'the underline rides the same alignment math as the glyphs');
     });
   });
 
@@ -255,6 +330,40 @@ void main() {
       expect(content, contains(' gs'),
           reason: 'CanvasPainter renders 0x80 alpha translucent; the PDF '
               'backend must match via an ExtGState, not drop the alpha');
+    });
+  });
+
+  group('shapes — stroke width 0 (021 / C7)', () {
+    test('a shape with strokeWidth 0 emits no stroke operators', () async {
+      // Through the REAL renderer: the seam emits stroke: null at width 0, so
+      // the PDF backend writes a fill pass only.
+      final FrameBuilder builder = FrameBuilder(_page);
+      const ShapeElementRenderer renderer = ShapeElementRenderer();
+      const JetRect bounds = JetRect(x: 10, y: 10, width: 60, height: 40);
+      renderer.emit(
+        const ShapeElement(
+          id: 's',
+          bounds: bounds,
+          kind: ShapeKind.rectangle,
+          style: JetBoxStyle(
+            fill: JetColor(0xFFFF0000),
+            stroke: JetColor(0xFF0000FF),
+            strokeWidth: 0,
+          ),
+        ),
+        RenderContext(measurer: measurer),
+        bounds,
+        builder,
+      );
+      final PdfPainter painter = PdfPainter(fonts);
+      await paintFrame(builder.build(), painter);
+      final PdfInspector pdf = PdfInspector(await painter.save());
+      final String content = pdf.contentOf(0);
+
+      expect(content, contains(RegExp(r're\s+f\b')),
+          reason: 'fill still paints');
+      expect(content, isNot(contains(RegExp(r'\bS\b'))),
+          reason: 'no stroke operator at width 0');
     });
   });
 

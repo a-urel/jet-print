@@ -45,14 +45,23 @@ class BarcodeElement extends ReportElement {
   @override
   String get typeKey => 'barcode';
 
-  @override
-  BarcodeElement withBounds(JetRect bounds) => BarcodeElement(
+  /// Returns a copy with the named fields replaced and the rest preserved.
+  BarcodeElement copyWith({
+    JetRect? bounds,
+    BarcodeSymbology? symbology,
+    String? data,
+    JetColor? color,
+  }) =>
+      BarcodeElement(
         id: id,
-        bounds: bounds,
-        symbology: symbology,
-        data: data,
-        color: color,
+        bounds: bounds ?? this.bounds,
+        symbology: symbology ?? this.symbology,
+        data: data ?? this.data,
+        color: color ?? this.color,
       );
+
+  @override
+  BarcodeElement withBounds(JetRect bounds) => copyWith(bounds: bounds);
 
   @override
   bool operator ==(Object other) =>
