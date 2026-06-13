@@ -872,6 +872,35 @@ void main() {
       expect(_field('fontFamily.option.JetSans'), findsOneWidget);
       expect(_field('fontFamily.option.Acme Brand'), findsOneWidget);
     });
+
+    testWidgets('a long family list scrolls so late options stay reachable',
+        (WidgetTester tester) async {
+      // 30 host families → the menu overflows the viewport; it must scroll, not
+      // clip (022 — large catalogs).
+      final List<JetFontFamily> many = <JetFontFamily>[
+        for (int i = 0; i < 30; i++)
+          JetFontFamily(
+            name: 'Family ${i.toString().padLeft(2, '0')}',
+            faces: <JetFontFace>[JetFontFace(bytes: validRegularFontBytes())],
+          ),
+      ];
+      final JetReportDesignerController c =
+          await _pumpStyledTextWithFonts(tester, const JetTextStyle(), many);
+
+      await tester.tap(_field('fontFamily'));
+      await tester.pumpAndSettle();
+
+      // The last family is built (in the tree) but off-screen; reaching it
+      // requires a working scroll view.
+      final Finder last = _field('fontFamily.option.Family 29');
+      expect(last, findsOneWidget);
+      await tester.ensureVisible(last); // throws if nothing can scroll it
+      await tester.pumpAndSettle();
+      await tester.tap(last);
+      await tester.pumpAndSettle();
+      expect(_textStyleOf(c, 't').fontFamily, 'Family 29',
+          reason: 'a late, scrolled-to option is selectable');
+    });
   });
 
   group('properties — B/I/U toggles (C5)', () {

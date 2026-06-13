@@ -1006,21 +1006,38 @@ class _PresetDropdownState extends State<_PresetDropdown> {
     final ShadColorScheme colors = theme.colorScheme;
     return ShadContextMenu(
       controller: _menu,
+      // ShadContextMenu stacks its items in a non-scrolling Column, so a long
+      // option list (e.g. a large font catalog) would overflow the viewport
+      // unreachably. Wrap the items in a height-capped scroll view: short
+      // preset lists stay un-scrolled, long ones scroll (022).
       items: <Widget>[
-        for (final _DropdownOption option in widget.options)
-          ShadContextMenuItem(
-            key: option.optionKey,
-            leading: Icon(
-              LucideIcons.check,
-              size: 16,
-              color: option.selected ? colors.foreground : colors.background,
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 320),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                for (final _DropdownOption option in widget.options)
+                  ShadContextMenuItem(
+                    key: option.optionKey,
+                    leading: Icon(
+                      LucideIcons.check,
+                      size: 16,
+                      color: option.selected
+                          ? colors.foreground
+                          : colors.background,
+                    ),
+                    onPressed: () {
+                      _menu.hide();
+                      option.onPick();
+                    },
+                    child: Text(option.label, style: option.labelStyle),
+                  ),
+              ],
             ),
-            onPressed: () {
-              _menu.hide();
-              option.onPick();
-            },
-            child: Text(option.label, style: option.labelStyle),
           ),
+        ),
       ],
       child: Semantics(
         label: widget.tooltip,
