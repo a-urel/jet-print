@@ -94,6 +94,9 @@ class _ColorField extends StatefulWidget {
     required this.value,
     required this.onCommit,
     this.allowNone = false,
+    this.compact = false,
+    this.leadingIcon,
+    this.semanticLabel,
   });
 
   /// The stable key prefix, e.g. `jet_print.designer.properties.field.fill`;
@@ -106,6 +109,20 @@ class _ColorField extends StatefulWidget {
 
   /// Whether the popover offers a None entry committing `null` (C7).
   final bool allowNone;
+
+  /// Renders a square swatch-only trigger (the Font row's `[C]` box) instead of
+  /// the full swatch + hex + chevron field. The popover is identical.
+  final bool compact;
+
+  /// A small glyph shown before the swatch in [compact] mode — identifies the
+  /// property a label-less box stands for (e.g. fill vs outline). Decorative:
+  /// the accessible name comes from [semanticLabel] / the picker tooltip.
+  final IconData? leadingIcon;
+
+  /// Prepended to the trigger's accessible name so two adjacent color boxes
+  /// (fill, outline) read distinctly to a screen reader. Null ⇒ the picker
+  /// tooltip alone.
+  final String? semanticLabel;
 
   /// Receives the committed color (null only from the None entry).
   final ValueChanged<JetColor?> onCommit;
@@ -175,41 +192,73 @@ class _ColorFieldState extends State<_ColorField> {
     final ShadColorScheme colors = theme.colorScheme;
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
     final JetColor? value = widget.value;
+    // The hover tooltip names the property (e.g. "Fill"); the accessible name
+    // keeps the picker role too ("Fill, Choose color") so it reads in full.
+    final String tip = widget.semanticLabel ?? l10n.colorPickerTooltip;
+    final String name = widget.semanticLabel == null
+        ? l10n.colorPickerTooltip
+        : '${widget.semanticLabel}, ${l10n.colorPickerTooltip}';
 
     return ShadPopover(
       controller: _popover,
       popover: (BuildContext context) => _buildPopover(theme, l10n),
-      child: Semantics(
-        label: l10n.colorPickerTooltip,
-        button: true,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: _popover.toggle,
-          child: Container(
-            key: ValueKey<String>(widget.keyBase),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: colors.background,
-              border: Border.all(
-                  color: _flash ? colors.destructive : colors.border),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Row(
-              children: <Widget>[
-                _SwatchTile(color: value, size: 16),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    value == null ? l10n.colorNone : _hexDisplay(value),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.small,
+      child: ShadTooltip(
+        builder: (BuildContext context) => Text(tip),
+        child: Semantics(
+          label: name,
+          button: true,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: _popover.toggle,
+            child: widget.compact
+                ? Container(
+                    key: ValueKey<String>(widget.keyBase),
+                    padding: const EdgeInsets.all(9),
+                    decoration: BoxDecoration(
+                      color: colors.background,
+                      border: Border.all(
+                          color: _flash ? colors.destructive : colors.border),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: widget.leadingIcon == null
+                        ? _SwatchTile(color: value, size: 16)
+                        : Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Icon(widget.leadingIcon,
+                                  size: 14, color: colors.mutedForeground),
+                              const SizedBox(width: 6),
+                              _SwatchTile(color: value, size: 16),
+                            ],
+                          ),
+                  )
+                : Container(
+                    key: ValueKey<String>(widget.keyBase),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: colors.background,
+                      border: Border.all(
+                          color: _flash ? colors.destructive : colors.border),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      children: <Widget>[
+                        _SwatchTile(color: value, size: 16),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            value == null ? l10n.colorNone : _hexDisplay(value),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.small,
+                          ),
+                        ),
+                        Icon(LucideIcons.chevronDown,
+                            size: 14, color: colors.mutedForeground),
+                      ],
+                    ),
                   ),
-                ),
-                Icon(LucideIcons.chevronDown,
-                    size: 14, color: colors.mutedForeground),
-              ],
-            ),
           ),
         ),
       ),

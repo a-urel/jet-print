@@ -251,27 +251,50 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
             children: <Widget>[
               SectionLabel(l10n.propertiesFont),
               const SizedBox(height: 4),
-              _LabeledRow(
-                label: l10n.fontFamilyLabel,
-                child: _FontFamilyRow(
-                  fonts: DesignerFontScope.of(context),
-                  showBuiltIns: DesignerFontScope.showBuiltInsOf(context),
-                  style: element.style,
-                  onCommit: (JetTextStyle next) =>
-                      controller.setTextStyle(id, next),
-                ),
-              ),
-              _LabeledRow(
-                label: l10n.fontSizeLabel,
-                child: _NumberField(
-                  fieldKey: const ValueKey<String>('$_p.field.fontSize'),
-                  prefix: LucideIcons.aLargeSmall,
-                  value: element.style.fontSize,
-                  min: 4,
-                  max: 144,
-                  onCommit: (double v) => controller.setTextStyle(
-                      id, element.style.copyWith(fontSize: v)),
-                ),
+              // Family, size and color share one compact row — no left labels.
+              // The family picker takes the slack; size is a fixed-width field
+              // (its leading glyph stands in for the dropped "Size" label); the
+              // color trigger is a square swatch-only box.
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: _FontFamilyRow(
+                      fonts: DesignerFontScope.of(context),
+                      showBuiltIns: DesignerFontScope.showBuiltInsOf(context),
+                      style: element.style,
+                      onCommit: (JetTextStyle next) =>
+                          controller.setTextStyle(id, next),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  SizedBox(
+                    width: 84,
+                    child: _PresetDropdown(
+                      fieldKey: const ValueKey<String>('$_p.field.fontSize'),
+                      label: _format(element.style.fontSize),
+                      tooltip: l10n.fontSizeLabel,
+                      options: <_DropdownOption>[
+                        for (final double size in _fontSizePresets)
+                          _DropdownOption(
+                            optionKey: ValueKey<String>(
+                                '$_p.field.fontSize.option.${_format(size)}'),
+                            label: _format(size),
+                            selected: element.style.fontSize == size,
+                            onPick: () => controller.setTextStyle(
+                                id, element.style.copyWith(fontSize: size)),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  _ColorField(
+                    keyBase: '$_p.field.textColor',
+                    value: element.style.color,
+                    compact: true,
+                    onCommit: (JetColor? c) => controller.setTextStyle(
+                        id, element.style.copyWith(color: c)),
+                  ),
+                ],
               ),
               const SizedBox(height: 4),
               Row(
@@ -290,16 +313,6 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(height: 8),
-              _LabeledRow(
-                label: l10n.propertiesColor,
-                child: _ColorField(
-                  keyBase: '$_p.field.textColor',
-                  value: element.style.color,
-                  onCommit: (JetColor? c) => controller.setTextStyle(
-                      id, element.style.copyWith(color: c)),
-                ),
               ),
             ],
           ),
@@ -362,38 +375,58 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
             children: <Widget>[
               SectionLabel(l10n.propertiesAppearance),
               const SizedBox(height: 4),
-              if (element.kind != ShapeKind.line)
-                _LabeledRow(
-                  label: l10n.propertiesFill,
-                  child: _ColorField(
-                    keyBase: '$_p.field.fill',
-                    value: element.style.fill,
+              // Fill, outline and width share one label-less row. The two color
+              // boxes are compact swatches distinguished by a leading glyph
+              // (bucket = fill, square = outline); a line has no interior, so it
+              // drops the fill box. Width fills the remaining width.
+              Row(
+                children: <Widget>[
+                  if (element.kind != ShapeKind.line) ...<Widget>[
+                    _ColorField(
+                      keyBase: '$_p.field.fill',
+                      value: element.style.fill,
+                      allowNone: true,
+                      compact: true,
+                      leadingIcon: LucideIcons.paintBucket,
+                      semanticLabel: l10n.propertiesFill,
+                      onCommit: (JetColor? c) => controller.setShapeStyle(
+                          id, element.style.copyWith(fill: c)),
+                    ),
+                    const SizedBox(width: 6),
+                  ],
+                  _ColorField(
+                    keyBase: '$_p.field.stroke',
+                    value: element.style.stroke,
                     allowNone: true,
+                    compact: true,
+                    leadingIcon: LucideIcons.pen,
+                    semanticLabel: l10n.propertiesOutline,
                     onCommit: (JetColor? c) => controller.setShapeStyle(
-                        id, element.style.copyWith(fill: c)),
+                        id, element.style.copyWith(stroke: c)),
                   ),
-                ),
-              _LabeledRow(
-                label: l10n.propertiesOutline,
-                child: _ColorField(
-                  keyBase: '$_p.field.stroke',
-                  value: element.style.stroke,
-                  allowNone: true,
-                  onCommit: (JetColor? c) => controller.setShapeStyle(
-                      id, element.style.copyWith(stroke: c)),
-                ),
-              ),
-              _LabeledRow(
-                label: l10n.propertiesOutlineWidth,
-                child: _NumberField(
-                  fieldKey: const ValueKey<String>('$_p.field.strokeWidth'),
-                  prefix: LucideIcons.ruler,
-                  value: element.style.strokeWidth,
-                  min: 0,
-                  max: 20,
-                  onCommit: (double v) => controller.setShapeStyle(
-                      id, element.style.copyWith(strokeWidth: v)),
-                ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: _PresetDropdown(
+                      fieldKey: const ValueKey<String>('$_p.field.strokeWidth'),
+                      triggerPreview:
+                          _LineWidthPreview(width: element.style.strokeWidth),
+                      label: _format(element.style.strokeWidth),
+                      tooltip: l10n.propertiesOutlineWidth,
+                      options: <_DropdownOption>[
+                        for (final double w in _strokeWidthPresets)
+                          _DropdownOption(
+                            optionKey: ValueKey<String>(
+                                '$_p.field.strokeWidth.option.${_format(w)}'),
+                            label: _format(w),
+                            preview: _LineWidthPreview(width: w),
+                            selected: element.style.strokeWidth == w,
+                            onPick: () => controller.setShapeStyle(
+                                id, element.style.copyWith(strokeWidth: w)),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -542,38 +575,35 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
       const SizedBox(height: 14),
       SectionLabel(l10n.propertiesPage),
       const SizedBox(height: 8),
-      // Paper type: named by the matching preset (or Custom), resizing the page
-      // through setPageFormat while preserving the current margins (US1).
-      _LabeledRow(
-        label: l10n.propertiesPaper,
-        child: _PresetDropdown(
-          fieldKey: const ValueKey<String>('$_p.field.paper'),
-          label: customMode ? l10n.propertiesCustom : paper.name!,
-          tooltip: l10n.paperPickerTooltip,
-          options: <_DropdownOption>[
-            for (final PaperPreset preset in kPaperPresets)
-              _DropdownOption(
-                optionKey:
-                    ValueKey<String>('$_p.field.paper.option.${preset.name}'),
-                label: preset.name,
-                selected: !customMode && paper.name == preset.name,
-                onPick: () {
-                  setState(() => _customPaper = false);
-                  controller.setPageFormat(applyPaper(preset,
-                      landscape: landscape, margins: page.margins));
-                },
-              ),
-            // Custom: keep the current dimensions but reveal the W/H fields so
-            // the user can type exact values (US3).
+      // Paper type: named by the matching preset (with its size) or Custom,
+      // resizing the page through setPageFormat while preserving the current
+      // margins (US1). Label-less — the picker's value and tooltip name it.
+      _PresetDropdown(
+        fieldKey: const ValueKey<String>('$_p.field.paper'),
+        label: customMode ? l10n.propertiesCustom : paper.label!,
+        tooltip: l10n.paperPickerTooltip,
+        options: <_DropdownOption>[
+          for (final PaperPreset preset in kPaperPresets)
             _DropdownOption(
               optionKey:
-                  const ValueKey<String>('$_p.field.paper.option.Custom'),
-              label: l10n.propertiesCustom,
-              selected: customMode,
-              onPick: () => setState(() => _customPaper = true),
+                  ValueKey<String>('$_p.field.paper.option.${preset.name}'),
+              label: paperPresetLabel(preset),
+              selected: !customMode && paper.name == preset.name,
+              onPick: () {
+                setState(() => _customPaper = false);
+                controller.setPageFormat(applyPaper(preset,
+                    landscape: landscape, margins: page.margins));
+              },
             ),
-          ],
-        ),
+          // Custom: keep the current dimensions but reveal the W/H fields so
+          // the user can type exact values (US3).
+          _DropdownOption(
+            optionKey: const ValueKey<String>('$_p.field.paper.option.Custom'),
+            label: l10n.propertiesCustom,
+            selected: customMode,
+            onPick: () => setState(() => _customPaper = true),
+          ),
+        ],
       ),
       const SizedBox(height: 12),
       // Orientation: derived from width vs height; toggling swaps them (US3).
@@ -593,25 +623,30 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
       // clamps a sub-minimum dimension; the field reverts non-numeric input.
       if (customMode) ...<Widget>[
         const SizedBox(height: 8),
-        _LabeledRow(
-          label: l10n.propertiesWidth,
-          child: _NumberField(
-            fieldKey: const ValueKey<String>('$_p.field.pageWidth'),
-            prefix: LucideIcons.moveHorizontal,
-            value: page.width,
-            onCommit: (double v) => controller
-                .setPageFormat(controller.template.page.copyWith(width: v)),
-          ),
-        ),
-        _LabeledRow(
-          label: l10n.propertiesHeight,
-          child: _NumberField(
-            fieldKey: const ValueKey<String>('$_p.field.pageHeight'),
-            prefix: LucideIcons.moveVertical,
-            value: page.height,
-            onCommit: (double v) => controller
-                .setPageFormat(controller.template.page.copyWith(height: v)),
-          ),
+        // Width and height share one label-less row (their directional glyphs
+        // stand in for the dropped labels, as the element SIZE row does).
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: _NumberField(
+                fieldKey: const ValueKey<String>('$_p.field.pageWidth'),
+                prefix: LucideIcons.moveHorizontal,
+                value: page.width,
+                onCommit: (double v) => controller
+                    .setPageFormat(controller.template.page.copyWith(width: v)),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _NumberField(
+                fieldKey: const ValueKey<String>('$_p.field.pageHeight'),
+                prefix: LucideIcons.moveVertical,
+                value: page.height,
+                onCommit: (double v) => controller.setPageFormat(
+                    controller.template.page.copyWith(height: v)),
+              ),
+            ),
+          ],
         ),
       ],
       // Margins: a preset picker that writes all four sides, plus per-side
@@ -638,60 +673,74 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
         ],
       ),
       const SizedBox(height: 8),
-      _marginSideRow(
-          controller,
-          'marginLeft',
-          l10n.propertiesMarginLeft,
-          LucideIcons.arrowLeft,
-          page.margins.left,
-          (JetEdgeInsets m, double v) => m.copyWith(left: v)),
-      _marginSideRow(
-          controller,
-          'marginTop',
-          l10n.propertiesMarginTop,
-          LucideIcons.arrowUp,
-          page.margins.top,
-          (JetEdgeInsets m, double v) => m.copyWith(top: v)),
-      _marginSideRow(
-          controller,
-          'marginRight',
-          l10n.propertiesMarginRight,
-          LucideIcons.arrowRight,
-          page.margins.right,
-          (JetEdgeInsets m, double v) => m.copyWith(right: v)),
-      _marginSideRow(
-          controller,
-          'marginBottom',
-          l10n.propertiesMarginBottom,
-          LucideIcons.arrowDown,
-          page.margins.bottom,
-          (JetEdgeInsets m, double v) => m.copyWith(bottom: v)),
+      // Margins in two label-less rows — horizontal (left/right), then vertical
+      // (top/bottom); the directional arrows stand in for the dropped labels.
+      Row(
+        children: <Widget>[
+          Expanded(
+            child: _marginField(
+                controller,
+                'marginLeft',
+                LucideIcons.arrowLeft,
+                page.margins.left,
+                (JetEdgeInsets m, double v) => m.copyWith(left: v)),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _marginField(
+                controller,
+                'marginRight',
+                LucideIcons.arrowRight,
+                page.margins.right,
+                (JetEdgeInsets m, double v) => m.copyWith(right: v)),
+          ),
+        ],
+      ),
+      const SizedBox(height: 8),
+      Row(
+        children: <Widget>[
+          Expanded(
+            child: _marginField(
+                controller,
+                'marginTop',
+                LucideIcons.arrowUp,
+                page.margins.top,
+                (JetEdgeInsets m, double v) => m.copyWith(top: v)),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _marginField(
+                controller,
+                'marginBottom',
+                LucideIcons.arrowDown,
+                page.margins.bottom,
+                (JetEdgeInsets m, double v) => m.copyWith(bottom: v)),
+          ),
+        ],
+      ),
     ];
   }
 
-  /// One per-side margin row: a labelled [_NumberField] that commits the edited
-  /// side through `setPageFormat`, composing the next margins from the live page
-  /// so concurrent edits never race on a stale capture. [edit] applies the typed
-  /// value to the right side; the field reverts invalid input to the last valid.
-  Widget _marginSideRow(
+  /// One per-side margin [_NumberField] (label-less; its arrow [prefix] names
+  /// the side) that commits the edited side through `setPageFormat`, composing
+  /// the next margins from the live page so concurrent edits never race on a
+  /// stale capture. [edit] applies the typed value to the right side; the field
+  /// reverts invalid input to the last valid.
+  Widget _marginField(
     JetReportDesignerController controller,
     String keySuffix,
-    String label,
     IconData prefix,
     double value,
     JetEdgeInsets Function(JetEdgeInsets margins, double value) edit,
   ) {
-    return _LabeledRow(
-      label: label,
-      child: _NumberField(
-        fieldKey: ValueKey<String>('$_p.field.$keySuffix'),
-        prefix: prefix,
-        value: value,
-        onCommit: (double v) {
-          final PageFormat p = controller.template.page;
-          controller.setPageFormat(p.copyWith(margins: edit(p.margins, v)));
-        },
-      ),
+    return _NumberField(
+      fieldKey: ValueKey<String>('$_p.field.$keySuffix'),
+      prefix: prefix,
+      value: value,
+      onCommit: (double v) {
+        final PageFormat p = controller.template.page;
+        controller.setPageFormat(p.copyWith(margins: edit(p.margins, v)));
+      },
     );
   }
 
@@ -811,18 +860,38 @@ class _PagePreview extends StatelessWidget {
   static const Color _paperBorder = Color(0xFFCBD5E1); // slate-300
   static const Color _guideColor = Color(0xFF64748B); // slate-500
 
+  /// The preview frame (px) the page is drawn within.
+  static const double _frame = 150;
+
+  /// Points mapped to [_frame] px — A4's long side, so the default page nearly
+  /// fills the frame and other sizes read relative to it.
+  static const double _referenceSide = 842;
+
   @override
   Widget build(BuildContext context) {
     // Guard against a degenerate page (the controller clamps to a positive
-    // page, but a raw model could be malformed) so the aspect ratio is finite.
-    final double aspect =
-        (page.width <= 0 || page.height <= 0) ? 1.0 : page.width / page.height;
+    // page, but a raw model could be malformed) so the sizing stays finite.
+    final double pw = page.width <= 0 ? 1.0 : page.width;
+    final double ph = page.height <= 0 ? 1.0 : page.height;
+    // Scale points→px so the preview's *size* tracks the page — a larger page
+    // reads larger, a smaller one smaller — not just its proportions (US3).
+    const double scale = _frame / _referenceSide;
+    double w = pw * scale;
+    double h = ph * scale;
+    // Keep the sheet inside the frame: a page past the reference is fitted down
+    // with its proportions preserved.
+    final double longest = w > h ? w : h;
+    if (longest > _frame) {
+      w = w * _frame / longest;
+      h = h * _frame / longest;
+    }
     return SizedBox(
       key: const ValueKey<String>('$_p.pagePreview'),
-      height: 150,
+      height: _frame,
       child: Center(
-        child: AspectRatio(
-          aspectRatio: aspect,
+        child: SizedBox(
+          width: w,
+          height: h,
           child: LayoutBuilder(
             builder: (BuildContext context, BoxConstraints constraints) {
               final double sheetW = constraints.maxWidth;
@@ -956,6 +1025,7 @@ class _DropdownOption {
     required this.selected,
     required this.onPick,
     this.labelStyle,
+    this.preview,
   });
 
   final Key optionKey;
@@ -967,6 +1037,11 @@ class _DropdownOption {
   /// each font family in its own typeface (021 / C3). Null inherits the
   /// menu's default item style.
   final TextStyle? labelStyle;
+
+  /// An optional preview shown trailing the label, filling the rest of the
+  /// option's width — the outline-width picker draws a rule at each option's
+  /// thickness. Null ⇒ label only.
+  final Widget? preview;
 }
 
 /// A compact Office-style picker for the PAGE section: an outlined trigger
@@ -980,12 +1055,20 @@ class _PresetDropdown extends StatefulWidget {
     required this.label,
     required this.tooltip,
     required this.options,
+    this.triggerPreview,
   });
 
   final Key fieldKey;
   final String label;
   final String tooltip;
   final List<_DropdownOption> options;
+
+  /// An optional preview shown trailing the label in the trigger, filling the
+  /// space up to the chevron — the outline-width picker draws a rule at the
+  /// current thickness so the selected value reads visually, mirroring its
+  /// option previews. When set, the label sizes to its content rather than
+  /// expanding. Null ⇒ the label expands as usual.
+  final Widget? triggerPreview;
 
   @override
   State<_PresetDropdown> createState() => _PresetDropdownState();
@@ -1032,40 +1115,70 @@ class _PresetDropdownState extends State<_PresetDropdown> {
                       _menu.hide();
                       option.onPick();
                     },
-                    child: Text(option.label, style: option.labelStyle),
+                    child: option.preview == null
+                        ? Text(option.label, style: option.labelStyle)
+                        // A fixed width gives the trailing rule a stable span
+                        // to fill, so the menu reads as one tidy column.
+                        : SizedBox(
+                            width: 140,
+                            child: Row(
+                              children: <Widget>[
+                                Text(option.label, style: option.labelStyle),
+                                const SizedBox(width: 12),
+                                Expanded(child: option.preview!),
+                              ],
+                            ),
+                          ),
                   ),
               ],
             ),
           ),
         ),
       ],
-      child: Semantics(
-        label: widget.tooltip,
-        button: true,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: _menu.toggle,
-          child: Container(
-            key: widget.fieldKey,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-            decoration: BoxDecoration(
-              color: colors.background,
-              border: Border.all(color: colors.border),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Row(
-              children: <Widget>[
-                Expanded(
-                  child: Text(
-                    widget.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.small,
-                  ),
-                ),
-                Icon(LucideIcons.chevronDown,
-                    size: 14, color: colors.mutedForeground),
-              ],
+      child: ShadTooltip(
+        builder: (BuildContext context) => Text(widget.tooltip),
+        child: Semantics(
+          label: widget.tooltip,
+          button: true,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: _menu.toggle,
+            child: Container(
+              key: widget.fieldKey,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              decoration: BoxDecoration(
+                color: colors.background,
+                border: Border.all(color: colors.border),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Row(
+                children: <Widget>[
+                  // With a trailing preview the label sizes to its content and
+                  // the preview takes the slack; otherwise the label expands.
+                  if (widget.triggerPreview == null)
+                    Expanded(
+                      child: Text(
+                        widget.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.small,
+                      ),
+                    )
+                  else ...<Widget>[
+                    Text(
+                      widget.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.small,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(child: widget.triggerPreview!),
+                    const SizedBox(width: 8),
+                  ],
+                  Icon(LucideIcons.chevronDown,
+                      size: 14, color: colors.mutedForeground),
+                ],
+              ),
             ),
           ),
         ),
@@ -1154,12 +1267,8 @@ class _TextInputState extends State<_TextInput> {
 /// commits a typed value on Enter or blur, and nudges by one via its stepper —
 /// each commit a single undoable model edit. While the field is focused the
 /// live value is not written over the user's in-progress text; an out-of-range
-/// commit is reconciled by the model's clamp on the next rebuild.
-///
-/// With [min]/[max] set, a typed out-of-range value commits the clamped bound
-/// (the field shows the bound, not the rejected text) and a stepper bump past a
-/// bound is a no-op — no commit, no history entry (021 / C4). Non-numeric input
-/// is always rejected and the last valid value restored, with no commit.
+/// commit is reconciled by the model's clamp on the next rebuild. Non-numeric
+/// input is rejected and the last valid value restored, with no commit.
 class _NumberField extends StatefulWidget {
   const _NumberField({
     required this.fieldKey,
@@ -1167,8 +1276,6 @@ class _NumberField extends StatefulWidget {
     required this.value,
     required this.onCommit,
     this.focusNode,
-    this.min,
-    this.max,
   });
 
   final Key fieldKey;
@@ -1179,13 +1286,6 @@ class _NumberField extends StatefulWidget {
   /// An externally-owned focus node (the panel's double-tap focus target);
   /// null ⇒ the field owns a private one.
   final FocusNode? focusNode;
-
-  /// Inclusive lower bound for committed values; null ⇒ unbounded (the
-  /// pre-021 X/Y/W/H behavior).
-  final double? min;
-
-  /// Inclusive upper bound for committed values; null ⇒ unbounded.
-  final double? max;
 
   @override
   State<_NumberField> createState() => _NumberFieldState();
@@ -1227,32 +1327,17 @@ class _NumberFieldState extends State<_NumberField> {
       _controller.text = _format(widget.value); // reject unparseable input
       return;
     }
-    final double next = _clamp(parsed);
     // Ignore a re-commit that only reflects display rounding — e.g. blurring a
     // field showing the rounded "28.4" form of a 28.35 model value would
     // otherwise drift it to 28.4. Below display precision, there is no edit.
-    // An out-of-range entry that clamps back to the current value lands here
-    // too: the field restores, and no history entry is recorded (C4).
-    if (_format(next) == _format(widget.value)) {
+    if (_format(parsed) == _format(widget.value)) {
       _controller.text = _format(widget.value);
       return;
     }
-    if (next != parsed) _controller.text = _format(next); // show the bound
-    widget.onCommit(next);
+    widget.onCommit(parsed);
   }
 
-  void _bump(double delta) {
-    final double next = _clamp(widget.value + delta);
-    if (next == widget.value) return; // stuck at a bound: no-op, no history
-    widget.onCommit(next);
-  }
-
-  double _clamp(double v) {
-    double next = v;
-    if (widget.min case final double min when next < min) next = min;
-    if (widget.max case final double max when next > max) next = max;
-    return next;
-  }
+  void _bump(double delta) => widget.onCommit(widget.value + delta);
 
   @override
   void dispose() {
@@ -1319,6 +1404,7 @@ class _OrientationToggle extends StatelessWidget {
             theme: theme,
             segmentKey:
                 const ValueKey<String>('$_p.field.orientation.portrait'),
+            icon: LucideIcons.rectangleVertical,
             label: portraitLabel,
             active: !landscape,
             onTap: () => onChanged(false),
@@ -1328,6 +1414,7 @@ class _OrientationToggle extends StatelessWidget {
             theme: theme,
             segmentKey:
                 const ValueKey<String>('$_p.field.orientation.landscape'),
+            icon: LucideIcons.rectangleHorizontal,
             label: landscapeLabel,
             active: landscape,
             onTap: () => onChanged(true),
@@ -1340,11 +1427,13 @@ class _OrientationToggle extends StatelessWidget {
   Widget _segment({
     required ShadThemeData theme,
     required Key segmentKey,
+    required IconData icon,
     required String label,
     required bool active,
     required VoidCallback onTap,
   }) {
     final ShadColorScheme colors = theme.colorScheme;
+    final Color fg = active ? colors.foreground : colors.mutedForeground;
     return Expanded(
       child: Semantics(
         selected: active,
@@ -1368,12 +1457,21 @@ class _OrientationToggle extends StatelessWidget {
                     ]
                   : null,
             ),
-            child: Text(
-              label,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.small.copyWith(
-                color: active ? colors.foreground : colors.mutedForeground,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Icon(icon, size: 14, color: fg),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.small.copyWith(color: fg),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -1863,6 +1961,78 @@ class _EmptyState extends StatelessWidget {
         ? l10n.propertiesMultiSelected(count)
         : l10n.propertiesEmptyHint;
     return RegionEmptyHint(icon: LucideIcons.mousePointer2, message: message);
+  }
+}
+
+/// The font sizes (points) the Font row's size picker offers, in ascending
+/// order. A stored size outside this set still displays as the trigger label —
+/// it is simply not check-marked, mirroring the family picker's handling of an
+/// unavailable family. All entries sit inside the legacy [4, 144] bounds.
+const List<double> _fontSizePresets = <double>[
+  8,
+  9,
+  10,
+  11,
+  12,
+  14,
+  16,
+  18,
+  20,
+  24,
+  28,
+  32,
+  36,
+  48,
+  72,
+  96,
+];
+
+/// The outline widths (points) the Appearance row's width picker offers, in
+/// ascending order. 0 hides the outline (the color stays remembered). A stored
+/// width outside this set still displays as the trigger label. All entries sit
+/// inside the legacy [0, 20] bounds.
+const List<double> _strokeWidthPresets = <double>[
+  0,
+  0.5,
+  1,
+  1.5,
+  2,
+  3,
+  4,
+  6,
+  8,
+  12,
+  16,
+  20,
+];
+
+/// A full-width preview of a stroke [width]: a horizontal rule that fills the
+/// space it is given, drawn at the width's thickness (capped to the box so
+/// heavy widths stay legible — the numeric label carries the exact value). A
+/// width of 0 draws nothing, reading as "no outline". Used by the Appearance
+/// row's width picker, trailing the number in both the trigger and the options.
+class _LineWidthPreview extends StatelessWidget {
+  const _LineWidthPreview({required this.width});
+
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    final ShadColorScheme colors = ShadTheme.of(context).colorScheme;
+    return SizedBox(
+      width: double.infinity,
+      height: 16,
+      child: Center(
+        child: Container(
+          width: double.infinity,
+          height: width.clamp(0, 14).toDouble(),
+          decoration: BoxDecoration(
+            color: colors.foreground,
+            borderRadius: BorderRadius.circular(1),
+          ),
+        ),
+      ),
+    );
   }
 }
 

@@ -26,6 +26,16 @@ Finder _editable(String name) =>
 Finder _valueIn(String name, String text) =>
     find.descendant(of: _field(name), matching: find.text(text));
 
+/// Whether the field [name]'s trigger paints a swatch in [expected] — the
+/// compact color box reflects the current color by fill, not by hex text.
+bool _hasSwatch(WidgetTester tester, String name, Color expected) =>
+    tester
+        .widgetList<Container>(
+            find.descendant(of: _field(name), matching: find.byType(Container)))
+        .any((Container c) =>
+            c.decoration is BoxDecoration &&
+            (c.decoration! as BoxDecoration).color == expected);
+
 // --- PAGE section (018) seams ---
 Finder _preview = find.byKey(const ValueKey<String>('$_p.pagePreview'));
 Finder _paperOption(String name) =>
@@ -63,10 +73,11 @@ double _previewLeftInset(WidgetTester tester) {
 
 /// The aspect ratio (width / height) the preview is currently drawing the sheet
 /// at — the testable expression of the page's size and orientation.
-double _previewAspect(WidgetTester tester) => tester
-    .widget<AspectRatio>(
-        find.descendant(of: _preview, matching: find.byType(AspectRatio)))
-    .aspectRatio;
+double _previewAspect(WidgetTester tester) {
+  final Rect sheet = tester
+      .getRect(find.byKey(const ValueKey<String>('$_p.pagePreview.sheet')));
+  return sheet.width / sheet.height;
+}
 
 /// A report whose page is exactly [w] × [h] points (default margins), so the
 /// PAGE controls can be driven against a known size.
@@ -387,8 +398,10 @@ void main() {
       c.selectReport();
       await tester.pumpAndSettle();
 
-      // The default A4 page is named, not shown as raw numbers (C1.1).
-      expect(find.descendant(of: _field('paper'), matching: find.text('A4')),
+      // The default A4 page is named (with its size), not raw points (C1.1).
+      expect(
+          find.descendant(
+              of: _field('paper'), matching: find.textContaining('A4')),
           findsOneWidget);
       // The Office-style page-sample preview is present (C9.1) ...
       expect(_preview, findsOneWidget);
@@ -408,6 +421,12 @@ void main() {
 
       await tester.tap(_field('paper'));
       await tester.pumpAndSettle();
+      // Each option names its size, e.g. "A4 (210 × 297 mm)".
+      expect(
+          find.descendant(
+              of: _paperOption('A4'),
+              matching: find.text('A4 (210 × 297 mm)')),
+          findsOneWidget);
       await tester.tap(_paperOption('Letter'));
       await tester.pumpAndSettle();
 
@@ -417,7 +436,8 @@ void main() {
           reason: 'changing paper type leaves margins untouched');
       // The picker now reflects the new size by name.
       expect(
-          find.descendant(of: _field('paper'), matching: find.text('Letter')),
+          find.descendant(
+              of: _field('paper'), matching: find.textContaining('Letter')),
           findsOneWidget);
     });
 
@@ -535,6 +555,26 @@ void main() {
       expect(_previewAspect(tester), greaterThan(1)); // now landscape
     });
 
+    testWidgets('editing a custom dimension reflects in the preview aspect',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c =
+          JetReportDesignerController(template: _pageTemplate(300, 600));
+      await pumpDesignerWith(tester, controller: c);
+      await _openProperties(tester);
+      c.selectReport();
+      await tester.pumpAndSettle();
+      expect(_previewAspect(tester), closeTo(0.5, 0.001)); // 300 / 600
+
+      await tester.tap(_field('pageWidth'));
+      await tester.pumpAndSettle();
+      await tester.enterText(_editable('pageWidth'), '900');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      expect(c.template.page.width, 900);
+      expect(_previewAspect(tester), closeTo(1.5, 0.001)); // 900 / 600
+    });
+
     testWidgets('a standard paper hides the custom W/H fields (C3.3)',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
@@ -589,67 +629,36 @@ void main() {
     });
   });
 
-  // --- Number-field clamping (021 / foundational, contract C4) --------------
+  // --- Font-size picker (was the C4 number field) ---------------------------
   //
-  // The clamp contract is parameterized over the two ranged fields this feature
-  // introduces: font size [4, 144] (here) and outline width [0, 20] (in the
-  // shape-appearance group). Both ride the same _NumberField primitive.
-  group('properties — number-field clamping (C4)', () {
-    testWidgets('an out-of-range font size commits the clamped bound',
-        (WidgetTester tester) async {
-      final JetReportDesignerController c = await pumpDesignerWith(tester);
-      await _openProperties(tester);
-      final String id = await _addText(tester, c);
-
-      await tester.enterText(_editable('fontSize'), '500');
-      await tester.testTextInput.receiveAction(TextInputAction.done);
-      await tester.pumpAndSettle();
-      expect(_textStyleOf(c, id).fontSize, 144, reason: 'clamped to max');
-
-      await tester.enterText(_editable('fontSize'), '1');
-      await tester.testTextInput.receiveAction(TextInputAction.done);
-      await tester.pumpAndSettle();
-      expect(_textStyleOf(c, id).fontSize, 4, reason: 'clamped to min');
-    });
-
-    testWidgets('non-numeric input is rejected, restored, and not committed',
+  // Font size moved to a preset dropdown — there is no free entry left to clamp.
+  // The _NumberField clamp/reject primitive is still exercised by outline width
+  // [0, 20] (shape-appearance group) and page width (invalid-input rejection).
+  group('properties — font-size picker', () {
+    testWidgets('picking a preset commits that size in one undo step',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openProperties(tester);
       final String id = await _addText(tester, c);
       final int undoDepthBefore = _undoDepth(c);
 
-      await tester.enterText(_editable('fontSize'), 'abc');
-      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.tap(_field('fontSize'));
+      await tester.pumpAndSettle();
+      await tester.tap(_field('fontSize.option.24'));
       await tester.pumpAndSettle();
 
-      expect(_textStyleOf(c, id).fontSize, 12, reason: 'invalid is rejected');
-      expect(find.text('abc'), findsNothing);
-      expect(_valueIn('fontSize', '12'), findsOneWidget,
-          reason: 'the field restores the last valid value');
-      expect(_undoDepth(c), undoDepthBefore, reason: 'no history entry');
+      expect(_textStyleOf(c, id).fontSize, 24);
+      expect(_undoDepth(c), undoDepthBefore + 1, reason: 'one undoable step');
+      expect(_valueIn('fontSize', '24'), findsOneWidget,
+          reason: 'the trigger reflects the picked size');
     });
 
-    testWidgets('the stepper at a bound stays at the bound as a no-op',
+    testWidgets('a stored size outside the preset set still displays',
         (WidgetTester tester) async {
-      final JetReportDesignerController c = await pumpDesignerWith(tester);
-      await _openProperties(tester);
-      final String id = await _addText(tester, c);
-
-      await tester.enterText(_editable('fontSize'), '144');
-      await tester.testTextInput.receiveAction(TextInputAction.done);
-      await tester.pumpAndSettle();
-      expect(_textStyleOf(c, id).fontSize, 144);
-      final int undoDepthBefore = _undoDepth(c);
-
-      await tester.tap(find.descendant(
-          of: _field('fontSize'),
-          matching: find.byIcon(LucideIcons.chevronUp)));
-      await tester.pumpAndSettle();
-
-      expect(_textStyleOf(c, id).fontSize, 144, reason: 'stays at the bound');
-      expect(_undoDepth(c), undoDepthBefore,
-          reason: 'a bound-stuck bump records no history');
+      // 22 is not a preset, so it shows on the trigger (un-check-marked),
+      // mirroring the family picker's handling of an unavailable family.
+      await _pumpStyledText(tester, const JetTextStyle(fontSize: 22));
+      expect(_valueIn('fontSize', '22'), findsOneWidget);
     });
   });
 
@@ -718,7 +727,7 @@ void main() {
       expect(_semanticsOf(tester, 'bold'), isSemantics(isSelected: true));
       expect(_semanticsOf(tester, 'italic'), isSemantics(isSelected: true));
       expect(_semanticsOf(tester, 'underline'), isSemantics(isSelected: true));
-      expect(_valueIn('textColor', '#1E40AF'), findsOneWidget);
+      expect(_hasSwatch(tester, 'textColor', const Color(0xFF1E40AF)), isTrue);
       expect(
           _semanticsOf(tester, 'align.center'), isSemantics(isSelected: true));
       expect(
@@ -735,7 +744,7 @@ void main() {
       expect(_semanticsOf(tester, 'bold'), isSemantics(isSelected: false));
       expect(_semanticsOf(tester, 'italic'), isSemantics(isSelected: false));
       expect(_semanticsOf(tester, 'underline'), isSemantics(isSelected: false));
-      expect(_valueIn('textColor', '#000000'), findsOneWidget);
+      expect(_hasSwatch(tester, 'textColor', const Color(0xFF000000)), isTrue);
       expect(_semanticsOf(tester, 'align.left'), isSemantics(isSelected: true));
       sem.dispose();
     });
@@ -973,11 +982,16 @@ void main() {
   });
 
   group('properties — text color editor (C6)', () {
-    testWidgets('shows #RRGGBB for opaque and #AARRGGBB for translucent',
+    testWidgets('the hex input shows #RRGGBB for opaque, #AARRGGBB translucent',
         (WidgetTester tester) async {
       await _pumpStyledText(
           tester, const JetTextStyle(color: JetColor(0x80FF8800)));
-      expect(_valueIn('textColor', '#80FF8800'), findsOneWidget);
+      // The compact trigger paints the colour; the formatted hex lives in the
+      // popover's hex input.
+      expect(_hasSwatch(tester, 'textColor', const Color(0x80FF8800)), isTrue);
+      await tester.tap(_field('textColor'));
+      await tester.pumpAndSettle();
+      expect(_valueIn('textColor.hex', '#80FF8800'), findsOneWidget);
     });
 
     testWidgets('a swatch pick preserves the stored alpha, one undo step',
@@ -1033,8 +1047,8 @@ void main() {
             reason: '"$bad" must not commit');
         expect(_undoDepth(c), before, reason: '"$bad" records no history');
       }
-      // The trigger still shows the last valid value.
-      expect(_valueIn('textColor', '#1E40AF'), findsOneWidget);
+      // The trigger still paints the last valid value.
+      expect(_hasSwatch(tester, 'textColor', const Color(0xFF1E40AF)), isTrue);
     });
 
     testWidgets('the text color editor offers no None entry',
@@ -1105,7 +1119,7 @@ void main() {
   });
 
   group('properties — font undo & selection switching (C9)', () {
-    testWidgets('a selection switch discards uncommitted typed input',
+    testWidgets('the keyed font editors re-bind when selection switches',
         (WidgetTester tester) async {
       final JetReportDesignerController c =
           await _pumpStyledText(tester, JetTextStyle.fallback);
@@ -1115,16 +1129,22 @@ void main() {
       c.select('t');
       await tester.pumpAndSettle();
 
-      // Type without committing, then switch selection and come back.
-      await tester.enterText(_editable('fontSize'), '99');
+      // Give 't' a distinct size, then switch selection and come back: the
+      // KeyedSubtree rebuilds the editors against whichever element is current.
+      await tester.tap(_field('fontSize'));
+      await tester.pumpAndSettle();
+      await tester.tap(_field('fontSize.option.24'));
+      await tester.pumpAndSettle();
+      expect(_textStyleOf(c, 't').fontSize, 24);
+
       c.select(other);
       await tester.pumpAndSettle();
+      expect(_valueIn('fontSize', '12'), findsOneWidget,
+          reason: 'the other element binds its own default size');
+
       c.select('t');
       await tester.pumpAndSettle();
-
-      expect(_textStyleOf(c, 't').fontSize, 12,
-          reason: 'uncommitted input is discarded');
-      expect(_valueIn('fontSize', '12'), findsOneWidget,
+      expect(_valueIn('fontSize', '24'), findsOneWidget,
           reason: 'the editor re-binds to the stored value');
     });
 
@@ -1133,10 +1153,11 @@ void main() {
       final JetReportDesignerController c =
           await _pumpStyledText(tester, JetTextStyle.fallback);
 
-      await tester.enterText(_editable('fontSize'), '36');
-      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.tap(_field('fontSize'));
       await tester.pumpAndSettle();
-      expect(_textStyleOf(c, 't').fontSize, 36);
+      await tester.tap(_field('fontSize.option.24'));
+      await tester.pumpAndSettle();
+      expect(_textStyleOf(c, 't').fontSize, 24);
 
       c.undo();
       await tester.pumpAndSettle();
@@ -1204,8 +1225,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(_shapeOf(c, id).style.fill, isNull);
-      expect(_valueIn('fill', 'None'), findsOneWidget,
-          reason: 'the trigger displays the none state distinctly');
+      expect(
+          find.descendant(
+              of: _field('fill'), matching: find.byIcon(LucideIcons.ban)),
+          findsOneWidget,
+          reason: 'the compact swatch shows the none state (a ban glyph)');
       c.undo();
       expect(_shapeOf(c, id).style.fill, const JetColor(0xFF22C55E),
           reason: 'one-step undo restores the fill');
@@ -1222,7 +1246,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(_shapeOf(c, id).style.stroke, isNull);
-      expect(_valueIn('stroke', 'None'), findsOneWidget);
+      expect(
+          find.descendant(
+              of: _field('stroke'), matching: find.byIcon(LucideIcons.ban)),
+          findsOneWidget);
     });
 
     testWidgets('the text color editor still has no None, the shape ones do',
@@ -1237,41 +1264,23 @@ void main() {
     });
   });
 
-  group('properties — outline width (C4 0–20 / C7)', () {
-    testWidgets('the width field clamps to [0, 20]',
+  group('properties — outline width picker (C7)', () {
+    testWidgets('picking a preset commits that width in one undo step',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openProperties(tester);
       final String id = await _addShape(tester, c);
-
-      await tester.enterText(_editable('strokeWidth'), '50');
-      await tester.testTextInput.receiveAction(TextInputAction.done);
-      await tester.pumpAndSettle();
-      expect(_shapeOf(c, id).style.strokeWidth, 20, reason: 'clamped to max');
-
-      await tester.enterText(_editable('strokeWidth'), '-3');
-      await tester.testTextInput.receiveAction(TextInputAction.done);
-      await tester.pumpAndSettle();
-      expect(_shapeOf(c, id).style.strokeWidth, 0, reason: 'clamped to min');
-    });
-
-    testWidgets('the down stepper at width 0 is a no-op',
-        (WidgetTester tester) async {
-      final JetReportDesignerController c = await pumpDesignerWith(tester);
-      await _openProperties(tester);
-      final String id = await _addShape(tester, c);
-      await tester.enterText(_editable('strokeWidth'), '0');
-      await tester.testTextInput.receiveAction(TextInputAction.done);
-      await tester.pumpAndSettle();
       final int before = _undoDepth(c);
 
-      await tester.tap(find.descendant(
-          of: _field('strokeWidth'),
-          matching: find.byIcon(LucideIcons.chevronDown)));
+      await tester.tap(_field('strokeWidth'));
+      await tester.pumpAndSettle();
+      await tester.tap(_field('strokeWidth.option.0'));
       await tester.pumpAndSettle();
 
       expect(_shapeOf(c, id).style.strokeWidth, 0);
-      expect(_undoDepth(c), before, reason: 'stuck at the bound: no history');
+      expect(_undoDepth(c), before + 1, reason: 'one undoable step');
+      expect(_valueIn('strokeWidth', '0'), findsOneWidget,
+          reason: 'the trigger reflects the picked width');
     });
 
     testWidgets(
@@ -1284,17 +1293,19 @@ void main() {
           _shapeOf(c, id).style.copyWith(stroke: const JetColor(0xFF1E40AF)));
       await tester.pumpAndSettle();
 
-      await tester.enterText(_editable('strokeWidth'), '0');
-      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.tap(_field('strokeWidth'));
+      await tester.pumpAndSettle();
+      await tester.tap(_field('strokeWidth.option.0'));
       await tester.pumpAndSettle();
       expect(_shapeOf(c, id).style.strokeWidth, 0);
       expect(_shapeOf(c, id).style.stroke, const JetColor(0xFF1E40AF),
           reason: 'the stored color survives width 0 (no trapdoor)');
 
-      await tester.enterText(_editable('strokeWidth'), '2');
-      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.tap(_field('strokeWidth'));
       await tester.pumpAndSettle();
-      expect(_shapeOf(c, id).style.strokeWidth, 2);
+      await tester.tap(_field('strokeWidth.option.0.5'));
+      await tester.pumpAndSettle();
+      expect(_shapeOf(c, id).style.strokeWidth, 0.5);
       expect(_shapeOf(c, id).style.stroke, const JetColor(0xFF1E40AF),
           reason: 'the outline returns in its remembered color');
     });
@@ -1318,7 +1329,7 @@ void main() {
       expect(_shapeOf(c, id).style.fill, fillBefore);
     });
 
-    testWidgets('a selection switch discards uncommitted width input',
+    testWidgets('switching selection re-binds the width picker to each shape',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openProperties(tester);
@@ -1327,16 +1338,24 @@ void main() {
           await _addShape(tester, c, at: const JetOffset(120, 30));
       c.select(id);
       await tester.pumpAndSettle();
-      final double widthBefore = _shapeOf(c, id).style.strokeWidth;
 
-      await tester.enterText(_editable('strokeWidth'), '17');
+      // Give `id` a distinct width, then switch away and back: the appearance
+      // KeyedSubtree rebuilds the picker against whichever shape is current.
+      await tester.tap(_field('strokeWidth'));
+      await tester.pumpAndSettle();
+      await tester.tap(_field('strokeWidth.option.0'));
+      await tester.pumpAndSettle();
+      expect(_shapeOf(c, id).style.strokeWidth, 0);
+
       c.select(other);
       await tester.pumpAndSettle();
+      expect(_valueIn('strokeWidth', '1'), findsOneWidget,
+          reason: 'the other shape binds its own default width');
+
       c.select(id);
       await tester.pumpAndSettle();
-
-      expect(_shapeOf(c, id).style.strokeWidth, widthBefore,
-          reason: 'uncommitted input is discarded');
+      expect(_valueIn('strokeWidth', '0'), findsOneWidget,
+          reason: 're-binds to the stored width');
     });
   });
 
