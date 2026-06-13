@@ -9,6 +9,7 @@
 // The fields reflect the live model (a canvas move updates them).
 //
 // Drives the public `JetReportDesigner` only (Properties reached via its tab).
+import 'package:flutter/rendering.dart' show SemanticsNode;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
@@ -124,6 +125,46 @@ JetTextStyle _textStyleOf(JetReportDesignerController c, String id) =>
 /// The controller's history revision — unchanged across an interaction ⇔ that
 /// interaction recorded no undo entry (no-op commits must not pollute history).
 int _undoDepth(JetReportDesignerController c) => c.revision;
+
+/// A one-band report holding a single text element `t` styled with [style], so
+/// the Font editors can be asserted against known values (021 / C2).
+JetReportDesignerController _styledTextController(JetTextStyle style) =>
+    JetReportDesignerController(
+      template: ReportTemplate(
+        name: 'Styled',
+        page: PageFormat.a4Portrait,
+        bands: <ReportBand>[
+          ReportBand(
+            type: BandType.detail,
+            height: 120,
+            elements: <ReportElement>[
+              TextElement(
+                id: 't',
+                bounds: const JetRect(x: 10, y: 10, width: 160, height: 24),
+                text: 'Hello',
+                style: style,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+/// Pumps the designer over [_styledTextController]'s template with `t`
+/// selected and the Properties tab open.
+Future<JetReportDesignerController> _pumpStyledText(
+    WidgetTester tester, JetTextStyle style) async {
+  final JetReportDesignerController c = _styledTextController(style);
+  await pumpDesignerWith(tester, controller: c);
+  await _openProperties(tester);
+  c.select('t');
+  await tester.pumpAndSettle();
+  return c;
+}
+
+/// The semantics of the Font-section control at key suffix [name].
+SemanticsNode _semanticsOf(WidgetTester tester, String name) =>
+    tester.getSemantics(_field(name));
 
 void main() {
   group('properties — empty state', () {
@@ -576,6 +617,388 @@ void main() {
           reason: 'a bound-stuck bump records no history');
     });
   });
+
+  // --- Font section (021 / US1) --------------------------------------------
+  group('properties — font section gating (C1)', () {
+    testWidgets('a text element shows the full Font section',
+        (WidgetTester tester) async {
+      await _pumpStyledText(tester, JetTextStyle.fallback);
+
+      expect(_field('fontFamily'), findsOneWidget);
+      expect(_field('fontSize'), findsOneWidget);
+      expect(_field('bold'), findsOneWidget);
+      expect(_field('italic'), findsOneWidget);
+      expect(_field('underline'), findsOneWidget);
+      expect(_field('textColor'), findsOneWidget);
+      expect(_field('align.left'), findsOneWidget);
+      expect(_field('align.center'), findsOneWidget);
+      expect(_field('align.right'), findsOneWidget);
+    });
+
+    testWidgets('no Font section for a shape element',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      await _addShape(tester, c);
+
+      expect(_field('fontFamily'), findsNothing);
+      expect(_field('fontSize'), findsNothing);
+      expect(_field('bold'), findsNothing);
+      expect(_field('textColor'), findsNothing);
+    });
+
+    testWidgets('no Font section for a band, the report, or no selection',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      expect(_field('fontSize'), findsNothing); // nothing selected
+
+      c.selectBand(1);
+      await tester.pumpAndSettle();
+      expect(_field('fontSize'), findsNothing);
+
+      c.selectReport();
+      await tester.pumpAndSettle();
+      expect(_field('fontSize'), findsNothing);
+    });
+  });
+
+  group('properties — font binding (C2)', () {
+    testWidgets('the editors display a styled element\'s effective values',
+        (WidgetTester tester) async {
+      final SemanticsHandle sem = tester.ensureSemantics();
+      await _pumpStyledText(
+        tester,
+        const JetTextStyle(
+          fontSize: 24,
+          weight: JetFontWeight.bold,
+          italic: true,
+          underline: true,
+          color: JetColor(0xFF1E40AF),
+          align: JetTextAlign.center,
+        ),
+      );
+
+      expect(_valueIn('fontSize', '24'), findsOneWidget);
+      expect(_semanticsOf(tester, 'bold'), isSemantics(isSelected: true));
+      expect(_semanticsOf(tester, 'italic'), isSemantics(isSelected: true));
+      expect(
+          _semanticsOf(tester, 'underline'), isSemantics(isSelected: true));
+      expect(_valueIn('textColor', '#1E40AF'), findsOneWidget);
+      expect(_semanticsOf(tester, 'align.center'),
+          isSemantics(isSelected: true));
+      expect(
+          _semanticsOf(tester, 'align.left'), isSemantics(isSelected: false));
+      sem.dispose();
+    });
+
+    testWidgets('a pre-feature fallback element displays the defaults',
+        (WidgetTester tester) async {
+      final SemanticsHandle sem = tester.ensureSemantics();
+      await _pumpStyledText(tester, JetTextStyle.fallback);
+
+      expect(_valueIn('fontSize', '12'), findsOneWidget);
+      expect(_semanticsOf(tester, 'bold'), isSemantics(isSelected: false));
+      expect(_semanticsOf(tester, 'italic'), isSemantics(isSelected: false));
+      expect(
+          _semanticsOf(tester, 'underline'), isSemantics(isSelected: false));
+      expect(_valueIn('textColor', '#000000'), findsOneWidget);
+      expect(
+          _semanticsOf(tester, 'align.left'), isSemantics(isSelected: true));
+      sem.dispose();
+    });
+  });
+
+  group('properties — family picker (C3)', () {
+    testWidgets(
+        'lists the registry families, previewed in their own typeface, '
+        'and a pick is one undoable commit', (WidgetTester tester) async {
+      final JetReportDesignerController c = await _pumpStyledText(
+          tester, const JetTextStyle(fontFamily: 'Unknown Family'));
+
+      await tester.tap(_field('fontFamily'));
+      await tester.pumpAndSettle();
+
+      // The default registry holds exactly the bundled default family.
+      final Finder option = _field('fontFamily.option.JetSans');
+      expect(option, findsOneWidget);
+      final Text label = tester.widget<Text>(
+          find.descendant(of: option, matching: find.byType(Text)));
+      expect(label.style?.fontFamily, 'JetSans',
+          reason: 'each item previews in its own typeface');
+
+      await tester.tap(option);
+      await tester.pumpAndSettle();
+
+      expect(_textStyleOf(c, 't').fontFamily, isNull,
+          reason: 'picking the default family selects the renderer default');
+      c.undo();
+      expect(_textStyleOf(c, 't').fontFamily, 'Unknown Family',
+          reason: 'one-step undo restores the stored family');
+    });
+
+    testWidgets(
+        'an unregistered stored family appears marked unavailable and is '
+        'preserved on unrelated edits', (WidgetTester tester) async {
+      final JetReportDesignerController c = await _pumpStyledText(
+          tester, const JetTextStyle(fontFamily: 'Unknown Family'));
+
+      // The trigger shows the unavailable marker without opening the menu.
+      expect(find.textContaining('Unknown Family'), findsOneWidget);
+      expect(find.textContaining('(unavailable)'), findsOneWidget);
+
+      // An unrelated edit preserves the stored family verbatim.
+      await tester.tap(_field('bold'));
+      await tester.pumpAndSettle();
+      expect(_textStyleOf(c, 't').fontFamily, 'Unknown Family');
+      expect(_textStyleOf(c, 't').weight, JetFontWeight.bold);
+    });
+  });
+
+  group('properties — B/I/U toggles (C5)', () {
+    testWidgets('Bold is active iff the weight is bold',
+        (WidgetTester tester) async {
+      final SemanticsHandle sem = tester.ensureSemantics();
+      for (final (JetFontWeight weight, bool active) in <(
+        JetFontWeight,
+        bool
+      )>[
+        (JetFontWeight.normal, false),
+        (JetFontWeight.medium, false),
+        (JetFontWeight.semiBold, false),
+        (JetFontWeight.bold, true),
+      ]) {
+        final JetReportDesignerController c =
+            _styledTextController(JetTextStyle(weight: weight));
+        await pumpDesignerWith(tester, controller: c);
+        await _openProperties(tester);
+        c.select('t');
+        await tester.pumpAndSettle();
+        expect(_semanticsOf(tester, 'bold'), isSemantics(isSelected: active),
+            reason: '${weight.name}: bold active ⟺ weight == bold');
+      }
+      sem.dispose();
+    });
+
+    testWidgets('a medium weight is preserved until the toggle is operated',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await _pumpStyledText(
+          tester, const JetTextStyle(weight: JetFontWeight.medium));
+
+      // Unrelated edit: italic — the intermediate weight must survive.
+      await tester.tap(_field('italic'));
+      await tester.pumpAndSettle();
+      expect(_textStyleOf(c, 't').weight, JetFontWeight.medium);
+      expect(_textStyleOf(c, 't').italic, isTrue);
+
+      // Press while inactive ⇒ bold; press while active ⇒ normal.
+      await tester.tap(_field('bold'));
+      await tester.pumpAndSettle();
+      expect(_textStyleOf(c, 't').weight, JetFontWeight.bold);
+      await tester.tap(_field('bold'));
+      await tester.pumpAndSettle();
+      expect(_textStyleOf(c, 't').weight, JetFontWeight.normal);
+    });
+
+    testWidgets('italic and underline map 1:1, each press one undo step',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c =
+          await _pumpStyledText(tester, JetTextStyle.fallback);
+
+      await tester.tap(_field('underline'));
+      await tester.pumpAndSettle();
+      expect(_textStyleOf(c, 't').underline, isTrue);
+
+      await tester.tap(_field('italic'));
+      await tester.pumpAndSettle();
+      expect(_textStyleOf(c, 't').italic, isTrue);
+
+      c.undo();
+      expect(_textStyleOf(c, 't').italic, isFalse,
+          reason: 'one undo reverts only the italic press');
+      expect(_textStyleOf(c, 't').underline, isTrue);
+      c.undo();
+      expect(_textStyleOf(c, 't').underline, isFalse);
+    });
+  });
+
+  group('properties — text color editor (C6)', () {
+    testWidgets('shows #RRGGBB for opaque and #AARRGGBB for translucent',
+        (WidgetTester tester) async {
+      await _pumpStyledText(
+          tester, const JetTextStyle(color: JetColor(0x80FF8800)));
+      expect(_valueIn('textColor', '#80FF8800'), findsOneWidget);
+    });
+
+    testWidgets('a swatch pick preserves the stored alpha, one undo step',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await _pumpStyledText(
+          tester, const JetTextStyle(color: JetColor(0x80FF8800)));
+
+      await tester.tap(_field('textColor'));
+      await tester.pumpAndSettle();
+      await tester.tap(_field('textColor.swatch.red'));
+      await tester.pumpAndSettle();
+
+      expect(_textStyleOf(c, 't').color, const JetColor(0x80EF4444),
+          reason: 'swatch replaces RGB, stored alpha 0x80 is preserved');
+      c.undo();
+      expect(_textStyleOf(c, 't').color, const JetColor(0x80FF8800));
+    });
+
+    testWidgets('a 6-digit hex preserves alpha; an 8-digit hex sets it',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await _pumpStyledText(
+          tester, const JetTextStyle(color: JetColor(0x80FF8800)));
+
+      await tester.tap(_field('textColor'));
+      await tester.pumpAndSettle();
+      await tester.enterText(_editable('textColor.hex'), '#1E40AF');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(_textStyleOf(c, 't').color, const JetColor(0x801E40AF));
+
+      await tester.tap(_field('textColor'));
+      await tester.pumpAndSettle();
+      await tester.enterText(_editable('textColor.hex'), '#33112233');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(_textStyleOf(c, 't').color, const JetColor(0x33112233));
+    });
+
+    testWidgets('malformed hex is rejected, restored, and records no history',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await _pumpStyledText(
+          tester, const JetTextStyle(color: JetColor(0xFF1E40AF)));
+
+      for (final String bad in <String>['#12', 'red', '#GGGGGG']) {
+        final int before = _undoDepth(c);
+        await tester.tap(_field('textColor'));
+        await tester.pumpAndSettle();
+        await tester.enterText(_editable('textColor.hex'), bad);
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+        await tester.pumpAndSettle();
+
+        expect(_textStyleOf(c, 't').color, const JetColor(0xFF1E40AF),
+            reason: '"$bad" must not commit');
+        expect(_undoDepth(c), before, reason: '"$bad" records no history');
+      }
+      // The trigger still shows the last valid value.
+      expect(_valueIn('textColor', '#1E40AF'), findsOneWidget);
+    });
+
+    testWidgets('the text color editor offers no None entry',
+        (WidgetTester tester) async {
+      await _pumpStyledText(tester, JetTextStyle.fallback);
+      await tester.tap(_field('textColor'));
+      await tester.pumpAndSettle();
+      expect(_field('textColor.none'), findsNothing);
+    });
+  });
+
+  group('properties — alignment segments (C2/C9)', () {
+    testWidgets('clicking center then right re-aligns, one undo step each',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c =
+          await _pumpStyledText(tester, JetTextStyle.fallback);
+
+      await tester.tap(_field('align.center'));
+      await tester.pumpAndSettle();
+      expect(_textStyleOf(c, 't').align, JetTextAlign.center);
+
+      await tester.tap(_field('align.right'));
+      await tester.pumpAndSettle();
+      expect(_textStyleOf(c, 't').align, JetTextAlign.right);
+
+      c.undo();
+      expect(_textStyleOf(c, 't').align, JetTextAlign.center);
+      c.undo();
+      expect(_textStyleOf(c, 't').align, JetTextAlign.left);
+    });
+
+    testWidgets('clicking the active segment records no history',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c =
+          await _pumpStyledText(tester, JetTextStyle.fallback);
+      final int before = _undoDepth(c);
+
+      await tester.tap(_field('align.left')); // already active
+      await tester.pumpAndSettle();
+
+      expect(_undoDepth(c), before);
+      expect(_textStyleOf(c, 't').align, JetTextAlign.left);
+    });
+
+    testWidgets(
+        'a stored justify shows no active segment and survives unrelated '
+        'edits', (WidgetTester tester) async {
+      final SemanticsHandle sem = tester.ensureSemantics();
+      final JetReportDesignerController c = await _pumpStyledText(
+          tester, const JetTextStyle(align: JetTextAlign.justify));
+
+      for (final String seg in <String>['left', 'center', 'right']) {
+        expect(_semanticsOf(tester, 'align.$seg'),
+            isSemantics(isSelected: false),
+            reason: 'justify activates no segment');
+      }
+
+      await tester.tap(_field('bold')); // unrelated edit
+      await tester.pumpAndSettle();
+      expect(_textStyleOf(c, 't').align, JetTextAlign.justify,
+          reason: 'justify is preserved verbatim until an alignment is picked');
+
+      await tester.tap(_field('align.center'));
+      await tester.pumpAndSettle();
+      expect(_textStyleOf(c, 't').align, JetTextAlign.center);
+      sem.dispose();
+    });
+  });
+
+  group('properties — font undo & selection switching (C9)', () {
+    testWidgets('a selection switch discards uncommitted typed input',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c =
+          await _pumpStyledText(tester, JetTextStyle.fallback);
+      c.createElement(DesignerToolType.text,
+          bandIndex: 0, at: const JetOffset(10, 60));
+      final String other = c.selection.singleOrNull!;
+      c.select('t');
+      await tester.pumpAndSettle();
+
+      // Type without committing, then switch selection and come back.
+      await tester.enterText(_editable('fontSize'), '99');
+      c.select(other);
+      await tester.pumpAndSettle();
+      c.select('t');
+      await tester.pumpAndSettle();
+
+      expect(_textStyleOf(c, 't').fontSize, 12,
+          reason: 'uncommitted input is discarded');
+      expect(_valueIn('fontSize', '12'), findsOneWidget,
+          reason: 'the editor re-binds to the stored value');
+    });
+
+    testWidgets('undo restores both the model and the displayed values',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c =
+          await _pumpStyledText(tester, JetTextStyle.fallback);
+
+      await tester.enterText(_editable('fontSize'), '36');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(_textStyleOf(c, 't').fontSize, 36);
+
+      c.undo();
+      await tester.pumpAndSettle();
+      expect(_textStyleOf(c, 't').fontSize, 12);
+      expect(_valueIn('fontSize', '12'), findsOneWidget,
+          reason: 'the editor tracks the restored value');
+    });
+  });
+
+  // Font-label l10n for de/tr lives in localization_de_test.dart /
+  // localization_tr_test.dart — one non-English locale per isolate (the CLDR
+  // locale-switch leak documented in localization_test.dart).
 
   // --- Shape gallery (020 / US1) -------------------------------------------
   group('properties — shape gallery', () {

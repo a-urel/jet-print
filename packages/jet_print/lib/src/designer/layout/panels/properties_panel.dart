@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
@@ -12,9 +14,13 @@ import '../../../domain/elements/text_element.dart';
 import '../../../domain/geometry.dart';
 import '../../../domain/page_format.dart';
 import '../../../domain/report_element.dart';
+import '../../../domain/styles/color.dart';
+import '../../../domain/styles/text_style.dart';
 import '../../../rendering/elements/shape_path.dart';
 import '../../../rendering/frame/primitive.dart';
+import '../../../rendering/text/font_registry.dart';
 import '../../controller/jet_report_designer_controller.dart';
+import '../../designer_font_scope.dart';
 import '../../designer_schema_scope.dart';
 import '../../designer_scope.dart';
 import '../../field_type_glyph.dart';
@@ -25,6 +31,8 @@ import '../../margin_presets.dart';
 import '../../paper_presets.dart';
 import '../../template/value_template_compiler.dart';
 import '../region_chrome.dart';
+
+part 'style_editors.dart';
 
 /// Stable test-seam key prefix for the inspector's fields and empty state.
 const String _p = 'jet_print.designer.properties';
@@ -228,6 +236,71 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
               _boundFieldType(schema, controller, id, element.expression),
           pickerTooltip: l10n.formatPresetPickerTooltip,
           onCommit: (String v) => controller.setFormat(id, v),
+        ),
+        const SizedBox(height: 12),
+        // Font section (021 / US1): every editor reads the element's effective
+        // style and commits one whole-style copyWith through setTextStyle —
+        // one undoable step per committed change (FR-013). Keyed by element id
+        // so a selection switch rebuilds the editors, discarding uncommitted
+        // input (C9).
+        KeyedSubtree(
+          key: ValueKey<String>('$_p.font.$id'),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              SectionLabel(l10n.propertiesFont),
+              const SizedBox(height: 4),
+              _LabeledRow(
+                label: l10n.fontFamilyLabel,
+                child: _FontFamilyRow(
+                  fonts: DesignerFontScope.of(context),
+                  style: element.style,
+                  onCommit: (JetTextStyle next) =>
+                      controller.setTextStyle(id, next),
+                ),
+              ),
+              _LabeledRow(
+                label: l10n.fontSizeLabel,
+                child: _NumberField(
+                  fieldKey: const ValueKey<String>('$_p.field.fontSize'),
+                  prefix: LucideIcons.aLargeSmall,
+                  value: element.style.fontSize,
+                  min: 4,
+                  max: 144,
+                  onCommit: (double v) => controller.setTextStyle(
+                      id, element.style.copyWith(fontSize: v)),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: <Widget>[
+                  _StyleToggleGroup(
+                    style: element.style,
+                    onCommit: (JetTextStyle next) =>
+                        controller.setTextStyle(id, next),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _AlignSegments(
+                      align: element.style.align,
+                      onCommit: (JetTextAlign a) => controller.setTextStyle(
+                          id, element.style.copyWith(align: a)),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              _LabeledRow(
+                label: l10n.propertiesColor,
+                child: _ColorField(
+                  keyBase: '$_p.field.textColor',
+                  value: element.style.color,
+                  onCommit: (JetColor? c) => controller.setTextStyle(
+                      id, element.style.copyWith(color: c)),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
       // Image binding: a field picker only (no expression) — FR-013 / U1.
@@ -813,12 +886,18 @@ class _DropdownOption {
     required this.label,
     required this.selected,
     required this.onPick,
+    this.labelStyle,
   });
 
   final Key optionKey;
   final String label;
   final bool selected;
   final VoidCallback onPick;
+
+  /// An optional style for the option's label — the family picker previews
+  /// each font family in its own typeface (021 / C3). Null inherits the
+  /// menu's default item style.
+  final TextStyle? labelStyle;
 }
 
 /// A compact Office-style picker for the PAGE section: an outlined trigger
@@ -871,7 +950,7 @@ class _PresetDropdownState extends State<_PresetDropdown> {
               _menu.hide();
               option.onPick();
             },
-            child: Text(option.label),
+            child: Text(option.label, style: option.labelStyle),
           ),
       ],
       child: Semantics(

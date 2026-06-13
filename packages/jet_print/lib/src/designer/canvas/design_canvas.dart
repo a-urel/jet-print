@@ -25,6 +25,7 @@ import '../../domain/geometry.dart';
 import '../../domain/report_band.dart';
 import '../../domain/report_template.dart';
 import '../controller/jet_report_designer_controller.dart';
+import '../designer_font_scope.dart';
 import '../designer_scope.dart';
 import '../interaction/canvas_shortcuts.dart';
 import '../l10n/band_type_label.dart';
@@ -88,7 +89,11 @@ class DesignCanvas extends StatefulWidget {
 }
 
 class _DesignCanvasState extends State<DesignCanvas> {
-  final DesignTimeFrameBuilder _frameBuilder = DesignTimeFrameBuilder();
+  /// Built in [didChangeDependencies] around the designer's hoisted
+  /// [DesignerFontScope] registry (021), so the canvas measures and paints
+  /// with exactly the family set the Properties panel's picker enumerates.
+  late DesignTimeFrameBuilder _frameBuilder;
+  bool _frameBuilderReady = false;
   final FocusNode _focusNode =
       FocusNode(debugLabel: 'jet_print.designer.canvas');
   final GlobalKey _pageKey = GlobalKey();
@@ -168,6 +173,14 @@ class _DesignCanvasState extends State<DesignCanvas> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // Build the frame builder once, around the designer's hoisted font
+    // registry (021) — the canvas then measures and paints with exactly the
+    // family set the Properties panel's picker enumerates.
+    if (!_frameBuilderReady) {
+      _frameBuilder =
+          DesignTimeFrameBuilder(fonts: DesignerFontScope.of(context));
+      _frameBuilderReady = true;
+    }
     // Subscribe to the controller for the scroll-into-view side effect (the
     // build path already rebuilds via DesignerScope's InheritedNotifier).
     final JetReportDesignerController controller =

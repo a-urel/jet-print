@@ -141,4 +141,39 @@ void main() {
     expect(l10n.shapeFormHexagon, 'Sechseck');
     expect(l10n.shapeFormStar, 'Stern');
   });
+
+  // 021 / C12 — the Font-section strings are German.
+  testWidgets('the Font section strings are localized in German (021)', (
+    WidgetTester tester,
+  ) async {
+    final JetReportDesignerController c = JetReportDesignerController(
+      template: ReportTemplate(
+        name: 'Styled',
+        page: PageFormat.a4Portrait,
+        bands: const <ReportBand>[
+          ReportBand(
+            type: BandType.detail,
+            height: 120,
+            elements: <ReportElement>[
+              TextElement(
+                id: 't',
+                bounds: JetRect(x: 10, y: 10, width: 160, height: 24),
+                text: 'Hallo',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+    await pumpDesignerWith(tester, controller: c, locale: const Locale('de'));
+    await openPropertiesTab(tester);
+    c.select('t');
+    await tester.pumpAndSettle();
+
+    // The section caption renders upper-cased (SectionLabel convention).
+    expect(find.text('SCHRIFT'), findsOneWidget);
+    expect(find.text('Schriftart'), findsOneWidget);
+    expect(find.text('Größe'), findsOneWidget);
+    expect(find.text('Farbe'), findsOneWidget);
+  });
 }

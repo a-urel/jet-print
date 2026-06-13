@@ -27,6 +27,7 @@ import '../frame/primitive.dart';
 import '../paint/image_fit.dart';
 import '../paint/report_painter.dart';
 import '../text/font_registry.dart';
+import '../text/underline_metrics.dart';
 
 /// Paints [PageFrame]s into one PDF document; call [save] after the last page.
 ///
@@ -132,6 +133,17 @@ class PdfPainter implements ReportPainter {
           dx,
           _mapY(p.bounds.y + line.baseline),
         );
+        if (p.style.underline) {
+          // The same explicit segment CanvasPainter strokes, from the same
+          // shared geometry helper (021 / research §2, Constitution IV).
+          final ({double offset, double thickness}) u =
+              underlineFor(p.style.fontSize);
+          final double y = _mapY(p.bounds.y + line.baseline + u.offset);
+          g.setStrokeColor(_pdfColor(p.style.color));
+          g.setLineWidth(u.thickness);
+          g.drawLine(dx, y, dx + line.width, y);
+          g.strokePath();
+        }
       }
     });
   }

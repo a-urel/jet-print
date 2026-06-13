@@ -3,7 +3,9 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../data/data_schema.dart';
 import '../domain/report_template.dart';
+import '../rendering/text/font_registry.dart';
 import 'controller/jet_report_designer_controller.dart';
+import 'designer_font_scope.dart';
 import 'designer_schema_scope.dart';
 import 'designer_scope.dart';
 import 'l10n/jet_print_localizations.dart';
@@ -103,6 +105,12 @@ class JetReportDesigner extends StatefulWidget {
 class _JetReportDesignerState extends State<JetReportDesigner> {
   late JetReportDesignerController _controller;
 
+  /// The designer's ONE font registry, hoisted here (021 / research §1) so the
+  /// canvas frame builder and the Properties panel's family picker share the
+  /// same family set — what the picker offers is exactly what the canvas
+  /// measures and paints with.
+  final FontRegistry _fonts = FontRegistry()..registerDefault();
+
   /// Whether this state created (and must dispose) [_controller]. A
   /// host-supplied controller is owned by the host.
   bool _ownsController = false;
@@ -188,23 +196,26 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
     // so the panels can display it and resolve bindings.
     return DesignerSchemaScope(
       dataSchema: widget.dataSchema,
-      child: DesignerScope(
-        controller: _controller,
-        child: LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints constraints) {
-            final Widget shell = _buildShell(context);
-            if (constraints.maxWidth >= _minShellWidth) return shell;
-            // Too narrow: lay the shell out at its minimum width and let the user
-            // reach the off-screen edge by scrolling, rather than overflowing.
-            return SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: SizedBox(
-                width: _minShellWidth,
-                height: constraints.maxHeight,
-                child: shell,
-              ),
-            );
-          },
+      child: DesignerFontScope(
+        fonts: _fonts,
+        child: DesignerScope(
+          controller: _controller,
+          child: LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) {
+              final Widget shell = _buildShell(context);
+              if (constraints.maxWidth >= _minShellWidth) return shell;
+              // Too narrow: lay the shell out at its minimum width and let the user
+              // reach the off-screen edge by scrolling, rather than overflowing.
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SizedBox(
+                  width: _minShellWidth,
+                  height: constraints.maxHeight,
+                  child: shell,
+                ),
+              );
+            },
+          ),
         ),
       ),
     );

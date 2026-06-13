@@ -440,4 +440,99 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
 
   @override
   String get shapeFormStar => 'Star';
+
+  @override
+  String get propertiesFont => 'Font';
+
+  @override
+  String get fontFamilyLabel => 'Family';
+
+  @override
+  String get fontFamilyPickerTooltip => 'Choose font family';
+
+  @override
+  String fontFamilyUnavailable(String family) {
+    return '$family (unavailable)';
+  }
+
+  @override
+  String get fontSizeLabel => 'Size';
+
+  @override
+  String get fontBoldTooltip => 'Bold';
+
+  @override
+  String get fontItalicTooltip => 'Italic';
+
+  @override
+  String get fontUnderlineTooltip => 'Underline';
+
+  @override
+  String get alignLeftTooltip => 'Align left';
+
+  @override
+  String get alignCenterTooltip => 'Align center';
+
+  @override
+  String get alignRightTooltip => 'Align right';
+
+  @override
+  String get propertiesColor => 'Color';
+
+  @override
+  String get colorPickerTooltip => 'Choose color';
+
+  @override
+  String get colorHexLabel => 'Hex';
+
+  @override
+  String get colorNone => 'None';
+
+  @override
+  String get swatchBlack => 'Black';
+
+  @override
+  String get swatchWhite => 'White';
+
+  @override
+  String get swatchGray => 'Gray';
+
+  @override
+  String get swatchSilver => 'Silver';
+
+  @override
+  String get swatchRed => 'Red';
+
+  @override
+  String get swatchOrange => 'Orange';
+
+  @override
+  String get swatchAmber => 'Amber';
+
+  @override
+  String get swatchYellow => 'Yellow';
+
+  @override
+  String get swatchGreen => 'Green';
+
+  @override
+  String get swatchEmerald => 'Emerald';
+
+  @override
+  String get swatchTeal => 'Teal';
+
+  @override
+  String get swatchCyan => 'Cyan';
+
+  @override
+  String get swatchBlue => 'Blue';
+
+  @override
+  String get swatchIndigo => 'Indigo';
+
+  @override
+  String get swatchViolet => 'Violet';
+
+  @override
+  String get swatchPink => 'Pink';
 }

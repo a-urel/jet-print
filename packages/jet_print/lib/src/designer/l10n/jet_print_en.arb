@@ -599,5 +599,136 @@
   "shapeFormStar": "Star",
   "@shapeFormStar": {
     "description": "Shape gallery thumbnail name: a five-point, point-up star (020)."
+  },
+
+  "propertiesFont": "Font",
+  "@propertiesFont": {
+    "description": "Properties panel section label for the text styling controls shown when a text element is selected (021)."
+  },
+  "fontFamilyLabel": "Family",
+  "@fontFamilyLabel": {
+    "description": "Row label for the font-family picker in the Font section (021)."
+  },
+  "fontFamilyPickerTooltip": "Choose font family",
+  "@fontFamilyPickerTooltip": {
+    "description": "Accessible name for the font-family picker trigger (021)."
+  },
+  "fontFamilyUnavailable": "{family} (unavailable)",
+  "@fontFamilyUnavailable": {
+    "description": "Picker entry for a stored font family that is not registered with the designer: the name is preserved but renders with the default font until repicked (021).",
+    "placeholders": {
+      "family": {
+        "type": "String",
+        "example": "Helvetica Neue"
+      }
+    }
+  },
+  "fontSizeLabel": "Size",
+  "@fontSizeLabel": {
+    "description": "Row label for the font-size field in the Font section (021)."
+  },
+  "fontBoldTooltip": "Bold",
+  "@fontBoldTooltip": {
+    "description": "Accessible name for the Bold style toggle (021)."
+  },
+  "fontItalicTooltip": "Italic",
+  "@fontItalicTooltip": {
+    "description": "Accessible name for the Italic style toggle (021)."
+  },
+  "fontUnderlineTooltip": "Underline",
+  "@fontUnderlineTooltip": {
+    "description": "Accessible name for the Underline style toggle (021)."
+  },
+  "alignLeftTooltip": "Align left",
+  "@alignLeftTooltip": {
+    "description": "Accessible name for the left horizontal-alignment segment (021)."
+  },
+  "alignCenterTooltip": "Align center",
+  "@alignCenterTooltip": {
+    "description": "Accessible name for the center horizontal-alignment segment (021)."
+  },
+  "alignRightTooltip": "Align right",
+  "@alignRightTooltip": {
+    "description": "Accessible name for the right horizontal-alignment segment (021)."
+  },
+  "propertiesColor": "Color",
+  "@propertiesColor": {
+    "description": "Row label for a color editor (text color, barcode color) in the Properties panel (021)."
+  },
+  "colorPickerTooltip": "Choose color",
+  "@colorPickerTooltip": {
+    "description": "Accessible name for a color-editor trigger that opens the swatch/hex popover (021)."
+  },
+  "colorHexLabel": "Hex",
+  "@colorHexLabel": {
+    "description": "Label for the hex color input inside the color popover (021)."
+  },
+  "colorNone": "None",
+  "@colorNone": {
+    "description": "Color popover entry that clears an optional color (no fill / no outline) (021)."
+  },
+  "swatchBlack": "Black",
+  "@swatchBlack": {
+    "description": "Accessible name of the black palette swatch (021)."
+  },
+  "swatchWhite": "White",
+  "@swatchWhite": {
+    "description": "Accessible name of the white palette swatch (021)."
+  },
+  "swatchGray": "Gray",
+  "@swatchGray": {
+    "description": "Accessible name of the gray palette swatch (021)."
+  },
+  "swatchSilver": "Silver",
+  "@swatchSilver": {
+    "description": "Accessible name of the light-gray palette swatch (021)."
+  },
+  "swatchRed": "Red",
+  "@swatchRed": {
+    "description": "Accessible name of the red palette swatch (021)."
+  },
+  "swatchOrange": "Orange",
+  "@swatchOrange": {
+    "description": "Accessible name of the orange palette swatch (021)."
+  },
+  "swatchAmber": "Amber",
+  "@swatchAmber": {
+    "description": "Accessible name of the amber palette swatch (021)."
+  },
+  "swatchYellow": "Yellow",
+  "@swatchYellow": {
+    "description": "Accessible name of the yellow palette swatch (021)."
+  },
+  "swatchGreen": "Green",
+  "@swatchGreen": {
+    "description": "Accessible name of the green palette swatch (021)."
+  },
+  "swatchEmerald": "Emerald",
+  "@swatchEmerald": {
+    "description": "Accessible name of the emerald palette swatch (021)."
+  },
+  "swatchTeal": "Teal",
+  "@swatchTeal": {
+    "description": "Accessible name of the teal palette swatch (021)."
+  },
+  "swatchCyan": "Cyan",
+  "@swatchCyan": {
+    "description": "Accessible name of the cyan palette swatch (021)."
+  },
+  "swatchBlue": "Blue",
+  "@swatchBlue": {
+    "description": "Accessible name of the blue palette swatch (021)."
+  },
+  "swatchIndigo": "Indigo",
+  "@swatchIndigo": {
+    "description": "Accessible name of the indigo palette swatch (021)."
+  },
+  "swatchViolet": "Violet",
+  "@swatchViolet": {
+    "description": "Accessible name of the violet palette swatch (021)."
+  },
+  "swatchPink": "Pink",
+  "@swatchPink": {
+    "description": "Accessible name of the pink palette swatch (021)."
   }
 }

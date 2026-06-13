@@ -5,10 +5,18 @@ import 'package:jet_print/src/domain/report_element.dart';
 import 'package:jet_print/src/domain/serialization/element_codec.dart';
 import 'package:jet_print/src/domain/serialization/report_format_exception.dart';
 import 'package:jet_print/src/domain/serialization/text_element_codec.dart';
+import 'package:jet_print/src/domain/styles/text_style.dart';
 import 'package:jet_print/src/domain/unknown_element.dart';
 
 ElementCodecRegistry _registryWithText() =>
     ElementCodecRegistry()..register('text', const TextElementCodec());
+
+TextElement _styledText(JetTextStyle style) => TextElement(
+      id: 't1',
+      bounds: const JetRect(x: 1, y: 2, width: 3, height: 4),
+      text: 'hi',
+      style: style,
+    );
 
 void main() {
   group('ElementCodecRegistry', () {
@@ -109,6 +117,72 @@ void main() {
         'bounds': <String, Object?>{'x': 0, 'y': 0, 'w': 10, 'h': 5},
         'series': <Object?>[3, 1, 4],
       });
+    });
+  });
+
+  // --- 021 format properties: underline + unknown family wire rules ---------
+  group('TextElementCodec — underline (021 / C3, C10)', () {
+    test('underline: true serializes and round-trips', () {
+      final ElementCodecRegistry registry = _registryWithText();
+      final TextElement element =
+          _styledText(const JetTextStyle(underline: true));
+      final Map<String, Object?> json = registry.encode(element);
+      expect((json['style']! as Map)['underline'], isTrue);
+      expect(registry.decode(json), element);
+    });
+
+    test('underline: false is omitted from the wire', () {
+      final ElementCodecRegistry registry = _registryWithText();
+      final Map<String, Object?> json =
+          registry.encode(_styledText(const JetTextStyle(fontSize: 20)));
+      expect((json['style']! as Map).containsKey('underline'), isFalse);
+    });
+
+    test('a pre-021 style map (no underline key) loads as not underlined', () {
+      final ElementCodecRegistry registry = _registryWithText();
+      final Map<String, Object?> pre021 = <String, Object?>{
+        'type': 'text',
+        'id': 't1',
+        'bounds': <String, Object?>{'x': 1, 'y': 2, 'w': 3, 'h': 4},
+        'text': 'hi',
+        'style': <String, Object?>{
+          'fontSize': 20.0,
+          'weight': 'normal',
+          'italic': false,
+          'color': '#FF000000',
+          'align': 'left',
+        },
+      };
+      final TextElement decoded =
+          registry.decode(pre021) as TextElement;
+      expect(decoded.style.underline, isFalse);
+    });
+
+    test('fallback-plus-underline is no longer omitted as a fallback style',
+        () {
+      final ElementCodecRegistry registry = _registryWithText();
+      // A style equal to fallback in every pre-021 field, but underlined: it
+      // is NOT equal to fallback any more, so it must serialize.
+      final Map<String, Object?> json =
+          registry.encode(_styledText(const JetTextStyle(underline: true)));
+      expect(json.containsKey('style'), isTrue,
+          reason: 'underline distinguishes the style from the fallback');
+      // And a true fallback style is still omitted (compact wire unchanged).
+      expect(
+          registry.encode(_styledText(JetTextStyle.fallback))
+              .containsKey('style'),
+          isFalse);
+    });
+
+    test('an unknown fontFamily string survives load→save untouched', () {
+      final ElementCodecRegistry registry = _registryWithText();
+      final Map<String, Object?> json = registry.encode(_styledText(
+          const JetTextStyle(fontFamily: 'SomeUnregisteredFamily')));
+      final ReportElement decoded = registry.decode(json);
+      expect((decoded as TextElement).style.fontFamily,
+          'SomeUnregisteredFamily');
+      expect(registry.encode(decoded), equals(json),
+          reason: 'the stored family is preserved byte-for-byte');
     });
   });
 }

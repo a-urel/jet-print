@@ -952,6 +952,192 @@ abstract class JetPrintLocalizations {
   /// In en, this message translates to:
   /// **'Star'**
   String get shapeFormStar;
+
+  /// Properties panel section label for the text styling controls shown when a text element is selected (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Font'**
+  String get propertiesFont;
+
+  /// Row label for the font-family picker in the Font section (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Family'**
+  String get fontFamilyLabel;
+
+  /// Accessible name for the font-family picker trigger (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Choose font family'**
+  String get fontFamilyPickerTooltip;
+
+  /// Picker entry for a stored font family that is not registered with the designer: the name is preserved but renders with the default font until repicked (021).
+  ///
+  /// In en, this message translates to:
+  /// **'{family} (unavailable)'**
+  String fontFamilyUnavailable(String family);
+
+  /// Row label for the font-size field in the Font section (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get fontSizeLabel;
+
+  /// Accessible name for the Bold style toggle (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Bold'**
+  String get fontBoldTooltip;
+
+  /// Accessible name for the Italic style toggle (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Italic'**
+  String get fontItalicTooltip;
+
+  /// Accessible name for the Underline style toggle (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Underline'**
+  String get fontUnderlineTooltip;
+
+  /// Accessible name for the left horizontal-alignment segment (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Align left'**
+  String get alignLeftTooltip;
+
+  /// Accessible name for the center horizontal-alignment segment (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Align center'**
+  String get alignCenterTooltip;
+
+  /// Accessible name for the right horizontal-alignment segment (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Align right'**
+  String get alignRightTooltip;
+
+  /// Row label for a color editor (text color, barcode color) in the Properties panel (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get propertiesColor;
+
+  /// Accessible name for a color-editor trigger that opens the swatch/hex popover (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Choose color'**
+  String get colorPickerTooltip;
+
+  /// Label for the hex color input inside the color popover (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Hex'**
+  String get colorHexLabel;
+
+  /// Color popover entry that clears an optional color (no fill / no outline) (021).
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get colorNone;
+
+  /// Accessible name of the black palette swatch (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Black'**
+  String get swatchBlack;
+
+  /// Accessible name of the white palette swatch (021).
+  ///
+  /// In en, this message translates to:
+  /// **'White'**
+  String get swatchWhite;
+
+  /// Accessible name of the gray palette swatch (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Gray'**
+  String get swatchGray;
+
+  /// Accessible name of the light-gray palette swatch (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Silver'**
+  String get swatchSilver;
+
+  /// Accessible name of the red palette swatch (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Red'**
+  String get swatchRed;
+
+  /// Accessible name of the orange palette swatch (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Orange'**
+  String get swatchOrange;
+
+  /// Accessible name of the amber palette swatch (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Amber'**
+  String get swatchAmber;
+
+  /// Accessible name of the yellow palette swatch (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Yellow'**
+  String get swatchYellow;
+
+  /// Accessible name of the green palette swatch (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Green'**
+  String get swatchGreen;
+
+  /// Accessible name of the emerald palette swatch (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Emerald'**
+  String get swatchEmerald;
+
+  /// Accessible name of the teal palette swatch (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Teal'**
+  String get swatchTeal;
+
+  /// Accessible name of the cyan palette swatch (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Cyan'**
+  String get swatchCyan;
+
+  /// Accessible name of the blue palette swatch (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Blue'**
+  String get swatchBlue;
+
+  /// Accessible name of the indigo palette swatch (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Indigo'**
+  String get swatchIndigo;
+
+  /// Accessible name of the violet palette swatch (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Violet'**
+  String get swatchViolet;
+
+  /// Accessible name of the pink palette swatch (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Pink'**
+  String get swatchPink;
 }
 
 class _JetPrintLocalizationsDelegate

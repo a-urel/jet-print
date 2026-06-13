@@ -10,6 +10,7 @@ import '../../domain/page_format.dart';
 import '../../domain/report_band.dart';
 import '../../domain/report_element.dart';
 import '../../domain/report_template.dart';
+import '../../domain/styles/text_style.dart';
 import '../canvas/design_tunables.dart';
 import '../canvas/resize_handle.dart';
 import '../template/value_template_compiler.dart';
@@ -29,6 +30,7 @@ import 'commands/set_page_format_command.dart';
 import 'commands/set_shape_kind_command.dart';
 import 'commands/set_template_name_command.dart';
 import 'commands/set_text_command.dart';
+import 'commands/set_text_style_command.dart';
 import 'commands/set_value_command.dart';
 import 'default_template.dart';
 import 'designer_document.dart';
@@ -699,6 +701,17 @@ class JetReportDesignerController extends ChangeNotifier {
   /// unrecognized form name (FR-009). No-op for a non-shape or absent id.
   void setShapeKind(String id, ShapeKind kind) =>
       _commit(SetShapeKindCommand(id: id, kind: kind));
+
+  /// Replaces the [TextElement] [id]'s whole style with [style] as one
+  /// undoable step (021 / FR-001…FR-005), preserving its text, bounds,
+  /// binding, and format. Editors build [style] from the current one via
+  /// [JetTextStyle.copyWith], so each committed editor change is exactly one
+  /// history entry (FR-013).
+  ///
+  /// Committing an equal style is a no-op: it records no history entry and
+  /// notifies no listener. No-op for a non-text or absent id.
+  void setTextStyle(String id, JetTextStyle style) =>
+      _commit(SetTextStyleCommand(id: id, style: style));
 
   /// Binds the [ImageElement] [id] to read its picture from the data [field]
   /// (US2 / FR-013). No-op for a non-image or absent id, or when already bound

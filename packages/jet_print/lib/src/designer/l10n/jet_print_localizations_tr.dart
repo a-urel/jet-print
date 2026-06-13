@@ -441,4 +441,99 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
 
   @override
   String get shapeFormStar => 'Yıldız';
+
+  @override
+  String get propertiesFont => 'Yazı Tipi';
+
+  @override
+  String get fontFamilyLabel => 'Yazı tipi';
+
+  @override
+  String get fontFamilyPickerTooltip => 'Yazı tipi seç';
+
+  @override
+  String fontFamilyUnavailable(String family) {
+    return '$family (kullanılamıyor)';
+  }
+
+  @override
+  String get fontSizeLabel => 'Boyut';
+
+  @override
+  String get fontBoldTooltip => 'Kalın';
+
+  @override
+  String get fontItalicTooltip => 'İtalik';
+
+  @override
+  String get fontUnderlineTooltip => 'Altı çizili';
+
+  @override
+  String get alignLeftTooltip => 'Sola hizala';
+
+  @override
+  String get alignCenterTooltip => 'Ortala';
+
+  @override
+  String get alignRightTooltip => 'Sağa hizala';
+
+  @override
+  String get propertiesColor => 'Renk';
+
+  @override
+  String get colorPickerTooltip => 'Renk seç';
+
+  @override
+  String get colorHexLabel => 'Onaltılık';
+
+  @override
+  String get colorNone => 'Yok';
+
+  @override
+  String get swatchBlack => 'Siyah';
+
+  @override
+  String get swatchWhite => 'Beyaz';
+
+  @override
+  String get swatchGray => 'Gri';
+
+  @override
+  String get swatchSilver => 'Gümüş';
+
+  @override
+  String get swatchRed => 'Kırmızı';
+
+  @override
+  String get swatchOrange => 'Turuncu';
+
+  @override
+  String get swatchAmber => 'Kehribar';
+
+  @override
+  String get swatchYellow => 'Sarı';
+
+  @override
+  String get swatchGreen => 'Yeşil';
+
+  @override
+  String get swatchEmerald => 'Zümrüt';
+
+  @override
+  String get swatchTeal => 'Petrol';
+
+  @override
+  String get swatchCyan => 'Camgöbeği';
+
+  @override
+  String get swatchBlue => 'Mavi';
+
+  @override
+  String get swatchIndigo => 'Çivit';
+
+  @override
+  String get swatchViolet => 'Mor';
+
+  @override
+  String get swatchPink => 'Pembe';
 }

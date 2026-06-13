@@ -272,6 +272,64 @@ void main() {
     controller.dispose();
   });
 
+  // --- 021: format properties — the additions ride already-public types:
+  // JetTextStyle.underline + copyWith, JetBoxStyle.copyWith, and the three
+  // style mutators on the controller. `lib/jet_print.dart` needs NO new export
+  // line, and the designer's FontRegistry stays internal: it is deliberately
+  // absent from the export list (research §1 — a designer-only font seam would
+  // silently break preview/export WYSIWYG), so it cannot even be named here. ---
+
+  test('JetTextStyle exposes underline and a sentinel-based copyWith (021)',
+      () {
+    const JetTextStyle base =
+        JetTextStyle(fontFamily: 'Inter', underline: true);
+    expect(base.underline, isTrue);
+    // Omitting fontFamily preserves it; explicit null clears it.
+    expect(base.copyWith(fontSize: 9).fontFamily, 'Inter');
+    expect(base.copyWith(fontFamily: null).fontFamily, isNull);
+    expect(base.copyWith(underline: false).underline, isFalse);
+  });
+
+  test('JetReportDesignerController.setTextStyle restyles a text element (021)',
+      () {
+    final JetReportDesignerController controller = JetReportDesignerController(
+      template: const ReportTemplate(
+        name: 'API check',
+        page: PageFormat.a4Portrait,
+        bands: <ReportBand>[
+          ReportBand(
+              type: BandType.detail,
+              height: 80,
+              elements: <ReportElement>[
+                TextElement(
+                  id: 't1',
+                  bounds: JetRect(x: 0, y: 0, width: 100, height: 18),
+                  text: 'Hi',
+                ),
+              ]),
+        ],
+      ),
+    );
+    controller.setTextStyle(
+        't1',
+        const JetTextStyle()
+            .copyWith(weight: JetFontWeight.bold, underline: true));
+    final TextElement text =
+        controller.template.bands.first.elements.first as TextElement;
+    expect(text.style.weight, JetFontWeight.bold);
+    expect(text.style.underline, isTrue);
+    // Undoable in a single step, like every other edit.
+    expect(controller.canUndo, isTrue);
+    controller.undo();
+    expect(
+      (controller.template.bands.first.elements.first as TextElement)
+          .style
+          .underline,
+      isFalse,
+    );
+    controller.dispose();
+  });
+
   test('JetReportWorkspace is constructible from the public surface', () {
     final JetReportDesignerController controller =
         JetReportDesignerController();

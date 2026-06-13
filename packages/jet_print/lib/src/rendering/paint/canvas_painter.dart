@@ -13,6 +13,7 @@ import '../../domain/styles/text_style.dart';
 import '../frame/page_frame.dart';
 import '../frame/primitive.dart';
 import '../text/font_registry.dart';
+import '../text/underline_metrics.dart';
 import 'image_fit.dart';
 import 'report_painter.dart';
 
@@ -90,6 +91,22 @@ class CanvasPainter implements ReportPainter {
         JetTextAlign.left || JetTextAlign.justify => p.bounds.x,
       };
       _canvas.drawParagraph(para, ui.Offset(dx, p.bounds.y + line.top));
+      if (p.style.underline) {
+        // An explicit stroked segment from the shared geometry helper — NOT
+        // ui.TextDecoration, whose placement the PDF backend cannot replicate
+        // (021 / research §2, Constitution IV).
+        final ({double offset, double thickness}) u =
+            underlineFor(p.style.fontSize);
+        final double y = p.bounds.y + line.baseline + u.offset;
+        _canvas.drawLine(
+          ui.Offset(dx, y),
+          ui.Offset(dx + line.width, y),
+          ui.Paint()
+            ..color = color
+            ..strokeWidth = u.thickness
+            ..style = ui.PaintingStyle.stroke,
+        );
+      }
     }
   }
 

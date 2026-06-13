@@ -38,6 +38,19 @@ class FontRegistry {
   bool get hasDefault =>
       _entries.containsKey(_key(defaultFamily, JetFontWeight.normal, false));
 
+  /// Registered family names: [defaultFamily] first (when registered), then
+  /// the rest in insertion order, deduped across weight/italic variants — the
+  /// designer's family picker enumerates exactly this list (021 / FR-001).
+  List<String> get families {
+    final List<String> result = <String>[];
+    for (final String key in _entries.keys) {
+      final String family = key.substring(0, key.indexOf('|'));
+      if (!result.contains(family)) result.add(family);
+    }
+    if (result.remove(defaultFamily)) result.insert(0, defaultFamily);
+    return result;
+  }
+
   /// Metrics for the resolved variant (falls back to the default).
   FontMetrics metricsFor(
     String? family, {

@@ -26,6 +26,7 @@ import 'package:jet_print/src/rendering/paint/report_painter.dart';
 import 'package:jet_print/src/rendering/text/font_registry.dart';
 import 'package:jet_print/src/rendering/text/metrics_text_measurer.dart';
 import 'package:jet_print/src/rendering/text/text_measurer.dart';
+import 'package:jet_print/src/rendering/text/underline_metrics.dart';
 
 import 'support/export_fixtures.dart';
 import 'support/pdf_inspector.dart';
@@ -137,6 +138,75 @@ void main() {
       expect(_tdRe.allMatches(content).length, nonEmpty,
           reason: 'blank lines draw nothing (but still occupy vertical space '
               'via the following lines\' baselines)');
+    });
+  });
+
+  group('text — underline parity (021 / US1 / C11)', () {
+    test('an underlined run strokes one line segment per text line at the '
+        'shared underlineFor geometry', () async {
+      const JetTextStyle style = JetTextStyle(fontSize: 12, underline: true);
+      final MeasuredText measured = measurer.measure('Hi', style);
+      const JetRect bounds = JetRect(x: 10, y: 20, width: 120, height: 40);
+      final (_, String content) = await _paint(<FramePrimitive>[
+        TextRunPrimitive(
+          bounds: bounds,
+          lines: measured.lines,
+          style: style,
+          fontFamily: measured.fontFamily,
+        ),
+      ], fonts: fonts);
+
+      final ({double offset, double thickness}) m = underlineFor(12);
+      final TextLine line = measured.lines.single;
+      final double y =
+          _pageHeight - (bounds.y + line.baseline + m.offset);
+
+      final Match seg = _lineRe.firstMatch(content)!;
+      expect(double.parse(seg.group(1)!), closeTo(bounds.x, 0.001),
+          reason: 'segment starts at the aligned dx');
+      expect(double.parse(seg.group(2)!), closeTo(y, 0.001),
+          reason: 'segment sits underlineFor().offset below the baseline');
+      expect(double.parse(seg.group(3)!), closeTo(bounds.x + line.width, 0.001),
+          reason: 'segment spans the measured line width');
+      expect(double.parse(seg.group(4)!), closeTo(y, 0.001),
+          reason: 'the segment is horizontal');
+      final Match width = RegExp(r'([\d.]+)\s+w\b').firstMatch(content)!;
+      expect(double.parse(width.group(1)!), closeTo(m.thickness, 0.001),
+          reason: 'stroke width = underlineFor().thickness');
+    });
+
+    test('a non-underlined run strokes no line segment', () async {
+      const JetTextStyle style = JetTextStyle(fontSize: 12);
+      final MeasuredText measured = measurer.measure('Hi', style);
+      final (_, String content) = await _paint(<FramePrimitive>[
+        TextRunPrimitive(
+          bounds: const JetRect(x: 10, y: 20, width: 120, height: 40),
+          lines: measured.lines,
+          style: style,
+          fontFamily: measured.fontFamily,
+        ),
+      ], fonts: fonts);
+      expect(_lineRe.hasMatch(content), isFalse);
+    });
+
+    test('an underlined centered run places the segment at the aligned dx',
+        () async {
+      const JetTextStyle style = JetTextStyle(
+          fontSize: 12, underline: true, align: JetTextAlign.center);
+      final MeasuredText measured = measurer.measure('Hi', style);
+      const JetRect bounds = JetRect(x: 10, y: 20, width: 120, height: 40);
+      final (_, String content) = await _paint(<FramePrimitive>[
+        TextRunPrimitive(
+          bounds: bounds,
+          lines: measured.lines,
+          style: style,
+          fontFamily: measured.fontFamily,
+        ),
+      ], fonts: fonts);
+      final double extra = bounds.width - measured.lines.single.width;
+      final Match seg = _lineRe.firstMatch(content)!;
+      expect(double.parse(seg.group(1)!), closeTo(bounds.x + extra / 2, 0.001),
+          reason: 'the underline rides the same alignment math as the glyphs');
     });
   });
 
