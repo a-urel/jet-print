@@ -431,6 +431,10 @@ class ReportLayouter {
       cum.add(cum.last + mb.height);
     }
     final Map<int, double> keepExtent = <int, double>{};
+    // Stream indices of group-header bands that must begin on a fresh page:
+    // each instance of a startNewPage group after that group's first (023).
+    final Set<int> startNewPageAt = <int>{};
+    final Set<String> seenStartNewPageGroup = <String>{};
     final List<_Span> spanStack = <_Span>[];
     void finalizeSpan(_Span s, int exitIndex) {
       if (groupByName[s.name]!.keepTogether) {
@@ -450,6 +454,11 @@ class ReportLayouter {
           isGroupBand &&
           spanPrevHeader != band.group;
       if (newHeader) {
+        // Mark every startNewPage instance after the group's first.
+        if (groupByName[band.group]!.startNewPage &&
+            !seenStartNewPageGroup.add(band.group!)) {
+          startNewPageAt.add(k);
+        }
         while (spanStack.isNotEmpty && spanStack.last.level >= level) {
           finalizeSpan(spanStack.removeLast(), k);
         }
@@ -516,6 +525,16 @@ class ReportLayouter {
       } else if (band.type == BandType.summary ||
           band.type == BandType.noData) {
         openStack.clear();
+      }
+
+      // 023: a startNewPage group's later instances begin on a fresh page. Close
+      // the ending instance (this group + any inner) first so a reprinted outer
+      // header is not duplicated, then break — unless already at a fresh top.
+      if (startNewPageAt.contains(i) && cursorY > bodyTop) {
+        while (openStack.isNotEmpty && openStack.last.level >= level) {
+          openStack.removeLast();
+        }
+        breakPage();
       }
 
       bool broke = false;
