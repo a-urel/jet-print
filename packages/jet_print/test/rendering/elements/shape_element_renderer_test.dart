@@ -67,6 +67,76 @@ void main() {
     expect(p.end, const JetOffset(50, 20));
   });
 
+  // 021 / C7 — stroke width 0 removes the outline at the ONE renderer seam
+  // (`stroke: strokeWidth > 0 ? style.stroke : null`), zero painter changes;
+  // the stored stroke color stays on the style so width > 0 restores it.
+  group('stroke width 0 hides the outline (021 / C7)', () {
+    const JetBoxStyle zeroWidth = JetBoxStyle(
+      fill: JetColor(0x2200FF00),
+      stroke: JetColor(0xFF112233),
+      strokeWidth: 0,
+    );
+
+    test('rectangle emits stroke: null when width is 0, fill intact', () {
+      const ShapeElement el = ShapeElement(
+          id: 'r', bounds: bounds, kind: ShapeKind.rectangle,
+          style: zeroWidth);
+      final FrameBuilder out = FrameBuilder(PageFormat.a4Portrait);
+      renderer.emit(el, ctx, bounds, out);
+      final RectPrimitive p = out.build().primitives.single as RectPrimitive;
+      expect(p.stroke, isNull, reason: 'no outline at width 0');
+      expect(p.fill, const JetColor(0x2200FF00), reason: 'fill unaffected');
+      expect(el.style.stroke, const JetColor(0xFF112233),
+          reason: 'the stored stroke color is retained on the style');
+    });
+
+    test('closed path forms emit stroke: null when width is 0', () {
+      const ShapeElement el = ShapeElement(
+          id: 'p', bounds: bounds, kind: ShapeKind.hexagon, style: zeroWidth);
+      final FrameBuilder out = FrameBuilder(PageFormat.a4Portrait);
+      renderer.emit(el, ctx, bounds, out);
+      final PathPrimitive p = out.build().primitives.single as PathPrimitive;
+      expect(p.stroke, isNull);
+      expect(p.fill, const JetColor(0x2200FF00));
+    });
+
+    test('a line with width 0 emits nothing (its stroke IS the shape)', () {
+      const ShapeElement el = ShapeElement(
+          id: 'l',
+          bounds: bounds,
+          kind: ShapeKind.line,
+          style: JetBoxStyle(stroke: JetColor.black, strokeWidth: 0));
+      final FrameBuilder out = FrameBuilder(PageFormat.a4Portrait);
+      renderer.emit(el, ctx, bounds, out);
+      expect(out.build().primitives, isEmpty,
+          reason: 'a zero-width LinePrimitive would still paint a hairline');
+    });
+
+    test('a negative width behaves like 0', () {
+      const ShapeElement el = ShapeElement(
+          id: 'r',
+          bounds: bounds,
+          kind: ShapeKind.rectangle,
+          style: JetBoxStyle(stroke: JetColor.black, strokeWidth: -1));
+      final FrameBuilder out = FrameBuilder(PageFormat.a4Portrait);
+      renderer.emit(el, ctx, bounds, out);
+      expect((out.build().primitives.single as RectPrimitive).stroke, isNull);
+    });
+
+    test('width > 0 still carries the stroke (the 020 behavior, unchanged)',
+        () {
+      const ShapeElement el = ShapeElement(
+          id: 'r',
+          bounds: bounds,
+          kind: ShapeKind.rectangle,
+          style: JetBoxStyle(stroke: JetColor(0xFF112233), strokeWidth: 2));
+      final FrameBuilder out = FrameBuilder(PageFormat.a4Portrait);
+      renderer.emit(el, ctx, bounds, out);
+      expect((out.build().primitives.single as RectPrimitive).stroke,
+          const JetColor(0xFF112233));
+    });
+  });
+
   // 020 / C7.1 — every form that is not line/rectangle renders as exactly one
   // PathPrimitive whose commands ARE `shapePath(kind, bounds)` and whose
   // fill/stroke/strokeWidth come straight from the element's style. This is the

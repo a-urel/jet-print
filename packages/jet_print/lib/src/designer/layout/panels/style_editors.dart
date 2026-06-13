@@ -258,8 +258,9 @@ class _ColorFieldState extends State<_ColorField> {
           ),
           if (widget.allowNone) ...<Widget>[
             const SizedBox(height: 8),
+            // No explicit Semantics label: the visible Text already names the
+            // entry, and doubling it would announce "None, None".
             Semantics(
-              label: l10n.colorNone,
               button: true,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,

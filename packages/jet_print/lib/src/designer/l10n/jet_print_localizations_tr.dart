@@ -536,4 +536,16 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
 
   @override
   String get swatchPink => 'Pembe';
+
+  @override
+  String get propertiesAppearance => 'Görünüm';
+
+  @override
+  String get propertiesFill => 'Dolgu';
+
+  @override
+  String get propertiesOutline => 'Anahat';
+
+  @override
+  String get propertiesOutlineWidth => 'Genişlik';
 }

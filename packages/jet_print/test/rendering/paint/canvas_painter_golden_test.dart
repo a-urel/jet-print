@@ -3,10 +3,14 @@ import 'dart:ui' as ui;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/domain/elements/image_source.dart';
+import 'package:jet_print/src/domain/elements/shape_element.dart';
 import 'package:jet_print/src/domain/geometry.dart';
 import 'package:jet_print/src/domain/page_format.dart';
+import 'package:jet_print/src/domain/styles/box_style.dart';
 import 'package:jet_print/src/domain/styles/color.dart';
 import 'package:jet_print/src/domain/styles/text_style.dart';
+import 'package:jet_print/src/rendering/elements/render_context.dart';
+import 'package:jet_print/src/rendering/elements/renderers/shape_element_renderer.dart';
 import 'package:jet_print/src/rendering/frame/frame_builder.dart';
 import 'package:jet_print/src/rendering/frame/page_frame.dart';
 import 'package:jet_print/src/rendering/frame/primitive.dart';
@@ -133,5 +137,70 @@ void main() {
 
     await expectLater(
         image, matchesGoldenFile('goldens/canvas_styled_text.png'));
+  });
+
+  // --- 021 format properties: shape styles (US2 / C7 / C11) ----------------
+  test('paints a shape-style page (filled+stroked, fill-only, stroke-only, '
+      'none+none, width-0) to a golden', () async {
+    final FontRegistry reg = FontRegistry()..registerDefault();
+    final RenderContext ctx =
+        RenderContext(measurer: MetricsTextMeasurer(reg));
+    const ShapeElementRenderer renderer = ShapeElementRenderer();
+
+    const PageFormat page =
+        PageFormat(width: 220, height: 120, margins: JetEdgeInsets.all(0));
+    final FrameBuilder builder = FrameBuilder(page)
+      ..add(const RectPrimitive(
+          bounds: JetRect(x: 0, y: 0, width: 220, height: 120),
+          fill: JetColor(0xFFFFFFFF)));
+
+    // Each case goes THROUGH the real renderer so the golden pins the
+    // stroke-width-0 seam, not hand-built primitives.
+    void addShape(String id, double x, double y, JetBoxStyle style,
+        {ShapeKind kind = ShapeKind.rectangle}) {
+      final JetRect bounds = JetRect(x: x, y: y, width: 56, height: 36);
+      renderer.emit(
+        ShapeElement(id: id, bounds: bounds, kind: kind, style: style),
+        ctx,
+        bounds,
+        builder,
+      );
+    }
+
+    addShape(
+        'filled-stroked',
+        10,
+        10,
+        const JetBoxStyle(
+            fill: JetColor(0x553B82F6),
+            stroke: JetColor(0xFF1E40AF),
+            strokeWidth: 2));
+    addShape('fill-only', 80, 10,
+        const JetBoxStyle(fill: JetColor(0xFF22C55E)));
+    addShape('stroke-only', 150, 10,
+        const JetBoxStyle(stroke: JetColor(0xFFEF4444), strokeWidth: 3),
+        kind: ShapeKind.hexagon);
+    // None + none: nothing paints — the area stays blank (the canvas's
+    // selectable affordance is designer chrome, not render output).
+    addShape('none-none', 10, 70, JetBoxStyle.none);
+    // Width 0: the outline disappears although the stroke color is stored.
+    addShape(
+        'width-0',
+        80,
+        70,
+        const JetBoxStyle(
+            fill: JetColor(0xFFF59E0B),
+            stroke: JetColor(0xFF000000),
+            strokeWidth: 0));
+
+    final ui.PictureRecorder recorder = ui.PictureRecorder();
+    final ReportPainter painter = CanvasPainter(ui.Canvas(recorder), reg);
+    await paintFrame(builder.build(), painter);
+    final ui.Image image = await recorder
+        .endRecording()
+        .toImage(page.width.toInt(), page.height.toInt());
+
+    await expectLater(
+        image, matchesGoldenFile('goldens/canvas_shape_styles.png'));
   });
 }

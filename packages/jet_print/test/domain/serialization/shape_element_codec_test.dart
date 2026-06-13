@@ -35,6 +35,51 @@ void main() {
     }
   });
 
+  // 021 / C10 — the UI can now reach the none states and translucent colors;
+  // the wire rules they ride are pinned here.
+  group('fill/stroke none + alpha wire rules (021 / C10)', () {
+    test('null fill/stroke are omitted on write and null on read', () {
+      const ShapeElement s = ShapeElement(
+        id: 's',
+        bounds: bounds,
+        kind: ShapeKind.rectangle,
+        style: JetBoxStyle(strokeWidth: 3),
+      );
+      final Map<String, Object?> json = codec.toJson(s);
+      final Map<String, Object?> style =
+          (json['style']! as Map).cast<String, Object?>();
+      expect(style.containsKey('fill'), isFalse);
+      expect(style.containsKey('stroke'), isFalse);
+
+      final ShapeElement decoded = codec.fromJson(json);
+      expect(decoded.style.fill, isNull);
+      expect(decoded.style.stroke, isNull);
+      expect(decoded, s);
+    });
+
+    test('translucent #AARRGGBB fill/stroke round-trip with alpha intact', () {
+      const ShapeElement s = ShapeElement(
+        id: 's',
+        bounds: bounds,
+        kind: ShapeKind.ellipse,
+        style: JetBoxStyle(
+          fill: JetColor(0x3300FF00),
+          stroke: JetColor(0x80112233),
+          strokeWidth: 2,
+        ),
+      );
+      final Map<String, Object?> json = codec.toJson(s);
+      final Map<String, Object?> style =
+          (json['style']! as Map).cast<String, Object?>();
+      expect(style['fill'], '#3300FF00');
+      expect(style['stroke'], '#80112233');
+
+      final ShapeElement decoded = codec.fromJson(json);
+      expect(decoded.style.fill, const JetColor(0x3300FF00));
+      expect(decoded.style.stroke, const JetColor(0x80112233));
+    });
+  });
+
   group('C8.2 — pre-feature reports are unchanged; schema stays 1', () {
     test('a line/rectangle serialize exactly as before (no new keys)', () {
       const ShapeElement line = ShapeElement(

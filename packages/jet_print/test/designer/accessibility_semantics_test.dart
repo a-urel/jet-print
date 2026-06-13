@@ -268,4 +268,36 @@ void main() {
       sem.dispose();
     });
   });
+
+  // --- Appearance section controls (021 / US2 / C12) ------------------------
+  group('Appearance section a11y (021)', () {
+    Finder field(String name) => find
+        .byKey(ValueKey<String>('jet_print.designer.properties.field.$name'));
+
+    testWidgets(
+        'the fill/outline triggers and the None entry are named, activatable '
+        'buttons', (WidgetTester tester) async {
+      final SemanticsHandle sem = tester.ensureSemantics();
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      c.createElement(DesignerToolType.shape,
+          bandIndex: 1, at: const JetOffset(20, 20));
+      await tester.pumpAndSettle();
+      await openPropertiesTab(tester);
+
+      for (final String name in <String>['fill', 'stroke']) {
+        final SemanticsNode trigger = tester.getSemantics(field(name));
+        expect(trigger, isSemantics(isButton: true, hasTapAction: true),
+            reason: '$name trigger is an activatable button');
+        expect(trigger.label, contains('Choose color'));
+      }
+
+      await tester.tap(field('fill'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.getSemantics(field('fill.none')),
+        isSemantics(label: 'None', isButton: true, hasTapAction: true),
+      );
+      sem.dispose();
+    });
+  });
 }

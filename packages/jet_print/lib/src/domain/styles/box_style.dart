@@ -23,6 +23,11 @@ class JetBoxStyle {
   /// No fill, no stroke, unit stroke width.
   static const JetBoxStyle none = JetBoxStyle();
 
+  /// Sentinel distinguishing an omitted [copyWith] argument from an explicit
+  /// null — both [fill] and [stroke] are nullable, and "clear to no fill /
+  /// no outline" must be expressible (021 / FR-007, FR-008).
+  static const Object _unset = Object();
+
   /// Fill color, or null for no fill.
   final JetColor? fill;
 
@@ -31,6 +36,22 @@ class JetBoxStyle {
 
   /// Stroke width, in points.
   final double strokeWidth;
+
+  /// A copy with the given fields replaced.
+  ///
+  /// [fill] and [stroke] are sentinel-based: omitting one preserves the
+  /// current color, while an explicit `null` clears it ("no fill" /
+  /// "no outline") — two different edits.
+  JetBoxStyle copyWith({
+    Object? fill = _unset,
+    Object? stroke = _unset,
+    double? strokeWidth,
+  }) =>
+      JetBoxStyle(
+        fill: identical(fill, _unset) ? this.fill : fill as JetColor?,
+        stroke: identical(stroke, _unset) ? this.stroke : stroke as JetColor?,
+        strokeWidth: strokeWidth ?? this.strokeWidth,
+      );
 
   /// Serializes to a JSON-safe map (omitting null fill/stroke).
   Map<String, Object?> toJson() => <String, Object?>{

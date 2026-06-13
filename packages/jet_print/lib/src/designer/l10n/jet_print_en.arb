@@ -730,5 +730,21 @@
   "swatchPink": "Pink",
   "@swatchPink": {
     "description": "Accessible name of the pink palette swatch (021)."
+  },
+  "propertiesAppearance": "Appearance",
+  "@propertiesAppearance": {
+    "description": "Properties panel section label for the fill/outline controls shown when a shape element is selected (021)."
+  },
+  "propertiesFill": "Fill",
+  "@propertiesFill": {
+    "description": "Row label for a shape's fill-color editor in the Appearance section (021)."
+  },
+  "propertiesOutline": "Outline",
+  "@propertiesOutline": {
+    "description": "Row label for a shape's outline-color editor in the Appearance section (021)."
+  },
+  "propertiesOutlineWidth": "Width",
+  "@propertiesOutlineWidth": {
+    "description": "Row label for a shape's outline-width field in the Appearance section (021)."
   }
 }

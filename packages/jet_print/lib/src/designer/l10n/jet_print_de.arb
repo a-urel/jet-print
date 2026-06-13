@@ -191,5 +191,10 @@
   "swatchBlue": "Blau",
   "swatchIndigo": "Indigo",
   "swatchViolet": "Violett",
-  "swatchPink": "Rosa"
+  "swatchPink": "Rosa",
+
+  "propertiesAppearance": "Darstellung",
+  "propertiesFill": "Füllung",
+  "propertiesOutline": "Kontur",
+  "propertiesOutlineWidth": "Breite"
 }

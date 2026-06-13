@@ -330,6 +330,54 @@ void main() {
     controller.dispose();
   });
 
+  test('JetBoxStyle exposes a sentinel-based copyWith (021)', () {
+    const JetBoxStyle base = JetBoxStyle(
+        fill: JetColor(0x3300FF00), stroke: JetColor.black, strokeWidth: 2);
+    // Omitting preserves; explicit null clears (None states, FR-007/FR-008).
+    expect(base.copyWith(strokeWidth: 5).fill, base.fill);
+    expect(base.copyWith(fill: null).fill, isNull);
+    expect(base.copyWith(stroke: null).stroke, isNull);
+  });
+
+  test('JetReportDesignerController.setShapeStyle restyles a shape (021)', () {
+    final JetReportDesignerController controller = JetReportDesignerController(
+      template: const ReportTemplate(
+        name: 'API check',
+        page: PageFormat.a4Portrait,
+        bands: <ReportBand>[
+          ReportBand(
+              type: BandType.detail,
+              height: 80,
+              elements: <ReportElement>[
+                ShapeElement(
+                  id: 's1',
+                  bounds: JetRect(x: 0, y: 0, width: 40, height: 40),
+                  kind: ShapeKind.rectangle,
+                  style: JetBoxStyle(stroke: JetColor.black),
+                ),
+              ]),
+        ],
+      ),
+    );
+    controller.setShapeStyle(
+        's1',
+        const JetBoxStyle(stroke: JetColor.black)
+            .copyWith(fill: const JetColor(0x3300FF00), strokeWidth: 3));
+    final ShapeElement shape =
+        controller.template.bands.first.elements.first as ShapeElement;
+    expect(shape.style.fill, const JetColor(0x3300FF00));
+    expect(shape.style.strokeWidth, 3);
+    expect(controller.canUndo, isTrue);
+    controller.undo();
+    expect(
+      (controller.template.bands.first.elements.first as ShapeElement)
+          .style
+          .fill,
+      isNull,
+    );
+    controller.dispose();
+  });
+
   test('JetReportWorkspace is constructible from the public surface', () {
     final JetReportDesignerController controller =
         JetReportDesignerController();

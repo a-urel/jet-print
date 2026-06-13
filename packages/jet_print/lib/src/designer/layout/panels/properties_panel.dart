@@ -329,6 +329,55 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
         const SizedBox(height: 12),
         SectionLabel(l10n.propertiesShape),
         _ShapeGallery(controller: controller, element: element),
+        const SizedBox(height: 12),
+        // Appearance section (021 / US2): fill (closed forms only — a line has
+        // no interior), outline color with None, and outline width 0–20 (0
+        // hides the outline, the color stays remembered). Each commit is one
+        // copyWith + one setShapeStyle = one undo step (FR-013). Keyed by
+        // element id so a selection switch discards uncommitted input (C9).
+        KeyedSubtree(
+          key: ValueKey<String>('$_p.appearance.$id'),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              SectionLabel(l10n.propertiesAppearance),
+              const SizedBox(height: 4),
+              if (element.kind != ShapeKind.line)
+                _LabeledRow(
+                  label: l10n.propertiesFill,
+                  child: _ColorField(
+                    keyBase: '$_p.field.fill',
+                    value: element.style.fill,
+                    allowNone: true,
+                    onCommit: (JetColor? c) => controller.setShapeStyle(
+                        id, element.style.copyWith(fill: c)),
+                  ),
+                ),
+              _LabeledRow(
+                label: l10n.propertiesOutline,
+                child: _ColorField(
+                  keyBase: '$_p.field.stroke',
+                  value: element.style.stroke,
+                  allowNone: true,
+                  onCommit: (JetColor? c) => controller.setShapeStyle(
+                      id, element.style.copyWith(stroke: c)),
+                ),
+              ),
+              _LabeledRow(
+                label: l10n.propertiesOutlineWidth,
+                child: _NumberField(
+                  fieldKey: const ValueKey<String>('$_p.field.strokeWidth'),
+                  prefix: LucideIcons.ruler,
+                  value: element.style.strokeWidth,
+                  min: 0,
+                  max: 20,
+                  onCommit: (double v) => controller.setShapeStyle(
+                      id, element.style.copyWith(strokeWidth: v)),
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     ];
   }

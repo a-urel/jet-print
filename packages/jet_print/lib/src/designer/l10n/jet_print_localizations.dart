@@ -1138,6 +1138,30 @@ abstract class JetPrintLocalizations {
   /// In en, this message translates to:
   /// **'Pink'**
   String get swatchPink;
+
+  /// Properties panel section label for the fill/outline controls shown when a shape element is selected (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get propertiesAppearance;
+
+  /// Row label for a shape's fill-color editor in the Appearance section (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Fill'**
+  String get propertiesFill;
+
+  /// Row label for a shape's outline-color editor in the Appearance section (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Outline'**
+  String get propertiesOutline;
+
+  /// Row label for a shape's outline-width field in the Appearance section (021).
+  ///
+  /// In en, this message translates to:
+  /// **'Width'**
+  String get propertiesOutlineWidth;
 }
 
 class _JetPrintLocalizationsDelegate

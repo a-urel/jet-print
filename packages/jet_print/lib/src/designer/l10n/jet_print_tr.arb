@@ -191,5 +191,10 @@
   "swatchBlue": "Mavi",
   "swatchIndigo": "Çivit",
   "swatchViolet": "Mor",
-  "swatchPink": "Pembe"
+  "swatchPink": "Pembe",
+
+  "propertiesAppearance": "Görünüm",
+  "propertiesFill": "Dolgu",
+  "propertiesOutline": "Anahat",
+  "propertiesOutlineWidth": "Genişlik"
 }

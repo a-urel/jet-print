@@ -14,11 +14,16 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/domain/elements/image_source.dart';
+import 'package:jet_print/src/domain/elements/shape_element.dart';
 import 'package:jet_print/src/domain/geometry.dart';
 import 'package:jet_print/src/domain/page_format.dart';
+import 'package:jet_print/src/domain/styles/box_style.dart';
 import 'package:jet_print/src/domain/styles/color.dart';
 import 'package:jet_print/src/domain/styles/text_style.dart';
+import 'package:jet_print/src/rendering/elements/render_context.dart';
+import 'package:jet_print/src/rendering/elements/renderers/shape_element_renderer.dart';
 import 'package:jet_print/src/rendering/export/pdf_painter.dart';
+import 'package:jet_print/src/rendering/frame/frame_builder.dart';
 import 'package:jet_print/src/rendering/frame/page_frame.dart';
 import 'package:jet_print/src/rendering/frame/primitive.dart';
 import 'package:jet_print/src/rendering/paint/image_fit.dart';
@@ -325,6 +330,39 @@ void main() {
       expect(content, contains(' gs'),
           reason: 'CanvasPainter renders 0x80 alpha translucent; the PDF '
               'backend must match via an ExtGState, not drop the alpha');
+    });
+  });
+
+  group('shapes — stroke width 0 (021 / C7)', () {
+    test('a shape with strokeWidth 0 emits no stroke operators', () async {
+      // Through the REAL renderer: the seam emits stroke: null at width 0, so
+      // the PDF backend writes a fill pass only.
+      final FrameBuilder builder = FrameBuilder(_page);
+      const ShapeElementRenderer renderer = ShapeElementRenderer();
+      const JetRect bounds = JetRect(x: 10, y: 10, width: 60, height: 40);
+      renderer.emit(
+        const ShapeElement(
+          id: 's',
+          bounds: bounds,
+          kind: ShapeKind.rectangle,
+          style: JetBoxStyle(
+            fill: JetColor(0xFFFF0000),
+            stroke: JetColor(0xFF0000FF),
+            strokeWidth: 0,
+          ),
+        ),
+        RenderContext(measurer: measurer),
+        bounds,
+        builder,
+      );
+      final PdfPainter painter = PdfPainter(fonts);
+      await paintFrame(builder.build(), painter);
+      final PdfInspector pdf = PdfInspector(await painter.save());
+      final String content = pdf.contentOf(0);
+
+      expect(content, contains(RegExp(r're\s+f\b')), reason: 'fill still paints');
+      expect(content, isNot(contains(RegExp(r'\bS\b'))),
+          reason: 'no stroke operator at width 0');
     });
   });
 

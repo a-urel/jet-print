@@ -1000,6 +1000,196 @@ void main() {
   // localization_tr_test.dart — one non-English locale per isolate (the CLDR
   // locale-switch leak documented in localization_test.dart).
 
+  // --- Appearance section (021 / US2) ---------------------------------------
+  group('properties — appearance gating (C1)', () {
+    testWidgets('a closed shape shows fill, outline, and width controls',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      await _addShape(tester, c); // a rectangle
+
+      expect(_field('fill'), findsOneWidget);
+      expect(_field('stroke'), findsOneWidget);
+      expect(_field('strokeWidth'), findsOneWidget);
+    });
+
+    testWidgets('a line shape offers outline controls only — no fill control',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      final String id = await _addShape(tester, c);
+      c.setShapeKind(id, ShapeKind.line);
+      await tester.pumpAndSettle();
+
+      expect(_field('fill'), findsNothing);
+      expect(_field('stroke'), findsOneWidget);
+      expect(_field('strokeWidth'), findsOneWidget);
+    });
+
+    testWidgets('no Appearance section for a text element',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      await _addText(tester, c);
+
+      expect(_field('fill'), findsNothing);
+      expect(_field('stroke'), findsNothing);
+      expect(_field('strokeWidth'), findsNothing);
+    });
+  });
+
+  group('properties — shape fill & outline none states (C7)', () {
+    testWidgets('None commits fill: null and the editor shows the none state',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      final String id = await _addShape(tester, c);
+      c.setShapeStyle(
+          id, _shapeOf(c, id).style.copyWith(fill: const JetColor(0xFF22C55E)));
+      await tester.pumpAndSettle();
+
+      await tester.tap(_field('fill'));
+      await tester.pumpAndSettle();
+      await tester.tap(_field('fill.none'));
+      await tester.pumpAndSettle();
+
+      expect(_shapeOf(c, id).style.fill, isNull);
+      expect(_valueIn('fill', 'None'), findsOneWidget,
+          reason: 'the trigger displays the none state distinctly');
+      c.undo();
+      expect(_shapeOf(c, id).style.fill, const JetColor(0xFF22C55E),
+          reason: 'one-step undo restores the fill');
+    });
+
+    testWidgets('None commits stroke: null', (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      final String id = await _addShape(tester, c);
+
+      await tester.tap(_field('stroke'));
+      await tester.pumpAndSettle();
+      await tester.tap(_field('stroke.none'));
+      await tester.pumpAndSettle();
+
+      expect(_shapeOf(c, id).style.stroke, isNull);
+      expect(_valueIn('stroke', 'None'), findsOneWidget);
+    });
+
+    testWidgets('the text color editor still has no None, the shape ones do',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      await _addShape(tester, c);
+
+      await tester.tap(_field('fill'));
+      await tester.pumpAndSettle();
+      expect(_field('fill.none'), findsOneWidget);
+    });
+  });
+
+  group('properties — outline width (C4 0–20 / C7)', () {
+    testWidgets('the width field clamps to [0, 20]',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      final String id = await _addShape(tester, c);
+
+      await tester.enterText(_editable('strokeWidth'), '50');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(_shapeOf(c, id).style.strokeWidth, 20, reason: 'clamped to max');
+
+      await tester.enterText(_editable('strokeWidth'), '-3');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(_shapeOf(c, id).style.strokeWidth, 0, reason: 'clamped to min');
+    });
+
+    testWidgets('the down stepper at width 0 is a no-op',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      final String id = await _addShape(tester, c);
+      await tester.enterText(_editable('strokeWidth'), '0');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      final int before = _undoDepth(c);
+
+      await tester.tap(find.descendant(
+          of: _field('strokeWidth'),
+          matching: find.byIcon(LucideIcons.chevronDown)));
+      await tester.pumpAndSettle();
+
+      expect(_shapeOf(c, id).style.strokeWidth, 0);
+      expect(_undoDepth(c), before, reason: 'stuck at the bound: no history');
+    });
+
+    testWidgets(
+        'width 0 hides the outline but keeps the color; width > 0 restores it',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      final String id = await _addShape(tester, c);
+      c.setShapeStyle(id,
+          _shapeOf(c, id).style.copyWith(stroke: const JetColor(0xFF1E40AF)));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(_editable('strokeWidth'), '0');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(_shapeOf(c, id).style.strokeWidth, 0);
+      expect(_shapeOf(c, id).style.stroke, const JetColor(0xFF1E40AF),
+          reason: 'the stored color survives width 0 (no trapdoor)');
+
+      await tester.enterText(_editable('strokeWidth'), '2');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(_shapeOf(c, id).style.strokeWidth, 2);
+      expect(_shapeOf(c, id).style.stroke, const JetColor(0xFF1E40AF),
+          reason: 'the outline returns in its remembered color');
+    });
+  });
+
+  group('properties — shape editor undo & selection switch (C9)', () {
+    testWidgets('a swatch pick on fill is one undoable step',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      final String id = await _addShape(tester, c);
+      final JetColor? fillBefore = _shapeOf(c, id).style.fill;
+
+      await tester.tap(_field('fill'));
+      await tester.pumpAndSettle();
+      await tester.tap(_field('fill.swatch.blue'));
+      await tester.pumpAndSettle();
+
+      expect(_shapeOf(c, id).style.fill, const JetColor(0xFF3B82F6));
+      c.undo();
+      expect(_shapeOf(c, id).style.fill, fillBefore);
+    });
+
+    testWidgets('a selection switch discards uncommitted width input',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      final String id = await _addShape(tester, c);
+      final String other =
+          await _addShape(tester, c, at: const JetOffset(120, 30));
+      c.select(id);
+      await tester.pumpAndSettle();
+      final double widthBefore = _shapeOf(c, id).style.strokeWidth;
+
+      await tester.enterText(_editable('strokeWidth'), '17');
+      c.select(other);
+      await tester.pumpAndSettle();
+      c.select(id);
+      await tester.pumpAndSettle();
+
+      expect(_shapeOf(c, id).style.strokeWidth, widthBefore,
+          reason: 'uncommitted input is discarded');
+    });
+  });
+
   // --- Shape gallery (020 / US1) -------------------------------------------
   group('properties — shape gallery', () {
     testWidgets('shows the Shape section with the seven closed forms (C1.1)',

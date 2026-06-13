@@ -536,4 +536,16 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
 
   @override
   String get swatchPink => 'Rosa';
+
+  @override
+  String get propertiesAppearance => 'Darstellung';
+
+  @override
+  String get propertiesFill => 'Füllung';
+
+  @override
+  String get propertiesOutline => 'Kontur';
+
+  @override
+  String get propertiesOutlineWidth => 'Breite';
 }
