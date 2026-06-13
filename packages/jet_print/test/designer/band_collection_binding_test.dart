@@ -9,6 +9,12 @@ import 'support/designer_harness.dart';
 const ValueKey<String> _bandCollectionKey =
     ValueKey<String>('jet_print.designer.properties.field.bandCollection');
 
+const ValueKey<String> _bandPickKey =
+    ValueKey<String>('jet_print.designer.properties.field.bandCollection.pick');
+
+Finder _bandPickItem(String field) => find.byKey(ValueKey<String>(
+    'jet_print.designer.properties.field.bandCollection.pick.$field'));
+
 const JetDataSchema _invoice = JetDataSchema(
   name: 'Invoice',
   fields: <FieldDef>[
@@ -39,6 +45,60 @@ void main() {
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
     expect(c.template.bands[1].collectionField, 'lines');
+  });
+
+  testWidgets(
+      'the band binding shows a field-picker button when a schema with a '
+      'collection is attached', (WidgetTester tester) async {
+    final JetReportDesignerController c =
+        await pumpDesignerWith(tester, dataSchema: _invoice);
+    c.selectBand(1); // the detail band
+    await tester.pumpAndSettle();
+    await openPropertiesTab(tester);
+
+    expect(find.byKey(_bandPickKey), findsOneWidget);
+  });
+
+  testWidgets('with no schema there is nothing to pick, so no picker button',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c = await pumpDesignerWith(tester);
+    c.selectBand(1);
+    await tester.pumpAndSettle();
+    await openPropertiesTab(tester);
+
+    expect(find.byKey(_bandPickKey), findsNothing);
+  });
+
+  testWidgets('the band picker lists only collection fields, not scalars',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c =
+        await pumpDesignerWith(tester, dataSchema: _invoice);
+    c.selectBand(1);
+    await tester.pumpAndSettle();
+    await openPropertiesTab(tester);
+
+    await tester.tap(find.byKey(_bandPickKey));
+    await tester.pumpAndSettle();
+
+    expect(_bandPickItem('lines'), findsOneWidget);
+    expect(_bandPickItem('customerName'), findsNothing); // scalar, not a band
+  });
+
+  testWidgets('choosing a collection binds the band as a single undoable edit',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c =
+        await pumpDesignerWith(tester, dataSchema: _invoice);
+    c.selectBand(1);
+    await tester.pumpAndSettle();
+    await openPropertiesTab(tester);
+
+    await tester.tap(find.byKey(_bandPickKey));
+    await tester.pumpAndSettle();
+    await tester.tap(_bandPickItem('lines'));
+    await tester.pumpAndSettle();
+
+    expect(c.template.bands[1].collectionField, 'lines');
+    expect(c.canUndo, isTrue);
   });
 
   testWidgets('flags a binding whose field is missing from the master scope',

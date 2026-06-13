@@ -105,10 +105,12 @@ void main() {
     expect(find.text('PAGE'), findsNothing);
     expect(find.text('Report'), findsNothing);
 
-    // (3) Band inspector — the height row label (verbatim).
+    // (3) Band inspector — the height row is now label-less (its glyph stands
+    // in for the dropped label); the band-specific collection-binding
+    // placeholder carries the localized string instead.
     c.selectBand(1);
     await tester.pumpAndSettle();
-    expect(find.text('Höhe'), findsOneWidget); // Height
+    expect(find.text('Höhe'), findsNothing); // height row dropped its label
     expect(find.text('Height'), findsNothing);
     // Band master/detail collection-binding placeholder (US3).
     expect(find.text('Sammlungsfeld'), findsOneWidget); // Collection field

@@ -259,6 +259,9 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get bindingCollectionHint => 'Collection field';
 
   @override
+  String get bindingFieldPickerTooltip => 'Select a field';
+
+  @override
   String get bindingUnresolved => 'Field not found in the data source';
 
   @override

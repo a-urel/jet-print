@@ -128,7 +128,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     if (selection.isReport) {
       children = _reportInspector(controller, theme, l10n);
     } else if (selection.bandIndex case final int bandIndex) {
-      children = _bandInspector(controller, bandIndex, theme, l10n);
+      children = _bandInspector(controller, bandIndex, theme, l10n, schema);
     } else if (selection.singleOrNull case final String id
         when _find(controller, id) != null) {
       children = _elementInspector(
@@ -509,6 +509,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     int index,
     ShadThemeData theme,
     JetPrintLocalizations l10n,
+    JetDataSchema? schema,
   ) {
     final double height = controller.template.bands[index].height;
     return <Widget>[
@@ -519,15 +520,14 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
       ),
       const SizedBox(height: 14),
       SectionLabel(l10n.propertiesSize),
-      _LabeledRow(
-        label: l10n.propertiesHeight,
-        child: _NumberField(
-          fieldKey: const ValueKey<String>('$_p.field.bandHeight'),
-          prefix: LucideIcons.moveVertical,
-          value: height,
-          focusNode: _bandHeightFocus,
-          onCommit: (double v) => controller.setBandHeight(index, v),
-        ),
+      // Label-less, like the element SIZE row: the vertical-arrow glyph stands
+      // in for the dropped "Height" label.
+      _NumberField(
+        fieldKey: const ValueKey<String>('$_p.field.bandHeight'),
+        prefix: LucideIcons.moveVertical,
+        value: height,
+        focusNode: _bandHeightFocus,
+        onCommit: (double v) => controller.setBandHeight(index, v),
       ),
       // Master/detail: designate the nested-collection field this band iterates
       // (US3 / FR-015). Addresses the selected top-level band as path [index].
@@ -538,9 +538,29 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
         value: controller.template.bands[index].collectionField ?? '',
         placeholder: l10n.bindingCollectionHint,
         clearTooltip: l10n.bindingClearTooltip,
+        fields: _bandCollectionChoices(schema, controller, index),
+        pickerTooltip: l10n.bindingFieldPickerTooltip,
+        pickerKeyPrefix: '$_p.field.bandCollection.pick',
         onSet: (String v) => controller.setBandCollection(<int>[index], v),
         onClear: () => controller.setBandCollection(<int>[index], null),
       ),
+    ];
+  }
+
+  /// The collection fields a top-level band can iterate (US3 / FR-015): every
+  /// nested-collection field at the master/root scope. A band binds a whole
+  /// collection, so — unlike the Value picker, which offers scalars — this keeps
+  /// only collections. Empty when no schema is attached, hiding the picker.
+  List<FieldDef> _bandCollectionChoices(
+    JetDataSchema? schema,
+    JetReportDesignerController controller,
+    int index,
+  ) {
+    if (schema == null) return const <FieldDef>[];
+    return <FieldDef>[
+      for (final FieldDef f
+          in fieldsInScopeAt(schema, controller.template, const <int>[]))
+        if (f.type == JetFieldType.collection) f,
     ];
   }
 
@@ -1597,12 +1617,18 @@ class _FieldPicker extends StatelessWidget {
     required this.fields,
     required this.tooltip,
     required this.onPick,
+    this.keyPrefix = '$_p.field.value.pick',
   });
 
   final ShadPopoverController controller;
   final List<FieldDef> fields;
   final String tooltip;
   final ValueChanged<String> onPick;
+
+  /// Key namespace for the trigger glyph and each option, so each reuse of the
+  /// picker (Value field, band/image binding) has its own stable test seam.
+  /// Defaults to the Value field's namespace.
+  final String keyPrefix;
 
   @override
   Widget build(BuildContext context) {
@@ -1612,7 +1638,7 @@ class _FieldPicker extends StatelessWidget {
       items: <Widget>[
         for (final FieldDef field in fields)
           ShadContextMenuItem(
-            key: ValueKey<String>('$_p.field.value.pick.${field.name}'),
+            key: ValueKey<String>('$keyPrefix.${field.name}'),
             leading: Icon(fieldTypeGlyph(field.type), size: 16),
             onPressed: () => onPick(field.name),
             child: Text(field.name),
@@ -1626,7 +1652,7 @@ class _FieldPicker extends StatelessWidget {
           onTap: controller.toggle,
           child: Icon(
             LucideIcons.database,
-            key: const ValueKey<String>('$_p.field.value.pick'),
+            key: ValueKey<String>(keyPrefix),
             size: 14,
             color: colors.mutedForeground,
           ),
@@ -1796,6 +1822,9 @@ class _BindingField extends StatefulWidget {
     required this.clearTooltip,
     required this.onSet,
     required this.onClear,
+    this.fields = const <FieldDef>[],
+    this.pickerTooltip = '',
+    this.pickerKeyPrefix = '',
   });
 
   final Key fieldKey;
@@ -1805,6 +1834,20 @@ class _BindingField extends StatefulWidget {
   final ValueChanged<String> onSet;
   final VoidCallback onClear;
 
+  /// In-scope data-source fields offered by an optional suffix picker (the same
+  /// affordance the Value field carries); empty ⇒ no picker button, leaving the
+  /// plain free-text binding field. A band binding offers its collection fields,
+  /// an image binding its scalar fields.
+  final List<FieldDef> fields;
+
+  /// Accessible label / tooltip for the suffix picker button (used only when
+  /// [fields] is non-empty).
+  final String pickerTooltip;
+
+  /// Key namespace for the suffix picker, so the band and image bindings each
+  /// get a distinct test seam (used only when [fields] is non-empty).
+  final String pickerKeyPrefix;
+
   @override
   State<_BindingField> createState() => _BindingFieldState();
 }
@@ -1812,6 +1855,7 @@ class _BindingField extends StatefulWidget {
 class _BindingFieldState extends State<_BindingField> {
   late final TextEditingController _controller =
       TextEditingController(text: widget.value);
+  final ShadPopoverController _picker = ShadPopoverController();
   final FocusNode _focus = FocusNode();
 
   @override
@@ -1846,9 +1890,19 @@ class _BindingFieldState extends State<_BindingField> {
     widget.onClear();
   }
 
+  /// Sets [field] as the binding — the bare field name (a band binding names a
+  /// collection, an image binding a scalar) — and closes the picker. One
+  /// undoable edit through the same `onSet` path typing commits.
+  void _pick(String field) {
+    _picker.hide();
+    _controller.text = field;
+    if (field != widget.value) widget.onSet(field);
+  }
+
   @override
   void dispose() {
     _focus.removeListener(_onFocusChange);
+    _picker.dispose();
     _focus.dispose();
     _controller.dispose();
     super.dispose();
@@ -1863,15 +1917,28 @@ class _BindingFieldState extends State<_BindingField> {
       focusNode: _focus,
       placeholder: Text(widget.placeholder),
       onSubmitted: (_) => _commit(),
-      trailing: Semantics(
-        label: widget.clearTooltip,
-        button: true,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: _clear,
-          child: Icon(LucideIcons.x, size: 14, color: colors.mutedForeground),
-        ),
-      ),
+      // With in-scope fields the input shows the same data-field picker the
+      // Value field carries; the picker supersedes the clear affordance
+      // (emptying the field still clears the binding). Without a picker, the
+      // plain clear (×) stays as the only way to drop the binding.
+      trailing: widget.fields.isEmpty
+          ? Semantics(
+              label: widget.clearTooltip,
+              button: true,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _clear,
+                child: Icon(LucideIcons.x,
+                    size: 14, color: colors.mutedForeground),
+              ),
+            )
+          : _FieldPicker(
+              controller: _picker,
+              fields: widget.fields,
+              tooltip: widget.pickerTooltip,
+              keyPrefix: widget.pickerKeyPrefix,
+              onPick: _pick,
+            ),
     );
   }
 }

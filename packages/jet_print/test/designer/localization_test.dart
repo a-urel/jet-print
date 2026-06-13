@@ -115,10 +115,13 @@ void main() {
             .label,
         contains('Choose a paper size'));
 
-    // (3) Band inspector — the height row label (rendered verbatim).
+    // (3) Band inspector — the height row is label-less (its glyph stands in
+    // for the dropped label, like the element SIZE row); the band-specific
+    // collection-binding placeholder carries the localized string instead.
     c.selectBand(1);
     await tester.pumpAndSettle();
-    expect(find.text('Height'), findsOneWidget);
+    expect(find.text('Height'), findsNothing);
+    expect(find.text('Collection field'), findsOneWidget);
 
     // (4) Empty state — nothing selected.
     c.clearSelection();

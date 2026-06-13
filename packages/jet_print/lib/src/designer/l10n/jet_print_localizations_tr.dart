@@ -259,6 +259,9 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get bindingCollectionHint => 'Koleksiyon alanı';
 
   @override
+  String get bindingFieldPickerTooltip => 'Alan seç';
+
+  @override
   String get bindingUnresolved => 'Alan veri kaynağında bulunamadı';
 
   @override

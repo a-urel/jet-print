@@ -259,6 +259,9 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   String get bindingCollectionHint => 'Sammlungsfeld';
 
   @override
+  String get bindingFieldPickerTooltip => 'Feld auswählen';
+
+  @override
   String get bindingUnresolved => 'Feld nicht in der Datenquelle gefunden';
 
   @override

@@ -96,6 +96,7 @@
   "bindingImageFieldHint": "Feldname",
   "bindingClearTooltip": "Bindung entfernen",
   "bindingCollectionHint": "Sammlungsfeld",
+  "bindingFieldPickerTooltip": "Feld auswählen",
   "bindingUnresolved": "Feld nicht in der Datenquelle gefunden",
   "propertiesHeight": "Höhe",
   "propertiesPage": "Seite",

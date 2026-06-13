@@ -599,6 +599,12 @@ abstract class JetPrintLocalizations {
   /// **'Collection field'**
   String get bindingCollectionHint;
 
+  /// Accessible name / tooltip for the suffix button that opens a menu of in-scope data fields to fill a binding input.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a field'**
+  String get bindingFieldPickerTooltip;
+
   /// Shown under a binding whose field is missing from, or out of scope in, the attached data source (009).
   ///
   /// In en, this message translates to:

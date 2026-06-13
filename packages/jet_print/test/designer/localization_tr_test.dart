@@ -113,11 +113,13 @@ void main() {
         contains('Kağıt boyutu seçin'));
     expect(find.text('PAGE'), findsNothing);
 
-    // (3) Band inspector — the height row label (verbatim).
+    // (3) Band inspector — the height row is now label-less (its glyph stands
+    // in for the dropped label); the band collection-binding placeholder is
+    // translated (US3) — English gone.
     c.selectBand(1);
     await tester.pumpAndSettle();
-    expect(find.text('Yükseklik'), findsOneWidget); // Height
-    // Band collection-binding placeholder is translated (US3) — English gone.
+    expect(find.text('Yükseklik'), findsNothing); // height row dropped its label
+    expect(find.text('Koleksiyon alanı'), findsOneWidget); // Collection field
     expect(find.text('Collection field'), findsNothing);
 
     // (4) Empty state.

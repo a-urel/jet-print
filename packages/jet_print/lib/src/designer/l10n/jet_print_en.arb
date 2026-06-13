@@ -347,6 +347,10 @@
   "@bindingCollectionHint": {
     "description": "Placeholder for the band collection-binding input (the nested-collection field this band iterates, for master/detail)."
   },
+  "bindingFieldPickerTooltip": "Select a field",
+  "@bindingFieldPickerTooltip": {
+    "description": "Accessible name / tooltip for the suffix button that opens a menu of in-scope data fields to fill a binding input."
+  },
   "bindingUnresolved": "Field not found in the data source",
   "@bindingUnresolved": {
     "description": "Shown under a binding whose field is missing from, or out of scope in, the attached data source (009)."

@@ -96,6 +96,7 @@
   "bindingImageFieldHint": "Alan adı",
   "bindingClearTooltip": "Bağlantıyı temizle",
   "bindingCollectionHint": "Koleksiyon alanı",
+  "bindingFieldPickerTooltip": "Alan seç",
   "bindingUnresolved": "Alan veri kaynağında bulunamadı",
   "propertiesHeight": "Yükseklik",
   "propertiesPage": "Sayfa",
