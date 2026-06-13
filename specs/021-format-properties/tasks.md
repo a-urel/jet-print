@@ -113,19 +113,19 @@
 
 ### Tests for User Story 3 (write FIRST — must FAIL before implementation) ⚠️
 
-- [ ] T039 [P] [US3] Extend `packages/jet_print/test/domain/serialization/element_codec_test.dart`: `BarcodeElement.color` omitted when black, round-trips otherwise including alpha (contract C8/C10)
-- [ ] T040 [P] [US3] Extend `packages/jet_print/test/rendering/elements/barcode_element_renderer_test.dart`: placeholder primitives (glyph/border) carry `el.color` instead of the hardcoded tint
-- [ ] T041 [P] [US3] Create `packages/jet_print/test/designer/controller/set_barcode_color_command_test.dart` (NEW): same matrix — single undo step, notify once, `before` on missing/wrong-type/equal-color
+- [X] T039 [P] [US3] Extend `packages/jet_print/test/domain/serialization/element_codec_test.dart`: `BarcodeElement.color` omitted when black, round-trips otherwise including alpha (contract C8/C10)
+- [X] T040 [P] [US3] Extend `packages/jet_print/test/rendering/elements/barcode_element_renderer_test.dart`: placeholder primitives (glyph/border) carry `el.color` instead of the hardcoded tint
+- [X] T041 [P] [US3] Create `packages/jet_print/test/designer/controller/set_barcode_color_command_test.dart` (NEW): same matrix — single undo step, notify once, `before` on missing/wrong-type/equal-color
 
 ### Implementation for User Story 3
 
-- [ ] T042 [US3] Verify `BarcodeElement.copyWith` supports `color` in `packages/jet_print/lib/src/domain/elements/barcode_element.dart`; add it if absent (with unit coverage in the corresponding domain test)
-- [ ] T043 [US3] Tint the placeholder primitives with `el.color` in `packages/jet_print/lib/src/rendering/elements/renderers/barcode_element_renderer.dart` (research §8) — makes T040 green
-- [ ] T044 [US3] Create `packages/jet_print/lib/src/designer/controller/commands/set_barcode_color_command.dart` (NEW) and add `void setBarcodeColor(String id, JetColor color)` to `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart` through `_commit`, with dartdoc — makes T041 green
-- [ ] T045 [US3] Add barcode color-row localization key(s) to `packages/jet_print/lib/src/designer/l10n/jet_print_en.arb`, `jet_print_de.arb`, `jet_print_tr.arb`; regenerate localizations
-- [ ] T046 [US3] Write failing widget tests in `packages/jet_print/test/designer/properties_editor_test.dart`: C1 gating (color row for `BarcodeElement` only), C8 editor shows current color, pick commits one `setBarcodeColor`, **no None entry**, undo restores
-- [ ] T047 [US3] Wire the barcode color row into the `BarcodeElement` branch of `_elementInspector` in `packages/jet_print/lib/src/designer/layout/panels/properties_panel.dart` using `_ColorField` without None — makes T046 green
-- [ ] T048 [US3] Update `packages/jet_print/test/public_api_test.dart`: record `JetReportDesignerController.setBarcodeColor`
+- [X] T042 [US3] Verify `BarcodeElement.copyWith` supports `color` in `packages/jet_print/lib/src/domain/elements/barcode_element.dart`; add it if absent (with unit coverage in the corresponding domain test)
+- [X] T043 [US3] Tint the placeholder primitives with `el.color` in `packages/jet_print/lib/src/rendering/elements/renderers/barcode_element_renderer.dart` (research §8) — makes T040 green
+- [X] T044 [US3] Create `packages/jet_print/lib/src/designer/controller/commands/set_barcode_color_command.dart` (NEW) and add `void setBarcodeColor(String id, JetColor color)` to `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart` through `_commit`, with dartdoc — makes T041 green
+- [X] T045 [US3] Add barcode color-row localization key(s) to `packages/jet_print/lib/src/designer/l10n/jet_print_en.arb`, `jet_print_de.arb`, `jet_print_tr.arb`; regenerate localizations
+- [X] T046 [US3] Write failing widget tests in `packages/jet_print/test/designer/properties_editor_test.dart`: C1 gating (color row for `BarcodeElement` only), C8 editor shows current color, pick commits one `setBarcodeColor`, **no None entry**, undo restores
+- [X] T047 [US3] Wire the barcode color row into the `BarcodeElement` branch of `_elementInspector` in `packages/jet_print/lib/src/designer/layout/panels/properties_panel.dart` using `_ColorField` without None — makes T046 green
+- [X] T048 [US3] Update `packages/jet_print/test/public_api_test.dart`: record `JetReportDesignerController.setBarcodeColor`
 
 **Checkpoint**: All three stories independently functional; full suite green.
 

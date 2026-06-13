@@ -322,6 +322,24 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                 _unresolved(schema, controller, id, imageField: s.field))
           _UnresolvedHint(message: l10n.bindingUnresolved),
       ],
+      // Barcode color (021 / US3): the shared color editor — no None, bars
+      // always have a color — bound to BarcodeElement.color through one
+      // setBarcodeColor commit per pick (C8). The placeholder rendering (and
+      // later the real bars) reflects it on canvas/preview/export.
+      if (element is BarcodeElement) ...<Widget>[
+        const SizedBox(height: 12),
+        KeyedSubtree(
+          key: ValueKey<String>('$_p.barcode.$id'),
+          child: _LabeledRow(
+            label: l10n.propertiesColor,
+            child: _ColorField(
+              keyBase: '$_p.field.barcodeColor',
+              value: element.color,
+              onCommit: (JetColor? c) => controller.setBarcodeColor(id, c!),
+            ),
+          ),
+        ),
+      ],
       // Shape gallery: pick the form from a visual roster (020 / FR-001/002).
       // Shape-gated, so it is absent for text/image/barcode and for no/multi
       // selection (the latter fall through to the empty state before this runs).

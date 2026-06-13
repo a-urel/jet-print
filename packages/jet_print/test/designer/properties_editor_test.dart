@@ -1190,6 +1190,69 @@ void main() {
     });
   });
 
+  // --- Barcode color (021 / US3) --------------------------------------------
+  group('properties — barcode color (C1/C8)', () {
+    Future<String> addBarcode(
+        WidgetTester tester, JetReportDesignerController c) async {
+      c.createElement(DesignerToolType.barcode,
+          bandIndex: 1, at: const JetOffset(20, 30));
+      final String id = c.selection.singleOrNull!;
+      await tester.pumpAndSettle();
+      return id;
+    }
+
+    BarcodeElement barcodeOf(JetReportDesignerController c, String id) =>
+        c.template.bands
+            .expand((ReportBand b) => b.elements)
+            .firstWhere((ReportElement e) => e.id == id) as BarcodeElement;
+
+    testWidgets('a barcode shows the color row; other types do not',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      await addBarcode(tester, c);
+      expect(_field('barcodeColor'), findsOneWidget);
+
+      await _addText(tester, c);
+      expect(_field('barcodeColor'), findsNothing);
+
+      await _addShape(tester, c, at: const JetOffset(120, 30));
+      expect(_field('barcodeColor'), findsNothing);
+    });
+
+    testWidgets('shows the current color and commits one setBarcodeColor',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      final String id = await addBarcode(tester, c);
+
+      expect(_valueIn('barcodeColor', '#000000'), findsOneWidget,
+          reason: 'a new barcode is black');
+
+      await tester.tap(_field('barcodeColor'));
+      await tester.pumpAndSettle();
+      await tester.tap(_field('barcodeColor.swatch.indigo'));
+      await tester.pumpAndSettle();
+
+      expect(barcodeOf(c, id).color, const JetColor(0xFF6366F1));
+      c.undo();
+      expect(barcodeOf(c, id).color, JetColor.black,
+          reason: 'one-step undo restores black');
+    });
+
+    testWidgets('the barcode color editor offers no None entry (C8)',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      await addBarcode(tester, c);
+
+      await tester.tap(_field('barcodeColor'));
+      await tester.pumpAndSettle();
+      expect(_field('barcodeColor.none'), findsNothing);
+      expect(_field('barcodeColor.hex'), findsOneWidget);
+    });
+  });
+
   // --- Shape gallery (020 / US1) -------------------------------------------
   group('properties — shape gallery', () {
     testWidgets('shows the Shape section with the seven closed forms (C1.1)',

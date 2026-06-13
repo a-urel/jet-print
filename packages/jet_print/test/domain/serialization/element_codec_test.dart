@@ -1,10 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jet_print/src/domain/elements/barcode_element.dart';
 import 'package:jet_print/src/domain/elements/text_element.dart';
 import 'package:jet_print/src/domain/geometry.dart';
 import 'package:jet_print/src/domain/report_element.dart';
+import 'package:jet_print/src/domain/serialization/barcode_element_codec.dart';
 import 'package:jet_print/src/domain/serialization/element_codec.dart';
 import 'package:jet_print/src/domain/serialization/report_format_exception.dart';
 import 'package:jet_print/src/domain/serialization/text_element_codec.dart';
+import 'package:jet_print/src/domain/styles/color.dart';
 import 'package:jet_print/src/domain/styles/text_style.dart';
 import 'package:jet_print/src/domain/unknown_element.dart';
 
@@ -183,6 +186,40 @@ void main() {
           'SomeUnregisteredFamily');
       expect(registry.encode(decoded), equals(json),
           reason: 'the stored family is preserved byte-for-byte');
+    });
+  });
+
+  // --- 021 format properties: barcode color wire rules (US3 / C8, C10) ------
+  group('BarcodeElementCodec — color (021 / US3)', () {
+    const BarcodeElementCodec codec = BarcodeElementCodec();
+    const JetRect bounds = JetRect(x: 1, y: 2, width: 40, height: 40);
+
+    BarcodeElement barcode(JetColor color) => BarcodeElement(
+          id: 'b',
+          bounds: bounds,
+          symbology: BarcodeSymbology.qrCode,
+          data: '42',
+          color: color,
+        );
+
+    test('color is omitted when black (the compact default)', () {
+      final Map<String, Object?> json = codec.toJson(barcode(JetColor.black));
+      expect(json.containsKey('color'), isFalse);
+      expect(codec.fromJson(json).color, JetColor.black);
+    });
+
+    test('a non-black color round-trips', () {
+      final BarcodeElement el = barcode(const JetColor(0xFF1E40AF));
+      final Map<String, Object?> json = codec.toJson(el);
+      expect(json['color'], '#FF1E40AF');
+      expect(codec.fromJson(json), el);
+    });
+
+    test('a translucent color round-trips with alpha intact', () {
+      final BarcodeElement el = barcode(const JetColor(0x801E40AF));
+      final Map<String, Object?> json = codec.toJson(el);
+      expect(json['color'], '#801E40AF');
+      expect(codec.fromJson(json).color, const JetColor(0x801E40AF));
     });
   });
 }

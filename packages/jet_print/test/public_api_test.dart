@@ -378,6 +378,41 @@ void main() {
     controller.dispose();
   });
 
+  test('JetReportDesignerController.setBarcodeColor recolors a barcode (021)',
+      () {
+    final JetReportDesignerController controller = JetReportDesignerController(
+      template: const ReportTemplate(
+        name: 'API check',
+        page: PageFormat.a4Portrait,
+        bands: <ReportBand>[
+          ReportBand(
+              type: BandType.detail,
+              height: 80,
+              elements: <ReportElement>[
+                BarcodeElement(
+                  id: 'b1',
+                  bounds: JetRect(x: 0, y: 0, width: 40, height: 40),
+                  symbology: BarcodeSymbology.qrCode,
+                  data: '42',
+                ),
+              ]),
+        ],
+      ),
+    );
+    controller.setBarcodeColor('b1', const JetColor(0xFF1E40AF));
+    expect(
+      (controller.template.bands.first.elements.first as BarcodeElement).color,
+      const JetColor(0xFF1E40AF),
+    );
+    expect(controller.canUndo, isTrue);
+    controller.undo();
+    expect(
+      (controller.template.bands.first.elements.first as BarcodeElement).color,
+      JetColor.black,
+    );
+    controller.dispose();
+  });
+
   test('JetReportWorkspace is constructible from the public surface', () {
     final JetReportDesignerController controller =
         JetReportDesignerController();

@@ -11,6 +11,7 @@ import '../../domain/report_band.dart';
 import '../../domain/report_element.dart';
 import '../../domain/report_template.dart';
 import '../../domain/styles/box_style.dart';
+import '../../domain/styles/color.dart';
 import '../../domain/styles/text_style.dart';
 import '../canvas/design_tunables.dart';
 import '../canvas/resize_handle.dart';
@@ -25,6 +26,7 @@ import 'commands/reorder_command.dart';
 import 'commands/resize_command.dart';
 import 'commands/set_band_collection_command.dart';
 import 'commands/set_band_height_command.dart';
+import 'commands/set_barcode_color_command.dart';
 import 'commands/set_binding_command.dart';
 import 'commands/set_format_command.dart';
 import 'commands/set_page_format_command.dart';
@@ -725,6 +727,16 @@ class JetReportDesignerController extends ChangeNotifier {
   /// notifies no listener. No-op for a non-shape or absent id.
   void setShapeStyle(String id, JetBoxStyle style) =>
       _commit(SetShapeStyleCommand(id: id, style: style));
+
+  /// Replaces the barcode element [id]'s foreground color with [color] as
+  /// one undoable step (021 / FR-011), preserving its symbology, data, and
+  /// bounds. The placeholder rendering (and, later, the real bars) reflects
+  /// the color on canvas, preview, and export.
+  ///
+  /// Committing an equal color is a no-op: it records no history entry and
+  /// notifies no listener. No-op for a non-barcode or absent id.
+  void setBarcodeColor(String id, JetColor color) =>
+      _commit(SetBarcodeColorCommand(id: id, color: color));
 
   /// Binds the [ImageElement] [id] to read its picture from the data [field]
   /// (US2 / FR-013). No-op for a non-image or absent id, or when already bound
