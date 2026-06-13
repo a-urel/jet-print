@@ -133,10 +133,10 @@
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T049 [P] Documentation pass: verify dartdoc on `setTextStyle`/`setShapeStyle`/`setBarcodeColor` (single-undo + no-op semantics), `underline`, and both `copyWith`s; update `packages/jet_print/CHANGELOG.md`
-- [ ] T050 [P] Cross-cutting verification: `packages/jet_print/test/architecture/layer_boundaries_test.dart` green (domain has no Flutter import; `underlineFor`/`families` in rendering; commands/editors in designer); all pre-existing goldens byte-identical; T002 compat test still green
-- [ ] T051 Run `dart format .`, `dart analyze` (zero warnings), and the full `flutter test packages/jet_print` suite from repo root; fix any fallout
-- [ ] T052 Manual quickstart validation: walk all of `specs/021-format-properties/quickstart.md` in `apps/jet_print_playground` (style text → shape fill/outline/none/width-0 → barcode tint → preview/export/save-reload parity, undo at each step ≤3 interactions per SC-001/SC-006)
+- [X] T049 [P] Documentation pass: verify dartdoc on `setTextStyle`/`setShapeStyle`/`setBarcodeColor` (single-undo + no-op semantics), `underline`, and both `copyWith`s; update `packages/jet_print/CHANGELOG.md`
+- [X] T050 [P] Cross-cutting verification: `packages/jet_print/test/architecture/layer_boundaries_test.dart` green (domain has no Flutter import; `underlineFor`/`families` in rendering; commands/editors in designer); all pre-existing goldens byte-identical; T002 compat test still green
+- [X] T051 Run `dart format .`, `dart analyze` (zero warnings), and the full `flutter test packages/jet_print` suite from repo root; fix any fallout
+- [ ] T052 (PENDING — requires a human at the GUI) Manual quickstart validation: walk all of `specs/021-format-properties/quickstart.md` in `apps/jet_print_playground` (style text → shape fill/outline/none/width-0 → barcode tint → preview/export/save-reload parity, undo at each step ≤3 interactions per SC-001/SC-006)
 
 ---
 

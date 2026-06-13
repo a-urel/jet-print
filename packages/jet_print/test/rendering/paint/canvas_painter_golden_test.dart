@@ -74,7 +74,8 @@ void main() {
   });
 
   // --- 021 format properties: styled text (US1 / C11 / SC-002) -------------
-  test('paints a styled-text page (family, size, B/I/U, translucent color, '
+  test(
+      'paints a styled-text page (family, size, B/I/U, translucent color, '
       'alignments) to a golden', () async {
     final FontRegistry reg = FontRegistry()..registerDefault();
     // A second family (same bytes under a distinct name) so a non-default
@@ -103,29 +104,20 @@ void main() {
 
     addRun('Display family',
         const JetTextStyle(fontFamily: 'Display', fontSize: 16), 6);
-    addRun(
-        'Bold 18',
-        const JetTextStyle(fontSize: 18, weight: JetFontWeight.bold),
-        30);
+    addRun('Bold 18',
+        const JetTextStyle(fontSize: 18, weight: JetFontWeight.bold), 30);
     addRun('Italic', const JetTextStyle(fontSize: 14, italic: true), 56);
-    addRun('Underlined',
-        const JetTextStyle(fontSize: 14, underline: true), 78);
+    addRun('Underlined', const JetTextStyle(fontSize: 14, underline: true), 78);
     addRun(
         'Translucent underline',
         const JetTextStyle(
             fontSize: 14, underline: true, color: JetColor(0x801E40AF)),
         100);
-    addRun(
-        'Left',
-        const JetTextStyle(fontSize: 12, align: JetTextAlign.left),
+    addRun('Left', const JetTextStyle(fontSize: 12, align: JetTextAlign.left),
         124);
-    addRun(
-        'Center',
-        const JetTextStyle(fontSize: 12, align: JetTextAlign.center),
-        142);
-    addRun(
-        'Right',
-        const JetTextStyle(fontSize: 12, align: JetTextAlign.right),
+    addRun('Center',
+        const JetTextStyle(fontSize: 12, align: JetTextAlign.center), 142);
+    addRun('Right', const JetTextStyle(fontSize: 12, align: JetTextAlign.right),
         160);
 
     final ui.PictureRecorder recorder = ui.PictureRecorder();
@@ -140,11 +132,11 @@ void main() {
   });
 
   // --- 021 format properties: shape styles (US2 / C7 / C11) ----------------
-  test('paints a shape-style page (filled+stroked, fill-only, stroke-only, '
+  test(
+      'paints a shape-style page (filled+stroked, fill-only, stroke-only, '
       'none+none, width-0) to a golden', () async {
     final FontRegistry reg = FontRegistry()..registerDefault();
-    final RenderContext ctx =
-        RenderContext(measurer: MetricsTextMeasurer(reg));
+    final RenderContext ctx = RenderContext(measurer: MetricsTextMeasurer(reg));
     const ShapeElementRenderer renderer = ShapeElementRenderer();
 
     const PageFormat page =
@@ -175,8 +167,8 @@ void main() {
             fill: JetColor(0x553B82F6),
             stroke: JetColor(0xFF1E40AF),
             strokeWidth: 2));
-    addShape('fill-only', 80, 10,
-        const JetBoxStyle(fill: JetColor(0xFF22C55E)));
+    addShape(
+        'fill-only', 80, 10, const JetBoxStyle(fill: JetColor(0xFF22C55E)));
     addShape('stroke-only', 150, 10,
         const JetBoxStyle(stroke: JetColor(0xFFEF4444), strokeWidth: 3),
         kind: ShapeKind.hexagon);

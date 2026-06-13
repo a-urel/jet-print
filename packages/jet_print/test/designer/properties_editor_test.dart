@@ -682,11 +682,10 @@ void main() {
       expect(_valueIn('fontSize', '24'), findsOneWidget);
       expect(_semanticsOf(tester, 'bold'), isSemantics(isSelected: true));
       expect(_semanticsOf(tester, 'italic'), isSemantics(isSelected: true));
-      expect(
-          _semanticsOf(tester, 'underline'), isSemantics(isSelected: true));
+      expect(_semanticsOf(tester, 'underline'), isSemantics(isSelected: true));
       expect(_valueIn('textColor', '#1E40AF'), findsOneWidget);
-      expect(_semanticsOf(tester, 'align.center'),
-          isSemantics(isSelected: true));
+      expect(
+          _semanticsOf(tester, 'align.center'), isSemantics(isSelected: true));
       expect(
           _semanticsOf(tester, 'align.left'), isSemantics(isSelected: false));
       sem.dispose();
@@ -700,11 +699,9 @@ void main() {
       expect(_valueIn('fontSize', '12'), findsOneWidget);
       expect(_semanticsOf(tester, 'bold'), isSemantics(isSelected: false));
       expect(_semanticsOf(tester, 'italic'), isSemantics(isSelected: false));
-      expect(
-          _semanticsOf(tester, 'underline'), isSemantics(isSelected: false));
+      expect(_semanticsOf(tester, 'underline'), isSemantics(isSelected: false));
       expect(_valueIn('textColor', '#000000'), findsOneWidget);
-      expect(
-          _semanticsOf(tester, 'align.left'), isSemantics(isSelected: true));
+      expect(_semanticsOf(tester, 'align.left'), isSemantics(isSelected: true));
       sem.dispose();
     });
   });
@@ -759,10 +756,7 @@ void main() {
     testWidgets('Bold is active iff the weight is bold',
         (WidgetTester tester) async {
       final SemanticsHandle sem = tester.ensureSemantics();
-      for (final (JetFontWeight weight, bool active) in <(
-        JetFontWeight,
-        bool
-      )>[
+      for (final (JetFontWeight weight, bool active) in <(JetFontWeight, bool)>[
         (JetFontWeight.normal, false),
         (JetFontWeight.medium, false),
         (JetFontWeight.semiBold, false),
@@ -937,8 +931,8 @@ void main() {
           tester, const JetTextStyle(align: JetTextAlign.justify));
 
       for (final String seg in <String>['left', 'center', 'right']) {
-        expect(_semanticsOf(tester, 'align.$seg'),
-            isSemantics(isSelected: false),
+        expect(
+            _semanticsOf(tester, 'align.$seg'), isSemantics(isSelected: false),
             reason: 'justify activates no segment');
       }
 

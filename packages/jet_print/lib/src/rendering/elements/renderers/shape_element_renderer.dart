@@ -30,8 +30,7 @@ class ShapeElementRenderer extends ElementRenderer<ShapeElement> {
     // outline is not emitted on any path, while the stored stroke color stays
     // on the style so stepping the width back restores it. Handled here once —
     // zero painter changes, parity across canvas/preview/export.
-    final JetColor? stroke =
-        el.style.strokeWidth > 0 ? el.style.stroke : null;
+    final JetColor? stroke = el.style.strokeWidth > 0 ? el.style.stroke : null;
     switch (el.kind) {
       case ShapeKind.rectangle:
         out.add(RectPrimitive(

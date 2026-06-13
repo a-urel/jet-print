@@ -79,8 +79,7 @@ void main() {
 
     test('rectangle emits stroke: null when width is 0, fill intact', () {
       const ShapeElement el = ShapeElement(
-          id: 'r', bounds: bounds, kind: ShapeKind.rectangle,
-          style: zeroWidth);
+          id: 'r', bounds: bounds, kind: ShapeKind.rectangle, style: zeroWidth);
       final FrameBuilder out = FrameBuilder(PageFormat.a4Portrait);
       renderer.emit(el, ctx, bounds, out);
       final RectPrimitive p = out.build().primitives.single as RectPrimitive;

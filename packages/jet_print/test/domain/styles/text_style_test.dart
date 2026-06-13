@@ -61,8 +61,7 @@ void main() {
     });
 
     test('is written only when true; absent or non-bool reads as false', () {
-      expect(
-          const JetTextStyle(underline: true).toJson()['underline'], isTrue);
+      expect(const JetTextStyle(underline: true).toJson()['underline'], isTrue);
       expect(const JetTextStyle().toJson().containsKey('underline'), isFalse);
       // A pre-021 style map has no `underline` key.
       final Map<String, Object?> pre021 = const JetTextStyle().toJson();
@@ -93,13 +92,13 @@ void main() {
     test('replaces each field independently', () {
       expect(base.copyWith(fontFamily: 'Roboto').fontFamily, 'Roboto');
       expect(base.copyWith(fontSize: 24).fontSize, 24);
-      expect(base.copyWith(weight: JetFontWeight.bold).weight,
-          JetFontWeight.bold);
+      expect(
+          base.copyWith(weight: JetFontWeight.bold).weight, JetFontWeight.bold);
       expect(base.copyWith(italic: false).italic, isFalse);
       expect(base.copyWith(underline: false).underline, isFalse);
       expect(base.copyWith(color: JetColor.black).color, JetColor.black);
-      expect(base.copyWith(align: JetTextAlign.center).align,
-          JetTextAlign.center);
+      expect(
+          base.copyWith(align: JetTextAlign.center).align, JetTextAlign.center);
     });
 
     test('a replaced field leaves every other field untouched', () {

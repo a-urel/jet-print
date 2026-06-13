@@ -156,8 +156,7 @@ void main() {
           'align': 'left',
         },
       };
-      final TextElement decoded =
-          registry.decode(pre021) as TextElement;
+      final TextElement decoded = registry.decode(pre021) as TextElement;
       expect(decoded.style.underline, isFalse);
     });
 
@@ -172,7 +171,8 @@ void main() {
           reason: 'underline distinguishes the style from the fallback');
       // And a true fallback style is still omitted (compact wire unchanged).
       expect(
-          registry.encode(_styledText(JetTextStyle.fallback))
+          registry
+              .encode(_styledText(JetTextStyle.fallback))
               .containsKey('style'),
           isFalse);
     });
@@ -182,8 +182,8 @@ void main() {
       final Map<String, Object?> json = registry.encode(_styledText(
           const JetTextStyle(fontFamily: 'SomeUnregisteredFamily')));
       final ReportElement decoded = registry.decode(json);
-      expect((decoded as TextElement).style.fontFamily,
-          'SomeUnregisteredFamily');
+      expect(
+          (decoded as TextElement).style.fontFamily, 'SomeUnregisteredFamily');
       expect(registry.encode(decoded), equals(json),
           reason: 'the stored family is preserved byte-for-byte');
     });

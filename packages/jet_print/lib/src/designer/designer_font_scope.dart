@@ -29,9 +29,7 @@ class DesignerFontScope extends InheritedWidget {
   /// registry when no scope is present (e.g. a panel pumped in isolation) —
   /// the same family set the engine/preview/exporter construct today.
   static FontRegistry of(BuildContext context) =>
-      context
-          .dependOnInheritedWidgetOfExactType<DesignerFontScope>()
-          ?.fonts ??
+      context.dependOnInheritedWidgetOfExactType<DesignerFontScope>()?.fonts ??
       (FontRegistry()..registerDefault());
 
   @override

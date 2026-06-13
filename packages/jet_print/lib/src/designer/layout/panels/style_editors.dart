@@ -42,7 +42,8 @@ JetColor? _parseHexColor(String input, JetColor? alphaSource) {
   if (match == null) return null;
   final String digits = match.group(1)!;
   if (digits.length == 8) return JetColor(int.parse(digits, radix: 16));
-  final int alpha = alphaSource == null ? 0xFF : (alphaSource.argb >> 24) & 0xFF;
+  final int alpha =
+      alphaSource == null ? 0xFF : (alphaSource.argb >> 24) & 0xFF;
   return JetColor((alpha << 24) | int.parse(digits, radix: 16));
 }
 
@@ -296,8 +297,8 @@ class _ColorFieldState extends State<_ColorField> {
 /// the panel background) when null. [selected] draws a check over the color so
 /// the active palette entry reads at a glance.
 class _SwatchTile extends StatelessWidget {
-  const _SwatchTile({required this.color, required this.size,
-      this.selected = false});
+  const _SwatchTile(
+      {required this.color, required this.size, this.selected = false});
 
   final JetColor? color;
   final double size;
@@ -316,8 +317,7 @@ class _SwatchTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(4),
       ),
       child: value == null
-          ? Icon(LucideIcons.ban,
-              size: size - 6, color: colors.mutedForeground)
+          ? Icon(LucideIcons.ban, size: size - 6, color: colors.mutedForeground)
           : selected
               ? Icon(LucideIcons.check,
                   size: size - 6,
@@ -369,14 +369,12 @@ class _FontFamilyRow extends StatelessWidget {
 
     return _PresetDropdown(
       fieldKey: const ValueKey<String>('$_p.field.fontFamily'),
-      label:
-          unavailable ? l10n.fontFamilyUnavailable(stored) : effective,
+      label: unavailable ? l10n.fontFamilyUnavailable(stored) : effective,
       tooltip: l10n.fontFamilyPickerTooltip,
       options: <_DropdownOption>[
         for (final String family in families)
           _DropdownOption(
-            optionKey:
-                ValueKey<String>('$_p.field.fontFamily.option.$family'),
+            optionKey: ValueKey<String>('$_p.field.fontFamily.option.$family'),
             label: family,
             // Preview each family in its own typeface: the raw family name
             // first, then the canvas painter's decorated variant name (the
@@ -392,8 +390,7 @@ class _FontFamilyRow extends StatelessWidget {
           ),
         if (unavailable)
           _DropdownOption(
-            optionKey:
-                ValueKey<String>('$_p.field.fontFamily.option.$stored'),
+            optionKey: ValueKey<String>('$_p.field.fontFamily.option.$stored'),
             label: l10n.fontFamilyUnavailable(stored),
             selected: true,
             // Re-picking the preserved name is a deliberate no-op: the value
@@ -474,8 +471,8 @@ class _AlignSegments extends StatelessWidget {
   Widget build(BuildContext context) {
     final ShadThemeData theme = ShadTheme.of(context);
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
-    Widget segment(String name, IconData icon, String label,
-        JetTextAlign value, {required bool expanded}) {
+    Widget segment(String name, IconData icon, String label, JetTextAlign value,
+        {required bool expanded}) {
       final bool active = align == value;
       final Widget child = _IconSegment(
         segmentKey: ValueKey<String>('$_p.field.align.$name'),

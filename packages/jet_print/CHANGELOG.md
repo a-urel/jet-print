@@ -8,6 +8,46 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Format properties — font & color editors (spec 021-format-properties).** The
+  Properties panel now edits the style the model already carries, per element
+  type:
+  - **Text — a new Font section:** family picker (enumerates the designer's
+    registered families, each previewed in its own typeface; an unregistered
+    stored family is shown as *unavailable* and preserved verbatim until
+    repicked), size field clamped to 4–144 pt, **B/I/U** toggles (Bold is active
+    iff the weight is exactly `bold`; `medium`/`semiBold` are preserved until the
+    toggle is operated), a swatch + hex color editor, and left/center/right
+    alignment segments (a stored `justify` shows no active segment and survives
+    unrelated edits).
+  - **Underline, end-to-end (the one net-new attribute):** `JetTextStyle` gains
+    `underline` (default `false`, serialized only when `true`). Both painters
+    draw it as an explicit stroked segment from one shared geometry helper —
+    never `TextDecoration` — so canvas, PNG preview, and PDF export are identical
+    by construction.
+  - **Shape — a new Appearance section:** fill color with **None** (hidden for
+    line shapes), outline color with **None**, and outline width clamped to
+    0–20 pt. Width 0 hides the outline at a single renderer seam while the
+    stored color is remembered, so stepping back above 0 restores it.
+  - **Barcode — a color row** bound to `BarcodeElement.color`; the placeholder
+    rendering is tinted with it (real symbology rendering will inherit it).
+  - **Color editing rules:** display is `#RRGGBB` (or `#AARRGGBB` when
+    translucent); a palette pick or 6-digit hex preserves the stored alpha, an
+    8-digit hex sets it, malformed input is rejected with the last valid value
+    restored and no history entry.
+  - New public surface is additive and minimal:
+    `JetTextStyle.underline` + `JetTextStyle.copyWith` (sentinel `fontFamily`),
+    `JetBoxStyle.copyWith` (sentinel `fill`/`stroke` — explicit null = the None
+    states), `BarcodeElement.copyWith`, and three controller mutators —
+    `setTextStyle`, `setShapeStyle`, `setBarcodeColor` — each one undoable,
+    notifying step that no-ops (no history, no notification) on an equal value,
+    a missing id, or a wrong element type. The editors, commands, underline
+    helper, and `FontRegistry` (including its new internal `families` getter)
+    stay private.
+  - **Serialization:** `kReportSchemaVersion` stays **1**, no migration.
+    `underline` is additive-optional; all existing omission rules are unchanged,
+    and pre-feature reports load and re-save **byte-identically** (pinned by a
+    frozen fixture test). ~35 new localized strings ship in en/de/tr.
+
 - **Visual shape gallery in the Properties pane (spec 020-shape-gallery).** When a
   single shape element is selected, the Properties panel now shows a **Shape**
   section with eight thumbnails — line, rectangle, **ellipse, triangle, diamond,

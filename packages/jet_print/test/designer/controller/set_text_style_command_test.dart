@@ -18,10 +18,9 @@ ReportTemplate _report(List<ReportElement> elements) => ReportTemplate(
       ],
     );
 
-TextElement _text(JetReportDesignerController c, String id) =>
-    c.template.bands
-        .expand((ReportBand b) => b.elements)
-        .firstWhere((ReportElement e) => e.id == id) as TextElement;
+TextElement _text(JetReportDesignerController c, String id) => c.template.bands
+    .expand((ReportBand b) => b.elements)
+    .firstWhere((ReportElement e) => e.id == id) as TextElement;
 
 const JetRect _bounds = JetRect(x: 12, y: 8, width: 120, height: 24);
 

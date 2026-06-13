@@ -45,8 +45,8 @@ void main() {
       reg.register('Zebra', bytes); // registered BEFORE the default
       reg.registerDefault();
       reg.register('Alpha', bytes);
-      expect(reg.families,
-          <String>[FontRegistry.defaultFamily, 'Zebra', 'Alpha'],
+      expect(
+          reg.families, <String>[FontRegistry.defaultFamily, 'Zebra', 'Alpha'],
           reason: 'default first, then insertion order — never sorted');
     });
 

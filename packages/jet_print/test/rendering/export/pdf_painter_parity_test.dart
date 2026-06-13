@@ -147,7 +147,8 @@ void main() {
   });
 
   group('text — underline parity (021 / US1 / C11)', () {
-    test('an underlined run strokes one line segment per text line at the '
+    test(
+        'an underlined run strokes one line segment per text line at the '
         'shared underlineFor geometry', () async {
       const JetTextStyle style = JetTextStyle(fontSize: 12, underline: true);
       final MeasuredText measured = measurer.measure('Hi', style);
@@ -163,8 +164,7 @@ void main() {
 
       final ({double offset, double thickness}) m = underlineFor(12);
       final TextLine line = measured.lines.single;
-      final double y =
-          _pageHeight - (bounds.y + line.baseline + m.offset);
+      final double y = _pageHeight - (bounds.y + line.baseline + m.offset);
 
       final Match seg = _lineRe.firstMatch(content)!;
       expect(double.parse(seg.group(1)!), closeTo(bounds.x, 0.001),
@@ -360,7 +360,8 @@ void main() {
       final PdfInspector pdf = PdfInspector(await painter.save());
       final String content = pdf.contentOf(0);
 
-      expect(content, contains(RegExp(r're\s+f\b')), reason: 'fill still paints');
+      expect(content, contains(RegExp(r're\s+f\b')),
+          reason: 'fill still paints');
       expect(content, isNot(contains(RegExp(r'\bS\b'))),
           reason: 'no stroke operator at width 0');
     });

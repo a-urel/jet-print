@@ -62,7 +62,9 @@ void main() {
 
     test('the default black barcode renders a black placeholder', () {
       const BarcodeElement el = BarcodeElement(
-          id: 'b', bounds: bounds, symbology: BarcodeSymbology.ean13,
+          id: 'b',
+          bounds: bounds,
+          symbology: BarcodeSymbology.ean13,
           data: 'X');
       final FrameBuilder out = FrameBuilder(PageFormat.a4Portrait);
       renderer.emit(el, ctx, bounds, out);
