@@ -4,12 +4,13 @@
 /// `PAGE_COUNT`/params); no image byte-resolution. INTERNAL; the public surface
 /// is the 011 JetReportEngine.
 ///
-/// 011 adds the **lazy page-production seam**: [ReportLayouter.layoutLazy]
-/// runs the existing measurement + pagination logic as a cheap boundary-only
-/// pass (page breaks + page count, **no** paint primitives), and the returned
-/// [LazyLayout] constructs each page's frame on demand. The eager
-/// [ReportLayouter.layout] is preserved as a thin wrapper over the seam, so
-/// the two paths are the same code and stay byte-identical (Constitution IV).
+/// 011 adds the **lazy page-production seam**:
+/// [ReportLayouter.layoutLazyDefinition] runs the measurement + pagination
+/// logic as a cheap boundary-only pass (page breaks + page count, **no** paint
+/// primitives), and the returned [LazyLayout] constructs each page's frame on
+/// demand. The eager [ReportLayouter.layoutDefinition] is a thin wrapper over
+/// the seam, so the two paths are the same code and stay byte-identical
+/// (Constitution IV).
 library;
 
 import '../../domain/band.dart';
@@ -22,8 +23,6 @@ import '../../domain/page_format.dart';
 import '../../domain/report_band.dart';
 import '../../domain/report_definition.dart';
 import '../../domain/report_element.dart';
-import '../../domain/report_group.dart';
-import '../../domain/report_template.dart';
 import '../../expression/expression.dart';
 import '../../expression/expression_exception.dart';
 import '../../expression/function_registry.dart';
@@ -81,8 +80,8 @@ class LayoutResult {
 /// replaying that page's recorded placements through the unchanged renderer
 /// `emit` path and substituting its page chrome.
 ///
-/// INTERNAL — consumers reach this via `JetReportEngine.render`, whose
-/// `RenderedReport` adds per-page caching on top.
+/// INTERNAL — consumers reach this via `JetReportEngine.renderDefinition`,
+/// whose `RenderedReport` adds per-page caching on top.
 class LazyLayout {
   LazyLayout._({
     required PageFormat page,
@@ -264,370 +263,9 @@ class ReportLayouter {
     return r;
   }
 
-  /// Lays [filled] out eagerly, sourcing page chrome + page format from
-  /// [template]. A thin wrapper over [layoutLazy] (011): identical placement,
-  /// identical frames — only the driving loop differs (build-all here,
-  /// on-demand there).
-  LayoutResult layout(ReportTemplate template, FilledReport filled) {
-    final LazyLayout lazy = layoutLazy(template, filled);
-    return LayoutResult(
-      pages: <PageFrame>[
-        for (int i = 0; i < lazy.pageCount; i++) lazy.buildPage(i),
-      ],
-      diagnostics: lazy.diagnostics,
-    );
-  }
-
-  /// Runs the boundary-only pass over [filled] (011 — FR-021): measures bands,
-  /// decides every page break, and records per-page placements **without**
-  /// constructing paint primitives. The returned [LazyLayout] knows the exact
-  /// page count and builds any page's frame on demand.
-  LazyLayout layoutLazy(ReportTemplate template, FilledReport filled) {
-    final ReportDiagnostics diagnostics = ReportDiagnostics();
-    final RenderContext ctx = RenderContext(measurer: _measurer);
-    final BandMeasurer bandMeasurer = BandMeasurer(_renderers, ctx);
-
-    // template.page is authoritative for the page format (spec §2/§10 #5).
-    final PageFormat page = template.page;
-    if (filled.page != page) {
-      diagnostics.warning(
-          'filled.page differs from template.page; using template.page');
-    }
-
-    final double left = page.margins.left;
-    final double top = page.margins.top;
-    final double bottom = page.height - page.margins.bottom;
-    final double contentHeight = bottom - top;
-
-    final List<ReportBand> headers = <ReportBand>[
-      for (final ReportBand b in template.bands)
-        if (b.type == BandType.pageHeader) b,
-    ];
-    final List<ReportBand> footers = <ReportBand>[
-      for (final ReportBand b in template.bands)
-        if (b.type == BandType.pageFooter) b,
-    ];
-    double sumHeight(List<ReportBand> bands) {
-      double h = 0;
-      for (final ReportBand b in bands) {
-        h += b.height;
-      }
-      return h;
-    }
-
-    final double headerHeight = sumHeight(headers);
-    final double footerHeight = sumHeight(footers);
-    final double bodyTop = top + headerHeight;
-    final double bodyBottom = bottom - footerHeight;
-    final double bodyCapacity = bodyBottom - bodyTop;
-
-    if (bodyCapacity <= 0) {
-      diagnostics.warning(
-          'page chrome (header $headerHeight + footer $footerHeight) leaves no '
-          'room for body on a $contentHeight-pt printable height; chrome '
-          'overlaps and body bands overflow');
-    }
-
-    // Band types 008a does not lay out yet (008b) — flag once each.
-    for (final BandType ignored in const <BandType>[
-      BandType.columnHeader,
-      BandType.columnFooter,
-      BandType.background,
-    ]) {
-      if (template.bands.any((ReportBand b) => b.type == ignored)) {
-        diagnostics
-            .info('${ignored.name} bands are not laid out in 008a; ignored');
-      }
-    }
-
-    // Compile-and-classify chrome text expressions ONCE (008c §5). Parsing and
-    // static reference analysis surface page-independent diagnostics here; the
-    // per-page build evaluates on demand. Images keep the 008a placeholder info.
-    final Map<String, Expression> chromeExprs = <String, Expression>{};
-    final Set<String> chromeParseFailed = <String>{};
-    final Set<String> chromeFlagged = <String>{};
-    for (final ReportBand band in <ReportBand>[...headers, ...footers]) {
-      for (final ReportElement el in band.elements) {
-        if (el is TextElement && el.expression != null) {
-          final Expression expr;
-          try {
-            expr = Expression.parse(el.expression!);
-          } on ExpressionException catch (e) {
-            diagnostics.error(
-                'chrome text on "${el.id}" failed to parse: ${e.message}',
-                elementId: el.id);
-            chromeParseFailed.add(el.id);
-            chromeFlagged.add(el.id);
-            continue;
-          }
-          chromeExprs[el.id] = expr;
-          final ({
-            Set<String> fields,
-            Set<String> params,
-            Set<String> variables
-          }) refs = expr.references;
-          if (refs.fields.isNotEmpty) {
-            diagnostics.warning(
-                'chrome text on "${el.id}" references field(s) '
-                '${(refs.fields.toList()..sort()).join(', ')}, which have no '
-                'data row at page scope',
-                elementId: el.id);
-            chromeFlagged.add(el.id);
-          }
-          final List<String> nonPageVars = refs.variables
-              .where((String v) => !kPageScopedVariables.contains(v))
-              .toList()
-            ..sort();
-          if (nonPageVars.isNotEmpty) {
-            diagnostics.warning(
-                'chrome text on "${el.id}" references non-page variable(s) '
-                '${nonPageVars.join(', ')}, unavailable at page scope',
-                elementId: el.id);
-            chromeFlagged.add(el.id);
-          }
-        } else if (el is ImageElement && el.source is! BytesImageSource) {
-          diagnostics.info(
-              'chrome image on "${el.id}" is not embedded; renders a placeholder',
-              elementId: el.id);
-        }
-      }
-    }
-
-    // Group lookup: name -> nesting level (outermost = 0) and name -> definition.
-    final Map<String, int> levelOf = <String, int>{
-      for (int i = 0; i < template.groups.length; i++)
-        template.groups[i].name: i,
-    };
-    final Map<String, ReportGroup> groupByName = <String, ReportGroup>{
-      for (final ReportGroup g in template.groups) g.name: g,
-    };
-
-    // Advisory: a flag on a group with no AUTHORED group-header band does
-    // nothing. Keyed off the template (static structure), NOT filled.bands —
-    // empty-data reports emit only noData, with no group bands, so a filled scan
-    // would falsely fire for every flagged group on empty input.
-    final Set<String> groupsWithHeader = <String>{
-      for (final ReportBand b in template.bands)
-        if (b.type == BandType.groupHeader && b.group != null) b.group!,
-    };
-    for (final ReportGroup g in template.groups) {
-      if ((g.keepTogether || g.reprintHeaderOnEachPage) &&
-          !groupsWithHeader.contains(g.name)) {
-        diagnostics.info(
-            'group "${g.name}" sets keepTogether/reprintHeaderOnEachPage but '
-            'has no group-header band; the flag has no effect');
-      }
-    }
-
-    // Pre-measure every body band once (pure, position-independent).
-    final List<MeasuredBand> measured = <MeasuredBand>[
-      for (final FilledBand b in filled.bands) bandMeasurer.measure(b),
-    ];
-
-    // Prefix sums + single O(n) exit-driven extent pre-pass for keepTogether
-    // groups (spec §6.1). keepExtent[openIndex] = the instance's total height.
-    // The span lifetime here mirrors the main loop's prevHeaderGroup logic —
-    // intentional duplication that keeps the extent a single O(n) pass instead
-    // of threading spans through the placement loop.
-    final List<double> cum = <double>[0];
-    for (final MeasuredBand mb in measured) {
-      cum.add(cum.last + mb.height);
-    }
-    final Map<int, double> keepExtent = <int, double>{};
-    // Stream indices of group-header bands that must begin on a fresh page:
-    // each instance of a startNewPage group after that group's first (023).
-    final Set<int> startNewPageAt = <int>{};
-    final Set<String> seenStartNewPageGroup = <String>{};
-    final List<_Span> spanStack = <_Span>[];
-    void finalizeSpan(_Span s, int exitIndex) {
-      if (groupByName[s.name]!.keepTogether) {
-        keepExtent[s.openIndex] = cum[exitIndex] - cum[s.openIndex];
-      }
-    }
-
-    String? spanPrevHeader;
-    for (int k = 0; k < filled.bands.length; k++) {
-      final FilledBand band = filled.bands[k];
-      final bool isGroupBand = (band.type == BandType.groupHeader ||
-              band.type == BandType.groupFooter) &&
-          band.group != null &&
-          levelOf.containsKey(band.group);
-      final int level = isGroupBand ? levelOf[band.group]! : -1;
-      final bool newHeader = band.type == BandType.groupHeader &&
-          isGroupBand &&
-          spanPrevHeader != band.group;
-      if (newHeader) {
-        // Mark every startNewPage instance after the group's first.
-        if (groupByName[band.group]!.startNewPage &&
-            !seenStartNewPageGroup.add(band.group!)) {
-          startNewPageAt.add(k);
-        }
-        while (spanStack.isNotEmpty && spanStack.last.level >= level) {
-          finalizeSpan(spanStack.removeLast(), k);
-        }
-      } else if (band.type == BandType.groupFooter && isGroupBand) {
-        while (spanStack.isNotEmpty && spanStack.last.level > level) {
-          finalizeSpan(spanStack.removeLast(), k);
-        }
-      } else if (band.type == BandType.summary ||
-          band.type == BandType.noData) {
-        while (spanStack.isNotEmpty) {
-          finalizeSpan(spanStack.removeLast(), k);
-        }
-      }
-      if (newHeader) {
-        spanStack.add((name: band.group!, level: level, openIndex: k));
-      }
-      spanPrevHeader = (band.type == BandType.groupHeader && isGroupBand)
-          ? band.group
-          : null;
-    }
-    while (spanStack.isNotEmpty) {
-      finalizeSpan(spanStack.removeLast(), filled.bands.length);
-    }
-
-    // The boundary pass proper: the unchanged pagination loop, except each
-    // decision RECORDS a placement instead of emitting primitives (011). Frame
-    // construction replays the recorded placements per page on demand.
-    final List<_OpenGroup> openStack = <_OpenGroup>[];
-    final List<List<_PlacedBand>> plans = <List<_PlacedBand>>[<_PlacedBand>[]];
-    double cursorY = bodyTop;
-
-    void reEmitHeaders() {
-      for (final _OpenGroup g in openStack) {
-        if (!g.reprint) continue;
-        for (final MeasuredBand hmb in g.headers) {
-          plans.last.add((band: hmb, y: cursorY));
-          cursorY += hmb.height;
-        }
-      }
-    }
-
-    void breakPage() {
-      plans.add(<_PlacedBand>[]);
-      cursorY = bodyTop;
-      reEmitHeaders();
-    }
-
-    String? prevHeaderGroup;
-    for (int i = 0; i < filled.bands.length; i++) {
-      final FilledBand band = filled.bands[i];
-      final MeasuredBand mb = measured[i];
-      final bool isGroupBand = (band.type == BandType.groupHeader ||
-              band.type == BandType.groupFooter) &&
-          band.group != null &&
-          levelOf.containsKey(band.group);
-      final int level = isGroupBand ? levelOf[band.group]! : -1;
-
-      // Pre-place closure (§5.2): an outer footer ends its inner groups (rule 1);
-      // summary/noData end all groups (rule 3).
-      if (band.type == BandType.groupFooter && isGroupBand) {
-        while (openStack.isNotEmpty && openStack.last.level > level) {
-          openStack.removeLast();
-        }
-      } else if (band.type == BandType.summary ||
-          band.type == BandType.noData) {
-        openStack.clear();
-      }
-
-      // 023: a startNewPage group's later instances begin on a fresh page. Close
-      // the ending instance (this group + any inner) first so a reprinted outer
-      // header is not duplicated, then break — unless already at a fresh top.
-      if (startNewPageAt.contains(i) && cursorY > bodyTop) {
-        while (openStack.isNotEmpty && openStack.last.level >= level) {
-          openStack.removeLast();
-        }
-        breakPage();
-      }
-
-      bool broke = false;
-      if (keepExtent.containsKey(i)) {
-        final double extent = keepExtent[i]!;
-        double repeatedOuter = 0;
-        for (final _OpenGroup g in openStack) {
-          if (!g.reprint) continue;
-          for (final MeasuredBand hmb in g.headers) {
-            repeatedOuter += hmb.height;
-          }
-        }
-        final double fresh = bodyCapacity - repeatedOuter;
-        if (extent <= fresh &&
-            cursorY + extent > bodyBottom &&
-            cursorY > bodyTop) {
-          breakPage();
-          broke = true;
-        }
-      }
-      if (!broke && cursorY + mb.height > bodyBottom && cursorY > bodyTop) {
-        breakPage();
-      }
-      if (bodyCapacity > 0 && mb.height > bodyCapacity) {
-        diagnostics.warning('band height ${mb.height} exceeds body capacity '
-            '$bodyCapacity; content overflows');
-      }
-      plans.last.add((band: mb, y: cursorY));
-      cursorY += mb.height;
-
-      // Post-place lifetime (§5.1 open/append; §5.2 rule 2 footer-run end).
-      if (band.type == BandType.groupHeader && isGroupBand) {
-        if (prevHeaderGroup == band.group &&
-            openStack.isNotEmpty &&
-            openStack.last.name == band.group) {
-          openStack.last.headers.add(mb); // continuation header
-        } else {
-          while (openStack.isNotEmpty && openStack.last.level >= level) {
-            openStack.removeLast(); // new instance: close prior g + inner
-          }
-          openStack.add((
-            name: band.group!,
-            level: level,
-            headers: <MeasuredBand>[mb],
-            reprint: groupByName[band.group]!.reprintHeaderOnEachPage,
-          ));
-        }
-      } else if (band.type == BandType.groupFooter && isGroupBand) {
-        final bool runEnd = i + 1 >= filled.bands.length ||
-            filled.bands[i + 1].type != BandType.groupFooter ||
-            filled.bands[i + 1].group != band.group;
-        if (runEnd) {
-          while (openStack.isNotEmpty && openStack.last.level >= level) {
-            openStack.removeLast();
-          }
-        }
-      }
-      prevHeaderGroup = (band.type == BandType.groupHeader && isGroupBand)
-          ? band.group
-          : null;
-    }
-
-    return LazyLayout._(
-      page: page,
-      plans: plans,
-      diagnostics: diagnostics,
-      renderers: _renderers,
-      ctx: ctx,
-      functions: _functions,
-      // Adapt legacy chrome bands to the unified [Band] the lazy layout holds.
-      headers: <Band>[
-        for (final ReportBand b in headers)
-          Band(id: '', type: b.type, height: b.height, elements: b.elements),
-      ],
-      footers: <Band>[
-        for (final ReportBand b in footers)
-          Band(id: '', type: b.type, height: b.height, elements: b.elements),
-      ],
-      chromeExprs: chromeExprs,
-      chromeParseFailed: chromeParseFailed,
-      chromeFlagged: chromeFlagged,
-      params: filled.params,
-      left: left,
-      top: top,
-      bodyBottom: bodyBottom,
-    );
-  }
-
-  /// Native counterpart of [layout] for a reified [ReportDefinition] (spec 024):
-  /// build-all over [layoutLazyDefinition], identical frames.
+  /// Lays a reified [ReportDefinition] out eagerly (spec 024): build-all over
+  /// [layoutLazyDefinition], identical frames — only the driving loop differs
+  /// (build-all here, on-demand there).
   LayoutResult layoutDefinition(ReportDefinition def, FilledReport filled) {
     final LazyLayout lazy = layoutLazyDefinition(def, filled);
     return LayoutResult(
@@ -638,10 +276,12 @@ class ReportLayouter {
     );
   }
 
-  /// Native counterpart of [layoutLazy] (spec 024): page chrome comes from
-  /// [ReportDefinition.furniture] and group pagination flags from the master
-  /// [GroupLevel]s; the band stream, measurement, and pagination loop are the
-  /// same logic, so frames stay byte-identical to the legacy path.
+  /// Runs the boundary-only pass over a reified [ReportDefinition] (spec 024):
+  /// page chrome comes from [ReportDefinition.furniture] and group pagination
+  /// flags from the master [GroupLevel]s. Measures bands, decides every page
+  /// break, and records per-page placements **without** constructing paint
+  /// primitives; the returned [LazyLayout] knows the exact page count and builds
+  /// any page's frame on demand.
   LazyLayout layoutLazyDefinition(ReportDefinition def, FilledReport filled) {
     final ReportDiagnostics diagnostics = ReportDiagnostics();
     final RenderContext ctx = RenderContext(measurer: _measurer);

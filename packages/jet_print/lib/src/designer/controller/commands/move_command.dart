@@ -23,6 +23,7 @@ class MoveCommand extends EditCommand {
   String get label => 'Move';
 
   @override
-  DesignerDocument apply(DesignerDocument before) =>
-      before.withTemplate(replaceElementBounds(before.template, newBounds));
+  DesignerDocument apply(DesignerDocument before) => before.withDefinition(
+        replaceElementBoundsInDef(before.definition, newBounds),
+      );
 }

@@ -92,7 +92,7 @@ void main() {
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       c.createElement(DesignerToolType.barcode,
-          bandIndex: 1, at: const JetOffset(40, 30));
+          bandId: 'detail', at: const JetOffset(40, 30));
       await tester.pumpAndSettle();
       final String id = c.selection.singleOrNull!;
       final Rect el = tester.getRect(_element(id));
@@ -111,10 +111,10 @@ void main() {
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       c.createElement(DesignerToolType.text,
-          bandIndex: 1, at: const JetOffset(20, 20));
+          bandId: 'detail', at: const JetOffset(20, 20));
       final String a = c.selection.singleOrNull!;
       c.createElement(DesignerToolType.text,
-          bandIndex: 1, at: const JetOffset(180, 90));
+          bandId: 'detail', at: const JetOffset(180, 90));
       final String b = c.selection.singleOrNull!;
       c.selectElements(<String>[a, b]);
       await tester.pumpAndSettle();
@@ -132,7 +132,7 @@ void main() {
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       c.createElement(DesignerToolType.shape,
-          bandIndex: 1, at: const JetOffset(30, 30));
+          bandId: 'detail', at: const JetOffset(30, 30));
       await tester.pumpAndSettle();
       final double before =
           tester.getRect(_in(_kHorizontalRuler, _kHighlight)).left;
@@ -149,7 +149,7 @@ void main() {
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       c.createElement(DesignerToolType.shape,
-          bandIndex: 1, at: const JetOffset(30, 30));
+          bandId: 'detail', at: const JetOffset(30, 30));
       await tester.pumpAndSettle();
       final double before =
           tester.getRect(_in(_kHorizontalRuler, _kHighlight)).left;
@@ -169,7 +169,7 @@ void main() {
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       c.createElement(DesignerToolType.shape,
-          bandIndex: 1, at: const JetOffset(30, 30));
+          bandId: 'detail', at: const JetOffset(30, 30));
       await tester.pumpAndSettle();
       final String id = c.selection.singleOrNull!;
       final double widthBefore =
@@ -189,13 +189,13 @@ void main() {
     testWidgets('a live band resize grows the band highlight on the left ruler',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
-      c.selectBand(0);
+      c.selectBand('pageHeader');
       await tester.pumpAndSettle();
       final double before =
           tester.getRect(_in(_kVerticalRuler, _kHighlight)).height;
 
       // Band-resize drag in progress — no commitBandResize() yet.
-      c.beginBandResize(0);
+      c.beginBandResize('pageHeader');
       c.updateBandResize(50);
       await tester.pump();
 
@@ -208,7 +208,7 @@ void main() {
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       c.createElement(DesignerToolType.image,
-          bandIndex: 1, at: const JetOffset(30, 30));
+          bandId: 'detail', at: const JetOffset(30, 30));
       await tester.pumpAndSettle();
       expect(_in(_kHorizontalRuler, _kHighlight), findsOneWidget);
 
@@ -225,7 +225,7 @@ void main() {
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       c.createElement(DesignerToolType.barcode,
-          bandIndex: 1, at: const JetOffset(40, 30));
+          bandId: 'detail', at: const JetOffset(40, 30));
       await tester.pumpAndSettle();
       // Zoom in hard so the element's extent overruns the visible strip.
       for (int i = 0; i < 6; i++) {

@@ -30,10 +30,12 @@ const JetDataSchema _schema = JetDataSchema(
   ],
 );
 
-TextElement _text(JetReportDesignerController c, String id) => c.template.bands
-    .expand((ReportBand b) => b.elements)
-    .whereType<TextElement>()
-    .firstWhere((TextElement e) => e.id == id);
+TextElement _text(JetReportDesignerController c, String id) =>
+    c.definition.body.root.children
+        .whereType<BandNode>()
+        .expand((BandNode n) => n.band.elements)
+        .whereType<TextElement>()
+        .firstWhere((TextElement e) => e.id == id);
 
 /// Creates a text element in the master detail band, selects it, and opens the
 /// Properties tab; returns its id.
@@ -42,7 +44,7 @@ Future<String> _selectedText(
   JetReportDesignerController c,
 ) async {
   c.createElement(DesignerToolType.text,
-      bandIndex: 1, at: const JetOffset(20, 20));
+      bandId: firstDetailBandId(c), at: const JetOffset(20, 20));
   final String id = c.selection.singleOrNull!;
   await tester.pumpAndSettle();
   await openPropertiesTab(tester);

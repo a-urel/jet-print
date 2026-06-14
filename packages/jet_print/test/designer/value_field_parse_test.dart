@@ -10,17 +10,19 @@ import 'support/designer_harness.dart';
 const ValueKey<String> _valueKey =
     ValueKey<String>('jet_print.designer.properties.field.value');
 
-TextElement _text(JetReportDesignerController c, String id) => c.template.bands
-    .expand((ReportBand b) => b.elements)
-    .whereType<TextElement>()
-    .firstWhere((TextElement e) => e.id == id);
+TextElement _text(JetReportDesignerController c, String id) =>
+    c.definition.body.root.children
+        .whereType<BandNode>()
+        .expand((BandNode n) => n.band.elements)
+        .whereType<TextElement>()
+        .firstWhere((TextElement e) => e.id == id);
 
 Future<String> _selectedText(
   WidgetTester tester,
   JetReportDesignerController c,
 ) async {
   c.createElement(DesignerToolType.text,
-      bandIndex: 1, at: const JetOffset(20, 20));
+      bandId: firstDetailBandId(c), at: const JetOffset(20, 20));
   final String id = c.selection.singleOrNull!;
   await tester.pumpAndSettle();
   await openPropertiesTab(tester);

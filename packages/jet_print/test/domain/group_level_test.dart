@@ -40,8 +40,10 @@ void main() {
       expect(a, equals(b));
       expect(a.hashCode, b.hashCode);
       expect(a, isNot(const GroupLevel(id: 'g', name: 'n', key: '2')));
-      expect(a, isNot(const GroupLevel(id: 'g', name: 'n', key: '1',
-          startNewPage: true)));
+      expect(
+          a,
+          isNot(const GroupLevel(
+              id: 'g', name: 'n', key: '1', startNewPage: true)));
     });
 
     test('copyWith replaces only named fields', () {

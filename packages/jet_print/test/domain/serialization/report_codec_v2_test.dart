@@ -51,7 +51,8 @@ ReportDefinition _representative() => ReportDefinition(
             height: 20,
             elements: <ReportElement>[
               _txt('pn',
-                  expression: r'"Page " + $V{PAGE_NUMBER} + "/" + $V{PAGE_COUNT}')
+                  expression:
+                      r'"Page " + $V{PAGE_NUMBER} + "/" + $V{PAGE_COUNT}')
             ]),
         columnHeader: const Band(
             id: 'furniture/columnHeader',
@@ -66,9 +67,10 @@ ReportDefinition _representative() => ReportDefinition(
             type: BandType.title,
             height: 24,
             elements: <ReportElement>[_txt('t')]),
-        summary: const Band(
-            id: 'body/summary', type: BandType.summary, height: 24),
-        noData: const Band(id: 'body/noData', type: BandType.noData, height: 30),
+        summary:
+            const Band(id: 'body/summary', type: BandType.summary, height: 24),
+        noData:
+            const Band(id: 'body/noData', type: BandType.noData, height: 30),
         root: DetailScope(
           id: 'root',
           groups: <GroupLevel>[
@@ -82,11 +84,11 @@ ReportDefinition _representative() => ReportDefinition(
                   id: 'root/g0/header',
                   type: BandType.groupHeader,
                   height: 40,
-                  elements: <ReportElement>[_txt('gh', expression: r'$F{invoiceNo}')]),
+                  elements: <ReportElement>[
+                    _txt('gh', expression: r'$F{invoiceNo}')
+                  ]),
               footer: const Band(
-                  id: 'root/g0/footer',
-                  type: BandType.groupFooter,
-                  height: 20),
+                  id: 'root/g0/footer', type: BandType.groupFooter, height: 20),
             ),
           ],
           children: <ScopeNode>[
@@ -127,13 +129,14 @@ void main() {
   group('ReportDefinition codec v2', () {
     test('round-trips losslessly (decode(encode(def)) == def)', () {
       final ReportDefinition def = _representative();
-      final ReportDefinition back =
-          JetReportFormat.decodeDefinition(JetReportFormat.encodeDefinition(def));
+      final ReportDefinition back = JetReportFormat.decodeDefinition(
+          JetReportFormat.encodeDefinition(def));
       expect(back, equals(def));
     });
 
     test('stamps schemaVersion 2', () {
-      expect(JetReportFormat.encodeDefinition(_representative())['schemaVersion'],
+      expect(
+          JetReportFormat.encodeDefinition(_representative())['schemaVersion'],
           2);
     });
 

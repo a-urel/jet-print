@@ -80,7 +80,8 @@ void main() {
     final String json = File(
             '${findWorkspaceRoot().path}/packages/jet_print/test/fixtures/v1/default.json')
         .readAsStringSync();
-    final ReportDefinition migrated = JetReportFormat.decodeDefinitionJson(json);
+    final ReportDefinition migrated =
+        JetReportFormat.decodeDefinitionJson(json);
     final ReportDefinition authored = _authoredDefault();
 
     // The migrated tree equals the hand-authored tree (ids, types, elements).

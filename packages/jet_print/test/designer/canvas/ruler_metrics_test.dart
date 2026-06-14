@@ -6,30 +6,41 @@ import 'package:jet_print/jet_print.dart';
 import 'package:jet_print/src/designer/canvas/design_time_layout.dart';
 import 'package:jet_print/src/designer/canvas/ruler_metrics.dart';
 
-/// A two-band template (page header + detail) with two detail elements at known
-/// band-relative positions, for exercising `selectionExtent`.
-ReportTemplate _template() => const ReportTemplate(
+/// A two-band definition (page header + detail) with two detail elements at
+/// known band-relative positions, for exercising `selectionExtent`.
+ReportDefinition _template() => const ReportDefinition(
       name: 'extent',
       page: PageFormat.a4Portrait,
-      bands: <ReportBand>[
-        ReportBand(type: BandType.pageHeader, height: 60),
-        ReportBand(
-          type: BandType.detail,
-          height: 200,
-          elements: <ReportElement>[
-            TextElement(
-              id: 'a',
-              bounds: JetRect(x: 10, y: 10, width: 50, height: 20),
-              text: 'A',
-            ),
-            TextElement(
-              id: 'b',
-              bounds: JetRect(x: 100, y: 60, width: 40, height: 30),
-              text: 'B',
+      furniture: PageFurniture(
+        pageHeader:
+            Band(id: 'pageHeader', type: BandType.pageHeader, height: 60),
+      ),
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(
+              Band(
+                id: 'detail',
+                type: BandType.detail,
+                height: 200,
+                elements: <ReportElement>[
+                  TextElement(
+                    id: 'a',
+                    bounds: JetRect(x: 10, y: 10, width: 50, height: 20),
+                    text: 'A',
+                  ),
+                  TextElement(
+                    id: 'b',
+                    bounds: JetRect(x: 100, y: 60, width: 40, height: 30),
+                    text: 'B',
+                  ),
+                ],
+              ),
             ),
           ],
         ),
-      ],
+      ),
     );
 
 void main() {
@@ -58,7 +69,7 @@ void main() {
   });
 
   group('selectionExtent (C2.3–7, FR-012)', () {
-    final ReportTemplate template = _template();
+    final ReportDefinition template = _template();
     final DesignTimeLayout layout = DesignTimeLayout.of(template);
 
     test('a single element returns its page-absolute rect (C2.3)', () {
@@ -87,7 +98,8 @@ void main() {
     });
 
     test('a band selection returns the band rect (C2.5)', () {
-      expect(selectionExtent(layout, Selection.band(1)), layout.bandRect(1));
+      expect(selectionExtent(layout, Selection.band('detail')),
+          layout.bandRect('detail'));
     });
 
     test('a report or empty selection returns null (C2.6)', () {

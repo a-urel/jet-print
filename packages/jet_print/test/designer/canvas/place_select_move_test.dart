@@ -22,8 +22,13 @@ Finder _handleFinder = find.byWidgetPredicate((Widget w) =>
         .value
         .startsWith('jet_print.designer.handle.'));
 
-int _elementCount(JetReportDesignerController c) => c.template.bands
-    .fold<int>(0, (int n, ReportBand b) => n + b.elements.length);
+int _elementCount(JetReportDesignerController c) => _allElements(c).length;
+
+// Every element across the (reified) definition's per-row bands.
+Iterable<ReportElement> _allElements(JetReportDesignerController c) =>
+    c.definition.body.root.children
+        .whereType<BandNode>()
+        .expand((BandNode n) => n.band.elements);
 
 void main() {
   testWidgets('clicking a toolbox entry places a selected element of its type',
@@ -39,9 +44,8 @@ void main() {
     final String? id = controller.selection.singleOrNull;
     expect(id, isNotNull);
     // The created element is a text element in a detail band.
-    final ReportElement created = controller.template.bands
-        .expand((ReportBand b) => b.elements)
-        .firstWhere((ReportElement e) => e.id == id);
+    final ReportElement created =
+        _allElements(controller).firstWhere((ReportElement e) => e.id == id);
     expect(created, isA<TextElement>());
   });
 
@@ -72,7 +76,7 @@ void main() {
 
     expect(_elementCount(controller), 1);
     expect(
-      controller.template.bands.expand((ReportBand b) => b.elements).single,
+      _allElements(controller).single,
       isA<BarcodeElement>(),
     );
   });
@@ -111,8 +115,7 @@ void main() {
     await tester.pumpAndSettle();
     final String id = controller.selection.singleOrNull!;
 
-    final JetRect before = controller.template.bands
-        .expand((ReportBand b) => b.elements)
+    final JetRect before = _allElements(controller)
         .firstWhere((ReportElement e) => e.id == id)
         .bounds;
 
@@ -122,8 +125,7 @@ void main() {
         warnIfMissed: false);
     await tester.pumpAndSettle();
 
-    final JetRect after = controller.template.bands
-        .expand((ReportBand b) => b.elements)
+    final JetRect after = _allElements(controller)
         .firstWhere((ReportElement e) => e.id == id)
         .bounds;
 
@@ -131,8 +133,7 @@ void main() {
     expect(after.y, greaterThan(before.y), reason: 'moved down');
     // The move is a single undoable step that restores the original position.
     controller.undo();
-    final JetRect undone = controller.template.bands
-        .expand((ReportBand b) => b.elements)
+    final JetRect undone = _allElements(controller)
         .firstWhere((ReportElement e) => e.id == id)
         .bounds;
     expect(undone.x, before.x);

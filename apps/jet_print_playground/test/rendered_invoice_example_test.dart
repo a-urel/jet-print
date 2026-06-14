@@ -14,7 +14,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 void main() {
   test('the example renders the invoice without any diagnostic', () {
-    final RenderedReport report = renderInvoice();
+    final RenderedReport report = renderInvoiceDefinition();
     // The invoice group sets startNewPage, so each of the three invoices lands
     // on its own page.
     expect(report.pageCount, 3);
@@ -51,10 +51,11 @@ void main() {
   test(
       'in-memory, JSON, and object-backed variants render identically '
       '(SC-006)', () {
-    final RenderedReport inMemory = renderInvoice();
-    final RenderedReport json = renderInvoice(source: invoiceJsonDataSource());
+    final RenderedReport inMemory = renderInvoiceDefinition();
+    final RenderedReport json =
+        renderInvoiceDefinition(source: invoiceJsonDataSource());
     final RenderedReport objects =
-        renderInvoice(source: invoiceObjectDataSource());
+        renderInvoiceDefinition(source: invoiceObjectDataSource());
     expect(json.pageCount, inMemory.pageCount);
     expect(objects.pageCount, inMemory.pageCount);
     for (int i = 0; i < inMemory.pageCount; i++) {
@@ -108,14 +109,14 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     // Stand-in for a user edit in the designer: the live template differs
     // from the canned sample (here: its name, which titles the preview bar).
-    final ReportTemplate edited =
-        invoiceSampleTemplate().copyWith(name: 'Edited In Designer');
+    final ReportDefinition edited =
+        invoiceSampleDefinition().copyWith(name: 'Edited In Designer');
     await tester.pumpWidget(ShadApp(
       localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
         JetPrintLocalizations.delegate,
       ],
       supportedLocales: JetPrintLocalizations.supportedLocales,
-      home: RenderedInvoiceExample(template: edited),
+      home: RenderedInvoiceExample(definition: edited),
     ));
     await tester.pumpAndSettle();
     expect(find.text('Edited In Designer'), findsOneWidget,

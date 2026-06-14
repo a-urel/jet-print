@@ -19,15 +19,16 @@ import '../support/designer_harness.dart';
 /// text element so the selection outline + handles are part of the golden.
 Future<void> _seedSurface(
     WidgetTester tester, JetReportDesignerController c) async {
+  final String bandId = firstDetailBandId(c);
   c.createElement(DesignerToolType.text,
-      bandIndex: 1, at: const JetOffset(24, 24));
+      bandId: bandId, at: const JetOffset(24, 24));
   final String textId = c.selection.singleOrNull!;
   c.createElement(DesignerToolType.shape,
-      bandIndex: 1, at: const JetOffset(24, 70));
+      bandId: bandId, at: const JetOffset(24, 70));
   c.createElement(DesignerToolType.image,
-      bandIndex: 1, at: const JetOffset(220, 24));
+      bandId: bandId, at: const JetOffset(220, 24));
   c.createElement(DesignerToolType.barcode,
-      bandIndex: 1, at: const JetOffset(220, 70));
+      bandId: bandId, at: const JetOffset(220, 70));
   c.select(textId); // single selection → outline + eight resize handles
   await tester.pumpAndSettle();
 }

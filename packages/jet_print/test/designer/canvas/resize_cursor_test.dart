@@ -60,7 +60,7 @@ void main() {
       final JetReportDesignerController controller =
           await pumpDesignerWith(tester);
       controller.createElement(DesignerToolType.shape,
-          bandIndex: 1, at: const JetOffset(40, 40));
+          bandId: 'detail', at: const JetOffset(40, 40));
       await tester.pumpAndSettle();
       expect(controller.selection.singleOrNull, isNotNull,
           reason:
@@ -96,7 +96,7 @@ void main() {
       final JetReportDesignerController controller =
           await pumpDesignerWith(tester);
       controller.createElement(DesignerToolType.shape,
-          bandIndex: 1, at: const JetOffset(40, 40));
+          bandId: 'detail', at: const JetOffset(40, 40));
       await tester.pumpAndSettle();
       controller.setViewScale(0.25); // element ~24×12px → handles overlap
       await tester.pumpAndSettle();
@@ -129,7 +129,7 @@ void main() {
       final JetReportDesignerController controller =
           await pumpDesignerWith(tester);
       controller.createElement(DesignerToolType.shape,
-          bandIndex: 1, at: const JetOffset(40, 40));
+          bandId: 'detail', at: const JetOffset(40, 40));
       await tester.pumpAndSettle();
 
       final TestGesture gesture = await _mouse(tester);

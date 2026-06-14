@@ -88,7 +88,7 @@ void main() {
     final JetReportDesignerController c =
         await pumpDesignerWith(tester, locale: const Locale('en'));
     c.createElement(DesignerToolType.text,
-        bandIndex: 1, at: const JetOffset(20, 20));
+        bandId: firstDetailBandId(c), at: const JetOffset(20, 20));
     await tester.pumpAndSettle();
     await openPropertiesTab(tester);
 
@@ -116,11 +116,18 @@ void main() {
         contains('Choose a paper size'));
 
     // (3) Band inspector — the height row is label-less (its glyph stands in
-    // for the dropped label, like the element SIZE row); the band-specific
-    // collection-binding placeholder carries the localized string instead.
-    c.selectBand(1);
+    // for the dropped label, like the element SIZE row). Under the reified model
+    // (spec 024) the band inspector shows ONLY the height; the collection field
+    // moved to the Scope inspector (checked next).
+    c.selectBand(firstDetailBandId(c));
     await tester.pumpAndSettle();
     expect(find.text('Height'), findsNothing);
+
+    // (3b) Scope inspector — a nested detail scope carries the collection-binding
+    // placeholder that used to live on the band, still resolving its localized
+    // string (createScope selects the new scope, opening its inspector).
+    c.createScope('root');
+    await tester.pumpAndSettle();
     expect(find.text('Collection field'), findsOneWidget);
 
     // (4) Empty state — nothing selected.
@@ -133,7 +140,7 @@ void main() {
 
     // (5) Multi-selection — the count summary.
     c.createElement(DesignerToolType.text,
-        bandIndex: 1, at: const JetOffset(80, 60));
+        bandId: firstDetailBandId(c), at: const JetOffset(80, 60));
     c.selectAll();
     await tester.pumpAndSettle();
     expect(find.text('2 elements selected'), findsOneWidget);

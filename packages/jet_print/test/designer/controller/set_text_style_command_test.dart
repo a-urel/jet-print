@@ -10,17 +10,28 @@ import 'package:jet_print/jet_print.dart';
 
 /// A one-band report holding [elements], so a style change can be driven and
 /// asserted against known elements.
-ReportTemplate _report(List<ReportElement> elements) => ReportTemplate(
+ReportDefinition _report(List<ReportElement> elements) => ReportDefinition(
       name: 'Text style test',
       page: PageFormat.a4Portrait,
-      bands: <ReportBand>[
-        ReportBand(type: BandType.detail, height: 120, elements: elements),
-      ],
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+                id: 'detail',
+                type: BandType.detail,
+                height: 120,
+                elements: elements)),
+          ],
+        ),
+      ),
     );
 
-TextElement _text(JetReportDesignerController c, String id) => c.template.bands
-    .expand((ReportBand b) => b.elements)
-    .firstWhere((ReportElement e) => e.id == id) as TextElement;
+TextElement _text(JetReportDesignerController c, String id) =>
+    c.definition.body.root.children
+        .whereType<BandNode>()
+        .expand((BandNode n) => n.band.elements)
+        .firstWhere((ReportElement e) => e.id == id) as TextElement;
 
 const JetRect _bounds = JetRect(x: 12, y: 8, width: 120, height: 24);
 
@@ -45,7 +56,7 @@ void main() {
   group('setTextStyle — replaces the style (C2/C5)', () {
     test('a commit replaces the whole style, preserving text and bounds', () {
       final JetReportDesignerController c = JetReportDesignerController(
-          template: _report(const <ReportElement>[_element]));
+          definition: _report(const <ReportElement>[_element]));
       c.setTextStyle('t', _next);
       expect(_text(c, 't').style, _next);
       expect(_text(c, 't').text, 'Hello');
@@ -55,7 +66,7 @@ void main() {
 
     test('a real change is a single notifying, undoable step', () {
       final JetReportDesignerController c = JetReportDesignerController(
-          template: _report(const <ReportElement>[_element]));
+          definition: _report(const <ReportElement>[_element]));
       int notifications = 0;
       c.addListener(() => notifications++);
 
@@ -70,7 +81,7 @@ void main() {
   group('setTextStyle — no-ops (C5 / FR-013)', () {
     test('an equal style records no history and notifies no one', () {
       final JetReportDesignerController c = JetReportDesignerController(
-          template: _report(const <ReportElement>[_element]));
+          definition: _report(const <ReportElement>[_element]));
       int notifications = 0;
       c.addListener(() => notifications++);
 
@@ -84,7 +95,7 @@ void main() {
 
     test('a missing target is a no-op', () {
       final JetReportDesignerController c = JetReportDesignerController(
-          template: _report(const <ReportElement>[_element]));
+          definition: _report(const <ReportElement>[_element]));
       int notifications = 0;
       c.addListener(() => notifications++);
 
@@ -97,7 +108,7 @@ void main() {
 
     test('a non-text target is a no-op', () {
       final JetReportDesignerController c = JetReportDesignerController(
-        template: _report(const <ReportElement>[
+        definition: _report(const <ReportElement>[
           _element,
           ShapeElement(id: 's', bounds: _bounds, kind: ShapeKind.rectangle),
         ]),
@@ -117,7 +128,7 @@ void main() {
     test('one undo restores the prior style; one redo reapplies the new one',
         () {
       final JetReportDesignerController c = JetReportDesignerController(
-          template: _report(const <ReportElement>[_element]));
+          definition: _report(const <ReportElement>[_element]));
       c.setTextStyle('t', _next);
       expect(_text(c, 't').style, _next);
 
@@ -133,7 +144,7 @@ void main() {
 
     test('two commits are exactly two undoable steps', () {
       final JetReportDesignerController c = JetReportDesignerController(
-          template: _report(const <ReportElement>[_element]));
+          definition: _report(const <ReportElement>[_element]));
       c.setTextStyle('t', _element.style.copyWith(fontSize: 36));
       c.setTextStyle('t', _next);
 

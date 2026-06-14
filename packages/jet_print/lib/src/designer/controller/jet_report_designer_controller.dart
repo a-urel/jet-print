@@ -3,41 +3,48 @@ library;
 
 import 'package:flutter/foundation.dart';
 
+import '../../domain/band.dart';
+import '../../domain/detail_scope.dart';
+import '../../domain/diagnostic.dart';
 import '../../domain/elements/shape_element.dart';
 import '../../domain/elements/text_element.dart';
 import '../../domain/geometry.dart';
+import '../../domain/group_level.dart';
 import '../../domain/page_format.dart';
-import '../../domain/report_band.dart';
+import '../../domain/report_band.dart' show BandType;
+import '../../domain/report_definition.dart';
 import '../../domain/report_element.dart';
-import '../../domain/report_template.dart';
+import '../../domain/report_validation.dart';
 import '../../domain/styles/box_style.dart';
 import '../../domain/styles/color.dart';
 import '../../domain/styles/text_style.dart';
 import '../canvas/design_tunables.dart';
 import '../canvas/resize_handle.dart';
 import '../template/value_template_compiler.dart';
+import 'band_walker.dart';
 import 'bulk_geometry.dart';
 import 'clipboard.dart';
 import 'commands/clipboard_command.dart';
 import 'commands/create_element_command.dart';
+import 'commands/definition_edit_command.dart';
 import 'commands/delete_command.dart';
+import 'commands/group_commands.dart';
 import 'commands/move_command.dart';
 import 'commands/reorder_command.dart';
 import 'commands/resize_command.dart';
-import 'commands/set_band_collection_command.dart';
+import 'commands/scope_commands.dart';
 import 'commands/set_band_height_command.dart';
 import 'commands/set_barcode_color_command.dart';
 import 'commands/set_binding_command.dart';
+import 'commands/set_definition_name_command.dart';
 import 'commands/set_format_command.dart';
-import 'commands/set_group_start_new_page_command.dart';
 import 'commands/set_page_format_command.dart';
 import 'commands/set_shape_kind_command.dart';
 import 'commands/set_shape_style_command.dart';
-import 'commands/set_template_name_command.dart';
 import 'commands/set_text_command.dart';
 import 'commands/set_text_style_command.dart';
 import 'commands/set_value_command.dart';
-import 'default_template.dart';
+import 'default_definition.dart';
 import 'designer_document.dart';
 import 'edit_command.dart';
 import 'edit_history.dart';
@@ -50,29 +57,29 @@ import 'snapping.dart';
 
 /// Owns the editable design and all editing operations for [JetReportDesigner].
 ///
-/// A [ChangeNotifier] holding the current [template], the [selection], and an
-/// unbounded session undo/redo history of immutable `(template, selection)`
+/// A [ChangeNotifier] holding the current [definition], the [selection], and an
+/// unbounded session undo/redo history of immutable `(definition, selection)`
 /// snapshots ([DesignerDocument]). Every state-changing edit funnels through a
 /// single [EditCommand] commit path, so:
 ///
 /// * undo/redo restore **both** model and selection exactly (FR-017), and
 /// * each operation is a pure, independently-testable transform.
 ///
-/// The controller is headless — it performs no filesystem or platform I/O; a
-/// host drives save/open via `JetReportFormat` and the designer's
-/// `onSaveRequested`/`onOpenRequested` hooks (FR-022).
-///
-/// Property editing this iteration is geometry + text only; the full per-type
-/// property suite is deferred (contracts §6).
+/// Reification (spec 024): the model is a [ReportDefinition] section tree, and a
+/// band, group, or scope is addressed by its **stable id** (not a flat list
+/// index), so selection and edits survive add/remove/reorder. The controller is
+/// headless — it performs no filesystem or platform I/O; a host drives save/open
+/// via `JetReportFormat` and the designer's `onSaveRequested`/`onOpenRequested`
+/// hooks (FR-022).
 class JetReportDesignerController extends ChangeNotifier {
-  /// Creates a controller over [template], or a blank default design when none
+  /// Creates a controller over [definition], or a blank default design when none
   /// is supplied (so `JetReportDesignerController()` is drop-in).
-  JetReportDesignerController({ReportTemplate? template})
+  JetReportDesignerController({ReportDefinition? definition})
       : _document = DesignerDocument(
-          template: template ?? defaultBlankTemplate(),
+          definition: definition ?? defaultBlankDefinition(),
           selection: Selection.empty,
         ) {
-    _ids.seedFrom(_document.template);
+    _ids.seedFrom(_document.definition);
   }
 
   DesignerDocument _document;
@@ -80,10 +87,17 @@ class JetReportDesignerController extends ChangeNotifier {
   final ElementIdFactory _ids = ElementIdFactory();
 
   /// The current report model — the value a host saves (FR-022).
-  ReportTemplate get template => _document.template;
+  ReportDefinition get definition => _document.definition;
 
-  /// The currently-selected element ids.
+  /// The currently-selected element ids / band / group / scope / report.
   Selection get selection => _document.selection;
+
+  /// Author-time semantic diagnostics for the current [definition] (spec 024 /
+  /// C12): duplicate ids/names, a `$F{}` field binding on record-blind
+  /// furniture, an unparseable group key, and the like. Recomputed on read and
+  /// never throws, so the designer can surface problems live while still holding
+  /// a transient invalid state (e.g. a half-typed duplicate name).
+  List<Diagnostic> get diagnostics => validate(_document.definition);
 
   /// Whether an [undo] is available (drives top-bar enablement, US3.4).
   bool get canUndo => _history.canUndo;
@@ -92,10 +106,10 @@ class JetReportDesignerController extends ChangeNotifier {
   bool get canRedo => _history.canRedo;
 
   /// Whether the current selection can be cut, copied, duplicated or deleted —
-  /// true iff one or more elements are selected (a band/report selection holds
-  /// no element ids). Both clipboard UI surfaces gate Cut/Copy/Duplicate/Delete
-  /// on this single predicate so they cannot diverge (016 / FR-004, FR-005a,
-  /// FR-012).
+  /// true iff one or more elements are selected (a band/group/scope/report
+  /// selection holds no element ids). Both clipboard UI surfaces gate
+  /// Cut/Copy/Duplicate/Delete on this single predicate so they cannot diverge
+  /// (016 / FR-004, FR-005a, FR-012).
   bool get canCopy => _document.selection.ids.isNotEmpty;
 
   /// Whether there is clipboard content to paste — true once the session's first
@@ -110,7 +124,7 @@ class JetReportDesignerController extends ChangeNotifier {
 
   /// Bumped on every live drag-preview change (move/resize/band-resize update,
   /// commit, and cancel), so [frameVersion] ticks while the committed [revision]
-  /// stays put — the canvas re-records its cached picture from [displayTemplate]
+  /// stays put — the canvas re-records its cached picture from [displayDefinition]
   /// in realtime during a drag, without a single mid-drag history entry.
   int _frameSerial = 0;
 
@@ -120,50 +134,52 @@ class JetReportDesignerController extends ChangeNotifier {
   /// changes — including mid-drag, when [revision] alone would not move.
   int get frameVersion => revision + _frameSerial;
 
-  /// The template the canvas should paint: the committed [template], or — while a
-  /// move, element-resize, or band-resize drag is in progress — that template
-  /// with the live drag baked in, so the design follows the pointer in realtime
-  /// instead of snapping into place on mouse-up. The committed model is untouched
-  /// until commit (one undo step per drag); this is a pure, throwaway projection
-  /// rebuilt from the same [MoveCommand] / [ResizeCommand] / [SetBandHeightCommand]
-  /// that commit uses, so the live frame and the committed frame are
-  /// pixel-identical for the same geometry.
+  /// The definition the canvas should paint: the committed [definition], or —
+  /// while a move, element-resize, or band-resize drag is in progress — that
+  /// definition with the live drag baked in, so the design follows the pointer in
+  /// realtime instead of snapping into place on mouse-up. The committed model is
+  /// untouched until commit (one undo step per drag); this is a pure, throwaway
+  /// projection rebuilt from the same [MoveCommand] / [ResizeCommand] /
+  /// [SetBandHeightCommand] that commit uses, so the live frame and the committed
+  /// frame are pixel-identical for the same geometry.
   ///
   /// A band resize reflows every band below it, so the canvas must lay out its
-  /// chrome (separators, grid, badges) from *this* template — not the committed
+  /// chrome (separators, grid, badges) from *this* definition — not the committed
   /// one — to keep the chrome in step with the live picture (see the canvas's
   /// display-vs-committed layout split).
-  ReportTemplate get displayTemplate {
+  ReportDefinition get displayDefinition {
     final JetOffset? move = _moveDelta;
     if (move != null && (move.dx != 0 || move.dy != 0)) {
       final Map<String, JetRect> targets = _clampedMoveTargets(move);
       if (targets.isNotEmpty) {
-        return MoveCommand(targets).apply(_document).template;
+        return MoveCommand(targets).apply(_document).definition;
       }
     }
     final String? rid = _resizeId;
     final JetRect? preview = _resizePreview;
     if (rid != null && preview != null) {
-      return ResizeCommand(id: rid, bounds: preview).apply(_document).template;
-    }
-    final int? bIndex = _bandResizeIndex;
-    final double? height = _bandResizePreviewHeight;
-    if (bIndex != null && height != null) {
-      return SetBandHeightCommand(bandIndex: bIndex, height: height)
+      return ResizeCommand(id: rid, bounds: preview)
           .apply(_document)
-          .template;
+          .definition;
     }
-    return _document.template;
+    final String? bid = _bandResizeId;
+    final double? height = _bandResizePreviewHeight;
+    if (bid != null && height != null) {
+      return SetBandHeightCommand(bandId: bid, height: height)
+          .apply(_document)
+          .definition;
+    }
+    return _document.definition;
   }
 
-  /// Replaces the whole design with [template], clearing history and re-seeding
+  /// Replaces the whole design with [definition], clearing history and re-seeding
   /// id assignment past the largest existing suffix (FR-004).
-  void open(ReportTemplate template) {
+  void open(ReportDefinition definition) {
     _pendingPropertiesFocus = false; // stale intent from the prior document
     _document =
-        DesignerDocument(template: template, selection: Selection.empty);
+        DesignerDocument(definition: definition, selection: Selection.empty);
     _history.clear();
-    _ids.seedFrom(template);
+    _ids.seedFrom(definition);
     notifyListeners();
   }
 
@@ -175,12 +191,24 @@ class JetReportDesignerController extends ChangeNotifier {
   /// Selects exactly [id] (replacing any prior selection).
   void select(String id) => _setSelection(Selection.of(<String>[id]));
 
-  /// Selects the band at [index] (replacing any prior selection). The band
-  /// becomes the selection target — exclusive with element/report selection. An
-  /// out-of-range [index] is ignored.
-  void selectBand(int index) {
-    if (index < 0 || index >= _document.template.bands.length) return;
-    _setSelection(Selection.band(index));
+  /// Selects the band with stable id [bandId] (replacing any prior selection).
+  /// Exclusive with element/group/scope/report selection. An unknown id is
+  /// ignored.
+  void selectBand(String bandId) {
+    if (findBand(_document.definition, bandId) == null) return;
+    _setSelection(Selection.band(bandId));
+  }
+
+  /// Selects the group with stable id [groupId]. An unknown id is ignored.
+  void selectGroup(String groupId) {
+    if (findGroup(_document.definition, groupId) == null) return;
+    _setSelection(Selection.group(groupId));
+  }
+
+  /// Selects the scope with stable id [scopeId]. An unknown id is ignored.
+  void selectScope(String scopeId) {
+    if (findScope(_document.definition, scopeId) == null) return;
+    _setSelection(Selection.scope(scopeId));
   }
 
   /// Selects the report/page itself (replacing any prior selection).
@@ -227,43 +255,41 @@ class JetReportDesignerController extends ChangeNotifier {
   // --- Creation --------------------------------------------------------------
 
   /// Creates a default element of [type] at the band-relative point [at] within
-  /// the band at [bandIndex], selecting it. The new element gets a fresh unique
-  /// id and the per-type default size; its bounds are clamped to the band
-  /// (FR-001/002/004/010). An out-of-range [bandIndex] is ignored.
+  /// the band with stable id [bandId], selecting it. The new element gets a fresh
+  /// unique id and the per-type default size; its bounds are clamped to the band
+  /// (FR-001/002/004/010). An unknown [bandId] is ignored.
   void createElement(
     DesignerToolType type, {
-    required int bandIndex,
+    required String bandId,
     required JetOffset at,
   }) {
-    if (bandIndex < 0 || bandIndex >= _document.template.bands.length) return;
+    if (findBand(_document.definition, bandId) == null) return;
     final String id = _ids.next(_typeKeyFor(type));
     final JetSize size = kDefaultElementSize[type]!;
     final JetRect bounds =
         JetRect(x: at.dx, y: at.dy, width: size.width, height: size.height);
     _commit(CreateElementCommand(
-      bandIndex: bandIndex,
+      bandId: bandId,
       element: buildDefaultElement(type, id, bounds),
     ));
   }
 
   /// Creates a **data-bound** text element at the band-relative point [at]
-  /// within the band at [bandIndex], bound to [expression] (a `$F{}`/`$P{}`/
-  /// `$V{}` string), and selects it (US2 / FR-009, FR-011). Used by drag-a-field
-  /// from the Data Source panel. The new element gets a fresh id and the default
-  /// text size; its literal text is a neutral fallback shown only if the binding
-  /// is later cleared. An out-of-range [bandIndex] is ignored.
+  /// within the band with stable id [bandId], bound to [expression] (a
+  /// `$F{}`/`$P{}`/`$V{}` string), and selects it (US2 / FR-009, FR-011). Used by
+  /// drag-a-field from the Data Source panel. An unknown [bandId] is ignored.
   void createBoundElement({
-    required int bandIndex,
+    required String bandId,
     required JetOffset at,
     required String expression,
   }) {
-    if (bandIndex < 0 || bandIndex >= _document.template.bands.length) return;
+    if (findBand(_document.definition, bandId) == null) return;
     final String id = _ids.next(_typeKeyFor(DesignerToolType.text));
     final JetSize size = kDefaultElementSize[DesignerToolType.text]!;
     final JetRect bounds =
         JetRect(x: at.dx, y: at.dy, width: size.width, height: size.height);
     _commit(CreateElementCommand(
-      bandIndex: bandIndex,
+      bandId: bandId,
       element: TextElement(
         id: id,
         bounds: bounds,
@@ -287,7 +313,7 @@ class JetReportDesignerController extends ChangeNotifier {
 
   JetOffset? _moveDelta;
   List<SnapGuide> _guides = const <SnapGuide>[];
-  int? _activeBand;
+  String? _activeBandId;
 
   /// The live drag delta during a move interaction (points), or null when no
   /// move is in progress. The selection overlay reads this to draw drag ghosts
@@ -299,9 +325,10 @@ class JetReportDesignerController extends ChangeNotifier {
   /// overlay to draw (FR-023 / SC-004). Empty when no guide is active.
   List<SnapGuide> get activeGuides => _guides;
 
-  /// The band index of the element being moved/resized, so the overlay can map
-  /// band-relative guide positions to page coordinates. Null when idle.
-  int? get activeBand => _activeBand;
+  /// The stable id of the band whose element is being moved/resized, so the
+  /// overlay can map band-relative guide positions to page coordinates. Null
+  /// when idle.
+  String? get activeBandId => _activeBandId;
 
   /// Begins a live move of the current selection (no history yet).
   void beginMove() => _moveDelta = const JetOffset(0, 0);
@@ -314,10 +341,10 @@ class JetReportDesignerController extends ChangeNotifier {
       {double threshold = 0, bool bypassSnap = false}) {
     JetOffset effective = delta;
     _guides = const <SnapGuide>[];
-    _activeBand = null;
+    _activeBandId = null;
     final String? single = _document.selection.singleOrNull;
     if (single != null && _snapEnabled && !bypassSnap && threshold > 0) {
-      final ({int bandIndex, ReportElement element})? loc = _locate(single);
+      final ({Band band, ReportElement element})? loc = _locate(single);
       if (loc != null) {
         final JetRect b = loc.element.bounds;
         final SnapResult result = snapMove(
@@ -326,8 +353,8 @@ class JetReportDesignerController extends ChangeNotifier {
               y: b.y + delta.dy,
               width: b.width,
               height: b.height),
-          siblings: _siblingBounds(loc.bandIndex, single),
-          bandBox: _bandBox(loc.bandIndex),
+          siblings: _siblingBounds(loc.band, single),
+          bandBox: _bandBox(loc.band),
           // Grid snapping is governed solely by the snap tool now (D3): we are
           // already inside the `_snapEnabled` guard, so feed the grid candidates
           // unconditionally. `_gridEnabled` controls only the grid's VISIBILITY.
@@ -337,7 +364,7 @@ class JetReportDesignerController extends ChangeNotifier {
         );
         effective = JetOffset(result.rect.x - b.x, result.rect.y - b.y);
         _guides = result.guides;
-        _activeBand = loc.bandIndex;
+        _activeBandId = loc.band.id;
       }
     }
     _moveDelta = effective;
@@ -351,7 +378,7 @@ class JetReportDesignerController extends ChangeNotifier {
     final JetOffset? delta = _moveDelta;
     _moveDelta = null;
     _guides = const <SnapGuide>[];
-    _activeBand = null;
+    _activeBandId = null;
     _frameSerial++; // the drag's preview frame is gone; re-record the committed one
     bool committed = false;
     if (delta != null && (delta.dx != 0 || delta.dy != 0)) {
@@ -369,7 +396,7 @@ class JetReportDesignerController extends ChangeNotifier {
     if (_moveDelta == null) return;
     _moveDelta = null;
     _guides = const <SnapGuide>[];
-    _activeBand = null;
+    _activeBandId = null;
     _frameSerial++;
     notifyListeners();
   }
@@ -432,13 +459,13 @@ class JetReportDesignerController extends ChangeNotifier {
 
   /// Begins resizing element [id] by dragging [handle].
   void beginResize(String id, ResizeHandle handle) {
-    final ({int bandIndex, ReportElement element})? loc = _locate(id);
+    final ({Band band, ReportElement element})? loc = _locate(id);
     if (loc == null) return;
     _resizeId = id;
     _resizeHandle = handle;
     _resizeStart = loc.element.bounds;
     _resizePreview = loc.element.bounds;
-    _activeBand = loc.bandIndex;
+    _activeBandId = loc.band.id;
     _guides = const <SnapGuide>[];
   }
 
@@ -451,7 +478,7 @@ class JetReportDesignerController extends ChangeNotifier {
     final ResizeHandle? handle = _resizeHandle;
     final JetRect? start = _resizeStart;
     if (id == null || handle == null || start == null) return;
-    final ({int bandIndex, ReportElement element})? loc = _locate(id);
+    final ({Band band, ReportElement element})? loc = _locate(id);
     if (loc == null) return;
 
     final bool isLine = loc.element is ShapeElement &&
@@ -465,8 +492,8 @@ class JetReportDesignerController extends ChangeNotifier {
       final SnapResult result = snapResize(
         resized,
         handle,
-        siblings: _siblingBounds(loc.bandIndex, id),
-        bandBox: _bandBox(loc.bandIndex),
+        siblings: _siblingBounds(loc.band, id),
+        bandBox: _bandBox(loc.band),
         // Decoupled (D3): grid snapping follows the snap tool only — we are
         // inside the `_snapEnabled` guard — while `_gridEnabled` is visibility.
         grid: true,
@@ -478,8 +505,7 @@ class JetReportDesignerController extends ChangeNotifier {
     } else {
       _guides = const <SnapGuide>[];
     }
-    _resizePreview = clampToBand(resized,
-        _document.template.bands[loc.bandIndex], _document.template.page);
+    _resizePreview = clampToBand(resized, loc.band, _document.definition.page);
     _frameSerial++;
     notifyListeners();
   }
@@ -493,11 +519,11 @@ class JetReportDesignerController extends ChangeNotifier {
     _resizeStart = null;
     _resizePreview = null;
     _guides = const <SnapGuide>[];
-    _activeBand = null;
+    _activeBandId = null;
     _frameSerial++;
     bool committed = false;
     if (id != null && preview != null) {
-      final ({int bandIndex, ReportElement element})? loc = _locate(id);
+      final ({Band band, ReportElement element})? loc = _locate(id);
       if (loc != null && preview != loc.element.bounds) {
         committed = _commit(ResizeCommand(id: id, bounds: preview));
       }
@@ -515,7 +541,7 @@ class JetReportDesignerController extends ChangeNotifier {
     _resizeStart = null;
     _resizePreview = null;
     _guides = const <SnapGuide>[];
-    _activeBand = null;
+    _activeBandId = null;
     _frameSerial++;
     notifyListeners();
   }
@@ -523,10 +549,10 @@ class JetReportDesignerController extends ChangeNotifier {
   /// Resizes [id] to [bounds] (clamped to its band) as one undoable step — the
   /// committed form used by numeric Properties editing and tests.
   void resizeTo(String id, JetRect bounds) {
-    final ({int bandIndex, ReportElement element})? loc = _locate(id);
+    final ({Band band, ReportElement element})? loc = _locate(id);
     if (loc == null) return;
-    final JetRect clamped = clampToBand(bounds,
-        _document.template.bands[loc.bandIndex], _document.template.page);
+    final JetRect clamped =
+        clampToBand(bounds, loc.band, _document.definition.page);
     if (clamped == loc.element.bounds) return;
     _commit(ResizeCommand(id: id, bounds: clamped));
   }
@@ -538,21 +564,23 @@ class JetReportDesignerController extends ChangeNotifier {
   // direction-to-height mapping is the caller's concern (a footer grows from its
   // top edge), so [updateBandResize] takes a signed *height* delta.
 
-  int? _bandResizeIndex;
+  String? _bandResizeId;
   double? _bandResizeStartHeight;
   double? _bandResizePreviewHeight;
 
-  /// The previewed height of the band at [index] during a live band resize, or
-  /// null. The overlay draws the band at this height while dragging the divider.
-  double? bandResizePreviewHeight(int index) =>
-      _bandResizeIndex == index ? _bandResizePreviewHeight : null;
+  /// The previewed height of band [bandId] during a live band resize, or null.
+  /// The overlay draws the band at this height while dragging the divider.
+  double? bandResizePreviewHeight(String bandId) =>
+      _bandResizeId == bandId ? _bandResizePreviewHeight : null;
 
-  /// Begins resizing the band at [index] (no history yet). Out-of-range ignored.
-  void beginBandResize(int index) {
-    if (index < 0 || index >= _document.template.bands.length) return;
-    _bandResizeIndex = index;
-    _bandResizeStartHeight = _document.template.bands[index].height;
-    _bandResizePreviewHeight = _bandResizeStartHeight;
+  /// Begins resizing the band with stable id [bandId] (no history yet). An
+  /// unknown id is ignored.
+  void beginBandResize(String bandId) {
+    final Band? band = findBand(_document.definition, bandId);
+    if (band == null) return;
+    _bandResizeId = bandId;
+    _bandResizeStartHeight = band.height;
+    _bandResizePreviewHeight = band.height;
   }
 
   /// Updates the in-progress band resize to a cumulative [heightDelta] (points,
@@ -570,15 +598,15 @@ class JetReportDesignerController extends ChangeNotifier {
   /// Commits the in-progress band resize as one history entry, or clears the
   /// transient state when nothing changed.
   void commitBandResize() {
-    final int? index = _bandResizeIndex;
+    final String? bandId = _bandResizeId;
     final double? preview = _bandResizePreviewHeight;
-    _bandResizeIndex = null;
+    _bandResizeId = null;
     _bandResizeStartHeight = null;
     _bandResizePreviewHeight = null;
     _frameSerial++; // the preview frame is gone; re-record the committed one
     bool committed = false;
-    if (index != null && preview != null) {
-      committed = _applyBandHeight(index, preview);
+    if (bandId != null && preview != null) {
+      committed = _applyBandHeight(bandId, preview);
     }
     // Repaint to drop the preview even when the resize committed nothing.
     if (!committed) notifyListeners();
@@ -586,25 +614,28 @@ class JetReportDesignerController extends ChangeNotifier {
 
   /// Discards an in-progress band resize.
   void cancelBandResize() {
-    if (_bandResizeIndex == null) return;
-    _bandResizeIndex = null;
+    if (_bandResizeId == null) return;
+    _bandResizeId = null;
     _bandResizeStartHeight = null;
     _bandResizePreviewHeight = null;
     _frameSerial++;
     notifyListeners();
   }
 
-  /// Sets the band at [index]'s height to [height] (floor-clamped) as one
-  /// undoable step — the committed form used by numeric editing and tests.
-  void setBandHeight(int index, double height) {
-    if (index < 0 || index >= _document.template.bands.length) return;
-    _applyBandHeight(index, height);
+  /// Sets band [bandId]'s height to [height] (floor-clamped) as one undoable
+  /// step — the committed form used by numeric editing and tests. An unknown id
+  /// is ignored.
+  void setBandHeight(String bandId, double height) {
+    if (findBand(_document.definition, bandId) == null) return;
+    _applyBandHeight(bandId, height);
   }
 
-  bool _applyBandHeight(int index, double height) {
+  bool _applyBandHeight(String bandId, double height) {
+    final Band? band = findBand(_document.definition, bandId);
+    if (band == null) return false;
     final double clamped = height < kMinBandHeight ? kMinBandHeight : height;
-    if (clamped == _document.template.bands[index].height) return false;
-    return _commit(SetBandHeightCommand(bandIndex: index, height: clamped));
+    if (clamped == band.height) return false;
+    return _commit(SetBandHeightCommand(bandId: bandId, height: clamped));
   }
 
   /// Sets the report's page [format] — size and/or margins — as one undoable,
@@ -617,7 +648,7 @@ class JetReportDesignerController extends ChangeNotifier {
   /// area (FR-009), then commits it. Routed through `_commit`, so a page equal
   /// to the current one records no history and notifies no listener (FR-007),
   /// undo restores the exact prior page, and elements are never repositioned
-  /// (FR-013). Canvas, preview, and export all read `template.page`, so the one
+  /// (FR-013). Canvas, preview, and export all read `definition.page`, so the one
   /// notification propagates the change everywhere (WYSIWYG).
   void setPageFormat(PageFormat format) {
     _commit(SetPageFormatCommand(clampPageFormat(format)));
@@ -629,7 +660,7 @@ class JetReportDesignerController extends ChangeNotifier {
   /// panel), clamped to its band, as one undoable step (FR-019).
   void setGeometry(String id,
       {double? x, double? y, double? width, double? height}) {
-    final ({int bandIndex, ReportElement element})? loc = _locate(id);
+    final ({Band band, ReportElement element})? loc = _locate(id);
     if (loc == null) return;
     final JetRect b = loc.element.bounds;
     final JetRect next = JetRect(
@@ -638,8 +669,8 @@ class JetReportDesignerController extends ChangeNotifier {
       width: width ?? b.width,
       height: height ?? b.height,
     );
-    final JetRect clamped = clampToBand(
-        next, _document.template.bands[loc.bandIndex], _document.template.page);
+    final JetRect clamped =
+        clampToBand(next, loc.band, _document.definition.page);
     if (clamped == b) return;
     _commit(ResizeCommand(id: id, bounds: clamped));
   }
@@ -655,9 +686,9 @@ class JetReportDesignerController extends ChangeNotifier {
   /// The name is stored verbatim: an empty or whitespace-only name is kept as
   /// `''`, and the UI shows the localized placeholder for an empty name
   /// (FR-010). Renaming to the current name is a no-op — it records no history
-  /// entry and notifies no listeners. The new name appears on [template], which
-  /// is the value a host persists on save.
-  void rename(String name) => _commit(SetTemplateNameCommand(name));
+  /// entry and notifies no listeners. The new name appears on [definition],
+  /// which is the value a host persists on save.
+  void rename(String name) => _commit(SetDefinitionNameCommand(name));
 
   /// Binds the [TextElement] [id] to [expression] (a `$F{}`/`$P{}`/`$V{}`
   /// string), as one undoable step (US2 / FR-009). No-op for a non-text or
@@ -678,7 +709,7 @@ class JetReportDesignerController extends ChangeNotifier {
   /// literal text (with `\` escapes) — and applies the result as a single
   /// undoable edit (FR-001/002/003/005). No-op for a non-text or absent id.
   void setValue(String id, String raw) {
-    final ({int bandIndex, ReportElement element})? loc = _locate(id);
+    final ({Band band, ReportElement element})? loc = _locate(id);
     if (loc == null || loc.element is! TextElement) return;
     final TextElement el = loc.element as TextElement;
     switch (parseValueField(raw)) {
@@ -699,43 +730,24 @@ class JetReportDesignerController extends ChangeNotifier {
 
   /// Changes the form of the [ShapeElement] [id] to [kind] as one undoable step
   /// (020 / FR-004), preserving the element's bounds and fill/stroke.
-  ///
-  /// Picking the already-active form is a no-op: it records no history entry and
-  /// notifies no listener (FR-005). Switching off a [ShapeKind.line] resets the
-  /// line-only diagonal flip, and any deliberate pick clears a preserved
-  /// unrecognized form name (FR-009). No-op for a non-shape or absent id.
   void setShapeKind(String id, ShapeKind kind) =>
       _commit(SetShapeKindCommand(id: id, kind: kind));
 
   /// Replaces the [TextElement] [id]'s whole style with [style] as one
   /// undoable step (021 / FR-001…FR-005), preserving its text, bounds,
-  /// binding, and format. Editors build [style] from the current one via
-  /// [JetTextStyle.copyWith], so each committed editor change is exactly one
-  /// history entry (FR-013).
-  ///
-  /// Committing an equal style is a no-op: it records no history entry and
-  /// notifies no listener. No-op for a non-text or absent id.
+  /// binding, and format.
   void setTextStyle(String id, JetTextStyle style) =>
       _commit(SetTextStyleCommand(id: id, style: style));
 
   /// Replaces the [ShapeElement] [id]'s whole style with [style] as one
   /// undoable step (021 / FR-007, FR-008), preserving its kind, bounds, and
-  /// flip state. Editors build [style] via [JetBoxStyle.copyWith], whose
-  /// explicit-null fill/stroke expresses the None states; one committed
-  /// editor change = one history entry (FR-013).
-  ///
-  /// Committing an equal style is a no-op: it records no history entry and
-  /// notifies no listener. No-op for a non-shape or absent id.
+  /// flip state.
   void setShapeStyle(String id, JetBoxStyle style) =>
       _commit(SetShapeStyleCommand(id: id, style: style));
 
   /// Replaces the barcode element [id]'s foreground color with [color] as
   /// one undoable step (021 / FR-011), preserving its symbology, data, and
-  /// bounds. The placeholder rendering (and, later, the real bars) reflects
-  /// the color on canvas, preview, and export.
-  ///
-  /// Committing an equal color is a no-op: it records no history entry and
-  /// notifies no listener. No-op for a non-barcode or absent id.
+  /// bounds.
   void setBarcodeColor(String id, JetColor color) =>
       _commit(SetBarcodeColorCommand(id: id, color: color));
 
@@ -746,45 +758,201 @@ class JetReportDesignerController extends ChangeNotifier {
     _commit(SetImageBindingCommand(id: id, field: field));
   }
 
-  /// Designates the band addressed by [path] (child indices from the top-level
-  /// band list; a top-level band is `[index]`) as iterating the nested
-  /// [collectionField] for master/detail, or clears it when [collectionField]
-  /// is null (US3 / FR-015, FR-015a). One undoable step; no-op for an
-  /// out-of-range path or an unchanged binding.
-  void setBandCollection(List<int> path, String? collectionField) {
-    _commit(SetBandCollectionCommand(
-      path: path,
-      collectionField: collectionField,
+  // --- Groups & scopes (first-class entities, spec 024 / FR-015) -------------
+
+  /// Adds a new group level (named [name], keyed by [key]) to scope [scopeId] and
+  /// selects it, as one undoable step. The new group gets a fresh unique id.
+  void createGroup(String scopeId,
+      {required String name, required String key}) {
+    _commit(CreateGroupCommand(
+      scopeId: scopeId,
+      group: GroupLevel(id: _ids.next('group'), name: name, key: key),
     ));
   }
 
-  /// Sets whether the group named [group] starts each of its instances (after
-  /// the first) on a fresh page (023 — `ReportGroup.startNewPage`). One undoable
-  /// step; a no-op (no history) for an unknown group or an unchanged value.
-  void setGroupStartNewPage(String group, bool value) {
-    _commit(SetGroupStartNewPageCommand(group: group, value: value));
+  /// Removes the group [groupId] (and its header/footer bands) as one undoable
+  /// step, clearing the selection.
+  void deleteGroup(String groupId) => _commit(DeleteGroupCommand(groupId));
+
+  /// Sets group [groupId]'s grouping [key] expression as one undoable step.
+  void setGroupKey(String groupId, String key) => _commit(UpdateGroupCommand(
+        groupId: groupId,
+        label: 'Set group key',
+        update: (GroupLevel g) => g.copyWith(key: key),
+      ));
+
+  /// Sets group [groupId]'s `keepTogether` flag as one undoable step.
+  void setGroupKeepTogether(String groupId, bool value) =>
+      _commit(UpdateGroupCommand(
+        groupId: groupId,
+        label: 'Set keep together',
+        update: (GroupLevel g) => g.copyWith(keepTogether: value),
+      ));
+
+  /// Sets group [groupId]'s `reprintHeaderOnEachPage` flag as one undoable step.
+  void setGroupReprintHeader(String groupId, bool value) =>
+      _commit(UpdateGroupCommand(
+        groupId: groupId,
+        label: 'Set reprint header',
+        update: (GroupLevel g) => g.copyWith(reprintHeaderOnEachPage: value),
+      ));
+
+  /// Sets group [groupId]'s `startNewPage` flag — start each instance after the
+  /// first on a fresh page — as one undoable step (the 023 feature, now owned by
+  /// the group). A no-op (no history) for an unknown group or an unchanged value.
+  void setGroupStartNewPage(String groupId, bool value) =>
+      _commit(UpdateGroupCommand(
+        groupId: groupId,
+        label: 'Set group page break',
+        update: (GroupLevel g) => g.copyWith(startNewPage: value),
+      ));
+
+  /// Adds a nested detail scope iterating [collectionField] under parent scope
+  /// [parentScopeId] and selects it, as one undoable step. The new scope gets a
+  /// fresh unique id.
+  void createScope(String parentScopeId, {String? collectionField}) {
+    _commit(CreateScopeCommand(
+      parentScopeId: parentScopeId,
+      scope:
+          DetailScope(id: _ids.next('scope'), collectionField: collectionField),
+    ));
   }
 
-  List<JetRect> _siblingBounds(int bandIndex, String excludeId) => <JetRect>[
-        for (final ReportElement e
-            in _document.template.bands[bandIndex].elements)
+  /// Removes the nested scope [scopeId] (and everything it contains) as one
+  /// undoable step, clearing the selection.
+  void deleteScope(String scopeId) => _commit(DeleteScopeCommand(scopeId));
+
+  /// Sets (or clears, when null) the nested [collectionField] scope [scopeId]
+  /// iterates, as one undoable step (US3 / FR-015, FR-015a).
+  void setScopeCollection(String scopeId, String? collectionField) => _commit(
+        SetScopeCollectionCommand(
+            scopeId: scopeId, collectionField: collectionField),
+      );
+
+  // --- Band lifecycle (add / remove / reorder / retype — spec 024 / US3) ------
+
+  /// Adds a band to the singleton slot for [type] (a furniture slot, or a body
+  /// title/summary/no-data band) and selects it, as one undoable step. A no-op
+  /// for a non-singleton [type] or an already-occupied slot.
+  void addBand(BandType type) {
+    if (!isSingletonSlotType(type)) return;
+    if (bandInSlot(_document.definition, type) != null) return;
+    final Band band = Band(
+        id: _ids.next('band'), type: type, height: _defaultBandHeight(type));
+    _commit(DefinitionEditCommand(
+      label: 'Add band',
+      transform: (ReportDefinition d) => setSlotBand(d, type, band),
+      selection: Selection.band(band.id),
+    ));
+  }
+
+  /// Appends a per-row detail band to scope [scopeId] and selects it, as one
+  /// undoable step. A no-op for an unknown scope.
+  void addDetailBand(String scopeId) {
+    if (findScope(_document.definition, scopeId) == null) return;
+    final Band band = Band(
+        id: _ids.next('band'),
+        type: BandType.detail,
+        height: _defaultBandHeight(BandType.detail));
+    _commit(DefinitionEditCommand(
+      label: 'Add band',
+      transform: (ReportDefinition d) =>
+          addScopeChild(d, scopeId, BandNode(band)),
+      selection: Selection.band(band.id),
+    ));
+  }
+
+  /// Adds group [groupId]'s [header] (or footer, when false) band and selects
+  /// it, as one undoable step. A no-op for an unknown group or an occupied slot.
+  void addGroupBand(String groupId, {required bool header}) {
+    final GroupLevel? group = findGroup(_document.definition, groupId);
+    if (group == null) return;
+    if ((header ? group.header : group.footer) != null) return;
+    final BandType type = header ? BandType.groupHeader : BandType.groupFooter;
+    final Band band = Band(
+        id: _ids.next('band'), type: type, height: _defaultBandHeight(type));
+    _commit(DefinitionEditCommand(
+      label: 'Add band',
+      transform: (ReportDefinition d) =>
+          setGroupBand(d, groupId, header: header, band: band),
+      selection: Selection.band(band.id),
+    ));
+  }
+
+  /// Removes the band [bandId] wherever it lives (a furniture slot, a body
+  /// once-band, a group header/footer, or a scope per-row band) as one undoable
+  /// step, clearing the selection. A no-op for an unknown id.
+  void removeBand(String bandId) {
+    if (findBand(_document.definition, bandId) == null) return;
+    _commit(DefinitionEditCommand(
+      label: 'Remove band',
+      transform: (ReportDefinition d) => removeBandFromTree(d, bandId),
+      selection: Selection.empty,
+    ));
+  }
+
+  /// Moves the per-row band [bandId] by [delta] positions within its scope's
+  /// ordered children (negative = toward the front), as one undoable step,
+  /// keeping it selected. A no-op when the band is not a scope per-row band or
+  /// the move clamps to its current position.
+  void moveBand(String bandId, int delta) {
+    final DetailScope? scope = findScopeOfBand(_document.definition, bandId);
+    if (scope == null) return;
+    // Selection is preserved (not forced), so a clamped move — which leaves the
+    // definition value-equal — records no history.
+    _commit(DefinitionEditCommand(
+      label: 'Reorder band',
+      transform: (ReportDefinition d) =>
+          reorderScopeChild(d, scope.id, bandId, delta),
+    ));
+  }
+
+  /// Retypes band [bandId] to [newType], relocating it to that type's slot and
+  /// updating its [Band.type] (FR-012 / FR-001a) — id, height, and elements are
+  /// preserved. Supported for the singleton-slot types (furniture + body
+  /// once-bands); a no-op for a non-singleton target, an occupied target slot,
+  /// an unknown id, or an unchanged type. One undoable step; the band stays
+  /// selected.
+  void retypeBand(String bandId, BandType newType) {
+    final Band? band = findBand(_document.definition, bandId);
+    if (band == null || band.type == newType) return;
+    if (!isSingletonSlotType(newType)) return;
+    if (bandInSlot(_document.definition, newType) != null) return;
+    final Band relocated = band.copyWith(type: newType);
+    _commit(DefinitionEditCommand(
+      label: 'Change band type',
+      transform: (ReportDefinition d) =>
+          setSlotBand(removeBandFromTree(d, bandId), newType, relocated),
+      selection: Selection.band(bandId),
+    ));
+  }
+
+  /// A sensible default height (points) for a freshly-added band of [type].
+  static double _defaultBandHeight(BandType type) => switch (type) {
+        BandType.title || BandType.summary => 32,
+        BandType.noData => 40,
+        BandType.detail => 80,
+        BandType.background => 200,
+        _ => 24,
+      };
+
+  List<JetRect> _siblingBounds(Band band, String excludeId) => <JetRect>[
+        for (final ReportElement e in band.elements)
           if (e.id != excludeId) e.bounds,
       ];
 
-  JetRect _bandBox(int bandIndex) {
-    final ReportBand band = _document.template.bands[bandIndex];
-    return JetRect(
+  JetRect _bandBox(Band band) => JetRect(
         x: 0,
         y: 0,
-        width: bandContentWidth(_document.template.page),
-        height: band.height);
-  }
+        width: bandContentWidth(_document.definition.page),
+        height: band.height,
+      );
 
   Map<String, JetRect> _clampedMoveTargets(JetOffset delta) {
-    final ReportTemplate t = _document.template;
+    final PageFormat page = _document.definition.page;
     final Map<String, JetRect> targets = <String, JetRect>{};
     for (final String id in _document.selection.ids) {
-      final ({int bandIndex, ReportElement element})? located = _locate(id);
+      final ({Band band, ReportElement element})? located = _locate(id);
       if (located == null) continue;
       final JetRect b = located.element.bounds;
       targets[id] = clampToBand(
@@ -794,29 +962,28 @@ class JetReportDesignerController extends ChangeNotifier {
           width: b.width,
           height: b.height,
         ),
-        t.bands[located.bandIndex],
-        t.page,
+        located.band,
+        page,
       );
     }
     return targets;
   }
 
-  /// Finds the band index and element for [id], or null if not present.
-  ({int bandIndex, ReportElement element})? _locate(String id) {
-    final bands = _document.template.bands;
-    for (int i = 0; i < bands.length; i++) {
-      for (final ReportElement element in bands[i].elements) {
-        if (element.id == id) return (bandIndex: i, element: element);
-      }
+  /// Finds the band and element for [id], or null if not present.
+  ({Band band, ReportElement element})? _locate(String id) {
+    final Band? band = findBandOfElement(_document.definition, id);
+    if (band == null) return null;
+    for (final ReportElement element in band.elements) {
+      if (element.id == id) return (band: band, element: element);
     }
     return null;
   }
 
   // --- Multi-selection -------------------------------------------------------
 
-  /// Selects every element in the template.
+  /// Selects every element in the definition.
   void selectAll() => _setSelection(Selection.of(<String>[
-        for (final band in _document.template.bands)
+        for (final Band band in allBands(_document.definition))
           for (final ReportElement e in band.elements) e.id,
       ]));
 
@@ -836,7 +1003,7 @@ class JetReportDesignerController extends ChangeNotifier {
   final Clipboard _clipboard = Clipboard();
 
   /// Deletes the selected elements as one undoable step (FR-014). No-op when the
-  /// selection holds no elements (e.g. a band or the report is selected).
+  /// selection holds no elements (e.g. a band/group/scope or the report).
   void delete() {
     if (_document.selection.ids.isEmpty) return;
     _commit(DeleteCommand(_document.selection.ids.toSet()));
@@ -867,11 +1034,8 @@ class JetReportDesignerController extends ChangeNotifier {
   ///
   /// A Copy changes derived UI-enablement state ([canPaste] flips `false→true`)
   /// but is **not** a history entry (FR-009) — so it [notifyListeners] to rebuild
-  /// the clipboard controls (Paste re-enables after a mouse Copy) WITHOUT routing
-  /// through [_commit]. This intentional split between "notify the UI" and
-  /// "commit to history" is unique to Copy; every other mutating op does both
-  /// through `_commit` (016 / research D1). No-op (no notify) when the selection
-  /// holds no elements, so an empty Copy never churns listeners.
+  /// the clipboard controls WITHOUT routing through [_commit]. No-op (no notify)
+  /// when the selection holds no elements.
   void copy() {
     final List<ClipboardEntry> entries = _collectSelected();
     if (entries.isEmpty) return;
@@ -909,35 +1073,34 @@ class JetReportDesignerController extends ChangeNotifier {
 
   void _commitBounds(Map<String, JetRect> newBounds) {
     if (newBounds.isEmpty) return;
+    final PageFormat page = _document.definition.page;
     final Map<String, JetRect> clamped = <String, JetRect>{};
     newBounds.forEach((String id, JetRect bounds) {
-      final ({int bandIndex, ReportElement element})? loc = _locate(id);
+      final ({Band band, ReportElement element})? loc = _locate(id);
       if (loc == null) return;
-      clamped[id] = clampToBand(bounds, _document.template.bands[loc.bandIndex],
-          _document.template.page);
+      clamped[id] = clampToBand(bounds, loc.band, page);
     });
     if (clamped.isNotEmpty) _commit(MoveCommand(clamped));
   }
 
   List<ClipboardEntry> _collectSelected() => <ClipboardEntry>[
         for (final String id in _document.selection.ids)
-          if (_locate(id) case final ({int bandIndex, ReportElement element}) l)
-            (bandIndex: l.bandIndex, element: l.element),
+          if (_locate(id) case final ({Band band, ReportElement element}) l)
+            (bandId: l.band.id, element: l.element),
       ];
 
   List<Positioned> _collectPositioned() => <Positioned>[
         for (final String id in _document.selection.ids)
-          if (_locate(id) case final ({int bandIndex, ReportElement element}) l)
+          if (_locate(id) case final ({Band band, ReportElement element}) l)
             (id: id, bounds: l.element.bounds),
       ];
 
   List<ClipboardEntry> _buildCopies(List<ClipboardEntry> source) {
+    final PageFormat page = _document.definition.page;
     final List<ClipboardEntry> copies = <ClipboardEntry>[];
     for (final ClipboardEntry entry in source) {
-      if (entry.bandIndex < 0 ||
-          entry.bandIndex >= _document.template.bands.length) {
-        continue;
-      }
+      final Band? band = findBand(_document.definition, entry.bandId);
+      if (band == null) continue;
       final String id = _ids.next(entry.element.typeKey);
       final JetRect b = entry.element.bounds;
       final JetRect offset = clampToBand(
@@ -946,11 +1109,11 @@ class JetReportDesignerController extends ChangeNotifier {
             y: b.y + kPasteOffset.dy,
             width: b.width,
             height: b.height),
-        _document.template.bands[entry.bandIndex],
-        _document.template.page,
+        band,
+        page,
       );
       copies.add((
-        bandIndex: entry.bandIndex,
+        bandId: entry.bandId,
         element: cloneElement(entry.element, id: id, bounds: offset),
       ));
     }
@@ -1021,18 +1184,20 @@ class JetReportDesignerController extends ChangeNotifier {
   }
 
   /// Applies [command], banks the prior document for undo (clearing redo), and
-  /// notifies listeners. Every model-mutating edit goes through here, which is
-  /// what makes the whole edit set uniformly undoable.
-  /// Applies [command], recording one history entry and notifying listeners.
-  /// Returns whether anything actually changed: a no-op command (same template
-  /// instance + selection — e.g. set-text to the same value, or a move wholly
-  /// absorbed by clamping) records nothing and returns `false`, so a caller that
-  /// holds its own transient state (a live move/resize) knows it still owes
-  /// listeners a repaint to tear that state down.
+  /// notifies listeners. Returns whether anything actually changed: a no-op
+  /// command (one that leaves the definition and selection value-equal — e.g.
+  /// set-text to the same value, or a move wholly absorbed by clamping) records
+  /// nothing and returns `false`, so a caller that holds its own transient state
+  /// (a live move/resize) knows it still owes listeners a repaint to tear that
+  /// state down.
+  ///
+  /// No-op detection is by **value** equality (not identity): the reified
+  /// tree-transform helpers rebuild structure freely, so `==` — not `identical`
+  /// — is what tells a real edit from a no-op.
   bool _commit(EditCommand command) {
     final DesignerDocument before = _document;
     final DesignerDocument after = command.apply(before);
-    if (identical(after.template, before.template) &&
+    if (after.definition == before.definition &&
         after.selection == before.selection) {
       return false;
     }

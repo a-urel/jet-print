@@ -47,20 +47,22 @@ void main() {
       final JetReportDesignerController editor = JetReportDesignerController();
       addTearDown(editor.dispose);
       editor.createElement(DesignerToolType.text,
-          bandIndex: 1, at: const JetOffset(20, 20));
+          bandId: 'detail', at: const JetOffset(20, 20));
       final String id = editor.selection.singleOrNull!;
       editor.setText(id, 'Invoice total');
 
       // Save: the exact call the app's onSaveRequested makes.
-      final String saved = JetReportFormat.encodeJson(editor.template);
+      final String saved =
+          JetReportFormat.encodeDefinitionJson(editor.definition);
 
       // Reopen: the exact call the app's onOpenRequested makes.
       final JetReportDesignerController reopened = JetReportDesignerController()
-        ..open(JetReportFormat.decodeJson(saved));
+        ..open(JetReportFormat.decodeDefinitionJson(saved));
       addTearDown(reopened.dispose);
 
-      final TextElement restored = reopened.template.bands
-          .expand((ReportBand b) => b.elements)
+      final TextElement restored = reopened.definition.body.root.children
+          .whereType<BandNode>()
+          .expand((BandNode n) => n.band.elements)
           .firstWhere((ReportElement e) => e.id == id) as TextElement;
       expect(restored.text, 'Invoice total');
     },

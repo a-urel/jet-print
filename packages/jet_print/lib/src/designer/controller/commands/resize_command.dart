@@ -24,7 +24,8 @@ class ResizeCommand extends EditCommand {
   String get label => 'Resize';
 
   @override
-  DesignerDocument apply(DesignerDocument before) => before.withTemplate(
-        replaceElementBounds(before.template, <String, JetRect>{id: bounds}),
+  DesignerDocument apply(DesignerDocument before) => before.withDefinition(
+        replaceElementBoundsInDef(
+            before.definition, <String, JetRect>{id: bounds}),
       );
 }

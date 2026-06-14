@@ -7,13 +7,15 @@
 // guard that the seam reuses the existing pagination logic (Constitution IV).
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/in_memory_data_source.dart';
+import 'package:jet_print/src/domain/band.dart';
+import 'package:jet_print/src/domain/detail_scope.dart';
 import 'package:jet_print/src/domain/elements/shape_element.dart';
 import 'package:jet_print/src/domain/elements/text_element.dart';
 import 'package:jet_print/src/domain/geometry.dart';
 import 'package:jet_print/src/domain/page_format.dart';
 import 'package:jet_print/src/domain/report_band.dart';
+import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/domain/report_element.dart';
-import 'package:jet_print/src/domain/report_template.dart';
 import 'package:jet_print/src/expression/value.dart';
 import 'package:jet_print/src/rendering/elements/built_in_element_renderers.dart';
 import 'package:jet_print/src/rendering/elements/element_renderer.dart';
@@ -48,15 +50,23 @@ FilledBand _body(double height, {String id = 'r'}) => FilledBand(
       variables: const <String, JetValue>{},
     );
 
-ReportTemplate _tpl({List<ReportBand> bands = const <ReportBand>[]}) =>
-    ReportTemplate(name: 'demo', page: _smallPage, bands: bands);
+ReportDefinition _tpl({
+  PageFurniture furniture = const PageFurniture(),
+  List<ScopeNode> children = const <ScopeNode>[],
+}) =>
+    ReportDefinition(
+      name: 'demo',
+      page: _smallPage,
+      furniture: furniture,
+      body: ReportBody(root: DetailScope(id: 'root', children: children)),
+    );
 
 FilledReport _filled(List<FilledBand> bands) =>
     FilledReport(page: _smallPage, bands: bands);
 
-ReportBand _chromeText(BandType type, String id, String expression,
+Band _chromeText(BandType type, String id, String expression,
         {double height = 20}) =>
-    ReportBand(type: type, height: height, elements: <ReportElement>[
+    Band(id: id, type: type, height: height, elements: <ReportElement>[
       TextElement(
         id: id,
         bounds: JetRect(x: 0, y: 0, width: 180, height: height),
@@ -119,7 +129,7 @@ void main() {
       final _EmitCounter counter = _EmitCounter();
       final ReportLayouter layouter =
           ReportLayouter(renderers: _SpyRegistry(counter));
-      final LazyLayout lazy = layouter.layoutLazy(
+      final LazyLayout lazy = layouter.layoutLazyDefinition(
         _tpl(),
         _filled(<FilledBand>[_body(30), _body(30), _body(30)]),
       );
@@ -132,7 +142,7 @@ void main() {
       final _EmitCounter counter = _EmitCounter();
       final ReportLayouter layouter =
           ReportLayouter(renderers: _SpyRegistry(counter));
-      final LazyLayout lazy = layouter.layoutLazy(
+      final LazyLayout lazy = layouter.layoutLazyDefinition(
         _tpl(),
         _filled(<FilledBand>[_body(30), _body(30), _body(30)]),
       );
@@ -146,18 +156,20 @@ void main() {
   group('lazy == eager (C5)', () {
     test('each lazily built frame is byte-identical to the eager layout()', () {
       // Chrome bands exercise the per-page substitution path too.
-      final ReportTemplate template = _tpl(bands: <ReportBand>[
-        _chromeText(BandType.pageHeader, 'hd', r'"Report"'),
-        _chromeText(BandType.pageFooter, 'pf',
-            r'"Page " + $V{PAGE_NUMBER} + " of " + $V{PAGE_COUNT}'),
-      ]);
+      final ReportDefinition template = _tpl(
+        furniture: PageFurniture(
+          pageHeader: _chromeText(BandType.pageHeader, 'hd', r'"Report"'),
+          pageFooter: _chromeText(BandType.pageFooter, 'pf',
+              r'"Page " + $V{PAGE_NUMBER} + " of " + $V{PAGE_COUNT}'),
+        ),
+      );
       final List<FilledBand> bands = <FilledBand>[
         for (int i = 0; i < 5; i++) _body(30, id: 'b$i'),
       ];
       final LayoutResult eager =
-          ReportLayouter().layout(template, _filled(bands));
+          ReportLayouter().layoutDefinition(template, _filled(bands));
       final LazyLayout lazy =
-          ReportLayouter().layoutLazy(template, _filled(bands));
+          ReportLayouter().layoutLazyDefinition(template, _filled(bands));
       expect(lazy.pageCount, eager.pages.length);
       for (int i = 0; i < lazy.pageCount; i++) {
         expect(lazy.buildPage(i), eager.pages[i],
@@ -166,12 +178,14 @@ void main() {
     });
 
     test('PAGE_COUNT resolves through the lazy seam', () {
-      final ReportTemplate template = _tpl(bands: <ReportBand>[
-        _chromeText(BandType.pageFooter, 'pf',
-            r'"Page " + $V{PAGE_NUMBER} + " of " + $V{PAGE_COUNT}'),
-      ]);
+      final ReportDefinition template = _tpl(
+        furniture: PageFurniture(
+          pageFooter: _chromeText(BandType.pageFooter, 'pf',
+              r'"Page " + $V{PAGE_NUMBER} + " of " + $V{PAGE_COUNT}'),
+        ),
+      );
       // Footer (20) leaves 60 capacity: 2 x 30pt bands per page, 3 pages.
-      final LazyLayout lazy = ReportLayouter().layoutLazy(
+      final LazyLayout lazy = ReportLayouter().layoutLazyDefinition(
         template,
         _filled(<FilledBand>[for (int i = 0; i < 6; i++) _body(30)]),
       );
@@ -222,8 +236,9 @@ void main() {
 
   group('facade smoke (C4 via render())', () {
     test('render().pageAt(0) yields a viewable first page and exact count', () {
-      final ReportTemplate template = _tpl(bands: <ReportBand>[
-        const ReportBand(
+      final ReportDefinition template = _tpl(children: <ScopeNode>[
+        const BandNode(Band(
+          id: 'root/c0',
           type: BandType.detail,
           height: 30,
           elements: <ReportElement>[
@@ -234,7 +249,7 @@ void main() {
               expression: r'$F{name}',
             ),
           ],
-        ),
+        )),
       ]);
       final JetInMemoryDataSource source = JetInMemoryDataSource(
         <Map<String, Object?>>[
@@ -242,7 +257,7 @@ void main() {
         ],
       );
       final RenderedReport report =
-          const JetReportEngine().render(template, source);
+          const JetReportEngine().renderDefinition(template, source);
       expect(report.pageCount, 3, reason: '2 x 30pt bands per 80pt page');
       expect(report.pageAt(0).frame.primitives, isNotEmpty);
       expect(_textRun(report.pageAt(0).frame, 'name'), 'row 0');

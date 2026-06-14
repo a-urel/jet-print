@@ -29,8 +29,10 @@ ReportDefinition _valid({
       page: PageFormat.a4Portrait,
       furniture: furniture ??
           const PageFurniture(
-            pageHeader:
-                Band(id: 'furniture/pageHeader', type: BandType.pageHeader, height: 20),
+            pageHeader: Band(
+                id: 'furniture/pageHeader',
+                type: BandType.pageHeader,
+                height: 20),
           ),
       body: body ??
           const ReportBody(
@@ -156,8 +158,8 @@ void main() {
     test('I5 flags a band whose type is inconsistent with its slot', () {
       final ReportDefinition def = _valid(
         furniture: const PageFurniture(
-          pageHeader:
-              Band(id: 'furniture/pageHeader', type: BandType.detail, height: 20),
+          pageHeader: Band(
+              id: 'furniture/pageHeader', type: BandType.detail, height: 20),
         ),
       );
       expect(_has(validate(def), DiagnosticSeverity.error, 'type'), isTrue);
@@ -171,8 +173,8 @@ void main() {
           ]),
         ),
       );
-      expect(_has(validate(def), DiagnosticSeverity.error, 'collection'),
-          isTrue);
+      expect(
+          _has(validate(def), DiagnosticSeverity.error, 'collection'), isTrue);
     });
 
     test('I6 flags a root scope that carries a collectionField', () {
@@ -181,8 +183,8 @@ void main() {
           root: DetailScope(id: 'root', collectionField: 'oops'),
         ),
       );
-      expect(_has(validate(def), DiagnosticSeverity.error, 'collection'),
-          isTrue);
+      expect(
+          _has(validate(def), DiagnosticSeverity.error, 'collection'), isTrue);
     });
   });
 }

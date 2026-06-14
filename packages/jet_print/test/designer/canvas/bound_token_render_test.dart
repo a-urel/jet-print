@@ -21,12 +21,12 @@ void main() {
 
     // A data-bound text element (token-rendered) and a field-bound image.
     c.createBoundElement(
-      bandIndex: 1,
+      bandId: 'detail',
       at: const JetOffset(24, 24),
       expression: r'$F{customerName}',
     );
     c.createElement(DesignerToolType.image,
-        bandIndex: 1, at: const JetOffset(24, 70));
+        bandId: 'detail', at: const JetOffset(24, 70));
     c.setImageField(c.selection.singleOrNull!, 'logo');
     c.clearSelection(); // keep selection chrome out of the golden
     await tester.pumpAndSettle();

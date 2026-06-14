@@ -28,7 +28,7 @@ void main() {
         await pumpDesignerWith(tester);
     // Default template bands: 0 = page header, 1 = detail, 2 = page footer.
     controller.createElement(DesignerToolType.text,
-        bandIndex: 2, at: const JetOffset(0, 0));
+        bandId: 'pageFooter', at: const JetOffset(0, 0));
     await tester.pumpAndSettle();
     final String id = controller.selection.singleOrNull!;
 

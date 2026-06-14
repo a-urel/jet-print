@@ -7,15 +7,17 @@
 // surrounding content renders normally.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/in_memory_data_source.dart';
+import 'package:jet_print/src/domain/band.dart';
+import 'package:jet_print/src/domain/detail_scope.dart';
 import 'package:jet_print/src/domain/elements/image_element.dart';
 import 'package:jet_print/src/domain/elements/image_source.dart';
 import 'package:jet_print/src/domain/elements/text_element.dart';
 import 'package:jet_print/src/domain/geometry.dart';
 import 'package:jet_print/src/domain/page_format.dart';
 import 'package:jet_print/src/domain/report_band.dart';
+import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/domain/report_element.dart';
 import 'package:jet_print/src/domain/report_parameter.dart';
-import 'package:jet_print/src/domain/report_template.dart';
 import 'package:jet_print/src/domain/value_type.dart';
 import 'package:jet_print/src/rendering/engine/jet_report_engine.dart';
 import 'package:jet_print/src/rendering/engine/rendered_report.dart';
@@ -33,17 +35,26 @@ TextElement _text(String id, String expression, {double y = 0}) => TextElement(
       expression: expression,
     );
 
-ReportTemplate _template(List<ReportElement> detailElements,
+ReportDefinition _template(List<ReportElement> detailElements,
         {List<ReportParameter> parameters = const <ReportParameter>[],
-        List<ReportBand> extraBands = const <ReportBand>[]}) =>
-    ReportTemplate(
+        PageFurniture furniture = const PageFurniture()}) =>
+    ReportDefinition(
       name: 'diag',
       page: _page,
       parameters: parameters,
-      bands: <ReportBand>[
-        ReportBand(type: BandType.detail, height: 80, elements: detailElements),
-        ...extraBands,
-      ],
+      furniture: furniture,
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+                id: 'root/c0',
+                type: BandType.detail,
+                height: 80,
+                elements: detailElements)),
+          ],
+        ),
+      ),
     );
 
 JetInMemoryDataSource _rows() => JetInMemoryDataSource(<Map<String, Object?>>[
@@ -68,7 +79,7 @@ void main() {
   test(
       'unknown field -> specific warning with elementId + blank fallback, '
       'surrounding content renders', () {
-    final RenderedReport report = const JetReportEngine().render(
+    final RenderedReport report = const JetReportEngine().renderDefinition(
       _template(<ReportElement>[
         _text('good', r'$F{name}'),
         _text('bad', r'$F{nope}', y: 20),
@@ -86,7 +97,7 @@ void main() {
   test(
       'missing parameter -> specific diagnostic naming the parameter + '
       'blank fallback', () {
-    final RenderedReport report = const JetReportEngine().render(
+    final RenderedReport report = const JetReportEngine().renderDefinition(
       _template(
         <ReportElement>[
           _text('good', r'$F{name}'),
@@ -106,7 +117,7 @@ void main() {
   });
 
   test('a declared parameter default fills in without a diagnostic', () {
-    final RenderedReport report = const JetReportEngine().render(
+    final RenderedReport report = const JetReportEngine().renderDefinition(
       _template(
         <ReportElement>[_text('by', r'$P{printedBy}')],
         parameters: const <ReportParameter>[
@@ -123,7 +134,7 @@ void main() {
   });
 
   test('expression type mismatch -> error diagnostic + !ERR fallback', () {
-    final RenderedReport report = const JetReportEngine().render(
+    final RenderedReport report = const JetReportEngine().renderDefinition(
       _template(<ReportElement>[
         _text('good', r'$F{name}'),
         _text('boom', r'$F{name} * 2', y: 20),
@@ -138,7 +149,7 @@ void main() {
   });
 
   test('divide-by-zero -> error diagnostic + !ERR fallback', () {
-    final RenderedReport report = const JetReportEngine().render(
+    final RenderedReport report = const JetReportEngine().renderDefinition(
       _template(<ReportElement>[
         _text('boom', r'$F{qty} / 0'),
       ]),
@@ -151,20 +162,16 @@ void main() {
   });
 
   test('empty dataset -> specific diagnostic + noData best-effort render', () {
-    final RenderedReport report = const JetReportEngine().render(
-      ReportTemplate(
+    final RenderedReport report = const JetReportEngine().renderDefinition(
+      ReportDefinition(
         name: 'empty',
         page: _page,
-        bands: <ReportBand>[
-          ReportBand(
-            type: BandType.detail,
-            height: 20,
-            elements: <ReportElement>[_text('d', r'$F{name}')],
-          ),
-          ReportBand(
+        body: ReportBody(
+          noData: const Band(
+            id: 'body/noData',
             type: BandType.noData,
             height: 20,
-            elements: const <ReportElement>[
+            elements: <ReportElement>[
               TextElement(
                 id: 'nd',
                 bounds: JetRect(x: 0, y: 0, width: 360, height: 16),
@@ -172,7 +179,18 @@ void main() {
               ),
             ],
           ),
-        ],
+          root: DetailScope(
+            id: 'root',
+            children: <ScopeNode>[
+              BandNode(Band(
+                id: 'root/c0',
+                type: BandType.detail,
+                height: 20,
+                elements: <ReportElement>[_text('d', r'$F{name}')],
+              )),
+            ],
+          ),
+        ),
       ),
       JetInMemoryDataSource(const <Map<String, Object?>>[]),
     );
@@ -185,7 +203,7 @@ void main() {
   test(
       'URL-only image -> diagnostic with elementId + placeholder render, '
       'no I/O (FR-012b/FR-015)', () {
-    final RenderedReport report = const JetReportEngine().render(
+    final RenderedReport report = const JetReportEngine().renderDefinition(
       _template(<ReportElement>[
         const ImageElement(
           id: 'logo',
@@ -214,7 +232,7 @@ void main() {
   test(
       'the whole matrix at once still renders — 0 unhandled crashes '
       '(SC-007), diagnostics merged fill-then-layout in order (FR-013)', () {
-    final RenderedReport report = const JetReportEngine().render(
+    final RenderedReport report = const JetReportEngine().renderDefinition(
       _template(
         <ReportElement>[
           _text('unknown', r'$F{nope}'),
@@ -229,9 +247,10 @@ void main() {
         parameters: const <ReportParameter>[
           ReportParameter(name: 'missing', type: JetFieldType.string),
         ],
-        extraBands: <ReportBand>[
+        furniture: const PageFurniture(
           // A chrome expression referencing a field: a LAYOUT-pass warning.
-          const ReportBand(
+          pageFooter: Band(
+            id: 'pageFooter',
             type: BandType.pageFooter,
             height: 16,
             elements: <ReportElement>[
@@ -243,7 +262,7 @@ void main() {
               ),
             ],
           ),
-        ],
+        ),
       ),
       _rows(),
     );

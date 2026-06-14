@@ -6,7 +6,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../domain/band.dart';
 import '../../domain/geometry.dart';
+import '../controller/band_walker.dart';
 import '../controller/jet_report_designer_controller.dart';
 import '../controller/selection.dart';
 import '../controller/snapping.dart';
@@ -94,7 +96,7 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
     // fixed-format sheet → outline only; a band resizes vertically → one
     // divider handle). Neither uses the element outline/handle machinery.
     if (selection.isReport) return _reportChrome();
-    final int? selectedBand = selection.bandIndex;
+    final String? selectedBand = selection.bandId;
     if (selectedBand != null) {
       return _bandChrome(controller, selectedBand, colors, l10n);
     }
@@ -118,7 +120,7 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
       final JetRect? preview = controller.previewBoundsFor(id);
       if (preview != null) {
         // Resize preview is band-relative; convert to page coords.
-        final int? band = controller.activeBand;
+        final String? band = controller.activeBandId;
         final JetRect? bandRect =
             band == null ? null : widget.layout.bandRect(band);
         if (bandRect != null) {
@@ -178,16 +180,17 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
   /// vertically.
   Widget _bandChrome(
     JetReportDesignerController controller,
-    int index,
+    String bandId,
     ShadColorScheme colors,
     JetPrintLocalizations l10n,
   ) {
-    final JetRect? bandRect = widget.layout.bandRect(index);
+    final JetRect? bandRect = widget.layout.bandRect(bandId);
     if (bandRect == null) return const SizedBox.shrink();
-    final bool footer = DesignTimeLayout.isBottomAnchored(
-        controller.template.bands[index].type);
+    final Band? band = findBand(controller.definition, bandId);
+    final bool footer =
+        band != null && DesignTimeLayout.isBottomAnchored(band.type);
     final double height =
-        controller.bandResizePreviewHeight(index) ?? bandRect.height;
+        controller.bandResizePreviewHeight(bandId) ?? bandRect.height;
     // Anchor the fixed edge; the other edge is where the divider sits and moves.
     final double top =
         footer ? bandRect.y + bandRect.height - height : bandRect.y;
@@ -195,7 +198,7 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
     return Stack(children: <Widget>[
       _outline(JetRect(
           x: bandRect.x, y: top, width: bandRect.width, height: height)),
-      _bandHandle(controller, index, footer, bandRect.x + bandRect.width / 2,
+      _bandHandle(controller, bandId, footer, bandRect.x + bandRect.width / 2,
           edgeY, colors, l10n),
     ]);
   }
@@ -206,7 +209,7 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
   /// from its top edge, so an upward drag enlarges it.
   Widget _bandHandle(
     JetReportDesignerController controller,
-    int index,
+    String bandId,
     bool footer,
     double centerX,
     double edgeY,
@@ -232,7 +235,7 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
               behavior: HitTestBehavior.opaque,
               onPanStart: (_) {
                 _bandResizeDelta = Offset.zero;
-                controller.beginBandResize(index);
+                controller.beginBandResize(bandId);
               },
               onPanUpdate: (DragUpdateDetails d) {
                 _bandResizeDelta += d.delta / widget.scale;
@@ -276,7 +279,7 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
 
   List<Widget> _guideWidgets(JetReportDesignerController controller) {
     final List<SnapGuide> guides = controller.activeGuides;
-    final int? band = controller.activeBand;
+    final String? band = controller.activeBandId;
     if (guides.isEmpty || band == null) return const <Widget>[];
     final JetRect? bandRect = widget.layout.bandRect(band);
     if (bandRect == null) return const <Widget>[];

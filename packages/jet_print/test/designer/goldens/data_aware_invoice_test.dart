@@ -27,11 +27,18 @@ const JetDataSchema _schema = JetDataSchema(
   ],
 );
 
-ReportTemplate _template() => const ReportTemplate(
+// The reified equivalent of the legacy three-band invoice (title + a
+// `lines`-bound detail band + summary), authored directly with the SAME
+// path-based ids the template→definition adapter assigns, so the design canvas
+// renders byte-identically: the title/summary bands become body slots, and the
+// `collectionField: 'lines'` detail band becomes a NestedScope whose first
+// child is the per-row BandNode (spec 024).
+ReportDefinition _definition() => const ReportDefinition(
       name: 'Invoice',
       page: PageFormat.a4Portrait,
-      bands: <ReportBand>[
-        ReportBand(
+      body: ReportBody(
+        title: Band(
+          id: 'body/title',
           type: BandType.title,
           height: 70,
           elements: <ReportElement>[
@@ -49,26 +56,8 @@ ReportTemplate _template() => const ReportTemplate(
             ),
           ],
         ),
-        ReportBand(
-          type: BandType.detail,
-          height: 22,
-          collectionField: 'lines',
-          elements: <ReportElement>[
-            TextElement(
-              id: 'desc',
-              bounds: JetRect(x: 0, y: 2, width: 260, height: 16),
-              text: 'description',
-              expression: r'$F{description}',
-            ),
-            TextElement(
-              id: 'qty',
-              bounds: JetRect(x: 280, y: 2, width: 60, height: 16),
-              text: 'qty',
-              expression: r'$F{qty}',
-            ),
-          ],
-        ),
-        ReportBand(
+        summary: Band(
+          id: 'body/summary',
           type: BandType.summary,
           height: 36,
           elements: <ReportElement>[
@@ -80,14 +69,44 @@ ReportTemplate _template() => const ReportTemplate(
             ),
           ],
         ),
-      ],
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            NestedScope(DetailScope(
+              id: 'root/c0',
+              collectionField: 'lines',
+              children: <ScopeNode>[
+                BandNode(Band(
+                  id: 'root/c0/c0',
+                  type: BandType.detail,
+                  height: 22,
+                  elements: <ReportElement>[
+                    TextElement(
+                      id: 'desc',
+                      bounds: JetRect(x: 0, y: 2, width: 260, height: 16),
+                      text: 'description',
+                      expression: r'$F{description}',
+                    ),
+                    TextElement(
+                      id: 'qty',
+                      bounds: JetRect(x: 280, y: 2, width: 60, height: 16),
+                      text: 'qty',
+                      expression: r'$F{qty}',
+                    ),
+                  ],
+                )),
+              ],
+            )),
+          ],
+        ),
+      ),
     );
 
 Future<void> _pump(WidgetTester tester, ThemeMode mode) async {
   // pumpDesignerWith registers the controller's dispose tear-down itself.
   await pumpDesignerWith(
     tester,
-    controller: JetReportDesignerController(template: _template()),
+    controller: JetReportDesignerController(definition: _definition()),
     themeMode: mode,
     dataSchema: _schema,
     // Rulers are pinned by widget tests, not goldens (decision V1) — off here so

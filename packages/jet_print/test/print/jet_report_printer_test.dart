@@ -10,8 +10,9 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/in_memory_data_source.dart';
+import 'package:jet_print/src/domain/detail_scope.dart';
 import 'package:jet_print/src/domain/page_format.dart';
-import 'package:jet_print/src/domain/report_template.dart';
+import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/print/jet_report_printer.dart';
 import 'package:jet_print/src/rendering/engine/jet_report_engine.dart';
 import 'package:jet_print/src/rendering/engine/rendered_report.dart';
@@ -84,8 +85,12 @@ void main() {
     });
 
     test('falls back to "Report" when the title is empty', () async {
-      final RenderedReport untitled = const JetReportEngine().render(
-        const ReportTemplate(name: '', page: PageFormat.a4Portrait),
+      final RenderedReport untitled = const JetReportEngine().renderDefinition(
+        const ReportDefinition(
+          name: '',
+          page: PageFormat.a4Portrait,
+          body: ReportBody(root: DetailScope(id: 'root')),
+        ),
         JetInMemoryDataSource(const <Map<String, Object?>>[]),
       );
       expect(untitled.title, isEmpty, reason: 'fixture sanity');

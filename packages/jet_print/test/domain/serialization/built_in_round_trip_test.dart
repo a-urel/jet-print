@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jet_print/src/domain/band.dart';
+import 'package:jet_print/src/domain/detail_scope.dart';
 import 'package:jet_print/src/domain/elements/barcode_element.dart';
 import 'package:jet_print/src/domain/elements/image_element.dart';
 import 'package:jet_print/src/domain/elements/image_source.dart';
@@ -9,11 +11,11 @@ import 'package:jet_print/src/domain/elements/text_element.dart';
 import 'package:jet_print/src/domain/geometry.dart';
 import 'package:jet_print/src/domain/page_format.dart';
 import 'package:jet_print/src/domain/report_band.dart';
+import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/domain/report_element.dart';
-import 'package:jet_print/src/domain/report_template.dart';
 import 'package:jet_print/src/domain/serialization/built_in_element_codecs.dart';
 import 'package:jet_print/src/domain/serialization/element_codec.dart';
-import 'package:jet_print/src/domain/serialization/report_codec.dart';
+import 'package:jet_print/src/domain/serialization/report_definition_codec.dart';
 import 'package:jet_print/src/domain/styles/box_style.dart';
 import 'package:jet_print/src/domain/styles/color.dart';
 import 'package:jet_print/src/domain/styles/text_style.dart';
@@ -23,11 +25,12 @@ void main() {
     final ElementCodecRegistry registry = ElementCodecRegistry();
     registerBuiltInElementCodecs(registry);
 
-    const ReportTemplate template = ReportTemplate(
+    const ReportDefinition definition = ReportDefinition(
       name: 'Showcase',
       page: PageFormat.a4Portrait,
-      bands: <ReportBand>[
-        ReportBand(
+      furniture: PageFurniture(
+        pageHeader: Band(
+          id: 'pageHeader',
           type: BandType.pageHeader,
           height: 80,
           elements: <ReportElement>[
@@ -60,20 +63,22 @@ void main() {
             ),
           ],
         ),
-      ],
+      ),
+      body: ReportBody(root: DetailScope(id: 'root')),
     );
 
-    final String wire = jsonEncode(encodeTemplate(template, registry));
-    final ReportTemplate decoded = decodeTemplate(
+    final String wire = jsonEncode(encodeDefinition(definition, registry));
+    final ReportDefinition decoded = decodeDefinition(
       (jsonDecode(wire) as Map).cast<String, Object?>(),
       registry,
     );
-    expect(encodeTemplate(decoded, registry),
-        equals(encodeTemplate(template, registry)));
-    expect(decoded.bands.single.elements.length, 4);
-    expect(decoded.bands.single.elements[0], isA<TextElement>());
-    expect(decoded.bands.single.elements[1], isA<ShapeElement>());
-    expect(decoded.bands.single.elements[2], isA<ImageElement>());
-    expect(decoded.bands.single.elements[3], isA<BarcodeElement>());
+    expect(encodeDefinition(decoded, registry),
+        equals(encodeDefinition(definition, registry)));
+    final List<ReportElement> elements = decoded.furniture.pageHeader!.elements;
+    expect(elements.length, 4);
+    expect(elements[0], isA<TextElement>());
+    expect(elements[1], isA<ShapeElement>());
+    expect(elements[2], isA<ImageElement>());
+    expect(elements[3], isA<BarcodeElement>());
   });
 }

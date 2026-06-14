@@ -13,7 +13,8 @@ import 'package:jet_print/src/domain/report_element.dart';
 TextElement _txt(String id) => TextElement(
     id: id, bounds: const JetRect(x: 0, y: 0, width: 10, height: 10), text: id);
 
-Band _band(String id, BandType type, {List<ReportElement> els = const <ReportElement>[]}) =>
+Band _band(String id, BandType type,
+        {List<ReportElement> els = const <ReportElement>[]}) =>
     Band(id: id, type: type, height: 10, elements: els);
 
 /// furniture(pageHeader,pageFooter) + title + a master group (header/footer) +
@@ -58,7 +59,15 @@ void main() {
   group('band_walker', () {
     test('findBand reaches every slot (furniture, body, group, scope)', () {
       final ReportDefinition d = _def();
-      for (final String id in <String>['ph', 'pf', 'title', 'gh', 'gf', 'm', 'line']) {
+      for (final String id in <String>[
+        'ph',
+        'pf',
+        'title',
+        'gh',
+        'gf',
+        'm',
+        'line'
+      ]) {
         expect(findBand(d, id)?.id, id, reason: id);
       }
       expect(findBand(d, 'nope'), isNull);
@@ -81,7 +90,8 @@ void main() {
 
     test('mapBands transforms every band', () {
       final ReportDefinition d = _def();
-      final ReportDefinition tall = mapBands(d, (Band b) => b.copyWith(height: 5));
+      final ReportDefinition tall =
+          mapBands(d, (Band b) => b.copyWith(height: 5));
       expect(allBands(tall).every((Band b) => b.height == 5), isTrue);
     });
 

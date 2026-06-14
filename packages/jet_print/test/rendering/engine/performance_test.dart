@@ -8,12 +8,14 @@
 // with dataset size).
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/in_memory_data_source.dart';
+import 'package:jet_print/src/domain/band.dart';
+import 'package:jet_print/src/domain/detail_scope.dart';
 import 'package:jet_print/src/domain/elements/text_element.dart';
 import 'package:jet_print/src/domain/geometry.dart';
 import 'package:jet_print/src/domain/page_format.dart';
 import 'package:jet_print/src/domain/report_band.dart';
+import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/domain/report_element.dart';
-import 'package:jet_print/src/domain/report_template.dart';
 import 'package:jet_print/src/rendering/elements/built_in_element_renderers.dart';
 import 'package:jet_print/src/rendering/elements/element_renderer.dart';
 import 'package:jet_print/src/rendering/elements/element_renderer_registry.dart';
@@ -64,29 +66,35 @@ class _SpyRegistry extends ElementRendererRegistry {
       _SpyRenderer(_delegate.rendererFor(element), _counter);
 }
 
-ReportTemplate _template() => const ReportTemplate(
+ReportDefinition _template() => const ReportDefinition(
       name: 'big',
       page: PageFormat.a4Portrait,
-      bands: <ReportBand>[
-        ReportBand(
-          type: BandType.detail,
-          height: 20,
-          elements: <ReportElement>[
-            TextElement(
-              id: 'name',
-              bounds: JetRect(x: 0, y: 0, width: 240, height: 16),
-              text: 'name',
-              expression: r'$F{name}',
-            ),
-            TextElement(
-              id: 'amount',
-              bounds: JetRect(x: 260, y: 0, width: 120, height: 16),
-              text: 'amount',
-              expression: r'$F{amount}',
-            ),
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+              id: 'root/c0',
+              type: BandType.detail,
+              height: 20,
+              elements: <ReportElement>[
+                TextElement(
+                  id: 'name',
+                  bounds: JetRect(x: 0, y: 0, width: 240, height: 16),
+                  text: 'name',
+                  expression: r'$F{name}',
+                ),
+                TextElement(
+                  id: 'amount',
+                  bounds: JetRect(x: 260, y: 0, width: 120, height: 16),
+                  text: 'amount',
+                  expression: r'$F{amount}',
+                ),
+              ],
+            )),
           ],
         ),
-      ],
+      ),
     );
 
 JetInMemoryDataSource _source(int records) => JetInMemoryDataSource(
@@ -100,9 +108,10 @@ JetInMemoryDataSource _source(int records) => JetInMemoryDataSource(
 /// emit count after building only page 0.
 int _firstPageEmits(int records) {
   final _EmitCounter counter = _EmitCounter();
-  final FillResult fill = ReportFiller().fill(_template(), _source(records));
+  final FillResult fill =
+      ReportFiller().fillDefinition(_template(), _source(records));
   final LazyLayout lazy = ReportLayouter(renderers: _SpyRegistry(counter))
-      .layoutLazy(_template(), fill.report);
+      .layoutLazyDefinition(_template(), fill.report);
   expect(counter.emits, 0,
       reason: 'the boundary-only pass must not construct paint primitives');
   expect(lazy.pageCount, greaterThan(1));
@@ -125,7 +134,7 @@ void main() {
   test('advisory: 1,000-record first page wall-clock (logged, not gated)', () {
     final Stopwatch watch = Stopwatch()..start();
     final RenderedReport report =
-        const JetReportEngine().render(_template(), _source(1000));
+        const JetReportEngine().renderDefinition(_template(), _source(1000));
     final int pageCount = report.pageCount;
     report.pageAt(0);
     watch.stop();

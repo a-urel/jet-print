@@ -1,38 +1,37 @@
 /// Resolving which schema fields a band/element binds against (US3 / FR-016,
-/// FR-017, FR-018). Pure logic over a [ReportTemplate] (domain) and a
-/// [JetDataSchema] (data) — no Flutter. Lives in the data seam because it spans
-/// the report model and the data schema; the data seam may depend on domain.
+/// FR-017, FR-018). Pure logic over a scope **chain** through the report model
+/// (domain) and a [JetDataSchema] (data) — no Flutter, no designer.
+///
+/// Reification (spec 024): a band's data scope is the chain of [DetailScope]s
+/// enclosing it (each with an optional `collectionField`). The designer computes
+/// that chain (and the band owning an element) via the tree-walk helpers; these
+/// helpers do the schema-side resolution, so the data seam depends only on the
+/// domain — never on the designer.
 library;
 
-import '../domain/report_band.dart';
-import '../domain/report_template.dart';
+import '../domain/detail_scope.dart';
 import 'data_schema.dart';
 import 'field_def.dart';
 
 /// Field references `$F{name}` anywhere in an expression.
 final RegExp _fieldRef = RegExp(r'\$F\{([^}]+)\}');
 
-/// The fields **in scope** for the band addressed by [bandPath] (child indices
-/// from the top-level band list; `[]` = the master/root scope). Each time the
-/// path enters a band with a `collectionField`, the scope descends into that
-/// collection's child schema — so an element inside a `lines`-bound band sees
-/// the line fields, and a deeper `subLines`-bound band sees the sub-line fields
-/// (arbitrary depth). An unresolved collection along the way yields no fields.
-List<FieldDef> fieldsInScopeAt(
+/// The fields **in scope** after descending [schema] through the
+/// `collectionField` of each scope in [chain], outermost-first. The master/root
+/// scope's null `collectionField` descends nothing, so an element in the root
+/// scope sees the top-level fields; each nested scope descends one collection
+/// level (arbitrary depth). An empty [chain] yields the root fields; an
+/// unresolvable collection along the way yields no fields.
+List<FieldDef> fieldsInScopeForChain(
   JetDataSchema schema,
-  ReportTemplate template,
-  List<int> bandPath,
+  List<DetailScope> chain,
 ) {
   List<FieldDef> scope = schema.fields;
-  List<ReportBand> bands = template.bands;
-  for (final int idx in bandPath) {
-    if (idx < 0 || idx >= bands.length) return const <FieldDef>[];
-    final ReportBand band = bands[idx];
-    final String? cf = band.collectionField;
+  for (final DetailScope s in chain) {
+    final String? cf = s.collectionField;
     if (cf != null) {
       scope = _collectionChildren(scope, cf);
     }
-    bands = band.children;
   }
   return scope;
 }
@@ -44,25 +43,6 @@ List<FieldDef> _collectionChildren(List<FieldDef> fields, String name) {
     if (f.name == name && f.type == JetFieldType.collection) return f.fields;
   }
   return const <FieldDef>[];
-}
-
-/// The path (child indices from the top-level band list) to the band owning the
-/// element with [elementId], or null if no band contains it. Walks nested bands.
-List<int>? bandPathOfElement(ReportTemplate template, String elementId) =>
-    _searchBands(template.bands, elementId, const <int>[]);
-
-List<int>? _searchBands(
-  List<ReportBand> bands,
-  String elementId,
-  List<int> prefix,
-) {
-  for (int i = 0; i < bands.length; i++) {
-    final List<int> here = <int>[...prefix, i];
-    if (bands[i].elements.any((dynamic e) => e.id == elementId)) return here;
-    final List<int>? nested = _searchBands(bands[i].children, elementId, here);
-    if (nested != null) return nested;
-  }
-  return null;
 }
 
 /// The `$F{...}` field names referenced in [expression].

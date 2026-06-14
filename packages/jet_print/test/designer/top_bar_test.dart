@@ -43,7 +43,7 @@ bool _segmentDisabled(WidgetTester tester, Key key) =>
 Future<void> _pumpDesignerWithPreview(
   WidgetTester tester,
   JetReportDesignerController controller, {
-  void Function(ReportTemplate current)? onPreviewRequested,
+  void Function(ReportDefinition current)? onPreviewRequested,
 }) async {
   await pumpDesigner(
     tester,
@@ -54,25 +54,35 @@ Future<void> _pumpDesignerWithPreview(
   );
 }
 
-ReportTemplate _oneElementFixture() => const ReportTemplate(
+ReportDefinition _oneElementFixture() => const ReportDefinition(
       name: 'F',
       page: PageFormat.a4Portrait,
-      bands: <ReportBand>[
-        ReportBand(
-          type: BandType.detail,
-          height: 300,
-          elements: <ReportElement>[
-            TextElement(
-                id: 'a',
-                bounds: JetRect(x: 10, y: 10, width: 20, height: 10),
-                text: 'a'),
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(
+              Band(
+                id: 'detail',
+                type: BandType.detail,
+                height: 300,
+                elements: <ReportElement>[
+                  TextElement(
+                      id: 'a',
+                      bounds: JetRect(x: 10, y: 10, width: 20, height: 10),
+                      text: 'a'),
+                ],
+              ),
+            ),
           ],
         ),
-      ],
+      ),
     );
 
-int _elementCount(JetReportDesignerController c) => c.template.bands
-    .fold<int>(0, (int n, ReportBand b) => n + b.elements.length);
+int _elementCount(JetReportDesignerController c) =>
+    c.definition.body.root.children
+        .whereType<BandNode>()
+        .fold<int>(0, (int n, BandNode node) => n + node.band.elements.length);
 
 /// True iff the icon button keyed [key] is disabled (its `onPressed` is null).
 bool _disabled(WidgetTester tester, Key key) =>
@@ -449,9 +459,9 @@ void main() {
       final JetReportDesignerController c = JetReportDesignerController();
       addTearDown(c.dispose);
       int calls = 0;
-      ReportTemplate? got;
+      ReportDefinition? got;
       await _pumpDesignerWithPreview(tester, c,
-          onPreviewRequested: (ReportTemplate t) {
+          onPreviewRequested: (ReportDefinition t) {
         calls++;
         got = t;
       });
@@ -459,8 +469,8 @@ void main() {
       await tester.tap(find.byKey(_modePreviewKey));
       await tester.pumpAndSettle();
       expect(calls, 1);
-      expect(identical(got, c.template), isTrue,
-          reason: 'the live template is handed to the host (C2.2)');
+      expect(identical(got, c.definition), isTrue,
+          reason: 'the live definition is handed to the host (C2.2)');
     });
 
     testWidgets(
@@ -500,7 +510,7 @@ void main() {
       c.select('a');
       c.nudge(5, 0);
       await tester.pumpAndSettle();
-      final ReportTemplate beforeTemplate = c.template;
+      final ReportDefinition beforeDefinition = c.definition;
       final bool undoBefore = c.canUndo;
       final bool redoBefore = c.canRedo;
       final Selection selectionBefore = c.selection;
@@ -508,7 +518,7 @@ void main() {
       await tester.tap(find.byKey(_modePreviewKey));
       await tester.pumpAndSettle();
 
-      expect(identical(c.template, beforeTemplate), isTrue,
+      expect(identical(c.definition, beforeDefinition), isTrue,
           reason: 'the switch request leaves the model untouched (FR-005)');
       expect(c.canUndo, undoBefore);
       expect(c.canRedo, redoBefore);

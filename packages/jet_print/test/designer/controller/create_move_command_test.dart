@@ -4,24 +4,37 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
-ReportTemplate _twoBandFixture() => const ReportTemplate(
+ReportDefinition _twoBandFixture() => const ReportDefinition(
       name: 'Fixture',
       page: PageFormat.a4Portrait, // content width ~538.58, see margins 28.35
-      bands: <ReportBand>[
-        ReportBand(type: BandType.pageHeader, height: 60),
-        ReportBand(
-          type: BandType.detail,
-          height: 200,
-          elements: <ReportElement>[
-            TextElement(
-              id: 'keep1',
-              bounds: JetRect(x: 5, y: 5, width: 40, height: 12),
-              text: 'keep',
-            ),
+      furniture: PageFurniture(
+        pageHeader:
+            Band(id: 'pageHeader', type: BandType.pageHeader, height: 60),
+      ),
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+              id: 'detail',
+              type: BandType.detail,
+              height: 200,
+              elements: <ReportElement>[
+                TextElement(
+                  id: 'keep1',
+                  bounds: JetRect(x: 5, y: 5, width: 40, height: 12),
+                  text: 'keep',
+                ),
+              ],
+            )),
           ],
         ),
-      ],
+      ),
     );
+
+/// The detail band's elements.
+List<ReportElement> _detail(JetReportDesignerController c) =>
+    c.definition.body.root.children.whereType<BandNode>().first.band.elements;
 
 void main() {
   group('createElement', () {
@@ -30,9 +43,9 @@ void main() {
       final JetReportDesignerController c = JetReportDesignerController()
         ..open(_twoBandFixture());
       c.createElement(DesignerToolType.barcode,
-          bandIndex: 1, at: const JetOffset(20, 20));
+          bandId: 'detail', at: const JetOffset(20, 20));
 
-      final List<ReportElement> els = c.template.bands[1].elements;
+      final List<ReportElement> els = _detail(c);
       expect(els.length, 2);
       expect(els.last, isA<BarcodeElement>());
       expect(c.selection.singleOrNull, els.last.id);
@@ -48,8 +61,8 @@ void main() {
         ..open(_twoBandFixture());
       // Drop near the bottom-right corner of the detail band.
       c.createElement(DesignerToolType.text,
-          bandIndex: 1, at: const JetOffset(530, 195));
-      final JetRect b = c.template.bands[1].elements.last.bounds;
+          bandId: 'detail', at: const JetOffset(530, 195));
+      final JetRect b = _detail(c).last.bounds;
       const double contentWidth = 595.28 - 28.35 * 2;
       expect(b.x + b.width, lessThanOrEqualTo(contentWidth + 0.001));
       expect(b.y + b.height, lessThanOrEqualTo(200 + 0.001));
@@ -58,12 +71,12 @@ void main() {
       c.dispose();
     });
 
-    test('an out-of-range band index is ignored', () {
+    test('an unknown band id is ignored', () {
       final JetReportDesignerController c = JetReportDesignerController()
         ..open(_twoBandFixture());
       c.createElement(DesignerToolType.text,
-          bandIndex: 9, at: const JetOffset(10, 10));
-      expect(c.template.bands[1].elements.length, 1); // unchanged
+          bandId: 'ghost', at: const JetOffset(10, 10));
+      expect(_detail(c).length, 1); // unchanged
       expect(c.canUndo, isFalse);
       c.dispose();
     });
@@ -75,12 +88,12 @@ void main() {
         ..open(_twoBandFixture());
       c.select('keep1');
       c.moveBy(const JetOffset(10, 7));
-      JetRect b = c.template.bands[1].elements.first.bounds;
+      JetRect b = _detail(c).first.bounds;
       expect(b.x, 15);
       expect(b.y, 12);
       expect(c.canUndo, isTrue);
       c.undo();
-      b = c.template.bands[1].elements.first.bounds;
+      b = _detail(c).first.bounds;
       expect(b.x, 5);
       expect(b.y, 5);
       c.dispose();
@@ -91,7 +104,7 @@ void main() {
         ..open(_twoBandFixture());
       c.select('keep1');
       c.moveBy(const JetOffset(-100, -100)); // try to push off the top-left
-      final JetRect b = c.template.bands[1].elements.first.bounds;
+      final JetRect b = _detail(c).first.bounds;
       expect(b.x, 0);
       expect(b.y, 0);
       c.dispose();

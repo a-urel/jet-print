@@ -1,9 +1,11 @@
 import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../domain/band.dart';
 import '../../domain/geometry.dart';
 import '../../domain/report_band.dart';
 import '../canvas/design_tunables.dart';
+import '../controller/band_walker.dart';
 import '../controller/jet_report_designer_controller.dart';
 import '../designer_scope.dart';
 import '../l10n/jet_print_localizations.dart';
@@ -78,18 +80,15 @@ class _ToolboxButton extends StatelessWidget {
   void _placeByClick(BuildContext context) {
     final JetReportDesignerController controller =
         DesignerScope.of(context, listen: false);
-    final List<ReportBand> bands = controller.template.bands;
+    final List<Band> bands = allBands(controller.definition).toList();
     if (bands.isEmpty) return;
-    int bandIndex = 0;
-    for (int i = 0; i < bands.length; i++) {
-      if (bands[i].type == BandType.detail) {
-        bandIndex = i;
-        break;
-      }
-    }
+    final Band target = bands.firstWhere(
+      (Band b) => b.type == BandType.detail,
+      orElse: () => bands.first,
+    );
     controller.createElement(
       entry.type,
-      bandIndex: bandIndex,
+      bandId: target.id,
       at: const JetOffset(24, 24),
     );
   }

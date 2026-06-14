@@ -85,19 +85,19 @@ create/delete groups and scopes works and renders.
 
 ### Tests (write first; must fail)
 
-- [ ] T024 [P] [US2] Failing controller tests — document/controller holds `ReportDefinition`; group/scope are selectable; create/delete group + scope; set group key/flags (undoable) in `packages/jet_print/test/designer/controller/report_definition_controller_test.dart`
-- [ ] T025 [P] [US2] Failing widget test — selecting a group shows a single Group inspector (key + 3 flags); the flag does NOT appear on both header and footer bands in `packages/jet_print/test/designer/group_inspector_test.dart` (C11)
-- [ ] T026 [P] [US2] Failing test — author-time `validate()` diagnostics surface in the designer (e.g. duplicate group name; `$F{}` on furniture) in `packages/jet_print/test/designer/author_time_validation_test.dart` (C12)
+- [X] T024 [P] [US2] Failing controller tests — document/controller holds `ReportDefinition`; group/scope are selectable; create/delete group + scope; set group key/flags (undoable) in `packages/jet_print/test/designer/controller/report_definition_controller_test.dart`
+- [X] T025 [P] [US2] Failing widget test — selecting a group shows a single Group inspector (key + 3 flags); the flag does NOT appear on both header and footer bands in `packages/jet_print/test/designer/group_inspector_test.dart` (C11)
+- [X] T026 [P] [US2] Failing test — author-time `validate()` diagnostics surface in the designer (e.g. duplicate group name; `$F{}` on furniture) in `packages/jet_print/test/designer/author_time_validation_test.dart` (C12)
 
 ### Implementation (to green)
 
-- [ ] T027 [US2] Migrate `DesignerDocument` + controller to hold `ReportDefinition` in `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart` (+ `designer_document.dart`)
-- [ ] T028 [US2] Migrate the selection model to stable ids + group/scope selection in `packages/jet_print/lib/src/designer/controller/selection.dart`
-- [ ] T029 [US2] Migrate Properties + Outline panels to the tree; add the first-class Group/Scope inspector (key + flags in one place) in `packages/jet_print/lib/src/designer/layout/panels/properties_panel.dart` and `outline_panel.dart`
-- [ ] T030 [US2] Migrate canvas + design-time layout to render the tree in `packages/jet_print/lib/src/designer/canvas/` (`design_canvas.dart`, `design_time_layout.dart`)
-- [ ] T031 [US2] Group/scope commands (create/delete group, create/delete scope, set group key/flags) — each a single undoable/redoable commit (FR-015) — in `packages/jet_print/lib/src/designer/controller/commands/`
-- [ ] T032 [US2] Remove the temporary converter (T020) and delete `report_template.dart`, `report_band.dart`, `report_group.dart`; engine + designer consume `ReportDefinition` only
-- [ ] T033 [US2] Update the playground to build a `ReportDefinition` in `apps/jet_print_playground/lib/invoice_sample.dart` and `rendered_invoice_example.dart`; update `packages/jet_print/test/public_api_test.dart` (tree exported; legacy gone) (C13)
+- [X] T027 [US2] Migrate `DesignerDocument` + controller to hold `ReportDefinition` in `packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart` (+ `designer_document.dart`)
+- [X] T028 [US2] Migrate the selection model to stable ids + group/scope selection in `packages/jet_print/lib/src/designer/controller/selection.dart`
+- [X] T029 [US2] Migrate Properties + Outline panels to the tree; add the first-class Group/Scope inspector (key + flags in one place) in `packages/jet_print/lib/src/designer/layout/panels/properties_panel.dart` and `outline_panel.dart`
+- [X] T030 [US2] Migrate canvas + design-time layout to render the tree in `packages/jet_print/lib/src/designer/canvas/` (`design_canvas.dart`, `design_time_layout.dart`)
+- [X] T031 [US2] Group/scope commands (create/delete group, create/delete scope, set group key/flags) — each a single undoable/redoable commit (FR-015) — in `packages/jet_print/lib/src/designer/controller/commands/`
+- [X] T032 [US2] Remove the temporary converter (T020) and delete `report_template.dart`, `report_band.dart`, `report_group.dart`; engine + designer consume `ReportDefinition` only
+- [X] T033 [US2] Update the playground to build a `ReportDefinition` in `apps/jet_print_playground/lib/invoice_sample.dart` and `rendered_invoice_example.dart`; update `packages/jet_print/test/public_api_test.dart` (tree exported; legacy gone) (C13)
 
 **Checkpoint**: designer authors the tree; first-class groups/scopes; legacy types removed; public API finalized; suite green.
 
@@ -111,13 +111,13 @@ gone; retype → moves to the matching slot; each is one undoable step.
 
 ### Tests (write first; must fail)
 
-- [ ] T034 [P] [US3] Failing command tests — add/remove/reorder/retype band (model + undo/redo; ids stable across reorder) in `packages/jet_print/test/designer/controller/band_lifecycle_test.dart` (C10)
-- [ ] T035 [P] [US3] Failing widget tests — Outline/canvas lifecycle affordances (add via toolbox, remove, reorder, retype) in `packages/jet_print/test/designer/band_lifecycle_widget_test.dart`
+- [X] T034 [P] [US3] Failing command tests — add/remove/reorder/retype band (model + undo/redo; ids stable across reorder) in `packages/jet_print/test/designer/controller/band_lifecycle_test.dart` (C10)
+- [X] T035 [P] [US3] Failing widget tests — Outline/canvas lifecycle affordances (add via toolbox, remove, reorder, retype) in `packages/jet_print/test/designer/band_lifecycle_widget_test.dart`
 
 ### Implementation (to green)
 
-- [ ] T036 [US3] Band lifecycle commands (add/remove/reorder/retype, stable ids; retype updates `type` to match the new slot per FR-001a) in `packages/jet_print/lib/src/designer/controller/commands/`
-- [ ] T037 [US3] Outline + canvas affordances and toolbox wiring for the lifecycle ops in `packages/jet_print/lib/src/designer/layout/panels/outline_panel.dart` and `packages/jet_print/lib/src/designer/canvas/`
+- [X] T036 [US3] Band lifecycle commands (add/remove/reorder/retype, stable ids; retype updates `type` to match the new slot per FR-001a) in `packages/jet_print/lib/src/designer/controller/commands/`
+- [X] T037 [US3] Outline + canvas affordances and toolbox wiring for the lifecycle ops in `packages/jet_print/lib/src/designer/layout/panels/outline_panel.dart` and `packages/jet_print/lib/src/designer/canvas/`
 
 **Checkpoint**: full band/group/scope lifecycle in the designer; US3 done.
 
@@ -125,10 +125,10 @@ gone; retype → moves to the matching slot; each is one undoable step.
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T038 [P] `CHANGELOG.md` — breaking `ReportTemplate`/`ReportBand`/`ReportGroup` removal, the v1→v2 schema migration, and the reification summary (Principle V/VI)
-- [ ] T039 [P] Dartdoc on every new public symbol; `flutter analyze` clean; `dart format` applied across `packages/jet_print` + `apps/jet_print_playground`
-- [ ] T040 [P] `layer_boundaries_test` — `ReportDefinition` and the tree types import no Flutter/rendering (Principle II) in `packages/jet_print/test/layer_boundaries_test.dart`
-- [ ] T041 Final golden review — confirm the full suite is byte-identical end-to-end; any deliberate visual change is called out and goldens updated in review (expected: none)
+- [X] T038 [P] `CHANGELOG.md` — breaking `ReportTemplate`/`ReportBand`/`ReportGroup` removal, the v1→v2 schema migration, and the reification summary (Principle V/VI)
+- [X] T039 [P] Dartdoc on every new public symbol; `flutter analyze` clean; `dart format` applied across `packages/jet_print` + `apps/jet_print_playground`
+- [X] T040 [P] `layer_boundaries_test` — `ReportDefinition` and the tree types import no Flutter/rendering (Principle II) in `packages/jet_print/test/layer_boundaries_test.dart`
+- [X] T041 Final golden review — confirm the full suite is byte-identical end-to-end; any deliberate visual change is called out and goldens updated in review (expected: none)
 - [ ] T042 Manual GUI walkthrough — author the invoice (page chrome + per-invoice group header/footer + nested lines + one-per-page) entirely in the playground designer (SC-004)
 
 ---

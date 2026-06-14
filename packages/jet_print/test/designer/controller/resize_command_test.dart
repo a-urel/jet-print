@@ -3,26 +3,38 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
-ReportTemplate _fixture() => const ReportTemplate(
+ReportDefinition _fixture() => const ReportDefinition(
       name: 'F',
       page: PageFormat.a4Portrait,
-      bands: <ReportBand>[
-        ReportBand(
-          type: BandType.detail,
-          height: 300,
-          elements: <ReportElement>[
-            TextElement(
-              id: 't1',
-              bounds: JetRect(x: 50, y: 50, width: 40, height: 20),
-              text: 'a',
-            ),
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+              id: 'detail',
+              type: BandType.detail,
+              height: 300,
+              elements: <ReportElement>[
+                TextElement(
+                  id: 't1',
+                  bounds: JetRect(x: 50, y: 50, width: 40, height: 20),
+                  text: 'a',
+                ),
+              ],
+            )),
           ],
         ),
-      ],
+      ),
     );
 
 JetRect _bounds(JetReportDesignerController c) =>
-    c.template.bands.first.elements.first.bounds;
+    c.definition.body.root.children
+        .whereType<BandNode>()
+        .first
+        .band
+        .elements
+        .first
+        .bounds;
 
 JetReportDesignerController _open() =>
     JetReportDesignerController()..open(_fixture());

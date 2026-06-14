@@ -50,17 +50,21 @@ Map<String, Object?> encodeDefinition(
 Map<String, Object?> _encodeFurniture(
     PageFurniture f, ElementCodecRegistry registry) {
   return <String, Object?>{
-    if (f.pageHeader != null) 'pageHeader': _encodeBand(f.pageHeader!, registry),
-    if (f.pageFooter != null) 'pageFooter': _encodeBand(f.pageFooter!, registry),
+    if (f.pageHeader != null)
+      'pageHeader': _encodeBand(f.pageHeader!, registry),
+    if (f.pageFooter != null)
+      'pageFooter': _encodeBand(f.pageFooter!, registry),
     if (f.columnHeader != null)
       'columnHeader': _encodeBand(f.columnHeader!, registry),
     if (f.columnFooter != null)
       'columnFooter': _encodeBand(f.columnFooter!, registry),
-    if (f.background != null) 'background': _encodeBand(f.background!, registry),
+    if (f.background != null)
+      'background': _encodeBand(f.background!, registry),
   };
 }
 
-Map<String, Object?> _encodeBody(ReportBody body, ElementCodecRegistry registry) {
+Map<String, Object?> _encodeBody(
+    ReportBody body, ElementCodecRegistry registry) {
   return <String, Object?>{
     if (body.title != null) 'title': _encodeBand(body.title!, registry),
     if (body.summary != null) 'summary': _encodeBand(body.summary!, registry),
@@ -86,7 +90,8 @@ Map<String, Object?> _encodeScope(
   };
 }
 
-Map<String, Object?> _encodeNode(ScopeNode node, ElementCodecRegistry registry) {
+Map<String, Object?> _encodeNode(
+    ScopeNode node, ElementCodecRegistry registry) {
   return switch (node) {
     BandNode(band: final Band b) => <String, Object?>{
         'kind': 'band',
@@ -159,7 +164,8 @@ ReportDefinition decodeDefinition(
   }
   return ReportDefinition(
     name: upgraded['name']! as String,
-    page: PageFormat.fromJson((upgraded['page']! as Map).cast<String, Object?>()),
+    page:
+        PageFormat.fromJson((upgraded['page']! as Map).cast<String, Object?>()),
     parameters: _decodeList<ReportParameter>(
         upgraded['parameters'], 'parameters', ReportParameter.fromJson),
     variables: _decodeList<ReportVariable>(
@@ -230,14 +236,13 @@ ScopeNode _decodeNode(
     Map<String, Object?> json, ElementCodecRegistry registry) {
   switch (json['kind']) {
     case 'band':
-      return BandNode(
-          _decodeBand((json['band']! as Map).cast<String, Object?>(), registry));
+      return BandNode(_decodeBand(
+          (json['band']! as Map).cast<String, Object?>(), registry));
     case 'scope':
       return NestedScope(_decodeScope(
           (json['scope']! as Map).cast<String, Object?>(), registry));
     default:
-      throw ReportFormatException(
-          'Unknown scope-node kind "${json['kind']}".');
+      throw ReportFormatException('Unknown scope-node kind "${json['kind']}".');
   }
 }
 

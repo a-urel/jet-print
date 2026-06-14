@@ -8,7 +8,8 @@ import 'package:jet_print/src/domain/report_parameter.dart';
 import 'package:jet_print/src/domain/report_variable.dart';
 import 'package:jet_print/src/domain/value_type.dart';
 
-const Band _ph = Band(id: 'furniture/pageHeader', type: BandType.pageHeader, height: 20);
+const Band _ph =
+    Band(id: 'furniture/pageHeader', type: BandType.pageHeader, height: 20);
 const Band _title = Band(id: 'body/title', type: BandType.title, height: 24);
 const ReportBody _body = ReportBody(root: DetailScope(id: 'root'));
 

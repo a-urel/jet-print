@@ -8,14 +8,16 @@ import 'dart:typed_data';
 
 import 'package:image/image.dart' as img;
 import 'package:jet_print/src/data/in_memory_data_source.dart';
+import 'package:jet_print/src/domain/band.dart';
+import 'package:jet_print/src/domain/detail_scope.dart';
 import 'package:jet_print/src/domain/elements/image_element.dart';
 import 'package:jet_print/src/domain/elements/image_source.dart';
 import 'package:jet_print/src/domain/elements/text_element.dart';
 import 'package:jet_print/src/domain/geometry.dart';
 import 'package:jet_print/src/domain/page_format.dart';
-import 'package:jet_print/src/domain/report_band.dart';
+import 'package:jet_print/src/domain/report_band.dart' show BandType;
+import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/domain/report_element.dart';
-import 'package:jet_print/src/domain/report_template.dart';
 import 'package:jet_print/src/domain/styles/text_style.dart';
 import 'package:jet_print/src/rendering/engine/jet_report_engine.dart';
 import 'package:jet_print/src/rendering/engine/rendered_report.dart';
@@ -30,90 +32,12 @@ const PageFormat customPage =
 
 /// The two-page invoice the preview goldens pin (rendered_invoice_test.dart):
 /// master fields, 12 iterated line items, bold total, page-footer page numbers.
-ReportTemplate invoiceTemplate() => const ReportTemplate(
+ReportDefinition invoiceDefinition() => const ReportDefinition(
       name: 'Invoice',
       page: PageFormat(width: 400, height: 300, margins: JetEdgeInsets.all(16)),
-      bands: <ReportBand>[
-        ReportBand(
-          type: BandType.title,
-          height: 28,
-          elements: <ReportElement>[
-            TextElement(
-              id: 'title',
-              bounds: JetRect(x: 0, y: 0, width: 160, height: 24),
-              text: 'INVOICE',
-              style: JetTextStyle(fontSize: 18, weight: JetFontWeight.bold),
-            ),
-          ],
-        ),
-        ReportBand(
-          type: BandType.detail,
-          height: 36,
-          elements: <ReportElement>[
-            TextElement(
-              id: 'invoiceNo',
-              bounds: JetRect(x: 220, y: 2, width: 148, height: 14),
-              text: 'invoiceNo',
-              style: JetTextStyle(align: JetTextAlign.right),
-              expression: r'$F{invoiceNo}',
-            ),
-            TextElement(
-              id: 'customer',
-              bounds: JetRect(x: 0, y: 2, width: 220, height: 14),
-              text: 'customer',
-              expression: r'$F{customerName}',
-            ),
-          ],
-        ),
-        ReportBand(
-          type: BandType.detail,
-          height: 18,
-          collectionField: 'lines',
-          elements: <ReportElement>[
-            TextElement(
-              id: 'desc',
-              bounds: JetRect(x: 0, y: 1, width: 180, height: 14),
-              text: 'desc',
-              expression: r'$F{description}',
-            ),
-            TextElement(
-              id: 'qty',
-              bounds: JetRect(x: 190, y: 1, width: 40, height: 14),
-              text: 'qty',
-              style: JetTextStyle(align: JetTextAlign.right),
-              expression: r'$F{qty}',
-            ),
-            TextElement(
-              id: 'lineTotal',
-              bounds: JetRect(x: 240, y: 1, width: 128, height: 14),
-              text: 'lineTotal',
-              style: JetTextStyle(align: JetTextAlign.right),
-              expression: r'FORMAT($F{qty} * $F{unitPrice}, "#,##0.00")',
-            ),
-          ],
-        ),
-        ReportBand(
-          type: BandType.detail,
-          height: 30,
-          elements: <ReportElement>[
-            TextElement(
-              id: 'totalLabel',
-              bounds: JetRect(x: 190, y: 8, width: 40, height: 14),
-              text: 'Total',
-              style: JetTextStyle(
-                  align: JetTextAlign.right, weight: JetFontWeight.bold),
-            ),
-            TextElement(
-              id: 'total',
-              bounds: JetRect(x: 240, y: 8, width: 128, height: 14),
-              text: 'total',
-              style: JetTextStyle(
-                  align: JetTextAlign.right, weight: JetFontWeight.bold),
-              expression: r'FORMAT($F{total}, "#,##0.00")',
-            ),
-          ],
-        ),
-        ReportBand(
+      furniture: PageFurniture(
+        pageFooter: Band(
+          id: 'furniture/pageFooter',
           type: BandType.pageFooter,
           height: 16,
           elements: <ReportElement>[
@@ -127,7 +51,103 @@ ReportTemplate invoiceTemplate() => const ReportTemplate(
             ),
           ],
         ),
-      ],
+      ),
+      body: ReportBody(
+        title: Band(
+          id: 'body/title',
+          type: BandType.title,
+          height: 28,
+          elements: <ReportElement>[
+            TextElement(
+              id: 'title',
+              bounds: JetRect(x: 0, y: 0, width: 160, height: 24),
+              text: 'INVOICE',
+              style: JetTextStyle(fontSize: 18, weight: JetFontWeight.bold),
+            ),
+          ],
+        ),
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+              id: 'root/c0',
+              type: BandType.detail,
+              height: 36,
+              elements: <ReportElement>[
+                TextElement(
+                  id: 'invoiceNo',
+                  bounds: JetRect(x: 220, y: 2, width: 148, height: 14),
+                  text: 'invoiceNo',
+                  style: JetTextStyle(align: JetTextAlign.right),
+                  expression: r'$F{invoiceNo}',
+                ),
+                TextElement(
+                  id: 'customer',
+                  bounds: JetRect(x: 0, y: 2, width: 220, height: 14),
+                  text: 'customer',
+                  expression: r'$F{customerName}',
+                ),
+              ],
+            )),
+            NestedScope(DetailScope(
+              id: 'root/c1',
+              collectionField: 'lines',
+              children: <ScopeNode>[
+                BandNode(Band(
+                  id: 'root/c1/c0',
+                  type: BandType.detail,
+                  height: 18,
+                  elements: <ReportElement>[
+                    TextElement(
+                      id: 'desc',
+                      bounds: JetRect(x: 0, y: 1, width: 180, height: 14),
+                      text: 'desc',
+                      expression: r'$F{description}',
+                    ),
+                    TextElement(
+                      id: 'qty',
+                      bounds: JetRect(x: 190, y: 1, width: 40, height: 14),
+                      text: 'qty',
+                      style: JetTextStyle(align: JetTextAlign.right),
+                      expression: r'$F{qty}',
+                    ),
+                    TextElement(
+                      id: 'lineTotal',
+                      bounds: JetRect(x: 240, y: 1, width: 128, height: 14),
+                      text: 'lineTotal',
+                      style: JetTextStyle(align: JetTextAlign.right),
+                      expression:
+                          r'FORMAT($F{qty} * $F{unitPrice}, "#,##0.00")',
+                    ),
+                  ],
+                )),
+              ],
+            )),
+            BandNode(Band(
+              id: 'root/c2',
+              type: BandType.detail,
+              height: 30,
+              elements: <ReportElement>[
+                TextElement(
+                  id: 'totalLabel',
+                  bounds: JetRect(x: 190, y: 8, width: 40, height: 14),
+                  text: 'Total',
+                  style: JetTextStyle(
+                      align: JetTextAlign.right, weight: JetFontWeight.bold),
+                ),
+                TextElement(
+                  id: 'total',
+                  bounds: JetRect(x: 240, y: 8, width: 128, height: 14),
+                  text: 'total',
+                  style: JetTextStyle(
+                      align: JetTextAlign.right, weight: JetFontWeight.bold),
+                  expression: r'FORMAT($F{total}, "#,##0.00")',
+                ),
+              ],
+            )),
+          ],
+        ),
+      ),
     );
 
 /// The invoice's deterministic in-memory dataset (12 lines -> 2 pages).
@@ -149,16 +169,17 @@ JetInMemoryDataSource invoiceSource() =>
     ]);
 
 /// Renders the invoice fixture (the export-side twin of the preview goldens).
-RenderedReport invoiceReport() =>
-    const JetReportEngine().render(invoiceTemplate(), invoiceSource());
+RenderedReport invoiceReport() => const JetReportEngine()
+    .renderDefinition(invoiceDefinition(), invoiceSource());
 
 /// A one-element static report on [page] saying [text].
 RenderedReport textOnlyReport(PageFormat page, {String text = 'Hello export'}) {
-  final ReportTemplate template = ReportTemplate(
+  final ReportDefinition definition = ReportDefinition(
     name: 'text-only',
     page: page,
-    bands: <ReportBand>[
-      ReportBand(
+    body: ReportBody(
+      title: Band(
+        id: 'body/title',
         type: BandType.title,
         height: 20,
         elements: <ReportElement>[
@@ -169,10 +190,11 @@ RenderedReport textOnlyReport(PageFormat page, {String text = 'Hello export'}) {
           ),
         ],
       ),
-    ],
+      root: const DetailScope(id: 'root'),
+    ),
   );
-  return const JetReportEngine()
-      .render(template, JetInMemoryDataSource(const <Map<String, Object?>>[]));
+  return const JetReportEngine().renderDefinition(
+      definition, JetInMemoryDataSource(const <Map<String, Object?>>[]));
 }
 
 /// A deterministic 4x2 PNG with full alpha (RGBA path in the PDF embedder).
@@ -196,11 +218,12 @@ RenderedReport imageReport({
   required Uint8List bytes,
   JetBoxFit fit = JetBoxFit.contain,
 }) {
-  final ReportTemplate template = ReportTemplate(
+  final ReportDefinition definition = ReportDefinition(
     name: 'image',
     page: customPage,
-    bands: <ReportBand>[
-      ReportBand(
+    body: ReportBody(
+      title: Band(
+        id: 'body/title',
         type: BandType.title,
         height: 70,
         elements: <ReportElement>[
@@ -212,20 +235,22 @@ RenderedReport imageReport({
           ),
         ],
       ),
-    ],
+      root: const DetailScope(id: 'root'),
+    ),
   );
-  return const JetReportEngine()
-      .render(template, JetInMemoryDataSource(const <Map<String, Object?>>[]));
+  return const JetReportEngine().renderDefinition(
+      definition, JetInMemoryDataSource(const <Map<String, Object?>>[]));
 }
 
-/// An empty dataset over a template with static chrome: the preview shows the
+/// An empty dataset over a definition with static chrome: the preview shows the
 /// static pages, so the artifact must too (never zero-page) — SC-007.
 RenderedReport emptyDatasetReport() {
-  final ReportTemplate template = ReportTemplate(
+  const ReportDefinition definition = ReportDefinition(
     name: 'empty',
     page: customPage,
-    bands: const <ReportBand>[
-      ReportBand(
+    body: ReportBody(
+      title: Band(
+        id: 'body/title',
         type: BandType.title,
         height: 20,
         elements: <ReportElement>[
@@ -236,32 +261,39 @@ RenderedReport emptyDatasetReport() {
           ),
         ],
       ),
-      ReportBand(
-        type: BandType.detail,
-        height: 16,
-        elements: <ReportElement>[
-          TextElement(
-            id: 'row',
-            bounds: JetRect(x: 0, y: 0, width: 150, height: 14),
-            text: 'row',
-            expression: r'$F{name}',
-          ),
+      root: DetailScope(
+        id: 'root',
+        children: <ScopeNode>[
+          BandNode(Band(
+            id: 'root/c0',
+            type: BandType.detail,
+            height: 16,
+            elements: <ReportElement>[
+              TextElement(
+                id: 'row',
+                bounds: JetRect(x: 0, y: 0, width: 150, height: 14),
+                text: 'row',
+                expression: r'$F{name}',
+              ),
+            ],
+          )),
         ],
       ),
-    ],
+    ),
   );
-  return const JetReportEngine()
-      .render(template, JetInMemoryDataSource(const <Map<String, Object?>>[]));
+  return const JetReportEngine().renderDefinition(
+      definition, JetInMemoryDataSource(const <Map<String, Object?>>[]));
 }
 
 /// A URL image source with no resolver: the layouter substitutes the shared
 /// placeholder primitives (outline rect + label), and records a diagnostic.
 RenderedReport unresolvedImageReport() {
-  final ReportTemplate template = ReportTemplate(
+  const ReportDefinition definition = ReportDefinition(
     name: 'unresolved-image',
     page: customPage,
-    bands: const <ReportBand>[
-      ReportBand(
+    body: ReportBody(
+      title: Band(
+        id: 'body/title',
         type: BandType.title,
         height: 60,
         elements: <ReportElement>[
@@ -272,41 +304,48 @@ RenderedReport unresolvedImageReport() {
           ),
         ],
       ),
-    ],
+      root: DetailScope(id: 'root'),
+    ),
   );
-  return const JetReportEngine()
-      .render(template, JetInMemoryDataSource(const <Map<String, Object?>>[]));
+  return const JetReportEngine().renderDefinition(
+      definition, JetInMemoryDataSource(const <Map<String, Object?>>[]));
 }
 
 /// One good binding plus one failing expression (unknown field): the bad
 /// element falls back blank with a diagnostic; the good one renders.
 RenderedReport failedExpressionReport() {
-  final ReportTemplate template = ReportTemplate(
+  const ReportDefinition definition = ReportDefinition(
     name: 'failed-expression',
     page: customPage,
-    bands: const <ReportBand>[
-      ReportBand(
-        type: BandType.detail,
-        height: 40,
-        elements: <ReportElement>[
-          TextElement(
-            id: 'good',
-            bounds: JetRect(x: 0, y: 0, width: 150, height: 14),
-            text: 'good',
-            expression: r'$F{name}',
-          ),
-          TextElement(
-            id: 'bad',
-            bounds: JetRect(x: 0, y: 18, width: 150, height: 14),
-            text: 'bad',
-            expression: r'$F{nope}',
-          ),
+    body: ReportBody(
+      root: DetailScope(
+        id: 'root',
+        children: <ScopeNode>[
+          BandNode(Band(
+            id: 'root/c0',
+            type: BandType.detail,
+            height: 40,
+            elements: <ReportElement>[
+              TextElement(
+                id: 'good',
+                bounds: JetRect(x: 0, y: 0, width: 150, height: 14),
+                text: 'good',
+                expression: r'$F{name}',
+              ),
+              TextElement(
+                id: 'bad',
+                bounds: JetRect(x: 0, y: 18, width: 150, height: 14),
+                text: 'bad',
+                expression: r'$F{nope}',
+              ),
+            ],
+          )),
         ],
       ),
-    ],
+    ),
   );
-  return const JetReportEngine().render(
-    template,
+  return const JetReportEngine().renderDefinition(
+    definition,
     JetInMemoryDataSource(<Map<String, Object?>>[
       <String, Object?>{'name': 'alpha'},
     ]),
@@ -315,32 +354,38 @@ RenderedReport failedExpressionReport() {
 
 /// The 011 1,000-record performance dataset shape (SC-005).
 RenderedReport performanceReport({int records = 1000}) {
-  const ReportTemplate template = ReportTemplate(
+  const ReportDefinition definition = ReportDefinition(
     name: 'big',
     page: PageFormat.a4Portrait,
-    bands: <ReportBand>[
-      ReportBand(
-        type: BandType.detail,
-        height: 20,
-        elements: <ReportElement>[
-          TextElement(
-            id: 'name',
-            bounds: JetRect(x: 0, y: 0, width: 240, height: 16),
-            text: 'name',
-            expression: r'$F{name}',
-          ),
-          TextElement(
-            id: 'amount',
-            bounds: JetRect(x: 260, y: 0, width: 120, height: 16),
-            text: 'amount',
-            expression: r'$F{amount}',
-          ),
+    body: ReportBody(
+      root: DetailScope(
+        id: 'root',
+        children: <ScopeNode>[
+          BandNode(Band(
+            id: 'root/c0',
+            type: BandType.detail,
+            height: 20,
+            elements: <ReportElement>[
+              TextElement(
+                id: 'name',
+                bounds: JetRect(x: 0, y: 0, width: 240, height: 16),
+                text: 'name',
+                expression: r'$F{name}',
+              ),
+              TextElement(
+                id: 'amount',
+                bounds: JetRect(x: 260, y: 0, width: 120, height: 16),
+                text: 'amount',
+                expression: r'$F{amount}',
+              ),
+            ],
+          )),
         ],
       ),
-    ],
+    ),
   );
-  return const JetReportEngine().render(
-    template,
+  return const JetReportEngine().renderDefinition(
+    definition,
     JetInMemoryDataSource(<Map<String, Object?>>[
       for (int i = 0; i < records; i++)
         <String, Object?>{'name': 'record $i', 'amount': i * 1.5},

@@ -5,8 +5,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
-int _count(JetReportDesignerController c) => c.template.bands
-    .fold<int>(0, (int n, ReportBand b) => n + b.elements.length);
+int _count(JetReportDesignerController c) => c.definition.body.root.children
+    .whereType<BandNode>()
+    .fold<int>(0, (int n, BandNode b) => n + b.band.elements.length);
 
 void main() {
   test('a 60-step create sequence fully undoes and redoes with exact state',
@@ -22,7 +23,7 @@ void main() {
     ];
     for (int i = 0; i < steps; i++) {
       c.createElement(cycle[i % cycle.length],
-          bandIndex: 1, at: const JetOffset(10, 10));
+          bandId: 'detail', at: const JetOffset(10, 10));
       states.add((count: _count(c), sel: c.selection.singleOrNull));
     }
     expect(_count(c), steps);
@@ -53,13 +54,13 @@ void main() {
     final JetReportDesignerController c = JetReportDesignerController();
     for (int i = 0; i < 5; i++) {
       c.createElement(DesignerToolType.text,
-          bandIndex: 1, at: const JetOffset(10, 10));
+          bandId: 'detail', at: const JetOffset(10, 10));
     }
     c.undo();
     c.undo();
     expect(c.canRedo, isTrue);
     c.createElement(DesignerToolType.shape,
-        bandIndex: 1, at: const JetOffset(10, 10));
+        bandId: 'detail', at: const JetOffset(10, 10));
     expect(c.canRedo, isFalse);
     c.dispose();
   });

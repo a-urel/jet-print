@@ -6,22 +6,24 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../data/binding_scope.dart';
 import '../../../data/data_schema.dart';
 import '../../../data/field_def.dart';
+import '../../../domain/band.dart';
+import '../../../domain/detail_scope.dart';
 import '../../../domain/elements/barcode_element.dart';
 import '../../../domain/elements/image_element.dart';
 import '../../../domain/elements/image_source.dart';
 import '../../../domain/elements/shape_element.dart';
 import '../../../domain/elements/text_element.dart';
 import '../../../domain/geometry.dart';
+import '../../../domain/group_level.dart';
 import '../../../domain/page_format.dart';
-import '../../../domain/report_band.dart';
 import '../../../domain/report_element.dart';
-import '../../../domain/report_group.dart';
 import '../../../domain/styles/color.dart';
 import '../../../domain/styles/text_style.dart';
 import '../../../rendering/elements/shape_path.dart';
 import '../../../rendering/frame/primitive.dart';
 import '../../../rendering/text/font_registry.dart';
 import '../../../rendering/text/ui_font_family.dart';
+import '../../controller/band_walker.dart';
 import '../../controller/jet_report_designer_controller.dart';
 import '../../designer_font_scope.dart';
 import '../../designer_schema_scope.dart';
@@ -104,7 +106,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !controller.takePropertiesFocus()) return;
       final selection = controller.selection;
-      if (selection.bandIndex != null) {
+      if (selection.bandId != null) {
         _bandHeightFocus.requestFocus();
         return;
       }
@@ -129,8 +131,14 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     final List<Widget> children;
     if (selection.isReport) {
       children = _reportInspector(controller, theme, l10n);
-    } else if (selection.bandIndex case final int bandIndex) {
-      children = _bandInspector(controller, bandIndex, theme, l10n, schema);
+    } else if (selection.bandId case final String bandId) {
+      children = _bandInspector(controller, bandId, theme, l10n);
+    } else if (selection.groupId case final String groupId
+        when findGroup(controller.definition, groupId) != null) {
+      children = _groupInspector(controller, groupId, theme, l10n);
+    } else if (selection.scopeId case final String scopeId
+        when findScope(controller.definition, scopeId) != null) {
+      children = _scopeInspector(controller, scopeId, theme, l10n, schema);
     } else if (selection.singleOrNull case final String id
         when _find(controller, id) != null) {
       children = _elementInspector(
@@ -449,11 +457,12 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     String elementId,
   ) {
     if (schema == null) return const <FieldDef>[];
-    final List<int>? path = bandPathOfElement(controller.template, elementId);
-    if (path == null) return const <FieldDef>[];
+    final Band? band = findBandOfElement(controller.definition, elementId);
+    if (band == null) return const <FieldDef>[];
+    final List<DetailScope> chain =
+        scopePathToBand(controller.definition, band.id);
     return <FieldDef>[
-      for (final FieldDef f
-          in fieldsInScopeAt(schema, controller.template, path))
+      for (final FieldDef f in fieldsInScopeForChain(schema, chain))
         if (f.type != JetFieldType.collection) f,
     ];
   }
@@ -474,10 +483,11 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     final RegExpMatch? simple = _simpleFieldRef.firstMatch(expression);
     if (simple == null) return null;
     final String name = simple.group(1)!;
-    final List<int>? path = bandPathOfElement(controller.template, elementId);
-    if (path == null) return null;
-    for (final FieldDef f
-        in fieldsInScopeAt(schema, controller.template, path)) {
+    final Band? band = findBandOfElement(controller.definition, elementId);
+    if (band == null) return null;
+    final List<DetailScope> chain =
+        scopePathToBand(controller.definition, band.id);
+    for (final FieldDef f in fieldsInScopeForChain(schema, chain)) {
       if (f.name == name) return f.type;
     }
     return null;
@@ -495,31 +505,34 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     String? imageField,
   }) {
     if (schema == null) return false;
-    final List<int>? path = bandPathOfElement(controller.template, elementId);
-    if (path == null) return false;
-    final List<FieldDef> scope =
-        fieldsInScopeAt(schema, controller.template, path);
+    final Band? band = findBandOfElement(controller.definition, elementId);
+    if (band == null) return false;
+    final List<DetailScope> chain =
+        scopePathToBand(controller.definition, band.id);
+    final List<FieldDef> scope = fieldsInScopeForChain(schema, chain);
     if (expression != null) return !expressionResolves(scope, expression);
     if (imageField != null) return !fieldResolves(scope, imageField);
     return false;
   }
 
   // --- Band ------------------------------------------------------------------
+  // A band inspector edits only what belongs to the band itself: its height.
+  // The group's key + pagination flags live in the Group inspector, and a
+  // scope's collection in the Scope inspector — so a flag is never shown on both
+  // a group header and footer band (the 023 two-bands smell, fixed by spec 024).
 
   List<Widget> _bandInspector(
     JetReportDesignerController controller,
-    int index,
+    String bandId,
     ShadThemeData theme,
     JetPrintLocalizations l10n,
-    JetDataSchema? schema,
   ) {
-    final double height = controller.template.bands[index].height;
-    final ReportGroup? group =
-        _groupOfBand(controller, controller.template.bands[index]);
-    return <Widget>[
+    final Band? band = findBand(controller.definition, bandId);
+    if (band == null) return const <Widget>[];
+    final List<Widget> children = <Widget>[
       _Header(
         icon: LucideIcons.rows3,
-        title: bandTypeLabel(controller.template.bands[index].type, l10n),
+        title: bandTypeLabel(band.type, l10n),
         theme: theme,
       ),
       const SizedBox(height: 14),
@@ -529,69 +542,142 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
       _NumberField(
         fieldKey: const ValueKey<String>('$_p.field.bandHeight'),
         prefix: LucideIcons.moveVertical,
-        value: height,
+        value: band.height,
         focusNode: _bandHeightFocus,
-        onCommit: (double v) => controller.setBandHeight(index, v),
+        onCommit: (double v) => controller.setBandHeight(bandId, v),
       ),
-      // Master/detail: designate the nested-collection field this band iterates
-      // (US3 / FR-015). Addresses the selected top-level band as path [index].
+    ];
+    // A group's key + pagination flags are edited from the band the author
+    // sees: its group HEADER band — or its FOOTER when the group has no header,
+    // so the flags are never unreachable (2026-06-14 design note). Exactly one
+    // band per group carries the section.
+    final GroupLevel? group = findGroupOfBand(controller.definition, bandId);
+    if (group != null && (group.header?.id ?? group.footer?.id) == bandId) {
+      children
+        ..add(const SizedBox(height: 18))
+        ..add(_Header(
+          icon: LucideIcons.group,
+          title: '${l10n.propertiesGroup} · ${group.name}',
+          theme: theme,
+        ))
+        ..add(const SizedBox(height: 14))
+        ..addAll(_groupSection(controller, group.id, theme, l10n));
+    }
+    return children;
+  }
+
+  // --- Group (first-class entity; its flags are edited from its header band) -
+  //
+  // The group's key + the three pagination flags are edited from the group's
+  // carrier band via [_groupSection] (see [_bandInspector]), not from this
+  // abstract node. Selecting the group row shows a read-only summary that points
+  // the author to the group header band (2026-06-14 design note).
+
+  List<Widget> _groupInspector(
+    JetReportDesignerController controller,
+    String groupId,
+    ShadThemeData theme,
+    JetPrintLocalizations l10n,
+  ) {
+    final GroupLevel? group = findGroup(controller.definition, groupId);
+    if (group == null) return const <Widget>[];
+    return <Widget>[
+      _Header(icon: LucideIcons.group, title: group.name, theme: theme),
       const SizedBox(height: 12),
-      SectionLabel(l10n.propertiesBinding),
-      _BindingField(
-        fieldKey: const ValueKey<String>('$_p.field.bandCollection'),
-        value: controller.template.bands[index].collectionField ?? '',
-        placeholder: l10n.bindingCollectionHint,
-        clearTooltip: l10n.bindingClearTooltip,
-        fields: _bandCollectionChoices(schema, controller, index),
-        pickerTooltip: l10n.bindingFieldPickerTooltip,
-        pickerKeyPrefix: '$_p.field.bandCollection.pick',
-        onSet: (String v) => controller.setBandCollection(<int>[index], v),
-        onClear: () => controller.setBandCollection(<int>[index], null),
+      Text(
+        l10n.propertiesGroupOnHeaderHint,
+        style: theme.textTheme.muted
+            .copyWith(color: theme.colorScheme.mutedForeground),
       ),
-      // Group bands expose their group's pagination flag (023). Shown only for a
-      // group header/footer whose group is declared.
-      if (group != null) ...<Widget>[
-        const SizedBox(height: 12),
-        SectionLabel(l10n.propertiesGroup),
-        ShadSwitch(
-          key: const ValueKey<String>('$_p.field.groupNewPage'),
-          value: group.startNewPage,
-          onChanged: (bool v) => controller.setGroupStartNewPage(group.name, v),
-          label: Text(l10n.propertiesGroupNewPage),
+    ];
+  }
+
+  /// The group's editable key + the three pagination flags, surfaced on the
+  /// group's carrier band by [_bandInspector]. Each flag writes through to the
+  /// one [GroupLevel] — the single source of truth (spec 024 / C11).
+  List<Widget> _groupSection(
+    JetReportDesignerController controller,
+    String groupId,
+    ShadThemeData theme,
+    JetPrintLocalizations l10n,
+  ) {
+    final GroupLevel? group = findGroup(controller.definition, groupId);
+    if (group == null) return const <Widget>[];
+    return <Widget>[
+      SectionLabel(l10n.propertiesGroupKey),
+      const SizedBox(height: 8),
+      _TextInput(
+        fieldKey: const ValueKey<String>('$_p.field.groupKey'),
+        value: group.key,
+        placeholder: l10n.bindingExpressionHint,
+        onCommit: (String v) => controller.setGroupKey(groupId, v),
+      ),
+      const SizedBox(height: 12),
+      // keepTogether + reprintHeaderOnEachPage are implemented and golden-tested
+      // but hidden from the UI for now (2026-06-14 design note) — only
+      // start-new-page is surfaced. The controller setters remain available.
+      ShadSwitch(
+        key: const ValueKey<String>('$_p.field.groupNewPage'),
+        value: group.startNewPage,
+        onChanged: (bool v) => controller.setGroupStartNewPage(groupId, v),
+        label: Text(l10n.propertiesGroupNewPage),
+      ),
+    ];
+  }
+
+  // --- Scope (the collection a detail scope iterates) ------------------------
+
+  List<Widget> _scopeInspector(
+    JetReportDesignerController controller,
+    String scopeId,
+    ShadThemeData theme,
+    JetPrintLocalizations l10n,
+    JetDataSchema? schema,
+  ) {
+    final DetailScope? scope = findScope(controller.definition, scopeId);
+    if (scope == null) return const <Widget>[];
+    final bool isRoot = controller.definition.body.root.id == scopeId;
+    return <Widget>[
+      _Header(
+          icon: LucideIcons.rows3, title: l10n.propertiesScope, theme: theme),
+      // The master/root scope iterates the records themselves and carries no
+      // collection field; only a nested scope binds one (US3 / FR-015).
+      if (!isRoot) ...<Widget>[
+        const SizedBox(height: 14),
+        SectionLabel(l10n.propertiesBinding),
+        _BindingField(
+          fieldKey: const ValueKey<String>('$_p.field.scopeCollection'),
+          value: scope.collectionField ?? '',
+          placeholder: l10n.bindingCollectionHint,
+          clearTooltip: l10n.bindingClearTooltip,
+          fields: _scopeCollectionChoices(schema, controller, scopeId),
+          pickerTooltip: l10n.bindingFieldPickerTooltip,
+          pickerKeyPrefix: '$_p.field.scopeCollection.pick',
+          onSet: (String v) => controller.setScopeCollection(scopeId, v),
+          onClear: () => controller.setScopeCollection(scopeId, null),
         ),
       ],
     ];
   }
 
-  /// The declared group a group header/footer band references, or null when the
-  /// band is not a group band or names no declared group (023).
-  ReportGroup? _groupOfBand(
-    JetReportDesignerController controller,
-    ReportBand band,
-  ) {
-    if (band.type != BandType.groupHeader &&
-        band.type != BandType.groupFooter) {
-      return null;
-    }
-    for (final ReportGroup g in controller.template.groups) {
-      if (g.name == band.group) return g;
-    }
-    return null;
-  }
-
-  /// The collection fields a top-level band can iterate (US3 / FR-015): every
-  /// nested-collection field at the master/root scope. A band binds a whole
-  /// collection, so — unlike the Value picker, which offers scalars — this keeps
-  /// only collections. Empty when no schema is attached, hiding the picker.
-  List<FieldDef> _bandCollectionChoices(
+  /// The collection fields a nested scope can iterate (US3 / FR-015): the
+  /// collection-typed fields in its PARENT scope's field scope (a scope binds a
+  /// whole collection). Empty when no schema is attached, hiding the picker.
+  List<FieldDef> _scopeCollectionChoices(
     JetDataSchema? schema,
     JetReportDesignerController controller,
-    int index,
+    String scopeId,
   ) {
     if (schema == null) return const <FieldDef>[];
+    // Descend the schema through every ANCESTOR scope (excluding this scope's
+    // own collectionField), then offer the collections available at that level.
+    final List<DetailScope> chain =
+        scopePathToScope(controller.definition, scopeId);
+    final List<DetailScope> ancestors = chain.isEmpty
+        ? const <DetailScope>[]
+        : chain.sublist(0, chain.length - 1);
     return <FieldDef>[
-      for (final FieldDef f
-          in fieldsInScopeAt(schema, controller.template, const <int>[]))
+      for (final FieldDef f in fieldsInScopeForChain(schema, ancestors))
         if (f.type == JetFieldType.collection) f,
     ];
   }
@@ -603,7 +689,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     ShadThemeData theme,
     JetPrintLocalizations l10n,
   ) {
-    final PageFormat page = controller.template.page;
+    final PageFormat page = controller.definition.page;
     final PaperMatch paper = recognizePaper(page);
     final MarginMatch margin = recognizeMargin(page.margins);
     final bool landscape = page.width > page.height;
@@ -620,7 +706,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
       const SizedBox(height: 8),
       _TextInput(
         fieldKey: const ValueKey<String>('$_p.field.reportName'),
-        value: controller.template.name,
+        value: controller.definition.name,
         placeholder: l10n.reportNameHint,
         onCommit: controller.rename,
       ),
@@ -684,8 +770,8 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                 fieldKey: const ValueKey<String>('$_p.field.pageWidth'),
                 prefix: LucideIcons.moveHorizontal,
                 value: page.width,
-                onCommit: (double v) => controller
-                    .setPageFormat(controller.template.page.copyWith(width: v)),
+                onCommit: (double v) => controller.setPageFormat(
+                    controller.definition.page.copyWith(width: v)),
               ),
             ),
             const SizedBox(width: 8),
@@ -695,7 +781,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                 prefix: LucideIcons.moveVertical,
                 value: page.height,
                 onCommit: (double v) => controller.setPageFormat(
-                    controller.template.page.copyWith(height: v)),
+                    controller.definition.page.copyWith(height: v)),
               ),
             ),
           ],
@@ -719,7 +805,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                   '$_p.field.marginPreset.option.${preset.kind.name}'),
               label: _marginPresetLabel(preset.kind, l10n),
               selected: margin.kind == preset.kind,
-              onPick: () => controller.setPageFormat(controller.template.page
+              onPick: () => controller.setPageFormat(controller.definition.page
                   .copyWith(margins: JetEdgeInsets.all(preset.value))),
             ),
         ],
@@ -790,7 +876,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
       prefix: prefix,
       value: value,
       onCommit: (double v) {
-        final PageFormat p = controller.template.page;
+        final PageFormat p = controller.definition.page;
         controller.setPageFormat(p.copyWith(margins: edit(p.margins, v)));
       },
     );
@@ -807,10 +893,10 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
       };
 
   ReportElement? _find(JetReportDesignerController controller, String id) {
-    for (final band in controller.template.bands) {
-      for (final ReportElement e in band.elements) {
-        if (e.id == id) return e;
-      }
+    final Band? band = findBandOfElement(controller.definition, id);
+    if (band == null) return null;
+    for (final ReportElement e in band.elements) {
+      if (e.id == id) return e;
     }
     return null;
   }

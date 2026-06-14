@@ -27,25 +27,31 @@ void main() {
         await loadGoogleFonts(bundle: _DiskBundle());
     const String tr = 'İıŞşĞğÇçÖöÜü';
     final String family = googleFontCatalog.first.name;
-    final RenderedReport report = const JetReportEngine().render(
-      ReportTemplate(
+    final RenderedReport report = const JetReportEngine().renderDefinition(
+      ReportDefinition(
         name: 'TR',
         page: const PageFormat(
             width: 300, height: 120, margins: JetEdgeInsets.all(10)),
-        bands: <ReportBand>[
-          ReportBand(
-            type: BandType.detail,
-            height: 40,
-            elements: <ReportElement>[
-              TextElement(
-                id: 't',
-                bounds: const JetRect(x: 0, y: 0, width: 260, height: 20),
-                text: tr,
-                style: JetTextStyle(fontFamily: family),
-              ),
+        body: ReportBody(
+          root: DetailScope(
+            id: 'root',
+            children: <ScopeNode>[
+              BandNode(Band(
+                id: 'detail',
+                type: BandType.detail,
+                height: 40,
+                elements: <ReportElement>[
+                  TextElement(
+                    id: 't',
+                    bounds: const JetRect(x: 0, y: 0, width: 260, height: 20),
+                    text: tr,
+                    style: JetTextStyle(fontFamily: family),
+                  ),
+                ],
+              )),
             ],
           ),
-        ],
+        ),
       ),
       JetInMemoryDataSource(const <Map<String, Object?>>[<String, Object?>{}]),
       options: RenderOptions(fonts: fonts),

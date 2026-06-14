@@ -8,9 +8,16 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
-/// The detail band's single element of type [T] (the default template's band 1).
+/// The detail band's single element of type [T] (the default definition's
+/// `'detail'` band).
 T _only<T extends ReportElement>(JetReportDesignerController c) =>
-    c.template.bands[1].elements.whereType<T>().single;
+    c.definition.body.root.children
+        .whereType<BandNode>()
+        .first
+        .band
+        .elements
+        .whereType<T>()
+        .single;
 
 void main() {
   group('text binding', () {
@@ -18,7 +25,7 @@ void main() {
       final JetReportDesignerController c = JetReportDesignerController();
       addTearDown(c.dispose);
       c.createElement(DesignerToolType.text,
-          bandIndex: 1, at: const JetOffset(10, 10));
+          bandId: 'detail', at: const JetOffset(10, 10));
       final String id = c.selection.singleOrNull!;
 
       expect(_only<TextElement>(c).expression, isNull);
@@ -33,7 +40,7 @@ void main() {
       final JetReportDesignerController c = JetReportDesignerController();
       addTearDown(c.dispose);
       c.createElement(DesignerToolType.text,
-          bandIndex: 1, at: const JetOffset(10, 10));
+          bandId: 'detail', at: const JetOffset(10, 10));
       final String id = c.selection.singleOrNull!;
 
       c.setBinding(id, r'$F{total}');
@@ -48,7 +55,7 @@ void main() {
       final JetReportDesignerController c = JetReportDesignerController();
       addTearDown(c.dispose);
       c.createElement(DesignerToolType.text,
-          bandIndex: 1, at: const JetOffset(10, 10));
+          bandId: 'detail', at: const JetOffset(10, 10));
       final String id = c.selection.singleOrNull!;
 
       c.setBinding(id, r'$F{a}');
@@ -63,7 +70,7 @@ void main() {
       final JetReportDesignerController c = JetReportDesignerController();
       addTearDown(c.dispose);
       c.createElement(DesignerToolType.image,
-          bandIndex: 1, at: const JetOffset(10, 10));
+          bandId: 'detail', at: const JetOffset(10, 10));
       final String id = c.selection.singleOrNull!;
 
       c.setImageField(id, 'logo');
@@ -78,7 +85,7 @@ void main() {
       final JetReportDesignerController c = JetReportDesignerController();
       addTearDown(c.dispose);
       c.createBoundElement(
-        bandIndex: 1,
+        bandId: 'detail',
         at: const JetOffset(12, 12),
         expression: r'$F{customerName}',
       );

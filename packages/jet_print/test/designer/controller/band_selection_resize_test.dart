@@ -11,20 +11,42 @@ void main() {
     return c;
   }
 
-  // Default template bands: 0 pageHeader (flow), 1 detail (flow, h=200),
-  // 2 pageFooter (bottom-anchored).
-  double bandHeight(JetReportDesignerController c, int i) =>
-      c.template.bands[i].height;
+  // Default definition bands (addressed by stable id, spec 024):
+  //   'pageHeader' (furniture), 'detail' (per-row, h=200), 'pageFooter'.
+  double bandHeight(JetReportDesignerController c, String id) {
+    if (id == 'pageHeader') return c.definition.furniture.pageHeader!.height;
+    if (id == 'pageFooter') return c.definition.furniture.pageFooter!.height;
+    return c.definition.body.root.children
+        .whereType<BandNode>()
+        .firstWhere((BandNode n) => n.band.id == id)
+        .band
+        .height;
+  }
+
+  int elementCount(JetReportDesignerController c) {
+    int n = 0;
+    final ReportDefinition d = c.definition;
+    for (final Band? b in <Band?>[
+      d.furniture.pageHeader,
+      d.furniture.pageFooter,
+    ]) {
+      if (b != null) n += b.elements.length;
+    }
+    for (final BandNode node in d.body.root.children.whereType<BandNode>()) {
+      n += node.band.elements.length;
+    }
+    return n;
+  }
 
   group('selection targets are mutually exclusive', () {
     test('selectBand replaces any element selection', () {
       final JetReportDesignerController c = make();
       c.createElement(DesignerToolType.text,
-          bandIndex: 1, at: const JetOffset(10, 10));
+          bandId: 'detail', at: const JetOffset(10, 10));
       expect(c.selection.singleOrNull, isNotNull);
 
-      c.selectBand(1);
-      expect(c.selection.bandIndex, 1);
+      c.selectBand('detail');
+      expect(c.selection.bandId, 'detail');
       expect(c.selection.ids, isEmpty);
       expect(c.selection.isReport, isFalse);
     });
@@ -32,54 +54,54 @@ void main() {
     test('selectReport replaces a band selection, and select() clears both',
         () {
       final JetReportDesignerController c = make();
-      c.selectBand(1);
+      c.selectBand('detail');
       c.selectReport();
       expect(c.selection.isReport, isTrue);
-      expect(c.selection.bandIndex, isNull);
+      expect(c.selection.bandId, isNull);
 
       c.createElement(DesignerToolType.text,
-          bandIndex: 0, at: const JetOffset(5, 5));
+          bandId: 'pageHeader', at: const JetOffset(5, 5));
       final String id = c.selection.singleOrNull!;
       c.select(id);
-      expect(c.selection.bandIndex, isNull);
+      expect(c.selection.bandId, isNull);
       expect(c.selection.isReport, isFalse);
     });
 
-    test('selectBand ignores an out-of-range index', () {
+    test('selectBand ignores an unknown id', () {
       final JetReportDesignerController c = make();
       c.selectReport();
-      c.selectBand(99);
-      expect(c.selection.isReport, isTrue, reason: 'unchanged on bad index');
+      c.selectBand('ghost');
+      expect(c.selection.isReport, isTrue, reason: 'unchanged on bad id');
     });
   });
 
   group('committed band height (undoable)', () {
     test('setBandHeight changes the model and is undoable', () {
       final JetReportDesignerController c = make();
-      expect(bandHeight(c, 1), 200);
+      expect(bandHeight(c, 'detail'), 200);
 
-      c.setBandHeight(1, 260);
-      expect(bandHeight(c, 1), 260);
-      expect(c.selection.bandIndex, 1,
+      c.setBandHeight('detail', 260);
+      expect(bandHeight(c, 'detail'), 260);
+      expect(c.selection.bandId, 'detail',
           reason: 'the resized band stays selected');
       expect(c.canUndo, isTrue);
 
       c.undo();
-      expect(bandHeight(c, 1), 200);
+      expect(bandHeight(c, 'detail'), 200);
       expect(c.selection.isEmpty, isTrue,
           reason: 'prior (empty) selection back');
     });
 
     test('setBandHeight clamps to a minimum floor', () {
       final JetReportDesignerController c = make();
-      c.setBandHeight(1, 0);
-      expect(bandHeight(c, 1), greaterThanOrEqualTo(8),
+      c.setBandHeight('detail', 0);
+      expect(bandHeight(c, 'detail'), greaterThanOrEqualTo(8),
           reason: 'a band cannot collapse to nothing');
     });
 
     test('setBandHeight to the same value records no history', () {
       final JetReportDesignerController c = make();
-      c.setBandHeight(1, 200);
+      c.setBandHeight('detail', 200);
       expect(c.canUndo, isFalse);
     });
   });
@@ -87,43 +109,45 @@ void main() {
   group('live band resize', () {
     test('a flow-band drag previews then commits the new height', () {
       final JetReportDesignerController c = make();
-      c.beginBandResize(1);
-      expect(c.bandResizePreviewHeight(1), 200);
+      c.beginBandResize('detail');
+      expect(c.bandResizePreviewHeight('detail'), 200);
 
       c.updateBandResize(50); // +50pt height
-      expect(c.bandResizePreviewHeight(1), 250);
-      expect(bandHeight(c, 1), 200, reason: 'model unchanged until commit');
+      expect(c.bandResizePreviewHeight('detail'), 250);
+      expect(bandHeight(c, 'detail'), 200,
+          reason: 'model unchanged until commit');
 
       c.commitBandResize();
-      expect(bandHeight(c, 1), 250);
-      expect(c.bandResizePreviewHeight(1), isNull, reason: 'preview cleared');
+      expect(bandHeight(c, 'detail'), 250);
+      expect(c.bandResizePreviewHeight('detail'), isNull,
+          reason: 'preview cleared');
       expect(c.canUndo, isTrue);
     });
 
     test('cancel discards the preview without touching the model', () {
       final JetReportDesignerController c = make();
-      c.beginBandResize(1);
+      c.beginBandResize('detail');
       c.updateBandResize(50);
       c.cancelBandResize();
-      expect(c.bandResizePreviewHeight(1), isNull);
-      expect(bandHeight(c, 1), 200);
+      expect(c.bandResizePreviewHeight('detail'), isNull);
+      expect(bandHeight(c, 'detail'), 200);
       expect(c.canUndo, isFalse);
     });
 
     test('a zero-delta commit records no history', () {
       final JetReportDesignerController c = make();
-      c.beginBandResize(1);
+      c.beginBandResize('detail');
       c.updateBandResize(0);
       c.commitBandResize();
-      expect(bandHeight(c, 1), 200);
+      expect(bandHeight(c, 'detail'), 200);
       expect(c.canUndo, isFalse);
     });
 
     test('the height floor also applies to a live shrink', () {
       final JetReportDesignerController c = make();
-      c.beginBandResize(1);
+      c.beginBandResize('detail');
       c.updateBandResize(-1000); // way past the floor
-      expect(c.bandResizePreviewHeight(1), greaterThanOrEqualTo(8));
+      expect(c.bandResizePreviewHeight('detail'), greaterThanOrEqualTo(8));
     });
   });
 
@@ -131,13 +155,11 @@ void main() {
     test('delete does nothing when a band is selected', () {
       final JetReportDesignerController c = make();
       c.createElement(DesignerToolType.text,
-          bandIndex: 1, at: const JetOffset(10, 10));
-      final int before =
-          c.template.bands.expand((ReportBand b) => b.elements).length;
-      c.selectBand(1);
+          bandId: 'detail', at: const JetOffset(10, 10));
+      final int before = elementCount(c);
+      c.selectBand('detail');
       c.delete();
-      final int after =
-          c.template.bands.expand((ReportBand b) => b.elements).length;
+      final int after = elementCount(c);
       expect(after, before, reason: 'delete targets elements, not bands');
     });
   });

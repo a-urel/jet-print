@@ -1,20 +1,23 @@
 /// The command that inserts pasted/duplicated element copies (FR-015).
 library;
 
-import '../../../domain/report_band.dart';
+import '../../../domain/band.dart';
+import '../../../domain/report_definition.dart';
 import '../../../domain/report_element.dart';
+import '../band_walker.dart';
 import '../clipboard.dart';
 import '../designer_document.dart';
 import '../edit_command.dart';
 import '../selection.dart';
 
 /// Inserts pre-built copies (fresh ids + paste offset already applied by the
-/// controller) into their bands and selects them. Used by paste and duplicate.
+/// controller) into their bands (by stable id) and selects them. Used by paste
+/// and duplicate. A copy whose band no longer exists is skipped.
 class ClipboardCommand extends EditCommand {
-  /// Creates an insert of [copies] (each carrying its target band index).
+  /// Creates an insert of [copies] (each carrying its target band id).
   const ClipboardCommand(this.copies);
 
-  /// The copies to insert, each with its destination band index.
+  /// The copies to insert, each with its destination band id.
   final List<ClipboardEntry> copies;
 
   @override
@@ -23,16 +26,17 @@ class ClipboardCommand extends EditCommand {
   @override
   DesignerDocument apply(DesignerDocument before) {
     if (copies.isEmpty) return before;
-    final List<ReportBand> bands = List<ReportBand>.of(before.template.bands);
+    ReportDefinition def = before.definition;
     for (final ClipboardEntry copy in copies) {
-      if (copy.bandIndex < 0 || copy.bandIndex >= bands.length) continue;
-      final ReportBand band = bands[copy.bandIndex];
-      bands[copy.bandIndex] = band.copyWith(
-        elements: <ReportElement>[...band.elements, copy.element],
+      def = updateBand(
+        def,
+        copy.bandId,
+        (Band b) =>
+            b.copyWith(elements: <ReportElement>[...b.elements, copy.element]),
       );
     }
-    return DesignerDocument(
-      template: before.template.copyWith(bands: bands),
+    return before.withDefinition(
+      def,
       selection: Selection.of(<String>[
         for (final ClipboardEntry c in copies) c.element.id,
       ]),

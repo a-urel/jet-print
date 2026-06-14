@@ -2,33 +2,39 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
-ReportTemplate _fixture() => const ReportTemplate(
+ReportDefinition _fixture() => const ReportDefinition(
       name: 'F',
       page: PageFormat.a4Portrait,
-      bands: <ReportBand>[
-        ReportBand(
-          type: BandType.detail,
-          height: 300,
-          elements: <ReportElement>[
-            TextElement(
-                id: 'a',
-                bounds: JetRect(x: 10, y: 10, width: 20, height: 10),
-                text: 'a'),
-            TextElement(
-                id: 'b',
-                bounds: JetRect(x: 45, y: 40, width: 20, height: 10),
-                text: 'b'),
-            TextElement(
-                id: 'c',
-                bounds: JetRect(x: 90, y: 80, width: 20, height: 10),
-                text: 'c'),
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+              id: 'detail',
+              type: BandType.detail,
+              height: 300,
+              elements: <ReportElement>[
+                TextElement(
+                    id: 'a',
+                    bounds: JetRect(x: 10, y: 10, width: 20, height: 10),
+                    text: 'a'),
+                TextElement(
+                    id: 'b',
+                    bounds: JetRect(x: 45, y: 40, width: 20, height: 10),
+                    text: 'b'),
+                TextElement(
+                    id: 'c',
+                    bounds: JetRect(x: 90, y: 80, width: 20, height: 10),
+                    text: 'c'),
+              ],
+            )),
           ],
         ),
-      ],
+      ),
     );
 
 List<ReportElement> _els(JetReportDesignerController c) =>
-    c.template.bands.first.elements;
+    c.definition.body.root.children.whereType<BandNode>().first.band.elements;
 
 JetRect _boundsOf(JetReportDesignerController c, String id) =>
     _els(c).firstWhere((ReportElement e) => e.id == id).bounds;

@@ -16,10 +16,12 @@ final Finder _bottomRightHandle =
 final Finder _guideBox = find.byWidgetPredicate(
     (Widget w) => w is ColoredBox && w.color == const Color(0xFFEF4444));
 
-JetRect _bounds(JetReportDesignerController c, String id) => c.template.bands
-    .expand((ReportBand b) => b.elements)
-    .firstWhere((ReportElement e) => e.id == id)
-    .bounds;
+JetRect _bounds(JetReportDesignerController c, String id) =>
+    c.definition.body.root.children
+        .whereType<BandNode>()
+        .expand((BandNode n) => n.band.elements)
+        .firstWhere((ReportElement e) => e.id == id)
+        .bounds;
 
 void main() {
   testWidgets('dragging a handle resizes the element and commits',

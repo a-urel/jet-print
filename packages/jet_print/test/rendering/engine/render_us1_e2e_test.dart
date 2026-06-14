@@ -17,14 +17,15 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 const PageFormat _page =
     PageFormat(width: 200, height: 100, margins: JetEdgeInsets.all(10));
 
-ReportTemplate _template() => const ReportTemplate(
+ReportDefinition _template() => const ReportDefinition(
       name: 'US1',
       page: _page,
       parameters: <ReportParameter>[
         ReportParameter(name: 'printedBy', type: JetFieldType.string),
       ],
-      bands: <ReportBand>[
-        ReportBand(
+      body: ReportBody(
+        title: Band(
+          id: 'body/title',
           type: BandType.title,
           height: 20,
           elements: <ReportElement>[
@@ -36,19 +37,25 @@ ReportTemplate _template() => const ReportTemplate(
             ),
           ],
         ),
-        ReportBand(
-          type: BandType.detail,
-          height: 30,
-          elements: <ReportElement>[
-            TextElement(
-              id: 'name',
-              bounds: JetRect(x: 0, y: 0, width: 180, height: 16),
-              text: 'name',
-              expression: r'$F{name}',
-            ),
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+              id: 'root/c0',
+              type: BandType.detail,
+              height: 30,
+              elements: <ReportElement>[
+                TextElement(
+                  id: 'name',
+                  bounds: JetRect(x: 0, y: 0, width: 180, height: 16),
+                  text: 'name',
+                  expression: r'$F{name}',
+                ),
+              ],
+            )),
           ],
         ),
-      ],
+      ),
     );
 
 JetInMemoryDataSource _source() => JetInMemoryDataSource(
@@ -59,7 +66,7 @@ JetInMemoryDataSource _source() => JetInMemoryDataSource(
       ],
     );
 
-RenderedReport _render() => const JetReportEngine().render(
+RenderedReport _render() => const JetReportEngine().renderDefinition(
       _template(),
       _source(),
       options: const RenderOptions(

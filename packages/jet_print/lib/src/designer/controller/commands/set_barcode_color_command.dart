@@ -2,18 +2,17 @@
 library;
 
 import '../../../domain/elements/barcode_element.dart';
-import '../../../domain/report_band.dart';
 import '../../../domain/report_element.dart';
 import '../../../domain/styles/color.dart';
+import '../band_walker.dart';
 import '../designer_document.dart';
 import '../edit_command.dart';
 
 /// Replaces the [BarcodeElement] [id]'s foreground [color] in one undoable
 /// step, preserving its symbology, data, and bounds.
 ///
-/// **No-op** when the element already carries an equal color: returns `before`
-/// unchanged, so the controller's `_commit` identity guard records no history
-/// and notifies no listener (FR-013). Also a no-op for a non-barcode or
+/// **No-op** when the element already carries an equal color (value-equal
+/// definition → no history, FR-013). Also a no-op for a non-barcode or
 /// absent [id].
 class SetBarcodeColorCommand extends EditCommand {
   /// Creates a recolor of the barcode element [id] to [color].
@@ -29,26 +28,12 @@ class SetBarcodeColorCommand extends EditCommand {
   String get label => 'Edit barcode color';
 
   @override
-  DesignerDocument apply(DesignerDocument before) {
-    bool changed = false;
-    final List<ReportBand> bands = <ReportBand>[
-      for (final ReportBand band in before.template.bands)
-        if (band.elements.any((ReportElement e) =>
-            e.id == id && e is BarcodeElement && e.color != color))
-          () {
-            changed = true;
-            return band.copyWith(elements: <ReportElement>[
-              for (final ReportElement e in band.elements)
-                if (e.id == id && e is BarcodeElement)
-                  e.copyWith(color: color)
-                else
-                  e,
-            ]);
-          }()
-        else
-          band,
-    ];
-    if (!changed) return before;
-    return before.withTemplate(before.template.copyWith(bands: bands));
-  }
+  DesignerDocument apply(DesignerDocument before) => before.withDefinition(
+        updateElement(
+          before.definition,
+          id,
+          (ReportElement e) =>
+              e is BarcodeElement ? e.copyWith(color: color) : e,
+        ),
+      );
 }

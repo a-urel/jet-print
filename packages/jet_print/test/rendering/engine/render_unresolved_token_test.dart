@@ -3,12 +3,14 @@
 // omitting knownFields renders empty (no regression, SC-005).
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/in_memory_data_source.dart';
+import 'package:jet_print/src/domain/band.dart';
+import 'package:jet_print/src/domain/detail_scope.dart';
 import 'package:jet_print/src/domain/elements/text_element.dart';
 import 'package:jet_print/src/domain/geometry.dart';
 import 'package:jet_print/src/domain/page_format.dart';
 import 'package:jet_print/src/domain/report_band.dart';
+import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/domain/report_element.dart';
-import 'package:jet_print/src/domain/report_template.dart';
 import 'package:jet_print/src/rendering/engine/jet_report_engine.dart';
 import 'package:jet_print/src/rendering/engine/render_options.dart';
 import 'package:jet_print/src/rendering/engine/rendered_report.dart';
@@ -18,23 +20,29 @@ import 'package:jet_print/src/rendering/text/text_measurer.dart';
 const PageFormat _page =
     PageFormat(width: 200, height: 100, margins: JetEdgeInsets.all(10));
 
-ReportTemplate _template() => ReportTemplate(
+ReportDefinition _template() => ReportDefinition(
       name: 'unresolved',
       page: _page,
-      bands: <ReportBand>[
-        ReportBand(
-          type: BandType.detail,
-          height: 20,
-          elements: <ReportElement>[
-            const TextElement(
-              id: 'who',
-              bounds: JetRect(x: 0, y: 0, width: 180, height: 16),
-              text: 'who',
-              expression: r'$F{missing}',
-            ),
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+              id: 'root/c0',
+              type: BandType.detail,
+              height: 20,
+              elements: <ReportElement>[
+                const TextElement(
+                  id: 'who',
+                  bounds: JetRect(x: 0, y: 0, width: 180, height: 16),
+                  text: 'who',
+                  expression: r'$F{missing}',
+                ),
+              ],
+            )),
           ],
         ),
-      ],
+      ),
     );
 
 final JetInMemoryDataSource _source = JetInMemoryDataSource(
@@ -52,7 +60,7 @@ List<String> _runs(RenderedReport report) => <String>[
 
 void main() {
   test('schema-aware render shows the token for an unknown field', () {
-    final RenderedReport report = const JetReportEngine().render(
+    final RenderedReport report = const JetReportEngine().renderDefinition(
       _template(),
       _source,
       options: const RenderOptions(knownFields: <String>{'name'}),
@@ -61,7 +69,7 @@ void main() {
   });
 
   test('a host-localized token is used verbatim', () {
-    final RenderedReport report = const JetReportEngine().render(
+    final RenderedReport report = const JetReportEngine().renderDefinition(
       _template(),
       _source,
       options: const RenderOptions(
@@ -74,7 +82,7 @@ void main() {
 
   test('without knownFields the binding renders empty (no regression)', () {
     final RenderedReport report =
-        const JetReportEngine().render(_template(), _source);
+        const JetReportEngine().renderDefinition(_template(), _source);
     expect(_runs(report), isNot(contains('#ERROR')));
   });
 }

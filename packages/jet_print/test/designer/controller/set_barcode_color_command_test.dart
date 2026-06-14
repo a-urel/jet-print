@@ -8,17 +8,27 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
-ReportTemplate _report(List<ReportElement> elements) => ReportTemplate(
+ReportDefinition _report(List<ReportElement> elements) => ReportDefinition(
       name: 'Barcode color test',
       page: PageFormat.a4Portrait,
-      bands: <ReportBand>[
-        ReportBand(type: BandType.detail, height: 120, elements: elements),
-      ],
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+                id: 'detail',
+                type: BandType.detail,
+                height: 120,
+                elements: elements)),
+          ],
+        ),
+      ),
     );
 
 BarcodeElement _barcode(JetReportDesignerController c, String id) =>
-    c.template.bands
-        .expand((ReportBand b) => b.elements)
+    c.definition.body.root.children
+        .whereType<BandNode>()
+        .expand((BandNode n) => n.band.elements)
         .firstWhere((ReportElement e) => e.id == id) as BarcodeElement;
 
 const JetRect _bounds = JetRect(x: 12, y: 8, width: 40, height: 40);
@@ -34,7 +44,7 @@ void main() {
   group('setBarcodeColor — replaces the color (C8)', () {
     test('a commit replaces the color, preserving symbology/data/bounds', () {
       final JetReportDesignerController c = JetReportDesignerController(
-          template: _report(const <ReportElement>[_element]));
+          definition: _report(const <ReportElement>[_element]));
       c.setBarcodeColor('b', const JetColor(0xFF1E40AF));
       expect(_barcode(c, 'b').color, const JetColor(0xFF1E40AF));
       expect(_barcode(c, 'b').symbology, BarcodeSymbology.qrCode);
@@ -45,7 +55,7 @@ void main() {
 
     test('a real change is a single notifying, undoable step', () {
       final JetReportDesignerController c = JetReportDesignerController(
-          template: _report(const <ReportElement>[_element]));
+          definition: _report(const <ReportElement>[_element]));
       int notifications = 0;
       c.addListener(() => notifications++);
 
@@ -60,7 +70,7 @@ void main() {
   group('setBarcodeColor — no-ops (C9 / FR-013)', () {
     test('an equal color records no history and notifies no one', () {
       final JetReportDesignerController c = JetReportDesignerController(
-          template: _report(const <ReportElement>[_element]));
+          definition: _report(const <ReportElement>[_element]));
       int notifications = 0;
       c.addListener(() => notifications++);
 
@@ -73,7 +83,7 @@ void main() {
 
     test('a missing target is a no-op', () {
       final JetReportDesignerController c = JetReportDesignerController(
-          template: _report(const <ReportElement>[_element]));
+          definition: _report(const <ReportElement>[_element]));
       int notifications = 0;
       c.addListener(() => notifications++);
 
@@ -86,7 +96,7 @@ void main() {
 
     test('a non-barcode target is a no-op', () {
       final JetReportDesignerController c = JetReportDesignerController(
-        template: _report(const <ReportElement>[
+        definition: _report(const <ReportElement>[
           _element,
           TextElement(id: 't', bounds: _bounds, text: 'Hi'),
         ]),
@@ -105,7 +115,7 @@ void main() {
   group('setBarcodeColor — undo / redo (C9)', () {
     test('one undo restores black; one redo reapplies the pick', () {
       final JetReportDesignerController c = JetReportDesignerController(
-          template: _report(const <ReportElement>[_element]));
+          definition: _report(const <ReportElement>[_element]));
       c.setBarcodeColor('b', const JetColor(0xFF1E40AF));
 
       c.undo();

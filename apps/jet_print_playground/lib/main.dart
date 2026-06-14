@@ -133,10 +133,11 @@ class _PlaygroundHome extends StatefulWidget {
 }
 
 class _PlaygroundHomeState extends State<_PlaygroundHome> {
-  // Seed the designer with the bundled invoice sample so the data-aware
-  // master/detail design is visible on first run (FR-021).
+  // Seed the designer with the bundled invoice sample — authored in the reified
+  // band model (spec 024) — so the data-aware master/detail design is editable
+  // on first run (FR-021).
   final JetReportDesignerController _controller =
-      JetReportDesignerController(template: invoiceSampleTemplate());
+      JetReportDesignerController(definition: invoiceSampleDefinition());
 
   /// The file type the designer reads/writes: a JSON document produced by
   /// `JetReportFormat.encodeJson`.
@@ -151,25 +152,26 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
     super.dispose();
   }
 
-  /// Save: encode the current template and write it to a picked location.
-  Future<void> _save(ReportTemplate template) async {
+  /// Save: encode the current definition and write it to a picked location.
+  Future<void> _save(ReportDefinition definition) async {
     final FileSaveLocation? location = await getSaveLocation(
       acceptedTypeGroups: const <XTypeGroup>[_reportType],
       suggestedName: 'report.jetreport',
     );
     if (location == null) return; // user cancelled
     await File(location.path)
-        .writeAsString(JetReportFormat.encodeJson(template));
+        .writeAsString(JetReportFormat.encodeDefinitionJson(definition));
   }
 
-  /// Open: read a picked file and decode it back into the controller.
+  /// Open: read a picked file and decode it back into the controller. The v2
+  /// decoder migrates a v1 (flat-template) document forward automatically.
   Future<void> _open() async {
     final XFile? file = await openFile(
       acceptedTypeGroups: const <XTypeGroup>[_reportType],
     );
     if (file == null) return; // user cancelled
     final String contents = await file.readAsString();
-    _controller.open(JetReportFormat.decodeJson(contents));
+    _controller.open(JetReportFormat.decodeDefinitionJson(contents));
   }
 
   /// Export the rendered report as a PDF to a picked location (host-owned I/O).
@@ -200,14 +202,12 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
             // Offer only the Google-Fonts catalog; the built-in Default stays
             // as the silent render fallback but is hidden from the picker (022).
             showBuiltInFonts: false,
-            // Preview the invoice authored in the REIFIED band model, rendered
-            // through the native `renderDefinition` path (spec 024) — the
-            // end-to-end confirmation of the new architecture. (While the
-            // designer canvas still authors the legacy template, the preview
-            // shows the canonical reified definition; once the designer is
-            // migrated it will render the live tree the canvas hands over.)
-            renderReport: (ReportTemplate _) =>
-                renderInvoiceDefinition(fonts: widget.fonts),
+            // Preview renders the LIVE definition the designer hands over,
+            // through the native `renderDefinition` path (spec 024) — so every
+            // edit on the reified canvas shows up in the preview.
+            renderReport: (ReportDefinition definition) =>
+                renderInvoiceDefinition(
+                    definition: definition, fonts: widget.fonts),
             onSaveRequested: _save,
             onOpenRequested: _open,
             onExportPdf: _exportPdf,

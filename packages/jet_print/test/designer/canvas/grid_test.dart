@@ -28,16 +28,24 @@ Stack _pageStack(WidgetTester tester) => tester.widget<Stack>(
           .first,
     );
 
-ReportTemplate _twoBands() => const ReportTemplate(
+ReportDefinition _twoBands() => const ReportDefinition(
       name: 'F',
       page: PageFormat.a4Portrait,
-      bands: <ReportBand>[
-        // Heights deliberately NOT whole multiples of the 5 mm step, so a
-        // per-band origin (lines restart at each band top) is the only way the
-        // drawn lines can coincide with that band's snap targets.
-        ReportBand(type: BandType.detail, height: 137),
-        ReportBand(type: BandType.pageFooter, height: 73),
-      ],
+      // Heights deliberately NOT whole multiples of the 5 mm step, so a
+      // per-band origin (lines restart at each band top) is the only way the
+      // drawn lines can coincide with that band's snap targets.
+      furniture: PageFurniture(
+        pageFooter:
+            Band(id: 'pageFooter', type: BandType.pageFooter, height: 73),
+      ),
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(id: 'detail', type: BandType.detail, height: 137)),
+          ],
+        ),
+      ),
     );
 
 void main() {
@@ -66,7 +74,7 @@ void main() {
   testWidgets('C2.4 renders across a ≥2-band layout (per-band origin)',
       (WidgetTester tester) async {
     final JetReportDesignerController c =
-        JetReportDesignerController(template: _twoBands());
+        JetReportDesignerController(definition: _twoBands());
     await pumpDesignerWith(tester, controller: c);
     // The grid still paints; that each band restarts its lines at its own top
     // (coincident with that band's snap targets) is pinned at the unit level by

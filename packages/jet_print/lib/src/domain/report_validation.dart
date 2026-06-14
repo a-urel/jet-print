@@ -140,8 +140,8 @@ List<Diagnostic> validate(ReportDefinition def) {
   // I1 — duplicate ids (reported once per offending id, in first-seen order).
   for (final MapEntry<String, int> e in idCounts.entries) {
     if (e.value > 1) {
-      out.add(Diagnostic(
-          DiagnosticSeverity.error, 'duplicate id "${e.key}" (${e.value} uses)'));
+      out.add(Diagnostic(DiagnosticSeverity.error,
+          'duplicate id "${e.key}" (${e.value} uses)'));
     }
   }
 

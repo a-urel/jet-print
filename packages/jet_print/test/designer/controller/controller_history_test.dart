@@ -6,36 +6,48 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
-ReportTemplate _seeded() => const ReportTemplate(
+ReportDefinition _seeded() => const ReportDefinition(
       name: 'Seeded',
       page: PageFormat.a4Portrait,
-      bands: <ReportBand>[
-        ReportBand(
-          type: BandType.detail,
-          height: 200,
-          elements: <ReportElement>[
-            TextElement(
-              id: 'text3',
-              bounds: JetRect(x: 0, y: 0, width: 10, height: 10),
-              text: 'a',
-            ),
-            TextElement(
-              id: 'text7',
-              bounds: JetRect(x: 0, y: 20, width: 10, height: 10),
-              text: 'b',
-            ),
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+              id: 'detail',
+              type: BandType.detail,
+              height: 200,
+              elements: <ReportElement>[
+                TextElement(
+                  id: 'text3',
+                  bounds: JetRect(x: 0, y: 0, width: 10, height: 10),
+                  text: 'a',
+                ),
+                TextElement(
+                  id: 'text7',
+                  bounds: JetRect(x: 0, y: 20, width: 10, height: 10),
+                  text: 'b',
+                ),
+              ],
+            )),
           ],
         ),
-      ],
+      ),
     );
 
 int _detailCount(JetReportDesignerController c) =>
-    c.template.bands.first.elements.length;
+    c.definition.body.root.children
+        .whereType<BandNode>()
+        .first
+        .band
+        .elements
+        .length;
 
 void main() {
-  test('a fresh no-arg controller has a default template, empty history', () {
+  test('a fresh no-arg controller has a default definition, empty history', () {
     final JetReportDesignerController c = JetReportDesignerController();
-    expect(c.template.bands, isNotEmpty); // default blank band structure
+    expect(c.definition.body.root.children,
+        isNotEmpty); // default blank band structure
     expect(c.canUndo, isFalse);
     expect(c.canRedo, isFalse);
     expect(c.selection.isEmpty, isTrue);
@@ -46,18 +58,18 @@ void main() {
     final JetReportDesignerController c = JetReportDesignerController()
       ..open(_seeded()); // existing ids text3, text7 -> next is 8
     c.createElement(DesignerToolType.text,
-        bandIndex: 0, at: const JetOffset(5, 5));
+        bandId: 'detail', at: const JetOffset(5, 5));
     expect(c.selection.singleOrNull, 'text8');
     c.dispose();
   });
 
-  test('undo/redo restore BOTH template and selection', () {
+  test('undo/redo restore BOTH definition and selection', () {
     final JetReportDesignerController c = JetReportDesignerController()
       ..open(_seeded());
     expect(_detailCount(c), 2);
 
     c.createElement(DesignerToolType.text,
-        bandIndex: 0, at: const JetOffset(5, 5));
+        bandId: 'detail', at: const JetOffset(5, 5));
     expect(_detailCount(c), 3);
     expect(c.selection.singleOrNull, 'text8');
     expect(c.canUndo, isTrue);
@@ -78,11 +90,11 @@ void main() {
     final JetReportDesignerController c = JetReportDesignerController()
       ..open(_seeded());
     c.createElement(DesignerToolType.text,
-        bandIndex: 0, at: const JetOffset(5, 5));
+        bandId: 'detail', at: const JetOffset(5, 5));
     c.undo();
     expect(c.canRedo, isTrue);
     c.createElement(DesignerToolType.shape,
-        bandIndex: 0, at: const JetOffset(5, 5));
+        bandId: 'detail', at: const JetOffset(5, 5));
     expect(c.canRedo, isFalse);
     c.dispose();
   });
@@ -104,7 +116,7 @@ void main() {
     int notifications = 0;
     c.addListener(() => notifications++);
     c.createElement(DesignerToolType.text,
-        bandIndex: 0, at: const JetOffset(5, 5));
+        bandId: 'detail', at: const JetOffset(5, 5));
     c.undo();
     c.redo();
     c.select('text3');

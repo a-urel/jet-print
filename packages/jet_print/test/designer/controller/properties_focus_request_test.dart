@@ -51,7 +51,7 @@ void main() {
     addTearDown(c.dispose);
 
     c.requestPropertiesFocus();
-    c.open(c.template);
+    c.open(c.definition);
     expect(c.pendingPropertiesFocus, isFalse);
     expect(c.takePropertiesFocus(), isFalse);
   });

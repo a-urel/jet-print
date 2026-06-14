@@ -36,7 +36,7 @@ void main() {
       (WidgetTester tester) async {
     final JetReportDesignerController c = await pumpDesignerWith(tester);
     c.createElement(DesignerToolType.text,
-        bandIndex: 1, at: const JetOffset(20, 30));
+        bandId: firstDetailBandId(c), at: const JetOffset(20, 30));
     final String id = c.selection.singleOrNull!;
     c.clearSelection();
     await tester.pumpAndSettle();
@@ -62,7 +62,7 @@ void main() {
       (WidgetTester tester) async {
     final JetReportDesignerController c = await pumpDesignerWith(tester);
     c.createElement(DesignerToolType.text,
-        bandIndex: 1, at: const JetOffset(20, 30));
+        bandId: firstDetailBandId(c), at: const JetOffset(20, 30));
     final String id = c.selection.singleOrNull!;
     c.clearSelection();
     await tester.pumpAndSettle();
@@ -82,7 +82,7 @@ void main() {
     // The page footer sits at the bottom of the A4 sheet — below the fold at
     // fit-to-width — so an element there starts off-screen.
     c.createElement(DesignerToolType.text,
-        bandIndex: 2, at: const JetOffset(20, 10));
+        bandId: 'pageFooter', at: const JetOffset(20, 10));
     final String id = c.selection.singleOrNull!;
     c.clearSelection();
     // Creating auto-selected (and scrolled to) the element; reset to the top so
@@ -108,7 +108,7 @@ void main() {
       (WidgetTester tester) async {
     final JetReportDesignerController c = await pumpDesignerWith(tester);
     c.createElement(DesignerToolType.text,
-        bandIndex: 1, at: const JetOffset(20, 30));
+        bandId: firstDetailBandId(c), at: const JetOffset(20, 30));
     final String id = c.selection.singleOrNull!;
     await tester.pumpAndSettle();
     final double beforeLeft = tester.getRect(_canvasElement(id)).left;

@@ -25,11 +25,15 @@ void main() {
       (WidgetTester tester) async {
     final JetReportDesignerController controller =
         await pumpDesignerWith(tester);
-    final PageFormat page = controller.template.page;
+    final PageFormat page = controller.definition.page;
     final JetEdgeInsets m = page.margins;
-    // Band 1 (detail) center: below band 0 (page header), centered horizontally.
-    final double h0 = controller.template.bands[0].height;
-    final double h1 = controller.template.bands[1].height;
+    // The `detail` band center: below the page header, centered horizontally.
+    final double h0 = controller.definition.furniture.pageHeader!.height;
+    final double h1 = controller.definition.body.root.children
+        .whereType<BandNode>()
+        .first
+        .band
+        .height;
     final double cx = m.left + (page.width - m.left - m.right) / 2;
     final double cy = m.top + h0 + h1 / 2;
 
@@ -37,7 +41,7 @@ void main() {
     await tester.tapAt(at(cx, cy));
     await tester.pumpAndSettle();
 
-    expect(controller.selection.bandIndex, 1);
+    expect(controller.selection.bandId, 'detail');
   });
 
   testWidgets('clicking the paper off any band selects the report',
@@ -50,7 +54,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(controller.selection.isReport, isTrue);
-    expect(controller.selection.bandIndex, isNull);
+    expect(controller.selection.bandId, isNull);
   });
 
   testWidgets('clicking off the paper clears the selection',
@@ -75,7 +79,7 @@ void main() {
     final JetReportDesignerController controller =
         await pumpDesignerWith(tester);
     controller.createElement(DesignerToolType.text,
-        bandIndex: 1, at: const JetOffset(30, 20));
+        bandId: 'detail', at: const JetOffset(30, 20));
     final String id = controller.selection.singleOrNull!;
     controller.selectReport(); // move selection away first
     await tester.pumpAndSettle();

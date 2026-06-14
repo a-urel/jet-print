@@ -18,13 +18,14 @@ void main() {
   testWidgets('a 20-element drag over a 200-element design stays smooth',
       (WidgetTester tester) async {
     final JetReportDesignerController c = await pumpDesignerWith(tester);
+    final String detailId = firstDetailBandId(c);
 
     // Seed 200 elements in the detail band (positions clamp within the band).
     final List<String> ids = <String>[];
     for (int i = 0; i < 200; i++) {
       c.createElement(
         DesignerToolType.text,
-        bandIndex: 1,
+        bandId: detailId,
         at: JetOffset((i % 20) * 14.0 + 4, (i ~/ 20) * 9.0 + 4),
       );
       ids.add(c.selection.singleOrNull!);
@@ -56,8 +57,10 @@ void main() {
   });
 }
 
-double _elementX(JetReportDesignerController c, String id) => c.template.bands
-    .expand((ReportBand b) => b.elements)
-    .firstWhere((ReportElement e) => e.id == id)
-    .bounds
-    .x;
+double _elementX(JetReportDesignerController c, String id) =>
+    c.definition.body.root.children
+        .whereType<BandNode>()
+        .expand((BandNode n) => n.band.elements)
+        .firstWhere((ReportElement e) => e.id == id)
+        .bounds
+        .x;

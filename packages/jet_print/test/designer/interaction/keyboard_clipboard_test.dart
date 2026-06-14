@@ -13,8 +13,49 @@ Finder _toolFinder(DesignerToolType type) =>
 Finder _elementFinder(String id) =>
     find.byKey(ValueKey<String>('jet_print.designer.element.$id'));
 
-int _count(JetReportDesignerController c) => c.template.bands
-    .fold<int>(0, (int n, ReportBand b) => n + b.elements.length);
+/// Enumerates every band in [def]'s reified tree (furniture slots, body
+/// title/summary/noData, and the detail tree's group headers/footers and
+/// per-row/nested bands), so the element-count assertions still span the whole
+/// design — the reified replacement for the old flat `template.bands`.
+Iterable<Band> _bands(ReportDefinition def) sync* {
+  final PageFurniture f = def.furniture;
+  for (final Band? b in <Band?>[
+    f.background,
+    f.pageHeader,
+    f.columnHeader,
+    f.columnFooter,
+    f.pageFooter,
+  ]) {
+    if (b != null) yield b;
+  }
+  final ReportBody body = def.body;
+  for (final Band? b in <Band?>[body.title, body.summary, body.noData]) {
+    if (b != null) yield b;
+  }
+  yield* _scopeBands(body.root);
+}
+
+Iterable<Band> _scopeBands(DetailScope scope) sync* {
+  for (final GroupLevel g in scope.groups) {
+    if (g.header != null) yield g.header!;
+  }
+  for (final ScopeNode node in scope.children) {
+    switch (node) {
+      case BandNode(:final Band band):
+        yield band;
+      case NestedScope(:final DetailScope scope):
+        yield* _scopeBands(scope);
+    }
+  }
+  for (final GroupLevel g in scope.groups) {
+    if (g.footer != null) yield g.footer!;
+  }
+}
+
+Iterable<ReportElement> _allElements(JetReportDesignerController c) =>
+    _bands(c.definition).expand((Band b) => b.elements);
+
+int _count(JetReportDesignerController c) => _allElements(c).length;
 
 Future<void> _meta(WidgetTester tester, LogicalKeyboardKey key) async {
   await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
@@ -41,8 +82,7 @@ void main() {
     final JetReportDesignerController controller =
         await pumpDesignerWith(tester);
     final String id = await _createAndFocus(tester, controller);
-    final double x0 = controller.template.bands
-        .expand((ReportBand b) => b.elements)
+    final double x0 = _allElements(controller)
         .firstWhere((ReportElement e) => e.id == id)
         .bounds
         .x;
@@ -50,8 +90,7 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.pumpAndSettle();
 
-    final double x1 = controller.template.bands
-        .expand((ReportBand b) => b.elements)
+    final double x1 = _allElements(controller)
         .firstWhere((ReportElement e) => e.id == id)
         .bounds
         .x;

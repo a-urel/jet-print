@@ -1,8 +1,9 @@
 /// The command that changes selected elements' z-order within their band (FR-013).
 library;
 
-import '../../../domain/report_band.dart';
+import '../../../domain/band.dart';
 import '../../../domain/report_element.dart';
+import '../band_walker.dart';
 import '../designer_document.dart';
 import '../edit_command.dart';
 
@@ -38,22 +39,15 @@ class ReorderCommand extends EditCommand {
   String get label => 'Reorder';
 
   @override
-  DesignerDocument apply(DesignerDocument before) {
-    bool changed = false;
-    final List<ReportBand> bands = <ReportBand>[
-      for (final ReportBand band in before.template.bands)
-        if (band.elements.any((ReportElement e) => ids.contains(e.id)))
-          () {
-            final List<ReportElement> reordered = _reorder(band.elements);
-            changed = true;
-            return band.copyWith(elements: reordered);
-          }()
-        else
-          band,
-    ];
-    if (!changed) return before;
-    return before.withTemplate(before.template.copyWith(bands: bands));
-  }
+  DesignerDocument apply(DesignerDocument before) => before.withDefinition(
+        mapBands(
+          before.definition,
+          (Band band) =>
+              band.elements.any((ReportElement e) => ids.contains(e.id))
+                  ? band.copyWith(elements: _reorder(band.elements))
+                  : band,
+        ),
+      );
 
   List<ReportElement> _reorder(List<ReportElement> elements) {
     final List<ReportElement> selected = <ReportElement>[

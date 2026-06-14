@@ -11,8 +11,8 @@ import 'dart:ui' as ui;
 
 import '../../domain/elements/text_element.dart';
 import '../../domain/page_format.dart';
+import '../../domain/report_definition.dart';
 import '../../domain/report_element.dart';
-import '../../domain/report_template.dart';
 import '../../rendering/elements/built_in_element_renderers.dart';
 import '../../rendering/elements/element_renderer_registry.dart';
 import '../../rendering/elements/element_type_registry.dart';
@@ -26,7 +26,7 @@ import '../../rendering/text/metrics_text_measurer.dart';
 import 'binding_token.dart';
 import 'design_time_layout.dart';
 
-/// Reusable builder that turns a `(template, layout)` pair into a [PageFrame]
+/// Reusable builder that turns a `(definition, layout)` pair into a [PageFrame]
 /// using the shared renderers, and records that frame into a cacheable
 /// `ui.Picture`.
 class DesignTimeFrameBuilder {
@@ -54,16 +54,17 @@ class DesignTimeFrameBuilder {
     return registry.renderers;
   }
 
-  /// Emits every element's primitives at its page-absolute rect from [layout].
-  PageFrame build(ReportTemplate template, DesignTimeLayout layout) {
+  /// Emits every element's primitives at its page-absolute rect from [layout],
+  /// walking the bands in the layout's visual document order.
+  PageFrame build(ReportDefinition definition, DesignTimeLayout layout) {
     final PageFormat page = PageFormat(
       width: layout.size.width,
       height: layout.size.height,
-      margins: template.page.margins,
+      margins: definition.page.margins,
     );
     final FrameBuilder out = FrameBuilder(page);
-    for (final band in template.bands) {
-      for (final element in band.elements) {
+    for (final PlacedBand placed in layout.bands) {
+      for (final element in placed.band.elements) {
         final rect = layout.elementRect(element.id);
         if (rect == null) continue;
         final ReportElement display = _designTimeDisplay(element);

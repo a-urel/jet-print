@@ -13,8 +13,8 @@ import '../../support/workspace.dart';
 
 ReportDefinition _fixture(String name) {
   final Directory root = findWorkspaceRoot();
-  final File file = File(
-      '${root.path}/packages/jet_print/test/fixtures/v1/$name.json');
+  final File file =
+      File('${root.path}/packages/jet_print/test/fixtures/v1/$name.json');
   return JetReportFormat.decodeDefinitionJson(file.readAsStringSync());
 }
 

@@ -10,25 +10,32 @@ import 'package:jet_print/jet_print.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 /// A two-page rendered report built through the public API only.
-RenderedReport previewLocalizationReport() => const JetReportEngine().render(
-      const ReportTemplate(
+RenderedReport previewLocalizationReport() =>
+    const JetReportEngine().renderDefinition(
+      const ReportDefinition(
         name: 'l10n',
         page:
             PageFormat(width: 200, height: 100, margins: JetEdgeInsets.all(10)),
-        bands: <ReportBand>[
-          ReportBand(
-            type: BandType.detail,
-            height: 30,
-            elements: <ReportElement>[
-              TextElement(
-                id: 'name',
-                bounds: JetRect(x: 0, y: 0, width: 180, height: 16),
-                text: 'name',
-                expression: r'$F{name}',
-              ),
+        body: ReportBody(
+          root: DetailScope(
+            id: 'root',
+            children: <ScopeNode>[
+              BandNode(Band(
+                id: 'root/c0',
+                type: BandType.detail,
+                height: 30,
+                elements: <ReportElement>[
+                  TextElement(
+                    id: 'name',
+                    bounds: JetRect(x: 0, y: 0, width: 180, height: 16),
+                    text: 'name',
+                    expression: r'$F{name}',
+                  ),
+                ],
+              )),
             ],
           ),
-        ],
+        ),
       ),
       JetInMemoryDataSource(<Map<String, Object?>>[
         for (int i = 0; i < 4; i++) <String, Object?>{'name': 'row $i'},

@@ -2,16 +2,16 @@
 ///
 /// Bindings live in the element model: a [TextElement]'s [TextElement.expression]
 /// (a `$F{}`/`$P{}`/`$V{}` string; null = static) and an [ImageElement]'s
-/// [FieldImageSource]. Each command rebuilds only the touched element, preserving
-/// every other element referentially (FR-025), and is a no-op (returns `before`
-/// unchanged, so no history entry) when the binding already matches.
+/// [FieldImageSource]. Each command rebuilds only the touched element (via
+/// [updateElement]); an unchanged binding yields a value-equal definition the
+/// controller treats as a no-op (no history entry).
 library;
 
 import '../../../domain/elements/image_element.dart';
 import '../../../domain/elements/image_source.dart';
 import '../../../domain/elements/text_element.dart';
-import '../../../domain/report_band.dart';
 import '../../../domain/report_element.dart';
+import '../band_walker.dart';
 import '../designer_document.dart';
 import '../edit_command.dart';
 
@@ -32,35 +32,23 @@ class SetTextBindingCommand extends EditCommand {
   String get label => expression == null ? 'Clear binding' : 'Bind text';
 
   @override
-  DesignerDocument apply(DesignerDocument before) {
-    bool changed = false;
-    final List<ReportBand> bands = <ReportBand>[
-      for (final ReportBand band in before.template.bands)
-        if (band.elements.any((ReportElement e) =>
-            e.id == id && e is TextElement && e.expression != expression))
-          () {
-            changed = true;
-            return band.copyWith(elements: <ReportElement>[
-              for (final ReportElement e in band.elements)
-                if (e.id == id && e is TextElement)
-                  TextElement(
-                    id: e.id,
-                    bounds: e.bounds,
-                    text: e.text,
-                    style: e.style,
-                    expression: expression,
-                    format: e.format,
-                  )
-                else
-                  e,
-            ]);
-          }()
-        else
-          band,
-    ];
-    if (!changed) return before;
-    return before.withTemplate(before.template.copyWith(bands: bands));
-  }
+  DesignerDocument apply(DesignerDocument before) => before.withDefinition(
+        updateElement(
+          before.definition,
+          id,
+          (ReportElement e) => e is TextElement
+              // Build directly (not copyWith) so a null [expression] can clear it.
+              ? TextElement(
+                  id: e.id,
+                  bounds: e.bounds,
+                  text: e.text,
+                  style: e.style,
+                  expression: expression,
+                  format: e.format,
+                )
+              : e,
+        ),
+      );
 }
 
 /// Binds the [ImageElement] with [id] to read its picture from the data [field]
@@ -80,32 +68,18 @@ class SetImageBindingCommand extends EditCommand {
   String get label => 'Bind image';
 
   @override
-  DesignerDocument apply(DesignerDocument before) {
-    final FieldImageSource source = FieldImageSource(field);
-    bool changed = false;
-    final List<ReportBand> bands = <ReportBand>[
-      for (final ReportBand band in before.template.bands)
-        if (band.elements.any((ReportElement e) =>
-            e.id == id && e is ImageElement && e.source != source))
-          () {
-            changed = true;
-            return band.copyWith(elements: <ReportElement>[
-              for (final ReportElement e in band.elements)
-                if (e.id == id && e is ImageElement)
-                  ImageElement(
-                    id: e.id,
-                    bounds: e.bounds,
-                    source: source,
-                    fit: e.fit,
-                  )
-                else
-                  e,
-            ]);
-          }()
-        else
-          band,
-    ];
-    if (!changed) return before;
-    return before.withTemplate(before.template.copyWith(bands: bands));
-  }
+  DesignerDocument apply(DesignerDocument before) => before.withDefinition(
+        updateElement(
+          before.definition,
+          id,
+          (ReportElement e) => e is ImageElement
+              ? ImageElement(
+                  id: e.id,
+                  bounds: e.bounds,
+                  source: FieldImageSource(field),
+                  fit: e.fit,
+                )
+              : e,
+        ),
+      );
 }

@@ -90,15 +90,22 @@ Future<void> pumpDesigner(
 const Key kArrangeButtonKey =
     ValueKey<String>('jet_print.designer.action.arrange');
 
+/// The stable id of the first per-row band in the master scope of [c]'s
+/// definition — the reified replacement for the old "detail band index". Tests
+/// address bands by id now (spec 024); for the blank default that is `'detail'`.
+String firstDetailBandId(JetReportDesignerController c) =>
+    c.definition.body.root.children.whereType<BandNode>().first.band.id;
+
 /// Creates two elements, selects them, and opens the top-bar **Arrange** menu,
 /// so a test can assert the localized align/distribute/z-order item labels. The
 /// trigger is found by its stable key, so this works in any locale.
 Future<void> openArrangeMenu(
     WidgetTester tester, JetReportDesignerController c) async {
+  final String bandId = firstDetailBandId(c);
   c.createElement(DesignerToolType.text,
-      bandIndex: 1, at: const JetOffset(10, 10));
+      bandId: bandId, at: const JetOffset(10, 10));
   c.createElement(DesignerToolType.text,
-      bandIndex: 1, at: const JetOffset(80, 60));
+      bandId: bandId, at: const JetOffset(80, 60));
   c.selectAll();
   await tester.pumpAndSettle();
   await tester.tap(find.byKey(kArrangeButtonKey));

@@ -2,31 +2,42 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
-ReportTemplate _fixture() => const ReportTemplate(
+ReportDefinition _fixture() => const ReportDefinition(
       name: 'F',
       page: PageFormat.a4Portrait,
-      bands: <ReportBand>[
-        ReportBand(
-          type: BandType.detail,
-          height: 300,
-          elements: <ReportElement>[
-            TextElement(
-                id: 't1',
-                bounds: JetRect(x: 10, y: 10, width: 40, height: 20),
-                text: 'hello'),
-            ShapeElement(
-                id: 's1',
-                bounds: JetRect(x: 10, y: 50, width: 40, height: 20),
-                kind: ShapeKind.rectangle),
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+              id: 'detail',
+              type: BandType.detail,
+              height: 300,
+              elements: <ReportElement>[
+                TextElement(
+                    id: 't1',
+                    bounds: JetRect(x: 10, y: 10, width: 40, height: 20),
+                    text: 'hello'),
+                ShapeElement(
+                    id: 's1',
+                    bounds: JetRect(x: 10, y: 50, width: 40, height: 20),
+                    kind: ShapeKind.rectangle),
+              ],
+            )),
           ],
         ),
-      ],
+      ),
     );
 
-JetRect _b(JetReportDesignerController c, String id) =>
-    c.template.bands.first.elements
-        .firstWhere((ReportElement e) => e.id == id)
-        .bounds;
+ReportElement _el(JetReportDesignerController c, String id) =>
+    c.definition.body.root.children
+        .whereType<BandNode>()
+        .first
+        .band
+        .elements
+        .firstWhere((ReportElement e) => e.id == id);
+
+JetRect _b(JetReportDesignerController c, String id) => _el(c, id).bounds;
 
 JetReportDesignerController _open() =>
     JetReportDesignerController()..open(_fixture());
@@ -63,11 +74,9 @@ void main() {
     test('sets a text element and is undoable', () {
       final JetReportDesignerController c = _open();
       c.setText('t1', 'world');
-      expect(
-          (c.template.bands.first.elements.first as TextElement).text, 'world');
+      expect((_el(c, 't1') as TextElement).text, 'world');
       c.undo();
-      expect(
-          (c.template.bands.first.elements.first as TextElement).text, 'hello');
+      expect((_el(c, 't1') as TextElement).text, 'hello');
       c.dispose();
     });
 

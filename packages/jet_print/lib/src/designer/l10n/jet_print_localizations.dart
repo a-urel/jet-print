@@ -587,6 +587,78 @@ abstract class JetPrintLocalizations {
   /// **'Start on new page'**
   String get propertiesGroupNewPage;
 
+  /// Properties panel label for a group's grouping-key expression (spec 024).
+  ///
+  /// In en, this message translates to:
+  /// **'Group key'**
+  String get propertiesGroupKey;
+
+  /// Properties panel toggle label: keep a group's whole instance on one page (spec 024).
+  ///
+  /// In en, this message translates to:
+  /// **'Keep together'**
+  String get propertiesGroupKeepTogether;
+
+  /// Properties panel toggle label: reprint a group header atop each continuation page (spec 024).
+  ///
+  /// In en, this message translates to:
+  /// **'Reprint header on each page'**
+  String get propertiesGroupReprintHeader;
+
+  /// Read-only hint shown when the group row is selected, pointing the author to the group header band where the key + pagination flags are edited (2026-06-14 design note).
+  ///
+  /// In en, this message translates to:
+  /// **'Edit page & group settings on the group header band.'**
+  String get propertiesGroupOnHeaderHint;
+
+  /// Properties panel header label for a selected detail scope (spec 024).
+  ///
+  /// In en, this message translates to:
+  /// **'Scope'**
+  String get propertiesScope;
+
+  /// Outline row action: move a per-row band up within its scope (spec 024).
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
+  String get outlineMoveUp;
+
+  /// Outline row action: move a per-row band down within its scope (spec 024).
+  ///
+  /// In en, this message translates to:
+  /// **'Move down'**
+  String get outlineMoveDown;
+
+  /// Outline row action: remove a band (spec 024).
+  ///
+  /// In en, this message translates to:
+  /// **'Remove band'**
+  String get outlineRemove;
+
+  /// Outline row action: relocate a band to a different slot, changing its type (spec 024).
+  ///
+  /// In en, this message translates to:
+  /// **'Change band type'**
+  String get outlineRetype;
+
+  /// Outline row action: add a per-row band to a scope (spec 024).
+  ///
+  /// In en, this message translates to:
+  /// **'Add band'**
+  String get outlineAddBand;
+
+  /// Outline row action: add a group header band (spec 024).
+  ///
+  /// In en, this message translates to:
+  /// **'Add header'**
+  String get outlineAddHeader;
+
+  /// Outline row action: add a group footer band (spec 024).
+  ///
+  /// In en, this message translates to:
+  /// **'Add footer'**
+  String get outlineAddFooter;
+
   /// Placeholder for the text binding input (a field reference or a full expression).
   ///
   /// In en, this message translates to:

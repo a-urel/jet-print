@@ -28,8 +28,8 @@ Band _row(String id) => Band(
       ],
     );
 
-ReportDefinition _def(DetailScope root) =>
-    ReportDefinition(name: 'D', page: PageFormat.a4Portrait, body: ReportBody(root: root));
+ReportDefinition _def(DetailScope root) => ReportDefinition(
+    name: 'D', page: PageFormat.a4Portrait, body: ReportBody(root: root));
 
 int _detailCount(ReportDefinition def, List<Map<String, Object?>> rows) {
   final FilledReport r =
@@ -43,7 +43,8 @@ bool _infoFlagged(ReportDefinition def) => validate(def).any((Diagnostic d) =>
 
 void main() {
   group('deferred capabilities render inert (C9)', () {
-    test('per-scope grouping is ignored at render but flagged by validate()', () {
+    test('per-scope grouping is ignored at render but flagged by validate()',
+        () {
       // A nested scope carrying groups — the engine renders its rows as today
       // (no nested group bands), the groups are simply inert.
       final ReportDefinition def = _def(DetailScope(
@@ -69,11 +70,15 @@ void main() {
       ];
 
       // Renders without error; the two item rows emit, the nested groups don't.
-      expect(() => const JetReportEngine().renderDefinition(
-          def, JetInMemoryDataSource(rows)), returnsNormally);
-      final FilledReport r =
-          ReportFiller().fillDefinition(def, JetInMemoryDataSource(rows)).report;
-      expect(r.bands.where((FilledBand b) => b.type == BandType.detail).length, 2);
+      expect(
+          () => const JetReportEngine()
+              .renderDefinition(def, JetInMemoryDataSource(rows)),
+          returnsNormally);
+      final FilledReport r = ReportFiller()
+          .fillDefinition(def, JetInMemoryDataSource(rows))
+          .report;
+      expect(
+          r.bands.where((FilledBand b) => b.type == BandType.detail).length, 2);
       expect(
           r.bands.any((FilledBand b) =>
               b.type == BandType.groupHeader || b.type == BandType.groupFooter),
@@ -99,8 +104,10 @@ void main() {
           ],
         },
       ];
-      expect(() => const JetReportEngine().renderDefinition(
-          def, JetInMemoryDataSource(rows)), returnsNormally);
+      expect(
+          () => const JetReportEngine()
+              .renderDefinition(def, JetInMemoryDataSource(rows)),
+          returnsNormally);
       expect(_detailCount(def, rows), 2); // both per-row bands emit
       expect(_infoFlagged(def), isTrue);
     });
