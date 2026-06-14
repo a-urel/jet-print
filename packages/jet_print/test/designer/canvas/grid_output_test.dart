@@ -12,29 +12,37 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
-ReportTemplate _template() => const ReportTemplate(
+ReportDefinition _template() => const ReportDefinition(
       name: 'Invoice',
       page: PageFormat(width: 200, height: 120, margins: JetEdgeInsets.all(10)),
-      bands: <ReportBand>[
-        ReportBand(
-          type: BandType.detail,
-          height: 40,
-          elements: <ReportElement>[
-            TextElement(
-              id: 'name',
-              bounds: JetRect(x: 0, y: 0, width: 180, height: 16),
-              text: 'name',
-              expression: r'$F{name}',
-            ),
-            ShapeElement(
-              id: 'rule',
-              bounds: JetRect(x: 0, y: 24, width: 180, height: 0),
-              kind: ShapeKind.line,
-              style: JetBoxStyle(stroke: JetColor.black),
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(
+              Band(
+                id: 'detail',
+                type: BandType.detail,
+                height: 40,
+                elements: <ReportElement>[
+                  TextElement(
+                    id: 'name',
+                    bounds: JetRect(x: 0, y: 0, width: 180, height: 16),
+                    text: 'name',
+                    expression: r'$F{name}',
+                  ),
+                  ShapeElement(
+                    id: 'rule',
+                    bounds: JetRect(x: 0, y: 24, width: 180, height: 0),
+                    kind: ShapeKind.line,
+                    style: JetBoxStyle(stroke: JetColor.black),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
-      ],
+      ),
     );
 
 JetInMemoryDataSource _data() => JetInMemoryDataSource(
@@ -46,9 +54,9 @@ JetInMemoryDataSource _data() => JetInMemoryDataSource(
 
 Future<Uint8List> _exportFirstPage(JetReportDesignerController c) async {
   const JetReportExporter exporter = JetReportExporter();
-  // Render exactly what a host saves (c.template) through the public engine.
+  // Render exactly what a host saves (c.definition) through the public engine.
   final RenderedReport report =
-      const JetReportEngine().render(c.template, _data());
+      const JetReportEngine().renderDefinition(c.definition, _data());
   return exporter.pageToPng(report, 0, scale: 2);
 }
 
@@ -58,7 +66,7 @@ void main() {
   test('C6.1 exported page bytes are identical with the grid on vs off',
       () async {
     final JetReportDesignerController c =
-        JetReportDesignerController(template: _template());
+        JetReportDesignerController(definition: _template());
     addTearDown(c.dispose);
 
     // Grid + snap on (defaults).
@@ -78,13 +86,15 @@ void main() {
 
   test('toggling the grid does not mutate the saved report model', () {
     final JetReportDesignerController c =
-        JetReportDesignerController(template: _template());
+        JetReportDesignerController(definition: _template());
     addTearDown(c.dispose);
 
-    final Map<String, Object?> before = JetReportFormat.encode(c.template);
+    final Map<String, Object?> before =
+        JetReportFormat.encodeDefinition(c.definition);
     c.setGridEnabled(false);
     c.setSnapEnabled(false);
-    final Map<String, Object?> after = JetReportFormat.encode(c.template);
+    final Map<String, Object?> after =
+        JetReportFormat.encodeDefinition(c.definition);
 
     expect(after, equals(before),
         reason: 'grid/snap are ephemeral view state, never in the model');

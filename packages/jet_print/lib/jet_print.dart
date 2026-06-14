@@ -55,12 +55,11 @@ export 'src/designer/l10n/jet_print_localizations.dart'
     show JetPrintLocalizations;
 // The read-only paginated viewer over a rendered report (011).
 export 'src/designer/preview/jet_report_preview.dart' show JetReportPreview;
-// --- The reachable model graph (003) + the reified section tree (024). The
-// explicit, id'd tree — Band / DetailScope+ScopeNode / GroupLevel /
-// ReportDefinition (PageFurniture + ReportBody) — plus author-time `validate()`
-// is added alongside the legacy ReportTemplate graph during the 024 transition;
-// the legacy types are removed once the designer authors the tree natively.
-// `validate()` returns the same [Diagnostic] type the render chain uses. ---
+// --- The reified section tree (024) — the public report model. The explicit,
+// id'd tree — Band / DetailScope+ScopeNode / GroupLevel / ReportDefinition
+// (PageFurniture + ReportBody) — plus author-time `validate()`, which returns
+// the same [Diagnostic] type the render chain uses. BandType names a band's
+// role. ---
 export 'src/domain/band.dart' show Band;
 export 'src/domain/detail_scope.dart'
     show BandNode, DetailScope, NestedScope, ScopeNode;
@@ -80,13 +79,11 @@ export 'src/domain/geometry.dart'
     show JetEdgeInsets, JetOffset, JetRect, JetSize;
 export 'src/domain/group_level.dart' show GroupLevel;
 export 'src/domain/page_format.dart' show PageFormat;
-export 'src/domain/report_band.dart' show BandType, ReportBand;
+export 'src/domain/report_band.dart' show BandType;
 export 'src/domain/report_definition.dart'
     show PageFurniture, ReportBody, ReportDefinition;
 export 'src/domain/report_element.dart' show ReportElement;
-export 'src/domain/report_group.dart' show ReportGroup;
 export 'src/domain/report_parameter.dart' show ReportParameter;
-export 'src/domain/report_template.dart' show ReportTemplate;
 export 'src/domain/report_validation.dart' show validate;
 export 'src/domain/report_variable.dart'
     show JetCalculation, ReportVariable, VariableResetScope;

@@ -26,7 +26,7 @@ void main() {
     final JetReportDesignerController controller =
         await pumpDesignerWith(tester);
     controller.createElement(DesignerToolType.text,
-        bandIndex: 1, at: const JetOffset(20, 20));
+        bandId: firstDetailBandId(controller), at: const JetOffset(20, 20));
     await tester.pumpAndSettle();
 
     // Data Source is the default tab: no inspector fields are present.
@@ -46,7 +46,7 @@ void main() {
     final JetReportDesignerController controller =
         await pumpDesignerWith(tester, size: kNarrowSize);
     controller.createElement(DesignerToolType.text,
-        bandIndex: 1, at: const JetOffset(20, 20));
+        bandId: firstDetailBandId(controller), at: const JetOffset(20, 20));
     await tester.pumpAndSettle();
 
     // Collapsed: the right panel is not in the tree at all, only its rail.
@@ -68,7 +68,7 @@ void main() {
     final JetReportDesignerController controller =
         await pumpDesignerWith(tester);
     controller.createElement(DesignerToolType.text,
-        bandIndex: 1, at: const JetOffset(20, 20));
+        bandId: firstDetailBandId(controller), at: const JetOffset(20, 20));
     await tester.pumpAndSettle();
 
     controller.requestPropertiesFocus();
@@ -83,7 +83,7 @@ void main() {
     final JetReportDesignerController controller =
         await pumpDesignerWith(tester);
     controller.createElement(DesignerToolType.shape,
-        bandIndex: 1, at: const JetOffset(20, 20));
+        bandId: firstDetailBandId(controller), at: const JetOffset(20, 20));
     await tester.pumpAndSettle();
 
     controller.requestPropertiesFocus();
@@ -98,7 +98,7 @@ void main() {
     final JetReportDesignerController controller =
         await pumpDesignerWith(tester, size: kNarrowSize);
     controller.createElement(DesignerToolType.text,
-        bandIndex: 1, at: const JetOffset(20, 20));
+        bandId: firstDetailBandId(controller), at: const JetOffset(20, 20));
     await tester.pumpAndSettle();
 
     controller.requestPropertiesFocus();

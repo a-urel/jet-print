@@ -36,7 +36,7 @@ double mmToPoints(double mm) => mm * kPointsPerMm;
 /// free (the caller recomputes it per build).
 JetRect? selectionExtent(DesignTimeLayout layout, Selection selection) {
   if (selection.isReport) return null;
-  if (selection.bandIndex case final int index) return layout.bandRect(index);
+  if (selection.bandId case final String id) return layout.bandRect(id);
 
   final List<JetRect> rects = <JetRect>[
     for (final String id in selection.ids)

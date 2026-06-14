@@ -253,6 +253,39 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get propertiesGroupNewPage => 'Yeni sayfa başlat';
 
   @override
+  String get propertiesGroupKey => 'Grup anahtarı';
+
+  @override
+  String get propertiesGroupKeepTogether => 'Birlikte tut';
+
+  @override
+  String get propertiesGroupReprintHeader => 'Başlığı her sayfada yinele';
+
+  @override
+  String get propertiesScope => 'Kapsam';
+
+  @override
+  String get outlineMoveUp => 'Yukarı taşı';
+
+  @override
+  String get outlineMoveDown => 'Aşağı taşı';
+
+  @override
+  String get outlineRemove => 'Bandı kaldır';
+
+  @override
+  String get outlineRetype => 'Bant türünü değiştir';
+
+  @override
+  String get outlineAddBand => 'Bant ekle';
+
+  @override
+  String get outlineAddHeader => 'Başlık ekle';
+
+  @override
+  String get outlineAddFooter => 'Alt bilgi ekle';
+
+  @override
   String get bindingExpressionHint => 'Alan veya ifade';
 
   @override

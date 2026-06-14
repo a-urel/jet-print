@@ -1,13 +1,15 @@
 // FLAGSHIP: a custom element type round-trips through report_codec AND renders,
 // with zero edits to library src/ (Constitution II — persistence + rendering).
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jet_print/src/domain/band.dart';
+import 'package:jet_print/src/domain/detail_scope.dart';
 import 'package:jet_print/src/domain/geometry.dart';
 import 'package:jet_print/src/domain/page_format.dart';
-import 'package:jet_print/src/domain/report_band.dart';
+import 'package:jet_print/src/domain/report_band.dart' show BandType;
+import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/domain/report_element.dart';
-import 'package:jet_print/src/domain/report_template.dart';
 import 'package:jet_print/src/domain/serialization/element_codec.dart';
-import 'package:jet_print/src/domain/serialization/report_codec.dart';
+import 'package:jet_print/src/domain/serialization/report_definition_codec.dart';
 import 'package:jet_print/src/domain/styles/color.dart';
 import 'package:jet_print/src/rendering/elements/built_in_element_renderers.dart';
 import 'package:jet_print/src/rendering/elements/element_renderer.dart';
@@ -79,23 +81,33 @@ void main() {
         id: 's1',
         bounds: JetRect(x: 10, y: 20, width: 30, height: 30),
         points: 5);
-    final ReportTemplate template = ReportTemplate(
+    final ReportDefinition definition = ReportDefinition(
       name: 'demo',
       page: PageFormat.a4Portrait,
-      bands: <ReportBand>[
-        ReportBand(
-            type: BandType.detail, height: 50, elements: <ReportElement>[star]),
-      ],
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+                id: 'root/c0',
+                type: BandType.detail,
+                height: 50,
+                elements: <ReportElement>[star])),
+          ],
+        ),
+      ),
     );
 
     // (a) Persist through the REAL codec path: encode -> decode -> re-encode.
-    final Map<String, Object?> json = encodeTemplate(template, reg.codecs);
-    final ReportTemplate decoded = decodeTemplate(json, reg.codecs);
-    expect(encodeTemplate(decoded, reg.codecs), json); // deep map equality
-    expect(decoded.bands.single.elements.single, star); // typed, value-equal
+    final Map<String, Object?> json = encodeDefinition(definition, reg.codecs);
+    final ReportDefinition decoded = decodeDefinition(json, reg.codecs);
+    expect(encodeDefinition(decoded, reg.codecs), json); // deep map equality
+    // The custom element survives round-trip: typed, value-equal.
+    final BandNode node = decoded.body.root.children.single as BandNode;
+    expect(node.band.elements.single, star);
 
     // (b) Render through the registered renderer.
-    final FrameBuilder out = FrameBuilder(template.page);
+    final FrameBuilder out = FrameBuilder(definition.page);
     reg.renderers.rendererFor(star).emit(
           star,
           RenderContext(

@@ -142,14 +142,24 @@ void main() {
     test('the no-arg controller seeds the default blank band structure', () {
       final JetReportDesignerController controller =
           JetReportDesignerController();
-      expect(
-        controller.template.bands.map((ReportBand b) => b.type).toList(),
-        <BandType>[BandType.pageHeader, BandType.detail, BandType.pageFooter],
-      );
-      expect(
-        controller.template.bands.every((ReportBand b) => b.elements.isEmpty),
-        isTrue,
-      );
+      final ReportDefinition def = controller.definition;
+      // A page header + footer in the record-blind furniture, and a single
+      // detail band in the master scope (FR-002).
+      expect(def.furniture.pageHeader?.type, BandType.pageHeader);
+      expect(def.furniture.pageFooter?.type, BandType.pageFooter);
+      final List<Band> detailBands = def.body.root.children
+          .whereType<BandNode>()
+          .map((BandNode n) => n.band)
+          .toList();
+      expect(detailBands.map((Band b) => b.type).toList(),
+          <BandType>[BandType.detail]);
+      // Every seeded band starts empty.
+      final List<Band> allBands = <Band>[
+        def.furniture.pageHeader!,
+        ...detailBands,
+        def.furniture.pageFooter!,
+      ];
+      expect(allBands.every((Band b) => b.elements.isEmpty), isTrue);
       controller.dispose();
     });
   });

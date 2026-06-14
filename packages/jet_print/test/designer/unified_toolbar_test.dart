@@ -24,14 +24,21 @@ const Size _size = Size(1200, 800);
 const PageFormat _page =
     PageFormat(width: 400, height: 300, margins: JetEdgeInsets.all(10));
 
-ReportTemplate _template(String name) => ReportTemplate(
+ReportDefinition _definition(String name) => ReportDefinition(
       name: name,
       page: _page,
-      bands: const <ReportBand>[ReportBand(type: BandType.detail, height: 50)],
+      body: const ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(id: 'detail', type: BandType.detail, height: 50)),
+          ],
+        ),
+      ),
     );
 
-RenderedReport _report(String name) => const JetReportEngine().render(
-      _template(name),
+RenderedReport _report(String name) => const JetReportEngine().renderDefinition(
+      _definition(name),
       JetInMemoryDataSource(const <Map<String, Object?>>[<String, Object?>{}]),
     );
 
@@ -44,7 +51,7 @@ Future<void> _pumpDesignerShell(
   Locale? locale,
 }) async {
   final JetReportDesignerController c =
-      JetReportDesignerController(template: _template(name));
+      JetReportDesignerController(definition: _definition(name));
   addTearDown(c.dispose);
   await pumpDesigner(
     tester,
@@ -198,7 +205,7 @@ void main() {
     testWidgets('the switch segments carry accessible names (C7.2)',
         (WidgetTester tester) async {
       final JetReportDesignerController c =
-          JetReportDesignerController(template: _template('A11y'));
+          JetReportDesignerController(definition: _definition('A11y'));
       addTearDown(c.dispose);
       await pumpDesigner(
         tester,

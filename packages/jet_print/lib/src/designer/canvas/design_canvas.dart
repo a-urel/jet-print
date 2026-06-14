@@ -22,8 +22,8 @@ import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../domain/geometry.dart';
-import '../../domain/report_band.dart';
-import '../../domain/report_template.dart';
+import '../../domain/report_definition.dart';
+import '../controller/band_walker.dart';
 import '../controller/jet_report_designer_controller.dart';
 import '../designer_font_scope.dart';
 import '../designer_scope.dart';
@@ -244,7 +244,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
 
   /// Re-records the displayed frame off the build path (the element renderers
   /// run here, never on a raw pan/zoom frame). The frame follows the live drag:
-  /// it is recorded from [JetReportDesignerController.displayTemplate] (the
+  /// it is recorded from [JetReportDesignerController.displayDefinition] (the
   /// committed model plus any in-progress move/resize) and keyed on
   /// `frameVersion` (which ticks on every drag preview), so a drag re-records in
   /// realtime. Coalesces rapid edits: only one record runs at a time, and it
@@ -254,10 +254,10 @@ class _DesignCanvasState extends State<DesignCanvas> {
     if (_building || controller.frameVersion == _renderedFrameVersion) return;
     _building = true;
     final int version = controller.frameVersion;
-    final ReportTemplate template = controller.displayTemplate;
-    final DesignTimeLayout layout = DesignTimeLayout.of(template);
+    final ReportDefinition definition = controller.displayDefinition;
+    final DesignTimeLayout layout = DesignTimeLayout.of(definition);
     _frameBuilder
-        .recordFrame(_frameBuilder.build(template, layout))
+        .recordFrame(_frameBuilder.build(definition, layout))
         .then((ui.Picture picture) {
       _building = false;
       if (!mounted) {
@@ -292,7 +292,6 @@ class _DesignCanvasState extends State<DesignCanvas> {
     final JetOffset page =
         transform.screenToPage(JetOffset(localPosition.dx, localPosition.dy));
     final String? hit = hitTestElement(
-      controller.template,
       layout,
       page,
       slop: kHandleHitSize / 2 / transform.scale,
@@ -346,7 +345,6 @@ class _DesignCanvasState extends State<DesignCanvas> {
     final JetOffset page =
         transform.screenToPage(JetOffset(localPosition.dx, localPosition.dy));
     final String? hit = hitTestElement(
-      controller.template,
       layout,
       page,
       slop: kHandleHitSize / 2 / transform.scale,
@@ -417,7 +415,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
       controller.clearSelection();
       return false;
     }
-    final int? band = layout.bandAt(page);
+    final String? band = layout.bandIdAt(page);
     if (band != null) {
       controller.selectBand(band);
     } else {
@@ -478,7 +476,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
   ) {
     final JetOffset page =
         transform.screenToPage(JetOffset(localPosition.dx, localPosition.dy));
-    final String? hit = hitTestElement(controller.template, layout, page,
+    final String? hit = hitTestElement(layout, page,
         slop: kHandleHitSize / 2 / transform.scale);
     if (hit == null) {
       // Empty-area drag → marquee (rubber-band) selection. Cancel any pending
@@ -544,8 +542,8 @@ class _DesignCanvasState extends State<DesignCanvas> {
       _marqueeStartPage = null;
       if (rect != null && (rect.width > 1 || rect.height > 1)) {
         controller.selectElements(<String>[
-          for (final band in controller.template.bands)
-            for (final element in band.elements)
+          for (final placed in layout.bands)
+            for (final element in placed.band.elements)
               if (layout.elementRect(element.id) case final JetRect r
                   when _encloses(rect, r))
                 element.id,
@@ -572,12 +570,12 @@ class _DesignCanvasState extends State<DesignCanvas> {
     final Offset local = object.globalToLocal(globalOffset);
     final JetOffset page =
         JetOffset(local.dx / transform.scale, local.dy / transform.scale);
-    final int? bandIndex = layout.bandIndexAt(page);
-    if (bandIndex == null) return;
+    final String? bandId = layout.bandIdNear(page);
+    if (bandId == null) return;
     controller.createElement(
       type,
-      bandIndex: bandIndex,
-      at: layout.toBandLocal(bandIndex, page),
+      bandId: bandId,
+      at: layout.toBandLocal(bandId, page),
     );
   }
 
@@ -596,11 +594,11 @@ class _DesignCanvasState extends State<DesignCanvas> {
     final Offset local = object.globalToLocal(globalOffset);
     final JetOffset page =
         JetOffset(local.dx / transform.scale, local.dy / transform.scale);
-    final int? bandIndex = layout.bandIndexAt(page);
-    if (bandIndex == null) return;
+    final String? bandId = layout.bandIdNear(page);
+    if (bandId == null) return;
     controller.createBoundElement(
-      bandIndex: bandIndex,
-      at: layout.toBandLocal(bandIndex, page),
+      bandId: bandId,
+      at: layout.toBandLocal(bandId, page),
       expression: '\$F{${data.fieldName}}',
     );
   }
@@ -669,16 +667,16 @@ class _DesignCanvasState extends State<DesignCanvas> {
     // they reflow together in realtime. Idle (and during element move/resize,
     // which never changes band geometry) the two are identical; only a band
     // resize makes them diverge, which is exactly where the reflow is wanted. When
-    // idle, `displayTemplate` is the same template instance, so the layout is
+    // idle, `displayDefinition` is the same instance, so the layout is
     // reused rather than recomputed.
-    final DesignTimeLayout layout = DesignTimeLayout.of(controller.template);
-    final ReportTemplate displayed = controller.displayTemplate;
+    final DesignTimeLayout layout = DesignTimeLayout.of(controller.definition);
+    final ReportDefinition displayed = controller.displayDefinition;
     final DesignTimeLayout displayLayout =
-        identical(displayed, controller.template)
+        identical(displayed, controller.definition)
             ? layout
             : DesignTimeLayout.of(displayed);
-    final bool isEmpty =
-        !controller.template.bands.any((band) => band.elements.isNotEmpty);
+    final bool isEmpty = !allBands(controller.definition)
+        .any((band) => band.elements.isNotEmpty);
 
     // Re-record the displayed picture whenever the displayed frame changes (off
     // the build path) — a committed edit or a live move/resize preview, both of
@@ -1148,18 +1146,15 @@ class _DesignCanvasState extends State<DesignCanvas> {
   ) {
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
     final List<Widget> badges = <Widget>[];
-    final List<ReportBand> bands = controller.template.bands;
-    for (int i = 0; i < bands.length; i++) {
-      final JetRect? rect = layout.bandRect(i);
-      if (rect == null) continue;
+    for (final PlacedBand placed in layout.bands) {
       badges.add(Positioned(
-        // Keyed by index so duplicate band types (e.g. several group headers)
-        // never produce a duplicate key.
-        key: ValueKey<String>('jet_print.designer.bandBadge.$i'),
+        // Keyed by the band's stable id so duplicate band types (e.g. several
+        // group headers) never produce a duplicate key.
+        key: ValueKey<String>('jet_print.designer.bandBadge.${placed.id}'),
         left: 0,
-        top: rect.y * scale,
+        top: placed.rect.y * scale,
         child: IgnorePointer(
-          child: _BandBadge(caption: bandTypeLabel(bands[i].type, l10n)),
+          child: _BandBadge(caption: bandTypeLabel(placed.band.type, l10n)),
         ),
       ));
     }
@@ -1173,8 +1168,8 @@ class _DesignCanvasState extends State<DesignCanvas> {
     JetPrintLocalizations l10n,
   ) {
     final List<Widget> regions = <Widget>[];
-    for (final band in controller.template.bands) {
-      for (final element in band.elements) {
+    for (final PlacedBand placed in layout.bands) {
+      for (final element in placed.band.elements) {
         final JetRect? rect = layout.elementRect(element.id);
         if (rect == null) continue;
         final GlobalKey regionKey =

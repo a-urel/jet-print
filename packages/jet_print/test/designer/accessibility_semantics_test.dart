@@ -28,7 +28,7 @@ void main() {
     final SemanticsHandle sem = tester.ensureSemantics();
     final JetReportDesignerController c = await pumpDesignerWith(tester);
     c.createElement(DesignerToolType.text,
-        bandIndex: 1, at: const JetOffset(40, 40));
+        bandId: firstDetailBandId(c), at: const JetOffset(40, 40));
     final String id = c.selection.singleOrNull!;
     await tester.pumpAndSettle();
 
@@ -44,7 +44,7 @@ void main() {
     final SemanticsHandle sem = tester.ensureSemantics();
     final JetReportDesignerController c = await pumpDesignerWith(tester);
     c.createElement(DesignerToolType.text,
-        bandIndex: 1, at: const JetOffset(60, 60));
+        bandId: firstDetailBandId(c), at: const JetOffset(60, 60));
     await tester.pumpAndSettle();
 
     const Map<String, String> names = <String, String>{
@@ -71,7 +71,7 @@ void main() {
       (WidgetTester tester) async {
     final SemanticsHandle sem = tester.ensureSemantics();
     final JetReportDesignerController c = await pumpDesignerWith(tester);
-    c.selectBand(1);
+    c.selectBand(firstDetailBandId(c));
     await tester.pumpAndSettle();
 
     expect(
@@ -86,7 +86,7 @@ void main() {
     final SemanticsHandle sem = tester.ensureSemantics();
     final JetReportDesignerController c = await pumpDesignerWith(tester);
     c.createElement(DesignerToolType.text,
-        bandIndex: 1, at: const JetOffset(20, 20));
+        bandId: firstDetailBandId(c), at: const JetOffset(20, 20));
     c.selectAll();
     await tester.pumpAndSettle();
 
@@ -112,7 +112,7 @@ void main() {
     final SemanticsHandle sem = tester.ensureSemantics();
     final JetReportDesignerController c = await pumpDesignerWith(tester);
     c.createElement(DesignerToolType.shape,
-        bandIndex: 1,
+        bandId: firstDetailBandId(c),
         at: const JetOffset(20, 20)); // a rectangle, auto-selected
     await tester.pumpAndSettle();
     await openPropertiesTab(tester);
@@ -155,7 +155,7 @@ void main() {
         WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       c.createElement(DesignerToolType.text,
-          bandIndex: 1, at: const JetOffset(20, 20));
+          bandId: firstDetailBandId(c), at: const JetOffset(20, 20));
       await tester.pumpAndSettle();
       await openPropertiesTab(tester);
       return c;
@@ -280,7 +280,7 @@ void main() {
       final SemanticsHandle sem = tester.ensureSemantics();
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       c.createElement(DesignerToolType.shape,
-          bandIndex: 1, at: const JetOffset(20, 20));
+          bandId: firstDetailBandId(c), at: const JetOffset(20, 20));
       await tester.pumpAndSettle();
       await openPropertiesTab(tester);
 

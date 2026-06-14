@@ -48,21 +48,27 @@ const List<MapEntry<String, List<String>>> _locales =
   ]),
 ];
 
-ReportTemplate _fixture() => const ReportTemplate(
+ReportDefinition _fixture() => const ReportDefinition(
       name: 'F',
       page: PageFormat.a4Portrait,
-      bands: <ReportBand>[
-        ReportBand(
-          type: BandType.detail,
-          height: 300,
-          elements: <ReportElement>[
-            TextElement(
-                id: 'a',
-                bounds: JetRect(x: 20, y: 20, width: 80, height: 24),
-                text: 'a'),
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+              id: 'detail',
+              type: BandType.detail,
+              height: 300,
+              elements: <ReportElement>[
+                TextElement(
+                    id: 'a',
+                    bounds: JetRect(x: 20, y: 20, width: 80, height: 24),
+                    text: 'a'),
+              ],
+            )),
           ],
         ),
-      ],
+      ),
     );
 
 Future<JetReportDesignerController> _pump(WidgetTester tester,

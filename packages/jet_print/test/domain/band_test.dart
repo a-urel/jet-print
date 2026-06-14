@@ -33,10 +33,14 @@ void main() {
 
     test('is value-equal by content (deep over elements)', () {
       final Band a = Band(
-          id: 'b', type: BandType.detail, height: 5,
+          id: 'b',
+          type: BandType.detail,
+          height: 5,
           elements: <ReportElement>[_txt('e')]);
       final Band b = Band(
-          id: 'b', type: BandType.detail, height: 5,
+          id: 'b',
+          type: BandType.detail,
+          height: 5,
           elements: <ReportElement>[_txt('e')]);
       expect(a, equals(b));
       expect(a.hashCode, b.hashCode);
@@ -44,17 +48,19 @@ void main() {
 
     test('differs when any field differs', () {
       const Band base = Band(id: 'b', type: BandType.detail, height: 5);
-      expect(base, isNot(const Band(id: 'x', type: BandType.detail, height: 5)));
+      expect(
+          base, isNot(const Band(id: 'x', type: BandType.detail, height: 5)));
       expect(base, isNot(const Band(id: 'b', type: BandType.title, height: 5)));
-      expect(base, isNot(const Band(id: 'b', type: BandType.detail, height: 6)));
+      expect(
+          base, isNot(const Band(id: 'b', type: BandType.detail, height: 6)));
     });
 
     test('copyWith replaces only named fields', () {
       const Band band = Band(id: 'b', type: BandType.detail, height: 5);
       expect(band.copyWith(height: 9),
           const Band(id: 'b', type: BandType.detail, height: 9));
-      expect(band.copyWith(type: BandType.groupHeader).type,
-          BandType.groupHeader);
+      expect(
+          band.copyWith(type: BandType.groupHeader).type, BandType.groupHeader);
       expect(band.copyWith().id, 'b');
     });
   });

@@ -1,15 +1,47 @@
-// Public-API import test (US1 / SC-001 / SC-007).
+// Public-API import test (US1 / SC-001 / SC-007; spec 024 / C13).
 //
 // Acts as an external consumer: it imports ONLY the single public entry point
-// and proves the documented surface (JetPrintPlaceholder, jetPrintVersion,
-// JetReportDesigner, JetPrintLocalizations) is reachable and sufficient. If this
-// file ever needs a `package:jet_print/src/` import to do its job, the public
-// API is incomplete.
+// and proves the documented surface is reachable and sufficient to build,
+// mutate, validate, serialize, and render a report — now expressed in the
+// reified [ReportDefinition] model. The legacy ReportTemplate/ReportBand/
+// ReportGroup graph is gone; this file no longer needs (or names) it.
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
 import 'support/test_fonts.dart';
+
+/// A minimal reified definition: the master scope with one detail band carrying
+/// [elements].
+ReportDefinition _detailDef({
+  List<ReportElement> elements = const <ReportElement>[],
+}) =>
+    ReportDefinition(
+      name: 'API check',
+      page: PageFormat.a4Portrait,
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+                id: 'detail',
+                type: BandType.detail,
+                height: 80,
+                elements: elements)),
+          ],
+        ),
+      ),
+    );
+
+/// The first element of the master detail band — the reified replacement for
+/// `template.bands.first.elements.first`.
+ReportElement _firstElement(JetReportDesignerController c) =>
+    c.definition.body.root.children
+        .whereType<BandNode>()
+        .first
+        .band
+        .elements
+        .first;
 
 void main() {
   test('jetPrintVersion is exposed as a non-empty String', () {
@@ -33,128 +65,197 @@ void main() {
       JetPrintLocalizations.delegate,
       isA<LocalizationsDelegate<JetPrintLocalizations>>(),
     );
-    // The library ships English (default/fallback), German and Turkish.
     final List<String> codes = JetPrintLocalizations.supportedLocales
         .map((Locale l) => l.languageCode)
         .toList();
     expect(codes, containsAll(<String>['en', 'de', 'tr']));
-    // English is listed first so unsupported locales resolve to it (FR-017).
     expect(JetPrintLocalizations.supportedLocales.first.languageCode, 'en');
   });
 
-  // --- 003: the model graph + controller + format are reachable and, together,
-  // sufficient to build, mutate, and serialize a design (contracts §7.1). ---
+  // --- 024: the reified model graph is the public surface. The tree types are
+  // reachable and, together with the controller + format + validate, sufficient
+  // to build, mutate, validate, and serialize a design (contracts §7.1 / C13). ---
 
-  test('the model graph builds a ReportTemplate from the public surface', () {
-    const ReportTemplate template = ReportTemplate(
+  test(
+      'the reified tree types build a ReportDefinition from the public surface',
+      () {
+    const ReportDefinition def = ReportDefinition(
       name: 'API check',
       page: PageFormat.a4Portrait,
-      bands: <ReportBand>[
-        ReportBand(
-          type: BandType.detail,
-          height: 80,
-          elements: <ReportElement>[
-            TextElement(
-              id: 't1',
-              bounds: JetRect(x: 0, y: 0, width: 100, height: 18),
-              text: 'Hi',
-              style: JetTextStyle(weight: JetFontWeight.bold),
-            ),
-            ShapeElement(
-              id: 's1',
-              bounds: JetRect(x: 0, y: 20, width: 100, height: 0),
-              kind: ShapeKind.line,
-              style: JetBoxStyle(stroke: JetColor.black),
+      furniture: PageFurniture(
+        pageHeader: Band(id: 'ph', type: BandType.pageHeader, height: 24),
+      ),
+      body: ReportBody(
+        title: Band(id: 'title', type: BandType.title, height: 20),
+        root: DetailScope(
+          id: 'root',
+          groups: <GroupLevel>[
+            GroupLevel(
+              id: 'g1',
+              name: 'category',
+              key: r'$F{category}',
+              header: Band(id: 'gh', type: BandType.groupHeader, height: 18),
             ),
           ],
+          children: <ScopeNode>[
+            BandNode(Band(
+              id: 'detail',
+              type: BandType.detail,
+              height: 80,
+              elements: <ReportElement>[
+                TextElement(
+                  id: 't1',
+                  bounds: JetRect(x: 0, y: 0, width: 100, height: 18),
+                  text: 'Hi',
+                  style: JetTextStyle(weight: JetFontWeight.bold),
+                ),
+              ],
+            )),
+            NestedScope(DetailScope(
+              id: 'lines',
+              collectionField: 'lines',
+              children: <ScopeNode>[
+                BandNode(Band(id: 'line', type: BandType.detail, height: 16)),
+              ],
+            )),
+          ],
         ),
-      ],
+      ),
     );
-    expect(template.bands.single.elements.length, 2);
-    // Geometry helpers are reachable.
-    expect(template.bands.single.elements.first.bounds, isA<JetRect>());
+    expect(def.furniture.pageHeader, isA<Band>());
+    expect(def.body.root.groups.single, isA<GroupLevel>());
+    expect(def.body.root.children.whereType<NestedScope>().single.scope.id,
+        'lines');
+    // The sealed ScopeNode is matchable from the public surface.
+    final ScopeNode node = def.body.root.children.first;
+    expect(node, isA<BandNode>());
+  });
+
+  test('validate() is public and returns Diagnostics for the reified model',
+      () {
+    // A clean definition yields no errors; a duplicate group name is flagged.
+    expect(
+      validate(_detailDef())
+          .where((Diagnostic d) => d.severity == DiagnosticSeverity.error),
+      isEmpty,
+    );
+    const ReportDefinition dup = ReportDefinition(
+      name: 'r',
+      page: PageFormat.a4Portrait,
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          groups: <GroupLevel>[
+            GroupLevel(id: 'g1', name: 'dup', key: r'$F{a}'),
+            GroupLevel(id: 'g2', name: 'dup', key: r'$F{b}'),
+          ],
+        ),
+      ),
+    );
+    expect(
+      validate(dup)
+          .any((Diagnostic d) => d.severity == DiagnosticSeverity.error),
+      isTrue,
+    );
   });
 
   test('JetReportDesignerController mutates the model and is undoable', () {
     final JetReportDesignerController controller =
         JetReportDesignerController();
-    final int before = controller.template.bands.first.elements.length;
+    final int before = controller.definition.body.root.children
+        .whereType<BandNode>()
+        .first
+        .band
+        .elements
+        .length;
     controller.createElement(
       DesignerToolType.text,
-      bandIndex: 0,
+      bandId: 'detail',
       at: const JetOffset(10, 10),
     );
-    expect(controller.template.bands.first.elements.length, before + 1);
+    expect(_firstElement(controller), isA<TextElement>());
     expect(controller.selection.isNotEmpty, isTrue);
     expect(controller.canUndo, isTrue);
     controller.undo();
-    expect(controller.template.bands.first.elements.length, before);
+    expect(
+      controller.definition.body.root.children
+          .whereType<BandNode>()
+          .first
+          .band
+          .elements
+          .length,
+      before,
+    );
+    controller.dispose();
+  });
+
+  test('the controller exposes first-class group & scope mutators (024)', () {
+    final JetReportDesignerController controller =
+        JetReportDesignerController();
+    // Create a group on the master scope, select it, and toggle a flag — each
+    // an undoable step keyed by the group's stable id.
+    controller.createGroup('root', name: 'cat', key: r'$F{cat}');
+    final GroupLevel group = controller.definition.body.root.groups.single;
+    controller.selectGroup(group.id);
+    expect(controller.selection.groupId, group.id);
+    controller.setGroupStartNewPage(group.id, true);
+    expect(controller.definition.body.root.groups.single.startNewPage, isTrue);
+    // Nested scopes are first-class too.
+    controller.createScope('root', collectionField: 'lines');
+    expect(controller.definition.body.root.children.whereType<NestedScope>(),
+        hasLength(1));
+    // Author-time diagnostics surface through the controller.
+    expect(controller.diagnostics, isA<List<Diagnostic>>());
     controller.dispose();
   });
 
   test('the controller exposes canCopy / canPaste clipboard predicates (016)',
       () {
-    // The two clipboard UI surfaces (toolbar + canvas context menu) bind their
-    // enablement to these two getters, mirroring the existing canUndo/canRedo
-    // idiom — a reviewed, additive public surface (Constitution I / FR-012).
     final JetReportDesignerController controller =
         JetReportDesignerController();
-    // Empty document: nothing selected, nothing on the clipboard.
     expect(controller.canCopy, isFalse);
     expect(controller.canPaste, isFalse);
-
     controller.createElement(
       DesignerToolType.text,
-      bandIndex: 0,
+      bandId: 'detail',
       at: const JetOffset(10, 10),
     );
-    // The new element is auto-selected, so Cut/Copy become available.
     expect(controller.canCopy, isTrue);
     expect(controller.canPaste, isFalse);
-
     controller.copy();
-    // A Copy fills the clipboard → Paste available; selection intact.
     expect(controller.canPaste, isTrue);
     controller.dispose();
   });
 
-  test('JetReportFormat serializes a mutated design losslessly', () {
+  test('JetReportFormat serializes a mutated design losslessly (v2)', () {
     final JetReportDesignerController controller =
         JetReportDesignerController();
     controller.createElement(
       DesignerToolType.barcode,
-      bandIndex: 0,
+      bandId: 'detail',
       at: const JetOffset(5, 5),
     );
-    final String json = JetReportFormat.encodeJson(controller.template);
-    final ReportTemplate reopened = JetReportFormat.decodeJson(json);
+    final String json =
+        JetReportFormat.encodeDefinitionJson(controller.definition);
+    final ReportDefinition reopened =
+        JetReportFormat.decodeDefinitionJson(json);
     expect(
-      JetReportFormat.encode(reopened),
-      equals(JetReportFormat.encode(controller.template)),
+      JetReportFormat.encodeDefinition(reopened),
+      equals(JetReportFormat.encodeDefinition(controller.definition)),
     );
     controller.dispose();
   });
-
-  // --- 017: the unified toolbar adds exactly two public symbols — an undoable
-  // controller mutator and an optional preview callback. The mode switch reuses
-  // the already-public onPreviewRequested/onBack; everything else stays private.
 
   test('JetReportDesignerController.rename is the additive 017 mutator', () {
     final JetReportDesignerController controller =
         JetReportDesignerController();
     controller.rename('Renamed report');
-    expect(controller.template.name, 'Renamed report');
-    // Undoable in a single step, like every other edit.
+    expect(controller.definition.name, 'Renamed report');
     controller.undo();
-    expect(controller.template.name, '',
+    expect(controller.definition.name, '',
         reason: 'a fresh design starts with an empty (placeholder) name');
     controller.dispose();
   });
-
-  // --- 018: editable page properties add exactly three public symbols — the
-  // undoable controller mutator setPageFormat and copyWith on the two already-
-  // public immutable value types. The paper/margin presets, recognition, clamp,
-  // and the SetPageFormatCommand all stay private (not reachable from here).
 
   test('PageFormat.copyWith and JetEdgeInsets.copyWith are public (018)', () {
     const PageFormat base = PageFormat.a4Portrait;
@@ -170,24 +271,19 @@ void main() {
       () {
     final JetReportDesignerController controller =
         JetReportDesignerController();
-    final PageFormat before = controller.template.page;
+    final PageFormat before = controller.definition.page;
     controller.setPageFormat(
         before.copyWith(width: before.height, height: before.width));
-    expect(controller.template.page.width, before.height);
-    // Undoable in a single step, like every other edit.
+    expect(controller.definition.page.width, before.height);
     expect(controller.canUndo, isTrue);
     controller.undo();
-    expect(controller.template.page, before);
+    expect(controller.definition.page, before);
     controller.dispose();
   });
 
   test('JetReportPreview exposes the additive onRename callback (017)', () {
-    final RenderedReport report = const JetReportEngine().render(
-      const ReportTemplate(
-        name: 'X',
-        page: PageFormat.a4Portrait,
-        bands: <ReportBand>[ReportBand(type: BandType.detail, height: 20)],
-      ),
+    final RenderedReport report = const JetReportEngine().renderDefinition(
+      _flatTextDef(),
       JetInMemoryDataSource(const <Map<String, Object?>>[<String, Object?>{}]),
     );
     final JetReportPreview preview =
@@ -196,13 +292,7 @@ void main() {
     expect(preview, isA<Widget>());
   });
 
-  // --- 020: the shape gallery adds exactly: six additive ShapeKind values, an
-  // optional unknownForm field + copyWith on the already-public ShapeElement,
-  // and the undoable controller mutator setShapeKind. shapePath, the
-  // SetShapeKindCommand, and the _ShapeGallery widget stay private (a `src/`
-  // import would be needed to reach them — this file never takes one).
-
-  test('the six new ShapeKind forms are public and additive (020)', () {
+  test('the eight ShapeKind forms are public and additive (020)', () {
     expect(
         ShapeKind.values,
         containsAll(<ShapeKind>[
@@ -215,7 +305,6 @@ void main() {
           ShapeKind.hexagon,
           ShapeKind.star,
         ]));
-    // line/rectangle stay first so pre-feature wire values are unchanged.
     expect(ShapeKind.values.first, ShapeKind.line);
     expect(ShapeKind.values[1], ShapeKind.rectangle);
   });
@@ -230,7 +319,6 @@ void main() {
     expect(star.kind, ShapeKind.star);
     expect(star.bounds, base.bounds);
     expect(base.unknownForm, isNull);
-    // The explicit clear flag is reachable from the public surface.
     const ShapeElement unknown = ShapeElement(
       id: 's',
       bounds: JetRect(x: 0, y: 0, width: 20, height: 20),
@@ -243,50 +331,28 @@ void main() {
   test('JetReportDesignerController.setShapeKind is the additive 020 mutator',
       () {
     final JetReportDesignerController controller = JetReportDesignerController(
-      template: const ReportTemplate(
-        name: 'Shape',
-        page: PageFormat.a4Portrait,
-        bands: <ReportBand>[
-          ReportBand(
-              type: BandType.detail,
-              height: 80,
-              elements: <ReportElement>[
-                ShapeElement(
-                  id: 's1',
-                  bounds: JetRect(x: 0, y: 0, width: 40, height: 40),
-                  kind: ShapeKind.rectangle,
-                ),
-              ]),
-        ],
-      ),
+      definition: _detailDef(elements: const <ReportElement>[
+        ShapeElement(
+          id: 's1',
+          bounds: JetRect(x: 0, y: 0, width: 40, height: 40),
+          kind: ShapeKind.rectangle,
+        ),
+      ]),
     );
     controller.setShapeKind('s1', ShapeKind.hexagon);
-    final ShapeElement shape =
-        controller.template.bands.first.elements.first as ShapeElement;
-    expect(shape.kind, ShapeKind.hexagon);
-    // Undoable in a single step, like every other edit.
+    expect((_firstElement(controller) as ShapeElement).kind, ShapeKind.hexagon);
     expect(controller.canUndo, isTrue);
     controller.undo();
     expect(
-      (controller.template.bands.first.elements.first as ShapeElement).kind,
-      ShapeKind.rectangle,
-    );
+        (_firstElement(controller) as ShapeElement).kind, ShapeKind.rectangle);
     controller.dispose();
   });
-
-  // --- 021: format properties — the additions ride already-public types:
-  // JetTextStyle.underline + copyWith, JetBoxStyle.copyWith, and the three
-  // style mutators on the controller. `lib/jet_print.dart` needs NO new export
-  // line, and the designer's FontRegistry stays internal: it is deliberately
-  // absent from the export list (research §1 — a designer-only font seam would
-  // silently break preview/export WYSIWYG), so it cannot even be named here. ---
 
   test('JetTextStyle exposes underline and a sentinel-based copyWith (021)',
       () {
     const JetTextStyle base =
         JetTextStyle(fontFamily: 'Inter', underline: true);
     expect(base.underline, isTrue);
-    // Omitting fontFamily preserves it; explicit null clears it.
     expect(base.copyWith(fontSize: 9).fontFamily, 'Inter');
     expect(base.copyWith(fontFamily: null).fontFamily, isNull);
     expect(base.copyWith(underline: false).underline, isFalse);
@@ -295,47 +361,30 @@ void main() {
   test('JetReportDesignerController.setTextStyle restyles a text element (021)',
       () {
     final JetReportDesignerController controller = JetReportDesignerController(
-      template: const ReportTemplate(
-        name: 'API check',
-        page: PageFormat.a4Portrait,
-        bands: <ReportBand>[
-          ReportBand(
-              type: BandType.detail,
-              height: 80,
-              elements: <ReportElement>[
-                TextElement(
-                  id: 't1',
-                  bounds: JetRect(x: 0, y: 0, width: 100, height: 18),
-                  text: 'Hi',
-                ),
-              ]),
-        ],
-      ),
+      definition: _detailDef(elements: const <ReportElement>[
+        TextElement(
+          id: 't1',
+          bounds: JetRect(x: 0, y: 0, width: 100, height: 18),
+          text: 'Hi',
+        ),
+      ]),
     );
     controller.setTextStyle(
         't1',
         const JetTextStyle()
             .copyWith(weight: JetFontWeight.bold, underline: true));
-    final TextElement text =
-        controller.template.bands.first.elements.first as TextElement;
+    final TextElement text = _firstElement(controller) as TextElement;
     expect(text.style.weight, JetFontWeight.bold);
     expect(text.style.underline, isTrue);
-    // Undoable in a single step, like every other edit.
     expect(controller.canUndo, isTrue);
     controller.undo();
-    expect(
-      (controller.template.bands.first.elements.first as TextElement)
-          .style
-          .underline,
-      isFalse,
-    );
+    expect((_firstElement(controller) as TextElement).style.underline, isFalse);
     controller.dispose();
   });
 
   test('JetBoxStyle exposes a sentinel-based copyWith (021)', () {
     const JetBoxStyle base = JetBoxStyle(
         fill: JetColor(0x3300FF00), stroke: JetColor.black, strokeWidth: 2);
-    // Omitting preserves; explicit null clears (None states, FR-007/FR-008).
     expect(base.copyWith(strokeWidth: 5).fill, base.fill);
     expect(base.copyWith(fill: null).fill, isNull);
     expect(base.copyWith(stroke: null).stroke, isNull);
@@ -343,75 +392,46 @@ void main() {
 
   test('JetReportDesignerController.setShapeStyle restyles a shape (021)', () {
     final JetReportDesignerController controller = JetReportDesignerController(
-      template: const ReportTemplate(
-        name: 'API check',
-        page: PageFormat.a4Portrait,
-        bands: <ReportBand>[
-          ReportBand(
-              type: BandType.detail,
-              height: 80,
-              elements: <ReportElement>[
-                ShapeElement(
-                  id: 's1',
-                  bounds: JetRect(x: 0, y: 0, width: 40, height: 40),
-                  kind: ShapeKind.rectangle,
-                  style: JetBoxStyle(stroke: JetColor.black),
-                ),
-              ]),
-        ],
-      ),
+      definition: _detailDef(elements: const <ReportElement>[
+        ShapeElement(
+          id: 's1',
+          bounds: JetRect(x: 0, y: 0, width: 40, height: 40),
+          kind: ShapeKind.rectangle,
+          style: JetBoxStyle(stroke: JetColor.black),
+        ),
+      ]),
     );
     controller.setShapeStyle(
         's1',
         const JetBoxStyle(stroke: JetColor.black)
             .copyWith(fill: const JetColor(0x3300FF00), strokeWidth: 3));
-    final ShapeElement shape =
-        controller.template.bands.first.elements.first as ShapeElement;
+    final ShapeElement shape = _firstElement(controller) as ShapeElement;
     expect(shape.style.fill, const JetColor(0x3300FF00));
     expect(shape.style.strokeWidth, 3);
     expect(controller.canUndo, isTrue);
     controller.undo();
-    expect(
-      (controller.template.bands.first.elements.first as ShapeElement)
-          .style
-          .fill,
-      isNull,
-    );
+    expect((_firstElement(controller) as ShapeElement).style.fill, isNull);
     controller.dispose();
   });
 
   test('JetReportDesignerController.setBarcodeColor recolors a barcode (021)',
       () {
     final JetReportDesignerController controller = JetReportDesignerController(
-      template: const ReportTemplate(
-        name: 'API check',
-        page: PageFormat.a4Portrait,
-        bands: <ReportBand>[
-          ReportBand(
-              type: BandType.detail,
-              height: 80,
-              elements: <ReportElement>[
-                BarcodeElement(
-                  id: 'b1',
-                  bounds: JetRect(x: 0, y: 0, width: 40, height: 40),
-                  symbology: BarcodeSymbology.qrCode,
-                  data: '42',
-                ),
-              ]),
-        ],
-      ),
+      definition: _detailDef(elements: const <ReportElement>[
+        BarcodeElement(
+          id: 'b1',
+          bounds: JetRect(x: 0, y: 0, width: 40, height: 40),
+          symbology: BarcodeSymbology.qrCode,
+          data: '42',
+        ),
+      ]),
     );
     controller.setBarcodeColor('b1', const JetColor(0xFF1E40AF));
-    expect(
-      (controller.template.bands.first.elements.first as BarcodeElement).color,
-      const JetColor(0xFF1E40AF),
-    );
+    expect((_firstElement(controller) as BarcodeElement).color,
+        const JetColor(0xFF1E40AF));
     expect(controller.canUndo, isTrue);
     controller.undo();
-    expect(
-      (controller.template.bands.first.elements.first as BarcodeElement).color,
-      JetColor.black,
-    );
+    expect((_firstElement(controller) as BarcodeElement).color, JetColor.black);
     controller.dispose();
   });
 
@@ -421,19 +441,12 @@ void main() {
     addTearDown(controller.dispose);
     final JetReportWorkspace workspace = JetReportWorkspace(
       controller: controller,
-      renderReport: (ReportTemplate t) => const JetReportEngine().render(
-        t,
-        JetInMemoryDataSource(const <Map<String, Object?>>[]),
-      ),
+      renderReport: (ReportDefinition d) => const JetReportEngine()
+          .renderDefinition(
+              d, JetInMemoryDataSource(const <Map<String, Object?>>[])),
     );
     expect(workspace, isA<Widget>());
   });
-
-  // --- 022: host fonts add exactly two public value types, the re-exported
-  // FontFormatException, RenderOptions.fonts, and a `fonts` param on the
-  // designer + workspace. `FontRegistry` and the registry carried on
-  // RenderedReport stay INTERNAL — they are deliberately absent from the export
-  // list, so this file cannot even name them (the comment is the contract). ---
 
   test('JetFontFace / JetFontFamily are exported and validate eagerly (022)',
       () {
@@ -443,7 +456,6 @@ void main() {
     final JetFontFamily family =
         JetFontFamily(name: 'Acme Brand', faces: <JetFontFace>[face]);
     expect(family.name, 'Acme Brand');
-    // The re-exported FontFormatException is the detectable rejection type.
     expect(
       () => JetFontFamily(
           name: 'Bad',
@@ -480,12 +492,26 @@ void main() {
         controller: controller,
         fonts: fonts,
         showBuiltInFonts: false,
-        renderReport: (ReportTemplate t) => const JetReportEngine().render(
-          t,
-          JetInMemoryDataSource(const <Map<String, Object?>>[]),
-        ),
+        renderReport: (ReportDefinition d) => const JetReportEngine()
+            .renderDefinition(
+                d, JetInMemoryDataSource(const <Map<String, Object?>>[])),
       ),
       isA<Widget>(),
     );
   });
 }
+
+/// A one-band reified definition with a single text element — for the preview
+/// render test.
+ReportDefinition _flatTextDef() => const ReportDefinition(
+      name: 'X',
+      page: PageFormat.a4Portrait,
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(id: 'detail', type: BandType.detail, height: 20)),
+          ],
+        ),
+      ),
+    );

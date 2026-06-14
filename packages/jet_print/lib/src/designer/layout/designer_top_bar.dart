@@ -68,7 +68,7 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
     // preview (FR-001) — and the designer's command groups fill the right slot.
     return UnifiedTopBar(
       leadingIcon: LucideIcons.fileText,
-      name: controller.template.name,
+      name: controller.definition.name,
       compactWidth: _compactWidth,
       scrollWidth: _scrollWidth,
       // The Preview segment of the switch IS the old Preview action: selecting

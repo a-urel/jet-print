@@ -21,11 +21,16 @@ const PageFormat _letterLandscape = PageFormat(
   margins: JetEdgeInsets.all(14.17),
 );
 
-ReportTemplate _template() => const ReportTemplate(
+// The reified equivalent of the legacy title + master-detail report, authored
+// directly with the SAME path-based ids the template→definition adapter assigns
+// (title → body slot, the master-level detail band → a root BandNode), so all
+// three surfaces stay byte-identical (spec 024).
+ReportDefinition _definition() => const ReportDefinition(
       name: 'Letter Landscape',
       page: _letterLandscape,
-      bands: <ReportBand>[
-        ReportBand(
+      body: ReportBody(
+        title: Band(
+          id: 'body/title',
           type: BandType.title,
           height: 64,
           elements: <ReportElement>[
@@ -37,22 +42,28 @@ ReportTemplate _template() => const ReportTemplate(
             ),
           ],
         ),
-        ReportBand(
-          type: BandType.detail,
-          height: 40,
-          elements: <ReportElement>[
-            TextElement(
-              id: 'body',
-              bounds: JetRect(x: 0, y: 4, width: 420, height: 18),
-              text: 'Body content spanning the wide content area.',
-            ),
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+              id: 'root/c0',
+              type: BandType.detail,
+              height: 40,
+              elements: <ReportElement>[
+                TextElement(
+                  id: 'body',
+                  bounds: JetRect(x: 0, y: 4, width: 420, height: 18),
+                  text: 'Body content spanning the wide content area.',
+                ),
+              ],
+            )),
           ],
         ),
-      ],
+      ),
     );
 
-RenderedReport _rendered() => const JetReportEngine().render(
-      _template(),
+RenderedReport _rendered() => const JetReportEngine().renderDefinition(
+      _definition(),
       JetInMemoryDataSource(const <Map<String, Object?>>[<String, Object?>{}]),
     );
 
@@ -78,7 +89,7 @@ void main() {
       (WidgetTester tester) async {
     await pumpDesignerWith(
       tester,
-      controller: JetReportDesignerController(template: _template()),
+      controller: JetReportDesignerController(definition: _definition()),
       themeMode: ThemeMode.light,
       rulers: false,
       grid: false,

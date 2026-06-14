@@ -11,6 +11,40 @@ import 'package:jet_print/jet_print.dart';
 
 import '../support/designer_harness.dart';
 
+// Every band across a (reified) definition: furniture slots, body once-bands,
+// and the recursive scope tree (per-row bands + group header/footer bands).
+Iterable<Band> _allBands(ReportDefinition def) sync* {
+  final PageFurniture f = def.furniture;
+  for (final Band? b in <Band?>[
+    f.pageHeader,
+    f.pageFooter,
+    f.columnHeader,
+    f.columnFooter,
+    f.background,
+    def.body.title,
+    def.body.summary,
+    def.body.noData,
+  ]) {
+    if (b != null) yield b;
+  }
+  yield* _scopeBands(def.body.root);
+}
+
+Iterable<Band> _scopeBands(DetailScope scope) sync* {
+  for (final GroupLevel g in scope.groups) {
+    if (g.header != null) yield g.header!;
+    if (g.footer != null) yield g.footer!;
+  }
+  for (final ScopeNode node in scope.children) {
+    switch (node) {
+      case BandNode(:final Band band):
+        yield band;
+      case NestedScope(:final DetailScope scope):
+        yield* _scopeBands(scope);
+    }
+  }
+}
+
 const JetDataSchema _invoice = JetDataSchema(
   name: 'Invoice',
   fields: <FieldDef>[
@@ -53,8 +87,8 @@ void main() {
     await tester.drag(find.text('invoiceNo'), target - source);
     await tester.pumpAndSettle();
 
-    final Iterable<TextElement> bound = c.template.bands
-        .expand((ReportBand b) => b.elements)
+    final Iterable<TextElement> bound = _allBands(c.definition)
+        .expand((Band b) => b.elements)
         .whereType<TextElement>()
         .where((TextElement e) => e.expression == r'$F{invoiceNo}');
     expect(bound, isNotEmpty,

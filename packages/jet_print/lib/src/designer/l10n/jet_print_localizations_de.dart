@@ -253,6 +253,39 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   String get propertiesGroupNewPage => 'Auf neuer Seite beginnen';
 
   @override
+  String get propertiesGroupKey => 'Gruppenschlüssel';
+
+  @override
+  String get propertiesGroupKeepTogether => 'Zusammenhalten';
+
+  @override
+  String get propertiesGroupReprintHeader => 'Kopf auf jeder Seite wiederholen';
+
+  @override
+  String get propertiesScope => 'Bereich';
+
+  @override
+  String get outlineMoveUp => 'Nach oben';
+
+  @override
+  String get outlineMoveDown => 'Nach unten';
+
+  @override
+  String get outlineRemove => 'Band entfernen';
+
+  @override
+  String get outlineRetype => 'Bandtyp ändern';
+
+  @override
+  String get outlineAddBand => 'Band hinzufügen';
+
+  @override
+  String get outlineAddHeader => 'Kopf hinzufügen';
+
+  @override
+  String get outlineAddFooter => 'Fuß hinzufügen';
+
+  @override
   String get bindingExpressionHint => 'Feld oder Ausdruck';
 
   @override

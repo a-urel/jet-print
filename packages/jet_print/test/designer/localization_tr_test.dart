@@ -84,7 +84,7 @@ void main() {
     final JetReportDesignerController c =
         await pumpDesignerWith(tester, locale: const Locale('tr'));
     c.createElement(DesignerToolType.text,
-        bandIndex: 1, at: const JetOffset(20, 20));
+        bandId: firstDetailBandId(c), at: const JetOffset(20, 20));
     await tester.pumpAndSettle();
     await openPropertiesTab(tester);
 
@@ -114,11 +114,19 @@ void main() {
     expect(find.text('PAGE'), findsNothing);
 
     // (3) Band inspector — the height row is now label-less (its glyph stands
-    // in for the dropped label); the band collection-binding placeholder is
-    // translated (US3) — English gone.
-    c.selectBand(1);
+    // in for the dropped label). Under the reified model (spec 024) the band
+    // inspector shows ONLY the height; the collection field moved to the Scope
+    // inspector (checked next).
+    c.selectBand(firstDetailBandId(c));
     await tester.pumpAndSettle();
-    expect(find.text('Yükseklik'), findsNothing); // height row dropped its label
+    expect(
+        find.text('Yükseklik'), findsNothing); // height row dropped its label
+
+    // (3b) Scope inspector — a nested detail scope carries the collection-binding
+    // placeholder that used to live on the band, still translated (US3) — English
+    // gone (createScope selects the new scope, opening its inspector).
+    c.createScope('root');
+    await tester.pumpAndSettle();
     expect(find.text('Koleksiyon alanı'), findsOneWidget); // Collection field
     expect(find.text('Collection field'), findsNothing);
 
@@ -132,7 +140,7 @@ void main() {
 
     // (5) Multi-selection — the count summary.
     c.createElement(DesignerToolType.text,
-        bandIndex: 1, at: const JetOffset(80, 60));
+        bandId: firstDetailBandId(c), at: const JetOffset(80, 60));
     c.selectAll();
     await tester.pumpAndSettle();
     expect(find.text('2 öğe seçildi'), findsOneWidget);
@@ -173,22 +181,28 @@ void main() {
     WidgetTester tester,
   ) async {
     final JetReportDesignerController c = JetReportDesignerController(
-      template: ReportTemplate(
+      definition: const ReportDefinition(
         name: 'Styled',
         page: PageFormat.a4Portrait,
-        bands: const <ReportBand>[
-          ReportBand(
-            type: BandType.detail,
-            height: 120,
-            elements: <ReportElement>[
-              TextElement(
-                id: 't',
-                bounds: JetRect(x: 10, y: 10, width: 160, height: 24),
-                text: 'Merhaba',
-              ),
+        body: ReportBody(
+          root: DetailScope(
+            id: 'root',
+            children: <ScopeNode>[
+              BandNode(Band(
+                id: 'root/c0',
+                type: BandType.detail,
+                height: 120,
+                elements: <ReportElement>[
+                  TextElement(
+                    id: 't',
+                    bounds: JetRect(x: 10, y: 10, width: 160, height: 24),
+                    text: 'Merhaba',
+                  ),
+                ],
+              )),
             ],
           ),
-        ],
+        ),
       ),
     );
     final SemanticsHandle sem = tester.ensureSemantics();
@@ -200,11 +214,20 @@ void main() {
     // The font row dropped its visible left labels — the family, size and
     // color controls now carry the localized strings as accessible names.
     const String f = 'jet_print.designer.properties.field';
-    expect(tester.getSemantics(find.byKey(const ValueKey<String>('$f.fontFamily'))).label,
+    expect(
+        tester
+            .getSemantics(find.byKey(const ValueKey<String>('$f.fontFamily')))
+            .label,
         contains('Yazı tipi seç'));
-    expect(tester.getSemantics(find.byKey(const ValueKey<String>('$f.fontSize'))).label,
+    expect(
+        tester
+            .getSemantics(find.byKey(const ValueKey<String>('$f.fontSize')))
+            .label,
         contains('Boyut'));
-    expect(tester.getSemantics(find.byKey(const ValueKey<String>('$f.textColor'))).label,
+    expect(
+        tester
+            .getSemantics(find.byKey(const ValueKey<String>('$f.textColor')))
+            .label,
         contains('Renk seç'));
     sem.dispose();
   });

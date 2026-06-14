@@ -27,7 +27,7 @@ void main() {
     final JetReportDesignerController controller =
         await pumpDesignerWith(tester);
     controller.createElement(DesignerToolType.barcode,
-        bandIndex: 1, at: const JetOffset(20, 20));
+        bandId: 'detail', at: const JetOffset(20, 20));
     await tester.pumpAndSettle();
     final String id = controller.selection.singleOrNull!;
 
@@ -50,7 +50,7 @@ void main() {
     final JetReportDesignerController controller =
         await pumpDesignerWith(tester);
     controller.createElement(DesignerToolType.text,
-        bandIndex: 1, at: const JetOffset(20, 20));
+        bandId: 'detail', at: const JetOffset(20, 20));
     await tester.pumpAndSettle();
     final String id = controller.selection.singleOrNull!;
 

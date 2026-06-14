@@ -8,12 +8,14 @@ import 'package:jet_print/src/data/in_memory_data_source.dart';
 import 'package:jet_print/src/data/jet_data_source.dart';
 import 'package:jet_print/src/data/json_data_source.dart';
 import 'package:jet_print/src/data/object_data_source.dart';
+import 'package:jet_print/src/domain/band.dart';
+import 'package:jet_print/src/domain/detail_scope.dart';
 import 'package:jet_print/src/domain/elements/text_element.dart';
 import 'package:jet_print/src/domain/geometry.dart';
 import 'package:jet_print/src/domain/page_format.dart';
 import 'package:jet_print/src/domain/report_band.dart';
+import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/domain/report_element.dart';
-import 'package:jet_print/src/domain/report_template.dart';
 import 'package:jet_print/src/rendering/engine/jet_report_engine.dart';
 import 'package:jet_print/src/rendering/engine/render_options.dart';
 import 'package:jet_print/src/rendering/engine/rendered_report.dart';
@@ -23,44 +25,56 @@ import 'package:jet_print/src/rendering/text/text_measurer.dart';
 const PageFormat _page =
     PageFormat(width: 400, height: 600, margins: JetEdgeInsets.all(10));
 
-ReportTemplate _template() => const ReportTemplate(
+ReportDefinition _template() => const ReportDefinition(
       name: 'parity',
       page: _page,
-      bands: <ReportBand>[
-        // Master scope: an invoice header plus a parameter binding.
-        ReportBand(
-          type: BandType.detail,
-          height: 40,
-          elements: <ReportElement>[
-            TextElement(
-              id: 'customer',
-              bounds: JetRect(x: 0, y: 0, width: 200, height: 16),
-              text: 'customer',
-              expression: r'$F{customer}',
-            ),
-            TextElement(
-              id: 'by',
-              bounds: JetRect(x: 0, y: 20, width: 200, height: 16),
-              text: 'by',
-              expression: r'"Printed by " + $P{printedBy}',
-            ),
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            // Master scope: an invoice header plus a parameter binding.
+            BandNode(Band(
+              id: 'root/c0',
+              type: BandType.detail,
+              height: 40,
+              elements: <ReportElement>[
+                TextElement(
+                  id: 'customer',
+                  bounds: JetRect(x: 0, y: 0, width: 200, height: 16),
+                  text: 'customer',
+                  expression: r'$F{customer}',
+                ),
+                TextElement(
+                  id: 'by',
+                  bounds: JetRect(x: 0, y: 20, width: 200, height: 16),
+                  text: 'by',
+                  expression: r'"Printed by " + $P{printedBy}',
+                ),
+              ],
+            )),
+            // Child scope: the nested lines collection.
+            NestedScope(DetailScope(
+              id: 'root/c1',
+              collectionField: 'lines',
+              children: <ScopeNode>[
+                BandNode(Band(
+                  id: 'root/c1/c0',
+                  type: BandType.detail,
+                  height: 20,
+                  elements: <ReportElement>[
+                    TextElement(
+                      id: 'line',
+                      bounds: JetRect(x: 0, y: 0, width: 360, height: 16),
+                      text: 'line',
+                      expression: r'$F{desc} + " x " + $F{qty}',
+                    ),
+                  ],
+                )),
+              ],
+            )),
           ],
         ),
-        // Child scope: the nested lines collection.
-        ReportBand(
-          type: BandType.detail,
-          height: 20,
-          collectionField: 'lines',
-          elements: <ReportElement>[
-            TextElement(
-              id: 'line',
-              bounds: JetRect(x: 0, y: 0, width: 360, height: 16),
-              text: 'line',
-              expression: r'$F{desc} + " x " + $F{qty}',
-            ),
-          ],
-        ),
-      ],
+      ),
     );
 
 /// The one logical dataset all three sources must represent identically.
@@ -101,7 +115,8 @@ class _Invoice {
   final List<Map<String, Object?>> lines;
 }
 
-RenderedReport _render(JetDataSource source) => const JetReportEngine().render(
+RenderedReport _render(JetDataSource source) =>
+    const JetReportEngine().renderDefinition(
       _template(),
       source,
       options: const RenderOptions(

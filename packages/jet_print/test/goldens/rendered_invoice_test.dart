@@ -13,11 +13,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
-ReportTemplate _template() => const ReportTemplate(
+ReportDefinition _definition() => const ReportDefinition(
       name: 'Invoice',
       page: PageFormat(width: 400, height: 300, margins: JetEdgeInsets.all(16)),
-      bands: <ReportBand>[
-        ReportBand(
+      body: ReportBody(
+        title: Band(
+          id: 'body/title',
           type: BandType.title,
           height: 28,
           elements: <ReportElement>[
@@ -29,76 +30,93 @@ ReportTemplate _template() => const ReportTemplate(
             ),
           ],
         ),
-        // Master fields live in a master-scope DETAIL band: title/summary
-        // have no row context by design (007b §5).
-        ReportBand(
-          type: BandType.detail,
-          height: 36,
-          elements: <ReportElement>[
-            TextElement(
-              id: 'invoiceNo',
-              bounds: JetRect(x: 220, y: 2, width: 148, height: 14),
-              text: 'invoiceNo',
-              style: JetTextStyle(align: JetTextAlign.right),
-              expression: r'$F{invoiceNo}',
-            ),
-            TextElement(
-              id: 'customer',
-              bounds: JetRect(x: 0, y: 2, width: 220, height: 14),
-              text: 'customer',
-              expression: r'$F{customerName}',
-            ),
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            // Master fields live in a master-scope DETAIL band: title/summary
+            // have no row context by design (007b §5).
+            BandNode(Band(
+              id: 'root/c0',
+              type: BandType.detail,
+              height: 36,
+              elements: <ReportElement>[
+                TextElement(
+                  id: 'invoiceNo',
+                  bounds: JetRect(x: 220, y: 2, width: 148, height: 14),
+                  text: 'invoiceNo',
+                  style: JetTextStyle(align: JetTextAlign.right),
+                  expression: r'$F{invoiceNo}',
+                ),
+                TextElement(
+                  id: 'customer',
+                  bounds: JetRect(x: 0, y: 2, width: 220, height: 14),
+                  text: 'customer',
+                  expression: r'$F{customerName}',
+                ),
+              ],
+            )),
+            NestedScope(DetailScope(
+              id: 'root/c1',
+              collectionField: 'lines',
+              children: <ScopeNode>[
+                BandNode(Band(
+                  id: 'root/c1/c0',
+                  type: BandType.detail,
+                  height: 18,
+                  elements: <ReportElement>[
+                    TextElement(
+                      id: 'desc',
+                      bounds: JetRect(x: 0, y: 1, width: 180, height: 14),
+                      text: 'desc',
+                      expression: r'$F{description}',
+                    ),
+                    TextElement(
+                      id: 'qty',
+                      bounds: JetRect(x: 190, y: 1, width: 40, height: 14),
+                      text: 'qty',
+                      style: JetTextStyle(align: JetTextAlign.right),
+                      expression: r'$F{qty}',
+                    ),
+                    TextElement(
+                      id: 'lineTotal',
+                      bounds: JetRect(x: 240, y: 1, width: 128, height: 14),
+                      text: 'lineTotal',
+                      style: JetTextStyle(align: JetTextAlign.right),
+                      expression:
+                          r'FORMAT($F{qty} * $F{unitPrice}, "#,##0.00")',
+                    ),
+                  ],
+                )),
+              ],
+            )),
+            BandNode(Band(
+              id: 'root/c2',
+              type: BandType.detail,
+              height: 30,
+              elements: <ReportElement>[
+                TextElement(
+                  id: 'totalLabel',
+                  bounds: JetRect(x: 190, y: 8, width: 40, height: 14),
+                  text: 'Total',
+                  style: JetTextStyle(
+                      align: JetTextAlign.right, weight: JetFontWeight.bold),
+                ),
+                TextElement(
+                  id: 'total',
+                  bounds: JetRect(x: 240, y: 8, width: 128, height: 14),
+                  text: 'total',
+                  style: JetTextStyle(
+                      align: JetTextAlign.right, weight: JetFontWeight.bold),
+                  expression: r'FORMAT($F{total}, "#,##0.00")',
+                ),
+              ],
+            )),
           ],
         ),
-        ReportBand(
-          type: BandType.detail,
-          height: 18,
-          collectionField: 'lines',
-          elements: <ReportElement>[
-            TextElement(
-              id: 'desc',
-              bounds: JetRect(x: 0, y: 1, width: 180, height: 14),
-              text: 'desc',
-              expression: r'$F{description}',
-            ),
-            TextElement(
-              id: 'qty',
-              bounds: JetRect(x: 190, y: 1, width: 40, height: 14),
-              text: 'qty',
-              style: JetTextStyle(align: JetTextAlign.right),
-              expression: r'$F{qty}',
-            ),
-            TextElement(
-              id: 'lineTotal',
-              bounds: JetRect(x: 240, y: 1, width: 128, height: 14),
-              text: 'lineTotal',
-              style: JetTextStyle(align: JetTextAlign.right),
-              expression: r'FORMAT($F{qty} * $F{unitPrice}, "#,##0.00")',
-            ),
-          ],
-        ),
-        ReportBand(
-          type: BandType.detail,
-          height: 30,
-          elements: <ReportElement>[
-            TextElement(
-              id: 'totalLabel',
-              bounds: JetRect(x: 190, y: 8, width: 40, height: 14),
-              text: 'Total',
-              style: JetTextStyle(
-                  align: JetTextAlign.right, weight: JetFontWeight.bold),
-            ),
-            TextElement(
-              id: 'total',
-              bounds: JetRect(x: 240, y: 8, width: 128, height: 14),
-              text: 'total',
-              style: JetTextStyle(
-                  align: JetTextAlign.right, weight: JetFontWeight.bold),
-              expression: r'FORMAT($F{total}, "#,##0.00")',
-            ),
-          ],
-        ),
-        ReportBand(
+      ),
+      furniture: PageFurniture(
+        pageFooter: Band(
+          id: 'pageFooter',
           type: BandType.pageFooter,
           height: 16,
           elements: <ReportElement>[
@@ -112,12 +130,12 @@ ReportTemplate _template() => const ReportTemplate(
             ),
           ],
         ),
-      ],
+      ),
     );
 
 /// Twelve lines on a 300pt page -> the invoice paginates onto two pages.
-RenderedReport _report() => const JetReportEngine().render(
-      _template(),
+RenderedReport _report() => const JetReportEngine().renderDefinition(
+      _definition(),
       JetInMemoryDataSource(<Map<String, Object?>>[
         <String, Object?>{
           'invoiceNo': 'INV-1042',

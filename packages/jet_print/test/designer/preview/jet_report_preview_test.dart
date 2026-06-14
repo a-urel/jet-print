@@ -20,28 +20,34 @@ const Key _prevKey = ValueKey<String>('jet_print.preview.prev');
 const Key _nextKey = ValueKey<String>('jet_print.preview.next');
 const Key _pageKey = ValueKey<String>('jet_print.preview.page');
 
-ReportTemplate _template() => const ReportTemplate(
+ReportDefinition _definition() => const ReportDefinition(
       name: 'Quarterly Report',
       page: _page,
-      bands: <ReportBand>[
-        ReportBand(
-          type: BandType.detail,
-          height: 30,
-          elements: <ReportElement>[
-            TextElement(
-              id: 'name',
-              bounds: JetRect(x: 0, y: 0, width: 180, height: 16),
-              text: 'name',
-              expression: r'$F{name}',
-            ),
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+              id: 'root/c0',
+              type: BandType.detail,
+              height: 30,
+              elements: <ReportElement>[
+                TextElement(
+                  id: 'name',
+                  bounds: JetRect(x: 0, y: 0, width: 180, height: 16),
+                  text: 'name',
+                  expression: r'$F{name}',
+                ),
+              ],
+            )),
           ],
         ),
-      ],
+      ),
     );
 
 /// A three-page report (6 rows, 2 per page) rendered via the public engine.
-RenderedReport _report() => const JetReportEngine().render(
-      _template(),
+RenderedReport _report() => const JetReportEngine().renderDefinition(
+      _definition(),
       JetInMemoryDataSource(<Map<String, Object?>>[
         for (int i = 0; i < 6; i++) <String, Object?>{'name': 'row $i'},
       ]),
@@ -197,8 +203,8 @@ void main() {
 
   testWidgets('a single-page report disables both nav buttons',
       (WidgetTester tester) async {
-    final RenderedReport report = const JetReportEngine().render(
-      _template(),
+    final RenderedReport report = const JetReportEngine().renderDefinition(
+      _definition(),
       JetInMemoryDataSource(<Map<String, Object?>>[
         <String, Object?>{'name': 'only'},
       ]),
@@ -216,10 +222,19 @@ void main() {
       (WidgetTester tester) async {
     // The unified shell renders one placeholder in both modes (FR-006, parity)
     // — the designer's reportTitlePlaceholder, not the old preview-only label.
-    final RenderedReport report = const JetReportEngine().render(
-      const ReportTemplate(name: '', page: _page, bands: <ReportBand>[
-        ReportBand(type: BandType.detail, height: 30),
-      ]),
+    final RenderedReport report = const JetReportEngine().renderDefinition(
+      const ReportDefinition(
+        name: '',
+        page: _page,
+        body: ReportBody(
+          root: DetailScope(
+            id: 'root',
+            children: <ScopeNode>[
+              BandNode(Band(id: 'root/c0', type: BandType.detail, height: 30)),
+            ],
+          ),
+        ),
+      ),
       JetInMemoryDataSource(<Map<String, Object?>>[<String, Object?>{}]),
     );
     await _pumpPreview(tester, report: report);

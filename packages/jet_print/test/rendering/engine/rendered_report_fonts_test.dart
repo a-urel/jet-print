@@ -10,12 +10,14 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/in_memory_data_source.dart';
 import 'package:jet_print/src/data/jet_data_source.dart';
+import 'package:jet_print/src/domain/band.dart';
+import 'package:jet_print/src/domain/detail_scope.dart';
 import 'package:jet_print/src/domain/elements/text_element.dart';
 import 'package:jet_print/src/domain/geometry.dart';
 import 'package:jet_print/src/domain/page_format.dart';
 import 'package:jet_print/src/domain/report_band.dart';
+import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/domain/report_element.dart';
-import 'package:jet_print/src/domain/report_template.dart';
 import 'package:jet_print/src/domain/styles/text_style.dart';
 import 'package:jet_print/src/rendering/engine/jet_report_engine.dart';
 import 'package:jet_print/src/rendering/engine/render_options.dart';
@@ -25,23 +27,29 @@ import 'package:jet_print/src/rendering/text/jet_font.dart';
 
 import '../../support/test_fonts.dart';
 
-ReportTemplate _template() => const ReportTemplate(
+ReportDefinition _template() => const ReportDefinition(
       name: 'Carry',
       page: PageFormat(width: 300, height: 200, margins: JetEdgeInsets.all(10)),
-      bands: <ReportBand>[
-        ReportBand(
-          type: BandType.detail,
-          height: 40,
-          elements: <ReportElement>[
-            TextElement(
-              id: 't',
-              bounds: JetRect(x: 0, y: 0, width: 200, height: 20),
-              text: 'Hello',
-              style: JetTextStyle(fontFamily: 'Acme Brand'),
-            ),
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+              id: 'root/c0',
+              type: BandType.detail,
+              height: 40,
+              elements: <ReportElement>[
+                TextElement(
+                  id: 't',
+                  bounds: JetRect(x: 0, y: 0, width: 200, height: 20),
+                  text: 'Hello',
+                  style: JetTextStyle(fontFamily: 'Acme Brand'),
+                ),
+              ],
+            )),
           ],
         ),
-      ],
+      ),
     );
 
 JetDataSource _source() =>
@@ -51,7 +59,7 @@ void main() {
   test('a host-font render carries a registry that resolves the host family',
       () {
     final Uint8List bytes = validRegularFontBytes();
-    final RenderedReport report = const JetReportEngine().render(
+    final RenderedReport report = const JetReportEngine().renderDefinition(
       _template(),
       _source(),
       options: RenderOptions(
@@ -69,7 +77,7 @@ void main() {
   });
 
   test('an empty-fonts render carries a default-only registry', () {
-    final RenderedReport report = const JetReportEngine().render(
+    final RenderedReport report = const JetReportEngine().renderDefinition(
       _template(),
       _source(),
     );

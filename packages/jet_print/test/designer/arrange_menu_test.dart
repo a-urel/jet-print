@@ -16,23 +16,28 @@ final Finder _arrangeButton =
 Finder _menuItem(String name) =>
     find.byKey(ValueKey<String>('jet_print.designer.arrange.$name'));
 
-double _leftOf(JetReportDesignerController c, String id) => c.template.bands
-    .expand((ReportBand b) => b.elements)
+/// The detail [Band] of the master scope (the reified "detail band").
+Band _detailBand(JetReportDesignerController c) =>
+    c.definition.body.root.children.whereType<BandNode>().first.band;
+
+double _leftOf(JetReportDesignerController c, String id) => _detailBand(c)
+    .elements
     .firstWhere((ReportElement e) => e.id == id)
     .bounds
     .x;
 
-List<String> _bandOrder(JetReportDesignerController c, int band) =>
-    c.template.bands[band].elements.map((ReportElement e) => e.id).toList();
+List<String> _detailOrder(JetReportDesignerController c) =>
+    _detailBand(c).elements.map((ReportElement e) => e.id).toList();
 
 /// Creates three text elements at distinct positions in the detail band and
 /// returns their ids (in creation order).
 Future<List<String>> _threeInARow(
     WidgetTester tester, JetReportDesignerController c) async {
+  final String bandId = firstDetailBandId(c);
   final List<String> ids = <String>[];
   for (final double x in <double>[10, 60, 120]) {
     c.createElement(DesignerToolType.text,
-        bandIndex: 1, at: JetOffset(x, 10 + x));
+        bandId: bandId, at: JetOffset(x, 10 + x));
     ids.add(c.selection.singleOrNull!);
   }
   await tester.pumpAndSettle();
@@ -96,13 +101,13 @@ void main() {
     final String first = ids.first;
     c.select(first);
     await tester.pumpAndSettle();
-    expect(_bandOrder(c, 1).first, first, reason: 'precondition: drawn first');
+    expect(_detailOrder(c).first, first, reason: 'precondition: drawn first');
 
     await _openArrange(tester);
     await tester.tap(_menuItem('bringToFront'));
     await tester.pumpAndSettle();
 
-    expect(_bandOrder(c, 1).last, first, reason: 'now drawn last (front)');
+    expect(_detailOrder(c).last, first, reason: 'now drawn last (front)');
     expect(c.canUndo, isTrue);
   });
 

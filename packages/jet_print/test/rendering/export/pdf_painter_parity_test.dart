@@ -15,14 +15,16 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/in_memory_data_source.dart';
 import 'package:jet_print/src/data/jet_data_source.dart';
+import 'package:jet_print/src/domain/band.dart';
+import 'package:jet_print/src/domain/detail_scope.dart';
 import 'package:jet_print/src/domain/elements/image_source.dart';
 import 'package:jet_print/src/domain/elements/shape_element.dart';
 import 'package:jet_print/src/domain/elements/text_element.dart';
 import 'package:jet_print/src/domain/geometry.dart';
 import 'package:jet_print/src/domain/page_format.dart';
-import 'package:jet_print/src/domain/report_band.dart';
+import 'package:jet_print/src/domain/report_band.dart' show BandType;
+import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/domain/report_element.dart';
-import 'package:jet_print/src/domain/report_template.dart';
 import 'package:jet_print/src/domain/styles/box_style.dart';
 import 'package:jet_print/src/domain/styles/color.dart';
 import 'package:jet_print/src/domain/styles/text_style.dart';
@@ -424,30 +426,36 @@ void main() {
   group('export — carried host registry (C8/C12)', () {
     // Two text elements, BOTH in the host family, so a correct byte-keyed
     // embed produces exactly one font program for the family.
-    ReportTemplate hostTemplate() => const ReportTemplate(
+    ReportDefinition hostDefinition() => const ReportDefinition(
           name: 'Host',
           page: PageFormat(
               width: 300, height: 200, margins: JetEdgeInsets.all(10)),
-          bands: <ReportBand>[
-            ReportBand(
-              type: BandType.detail,
-              height: 60,
-              elements: <ReportElement>[
-                TextElement(
-                  id: 'a',
-                  bounds: JetRect(x: 0, y: 0, width: 240, height: 20),
-                  text: 'Acme heading',
-                  style: JetTextStyle(fontFamily: 'Acme Brand'),
-                ),
-                TextElement(
-                  id: 'b',
-                  bounds: JetRect(x: 0, y: 24, width: 240, height: 20),
-                  text: 'Acme body',
-                  style: JetTextStyle(fontFamily: 'Acme Brand'),
-                ),
+          body: ReportBody(
+            root: DetailScope(
+              id: 'root',
+              children: <ScopeNode>[
+                BandNode(Band(
+                  id: 'root/c0',
+                  type: BandType.detail,
+                  height: 60,
+                  elements: <ReportElement>[
+                    TextElement(
+                      id: 'a',
+                      bounds: JetRect(x: 0, y: 0, width: 240, height: 20),
+                      text: 'Acme heading',
+                      style: JetTextStyle(fontFamily: 'Acme Brand'),
+                    ),
+                    TextElement(
+                      id: 'b',
+                      bounds: JetRect(x: 0, y: 24, width: 240, height: 20),
+                      text: 'Acme body',
+                      style: JetTextStyle(fontFamily: 'Acme Brand'),
+                    ),
+                  ],
+                )),
               ],
             ),
-          ],
+          ),
         );
 
     JetDataSource source() => JetInMemoryDataSource(
@@ -455,7 +463,7 @@ void main() {
 
     RenderedReport renderHost(
             {List<JetFontFamily> fonts = const <JetFontFamily>[]}) =>
-        const JetReportEngine().render(hostTemplate(), source(),
+        const JetReportEngine().renderDefinition(hostDefinition(), source(),
             options: RenderOptions(fonts: fonts));
 
     List<JetFontFamily> brand() => <JetFontFamily>[

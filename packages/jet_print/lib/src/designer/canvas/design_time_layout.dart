@@ -1,46 +1,57 @@
-/// The non-paginated, design-time geometry of a template's bands and elements.
+/// The non-paginated, design-time geometry of a definition's bands and elements.
 library;
 
 import 'dart:math' as math;
 
+import '../../domain/band.dart';
+import '../../domain/detail_scope.dart';
 import '../../domain/geometry.dart';
-import '../../domain/report_band.dart';
-import '../../domain/report_template.dart';
+import '../../domain/report_band.dart' show BandType;
+import '../../domain/report_definition.dart';
 
-/// Computes, once per template revision, the page-absolute rectangles of every
+/// One band positioned on the design surface: its stable [id], the [band]
+/// itself, and its page-absolute [rect].
+typedef PlacedBand = ({String id, Band band, JetRect rect});
+
+/// Computes, once per definition revision, the page-absolute rectangles of every
 /// band and element for the **design** view.
 ///
-/// The design surface is a real sheet of paper: it spans the page format's full
-/// dimensions ([ReportTemplate.page] width × height). Flow bands (title, page
-/// header, detail, groups, …) stack downward from the top margin; the page-/
-/// column-footer bands are *anchored to the bottom* of the sheet (stacked upward
-/// from the bottom margin, preserving authored order), leaving an empty "flow"
-/// gap in between — exactly how a rendered page looks (true WYSIWYG). If the
-/// authored bands are taller than the sheet, the surface grows so nothing is
-/// clipped. Element bounds are band-relative (origin at the band's content
-/// top-left), so the page-absolute element rect is `(bandLeft + bounds.x,
-/// bandTop + bounds.y)` — the same mapping the render-time layouter uses.
+/// The reified tree (spec 024) is flattened into a single **visual document
+/// order** — page header, column header, title, then the scope tree (each
+/// scope's group headers, its ordered children recursively, then its group
+/// footers innermost-first), then no-data, summary, and the bottom-anchored
+/// column/page footers. Flow bands stack downward from the top margin; the
+/// column-/page-footer bands are *anchored to the bottom* of the sheet (stacked
+/// upward from the bottom margin, preserving order), leaving an empty "flow" gap
+/// in between — exactly how a rendered page looks (true WYSIWYG). If the authored
+/// bands are taller than the sheet, the surface grows so nothing is clipped.
+/// Element bounds are band-relative, so the page-absolute element rect is
+/// `(bandLeft + bounds.x, bandTop + bounds.y)` — the same mapping the render-time
+/// layouter uses.
 class DesignTimeLayout {
   DesignTimeLayout._({
     required this.size,
-    required List<JetRect> bandRects,
+    required this.bands,
+    required Map<String, JetRect> bandRects,
     required Map<String, JetRect> elementRects,
-    required Map<String, int> bandOfElement,
+    required Map<String, String> bandOfElement,
   })  : _bandRects = bandRects,
         _elementRects = elementRects,
         _bandOfElement = bandOfElement;
 
-  /// Builds the layout for [template].
-  factory DesignTimeLayout.of(ReportTemplate template) {
-    final double left = template.page.margins.left;
-    final double right = template.page.margins.right;
-    final double top = template.page.margins.top;
-    final double bottom = template.page.margins.bottom;
-    final double contentWidth = template.page.width - left - right;
+  /// Builds the layout for [definition].
+  factory DesignTimeLayout.of(ReportDefinition definition) {
+    final double left = definition.page.margins.left;
+    final double right = definition.page.margins.right;
+    final double top = definition.page.margins.top;
+    final double bottom = definition.page.margins.bottom;
+    final double contentWidth = definition.page.width - left - right;
+
+    final List<Band> ordered = _orderedBands(definition);
 
     double topHeight = 0;
     double bottomHeight = 0;
-    for (final ReportBand band in template.bands) {
+    for (final Band band in ordered) {
       if (isBottomAnchored(band.type)) {
         bottomHeight += band.height;
       } else {
@@ -51,57 +62,94 @@ class DesignTimeLayout {
     // The surface is the full paper sheet, but never shorter than the authored
     // content (top flow + bottom-anchored bands + margins) so nothing is clipped.
     final double surfaceHeight = math.max(
-      template.page.height,
+      definition.page.height,
       top + topHeight + bottomHeight + bottom,
     );
 
-    final List<JetRect?> rects =
-        List<JetRect?>.filled(template.bands.length, null);
+    final Map<String, JetRect> bandRects = <String, JetRect>{};
 
     // Flow bands stack downward from the top margin.
     double topY = top;
-    for (int i = 0; i < template.bands.length; i++) {
-      final ReportBand band = template.bands[i];
+    for (final Band band in ordered) {
       if (isBottomAnchored(band.type)) continue;
-      rects[i] =
+      bandRects[band.id] =
           JetRect(x: left, y: topY, width: contentWidth, height: band.height);
       topY += band.height;
     }
 
-    // Footer bands stack upward from the bottom margin, preserving authored
-    // order (so e.g. a column footer ends up above the page footer).
+    // Footer bands stack upward from the bottom margin, preserving order (so a
+    // column footer ends up above the page footer).
     double bottomY = surfaceHeight - bottom;
-    for (int i = template.bands.length - 1; i >= 0; i--) {
-      final ReportBand band = template.bands[i];
+    for (final Band band in ordered.reversed) {
       if (!isBottomAnchored(band.type)) continue;
       bottomY -= band.height;
-      rects[i] = JetRect(
+      bandRects[band.id] = JetRect(
           x: left, y: bottomY, width: contentWidth, height: band.height);
     }
 
-    final List<JetRect> bandRects = <JetRect>[];
+    final List<PlacedBand> placed = <PlacedBand>[];
     final Map<String, JetRect> elementRects = <String, JetRect>{};
-    final Map<String, int> bandOfElement = <String, int>{};
-    for (int i = 0; i < template.bands.length; i++) {
-      final JetRect r = rects[i]!;
-      bandRects.add(r);
-      for (final element in template.bands[i].elements) {
+    final Map<String, String> bandOfElement = <String, String>{};
+    for (final Band band in ordered) {
+      final JetRect r = bandRects[band.id]!;
+      placed.add((id: band.id, band: band, rect: r));
+      for (final element in band.elements) {
         elementRects[element.id] = JetRect(
           x: r.x + element.bounds.x,
           y: r.y + element.bounds.y,
           width: element.bounds.width,
           height: element.bounds.height,
         );
-        bandOfElement[element.id] = i;
+        bandOfElement[element.id] = band.id;
       }
     }
 
     return DesignTimeLayout._(
-      size: JetSize(template.page.width, surfaceHeight),
-      bandRects: List<JetRect>.unmodifiable(bandRects),
+      size: JetSize(definition.page.width, surfaceHeight),
+      bands: List<PlacedBand>.unmodifiable(placed),
+      bandRects: bandRects,
       elementRects: elementRects,
       bandOfElement: bandOfElement,
     );
+  }
+
+  /// Flattens [def] into the visual top-to-bottom band order (see class doc).
+  /// The background slot is excluded — it is a reserved layer, not a stacked
+  /// band.
+  static List<Band> _orderedBands(ReportDefinition def) {
+    final List<Band> out = <Band>[];
+    void add(Band? b) {
+      if (b != null) out.add(b);
+    }
+
+    add(def.furniture.pageHeader);
+    add(def.furniture.columnHeader);
+    add(def.body.title);
+
+    void scope(DetailScope s) {
+      for (final g in s.groups) {
+        add(g.header);
+      }
+      for (final ScopeNode n in s.children) {
+        switch (n) {
+          case BandNode(band: final Band b):
+            add(b);
+          case NestedScope(scope: final DetailScope inner):
+            scope(inner);
+        }
+      }
+      for (final g in s.groups.reversed) {
+        add(g.footer);
+      }
+    }
+
+    scope(def.body.root);
+
+    add(def.body.noData);
+    add(def.body.summary);
+    add(def.furniture.columnFooter);
+    add(def.furniture.pageFooter);
+    return out;
   }
 
   /// Whether a band of [type] is anchored to the bottom of the sheet (printed at
@@ -113,72 +161,81 @@ class DesignTimeLayout {
   /// The full design-surface extent, in points (page width × stacked height).
   final JetSize size;
 
-  final List<JetRect> _bandRects;
+  /// Every placed band in visual document order (the order they stack on the
+  /// sheet, footers included at their anchored positions).
+  final List<PlacedBand> bands;
+
+  final Map<String, JetRect> _bandRects;
   final Map<String, JetRect> _elementRects;
-  final Map<String, int> _bandOfElement;
+  final Map<String, String> _bandOfElement;
 
-  /// The page-absolute rects of every band, index-aligned with `template.bands`.
-  List<JetRect> get bandRects => _bandRects;
+  /// The page-absolute rects of every band, in visual document order — for the
+  /// grid + separator chrome painters.
+  List<JetRect> get bandRects =>
+      <JetRect>[for (final PlacedBand b in bands) b.rect];
 
-  /// The page-absolute rect of the band at [index], or null if out of range.
-  JetRect? bandRect(int index) =>
-      (index >= 0 && index < _bandRects.length) ? _bandRects[index] : null;
+  /// The page-absolute rect of the band with stable id [bandId], or null.
+  JetRect? bandRect(String bandId) => _bandRects[bandId];
 
   /// The page-absolute rect of the element with [id], or null if absent.
   JetRect? elementRect(String id) => _elementRects[id];
 
-  /// The index of the band owning the element with [id], or null if absent.
-  int? bandOfElement(String id) => _bandOfElement[id];
+  /// The stable id of the band owning the element with [id], or null if absent.
+  String? bandOfElement(String id) => _bandOfElement[id];
 
-  /// The index of the band whose vertical range contains [point]'s `dy`. When
-  /// the point lands outside every band — the empty flow gap between the last
-  /// flow band and the bottom-anchored footers, or above/below the sheet — it
-  /// snaps to the vertically nearest band so a drop always lands somewhere valid
-  /// (FR-023 nearest-valid-band). Null only when the template has no bands.
-  int? bandIndexAt(JetOffset point) {
-    if (_bandRects.isEmpty) return null;
-    for (int i = 0; i < _bandRects.length; i++) {
-      final JetRect r = _bandRects[i];
-      if (point.dy >= r.y && point.dy < r.y + r.height) return i;
+  /// The stable id of the band whose vertical range contains [point]'s `dy`.
+  /// When the point lands outside every band — the empty flow gap, or above/below
+  /// the sheet — it snaps to the vertically nearest band so a drop always lands
+  /// somewhere valid (FR-023 nearest-valid-band). Null only when there are no
+  /// bands.
+  String? bandIdNear(JetOffset point) {
+    if (bands.isEmpty) return null;
+    for (final PlacedBand b in bands) {
+      if (point.dy >= b.rect.y && point.dy < b.rect.y + b.rect.height) {
+        return b.id;
+      }
     }
-    int nearest = 0;
+    String nearest = bands.first.id;
     double bestDistance = double.infinity;
-    for (int i = 0; i < _bandRects.length; i++) {
-      final JetRect r = _bandRects[i];
+    for (final PlacedBand b in bands) {
+      final JetRect r = b.rect;
       final double distance = point.dy < r.y
           ? r.y - point.dy
           : (point.dy > r.y + r.height ? point.dy - (r.y + r.height) : 0);
       if (distance < bestDistance) {
         bestDistance = distance;
-        nearest = i;
+        nearest = b.id;
       }
     }
     return nearest;
   }
 
-  /// The index of the band whose rect exactly contains [point], or null when the
-  /// point lands in no band (the margins, the empty flow gap, or off the sheet).
+  /// The stable id of the band whose rect exactly contains [point], or null when
+  /// the point lands in no band (the margins, the empty flow gap, or off the
+  /// sheet).
   ///
-  /// Unlike [bandIndexAt] there is no nearest-band fallback: this drives *click
+  /// Unlike [bandIdNear] there is no nearest-band fallback: this drives *click
   /// selection*, where an empty spot must resolve to the report/page — not to a
   /// band the pointer is merely near.
-  int? bandAt(JetOffset point) {
-    for (int i = 0; i < _bandRects.length; i++) {
-      final JetRect r = _bandRects[i];
+  String? bandIdAt(JetOffset point) {
+    for (final PlacedBand b in bands) {
+      final JetRect r = b.rect;
       if (point.dx >= r.x &&
           point.dx <= r.x + r.width &&
           point.dy >= r.y &&
           point.dy <= r.y + r.height) {
-        return i;
+        return b.id;
       }
     }
     return null;
   }
 
-  /// Converts a page point to a band-relative offset within the band at
-  /// [bandIndex] (origin at the band's content top-left).
-  JetOffset toBandLocal(int bandIndex, JetOffset page) {
-    final JetRect r = _bandRects[bandIndex];
+  /// Converts a page point to a band-relative offset within the band with stable
+  /// id [bandId] (origin at the band's content top-left). Returns [page]
+  /// unchanged when the band is unknown.
+  JetOffset toBandLocal(String bandId, JetOffset page) {
+    final JetRect? r = _bandRects[bandId];
+    if (r == null) return page;
     return JetOffset(page.dx - r.x, page.dy - r.y);
   }
 }

@@ -1,13 +1,15 @@
 // Outline panel tree test (model-driven, T071).
 //
-// The Outline tab renders the live `ReportTemplate` as an indented tree: a
+// The Outline tab renders the live `ReportDefinition` as an indented tree: a
 // Report root, one branch per band (localized band-type caption), and a leaf per
 // element. The current selection is highlighted; tapping a row selects that
 // object (report / band / element) through the controller; the disclosure
 // chevron collapses/expands a branch.
 //
 // These tests drive the public `JetReportDesigner` (Outline is reached by
-// selecting its tab) and never reach into `src/`.
+// selecting its tab) and never reach into `src/`. Bands are keyed by their
+// stable id (spec 024); the blank default has 'pageHeader', 'detail',
+// 'pageFooter'.
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
@@ -17,9 +19,10 @@ import 'support/designer_harness.dart';
 Key _reportRow = const ValueKey<String>('jet_print.designer.outline.report');
 Key _reportToggle =
     const ValueKey<String>('jet_print.designer.outline.report.toggle');
-Key _bandRow(int i) => ValueKey<String>('jet_print.designer.outline.band.$i');
-Key _bandToggle(int i) =>
-    ValueKey<String>('jet_print.designer.outline.band.$i.toggle');
+Key _bandRow(String id) =>
+    ValueKey<String>('jet_print.designer.outline.band.$id');
+Key _bandToggle(String id) =>
+    ValueKey<String>('jet_print.designer.outline.band.$id.toggle');
 Key _elementRow(String id) =>
     ValueKey<String>('jet_print.designer.outline.element.$id');
 
@@ -36,16 +39,16 @@ Future<void> _openOutline(WidgetTester tester) async {
 
 void main() {
   group('outline tree (model-driven)', () {
-    testWidgets('reflects the template: a Report root over each band',
+    testWidgets('reflects the definition: a Report root over each band',
         (WidgetTester tester) async {
       await pumpDesignerWith(tester);
       await _openOutline(tester);
 
-      // Default template: page header, detail, page footer.
+      // Default definition: page header, detail, page footer.
       expect(find.byKey(_reportRow), findsOneWidget);
-      expect(find.byKey(_bandRow(0)), findsOneWidget);
-      expect(find.byKey(_bandRow(1)), findsOneWidget);
-      expect(find.byKey(_bandRow(2)), findsOneWidget);
+      expect(find.byKey(_bandRow('pageHeader')), findsOneWidget);
+      expect(find.byKey(_bandRow('detail')), findsOneWidget);
+      expect(find.byKey(_bandRow('pageFooter')), findsOneWidget);
       // The old hard-coded sample content is gone.
       expect(_inPanel('OrdersTable'), findsNothing);
       expect(_inPanel('PageInfo'), findsNothing);
@@ -56,7 +59,7 @@ void main() {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openOutline(tester);
       c.createElement(DesignerToolType.text,
-          bandIndex: 1, at: const JetOffset(10, 10));
+          bandId: firstDetailBandId(c), at: const JetOffset(10, 10));
       final String id = c.selection.singleOrNull!;
       await tester.pumpAndSettle();
 
@@ -68,9 +71,9 @@ void main() {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openOutline(tester);
 
-      await tester.tap(find.byKey(_bandRow(1)));
+      await tester.tap(find.byKey(_bandRow('detail')));
       await tester.pumpAndSettle();
-      expect(c.selection.bandIndex, 1);
+      expect(c.selection.bandId, 'detail');
     });
 
     testWidgets('tapping an element row selects that element',
@@ -78,7 +81,7 @@ void main() {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openOutline(tester);
       c.createElement(DesignerToolType.text,
-          bandIndex: 1, at: const JetOffset(10, 10));
+          bandId: firstDetailBandId(c), at: const JetOffset(10, 10));
       final String id = c.selection.singleOrNull!;
       c.selectReport(); // move selection away
       await tester.pumpAndSettle();
@@ -92,7 +95,7 @@ void main() {
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openOutline(tester);
-      c.selectBand(0); // move selection away
+      c.selectBand('pageHeader'); // move selection away
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(_reportRow));
@@ -104,13 +107,13 @@ void main() {
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openOutline(tester);
-      c.selectBand(1);
+      c.selectBand('detail');
       await tester.pumpAndSettle();
 
       final SemanticsHandle handle = tester.ensureSemantics();
-      expect(tester.getSemantics(find.byKey(_bandRow(1))),
+      expect(tester.getSemantics(find.byKey(_bandRow('detail'))),
           isSemantics(isSelected: true));
-      expect(tester.getSemantics(find.byKey(_bandRow(0))),
+      expect(tester.getSemantics(find.byKey(_bandRow('pageHeader'))),
           isSemantics(isSelected: false));
       handle.dispose();
     });
@@ -120,16 +123,16 @@ void main() {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openOutline(tester);
       c.createElement(DesignerToolType.text,
-          bandIndex: 1, at: const JetOffset(10, 10));
+          bandId: firstDetailBandId(c), at: const JetOffset(10, 10));
       final String id = c.selection.singleOrNull!;
       await tester.pumpAndSettle();
       expect(find.byKey(_elementRow(id)), findsOneWidget);
 
-      await tester.tap(find.byKey(_bandToggle(1)));
+      await tester.tap(find.byKey(_bandToggle('detail')));
       await tester.pumpAndSettle();
       expect(find.byKey(_elementRow(id)), findsNothing);
 
-      await tester.tap(find.byKey(_bandToggle(1)));
+      await tester.tap(find.byKey(_bandToggle('detail')));
       await tester.pumpAndSettle();
       expect(find.byKey(_elementRow(id)), findsOneWidget);
     });
@@ -138,12 +141,12 @@ void main() {
         (WidgetTester tester) async {
       await pumpDesignerWith(tester);
       await _openOutline(tester);
-      expect(find.byKey(_bandRow(0)), findsOneWidget);
+      expect(find.byKey(_bandRow('pageHeader')), findsOneWidget);
 
       await tester.tap(find.byKey(_reportToggle));
       await tester.pumpAndSettle();
-      expect(find.byKey(_bandRow(0)), findsNothing);
-      expect(find.byKey(_bandRow(2)), findsNothing);
+      expect(find.byKey(_bandRow('pageHeader')), findsNothing);
+      expect(find.byKey(_bandRow('pageFooter')), findsNothing);
     });
   });
 }

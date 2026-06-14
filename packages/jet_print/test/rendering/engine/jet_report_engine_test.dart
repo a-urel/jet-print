@@ -5,14 +5,16 @@ import 'dart:ui' show Locale;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/in_memory_data_source.dart';
+import 'package:jet_print/src/domain/band.dart';
+import 'package:jet_print/src/domain/detail_scope.dart';
 import 'package:jet_print/src/domain/elements/text_element.dart';
 import 'package:jet_print/src/domain/geometry.dart';
+import 'package:jet_print/src/domain/group_level.dart';
 import 'package:jet_print/src/domain/page_format.dart';
 import 'package:jet_print/src/domain/report_band.dart';
+import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/domain/report_element.dart';
-import 'package:jet_print/src/domain/report_group.dart';
 import 'package:jet_print/src/domain/report_parameter.dart';
-import 'package:jet_print/src/domain/report_template.dart';
 import 'package:jet_print/src/domain/report_variable.dart';
 import 'package:jet_print/src/domain/value_type.dart';
 import 'package:jet_print/src/rendering/engine/jet_report_engine.dart';
@@ -52,24 +54,31 @@ List<String> _allRuns(RenderedReport report) => <String>[
 
 void main() {
   group('C1 — fill resolves tokens to values', () {
-    final ReportTemplate template = ReportTemplate(
+    final ReportDefinition template = ReportDefinition(
       name: 'flat',
       page: _smallPage,
       parameters: const <ReportParameter>[
         ReportParameter(name: 'printedBy', type: JetFieldType.string),
       ],
-      bands: <ReportBand>[
-        ReportBand(
+      body: ReportBody(
+        title: Band(
+          id: 'body/title',
           type: BandType.title,
           height: 20,
           elements: <ReportElement>[_text('by', r'$P{printedBy}')],
         ),
-        ReportBand(
-          type: BandType.detail,
-          height: 20,
-          elements: <ReportElement>[_text('name', r'$F{name}')],
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+              id: 'root/c0',
+              type: BandType.detail,
+              height: 20,
+              elements: <ReportElement>[_text('name', r'$F{name}')],
+            )),
+          ],
         ),
-      ],
+      ),
     );
     final JetInMemoryDataSource source =
         JetInMemoryDataSource(<Map<String, Object?>>[
@@ -79,7 +88,7 @@ void main() {
     ]);
 
     test('every bound element shows its evaluated value — zero tokens', () {
-      final RenderedReport report = const JetReportEngine().render(
+      final RenderedReport report = const JetReportEngine().renderDefinition(
         template,
         source,
         options: const RenderOptions(
@@ -95,7 +104,7 @@ void main() {
     });
 
     test('a parameter-bound element shows the supplied value', () {
-      final RenderedReport report = const JetReportEngine().render(
+      final RenderedReport report = const JetReportEngine().renderDefinition(
         template,
         source,
         options: const RenderOptions(
@@ -106,28 +115,38 @@ void main() {
   });
 
   group('C3 — pagination with repeated chrome', () {
-    final ReportTemplate template = ReportTemplate(
+    final ReportDefinition template = ReportDefinition(
       name: 'paged',
       page: _smallPage,
-      bands: <ReportBand>[
-        ReportBand(
+      furniture: PageFurniture(
+        pageHeader: Band(
+          id: 'pageHeader',
           type: BandType.pageHeader,
           height: 20,
           elements: <ReportElement>[_text('hd', r'"HEADER"')],
         ),
-        ReportBand(
-          type: BandType.detail,
-          height: 30,
-          elements: <ReportElement>[_text('name', r'$F{name}')],
-        ),
-        ReportBand(
+        pageFooter: Band(
+          id: 'pageFooter',
           type: BandType.pageFooter,
           height: 20,
           elements: <ReportElement>[
             _text('pf', r'"Page " + $V{PAGE_NUMBER} + " of " + $V{PAGE_COUNT}'),
           ],
         ),
-      ],
+      ),
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+              id: 'root/c0',
+              type: BandType.detail,
+              height: 30,
+              elements: <ReportElement>[_text('name', r'$F{name}')],
+            )),
+          ],
+        ),
+      ),
     );
     // Body capacity 40pt and 30pt bands -> exactly one row per page.
     final JetInMemoryDataSource source =
@@ -137,7 +156,7 @@ void main() {
 
     test('content splits at band boundaries with a correct page count', () {
       final RenderedReport report =
-          const JetReportEngine().render(template, source);
+          const JetReportEngine().renderDefinition(template, source);
       expect(report.pageCount, 5);
       for (int i = 0; i < 5; i++) {
         expect(_texts(report.pageAt(i).frame)['name'], 'row $i');
@@ -146,7 +165,7 @@ void main() {
 
     test('page header/footer repeat on every page; PAGE_X/COUNT resolve', () {
       final RenderedReport report =
-          const JetReportEngine().render(template, source);
+          const JetReportEngine().renderDefinition(template, source);
       for (int i = 0; i < report.pageCount; i++) {
         final Map<String, String> texts = _texts(report.pageAt(i).frame);
         expect(texts['hd'], 'HEADER');
@@ -164,54 +183,67 @@ void main() {
     // title/summary have no row context by design (007b §5 — $F{} blanks
     // there), and per-invoice header/total bands repeat correctly for
     // multi-invoice datasets.
-    ReportTemplate invoiceTemplate() => const ReportTemplate(
+    ReportDefinition invoiceTemplate() => const ReportDefinition(
           name: 'invoice',
           page: tallPage,
-          bands: <ReportBand>[
-            ReportBand(
-              type: BandType.detail,
-              height: 20,
-              elements: <ReportElement>[
-                TextElement(
-                  id: 'invoiceNo',
-                  bounds: JetRect(x: 0, y: 0, width: 200, height: 16),
-                  text: 'invoiceNo',
-                  expression: r'$F{invoiceNo}',
-                ),
+          body: ReportBody(
+            root: DetailScope(
+              id: 'root',
+              children: <ScopeNode>[
+                BandNode(Band(
+                  id: 'root/c0',
+                  type: BandType.detail,
+                  height: 20,
+                  elements: <ReportElement>[
+                    TextElement(
+                      id: 'invoiceNo',
+                      bounds: JetRect(x: 0, y: 0, width: 200, height: 16),
+                      text: 'invoiceNo',
+                      expression: r'$F{invoiceNo}',
+                    ),
+                  ],
+                )),
+                NestedScope(DetailScope(
+                  id: 'root/c1',
+                  collectionField: 'lines',
+                  children: <ScopeNode>[
+                    BandNode(Band(
+                      id: 'root/c1/c0',
+                      type: BandType.detail,
+                      height: 20,
+                      elements: <ReportElement>[
+                        TextElement(
+                          id: 'desc',
+                          bounds: JetRect(x: 0, y: 0, width: 150, height: 16),
+                          text: 'desc',
+                          expression: r'$F{desc}',
+                        ),
+                        TextElement(
+                          id: 'lineTotal',
+                          bounds: JetRect(x: 160, y: 0, width: 100, height: 16),
+                          text: 'lineTotal',
+                          expression: r'$F{qty} * $F{price}',
+                        ),
+                      ],
+                    )),
+                  ],
+                )),
+                BandNode(Band(
+                  id: 'root/c2',
+                  type: BandType.detail,
+                  height: 20,
+                  elements: <ReportElement>[
+                    TextElement(
+                      id: 'total',
+                      bounds: JetRect(x: 160, y: 0, width: 100, height: 16),
+                      text: 'total',
+                      expression: r'$F{total}',
+                    ),
+                  ],
+                )),
               ],
             ),
-            ReportBand(
-              type: BandType.detail,
-              height: 20,
-              collectionField: 'lines',
-              elements: <ReportElement>[
-                TextElement(
-                  id: 'desc',
-                  bounds: JetRect(x: 0, y: 0, width: 150, height: 16),
-                  text: 'desc',
-                  expression: r'$F{desc}',
-                ),
-                TextElement(
-                  id: 'lineTotal',
-                  bounds: JetRect(x: 160, y: 0, width: 100, height: 16),
-                  text: 'lineTotal',
-                  expression: r'$F{qty} * $F{price}',
-                ),
-              ],
-            ),
-            ReportBand(
-              type: BandType.detail,
-              height: 20,
-              elements: <ReportElement>[
-                TextElement(
-                  id: 'total',
-                  bounds: JetRect(x: 160, y: 0, width: 100, height: 16),
-                  text: 'total',
-                  expression: r'$F{total}',
-                ),
-              ],
-            ),
-          ],
+          ),
         );
 
     JetInMemoryDataSource invoiceSource() =>
@@ -240,8 +272,8 @@ void main() {
     test(
         'a collection-bound band repeats once per child record with child '
         'values resolved', () {
-      final RenderedReport report =
-          const JetReportEngine().render(invoiceTemplate(), invoiceSource());
+      final RenderedReport report = const JetReportEngine()
+          .renderDefinition(invoiceTemplate(), invoiceSource());
       expect(runsFor(report, 'invoiceNo'), <String>['INV-1042']);
       expect(runsFor(report, 'desc'), <String>['Widget', 'Gadget', 'Gizmo']);
       expect(runsFor(report, 'lineTotal'), <String>['6.0', '12.5', '1.0'],
@@ -249,8 +281,8 @@ void main() {
     });
 
     test('the invoice total equals the exact sum of line amounts (SC-002)', () {
-      final RenderedReport report =
-          const JetReportEngine().render(invoiceTemplate(), invoiceSource());
+      final RenderedReport report = const JetReportEngine()
+          .renderDefinition(invoiceTemplate(), invoiceSource());
       final double linesSum = runsFor(report, 'lineTotal')
           .map(double.parse)
           .fold(0, (double a, double b) => a + b);
@@ -259,39 +291,55 @@ void main() {
 
     test('nested collections iterate at arbitrary depth, in document order',
         () {
-      final ReportTemplate template = const ReportTemplate(
+      final ReportDefinition template = const ReportDefinition(
         name: 'nested',
         page: tallPage,
-        bands: <ReportBand>[
-          ReportBand(
-            type: BandType.detail,
-            height: 20,
-            collectionField: 'lines',
-            elements: <ReportElement>[
-              TextElement(
-                id: 'line',
-                bounds: JetRect(x: 0, y: 0, width: 200, height: 16),
-                text: 'line',
-                expression: r'$F{name}',
-              ),
-            ],
-            children: <ReportBand>[
-              ReportBand(
-                type: BandType.detail,
-                height: 16,
-                collectionField: 'subs',
-                elements: <ReportElement>[
-                  TextElement(
-                    id: 'sub',
-                    bounds: JetRect(x: 20, y: 0, width: 200, height: 14),
-                    text: 'sub',
-                    expression: r'$F{label}',
-                  ),
+        body: ReportBody(
+          root: DetailScope(
+            id: 'root',
+            children: <ScopeNode>[
+              NestedScope(DetailScope(
+                id: 'root/c0',
+                collectionField: 'lines',
+                children: <ScopeNode>[
+                  BandNode(Band(
+                    id: 'root/c0/c0',
+                    type: BandType.detail,
+                    height: 20,
+                    elements: <ReportElement>[
+                      TextElement(
+                        id: 'line',
+                        bounds: JetRect(x: 0, y: 0, width: 200, height: 16),
+                        text: 'line',
+                        expression: r'$F{name}',
+                      ),
+                    ],
+                  )),
+                  NestedScope(DetailScope(
+                    id: 'root/c0/c1',
+                    collectionField: 'subs',
+                    children: <ScopeNode>[
+                      BandNode(Band(
+                        id: 'root/c0/c1/c0',
+                        type: BandType.detail,
+                        height: 16,
+                        elements: <ReportElement>[
+                          TextElement(
+                            id: 'sub',
+                            bounds:
+                                JetRect(x: 20, y: 0, width: 200, height: 14),
+                            text: 'sub',
+                            expression: r'$F{label}',
+                          ),
+                        ],
+                      )),
+                    ],
+                  )),
                 ],
-              ),
+              )),
             ],
           ),
-        ],
+        ),
       );
       final JetInMemoryDataSource source =
           JetInMemoryDataSource(<Map<String, Object?>>[
@@ -314,7 +362,7 @@ void main() {
         },
       ]);
       final RenderedReport report =
-          const JetReportEngine().render(template, source);
+          const JetReportEngine().renderDefinition(template, source);
       expect(runsFor(report, 'line'), <String>['L1', 'L2']);
       expect(runsFor(report, 'sub'), <String>['L1.a', 'L1.b', 'L2.a']);
       // Document order: each line is followed by its own sub-rows.
@@ -330,12 +378,9 @@ void main() {
     test(
         'a sum variable computes at its reset scope: group subtotal + grand '
         'total; group header/footer render at key boundaries', () {
-      final ReportTemplate template = const ReportTemplate(
+      final ReportDefinition template = const ReportDefinition(
         name: 'groups',
         page: tallPage,
-        groups: <ReportGroup>[
-          ReportGroup(name: 'byCategory', expression: r'$F{category}'),
-        ],
         variables: <ReportVariable>[
           ReportVariable(
             name: 'subtotal',
@@ -350,46 +395,9 @@ void main() {
             calculation: JetCalculation.sum,
           ),
         ],
-        bands: <ReportBand>[
-          ReportBand(
-            type: BandType.groupHeader,
-            height: 18,
-            group: 'byCategory',
-            elements: <ReportElement>[
-              TextElement(
-                id: 'cat',
-                bounds: JetRect(x: 0, y: 0, width: 200, height: 16),
-                text: 'cat',
-                expression: r'$F{category}',
-              ),
-            ],
-          ),
-          ReportBand(
-            type: BandType.detail,
-            height: 18,
-            elements: <ReportElement>[
-              TextElement(
-                id: 'amount',
-                bounds: JetRect(x: 0, y: 0, width: 200, height: 16),
-                text: 'amount',
-                expression: r'$F{amount}',
-              ),
-            ],
-          ),
-          ReportBand(
-            type: BandType.groupFooter,
-            height: 18,
-            group: 'byCategory',
-            elements: <ReportElement>[
-              TextElement(
-                id: 'subtotal',
-                bounds: JetRect(x: 0, y: 0, width: 200, height: 16),
-                text: 'subtotal',
-                expression: r'$V{subtotal}',
-              ),
-            ],
-          ),
-          ReportBand(
+        body: ReportBody(
+          summary: Band(
+            id: 'body/summary',
             type: BandType.summary,
             height: 18,
             elements: <ReportElement>[
@@ -401,7 +409,58 @@ void main() {
               ),
             ],
           ),
-        ],
+          root: DetailScope(
+            id: 'root',
+            groups: <GroupLevel>[
+              GroupLevel(
+                id: 'byCategory',
+                name: 'byCategory',
+                key: r'$F{category}',
+                header: Band(
+                  id: 'root/g0/header',
+                  type: BandType.groupHeader,
+                  height: 18,
+                  elements: <ReportElement>[
+                    TextElement(
+                      id: 'cat',
+                      bounds: JetRect(x: 0, y: 0, width: 200, height: 16),
+                      text: 'cat',
+                      expression: r'$F{category}',
+                    ),
+                  ],
+                ),
+                footer: Band(
+                  id: 'root/g0/footer',
+                  type: BandType.groupFooter,
+                  height: 18,
+                  elements: <ReportElement>[
+                    TextElement(
+                      id: 'subtotal',
+                      bounds: JetRect(x: 0, y: 0, width: 200, height: 16),
+                      text: 'subtotal',
+                      expression: r'$V{subtotal}',
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            children: <ScopeNode>[
+              BandNode(Band(
+                id: 'root/c0',
+                type: BandType.detail,
+                height: 18,
+                elements: <ReportElement>[
+                  TextElement(
+                    id: 'amount',
+                    bounds: JetRect(x: 0, y: 0, width: 200, height: 16),
+                    text: 'amount',
+                    expression: r'$F{amount}',
+                  ),
+                ],
+              )),
+            ],
+          ),
+        ),
       );
       final JetInMemoryDataSource source =
           JetInMemoryDataSource(<Map<String, Object?>>[
@@ -410,7 +469,7 @@ void main() {
         <String, Object?>{'category': 'B', 'amount': 5},
       ]);
       final RenderedReport report =
-          const JetReportEngine().render(template, source);
+          const JetReportEngine().renderDefinition(template, source);
       expect(runsFor(report, 'cat'), <String>['A', 'B'],
           reason: 'one group header per key boundary');
       expect(runsFor(report, 'subtotal'), <String>['30.0', '5.0'],
@@ -422,28 +481,34 @@ void main() {
 
   group('determinism (FR-010 / SC-004)', () {
     test('identical inputs render byte-identical pages', () {
-      final ReportTemplate template = ReportTemplate(
+      final ReportDefinition template = ReportDefinition(
         name: 'det',
         page: _smallPage,
-        bands: <ReportBand>[
-          ReportBand(
-            type: BandType.detail,
-            height: 20,
-            elements: <ReportElement>[
-              _text('v', r'FORMAT($F{amount}, "#,##0.00")'),
+        body: ReportBody(
+          root: DetailScope(
+            id: 'root',
+            children: <ScopeNode>[
+              BandNode(Band(
+                id: 'root/c0',
+                type: BandType.detail,
+                height: 20,
+                elements: <ReportElement>[
+                  _text('v', r'FORMAT($F{amount}, "#,##0.00")'),
+                ],
+              )),
             ],
           ),
-        ],
+        ),
       );
       JetInMemoryDataSource source() =>
           JetInMemoryDataSource(<Map<String, Object?>>[
             for (int i = 0; i < 5; i++) <String, Object?>{'amount': i * 11.3},
           ]);
       const RenderOptions options = RenderOptions(locale: Locale('de'));
-      final RenderedReport a =
-          const JetReportEngine().render(template, source(), options: options);
-      final RenderedReport b =
-          const JetReportEngine().render(template, source(), options: options);
+      final RenderedReport a = const JetReportEngine()
+          .renderDefinition(template, source(), options: options);
+      final RenderedReport b = const JetReportEngine()
+          .renderDefinition(template, source(), options: options);
       expect(a.pageCount, b.pageCount);
       for (int i = 0; i < a.pageCount; i++) {
         expect(a.pageAt(i).frame, b.pageAt(i).frame,

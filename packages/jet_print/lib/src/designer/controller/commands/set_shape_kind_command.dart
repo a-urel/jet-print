@@ -2,8 +2,8 @@
 library;
 
 import '../../../domain/elements/shape_element.dart';
-import '../../../domain/report_band.dart';
 import '../../../domain/report_element.dart';
+import '../band_walker.dart';
 import '../designer_document.dart';
 import '../edit_command.dart';
 
@@ -11,16 +11,14 @@ import '../edit_command.dart';
 /// preserving its bounds and style.
 ///
 /// * **No-op** when the element is already that form *and* carries no preserved
-///   [ShapeElement.unknownForm]: returns `before` unchanged, so the controller's
-///   `_commit` identity guard records no history and notifies no listener
-///   (FR-005). A shape rendered as a rectangle only because its serialized form
-///   was unrecognized is therefore *not* a no-op when rectangle is picked — the
-///   pick is a real choice that clears the preserved form.
+///   [ShapeElement.unknownForm]: the rebuilt element is value-equal, so the
+///   controller's commit records no history and notifies no listener (FR-005). A
+///   shape rendered as a rectangle only because its serialized form was
+///   unrecognized is therefore *not* a no-op when rectangle is picked — the pick
+///   clears the preserved form, changing the element.
 /// * Switching **away from** [ShapeKind.line] resets the line-only
-///   [ShapeElement.flipDiagonal] to false, keeping the option coherent for
-///   closed forms (a spec edge case); staying on/returning to a line keeps it.
-/// * Any deliberate pick clears [ShapeElement.unknownForm] (FR-009): choosing a
-///   known form supersedes a preserved unrecognized one.
+///   [ShapeElement.flipDiagonal] to false; staying on/returning to a line keeps it.
+/// * Any deliberate pick clears [ShapeElement.unknownForm] (FR-009).
 ///
 /// A no-op for a non-shape or absent [id].
 class SetShapeKindCommand extends EditCommand {
@@ -37,36 +35,17 @@ class SetShapeKindCommand extends EditCommand {
   String get label => 'Set shape';
 
   @override
-  DesignerDocument apply(DesignerDocument before) {
-    bool changed = false;
-    final List<ReportBand> bands = <ReportBand>[
-      for (final ReportBand band in before.template.bands)
-        if (band.elements.any(
-            (ReportElement e) => e.id == id && e is ShapeElement && _isEdit(e)))
-          () {
-            changed = true;
-            return band.copyWith(elements: <ReportElement>[
-              for (final ReportElement e in band.elements)
-                if (e.id == id && e is ShapeElement)
-                  e.copyWith(
-                    kind: kind,
-                    flipDiagonal:
-                        kind == ShapeKind.line ? e.flipDiagonal : false,
-                    clearUnknownForm: true,
-                  )
-                else
-                  e,
-            ]);
-          }()
-        else
-          band,
-    ];
-    if (!changed) return before;
-    return before.withTemplate(before.template.copyWith(bands: bands));
-  }
-
-  /// Whether picking [kind] actually changes [shape] — true unless it is already
-  /// that form with no preserved unknown form to clear.
-  bool _isEdit(ShapeElement shape) =>
-      shape.kind != kind || shape.unknownForm != null;
+  DesignerDocument apply(DesignerDocument before) => before.withDefinition(
+        updateElement(
+          before.definition,
+          id,
+          (ReportElement e) => e is ShapeElement
+              ? e.copyWith(
+                  kind: kind,
+                  flipDiagonal: kind == ShapeKind.line ? e.flipDiagonal : false,
+                  clearUnknownForm: true,
+                )
+              : e,
+        ),
+      );
 }

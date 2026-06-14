@@ -15,10 +15,10 @@ void main() {
     final JetReportDesignerController controller =
         await pumpDesignerWith(tester);
     controller.createElement(DesignerToolType.text,
-        bandIndex: 1, at: const JetOffset(40, 20));
+        bandId: 'detail', at: const JetOffset(40, 20));
     await tester.pumpAndSettle();
     controller.createElement(DesignerToolType.shape,
-        bandIndex: 1, at: const JetOffset(40, 70));
+        bandId: 'detail', at: const JetOffset(40, 70));
     await tester.pumpAndSettle();
     controller.clearSelection();
     await tester.pump();
@@ -51,10 +51,10 @@ void main() {
     final JetReportDesignerController controller =
         await pumpDesignerWith(tester);
     controller.createElement(DesignerToolType.text,
-        bandIndex: 1, at: const JetOffset(20, 20));
+        bandId: 'detail', at: const JetOffset(20, 20));
     final String first = controller.selection.singleOrNull!;
     controller.createElement(DesignerToolType.barcode,
-        bandIndex: 1, at: const JetOffset(20, 120));
+        bandId: 'detail', at: const JetOffset(20, 120));
     await tester.pumpAndSettle();
     final String second = controller.selection.singleOrNull!;
 

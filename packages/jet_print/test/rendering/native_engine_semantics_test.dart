@@ -21,9 +21,11 @@ FilledReport _fill(ReportDefinition def, List<Map<String, Object?>> rows) =>
 
 void main() {
   group('native engine semantics (C8)', () {
-    test('master-level multi-level grouping cascades (outer→inner open, '
+    test(
+        'master-level multi-level grouping cascades (outer→inner open, '
         'inner→outer close)', () {
-      final FilledReport r = _fill(_fixture('multi_level_grouped'), <Map<String, Object?>>[
+      final FilledReport r =
+          _fill(_fixture('multi_level_grouped'), <Map<String, Object?>>[
         <String, Object?>{'region': 'West', 'category': 'X', 'amount': 1.0},
         <String, Object?>{'region': 'West', 'category': 'Y', 'amount': 2.0},
         <String, Object?>{'region': 'East', 'category': 'Z', 'amount': 3.0},
@@ -43,7 +45,8 @@ void main() {
     });
 
     test('arbitrary-depth master/detail iterates nested collections', () {
-      final FilledReport r = _fill(_fixture('deep_master_detail'), <Map<String, Object?>>[
+      final FilledReport r =
+          _fill(_fixture('deep_master_detail'), <Map<String, Object?>>[
         <String, Object?>{
           'orderNo': 'O1',
           'lines': <Map<String, Object?>>[
@@ -69,13 +72,17 @@ void main() {
         _fixture('invoice'),
         JetInMemoryDataSource(<Map<String, Object?>>[
           <String, Object?>{
-            'invoiceNo': 'INV-1', 'customerName': 'Acme', 'total': 3.0,
+            'invoiceNo': 'INV-1',
+            'customerName': 'Acme',
+            'total': 3.0,
             'lines': <Map<String, Object?>>[
               <String, Object?>{'description': 'a', 'lineTotal': 3.0},
             ],
           },
           <String, Object?>{
-            'invoiceNo': 'INV-2', 'customerName': 'Globex', 'total': 5.0,
+            'invoiceNo': 'INV-2',
+            'customerName': 'Globex',
+            'total': 5.0,
             'lines': <Map<String, Object?>>[
               <String, Object?>{'description': 'b', 'lineTotal': 5.0},
             ],

@@ -25,31 +25,41 @@ const Key _deleteKey = ValueKey<String>('jet_print.designer.menu.delete');
 Finder _elementFinder(String id) =>
     find.byKey(ValueKey<String>('jet_print.designer.element.$id'));
 
-int _elementCount(JetReportDesignerController c) => c.template.bands
-    .fold<int>(0, (int n, ReportBand b) => n + b.elements.length);
+int _elementCount(JetReportDesignerController c) =>
+    c.definition.body.root.children
+        .whereType<BandNode>()
+        .fold<int>(0, (int n, BandNode node) => n + node.band.elements.length);
 
 bool _menuEnabled(WidgetTester tester, Key key) =>
     tester.widget<ShadContextMenuItem>(find.byKey(key)).enabled;
 
-ReportTemplate _twoElementFixture() => const ReportTemplate(
+ReportDefinition _twoElementFixture() => const ReportDefinition(
       name: 'F',
       page: PageFormat.a4Portrait,
-      bands: <ReportBand>[
-        ReportBand(
-          type: BandType.detail,
-          height: 300,
-          elements: <ReportElement>[
-            TextElement(
-                id: 'a',
-                bounds: JetRect(x: 20, y: 20, width: 80, height: 24),
-                text: 'a'),
-            TextElement(
-                id: 'b',
-                bounds: JetRect(x: 20, y: 120, width: 80, height: 24),
-                text: 'b'),
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(
+              Band(
+                id: 'detail',
+                type: BandType.detail,
+                height: 300,
+                elements: <ReportElement>[
+                  TextElement(
+                      id: 'a',
+                      bounds: JetRect(x: 20, y: 20, width: 80, height: 24),
+                      text: 'a'),
+                  TextElement(
+                      id: 'b',
+                      bounds: JetRect(x: 20, y: 120, width: 80, height: 24),
+                      text: 'b'),
+                ],
+              ),
+            ),
           ],
         ),
-      ],
+      ),
     );
 
 /// Pumps the designer over the two-element fixture and returns the controller.

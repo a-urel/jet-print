@@ -79,23 +79,121 @@ double _previewAspect(WidgetTester tester) {
 }
 
 /// A report whose page is exactly [w] × [h] points (default margins), so the
-/// PAGE controls can be driven against a known size.
-ReportTemplate _pageTemplate(double w, double h) => ReportTemplate(
+/// PAGE controls can be driven against a known size. A single detail band lives
+/// in the master scope (the reified equivalent of the old flat detail band).
+ReportDefinition _pageDefinition(double w, double h) => ReportDefinition(
       name: 'Page',
       page: PageFormat(
           width: w, height: h, margins: const JetEdgeInsets.all(28.35)),
-      bands: const <ReportBand>[ReportBand(type: BandType.detail, height: 100)],
+      body: const ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(id: 'detail', type: BandType.detail, height: 100)),
+          ],
+        ),
+      ),
     );
 
-JetRect _bounds(JetReportDesignerController c, String id) => c.template.bands
-    .expand((ReportBand b) => b.elements)
-    .firstWhere((ReportElement e) => e.id == id)
-    .bounds;
+/// Every element in the definition, walking the furniture, the once-bands, and
+/// the master-scope tree (the reified replacement for `template.bands.expand`).
+List<ReportElement> _allElements(JetReportDesignerController c) {
+  final ReportDefinition def = c.definition;
+  final List<ReportElement> out = <ReportElement>[];
+  void addBand(Band? b) {
+    if (b != null) out.addAll(b.elements);
+  }
 
-String _text(JetReportDesignerController c, String id) => (c.template.bands
-        .expand((ReportBand b) => b.elements)
-        .firstWhere((ReportElement e) => e.id == id) as TextElement)
-    .text;
+  void addScope(DetailScope s) {
+    for (final GroupLevel g in s.groups) {
+      addBand(g.header);
+      addBand(g.footer);
+    }
+    for (final ScopeNode node in s.children) {
+      switch (node) {
+        case BandNode(band: final Band band):
+          addBand(band);
+        case NestedScope(scope: final DetailScope inner):
+          addScope(inner);
+      }
+    }
+  }
+
+  addBand(def.furniture.pageHeader);
+  addBand(def.furniture.pageFooter);
+  addBand(def.furniture.columnHeader);
+  addBand(def.furniture.columnFooter);
+  addBand(def.furniture.background);
+  addBand(def.body.title);
+  addBand(def.body.summary);
+  addBand(def.body.noData);
+  addScope(def.body.root);
+  return out;
+}
+
+ReportElement _elementById(JetReportDesignerController c, String id) =>
+    _allElements(c).firstWhere((ReportElement e) => e.id == id);
+
+/// Every band in the definition, in tree order (furniture, once-bands, the
+/// master scope's groups' header/footer bands, and per-row bands).
+List<Band> _allBands(JetReportDesignerController c) {
+  final ReportDefinition def = c.definition;
+  final List<Band> out = <Band>[];
+  void add(Band? b) {
+    if (b != null) out.add(b);
+  }
+
+  void addScope(DetailScope s) {
+    for (final GroupLevel g in s.groups) {
+      add(g.header);
+      add(g.footer);
+    }
+    for (final ScopeNode node in s.children) {
+      switch (node) {
+        case BandNode(band: final Band band):
+          add(band);
+        case NestedScope(scope: final DetailScope inner):
+          addScope(inner);
+      }
+    }
+  }
+
+  add(def.furniture.pageHeader);
+  add(def.furniture.pageFooter);
+  add(def.furniture.columnHeader);
+  add(def.furniture.columnFooter);
+  add(def.furniture.background);
+  add(def.body.title);
+  add(def.body.summary);
+  add(def.body.noData);
+  addScope(def.body.root);
+  return out;
+}
+
+Band _bandById(JetReportDesignerController c, String id) =>
+    _allBands(c).firstWhere((Band b) => b.id == id);
+
+/// The group with [id] anywhere in the scope tree.
+GroupLevel _groupById(JetReportDesignerController c, String id) {
+  GroupLevel? found;
+  void visit(DetailScope s) {
+    for (final GroupLevel g in s.groups) {
+      if (g.id == id) found = g;
+    }
+    for (final ScopeNode node in s.children) {
+      if (node is NestedScope) visit(node.scope);
+    }
+  }
+
+  visit(c.definition.body.root);
+  return found!;
+}
+
+JetRect _bounds(JetReportDesignerController c, String id) =>
+    _elementById(c, id).bounds;
+
+String _text(JetReportDesignerController c, String id) =>
+    (_elementById(c, id) as TextElement).text;
 
 Future<void> _openProperties(WidgetTester tester) async {
   final Finder tab = find.text('Properties');
@@ -107,7 +205,7 @@ Future<void> _openProperties(WidgetTester tester) async {
 
 Future<String> _addText(WidgetTester tester, JetReportDesignerController c,
     {JetOffset at = const JetOffset(20, 30)}) async {
-  c.createElement(DesignerToolType.text, bandIndex: 1, at: at);
+  c.createElement(DesignerToolType.text, bandId: firstDetailBandId(c), at: at);
   final String id = c.selection.singleOrNull!;
   await tester.pumpAndSettle();
   return id;
@@ -116,52 +214,54 @@ Future<String> _addText(WidgetTester tester, JetReportDesignerController c,
 /// Adds a default (rectangle) shape, selects it, and returns its id (020).
 Future<String> _addShape(WidgetTester tester, JetReportDesignerController c,
     {JetOffset at = const JetOffset(20, 30)}) async {
-  c.createElement(DesignerToolType.shape, bandIndex: 1, at: at);
+  c.createElement(DesignerToolType.shape, bandId: firstDetailBandId(c), at: at);
   final String id = c.selection.singleOrNull!;
   await tester.pumpAndSettle();
   return id;
 }
 
 ShapeElement _shapeOf(JetReportDesignerController c, String id) =>
-    c.template.bands
-        .expand((ReportBand b) => b.elements)
-        .firstWhere((ReportElement e) => e.id == id) as ShapeElement;
+    _elementById(c, id) as ShapeElement;
 
 JetTextStyle _textStyleOf(JetReportDesignerController c, String id) =>
-    (c.template.bands
-            .expand((ReportBand b) => b.elements)
-            .firstWhere((ReportElement e) => e.id == id) as TextElement)
-        .style;
+    (_elementById(c, id) as TextElement).style;
 
 /// The controller's history revision — unchanged across an interaction ⇔ that
 /// interaction recorded no undo entry (no-op commits must not pollute history).
 int _undoDepth(JetReportDesignerController c) => c.revision;
 
 /// A one-band report holding a single text element `t` styled with [style], so
-/// the Font editors can be asserted against known values (021 / C2).
+/// the Font editors can be asserted against known values (021 / C2). The detail
+/// band lives in the master scope (the reified equivalent of a flat band).
 JetReportDesignerController _styledTextController(JetTextStyle style) =>
     JetReportDesignerController(
-      template: ReportTemplate(
+      definition: ReportDefinition(
         name: 'Styled',
         page: PageFormat.a4Portrait,
-        bands: <ReportBand>[
-          ReportBand(
-            type: BandType.detail,
-            height: 120,
-            elements: <ReportElement>[
-              TextElement(
-                id: 't',
-                bounds: const JetRect(x: 10, y: 10, width: 160, height: 24),
-                text: 'Hello',
-                style: style,
-              ),
+        body: ReportBody(
+          root: DetailScope(
+            id: 'root',
+            children: <ScopeNode>[
+              BandNode(Band(
+                id: 'detail',
+                type: BandType.detail,
+                height: 120,
+                elements: <ReportElement>[
+                  TextElement(
+                    id: 't',
+                    bounds: const JetRect(x: 10, y: 10, width: 160, height: 24),
+                    text: 'Hello',
+                    style: style,
+                  ),
+                ],
+              )),
             ],
           ),
-        ],
+        ),
       ),
     );
 
-/// Pumps the designer over [_styledTextController]'s template with `t`
+/// Pumps the designer over [_styledTextController]'s definition with `t`
 /// selected and the Properties tab open.
 Future<JetReportDesignerController> _pumpStyledText(
     WidgetTester tester, JetTextStyle style) async {
@@ -287,7 +387,7 @@ void main() {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openProperties(tester);
       c.createElement(DesignerToolType.shape,
-          bandIndex: 1, at: const JetOffset(10, 10));
+          bandId: firstDetailBandId(c), at: const JetOffset(10, 10));
       await tester.pumpAndSettle();
 
       expect(_field('x'), findsOneWidget); // geometry still shown
@@ -312,35 +412,46 @@ void main() {
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openProperties(tester);
-      c.selectBand(1); // detail, height 200
+      c.selectBand('detail'); // detail, height 200
       await tester.pumpAndSettle();
 
       expect(_valueIn('bandHeight', '200'), findsOneWidget);
       await tester.enterText(_editable('bandHeight'), '260');
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
-      expect(c.template.bands[1].height, 260);
+      expect(_bandById(c, 'detail').height, 260);
     });
 
-    testWidgets('a group-header band exposes a Start-on-new-page toggle',
+    testWidgets('a group exposes a Start-on-new-page toggle',
         (WidgetTester tester) async {
+      // The page-break flag is a GROUP property now (spec 024): it lives in the
+      // Group inspector, no longer on the group-header band.
       final JetReportDesignerController c = JetReportDesignerController(
-        template: const ReportTemplate(
+        definition: const ReportDefinition(
           name: 'r',
           page: PageFormat.a4Portrait,
-          groups: <ReportGroup>[
-            ReportGroup(name: 'invoice', expression: r'$F{invoiceNo}'),
-          ],
-          bands: <ReportBand>[
-            ReportBand(
-                type: BandType.groupHeader, height: 30, group: 'invoice'),
-            ReportBand(type: BandType.detail, height: 40),
-          ],
+          body: ReportBody(
+            root: DetailScope(
+              id: 'root',
+              groups: <GroupLevel>[
+                GroupLevel(
+                  id: 'g1',
+                  name: 'invoice',
+                  key: r'$F{invoiceNo}',
+                  header:
+                      Band(id: 'gh', type: BandType.groupHeader, height: 30),
+                ),
+              ],
+              children: <ScopeNode>[
+                BandNode(Band(id: 'detail', type: BandType.detail, height: 40)),
+              ],
+            ),
+          ),
         ),
       );
       await pumpDesignerWith(tester, controller: c);
       await _openProperties(tester);
-      c.selectBand(0); // the group-header band
+      c.selectGroup('g1'); // the group itself
       await tester.pumpAndSettle();
 
       final Finder toggle = _field('groupNewPage');
@@ -348,9 +459,7 @@ void main() {
       await tester.tap(toggle);
       await tester.pumpAndSettle();
       expect(
-        c.template.groups
-            .firstWhere((ReportGroup g) => g.name == 'invoice')
-            .startNewPage,
+        _groupById(c, 'g1').startNewPage,
         isTrue,
       );
     });
@@ -359,7 +468,7 @@ void main() {
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openProperties(tester);
-      c.selectBand(1); // detail band in the default template
+      c.selectBand('detail'); // detail band in the default definition
       await tester.pumpAndSettle();
       expect(_field('groupNewPage'), findsNothing);
     });
@@ -383,22 +492,22 @@ void main() {
   group('properties — report name', () {
     testWidgets('the report exposes its name as an editable primary field',
         (WidgetTester tester) async {
-      final JetReportDesignerController c =
-          JetReportDesignerController(template: _pageTemplate(595.28, 841.89));
+      final JetReportDesignerController c = JetReportDesignerController(
+          definition: _pageDefinition(595.28, 841.89));
       await pumpDesignerWith(tester, controller: c);
       await _openProperties(tester);
       c.selectReport();
       await tester.pumpAndSettle();
 
-      // The Name field is present and reflects the live template name.
+      // The Name field is present and reflects the live definition name.
       expect(_field('reportName'), findsOneWidget);
       expect(_valueIn('reportName', 'Page'), findsOneWidget);
     });
 
     testWidgets('editing the Name renames the report (one undoable step)',
         (WidgetTester tester) async {
-      final JetReportDesignerController c =
-          JetReportDesignerController(template: _pageTemplate(595.28, 841.89));
+      final JetReportDesignerController c = JetReportDesignerController(
+          definition: _pageDefinition(595.28, 841.89));
       await pumpDesignerWith(tester, controller: c);
       await _openProperties(tester);
       c.selectReport();
@@ -407,17 +516,17 @@ void main() {
       await tester.enterText(_editable('reportName'), 'Invoice');
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
-      expect(c.template.name, 'Invoice');
+      expect(c.definition.name, 'Invoice');
 
       // Exactly one history entry: undo restores the prior name.
       c.undo();
-      expect(c.template.name, 'Page');
+      expect(c.definition.name, 'Page');
     });
 
     testWidgets('a blank Name reverts, keeping the report named',
         (WidgetTester tester) async {
-      final JetReportDesignerController c =
-          JetReportDesignerController(template: _pageTemplate(595.28, 841.89));
+      final JetReportDesignerController c = JetReportDesignerController(
+          definition: _pageDefinition(595.28, 841.89));
       await pumpDesignerWith(tester, controller: c);
       await _openProperties(tester);
       c.selectReport();
@@ -426,7 +535,7 @@ void main() {
       await tester.enterText(_editable('reportName'), '   ');
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
-      expect(c.template.name, 'Page', reason: 'blank entry is not committed');
+      expect(c.definition.name, 'Page', reason: 'blank entry is not committed');
     });
   });
 
@@ -458,7 +567,7 @@ void main() {
       await _openProperties(tester);
       c.selectReport();
       await tester.pumpAndSettle();
-      final JetEdgeInsets marginsBefore = c.template.page.margins;
+      final JetEdgeInsets marginsBefore = c.definition.page.margins;
 
       await tester.tap(_field('paper'));
       await tester.pumpAndSettle();
@@ -470,9 +579,9 @@ void main() {
       await tester.tap(_paperOption('Letter'));
       await tester.pumpAndSettle();
 
-      expect(c.template.page.width, 612);
-      expect(c.template.page.height, 792);
-      expect(c.template.page.margins, marginsBefore,
+      expect(c.definition.page.width, 612);
+      expect(c.definition.page.height, 792);
+      expect(c.definition.page.margins, marginsBefore,
           reason: 'changing paper type leaves margins untouched');
       // The picker now reflects the new size by name.
       expect(
@@ -484,7 +593,7 @@ void main() {
     testWidgets('a page matching no preset reads Custom (C1.3)',
         (WidgetTester tester) async {
       final JetReportDesignerController c =
-          JetReportDesignerController(template: _pageTemplate(500, 700));
+          JetReportDesignerController(definition: _pageDefinition(500, 700));
       await pumpDesignerWith(tester, controller: c);
       await _openProperties(tester);
       c.selectReport();
@@ -494,8 +603,8 @@ void main() {
           find.descendant(of: _field('paper'), matching: find.text('Custom')),
           findsOneWidget);
       // Dimensions are unaltered by recognition.
-      expect(c.template.page.width, 500);
-      expect(c.template.page.height, 700);
+      expect(c.definition.page.width, 500);
+      expect(c.definition.page.height, 700);
     });
   });
 
@@ -512,7 +621,7 @@ void main() {
       await tester.tap(_marginOption('narrow'));
       await tester.pumpAndSettle();
 
-      expect(c.template.page.margins, const JetEdgeInsets.all(14.17));
+      expect(c.definition.page.margins, const JetEdgeInsets.all(14.17));
       expect(_valueIn('marginLeft', '14.2'), findsOneWidget);
       expect(_valueIn('marginBottom', '14.2'), findsOneWidget);
     });
@@ -528,10 +637,10 @@ void main() {
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
 
-      expect(c.template.page.margins.left, 50);
-      expect(c.template.page.margins.top, 28.35);
-      expect(c.template.page.margins.right, 28.35);
-      expect(c.template.page.margins.bottom, 28.35);
+      expect(c.definition.page.margins.left, 50);
+      expect(c.definition.page.margins.top, 28.35);
+      expect(c.definition.page.margins.right, 28.35);
+      expect(c.definition.page.margins.bottom, 28.35);
       expect(
           find.descendant(
               of: _field('marginPreset'), matching: find.text('Custom')),
@@ -544,13 +653,13 @@ void main() {
       await _openProperties(tester);
       c.selectReport();
       await tester.pumpAndSettle();
-      final double before = c.template.page.margins.left;
+      final double before = c.definition.page.margins.left;
 
       await tester.enterText(_editable('marginLeft'), 'abc');
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
 
-      expect(c.template.page.margins.left, before,
+      expect(c.definition.page.margins.left, before,
           reason: 'invalid is rejected');
       expect(find.text('abc'), findsNothing);
       expect(_valueIn('marginLeft', '28.4'), findsOneWidget,
@@ -583,22 +692,22 @@ void main() {
       c.selectReport();
       await tester.pumpAndSettle();
       expect(_previewAspect(tester), lessThan(1)); // A4 portrait
-      final double w = c.template.page.width;
-      final double h = c.template.page.height;
+      final double w = c.definition.page.width;
+      final double h = c.definition.page.height;
 
       await tester.tap(find
           .byKey(const ValueKey<String>('$_p.field.orientation.landscape')));
       await tester.pumpAndSettle();
 
-      expect(c.template.page.width, h);
-      expect(c.template.page.height, w);
+      expect(c.definition.page.width, h);
+      expect(c.definition.page.height, w);
       expect(_previewAspect(tester), greaterThan(1)); // now landscape
     });
 
     testWidgets('editing a custom dimension reflects in the preview aspect',
         (WidgetTester tester) async {
       final JetReportDesignerController c =
-          JetReportDesignerController(template: _pageTemplate(300, 600));
+          JetReportDesignerController(definition: _pageDefinition(300, 600));
       await pumpDesignerWith(tester, controller: c);
       await _openProperties(tester);
       c.selectReport();
@@ -611,7 +720,7 @@ void main() {
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
 
-      expect(c.template.page.width, 900);
+      expect(c.definition.page.width, 900);
       expect(_previewAspect(tester), closeTo(1.5, 0.001)); // 900 / 600
     });
 
@@ -647,14 +756,14 @@ void main() {
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
 
-      expect(c.template.page.width, 300);
-      expect(c.template.page.height, 500);
+      expect(c.definition.page.width, 300);
+      expect(c.definition.page.height, 500);
     });
 
     testWidgets('a custom dimension field reverts invalid input (C3.5)',
         (WidgetTester tester) async {
       final JetReportDesignerController c =
-          JetReportDesignerController(template: _pageTemplate(300, 500));
+          JetReportDesignerController(definition: _pageDefinition(300, 500));
       await pumpDesignerWith(tester, controller: c);
       await _openProperties(tester);
       c.selectReport();
@@ -665,7 +774,7 @@ void main() {
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
 
-      expect(c.template.page.width, 300, reason: 'invalid input is rejected');
+      expect(c.definition.page.width, 300, reason: 'invalid input is rejected');
     });
   });
 
@@ -737,7 +846,7 @@ void main() {
       await _openProperties(tester);
       expect(_field('fontSize'), findsNothing); // nothing selected
 
-      c.selectBand(1);
+      c.selectBand('detail');
       await tester.pumpAndSettle();
       expect(_field('fontSize'), findsNothing);
 
@@ -841,23 +950,23 @@ void main() {
       final JetReportDesignerController c = await _pumpStyledText(
           tester, const JetTextStyle(fontFamily: 'Unknown Family'));
 
-      // An unrelated edit, then the host's save path (encode the live template).
+      // An unrelated edit, then the host's save path (encode the live model).
       await tester.tap(_field('bold'));
       await tester.pumpAndSettle();
-      final String json = JetReportFormat.encodeJson(c.template);
+      final String json = JetReportFormat.encodeDefinitionJson(c.definition);
       expect(json, contains('Unknown Family'),
           reason: 'the stored family name is preserved on save (SC-003)');
       // And decoding brings it back unchanged.
-      expect(
-          JetReportFormat.decodeJson(json)
-              .bands
-              .first
-              .elements
-              .whereType<TextElement>()
-              .single
-              .style
-              .fontFamily,
-          'Unknown Family');
+      final ReportDefinition decoded =
+          JetReportFormat.decodeDefinitionJson(json);
+      final TextElement text = decoded.body.root.children
+          .whereType<BandNode>()
+          .first
+          .band
+          .elements
+          .whereType<TextElement>()
+          .single;
+      expect(text.style.fontFamily, 'Unknown Family');
     });
   });
 
@@ -1164,7 +1273,7 @@ void main() {
       final JetReportDesignerController c =
           await _pumpStyledText(tester, JetTextStyle.fallback);
       c.createElement(DesignerToolType.text,
-          bandIndex: 0, at: const JetOffset(10, 60));
+          bandId: firstDetailBandId(c), at: const JetOffset(10, 60));
       final String other = c.selection.singleOrNull!;
       c.select('t');
       await tester.pumpAndSettle();
@@ -1404,16 +1513,14 @@ void main() {
     Future<String> addBarcode(
         WidgetTester tester, JetReportDesignerController c) async {
       c.createElement(DesignerToolType.barcode,
-          bandIndex: 1, at: const JetOffset(20, 30));
+          bandId: firstDetailBandId(c), at: const JetOffset(20, 30));
       final String id = c.selection.singleOrNull!;
       await tester.pumpAndSettle();
       return id;
     }
 
     BarcodeElement barcodeOf(JetReportDesignerController c, String id) =>
-        c.template.bands
-            .expand((ReportBand b) => b.elements)
-            .firstWhere((ReportElement e) => e.id == id) as BarcodeElement;
+        _elementById(c, id) as BarcodeElement;
 
     testWidgets('a barcode shows the color row; other types do not',
         (WidgetTester tester) async {
@@ -1524,22 +1631,28 @@ void main() {
       // A shape loaded with an unrecognized form renders as rectangle but must
       // not present rectangle as a deliberate choice.
       final JetReportDesignerController c = JetReportDesignerController(
-        template: ReportTemplate(
+        definition: const ReportDefinition(
           name: 'U',
           page: PageFormat.a4Portrait,
-          bands: const <ReportBand>[
-            ReportBand(
-                type: BandType.detail,
-                height: 120,
-                elements: <ReportElement>[
-                  ShapeElement(
-                    id: 's',
-                    bounds: JetRect(x: 5, y: 5, width: 60, height: 40),
-                    kind: ShapeKind.rectangle,
-                    unknownForm: 'octagon',
-                  ),
-                ]),
-          ],
+          body: ReportBody(
+            root: DetailScope(
+              id: 'root',
+              children: <ScopeNode>[
+                BandNode(Band(
+                    id: 'detail',
+                    type: BandType.detail,
+                    height: 120,
+                    elements: <ReportElement>[
+                      ShapeElement(
+                        id: 's',
+                        bounds: JetRect(x: 5, y: 5, width: 60, height: 40),
+                        kind: ShapeKind.rectangle,
+                        unknownForm: 'octagon',
+                      ),
+                    ])),
+              ],
+            ),
+          ),
         ),
       );
       await pumpDesignerWith(tester, controller: c);

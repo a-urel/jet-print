@@ -68,7 +68,8 @@ void main() {
       expect(scope.copyWith(collectionField: 'x').collectionField, 'x');
       expect(scope.copyWith(collectionField: 'x').id, 'root');
       expect(
-          scope.copyWith(children: const <ScopeNode>[BandNode(_detail)]).children,
+          scope.copyWith(
+              children: const <ScopeNode>[BandNode(_detail)]).children,
           hasLength(1));
     });
 

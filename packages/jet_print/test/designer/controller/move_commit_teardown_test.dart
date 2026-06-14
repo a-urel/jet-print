@@ -4,17 +4,18 @@
 //
 // Before the fix, `commitMove` cleared the guide state in memory but delegated
 // the repaint to the move command; a clamped no-op move produces an unchanged
-// template, `_commit` short-circuits it without notifying, and the last-painted
-// red snap guide stayed frozen on the canvas with no drag in progress.
+// definition, `_commit` short-circuits it without notifying, and the
+// last-painted red snap guide stayed frozen on the canvas with no drag in
+// progress.
 //
 // Drives the public controller only.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
-JetRect _boundsOf(JetReportDesignerController c, String id) => c.template.bands
-    .expand((ReportBand b) => b.elements)
-    .firstWhere((ReportElement e) => e.id == id)
-    .bounds;
+JetRect _boundsOf(JetReportDesignerController c, String id) =>
+    c.definition.furniture.pageHeader!.elements
+        .firstWhere((ReportElement e) => e.id == id)
+        .bounds;
 
 void main() {
   test('a move clamped to a no-op still repaints and clears the guide', () {
@@ -27,9 +28,9 @@ void main() {
     // grid line 0, so the snap that raises the guide is deterministic.
     c.setSnapEnabled(true);
     c.createElement(DesignerToolType.text,
-        bandIndex: 0, at: const JetOffset(0, 0));
+        bandId: 'pageHeader', at: const JetOffset(0, 0));
     final String id = c.selection.singleOrNull!;
-    final double bandHeight = c.template.bands[0].height;
+    final double bandHeight = c.definition.furniture.pageHeader!.height;
     final JetRect b0 = _boundsOf(c, id);
 
     // Pin the element to the bottom-left corner of its band.

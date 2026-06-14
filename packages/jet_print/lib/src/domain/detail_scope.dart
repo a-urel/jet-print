@@ -107,8 +107,8 @@ class DetailScope {
       listEquals(other.children, children);
 
   @override
-  int get hashCode => Object.hash(id, collectionField,
-      Object.hashAll(groups), Object.hashAll(children));
+  int get hashCode => Object.hash(
+      id, collectionField, Object.hashAll(groups), Object.hashAll(children));
 
   @override
   String toString() => 'DetailScope($id'

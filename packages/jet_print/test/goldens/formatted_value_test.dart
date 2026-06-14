@@ -11,44 +11,50 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:jet_print/jet_print.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
-ReportTemplate _template() => const ReportTemplate(
+ReportDefinition _definition() => const ReportDefinition(
       name: 'Formatted',
       page: PageFormat(width: 240, height: 120, margins: JetEdgeInsets.all(16)),
-      bands: <ReportBand>[
-        ReportBand(
-          type: BandType.detail,
-          height: 80,
-          elements: <ReportElement>[
-            // Raw (no format) for contrast: prints the bare double "1234.5".
-            TextElement(
-              id: 'raw',
-              bounds: JetRect(x: 0, y: 0, width: 208, height: 16),
-              text: 'raw',
-              expression: r'$F{amount}',
-            ),
-            // Number format property → "1,234.50".
-            TextElement(
-              id: 'amount',
-              bounds: JetRect(x: 0, y: 22, width: 208, height: 16),
-              text: 'amount',
-              expression: r'$F{amount}',
-              format: '#,##0.00',
-            ),
-            // Date format property → "2026-06-11".
-            TextElement(
-              id: 'when',
-              bounds: JetRect(x: 0, y: 44, width: 208, height: 16),
-              text: 'when',
-              expression: r'$F{when}',
-              format: 'yyyy-MM-dd',
-            ),
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+              id: 'root/c0',
+              type: BandType.detail,
+              height: 80,
+              elements: <ReportElement>[
+                // Raw (no format) for contrast: prints the bare double "1234.5".
+                TextElement(
+                  id: 'raw',
+                  bounds: JetRect(x: 0, y: 0, width: 208, height: 16),
+                  text: 'raw',
+                  expression: r'$F{amount}',
+                ),
+                // Number format property → "1,234.50".
+                TextElement(
+                  id: 'amount',
+                  bounds: JetRect(x: 0, y: 22, width: 208, height: 16),
+                  text: 'amount',
+                  expression: r'$F{amount}',
+                  format: '#,##0.00',
+                ),
+                // Date format property → "2026-06-11".
+                TextElement(
+                  id: 'when',
+                  bounds: JetRect(x: 0, y: 44, width: 208, height: 16),
+                  text: 'when',
+                  expression: r'$F{when}',
+                  format: 'yyyy-MM-dd',
+                ),
+              ],
+            )),
           ],
         ),
-      ],
+      ),
     );
 
-RenderedReport _report() => JetReportEngine().render(
-      _template(),
+RenderedReport _report() => JetReportEngine().renderDefinition(
+      _definition(),
       JetInMemoryDataSource(<Map<String, Object?>>[
         <String, Object?>{'amount': 1234.5, 'when': DateTime(2026, 6, 11)},
       ]),

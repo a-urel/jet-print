@@ -3,28 +3,34 @@
 //
 // Black-box (public entry point only): grid visibility and snapping are
 // ephemeral per-session designer preferences, never part of the report
-// document. Toggling them leaves the saved template byte-identical, the JSON
+// document. Toggling them leaves the saved definition byte-identical, the JSON
 // carries no grid/snap field, and the document round-trips losslessly (so a
-// reloaded template renders identically).
+// reloaded definition renders identically).
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
-ReportTemplate _template() => const ReportTemplate(
+ReportDefinition _definition() => const ReportDefinition(
       name: 'Invoice',
       page: PageFormat.a4Portrait,
-      bands: <ReportBand>[
-        ReportBand(
-          type: BandType.detail,
-          height: 120,
-          elements: <ReportElement>[
-            TextElement(
-              id: 't1',
-              bounds: JetRect(x: 10, y: 10, width: 120, height: 16),
-              text: 'hello',
-            ),
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+              id: 'detail',
+              type: BandType.detail,
+              height: 120,
+              elements: <ReportElement>[
+                TextElement(
+                  id: 't1',
+                  bounds: JetRect(x: 10, y: 10, width: 120, height: 16),
+                  text: 'hello',
+                ),
+              ],
+            )),
           ],
         ),
-      ],
+      ),
     );
 
 /// Every key appearing anywhere in a decoded-JSON tree.
@@ -51,20 +57,21 @@ void main() {
   test('C5.3 toggling grid/snap leaves the encoded document byte-identical',
       () {
     final JetReportDesignerController c =
-        JetReportDesignerController(template: _template());
+        JetReportDesignerController(definition: _definition());
     addTearDown(c.dispose);
 
-    final String before = JetReportFormat.encodeJson(c.template);
+    final String before = JetReportFormat.encodeDefinitionJson(c.definition);
     c.setGridEnabled(false);
     c.setSnapEnabled(false);
     c.setGridEnabled(true);
-    final String after = JetReportFormat.encodeJson(c.template);
+    final String after = JetReportFormat.encodeDefinitionJson(c.definition);
 
     expect(after, equals(before));
   });
 
   test('the document carries no grid/snap field at any depth', () {
-    final Map<String, Object?> json = JetReportFormat.encode(_template());
+    final Map<String, Object?> json =
+        JetReportFormat.encodeDefinition(_definition());
     final Set<String> keys = _allKeys(json);
 
     for (final String forbidden in const <String>[
@@ -79,13 +86,13 @@ void main() {
   });
 
   test('the document round-trips losslessly (reload renders identically)', () {
-    final ReportTemplate original = _template();
-    final ReportTemplate reloaded =
-        JetReportFormat.decode(JetReportFormat.encode(original));
+    final ReportDefinition original = _definition();
+    final ReportDefinition reloaded = JetReportFormat.decodeDefinition(
+        JetReportFormat.encodeDefinition(original));
 
-    // Re-encoding the reloaded template reproduces the original JSON exactly —
+    // Re-encoding the reloaded definition reproduces the original JSON exactly —
     // the lossless guarantee that makes a reloaded design render identically.
-    expect(JetReportFormat.encode(reloaded),
-        equals(JetReportFormat.encode(original)));
+    expect(JetReportFormat.encodeDefinition(reloaded),
+        equals(JetReportFormat.encodeDefinition(original)));
   });
 }

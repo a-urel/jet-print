@@ -4,7 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../data/data_schema.dart';
-import '../domain/report_template.dart';
+import '../domain/report_definition.dart';
 import '../rendering/text/font_registry.dart';
 import '../rendering/text/jet_font.dart';
 import 'controller/jet_report_designer_controller.dart';
@@ -18,19 +18,20 @@ import 'layout/designer_surface.dart';
 import 'layout/designer_toolbox.dart';
 import 'layout/designer_top_bar.dart';
 
-/// Invoked when the user triggers Save; receives the current [ReportTemplate] to
-/// persist. The library performs no file I/O itself (FR-022) — a host encodes it
-/// (e.g. via `JetReportFormat.encodeJson`) and writes it.
-typedef ReportSaveRequestedCallback = void Function(ReportTemplate current);
+/// Invoked when the user triggers Save; receives the current [ReportDefinition]
+/// to persist. The library performs no file I/O itself (FR-022) — a host encodes
+/// it (e.g. via `JetReportFormat.encodeDefinitionJson`) and writes it.
+typedef ReportSaveRequestedCallback = void Function(ReportDefinition current);
 
-/// Invoked when the user triggers Open; a host reads a template (e.g. via
-/// `JetReportFormat.decodeJson`) and calls `controller.open(...)`.
+/// Invoked when the user triggers Open; a host reads a definition (e.g. via
+/// `JetReportFormat.decodeDefinitionJson`) and calls `controller.open(...)`.
 typedef ReportOpenRequestedCallback = void Function();
 
 /// Invoked when the user triggers Preview; receives the current
-/// [ReportTemplate] so a host can render it (e.g. via `JetReportEngine`) and
+/// [ReportDefinition] so a host can render it (e.g. via `JetReportEngine`) and
 /// show a `JetReportPreview`.
-typedef ReportPreviewRequestedCallback = void Function(ReportTemplate current);
+typedef ReportPreviewRequestedCallback = void Function(
+    ReportDefinition current);
 
 /// The report designer **shell**: the visual workspace that arranges the
 /// regions of the designer — a top command bar, a left element toolbox, an
@@ -58,8 +59,8 @@ typedef ReportPreviewRequestedCallback = void Function(ReportTemplate current);
 ///   supportedLocales: JetPrintLocalizations.supportedLocales,
 ///   home: JetReportDesigner(
 ///     controller: controller,
-///     onSaveRequested: (ReportTemplate t) => writeFile(JetReportFormat.encodeJson(t)),
-///     onOpenRequested: () async => controller.open(JetReportFormat.decodeJson(await readFile())),
+///     onSaveRequested: (ReportDefinition d) => writeFile(JetReportFormat.encodeDefinitionJson(d)),
+///     onOpenRequested: () async => controller.open(JetReportFormat.decodeDefinitionJson(await readFile())),
 ///   ),
 /// );
 /// ```
@@ -92,7 +93,7 @@ class JetReportDesigner extends StatefulWidget {
 
   /// The design to seed an internally-created controller with (ignored when
   /// [controller] is given). Null seeds a blank default design.
-  final ReportTemplate? initialReport;
+  final ReportDefinition? initialReport;
 
   /// Invoked when the user triggers Save (wired to the top bar).
   final ReportSaveRequestedCallback? onSaveRequested;
@@ -172,7 +173,8 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
       _controller = widget.controller!;
       _ownsController = false;
     } else {
-      _controller = JetReportDesignerController(template: widget.initialReport);
+      _controller =
+          JetReportDesignerController(definition: widget.initialReport);
       _ownsController = true;
     }
     _controller.addListener(_handlePropertiesFocusRequest);
@@ -274,11 +276,11 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
             // disabled (the library performs no file I/O itself — FR-022).
             onSave: widget.onSaveRequested == null
                 ? null
-                : () => widget.onSaveRequested!(_controller.template),
+                : () => widget.onSaveRequested!(_controller.definition),
             onOpen: widget.onOpenRequested,
             onPreview: widget.onPreviewRequested == null
                 ? null
-                : () => widget.onPreviewRequested!(_controller.template),
+                : () => widget.onPreviewRequested!(_controller.definition),
           ),
           const ShadSeparator.horizontal(margin: EdgeInsets.zero),
           Expanded(

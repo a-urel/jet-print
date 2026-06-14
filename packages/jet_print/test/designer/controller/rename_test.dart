@@ -8,40 +8,46 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
-ReportTemplate _named(String name) => ReportTemplate(
+ReportDefinition _named(String name) => ReportDefinition(
       name: name,
       page: PageFormat.a4Portrait,
-      bands: const <ReportBand>[
-        ReportBand(
-          type: BandType.detail,
-          height: 100,
-          elements: <ReportElement>[
-            TextElement(
-              id: 'e1',
-              bounds: JetRect(x: 0, y: 0, width: 40, height: 12),
-              text: 'x',
-            ),
+      body: const ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+              id: 'detail',
+              type: BandType.detail,
+              height: 100,
+              elements: <ReportElement>[
+                TextElement(
+                  id: 'e1',
+                  bounds: JetRect(x: 0, y: 0, width: 40, height: 12),
+                  text: 'x',
+                ),
+              ],
+            )),
           ],
         ),
-      ],
+      ),
     );
 
 void main() {
-  test('rename(x) sets the template name (C4.1)', () {
+  test('rename(x) sets the definition name (C4.1)', () {
     final JetReportDesignerController c =
-        JetReportDesignerController(template: _named('Alpha'));
+        JetReportDesignerController(definition: _named('Alpha'));
     c.rename('Beta');
-    expect(c.template.name, 'Beta');
+    expect(c.definition.name, 'Beta');
     c.dispose();
   });
 
   test('rename is a single undoable step restoring the prior name (C4.2)', () {
     final JetReportDesignerController c =
-        JetReportDesignerController(template: _named('Alpha'));
+        JetReportDesignerController(definition: _named('Alpha'));
     c.rename('Beta');
     expect(c.canUndo, isTrue);
     c.undo();
-    expect(c.template.name, 'Alpha');
+    expect(c.definition.name, 'Alpha');
     expect(c.canUndo, isFalse,
         reason: 'one rename = exactly one history entry');
     c.dispose();
@@ -49,7 +55,7 @@ void main() {
 
   test('rename restores the prior selection on undo (snapshot coherence)', () {
     final JetReportDesignerController c =
-        JetReportDesignerController(template: _named('Alpha'));
+        JetReportDesignerController(definition: _named('Alpha'));
     c.select('e1');
     final Selection before = c.selection;
     c.rename('Beta');
@@ -60,7 +66,7 @@ void main() {
 
   test('rename notifies listeners exactly once (C4.3)', () {
     final JetReportDesignerController c =
-        JetReportDesignerController(template: _named('Alpha'));
+        JetReportDesignerController(definition: _named('Alpha'));
     int notifications = 0;
     c.addListener(() => notifications++);
     c.rename('Beta');
@@ -71,7 +77,7 @@ void main() {
   test('rename to the current name is a no-op — no history, no notify (C4.4)',
       () {
     final JetReportDesignerController c =
-        JetReportDesignerController(template: _named('Alpha'));
+        JetReportDesignerController(definition: _named('Alpha'));
     int notifications = 0;
     c.addListener(() => notifications++);
     c.rename('Alpha');
@@ -83,25 +89,26 @@ void main() {
   test('an empty or whitespace-only name is stored verbatim as empty (FR-010)',
       () {
     final JetReportDesignerController c =
-        JetReportDesignerController(template: _named('Alpha'));
+        JetReportDesignerController(definition: _named('Alpha'));
     c.rename('   ');
-    expect(c.template.name.trim(), isEmpty);
+    expect(c.definition.name.trim(), isEmpty);
     c.dispose();
   });
 
-  test('a renamed template round-trips losslessly through the codec (C4.5)',
+  test('a renamed definition round-trips losslessly through the codec (C4.5)',
       () {
     final JetReportDesignerController c =
-        JetReportDesignerController(template: _named('Alpha'));
+        JetReportDesignerController(definition: _named('Alpha'));
     c.rename('Renamed report');
 
-    final String json = JetReportFormat.encodeJson(c.template);
-    final ReportTemplate reopened = JetReportFormat.decodeJson(json);
+    final String json = JetReportFormat.encodeDefinitionJson(c.definition);
+    final ReportDefinition reopened =
+        JetReportFormat.decodeDefinitionJson(json);
     expect(reopened.name, 'Renamed report');
     // encode→decode→encode is a fixed point: no field, schema, or value drift.
     expect(
-      JetReportFormat.encode(reopened),
-      equals(JetReportFormat.encode(c.template)),
+      JetReportFormat.encodeDefinition(reopened),
+      equals(JetReportFormat.encodeDefinition(c.definition)),
     );
     c.dispose();
   });

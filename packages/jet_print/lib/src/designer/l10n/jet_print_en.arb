@@ -339,6 +339,50 @@
   "@propertiesGroupNewPage": {
     "description": "Properties panel toggle label: start each group instance on a new page (023)."
   },
+  "propertiesGroupKey": "Group key",
+  "@propertiesGroupKey": {
+    "description": "Properties panel label for a group's grouping-key expression (spec 024)."
+  },
+  "propertiesGroupKeepTogether": "Keep together",
+  "@propertiesGroupKeepTogether": {
+    "description": "Properties panel toggle label: keep a group's whole instance on one page (spec 024)."
+  },
+  "propertiesGroupReprintHeader": "Reprint header on each page",
+  "@propertiesGroupReprintHeader": {
+    "description": "Properties panel toggle label: reprint a group header atop each continuation page (spec 024)."
+  },
+  "propertiesScope": "Scope",
+  "@propertiesScope": {
+    "description": "Properties panel header label for a selected detail scope (spec 024)."
+  },
+  "outlineMoveUp": "Move up",
+  "@outlineMoveUp": {
+    "description": "Outline row action: move a per-row band up within its scope (spec 024)."
+  },
+  "outlineMoveDown": "Move down",
+  "@outlineMoveDown": {
+    "description": "Outline row action: move a per-row band down within its scope (spec 024)."
+  },
+  "outlineRemove": "Remove band",
+  "@outlineRemove": {
+    "description": "Outline row action: remove a band (spec 024)."
+  },
+  "outlineRetype": "Change band type",
+  "@outlineRetype": {
+    "description": "Outline row action: relocate a band to a different slot, changing its type (spec 024)."
+  },
+  "outlineAddBand": "Add band",
+  "@outlineAddBand": {
+    "description": "Outline row action: add a per-row band to a scope (spec 024)."
+  },
+  "outlineAddHeader": "Add header",
+  "@outlineAddHeader": {
+    "description": "Outline row action: add a group header band (spec 024)."
+  },
+  "outlineAddFooter": "Add footer",
+  "@outlineAddFooter": {
+    "description": "Outline row action: add a group footer band (spec 024)."
+  },
   "bindingExpressionHint": "Field or expression",
   "@bindingExpressionHint": {
     "description": "Placeholder for the text binding input (a field reference or a full expression)."

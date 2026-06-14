@@ -9,12 +9,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:jet_print/src/data/in_memory_data_source.dart';
+import 'package:jet_print/src/domain/band.dart';
+import 'package:jet_print/src/domain/detail_scope.dart';
 import 'package:jet_print/src/domain/elements/text_element.dart';
 import 'package:jet_print/src/domain/geometry.dart';
 import 'package:jet_print/src/domain/page_format.dart';
 import 'package:jet_print/src/domain/report_band.dart';
+import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/domain/report_element.dart';
-import 'package:jet_print/src/domain/report_template.dart';
 import 'package:jet_print/src/rendering/engine/jet_report_engine.dart';
 import 'package:jet_print/src/rendering/engine/render_options.dart';
 import 'package:jet_print/src/rendering/engine/rendered_report.dart';
@@ -25,23 +27,29 @@ import 'package:jet_print/src/rendering/text/text_measurer.dart';
 const PageFormat _page =
     PageFormat(width: 400, height: 200, margins: JetEdgeInsets.all(10));
 
-ReportTemplate _template(String expression) => ReportTemplate(
+ReportDefinition _template(String expression) => ReportDefinition(
       name: 'locale',
       page: _page,
-      bands: <ReportBand>[
-        ReportBand(
-          type: BandType.detail,
-          height: 24,
-          elements: <ReportElement>[
-            TextElement(
-              id: 'value',
-              bounds: const JetRect(x: 0, y: 0, width: 360, height: 18),
-              text: 'value',
-              expression: expression,
-            ),
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+              id: 'root/c0',
+              type: BandType.detail,
+              height: 24,
+              elements: <ReportElement>[
+                TextElement(
+                  id: 'value',
+                  bounds: const JetRect(x: 0, y: 0, width: 360, height: 18),
+                  text: 'value',
+                  expression: expression,
+                ),
+              ],
+            )),
           ],
         ),
-      ],
+      ),
     );
 
 String _renderedText(
@@ -49,7 +57,7 @@ String _renderedText(
   Map<String, Object?> row, {
   required Locale locale,
 }) {
-  final RenderedReport report = const JetReportEngine().render(
+  final RenderedReport report = const JetReportEngine().renderDefinition(
     _template(expression),
     JetInMemoryDataSource(<Map<String, Object?>>[row]),
     options: RenderOptions(locale: locale),

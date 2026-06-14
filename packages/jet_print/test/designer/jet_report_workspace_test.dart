@@ -17,27 +17,36 @@ const Key _loadingKey = ValueKey<String>('jet_print.workspace.loading');
 const Key _surfaceKey = ValueKey<String>('jet_print.designer.surface');
 const Key _pageKey = ValueKey<String>('jet_print.preview.page');
 
-ReportTemplate _template() => const ReportTemplate(
+ReportDefinition _definition() => const ReportDefinition(
       name: 'Quarterly Report',
       page: _page,
-      bands: <ReportBand>[
-        ReportBand(
-          type: BandType.detail,
-          height: 30,
-          elements: <ReportElement>[
-            TextElement(
-              id: 'name',
-              bounds: JetRect(x: 0, y: 0, width: 180, height: 16),
-              text: 'name',
-              expression: r'$F{name}',
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(
+              Band(
+                id: 'detail',
+                type: BandType.detail,
+                height: 30,
+                elements: <ReportElement>[
+                  TextElement(
+                    id: 'name',
+                    bounds: JetRect(x: 0, y: 0, width: 180, height: 16),
+                    text: 'name',
+                    expression: r'$F{name}',
+                  ),
+                ],
+              ),
             ),
           ],
         ),
-      ],
+      ),
     );
 
-RenderedReport _render(ReportTemplate t) => const JetReportEngine().render(
-      t,
+RenderedReport _render(ReportDefinition d) =>
+    const JetReportEngine().renderDefinition(
+      d,
       JetInMemoryDataSource(<Map<String, Object?>>[
         for (int i = 0; i < 6; i++) <String, Object?>{'name': 'row $i'},
       ]),
@@ -86,7 +95,7 @@ Future<void> _enterPreview(WidgetTester tester) async {
 void main() {
   testWidgets('starts in designer mode', (WidgetTester tester) async {
     final JetReportDesignerController controller =
-        JetReportDesignerController(template: _template());
+        JetReportDesignerController(definition: _definition());
     addTearDown(controller.dispose);
     await _pumpWorkspace(tester, controller: controller);
 
@@ -98,7 +107,7 @@ void main() {
   testWidgets('entering preview shows the loading bar, then the rendered page',
       (WidgetTester tester) async {
     final JetReportDesignerController controller =
-        JetReportDesignerController(template: _template());
+        JetReportDesignerController(definition: _definition());
     addTearDown(controller.dispose);
     await _pumpWorkspace(tester, controller: controller);
 
@@ -118,7 +127,7 @@ void main() {
   testWidgets('switching back to design is instant and keeps the canvas alive',
       (WidgetTester tester) async {
     final JetReportDesignerController controller =
-        JetReportDesignerController(template: _template());
+        JetReportDesignerController(definition: _definition());
     addTearDown(controller.dispose);
     await _pumpWorkspace(tester, controller: controller);
     await _enterPreview(tester);
@@ -137,12 +146,12 @@ void main() {
       (WidgetTester tester) async {
     int renders = 0;
     final JetReportDesignerController controller =
-        JetReportDesignerController(template: _template());
+        JetReportDesignerController(definition: _definition());
     addTearDown(controller.dispose);
     await _pumpWorkspace(
       tester,
       controller: controller,
-      renderReport: (ReportTemplate t) {
+      renderReport: (ReportDefinition t) {
         renders++;
         return _render(t);
       },
@@ -163,12 +172,12 @@ void main() {
       (WidgetTester tester) async {
     int renders = 0;
     final JetReportDesignerController controller =
-        JetReportDesignerController(template: _template());
+        JetReportDesignerController(definition: _definition());
     addTearDown(controller.dispose);
     await _pumpWorkspace(
       tester,
       controller: controller,
-      renderReport: (ReportTemplate t) {
+      renderReport: (ReportDefinition t) {
         renders++;
         return _render(t);
       },
@@ -189,12 +198,12 @@ void main() {
   testWidgets('a failed render reports the error and clears the spinner',
       (WidgetTester tester) async {
     final JetReportDesignerController controller =
-        JetReportDesignerController(template: _template());
+        JetReportDesignerController(definition: _definition());
     addTearDown(controller.dispose);
     await _pumpWorkspace(
       tester,
       controller: controller,
-      renderReport: (ReportTemplate t) => throw StateError('render failed'),
+      renderReport: (ReportDefinition t) => throw StateError('render failed'),
     );
 
     await tester.tap(find.byKey(_modePreviewKey));
@@ -217,7 +226,7 @@ void main() {
     RenderedReport? exported;
     RenderedReport? printed;
     final JetReportDesignerController controller =
-        JetReportDesignerController(template: _template());
+        JetReportDesignerController(definition: _definition());
     addTearDown(controller.dispose);
     await _pumpWorkspace(
       tester,
@@ -246,12 +255,12 @@ void main() {
     final List<Completer<RenderedReport>> gates = <Completer<RenderedReport>>[];
     int calls = 0;
     final JetReportDesignerController controller =
-        JetReportDesignerController(template: _template());
+        JetReportDesignerController(definition: _definition());
     addTearDown(controller.dispose);
     await _pumpWorkspace(
       tester,
       controller: controller,
-      renderReport: (ReportTemplate t) {
+      renderReport: (ReportDefinition t) {
         calls++;
         if (calls == 1) return _render(t); // first render resolves immediately
         final Completer<RenderedReport> gate = Completer<RenderedReport>();
@@ -283,7 +292,7 @@ void main() {
         reason: 'an overlay indicator shows the re-render is running');
 
     // Complete the gated render → the new pages replace the old ones.
-    gates.single.complete(_render(controller.template));
+    gates.single.complete(_render(controller.definition));
     await tester.pumpAndSettle();
     expect(find.byKey(_loadingKey), findsNothing);
     expect(find.text('Edited'), findsOneWidget);
@@ -294,12 +303,12 @@ void main() {
     const Key customKey = ValueKey<String>('custom.loading');
     final Completer<RenderedReport> gate = Completer<RenderedReport>();
     final JetReportDesignerController controller =
-        JetReportDesignerController(template: _template());
+        JetReportDesignerController(definition: _definition());
     addTearDown(controller.dispose);
     await _pumpWorkspace(
       tester,
       controller: controller,
-      renderReport: (ReportTemplate t) => gate.future, // gated open
+      renderReport: (ReportDefinition t) => gate.future, // gated open
       loadingBuilder: (BuildContext context) =>
           const SizedBox(key: customKey, height: 4),
     );
@@ -313,7 +322,7 @@ void main() {
         reason: 'the default ShadProgress bar is not used when overridden');
 
     // Complete the render so nothing is left pending.
-    gate.complete(_render(controller.template));
+    gate.complete(_render(controller.definition));
     await tester.pumpAndSettle();
   });
 }

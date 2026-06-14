@@ -253,6 +253,39 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get propertiesGroupNewPage => 'Start on new page';
 
   @override
+  String get propertiesGroupKey => 'Group key';
+
+  @override
+  String get propertiesGroupKeepTogether => 'Keep together';
+
+  @override
+  String get propertiesGroupReprintHeader => 'Reprint header on each page';
+
+  @override
+  String get propertiesScope => 'Scope';
+
+  @override
+  String get outlineMoveUp => 'Move up';
+
+  @override
+  String get outlineMoveDown => 'Move down';
+
+  @override
+  String get outlineRemove => 'Remove band';
+
+  @override
+  String get outlineRetype => 'Change band type';
+
+  @override
+  String get outlineAddBand => 'Add band';
+
+  @override
+  String get outlineAddHeader => 'Add header';
+
+  @override
+  String get outlineAddFooter => 'Add footer';
+
+  @override
   String get bindingExpressionHint => 'Field or expression';
 
   @override

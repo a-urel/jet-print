@@ -543,14 +543,17 @@ void main() {
     });
 
     test(
-        'the render path is read-only over templates: schemaVersion stays 1 '
+        'the render path is read-only over definitions: schemaVersion stays 2 '
         '(FR-016)', () {
       // No schema change, no migration: the existing format round-trips
       // unchanged. The dedicated round-trip / UnknownElement passthrough
       // tests cover fidelity; this pins the version constant itself.
-      const ReportTemplate template =
-          ReportTemplate(name: 'fr016', page: PageFormat.a4Portrait);
-      expect(JetReportFormat.encode(template)['schemaVersion'], 1);
+      const ReportDefinition definition = ReportDefinition(
+        name: 'fr016',
+        page: PageFormat.a4Portrait,
+        body: ReportBody(root: DetailScope(id: 'root')),
+      );
+      expect(JetReportFormat.encodeDefinition(definition)['schemaVersion'], 2);
     });
 
     test('the layout/ seam exists and stays Flutter-free', () {

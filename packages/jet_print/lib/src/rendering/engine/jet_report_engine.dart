@@ -1,5 +1,5 @@
-/// The public render facade (spec 011): one call from a designed
-/// [ReportTemplate] plus host data to a lazily-paginated, locale-aware
+/// The public render facade (spec 011): one call from a reified
+/// [ReportDefinition] plus host data to a lazily-paginated, locale-aware
 /// [RenderedReport]. A thin orchestrator over the existing `ReportFiller` and
 /// `ReportLayouter` — it owns **no** rendering logic of its own.
 library;
@@ -9,22 +9,20 @@ import 'package:intl/intl.dart';
 import '../../data/jet_data_source.dart';
 import '../../domain/report_definition.dart';
 import '../../domain/report_parameter.dart';
-import '../../domain/report_template.dart';
 import '../fill/report_diagnostics.dart';
 import '../fill/report_filler.dart';
 import '../layout/report_layouter.dart';
-import '../legacy/report_template_adapter.dart';
 import '../text/font_registry.dart';
 import '../text/metrics_text_measurer.dart';
 import 'render_options.dart';
 import 'rendered_report.dart';
 
-/// Fills a designed template with real data and paginates it for preview
-/// (and, in a later slice, export).
+/// Fills a reified report definition with real data and paginates it for
+/// preview (and, in a later slice, export).
 ///
 /// ```dart
-/// final RenderedReport report = const JetReportEngine().render(
-///   template,                      // a designed ReportTemplate
+/// final RenderedReport report = const JetReportEngine().renderDefinition(
+///   definition,                    // a reified ReportDefinition
 ///   JetInMemoryDataSource(rows),   // the host's records
 ///   options: const RenderOptions(
 ///     parameters: {'printedBy': 'A. Urel'},
@@ -33,10 +31,10 @@ import 'rendered_report.dart';
 /// );
 /// ```
 ///
-/// The engine is stateless and `const`; each [render] composes the fill pass
-/// (expression evaluation, master/detail iteration, variables/aggregates)
-/// with the lazy layout pass (pagination, repeated page chrome,
-/// `PAGE_NUMBER`/`PAGE_COUNT`), threading the per-render parameters and
+/// The engine is stateless and `const`; each [renderDefinition] composes the
+/// fill pass (expression evaluation, master/detail iteration,
+/// variables/aggregates) with the lazy layout pass (pagination, repeated page
+/// chrome, `PAGE_NUMBER`/`PAGE_COUNT`), threading the per-render parameters and
 /// locale through both.
 ///
 /// Guarantees:
@@ -44,30 +42,16 @@ import 'rendered_report.dart';
 /// * **Never throws on malformed data** (FR-013/FR-014): unknown fields,
 ///   missing parameters, unresolvable images, and empty datasets best-effort
 ///   render and surface on [RenderedReport.diagnostics].
-/// * **Deterministic** (FR-010): identical (template, data, parameters,
+/// * **Deterministic** (FR-010): identical (definition, data, parameters,
 ///   locale) produce byte-identical pages — no clock, no randomness, no
 ///   ambient-locale reads.
 /// * **Lazy first page** (FR-021): the returned report resolves its exact
 ///   page count up front, but builds each page's frame only when requested.
-/// * **Read-only over templates** (FR-016): rendering never mutates or
-///   re-serializes the template.
+/// * **Read-only over definitions** (FR-016): rendering never mutates or
+///   re-serializes the definition.
 class JetReportEngine {
   /// Creates the stateless render engine.
   const JetReportEngine();
-
-  /// Fills [template] with [source]'s records (and [options]), paginates, and
-  /// returns a lazily-paginated [RenderedReport].
-  ///
-  /// Transitional (spec 024): the legacy [ReportTemplate] is adapted to a
-  /// [ReportDefinition] and rendered through the native [renderDefinition] path,
-  /// byte-identically. Removed once hosts/the designer author definitions
-  /// directly (US2).
-  RenderedReport render(
-    ReportTemplate template,
-    JetDataSource source, {
-    RenderOptions options = const RenderOptions(),
-  }) =>
-      renderDefinition(convertTemplate(template), source, options: options);
 
   /// Fills [definition] with [source]'s records (and [options]), paginates, and
   /// returns a lazily-paginated [RenderedReport] — the native render path over

@@ -22,8 +22,46 @@ Finder _elementFinder(String id) =>
 bool _disabled(WidgetTester tester, Finder f) =>
     tester.widget<ShadIconButton>(f).onPressed == null;
 
-int _count(JetReportDesignerController c) => c.template.bands
-    .fold<int>(0, (int n, ReportBand b) => n + b.elements.length);
+/// Total element count across [c]'s reified tree (furniture, body
+/// title/summary/noData, and the detail tree's group + per-row/nested bands) —
+/// the reified replacement for the old flat `template.bands` fold.
+Iterable<Band> _bands(ReportDefinition def) sync* {
+  final PageFurniture f = def.furniture;
+  for (final Band? b in <Band?>[
+    f.background,
+    f.pageHeader,
+    f.columnHeader,
+    f.columnFooter,
+    f.pageFooter,
+  ]) {
+    if (b != null) yield b;
+  }
+  final ReportBody body = def.body;
+  for (final Band? b in <Band?>[body.title, body.summary, body.noData]) {
+    if (b != null) yield b;
+  }
+  yield* _scopeBands(body.root);
+}
+
+Iterable<Band> _scopeBands(DetailScope scope) sync* {
+  for (final GroupLevel g in scope.groups) {
+    if (g.header != null) yield g.header!;
+  }
+  for (final ScopeNode node in scope.children) {
+    switch (node) {
+      case BandNode(:final Band band):
+        yield band;
+      case NestedScope(:final DetailScope scope):
+        yield* _scopeBands(scope);
+    }
+  }
+  for (final GroupLevel g in scope.groups) {
+    if (g.footer != null) yield g.footer!;
+  }
+}
+
+int _count(JetReportDesignerController c) =>
+    _bands(c.definition).fold<int>(0, (int n, Band b) => n + b.elements.length);
 
 void main() {
   testWidgets('undo/redo buttons reflect availability and drive the controller',

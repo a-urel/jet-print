@@ -3,9 +3,10 @@ library;
 
 import '../../domain/report_element.dart';
 
-/// One clipboard entry: an [element] and the [bandIndex] it came from, so paste
-/// re-inserts it into the same band.
-typedef ClipboardEntry = ({int bandIndex, ReportElement element});
+/// One clipboard entry: an [element] and the stable [bandId] it came from, so
+/// paste re-inserts it into the same band (FR-002 — bands are addressed by id,
+/// not list position).
+typedef ClipboardEntry = ({String bandId, ReportElement element});
 
 /// Holds the last cut/copied elements (FR-015). Immutable elements are stored
 /// directly; paste produces fresh-id, offset copies (the controller assigns

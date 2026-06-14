@@ -6,11 +6,12 @@
 /// (FR-010): no element is ever committed off its band or off the page.
 library;
 
+import '../../domain/band.dart';
 import '../../domain/geometry.dart';
 import '../../domain/page_format.dart';
-import '../../domain/report_band.dart';
+import '../../domain/report_definition.dart';
 import '../../domain/report_element.dart';
-import '../../domain/report_template.dart';
+import 'band_walker.dart';
 
 /// The usable content width of a page, in points (page width minus L/R margins).
 double bandContentWidth(PageFormat page) =>
@@ -28,7 +29,7 @@ double _clampDouble(double value, double min, double max) {
 /// top-left positioned so the element does not overflow either edge. Size is
 /// clamped first, then position, so an oversized element shrinks to fit rather
 /// than being pushed off-screen.
-JetRect clampToBand(JetRect bounds, ReportBand band, PageFormat page) {
+JetRect clampToBand(JetRect bounds, Band band, PageFormat page) {
   final double maxWidth = bandContentWidth(page);
   final double maxHeight = band.height;
   final double width = _clampDouble(bounds.width, 0, maxWidth);
@@ -38,41 +39,31 @@ JetRect clampToBand(JetRect bounds, ReportBand band, PageFormat page) {
   return JetRect(x: x, y: y, width: width, height: height);
 }
 
-/// Returns a copy of [template] with the bounds of the elements named in
+/// Returns a copy of [definition] with the bounds of the elements named in
 /// [newBounds] replaced (via `withBounds`). Bands that contain no changed
-/// element are reused referentially, and so is the whole template when nothing
-/// actually changes — preserving FR-025 non-destructiveness. Bounds in
-/// [newBounds] are assumed already clamped by the caller.
-ReportTemplate replaceElementBounds(
-  ReportTemplate template,
+/// element are reused referentially; an empty [newBounds] returns [definition]
+/// unchanged. Bounds in [newBounds] are assumed already clamped by the caller.
+///
+/// The transform walks the whole reified tree via [mapBands], so an element in
+/// any band — furniture, once-band, group header/footer, or a scope's per-row
+/// band — is found by id without the caller knowing where it lives.
+ReportDefinition replaceElementBoundsInDef(
+  ReportDefinition definition,
   Map<String, JetRect> newBounds,
 ) {
-  if (newBounds.isEmpty) return template;
-  bool anyBandChanged = false;
-  final List<ReportBand> bands = <ReportBand>[
-    for (final ReportBand band in template.bands)
-      _replaceInBand(band, newBounds, () => anyBandChanged = true),
-  ];
-  return anyBandChanged ? template.copyWith(bands: bands) : template;
-}
-
-ReportBand _replaceInBand(
-  ReportBand band,
-  Map<String, JetRect> newBounds,
-  void Function() markChanged,
-) {
-  bool bandChanged = false;
-  final List<ReportElement> elements = <ReportElement>[];
-  for (final ReportElement element in band.elements) {
-    final JetRect? target = newBounds[element.id];
-    if (target != null && target != element.bounds) {
-      elements.add(element.withBounds(target));
-      bandChanged = true;
-    } else {
-      elements.add(element);
+  if (newBounds.isEmpty) return definition;
+  return mapBands(definition, (Band band) {
+    bool bandChanged = false;
+    final List<ReportElement> elements = <ReportElement>[];
+    for (final ReportElement element in band.elements) {
+      final JetRect? target = newBounds[element.id];
+      if (target != null && target != element.bounds) {
+        elements.add(element.withBounds(target));
+        bandChanged = true;
+      } else {
+        elements.add(element);
+      }
     }
-  }
-  if (!bandChanged) return band;
-  markChanged();
-  return band.copyWith(elements: elements);
+    return bandChanged ? band.copyWith(elements: elements) : band;
+  });
 }

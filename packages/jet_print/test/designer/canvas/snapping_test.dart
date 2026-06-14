@@ -10,44 +10,60 @@ import 'package:jet_print/jet_print.dart';
 /// black-box test that imports only the public entry point.
 const double kGridStep = 5 * 72 / 25.4;
 
-ReportTemplate _single() => const ReportTemplate(
+ReportDefinition _single() => const ReportDefinition(
       name: 'F',
       page: PageFormat.a4Portrait,
-      bands: <ReportBand>[
-        ReportBand(
-          type: BandType.detail,
-          height: 300,
-          elements: <ReportElement>[
-            TextElement(
-              id: 't1',
-              bounds: JetRect(x: 50, y: 50, width: 40, height: 20),
-              text: 'a',
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(
+              Band(
+                id: 'detail',
+                type: BandType.detail,
+                height: 300,
+                elements: <ReportElement>[
+                  TextElement(
+                    id: 't1',
+                    bounds: JetRect(x: 50, y: 50, width: 40, height: 20),
+                    text: 'a',
+                  ),
+                ],
+              ),
             ),
           ],
         ),
-      ],
+      ),
     );
 
 // Two elements; 's1' has a non-grid left edge (203) to isolate sibling snap.
-ReportTemplate _pair() => const ReportTemplate(
+ReportDefinition _pair() => const ReportDefinition(
       name: 'F',
       page: PageFormat.a4Portrait,
-      bands: <ReportBand>[
-        ReportBand(
-          type: BandType.detail,
-          height: 300,
-          elements: <ReportElement>[
-            TextElement(
-                id: 't1',
-                bounds: JetRect(x: 50, y: 50, width: 40, height: 20),
-                text: 'a'),
-            TextElement(
-                id: 's1',
-                bounds: JetRect(x: 203, y: 50, width: 40, height: 20),
-                text: 'b'),
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(
+              Band(
+                id: 'detail',
+                type: BandType.detail,
+                height: 300,
+                elements: <ReportElement>[
+                  TextElement(
+                      id: 't1',
+                      bounds: JetRect(x: 50, y: 50, width: 40, height: 20),
+                      text: 'a'),
+                  TextElement(
+                      id: 's1',
+                      bounds: JetRect(x: 203, y: 50, width: 40, height: 20),
+                      text: 'b'),
+                ],
+              ),
+            ),
           ],
         ),
-      ],
+      ),
     );
 
 void main() {
@@ -138,7 +154,13 @@ void main() {
       c.updateMove(const JetOffset(5, 0), threshold: 6);
       expect(c.activeGuides, isNotEmpty);
       c.commitMove();
-      expect(c.template.bands.first.elements.first.bounds.x,
+      expect(
+          (c.definition.body.root.children.first as BandNode)
+              .band
+              .elements
+              .first
+              .bounds
+              .x,
           closeTo(4 * kGridStep, 1e-9));
       c.dispose();
     });

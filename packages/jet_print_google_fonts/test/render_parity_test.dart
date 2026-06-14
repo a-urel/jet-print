@@ -20,28 +20,34 @@ class _DiskBundle extends CachingAssetBundle {
   }
 }
 
-ReportTemplate _template(String family) => ReportTemplate(
+ReportDefinition _template(String family) => ReportDefinition(
       name: 'Parity',
       page: const PageFormat(
           width: 300, height: 120, margins: JetEdgeInsets.all(10)),
-      bands: <ReportBand>[
-        ReportBand(
-          type: BandType.detail,
-          height: 40,
-          elements: <ReportElement>[
-            TextElement(
-              id: 't',
-              bounds: const JetRect(x: 0, y: 0, width: 260, height: 20),
-              text: 'Catalog font sample',
-              style: JetTextStyle(fontFamily: family),
-            ),
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+              id: 'detail',
+              type: BandType.detail,
+              height: 40,
+              elements: <ReportElement>[
+                TextElement(
+                  id: 't',
+                  bounds: const JetRect(x: 0, y: 0, width: 260, height: 20),
+                  text: 'Catalog font sample',
+                  style: JetTextStyle(fontFamily: family),
+                ),
+              ],
+            )),
           ],
         ),
-      ],
+      ),
     );
 
 RenderedReport _render(String family, List<JetFontFamily> fonts) =>
-    const JetReportEngine().render(
+    const JetReportEngine().renderDefinition(
       _template(family),
       JetInMemoryDataSource(const <Map<String, Object?>>[<String, Object?>{}]),
       options: RenderOptions(fonts: fonts),

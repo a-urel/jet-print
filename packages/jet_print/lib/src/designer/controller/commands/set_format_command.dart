@@ -4,8 +4,8 @@
 library;
 
 import '../../../domain/elements/text_element.dart';
-import '../../../domain/report_band.dart';
 import '../../../domain/report_element.dart';
+import '../band_walker.dart';
 import '../designer_document.dart';
 import '../edit_command.dart';
 
@@ -26,33 +26,20 @@ class SetFormatCommand extends EditCommand {
   String get label => format == null ? 'Clear format' : 'Set format';
 
   @override
-  DesignerDocument apply(DesignerDocument before) {
-    bool changed = false;
-    final List<ReportBand> bands = <ReportBand>[
-      for (final ReportBand band in before.template.bands)
-        if (band.elements.any((ReportElement e) =>
-            e.id == id && e is TextElement && e.format != format))
-          () {
-            changed = true;
-            return band.copyWith(elements: <ReportElement>[
-              for (final ReportElement e in band.elements)
-                if (e.id == id && e is TextElement)
-                  TextElement(
-                    id: e.id,
-                    bounds: e.bounds,
-                    text: e.text,
-                    style: e.style,
-                    expression: e.expression,
-                    format: format,
-                  )
-                else
-                  e,
-            ]);
-          }()
-        else
-          band,
-    ];
-    if (!changed) return before;
-    return before.withTemplate(before.template.copyWith(bands: bands));
-  }
+  DesignerDocument apply(DesignerDocument before) => before.withDefinition(
+        updateElement(
+          before.definition,
+          id,
+          (ReportElement e) => e is TextElement
+              ? TextElement(
+                  id: e.id,
+                  bounds: e.bounds,
+                  text: e.text,
+                  style: e.style,
+                  expression: e.expression,
+                  format: format,
+                )
+              : e,
+        ),
+      );
 }

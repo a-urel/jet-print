@@ -1,15 +1,19 @@
-// ReportFiller: the Fill data pass — flat bands (007b) + grouping (007c).
+// ReportFiller: the Fill data pass — flat bands (007b) + grouping (007c),
+// migrated to the reified model + native fillDefinition API (spec 024).
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/in_memory_data_source.dart';
+import 'package:jet_print/src/domain/band.dart';
+import 'package:jet_print/src/domain/detail_scope.dart';
+import 'package:jet_print/src/domain/diagnostic.dart' as domain;
 import 'package:jet_print/src/domain/elements/text_element.dart';
 import 'package:jet_print/src/domain/geometry.dart';
+import 'package:jet_print/src/domain/group_level.dart';
 import 'package:jet_print/src/domain/page_format.dart';
 import 'package:jet_print/src/domain/report_band.dart';
+import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/domain/report_element.dart';
-import 'package:jet_print/src/domain/report_group.dart';
-import 'package:jet_print/src/domain/report_template.dart';
+import 'package:jet_print/src/domain/report_validation.dart';
 import 'package:jet_print/src/domain/report_variable.dart';
-import 'package:jet_print/src/domain/serialization/report_format_exception.dart';
 import 'package:jet_print/src/expression/expression_exception.dart';
 import 'package:jet_print/src/expression/value.dart';
 import 'package:jet_print/src/rendering/fill/filled_report.dart';
@@ -21,47 +25,73 @@ const JetRect r = JetRect(x: 0, y: 0, width: 100, height: 10);
 TextElement t(String id, {String? text, String? expr}) =>
     TextElement(id: id, bounds: r, text: text ?? '', expression: expr);
 
-ReportBand gh(String group, {String? text, String? expr}) => ReportBand(
+// A group-header band for group [group] (the band the GroupLevel owns).
+Band gh(String group, {String? text, String? expr}) => Band(
+      id: 'gh-$group',
       type: BandType.groupHeader,
       height: 10,
-      group: group,
       elements: <ReportElement>[t('h-$group', text: text, expr: expr)],
     );
-ReportBand gf(String group, {String? text, String? expr}) => ReportBand(
+// A group-footer band for group [group].
+Band gf(String group, {String? text, String? expr}) => Band(
+      id: 'gf-$group',
       type: BandType.groupFooter,
       height: 10,
-      group: group,
       elements: <ReportElement>[t('f-$group', text: text, expr: expr)],
     );
 
-ReportTemplate template({
+ReportDefinition template({
   List<ReportElement> title = const <ReportElement>[],
   List<ReportElement> detail = const <ReportElement>[],
   List<ReportElement> summary = const <ReportElement>[],
   List<ReportElement> noData = const <ReportElement>[],
   List<ReportVariable> variables = const <ReportVariable>[],
-  List<ReportGroup> groups = const <ReportGroup>[],
+  List<GroupLevel> groups = const <GroupLevel>[],
 }) =>
-    ReportTemplate(
+    ReportDefinition(
       name: 'demo',
       page: PageFormat.a4Portrait,
       variables: variables,
-      groups: groups,
-      bands: <ReportBand>[
-        if (title.isNotEmpty)
-          ReportBand(type: BandType.title, height: 10, elements: title),
-        if (detail.isNotEmpty)
-          ReportBand(type: BandType.detail, height: 10, elements: detail),
-        if (summary.isNotEmpty)
-          ReportBand(type: BandType.summary, height: 10, elements: summary),
-        if (noData.isNotEmpty)
-          ReportBand(type: BandType.noData, height: 10, elements: noData),
-      ],
+      body: ReportBody(
+        title: title.isEmpty
+            ? null
+            : Band(
+                id: 'body/title',
+                type: BandType.title,
+                height: 10,
+                elements: title),
+        summary: summary.isEmpty
+            ? null
+            : Band(
+                id: 'body/summary',
+                type: BandType.summary,
+                height: 10,
+                elements: summary),
+        noData: noData.isEmpty
+            ? null
+            : Band(
+                id: 'body/noData',
+                type: BandType.noData,
+                height: 10,
+                elements: noData),
+        root: DetailScope(
+          id: 'root',
+          groups: groups,
+          children: <ScopeNode>[
+            if (detail.isNotEmpty)
+              BandNode(Band(
+                  id: 'detail',
+                  type: BandType.detail,
+                  height: 10,
+                  elements: detail)),
+          ],
+        ),
+      ),
     );
 
 void main() {
   test('flat data golden — title once, one detail per row, summary once', () {
-    final FillResult res = ReportFiller().fill(
+    final FillResult res = ReportFiller().fillDefinition(
       template(
         title: <ReportElement>[t('h', text: 'Report')],
         detail: <ReportElement>[t('d', expr: r'$F{name}')],
@@ -87,7 +117,7 @@ void main() {
   });
 
   test('running total in detail, grand total in summary', () {
-    final FillResult res = ReportFiller().fill(
+    final FillResult res = ReportFiller().fillDefinition(
       template(
         detail: <ReportElement>[t('d', expr: r'$V{total}')],
         summary: <ReportElement>[t('s', expr: r'$V{total}')],
@@ -115,7 +145,7 @@ void main() {
   });
 
   test('empty source emits noData, no detail/summary', () {
-    final FillResult res = ReportFiller().fill(
+    final FillResult res = ReportFiller().fillDefinition(
       template(
         detail: <ReportElement>[t('d', expr: r'$F{name}')],
         summary: <ReportElement>[t('s', text: 'End')],
@@ -128,7 +158,7 @@ void main() {
   });
 
   test('summary has no row context — \$F{} blanks, \$V{} resolves', () {
-    final FillResult res = ReportFiller().fill(
+    final FillResult res = ReportFiller().fillDefinition(
       template(
         summary: <ReportElement>[t('s', expr: r'$F{name}')],
       ),
@@ -142,7 +172,7 @@ void main() {
   });
 
   test('undeclared field in a variable warns (schema-drift signal)', () {
-    final FillResult res = ReportFiller().fill(
+    final FillResult res = ReportFiller().fillDefinition(
       template(
         detail: <ReportElement>[t('d', text: '.')],
         variables: const <ReportVariable>[
@@ -164,7 +194,7 @@ void main() {
   });
 
   test('page-scoped reference in a detail element is an error', () {
-    final FillResult res = ReportFiller().fill(
+    final FillResult res = ReportFiller().fillDefinition(
       template(detail: <ReportElement>[
         t('d', text: 'fb', expr: r'$V{PAGE_NUMBER}')
       ]),
@@ -177,7 +207,7 @@ void main() {
   });
 
   test('page-scoped reference in a variable expression is an error', () {
-    final FillResult res = ReportFiller().fill(
+    final FillResult res = ReportFiller().fillDefinition(
       template(
         detail: <ReportElement>[t('d', text: '.')],
         variables: const <ReportVariable>[
@@ -195,11 +225,11 @@ void main() {
   });
 
   test('page-scoped reference in a group expression is an error', () {
-    final FillResult res = ReportFiller().fill(
+    final FillResult res = ReportFiller().fillDefinition(
       template(
         detail: <ReportElement>[t('d', text: '.')],
-        groups: const <ReportGroup>[
-          ReportGroup(name: 'g', expression: r'$V{PAGE_NUMBER}'),
+        groups: const <GroupLevel>[
+          GroupLevel(id: 'g', name: 'g', key: r'$V{PAGE_NUMBER}'),
         ],
       ),
       JetInMemoryDataSource(<Map<String, Object?>>[
@@ -212,7 +242,7 @@ void main() {
   });
 
   test('page-scoped reference in a noData element is an error', () {
-    final FillResult res = ReportFiller().fill(
+    final FillResult res = ReportFiller().fillDefinition(
       template(noData: <ReportElement>[
         t('n', text: 'none', expr: r'$V{PAGE_NUMBER}')
       ]),
@@ -225,7 +255,7 @@ void main() {
 
   test('a malformed variable expression fails fast (throws)', () {
     expect(
-      () => ReportFiller().fill(
+      () => ReportFiller().fillDefinition(
         template(
           detail: <ReportElement>[t('d', text: '.')],
           variables: const <ReportVariable>[
@@ -241,17 +271,17 @@ void main() {
   });
 
   test('determinism — re-filling identical inputs yields an equal report', () {
-    ReportTemplate make() =>
+    ReportDefinition make() =>
         template(detail: <ReportElement>[t('d', expr: r'$F{n}')]);
     JetInMemoryDataSource src() => JetInMemoryDataSource(<Map<String, Object?>>[
           <String, Object?>{'n': 'a'}
         ]);
-    expect(ReportFiller().fill(make(), src()).report,
-        ReportFiller().fill(make(), src()).report);
+    expect(ReportFiller().fillDefinition(make(), src()).report,
+        ReportFiller().fillDefinition(make(), src()).report);
   });
 
   test('title has no row context — \$F{} blanks silently', () {
-    final FillResult res = ReportFiller().fill(
+    final FillResult res = ReportFiller().fillDefinition(
       template(
         title: <ReportElement>[t('h', expr: r'$F{name}')],
         detail: <ReportElement>[t('d', text: '.')],
@@ -266,7 +296,7 @@ void main() {
   });
 
   test('page-scoped reference in a title element is an error', () {
-    final FillResult res = ReportFiller().fill(
+    final FillResult res = ReportFiller().fillDefinition(
       template(
         title: <ReportElement>[t('h', text: 'fb', expr: r'$V{PAGE_NUMBER}')],
         detail: <ReportElement>[t('d', text: '.')],
@@ -281,7 +311,7 @@ void main() {
   });
 
   test('page-scoped reference in a summary element is an error', () {
-    final FillResult res = ReportFiller().fill(
+    final FillResult res = ReportFiller().fillDefinition(
       template(
         summary: <ReportElement>[t('s', text: 'fb', expr: r'$V{PAGE_NUMBER}')],
       ),
@@ -295,12 +325,9 @@ void main() {
 
   test('single group: header/detail/footer sequence with pre-reset subtotal',
       () {
-    final ReportTemplate tpl = ReportTemplate(
+    final ReportDefinition tpl = ReportDefinition(
       name: 'demo',
       page: PageFormat.a4Portrait,
-      groups: const <ReportGroup>[
-        ReportGroup(name: 'region', expression: r'$F{region}'),
-      ],
       variables: const <ReportVariable>[
         ReportVariable(
             name: 'regionTotal',
@@ -309,16 +336,29 @@ void main() {
             resetScope: VariableResetScope.group,
             resetGroup: 'region'),
       ],
-      bands: <ReportBand>[
-        gh('region', expr: r'$F{region}'),
-        ReportBand(
-            type: BandType.detail,
-            height: 10,
-            elements: <ReportElement>[t('d', expr: r'$V{regionTotal}')]),
-        gf('region', expr: r'$V{regionTotal}'),
-      ],
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          groups: <GroupLevel>[
+            GroupLevel(
+              id: 'region',
+              name: 'region',
+              key: r'$F{region}',
+              header: gh('region', expr: r'$F{region}'),
+              footer: gf('region', expr: r'$V{regionTotal}'),
+            ),
+          ],
+          children: <ScopeNode>[
+            BandNode(Band(
+                id: 'detail',
+                type: BandType.detail,
+                height: 10,
+                elements: <ReportElement>[t('d', expr: r'$V{regionTotal}')])),
+          ],
+        ),
+      ),
     );
-    final FillResult res = ReportFiller().fill(
+    final FillResult res = ReportFiller().fillDefinition(
       tpl,
       JetInMemoryDataSource(<Map<String, Object?>>[
         <String, Object?>{'region': 'West', 'amt': 10},
@@ -344,22 +384,32 @@ void main() {
   });
 
   test('header resolves the first row, footer the last row', () {
-    final ReportTemplate tpl = ReportTemplate(
+    final ReportDefinition tpl = ReportDefinition(
       name: 'demo',
       page: PageFormat.a4Portrait,
-      groups: const <ReportGroup>[
-        ReportGroup(name: 'region', expression: r'$F{region}'),
-      ],
-      bands: <ReportBand>[
-        gh('region', expr: r'$F{city}'),
-        ReportBand(
-            type: BandType.detail,
-            height: 10,
-            elements: <ReportElement>[t('d', text: '.')]),
-        gf('region', expr: r'$F{city}'),
-      ],
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          groups: <GroupLevel>[
+            GroupLevel(
+              id: 'region',
+              name: 'region',
+              key: r'$F{region}',
+              header: gh('region', expr: r'$F{city}'),
+              footer: gf('region', expr: r'$F{city}'),
+            ),
+          ],
+          children: <ScopeNode>[
+            BandNode(Band(
+                id: 'detail',
+                type: BandType.detail,
+                height: 10,
+                elements: <ReportElement>[t('d', text: '.')])),
+          ],
+        ),
+      ),
     );
-    final FillResult res = ReportFiller().fill(
+    final FillResult res = ReportFiller().fillDefinition(
       tpl,
       JetInMemoryDataSource(<Map<String, Object?>>[
         <String, Object?>{'region': 'West', 'city': 'A'},
@@ -371,13 +421,9 @@ void main() {
   });
 
   test('nested groups: header outer->inner, footer inner->outer, cascade', () {
-    final ReportTemplate tpl = ReportTemplate(
+    final ReportDefinition tpl = ReportDefinition(
       name: 'demo',
       page: PageFormat.a4Portrait,
-      groups: const <ReportGroup>[
-        ReportGroup(name: 'region', expression: r'$F{region}'),
-        ReportGroup(name: 'city', expression: r'$F{city}'),
-      ],
       variables: const <ReportVariable>[
         ReportVariable(
             name: 'regionTotal',
@@ -392,18 +438,36 @@ void main() {
             resetScope: VariableResetScope.group,
             resetGroup: 'city'),
       ],
-      bands: <ReportBand>[
-        gh('region', expr: r'$F{region}'),
-        gh('city', expr: r'$F{city}'),
-        ReportBand(
-            type: BandType.detail,
-            height: 10,
-            elements: <ReportElement>[t('d', text: '.')]),
-        gf('city', expr: r'$V{cityTotal}'),
-        gf('region', expr: r'$V{regionTotal}'),
-      ],
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          groups: <GroupLevel>[
+            GroupLevel(
+              id: 'region',
+              name: 'region',
+              key: r'$F{region}',
+              header: gh('region', expr: r'$F{region}'),
+              footer: gf('region', expr: r'$V{regionTotal}'),
+            ),
+            GroupLevel(
+              id: 'city',
+              name: 'city',
+              key: r'$F{city}',
+              header: gh('city', expr: r'$F{city}'),
+              footer: gf('city', expr: r'$V{cityTotal}'),
+            ),
+          ],
+          children: <ScopeNode>[
+            BandNode(Band(
+                id: 'detail',
+                type: BandType.detail,
+                height: 10,
+                elements: <ReportElement>[t('d', text: '.')])),
+          ],
+        ),
+      ),
     );
-    final FillResult res = ReportFiller().fill(
+    final FillResult res = ReportFiller().fillDefinition(
       tpl,
       JetInMemoryDataSource(<Map<String, Object?>>[
         <String, Object?>{'region': 'West', 'city': 'A', 'amt': 10},
@@ -439,58 +503,99 @@ void main() {
   });
 
   test('multiple headers/footers for one group emit in authored order', () {
-    final ReportTemplate tpl = ReportTemplate(
+    // In the reified model a GroupLevel owns at most one header and one footer.
+    // The legacy "two group-header bands / two group-footer bands" is faithfully
+    // a header band carrying two elements (H1, H2) and a footer band carrying
+    // two (F1, F2): the same authored-order emission within the group's open/
+    // close, byte-identical to two same-height stacked bands' element stream.
+    final ReportDefinition tpl = ReportDefinition(
       name: 'demo',
       page: PageFormat.a4Portrait,
-      groups: const <ReportGroup>[
-        ReportGroup(name: 'region', expression: r'$F{region}'),
-      ],
-      bands: <ReportBand>[
-        gh('region', text: 'H1'),
-        gh('region', text: 'H2'),
-        ReportBand(
-            type: BandType.detail,
-            height: 10,
-            elements: <ReportElement>[t('d', text: '.')]),
-        gf('region', text: 'F1'),
-        gf('region', text: 'F2'),
-      ],
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          groups: <GroupLevel>[
+            GroupLevel(
+              id: 'region',
+              name: 'region',
+              key: r'$F{region}',
+              header: Band(
+                  id: 'gh-region',
+                  type: BandType.groupHeader,
+                  height: 20,
+                  elements: <ReportElement>[
+                    t('h1-region', text: 'H1'),
+                    t('h2-region', text: 'H2'),
+                  ]),
+              footer: Band(
+                  id: 'gf-region',
+                  type: BandType.groupFooter,
+                  height: 20,
+                  elements: <ReportElement>[
+                    t('f1-region', text: 'F1'),
+                    t('f2-region', text: 'F2'),
+                  ]),
+            ),
+          ],
+          children: <ScopeNode>[
+            BandNode(Band(
+                id: 'detail',
+                type: BandType.detail,
+                height: 10,
+                elements: <ReportElement>[t('d', text: '.')])),
+          ],
+        ),
+      ),
     );
-    final FillResult res = ReportFiller().fill(
+    final FillResult res = ReportFiller().fillDefinition(
       tpl,
       JetInMemoryDataSource(<Map<String, Object?>>[
         <String, Object?>{'region': 'West'},
       ]),
     );
-    String txt(int i) =>
-        (res.report.bands[i].elements.single as TextElement).text;
-    expect(txt(0), 'H1');
-    expect(txt(1), 'H2');
-    expect(txt(3), 'F1');
-    expect(txt(4), 'F2');
+    // header band first, footer band last; their elements in authored order.
+    final List<TextElement> headerEls =
+        res.report.bands.first.elements.cast<TextElement>();
+    final List<TextElement> footerEls =
+        res.report.bands.last.elements.cast<TextElement>();
+    expect(headerEls.map((TextElement e) => e.text).toList(),
+        <String>['H1', 'H2']);
+    expect(footerEls.map((TextElement e) => e.text).toList(),
+        <String>['F1', 'F2']);
   });
 
   test('end-of-data group footers emit before the summary', () {
-    final ReportTemplate tpl = ReportTemplate(
+    final ReportDefinition tpl = ReportDefinition(
       name: 'demo',
       page: PageFormat.a4Portrait,
-      groups: const <ReportGroup>[
-        ReportGroup(name: 'region', expression: r'$F{region}'),
-      ],
-      bands: <ReportBand>[
-        gh('region', text: 'H'),
-        ReportBand(
-            type: BandType.detail,
-            height: 10,
-            elements: <ReportElement>[t('d', text: '.')]),
-        gf('region', text: 'GF'),
-        ReportBand(
+      body: ReportBody(
+        summary: Band(
+            id: 'body/summary',
             type: BandType.summary,
             height: 10,
             elements: <ReportElement>[t('s', text: 'SUM')]),
-      ],
+        root: DetailScope(
+          id: 'root',
+          groups: <GroupLevel>[
+            GroupLevel(
+              id: 'region',
+              name: 'region',
+              key: r'$F{region}',
+              header: gh('region', text: 'H'),
+              footer: gf('region', text: 'GF'),
+            ),
+          ],
+          children: <ScopeNode>[
+            BandNode(Band(
+                id: 'detail',
+                type: BandType.detail,
+                height: 10,
+                elements: <ReportElement>[t('d', text: '.')])),
+          ],
+        ),
+      ),
     );
-    final FillResult res = ReportFiller().fill(
+    final FillResult res = ReportFiller().fillDefinition(
       tpl,
       JetInMemoryDataSource(<Map<String, Object?>>[
         <String, Object?>{'region': 'West'},
@@ -505,21 +610,31 @@ void main() {
   });
 
   test('a page-scoped reference in a group-band element is an error', () {
-    final ReportTemplate tpl = ReportTemplate(
+    final ReportDefinition tpl = ReportDefinition(
       name: 'demo',
       page: PageFormat.a4Portrait,
-      groups: const <ReportGroup>[
-        ReportGroup(name: 'region', expression: r'$F{region}'),
-      ],
-      bands: <ReportBand>[
-        gh('region', text: 'fb', expr: r'$V{PAGE_NUMBER}'),
-        ReportBand(
-            type: BandType.detail,
-            height: 10,
-            elements: <ReportElement>[t('d', text: '.')]),
-      ],
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          groups: <GroupLevel>[
+            GroupLevel(
+              id: 'region',
+              name: 'region',
+              key: r'$F{region}',
+              header: gh('region', text: 'fb', expr: r'$V{PAGE_NUMBER}'),
+            ),
+          ],
+          children: <ScopeNode>[
+            BandNode(Band(
+                id: 'detail',
+                type: BandType.detail,
+                height: 10,
+                elements: <ReportElement>[t('d', text: '.')])),
+          ],
+        ),
+      ),
     );
-    final FillResult res = ReportFiller().fill(
+    final FillResult res = ReportFiller().fillDefinition(
       tpl,
       JetInMemoryDataSource(<Map<String, Object?>>[
         <String, Object?>{'region': 'West'},
@@ -529,42 +644,57 @@ void main() {
     expect((res.report.bands.first.elements.single as TextElement).text, 'fb');
   });
 
-  test('duplicate group names fail fast (fill throws)', () {
-    expect(
-      () => ReportFiller().fill(
-        const ReportTemplate(
-          name: 'demo',
-          page: PageFormat.a4Portrait,
-          groups: <ReportGroup>[
-            ReportGroup(name: 'region', expression: r'$F{a}'),
-            ReportGroup(name: 'region', expression: r'$F{b}'),
+  test('duplicate group names are rejected by author-time validation', () {
+    // The legacy "fill throws ReportFormatException on duplicate group names"
+    // contract moved to author-time validate() in the reified model, which
+    // reports the same invariant violation as an error Diagnostic (so the
+    // designer can hold a transient duplicate mid-rename without exceptions).
+    // Intent preserved: duplicate group names are detected and rejected.
+    final ReportDefinition def = ReportDefinition(
+      name: 'demo',
+      page: PageFormat.a4Portrait,
+      body: const ReportBody(
+        root: DetailScope(
+          id: 'root',
+          groups: <GroupLevel>[
+            GroupLevel(id: 'g1', name: 'region', key: r'$F{a}'),
+            GroupLevel(id: 'g2', name: 'region', key: r'$F{b}'),
           ],
-          bands: <ReportBand>[ReportBand(type: BandType.detail, height: 10)],
         ),
-        JetInMemoryDataSource(<Map<String, Object?>>[
-          <String, Object?>{'a': 1, 'b': 2},
-        ]),
       ),
-      throwsA(isA<ReportFormatException>()),
     );
+    final List<domain.Diagnostic> issues = validate(def);
+    expect(
+        issues.any((domain.Diagnostic d) =>
+            d.severity == domain.DiagnosticSeverity.error &&
+            d.message.contains('duplicate group name "region"')),
+        isTrue);
   });
 
   test('groups declared but no group bands emit no group bands (007b parity)',
       () {
-    final ReportTemplate tpl = ReportTemplate(
+    final ReportDefinition tpl = ReportDefinition(
       name: 'demo',
       page: PageFormat.a4Portrait,
-      groups: const <ReportGroup>[
-        ReportGroup(name: 'region', expression: r'$F{region}'),
-      ],
-      bands: <ReportBand>[
-        ReportBand(
-            type: BandType.detail,
-            height: 10,
-            elements: <ReportElement>[t('d', text: '.')]),
-      ],
+      body: const ReportBody(
+        root: DetailScope(
+          id: 'root',
+          groups: <GroupLevel>[
+            GroupLevel(id: 'region', name: 'region', key: r'$F{region}'),
+          ],
+          children: <ScopeNode>[
+            BandNode(Band(
+                id: 'detail',
+                type: BandType.detail,
+                height: 10,
+                elements: <ReportElement>[
+                  TextElement(id: 'd', bounds: r, text: '.')
+                ])),
+          ],
+        ),
+      ),
     );
-    final FillResult res = ReportFiller().fill(
+    final FillResult res = ReportFiller().fillDefinition(
       tpl,
       JetInMemoryDataSource(<Map<String, Object?>>[
         <String, Object?>{'region': 'West'},
@@ -577,51 +707,72 @@ void main() {
 
   test('determinism — re-filling a grouped template yields an equal report',
       () {
-    ReportTemplate make() => ReportTemplate(
+    ReportDefinition make() => ReportDefinition(
           name: 'demo',
           page: PageFormat.a4Portrait,
-          groups: const <ReportGroup>[
-            ReportGroup(name: 'region', expression: r'$F{region}'),
-          ],
-          bands: <ReportBand>[
-            gh('region', expr: r'$F{region}'),
-            ReportBand(
-                type: BandType.detail,
-                height: 10,
-                elements: <ReportElement>[t('d', text: '.')]),
-            gf('region', text: 'GF'),
-          ],
+          body: ReportBody(
+            root: DetailScope(
+              id: 'root',
+              groups: <GroupLevel>[
+                GroupLevel(
+                  id: 'region',
+                  name: 'region',
+                  key: r'$F{region}',
+                  header: gh('region', expr: r'$F{region}'),
+                  footer: gf('region', text: 'GF'),
+                ),
+              ],
+              children: <ScopeNode>[
+                BandNode(Band(
+                    id: 'detail',
+                    type: BandType.detail,
+                    height: 10,
+                    elements: <ReportElement>[t('d', text: '.')])),
+              ],
+            ),
+          ),
         );
     JetInMemoryDataSource src() => JetInMemoryDataSource(<Map<String, Object?>>[
           <String, Object?>{'region': 'West'},
           <String, Object?>{'region': 'East'},
         ]);
-    expect(ReportFiller().fill(make(), src()).report,
-        ReportFiller().fill(make(), src()).report);
+    expect(ReportFiller().fillDefinition(make(), src()).report,
+        ReportFiller().fillDefinition(make(), src()).report);
   });
 
   test('noData path with groups declared emits only noData (no group bands)',
       () {
-    final ReportTemplate tpl = ReportTemplate(
+    final ReportDefinition tpl = ReportDefinition(
       name: 'demo',
       page: PageFormat.a4Portrait,
-      groups: const <ReportGroup>[
-        ReportGroup(name: 'region', expression: r'$F{region}'),
-      ],
-      bands: <ReportBand>[
-        gh('region', text: 'H'),
-        ReportBand(
-            type: BandType.detail,
-            height: 10,
-            elements: <ReportElement>[t('d', text: '.')]),
-        gf('region', text: 'F'),
-        ReportBand(
+      body: ReportBody(
+        noData: Band(
+            id: 'body/noData',
             type: BandType.noData,
             height: 10,
             elements: <ReportElement>[t('n', text: 'ND')]),
-      ],
+        root: DetailScope(
+          id: 'root',
+          groups: <GroupLevel>[
+            GroupLevel(
+              id: 'region',
+              name: 'region',
+              key: r'$F{region}',
+              header: gh('region', text: 'H'),
+              footer: gf('region', text: 'F'),
+            ),
+          ],
+          children: <ScopeNode>[
+            BandNode(Band(
+                id: 'detail',
+                type: BandType.detail,
+                height: 10,
+                elements: <ReportElement>[t('d', text: '.')])),
+          ],
+        ),
+      ),
     );
-    final FillResult res = ReportFiller().fill(
+    final FillResult res = ReportFiller().fillDefinition(
       tpl,
       JetInMemoryDataSource(const <Map<String, Object?>>[]),
     );
@@ -631,22 +782,32 @@ void main() {
   });
 
   test('filled group bands carry their group name; plain bands carry null', () {
-    final ReportTemplate tpl = ReportTemplate(
+    final ReportDefinition tpl = ReportDefinition(
       name: 'demo',
       page: PageFormat.a4Portrait,
-      groups: const <ReportGroup>[
-        ReportGroup(name: 'region', expression: r'$F{region}'),
-      ],
-      bands: <ReportBand>[
-        gh('region', text: 'H'),
-        ReportBand(
-            type: BandType.detail,
-            height: 10,
-            elements: <ReportElement>[t('d', text: '.')]),
-        gf('region', text: 'F'),
-      ],
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          groups: <GroupLevel>[
+            GroupLevel(
+              id: 'region',
+              name: 'region',
+              key: r'$F{region}',
+              header: gh('region', text: 'H'),
+              footer: gf('region', text: 'F'),
+            ),
+          ],
+          children: <ScopeNode>[
+            BandNode(Band(
+                id: 'detail',
+                type: BandType.detail,
+                height: 10,
+                elements: <ReportElement>[t('d', text: '.')])),
+          ],
+        ),
+      ),
     );
-    final FillResult res = ReportFiller().fill(
+    final FillResult res = ReportFiller().fillDefinition(
       tpl,
       JetInMemoryDataSource(<Map<String, Object?>>[
         <String, Object?>{'region': 'West'},
@@ -663,17 +824,25 @@ void main() {
 
   test('fill normalizes params into FilledReport.params (JetValue; stable)',
       () {
-    final ReportTemplate tpl = ReportTemplate(
+    final ReportDefinition tpl = ReportDefinition(
       name: 'demo',
       page: PageFormat.a4Portrait,
-      bands: <ReportBand>[
-        ReportBand(
-            type: BandType.detail,
-            height: 10,
-            elements: <ReportElement>[t('d', text: '.')]),
-      ],
+      body: const ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+                id: 'detail',
+                type: BandType.detail,
+                height: 10,
+                elements: <ReportElement>[
+                  TextElement(id: 'd', bounds: r, text: '.')
+                ])),
+          ],
+        ),
+      ),
     );
-    FillResult run() => ReportFiller().fill(
+    FillResult run() => ReportFiller().fillDefinition(
           tpl,
           JetInMemoryDataSource(<Map<String, Object?>>[<String, Object?>{}]),
           params: <String, Object?>{
@@ -692,21 +861,31 @@ void main() {
   });
 
   test('a page-scoped reference in a group FOOTER element is an error', () {
-    final ReportTemplate tpl = ReportTemplate(
+    final ReportDefinition tpl = ReportDefinition(
       name: 'demo',
       page: PageFormat.a4Portrait,
-      groups: const <ReportGroup>[
-        ReportGroup(name: 'region', expression: r'$F{region}'),
-      ],
-      bands: <ReportBand>[
-        ReportBand(
-            type: BandType.detail,
-            height: 10,
-            elements: <ReportElement>[t('d', text: '.')]),
-        gf('region', text: 'fb', expr: r'$V{PAGE_NUMBER}'),
-      ],
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          groups: <GroupLevel>[
+            GroupLevel(
+              id: 'region',
+              name: 'region',
+              key: r'$F{region}',
+              footer: gf('region', text: 'fb', expr: r'$V{PAGE_NUMBER}'),
+            ),
+          ],
+          children: <ScopeNode>[
+            BandNode(Band(
+                id: 'detail',
+                type: BandType.detail,
+                height: 10,
+                elements: <ReportElement>[t('d', text: '.')])),
+          ],
+        ),
+      ),
     );
-    final FillResult res = ReportFiller().fill(
+    final FillResult res = ReportFiller().fillDefinition(
       tpl,
       JetInMemoryDataSource(<Map<String, Object?>>[
         <String, Object?>{'region': 'West'},

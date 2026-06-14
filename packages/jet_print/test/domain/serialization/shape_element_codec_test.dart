@@ -8,7 +8,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/domain/elements/shape_element.dart';
 import 'package:jet_print/src/domain/geometry.dart';
-import 'package:jet_print/src/domain/serialization/report_codec.dart';
+import 'package:jet_print/src/domain/serialization/report_definition_codec.dart';
 import 'package:jet_print/src/domain/serialization/shape_element_codec.dart';
 import 'package:jet_print/src/domain/styles/box_style.dart';
 import 'package:jet_print/src/domain/styles/color.dart';
@@ -80,7 +80,7 @@ void main() {
     });
   });
 
-  group('C8.2 — pre-feature reports are unchanged; schema stays 1', () {
+  group('C8.2 — pre-feature reports are unchanged; schema not bumped', () {
     test('a line/rectangle serialize exactly as before (no new keys)', () {
       const ShapeElement line = ShapeElement(
         id: 'l',
@@ -96,7 +96,7 @@ void main() {
     });
 
     test('the report schema version is not bumped by this feature', () {
-      expect(kReportSchemaVersion, 1);
+      expect(kReportDefinitionSchemaVersion, 2);
     });
   });
 

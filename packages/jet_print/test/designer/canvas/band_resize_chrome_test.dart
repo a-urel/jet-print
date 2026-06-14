@@ -19,12 +19,30 @@ final Finder _elementHandles = find.byWidgetPredicate((Widget w) {
       k.value.startsWith('jet_print.designer.handle.');
 });
 
+// The height of the band with [id] in the (reified) default definition. The
+// blank default has furniture `pageHeader`/`pageFooter` and a single `detail`
+// per-row band in the root scope.
+double _bandHeight(JetReportDesignerController c, String id) {
+  switch (id) {
+    case 'pageHeader':
+      return c.definition.furniture.pageHeader!.height;
+    case 'pageFooter':
+      return c.definition.furniture.pageFooter!.height;
+    default:
+      return c.definition.body.root.children
+          .whereType<BandNode>()
+          .firstWhere((BandNode n) => n.band.id == id)
+          .band
+          .height;
+  }
+}
+
 void main() {
   testWidgets('a selected band shows one divider handle and no element handles',
       (WidgetTester tester) async {
     final JetReportDesignerController controller =
         await pumpDesignerWith(tester);
-    controller.selectBand(1);
+    controller.selectBand('detail');
     await tester.pumpAndSettle();
 
     expect(_bandHandle, findsOneWidget);
@@ -49,9 +67,9 @@ void main() {
     final JetReportDesignerController controller =
         await pumpDesignerWith(tester);
     controller.setViewScale(0.3); // whole sheet visible → handle on-screen
-    controller.selectBand(1); // detail (flow band)
+    controller.selectBand('detail'); // detail (flow band)
     await tester.pumpAndSettle();
-    final double before = controller.template.bands[1].height;
+    final double before = _bandHeight(controller, 'detail');
 
     // Several steps so movement clears kPanSlop (~36px) and still leaves
     // post-recognition deltas to grow the band.
@@ -64,7 +82,7 @@ void main() {
     await g.up();
     await tester.pumpAndSettle();
 
-    expect(controller.template.bands[1].height, greaterThan(before),
+    expect(_bandHeight(controller, 'detail'), greaterThan(before),
         reason: 'dragging a flow band divider down increases its height');
   });
 
@@ -73,9 +91,9 @@ void main() {
     final JetReportDesignerController controller =
         await pumpDesignerWith(tester);
     controller.setViewScale(0.3);
-    controller.selectBand(2); // page footer (bottom-anchored)
+    controller.selectBand('pageFooter'); // page footer (bottom-anchored)
     await tester.pumpAndSettle();
-    final double before = controller.template.bands[2].height;
+    final double before = _bandHeight(controller, 'pageFooter');
 
     // The footer grows from its top edge, so dragging the divider UP enlarges it.
     final TestGesture g =
@@ -87,7 +105,7 @@ void main() {
     await g.up();
     await tester.pumpAndSettle();
 
-    expect(controller.template.bands[2].height, greaterThan(before),
+    expect(_bandHeight(controller, 'pageFooter'), greaterThan(before),
         reason:
             'a bottom-anchored band grows when its top divider is dragged up');
   });

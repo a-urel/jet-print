@@ -17,16 +17,17 @@ void main() {
     // on (the default) is what this golden pins.
     final JetReportDesignerController c =
         await pumpDesignerWith(tester, rulers: false);
+    final String bandId = firstDetailBandId(c);
     c.setViewScale(1.0); // 100% zoom — one grid cell == 5 mm on screen
     c.createElement(DesignerToolType.text,
-        bandIndex: 1, at: const JetOffset(24, 24));
+        bandId: bandId, at: const JetOffset(24, 24));
     final String textId = c.selection.singleOrNull!;
     c.createElement(DesignerToolType.shape,
-        bandIndex: 1, at: const JetOffset(24, 70));
+        bandId: bandId, at: const JetOffset(24, 70));
     c.createElement(DesignerToolType.image,
-        bandIndex: 1, at: const JetOffset(220, 24));
+        bandId: bandId, at: const JetOffset(220, 24));
     c.createElement(DesignerToolType.barcode,
-        bandIndex: 1, at: const JetOffset(220, 70));
+        bandId: bandId, at: const JetOffset(220, 70));
     c.select(textId);
     await tester.pumpAndSettle();
 

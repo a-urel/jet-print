@@ -1,7 +1,6 @@
 // Confirms the new architecture end to end (spec 024): the invoice authored in
 // the reified band model ([invoiceSampleDefinition]) renders through the native
-// `renderDefinition` path, byte-identically to the flat-template path — all
-// through `package:jet_print/jet_print.dart` only.
+// `renderDefinition` path — all through `package:jet_print/jet_print.dart` only.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 import 'package:jet_print_playground/invoice_sample.dart';
@@ -38,18 +37,8 @@ void main() {
       report.diagnostics.entries
           .where((Diagnostic d) => d.severity == DiagnosticSeverity.error),
       isEmpty,
-      reason: 'a fully-bound reified definition + matching data renders cleanly',
+      reason:
+          'a fully-bound reified definition + matching data renders cleanly',
     );
-  });
-
-  test('the reified definition renders byte-identically to the flat template',
-      () {
-    final RenderedReport viaDefinition = renderInvoiceDefinition();
-    final RenderedReport viaTemplate = renderInvoice();
-    expect(viaDefinition.pageCount, viaTemplate.pageCount);
-    for (int i = 0; i < viaTemplate.pageCount; i++) {
-      expect(viaDefinition.pageAt(i).frame, equals(viaTemplate.pageAt(i).frame),
-          reason: 'page $i must match the legacy-template render');
-    }
   });
 }

@@ -10,21 +10,28 @@ import 'package:jet_print/jet_print.dart';
 
 /// A one-band report holding a single [ShapeElement] [shape], so a form change
 /// can be driven and asserted against a known element.
-ReportTemplate _report(ShapeElement shape) => ReportTemplate(
+ReportDefinition _report(ShapeElement shape) => ReportDefinition(
       name: 'Shape test',
       page: PageFormat.a4Portrait,
-      bands: <ReportBand>[
-        ReportBand(
-          type: BandType.detail,
-          height: 120,
-          elements: <ReportElement>[shape],
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+              id: 'detail',
+              type: BandType.detail,
+              height: 120,
+              elements: <ReportElement>[shape],
+            )),
+          ],
         ),
-      ],
+      ),
     );
 
 ShapeElement _shape(JetReportDesignerController c, String id) =>
-    c.template.bands
-        .expand((ReportBand b) => b.elements)
+    c.definition.body.root.children
+        .whereType<BandNode>()
+        .expand((BandNode n) => n.band.elements)
         .firstWhere((ReportElement e) => e.id == id) as ShapeElement;
 
 void main() {
@@ -34,7 +41,7 @@ void main() {
   group('setShapeKind — changes the form, preserves the box (C3.1–C3.3)', () {
     test('a pick changes kind while preserving bounds and style', () {
       final JetReportDesignerController c = JetReportDesignerController(
-        template: _report(const ShapeElement(
+        definition: _report(const ShapeElement(
             id: 's', bounds: bounds, kind: ShapeKind.rectangle, style: style)),
       );
       c.setShapeKind('s', ShapeKind.hexagon);
@@ -48,7 +55,7 @@ void main() {
   group('setShapeKind — no-op on the already-active form (C3.4 / FR-005)', () {
     test('picking the current form records no history and notifies no one', () {
       final JetReportDesignerController c = JetReportDesignerController(
-        template: _report(
+        definition: _report(
             const ShapeElement(id: 's', bounds: bounds, kind: ShapeKind.star)),
       );
       int notifications = 0;
@@ -66,7 +73,7 @@ void main() {
   group('setShapeKind — one notifying step (C4.x scaffolding)', () {
     test('a real pick is a single notifying, undoable step', () {
       final JetReportDesignerController c = JetReportDesignerController(
-        template: _report(const ShapeElement(
+        definition: _report(const ShapeElement(
             id: 's', bounds: bounds, kind: ShapeKind.rectangle)),
       );
       int notifications = 0;
@@ -83,7 +90,7 @@ void main() {
   group('setShapeKind — line/flip coherence (C5.2)', () {
     test('switching off a line resets the line-only flipDiagonal', () {
       final JetReportDesignerController c = JetReportDesignerController(
-        template: _report(const ShapeElement(
+        definition: _report(const ShapeElement(
             id: 's', bounds: bounds, kind: ShapeKind.line, flipDiagonal: true)),
       );
       c.setShapeKind('s', ShapeKind.diamond);
@@ -95,7 +102,7 @@ void main() {
 
     test('staying on / returning to a line keeps its diagonal coherent', () {
       final JetReportDesignerController c = JetReportDesignerController(
-        template: _report(const ShapeElement(
+        definition: _report(const ShapeElement(
             id: 's', bounds: bounds, kind: ShapeKind.rectangle)),
       );
       c.setShapeKind('s', ShapeKind.line);
@@ -108,7 +115,7 @@ void main() {
   group('setShapeKind — clears a preserved unknownForm (C8.4 / FR-009)', () {
     test('a deliberate pick clears unknownForm', () {
       final JetReportDesignerController c = JetReportDesignerController(
-        template: _report(const ShapeElement(
+        definition: _report(const ShapeElement(
             id: 's',
             bounds: bounds,
             kind: ShapeKind.rectangle,
@@ -123,7 +130,7 @@ void main() {
     test('picking rectangle on an unknown-form shape clears it (not a no-op)',
         () {
       final JetReportDesignerController c = JetReportDesignerController(
-        template: _report(const ShapeElement(
+        definition: _report(const ShapeElement(
             id: 's',
             bounds: bounds,
             kind: ShapeKind.rectangle,
@@ -148,7 +155,7 @@ void main() {
     test('one undo restores the prior form; one redo reapplies the new form',
         () {
       final JetReportDesignerController c = JetReportDesignerController(
-        template: _report(const ShapeElement(
+        definition: _report(const ShapeElement(
             id: 's', bounds: bounds, kind: ShapeKind.hexagon)),
       );
       c.setShapeKind('s', ShapeKind.star);
@@ -166,7 +173,7 @@ void main() {
   group('setShapeKind — one step per pick, no orphans (C4.3 / SC-005)', () {
     test('rectangle→hexagon→star is exactly two undoable steps', () {
       final JetReportDesignerController c = JetReportDesignerController(
-        template: _report(const ShapeElement(
+        definition: _report(const ShapeElement(
             id: 's', bounds: bounds, kind: ShapeKind.rectangle)),
       );
       c.setShapeKind('s', ShapeKind.hexagon);
@@ -190,7 +197,7 @@ void main() {
 
     test('a no-op pick adds nothing to the undo stack', () {
       final JetReportDesignerController c = JetReportDesignerController(
-        template: _report(const ShapeElement(
+        definition: _report(const ShapeElement(
             id: 's', bounds: bounds, kind: ShapeKind.rectangle)),
       );
       c.setShapeKind('s', ShapeKind.diamond); // one real step

@@ -1,25 +1,35 @@
-/// The current designer selection: a set of elements, a single band, or the
-/// whole report/page.
+/// The current designer selection: a set of elements, a single band, a single
+/// group, a single scope, or the whole report/page.
 library;
 
 /// An immutable selection target.
 ///
 /// A selection is exactly one of: a set of element `id`s (the common case), a
-/// single band (by index), or the report/page itself. The three are mutually
-/// exclusive — the factories guarantee it — so band/report selections always
-/// carry an empty [ids], and element selections carry a null [bandIndex] and a
-/// false [isReport].
+/// single band (by stable [bandId]), a single group (by [groupId]), a single
+/// scope (by [scopeId]), or the report/page itself. They are mutually
+/// exclusive — the factories guarantee it — so a band/group/scope/report
+/// selection always carries an empty [ids], and an element selection carries
+/// null ids for the others and a false [isReport].
+///
+/// Reification (spec 024): a band, group, and scope are now addressed by their
+/// **stable id**, not a flat list index — so a selection stays valid across
+/// add/remove/reorder, and resolves against the current [ReportDefinition] on
+/// demand. It never holds model references, so it survives edit-to-edit
+/// replacement of the immutable model.
 ///
 /// Element order is preserved (insertion order) so multi-element operations that
 /// need a deterministic anchor — align/distribute — behave predictably.
-/// Selection is resolved against the current `ReportTemplate` on demand; it never
-/// holds model references, so it stays valid as the immutable model is replaced
-/// edit-to-edit.
 class Selection {
-  const Selection._(this.ids, {this.bandIndex, this.isReport = false});
+  const Selection._(
+    this.ids, {
+    this.bandId,
+    this.groupId,
+    this.scopeId,
+    this.isReport = false,
+  });
 
   /// Builds an element selection from [ids], de-duplicating while preserving
-  /// order. Targets no band and not the report.
+  /// order. Targets no band/group/scope and not the report.
   factory Selection.of(Iterable<String> ids) {
     final List<String> ordered = <String>[];
     for (final String id in ids) {
@@ -28,9 +38,17 @@ class Selection {
     return Selection._(List<String>.unmodifiable(ordered));
   }
 
-  /// Selects the band at [index] (and nothing else).
-  factory Selection.band(int index) =>
-      Selection._(const <String>[], bandIndex: index);
+  /// Selects the band with stable id [bandId] (and nothing else).
+  factory Selection.band(String bandId) =>
+      Selection._(const <String>[], bandId: bandId);
+
+  /// Selects the group with stable id [groupId] (and nothing else).
+  factory Selection.group(String groupId) =>
+      Selection._(const <String>[], groupId: groupId);
+
+  /// Selects the scope with stable id [scopeId] (and nothing else).
+  factory Selection.scope(String scopeId) =>
+      Selection._(const <String>[], scopeId: scopeId);
 
   /// Selects the report/page itself (and nothing else).
   factory Selection.report() => const Selection._(<String>[], isReport: true);
@@ -39,22 +57,33 @@ class Selection {
   static const Selection empty = Selection._(<String>[]);
 
   /// The selected element ids, in stable selection order (unmodifiable). Empty
-  /// for a band or report selection.
+  /// for a band/group/scope/report selection.
   final List<String> ids;
 
-  /// The selected band index, or null when a band is not the selection target.
-  final int? bandIndex;
+  /// The selected band's stable id, or null when a band is not the target.
+  final String? bandId;
+
+  /// The selected group's stable id, or null when a group is not the target.
+  final String? groupId;
+
+  /// The selected scope's stable id, or null when a scope is not the target.
+  final String? scopeId;
 
   /// Whether the report/page itself is the selection target.
   final bool isReport;
 
-  /// Whether nothing at all is selected (no elements, no band, not the report).
-  bool get isEmpty => ids.isEmpty && bandIndex == null && !isReport;
+  /// Whether nothing at all is selected.
+  bool get isEmpty =>
+      ids.isEmpty &&
+      bandId == null &&
+      groupId == null &&
+      scopeId == null &&
+      !isReport;
 
   /// Whether anything is selected.
   bool get isNotEmpty => !isEmpty;
 
-  /// The number of selected elements (0 for a band/report selection).
+  /// The number of selected elements (0 for a band/group/scope/report target).
   int get length => ids.length;
 
   /// The lone selected element id when exactly one element is selected, else
@@ -65,7 +94,7 @@ class Selection {
   bool contains(String id) => ids.contains(id);
 
   /// Returns an element selection with [id] added (switching away from a
-  /// band/report target; no-op if already present).
+  /// band/group/scope/report target; no-op if already present).
   Selection including(String id) =>
       contains(id) ? this : Selection.of(<String>[...ids, id]);
 
@@ -79,7 +108,9 @@ class Selection {
   @override
   bool operator ==(Object other) {
     if (other is! Selection ||
-        other.bandIndex != bandIndex ||
+        other.bandId != bandId ||
+        other.groupId != groupId ||
+        other.scopeId != scopeId ||
         other.isReport != isReport ||
         other.ids.length != ids.length) {
       return false;
@@ -91,12 +122,15 @@ class Selection {
   }
 
   @override
-  int get hashCode => Object.hash(Object.hashAll(ids), bandIndex, isReport);
+  int get hashCode =>
+      Object.hash(Object.hashAll(ids), bandId, groupId, scopeId, isReport);
 
   @override
   String toString() {
     if (isReport) return 'Selection(report)';
-    if (bandIndex != null) return 'Selection(band $bandIndex)';
+    if (bandId != null) return 'Selection(band $bandId)';
+    if (groupId != null) return 'Selection(group $groupId)';
+    if (scopeId != null) return 'Selection(scope $scopeId)';
     return 'Selection($ids)';
   }
 }

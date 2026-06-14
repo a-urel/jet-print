@@ -214,34 +214,6 @@ class Invoice {
   final List<Map<String, Object?>> lines;
 }
 
-/// Renders [template] (defaults to the bundled invoice sample design) with
-/// [source] (defaults to the in-memory sample data): line items iterate,
-/// master fields fill, and the first page is viewable without materializing
-/// the rest (FR-021).
-RenderedReport renderInvoice({
-  JetDataSource? source,
-  ReportTemplate? template,
-  List<JetFontFamily> fonts = const <JetFontFamily>[],
-}) =>
-    JetReportEngine().render(
-      template ?? invoiceSampleTemplate(),
-      source ?? invoiceDataSource(),
-      // Schema-aware render (013 / FR-007): naming the data source's fields lets
-      // a binding to an unknown field show `#ERROR` instead of resolving empty.
-      // The sample binds only declared fields, so nothing flags — it shows how a
-      // host wires it. A host with a BuildContext can also pass a localized
-      // token via RenderOptions.unresolvedFieldToken.
-      //
-      // 022 / FR-012: the host's [fonts] flow to the engine here, so the
-      // preview/PDF/PNG render in the registered family — the SAME list the
-      // workspace hands the designer picker.
-      options: RenderOptions(
-        locale: const Locale('en'),
-        knownFields: _schemaFieldNames(invoiceSchema.fields),
-        fonts: fonts,
-      ),
-    );
-
 /// Renders the invoice **authored in the reified band model** ([invoiceSampleDefinition])
 /// through the native [JetReportEngine.renderDefinition] path (spec 024). This
 /// is the end-to-end confirmation of the new architecture: a hand-built
@@ -249,11 +221,12 @@ RenderedReport renderInvoice({
 /// first-class `GroupLevel` and a nested `lines` scope) renders the same
 /// one-invoice-per-page output as the flat-template path ([renderInvoice]).
 RenderedReport renderInvoiceDefinition({
+  ReportDefinition? definition,
   JetDataSource? source,
   List<JetFontFamily> fonts = const <JetFontFamily>[],
 }) =>
     JetReportEngine().renderDefinition(
-      invoiceSampleDefinition(),
+      definition ?? invoiceSampleDefinition(),
       source ?? invoiceDataSource(),
       options: RenderOptions(
         locale: const Locale('en'),
@@ -282,7 +255,7 @@ class RenderedInvoiceExample extends StatefulWidget {
   const RenderedInvoiceExample({
     super.key,
     this.onBack,
-    this.template,
+    this.definition,
     this.onRename,
   });
 
@@ -291,7 +264,7 @@ class RenderedInvoiceExample extends StatefulWidget {
 
   /// The design to render against the sample invoice data (null = the
   /// bundled sample design).
-  final ReportTemplate? template;
+  final ReportDefinition? definition;
 
   /// Invoked when the report is renamed from the preview toolbar (017); the
   /// host routes it to the same `controller.rename` the designer uses.
@@ -304,7 +277,8 @@ class RenderedInvoiceExample extends StatefulWidget {
 class _RenderedInvoiceExampleState extends State<RenderedInvoiceExample> {
   /// Rendered ONCE: this single report feeds the preview, the PDF export,
   /// and the print job (FR-001) — no re-render per artifact.
-  late final RenderedReport _report = renderInvoice(template: widget.template);
+  late final RenderedReport _report =
+      renderInvoiceDefinition(definition: widget.definition);
 
   /// Export = save the in-memory PDF bytes wherever the user picks
   /// (host-owned I/O; the library stays headless).

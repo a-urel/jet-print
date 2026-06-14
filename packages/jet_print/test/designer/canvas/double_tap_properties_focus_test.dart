@@ -27,22 +27,29 @@ Offset Function(double, double) _pageMapper(
   return (double px, double py) => pageTopLeft + Offset(px * s, py * s);
 }
 
-// The center of band 1 (detail), in page points: below band 0, centered.
+// The center of the `detail` band, in page points: below the page header,
+// centered horizontally.
 Offset _band1Center(JetReportDesignerController controller) {
-  final PageFormat page = controller.template.page;
+  final PageFormat page = controller.definition.page;
   final JetEdgeInsets margins = page.margins;
-  final double h0 = controller.template.bands[0].height;
-  final double h1 = controller.template.bands[1].height;
+  final double h0 = controller.definition.furniture.pageHeader!.height;
+  final double h1 = controller.definition.body.root.children
+      .whereType<BandNode>()
+      .first
+      .band
+      .height;
   final double cx =
       margins.left + (page.width - margins.left - margins.right) / 2;
   final double cy = margins.top + h0 + h1 / 2;
   return Offset(cx, cy);
 }
 
-String _textOf(JetReportDesignerController c, String id) => (c.template.bands
-        .expand((ReportBand b) => b.elements)
-        .firstWhere((ReportElement e) => e.id == id) as TextElement)
-    .text;
+String _textOf(JetReportDesignerController c, String id) =>
+    (c.definition.body.root.children
+            .whereType<BandNode>()
+            .expand((BandNode n) => n.band.elements)
+            .firstWhere((ReportElement e) => e.id == id) as TextElement)
+        .text;
 
 bool _hasFocus(WidgetTester tester, Finder field) {
   final EditableText editable = tester.widget<EditableText>(
@@ -64,7 +71,7 @@ void main() {
     final JetReportDesignerController controller =
         await pumpDesignerWith(tester);
     controller.createElement(DesignerToolType.text,
-        bandIndex: 1, at: const JetOffset(20, 20));
+        bandId: 'detail', at: const JetOffset(20, 20));
     await tester.pumpAndSettle();
     final String id = controller.selection.singleOrNull!;
     expect(_textOf(controller, id), 'Text'); // default content
@@ -95,7 +102,7 @@ void main() {
     final JetReportDesignerController controller =
         await pumpDesignerWith(tester);
     controller.createElement(DesignerToolType.shape,
-        bandIndex: 1, at: const JetOffset(40, 30));
+        bandId: 'detail', at: const JetOffset(40, 30));
     await tester.pumpAndSettle();
     final String id = controller.selection.singleOrNull!;
 
@@ -109,7 +116,7 @@ void main() {
     final JetReportDesignerController controller =
         await pumpDesignerWith(tester);
     controller.createElement(DesignerToolType.text,
-        bandIndex: 1, at: const JetOffset(20, 20));
+        bandId: 'detail', at: const JetOffset(20, 20));
     await tester.pumpAndSettle();
     final String id = controller.selection.singleOrNull!;
     controller.clearSelection();
@@ -130,7 +137,7 @@ void main() {
     final JetReportDesignerController controller =
         await pumpDesignerWith(tester, size: kNarrowSize);
     controller.createElement(DesignerToolType.text,
-        bandIndex: 1, at: const JetOffset(20, 20));
+        bandId: 'detail', at: const JetOffset(20, 20));
     await tester.pumpAndSettle();
     final String id = controller.selection.singleOrNull!;
     expect(find.byKey(kRightPanelKey), findsNothing); // collapsed to the rail
@@ -146,7 +153,7 @@ void main() {
     final JetReportDesignerController controller =
         await pumpDesignerWith(tester);
     controller.createElement(DesignerToolType.text,
-        bandIndex: 1, at: const JetOffset(20, 20));
+        bandId: 'detail', at: const JetOffset(20, 20));
     await tester.pumpAndSettle();
     final String id = controller.selection.singleOrNull!;
 
@@ -169,7 +176,7 @@ void main() {
 
     await _doubleTapAt(tester, at(center.dx, center.dy));
 
-    expect(controller.selection.bandIndex, 1);
+    expect(controller.selection.bandId, 'detail');
     expect(_hasFocus(tester, _bandHeightField), isTrue);
   });
 
@@ -222,7 +229,7 @@ void main() {
     // Let the manual double-tap window (300 ms) lapse.
     await tester.pumpAndSettle(const Duration(milliseconds: 350));
 
-    expect(controller.selection.bandIndex, 1); // selected…
+    expect(controller.selection.bandId, 'detail'); // selected…
     expect(_bandHeightField, findsNothing); // …but still on Data Source
     expect(controller.pendingPropertiesFocus, isFalse);
   });

@@ -37,27 +37,37 @@ ShapeElement _form(String id, ShapeKind kind, double x) => ShapeElement(
       style: _style,
     );
 
-ReportTemplate _template() => ReportTemplate(
+// The reified equivalent of the legacy single detail-band report, authored
+// directly with the SAME path-based id the template→definition adapter assigns
+// (a master-level detail band → a root BandNode 'root/c0'), so the canvas and
+// the export stay byte-identical (spec 024).
+ReportDefinition _definition() => ReportDefinition(
       name: 'Shape Forms',
       page: _page,
-      bands: <ReportBand>[
-        ReportBand(
-          type: BandType.detail,
-          height: 80,
-          elements: <ReportElement>[
-            _form('ellipse', ShapeKind.ellipse, 0),
-            _form('triangle', ShapeKind.triangle, 72),
-            _form('diamond', ShapeKind.diamond, 144),
-            _form('pentagon', ShapeKind.pentagon, 216),
-            _form('hexagon', ShapeKind.hexagon, 288),
-            _form('star', ShapeKind.star, 360),
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+              id: 'root/c0',
+              type: BandType.detail,
+              height: 80,
+              elements: <ReportElement>[
+                _form('ellipse', ShapeKind.ellipse, 0),
+                _form('triangle', ShapeKind.triangle, 72),
+                _form('diamond', ShapeKind.diamond, 144),
+                _form('pentagon', ShapeKind.pentagon, 216),
+                _form('hexagon', ShapeKind.hexagon, 288),
+                _form('star', ShapeKind.star, 360),
+              ],
+            )),
           ],
         ),
-      ],
+      ),
     );
 
-RenderedReport _rendered() => const JetReportEngine().render(
-      _template(),
+RenderedReport _rendered() => const JetReportEngine().renderDefinition(
+      _definition(),
       JetInMemoryDataSource(const <Map<String, Object?>>[<String, Object?>{}]),
     );
 
@@ -73,7 +83,7 @@ void main() {
       (WidgetTester tester) async {
     await pumpDesignerWith(
       tester,
-      controller: JetReportDesignerController(template: _template()),
+      controller: JetReportDesignerController(definition: _definition()),
       themeMode: ThemeMode.light,
       rulers: false,
       grid: false,
