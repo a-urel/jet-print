@@ -770,6 +770,31 @@ class JetReportDesignerController extends ChangeNotifier {
     ));
   }
 
+  /// Creates a group level on scope [scopeId] together with its header band, and
+  /// selects the header band so its key + flags are edited right there (the
+  /// edit-the-group-from-its-band pattern) — as ONE undoable step. The group
+  /// gets a fresh unique id/name and a constant placeholder key the author then
+  /// replaces. A no-op for an unknown scope.
+  void createGroupWithHeader(String scopeId) {
+    if (findScope(_document.definition, scopeId) == null) return;
+    final String groupId = _ids.next('group');
+    final Band header = Band(
+        id: _ids.next('band'),
+        type: BandType.groupHeader,
+        height: _defaultBandHeight(BandType.groupHeader));
+    final GroupLevel group = GroupLevel(
+      id: groupId,
+      name: groupId, // unique by construction; a display label only
+      key: '0', // a constant placeholder key (parses); the author edits it
+      header: header,
+    );
+    _commit(DefinitionEditCommand(
+      label: 'Add group',
+      transform: (ReportDefinition d) => addGroup(d, scopeId, group),
+      selection: Selection.band(header.id),
+    ));
+  }
+
   /// Removes the group [groupId] (and its header/footer bands) as one undoable
   /// step, clearing the selection.
   void deleteGroup(String groupId) => _commit(DeleteGroupCommand(groupId));
