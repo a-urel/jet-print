@@ -6,42 +6,16 @@
 /// expression-evaluation error, an empty dataset, or an unresolvable image
 /// each yields a specific entry identifying the problem (and the offending
 /// element, where applicable) next to a best-effort render (FR-014/SC-007).
+///
+/// [Diagnostic] and [DiagnosticSeverity] are pure value types and now live in
+/// the domain layer ([Diagnostic] is also produced by author-time
+/// `validate()`); they are re-exported here so existing importers and the
+/// public API are unaffected.
 library;
 
-/// The severity of a [Diagnostic].
-enum DiagnosticSeverity {
-  /// Expected-but-noteworthy conditions (e.g. an empty dataset rendering the
-  /// noData band).
-  info,
+import '../../domain/diagnostic.dart';
 
-  /// Likely authoring or data mistakes that still render with a fallback
-  /// (e.g. an unknown field rendering blank, a URL-only image rendering a
-  /// placeholder).
-  warning,
-
-  /// Evaluation failures rendered as a visible `!ERR` fallback (e.g. a type
-  /// mismatch or divide-by-zero in an expression).
-  error,
-}
-
-/// One collected issue, optionally tagged with the originating [elementId].
-class Diagnostic {
-  /// Creates a diagnostic.
-  const Diagnostic(this.severity, this.message, {this.elementId});
-
-  /// How serious the issue is.
-  final DiagnosticSeverity severity;
-
-  /// A human-readable description.
-  final String message;
-
-  /// The originating element's id, or null.
-  final String? elementId;
-
-  @override
-  String toString() =>
-      '${severity.name.toUpperCase()}: $message${elementId == null ? '' : ' [$elementId]'}';
-}
+export '../../domain/diagnostic.dart' show Diagnostic, DiagnosticSeverity;
 
 /// A growable collection of [Diagnostic]s with severity helpers.
 class ReportDiagnostics {

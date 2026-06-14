@@ -3,11 +3,14 @@ library;
 
 import 'dart:convert';
 
+import '../report_definition.dart';
 import '../report_template.dart';
 import 'built_in_element_codecs.dart';
 import 'element_codec.dart';
 import 'migration.dart';
+import 'migrations/v1_to_v2.dart';
 import 'report_codec.dart';
+import 'report_definition_codec.dart' as defcodec;
 import 'report_format_exception.dart';
 
 /// Encodes and decodes a [ReportTemplate] to/from the library's versioned JSON
@@ -30,6 +33,11 @@ abstract final class JetReportFormat {
   /// Forward migrations from older schema versions. Empty today (the schema is
   /// at version 1); each future schema bump appends one migration here.
   static const List<SchemaMigration> _migrations = <SchemaMigration>[];
+
+  /// Forward migrations for the reified [ReportDefinition] format (spec 024):
+  /// the 1→2 flat-bands → tree migration walks legacy v1 documents forward.
+  static final List<SchemaMigration> _definitionMigrations =
+      <SchemaMigration>[V1ToV2Migration()];
 
   static ElementCodecRegistry _buildRegistry() {
     final ElementCodecRegistry registry = ElementCodecRegistry();
@@ -61,5 +69,37 @@ abstract final class JetReportFormat {
       throw const ReportFormatException('Report JSON must be a JSON object.');
     }
     return decode(decoded.cast<String, Object?>());
+  }
+
+  // --- Reified model (spec 024, schema v2) -------------------------------
+  // The same pre-wired element registry serves both formats. A v1 document
+  // (schemaVersion 1) is walked forward by the 1→2 migration into a
+  // [ReportDefinition]; a v2 document decodes the section tree directly.
+
+  /// Encodes [definition] to a JSON-safe map, stamped `schemaVersion: 2`.
+  static Map<String, Object?> encodeDefinition(ReportDefinition definition) =>
+      defcodec.encodeDefinition(definition, _registry);
+
+  /// Decodes a report [json] map into a [ReportDefinition], migrating a legacy
+  /// v1 (flat-band) document forward when needed. Throws [ReportFormatException]
+  /// on malformed input or a `schemaVersion` newer than this build.
+  static ReportDefinition decodeDefinition(Map<String, Object?> json) =>
+      defcodec.decodeDefinition(json, _registry,
+          migrations: _definitionMigrations);
+
+  /// Encodes [definition] to a UTF-8 JSON string (convenience over
+  /// [encodeDefinition]).
+  static String encodeDefinitionJson(ReportDefinition definition) =>
+      jsonEncode(encodeDefinition(definition));
+
+  /// Decodes a UTF-8 JSON [source] string into a [ReportDefinition]
+  /// (convenience over [decodeDefinition]). Throws [ReportFormatException] when
+  /// the text is not a JSON object.
+  static ReportDefinition decodeDefinitionJson(String source) {
+    final Object? decoded = jsonDecode(source);
+    if (decoded is! Map) {
+      throw const ReportFormatException('Report JSON must be a JSON object.');
+    }
+    return decodeDefinition(decoded.cast<String, Object?>());
   }
 }

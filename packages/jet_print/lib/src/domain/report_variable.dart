@@ -76,6 +76,10 @@ class ReportVariable {
 
   /// The group whose break resets this variable (when [resetScope] is
   /// [VariableResetScope.group]); otherwise `null`.
+  ///
+  /// In the legacy `ReportTemplate` model this is a `ReportGroup` **name**. In
+  /// the reified model (spec 024) it is a `GroupLevel` **id** (FR-003a); the
+  /// 1→2 migration rewrites each name to the matching group id.
   final String? resetGroup;
 
   /// Serializes to a JSON-safe map (defaults omitted).

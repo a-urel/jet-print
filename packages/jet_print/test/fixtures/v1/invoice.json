@@ -1,0 +1,162 @@
+{
+  "schemaVersion": 1,
+  "name": "Invoice",
+  "page": {
+    "width": 595.28,
+    "height": 841.89,
+    "margins": {
+      "l": 28.35,
+      "t": 28.35,
+      "r": 28.35,
+      "b": 28.35
+    }
+  },
+  "bands": [
+    {
+      "type": "pageHeader",
+      "height": 20.0,
+      "elements": [
+        {
+          "type": "text",
+          "id": "runningTitle",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "Invoices"
+        }
+      ]
+    },
+    {
+      "type": "groupHeader",
+      "height": 60.0,
+      "group": "invoice",
+      "elements": [
+        {
+          "type": "text",
+          "id": "heading",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "INVOICE"
+        },
+        {
+          "type": "text",
+          "id": "invoiceNo",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "invoiceNo",
+          "expression": "$F{invoiceNo}"
+        },
+        {
+          "type": "text",
+          "id": "customerName",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "customerName",
+          "expression": "$F{customerName}"
+        }
+      ]
+    },
+    {
+      "type": "detail",
+      "height": 22.0,
+      "collectionField": "lines",
+      "elements": [
+        {
+          "type": "text",
+          "id": "lineDescription",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "description",
+          "expression": "$F{description}"
+        },
+        {
+          "type": "text",
+          "id": "lineTotal",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "lineTotal",
+          "expression": "$F{lineTotal}",
+          "format": "#,##0.00"
+        }
+      ]
+    },
+    {
+      "type": "groupFooter",
+      "height": 32.0,
+      "group": "invoice",
+      "elements": [
+        {
+          "type": "text",
+          "id": "subtotal",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "total",
+          "expression": "$F{total}",
+          "format": "#,##0.00"
+        }
+      ]
+    },
+    {
+      "type": "pageFooter",
+      "height": 20.0,
+      "elements": [
+        {
+          "type": "text",
+          "id": "pageNumber",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "Page",
+          "expression": "\"Page \" + $V{PAGE_NUMBER} + \" of \" + $V{PAGE_COUNT}"
+        }
+      ]
+    }
+  ],
+  "variables": [
+    {
+      "name": "lineSum",
+      "expression": "$F{lineTotal}",
+      "calculation": "sum",
+      "resetScope": "group",
+      "resetGroup": "invoice"
+    }
+  ],
+  "groups": [
+    {
+      "name": "invoice",
+      "expression": "$F{invoiceNo}",
+      "keepTogether": true,
+      "startNewPage": true
+    }
+  ]
+}
