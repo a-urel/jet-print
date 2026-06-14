@@ -125,10 +125,10 @@ gone; retype → moves to the matching slot; each is one undoable step.
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T038 [P] `CHANGELOG.md` — breaking `ReportTemplate`/`ReportBand`/`ReportGroup` removal, the v1→v2 schema migration, and the reification summary (Principle V/VI)
-- [ ] T039 [P] Dartdoc on every new public symbol; `flutter analyze` clean; `dart format` applied across `packages/jet_print` + `apps/jet_print_playground`
-- [ ] T040 [P] `layer_boundaries_test` — `ReportDefinition` and the tree types import no Flutter/rendering (Principle II) in `packages/jet_print/test/layer_boundaries_test.dart`
-- [ ] T041 Final golden review — confirm the full suite is byte-identical end-to-end; any deliberate visual change is called out and goldens updated in review (expected: none)
+- [X] T038 [P] `CHANGELOG.md` — breaking `ReportTemplate`/`ReportBand`/`ReportGroup` removal, the v1→v2 schema migration, and the reification summary (Principle V/VI)
+- [X] T039 [P] Dartdoc on every new public symbol; `flutter analyze` clean; `dart format` applied across `packages/jet_print` + `apps/jet_print_playground`
+- [X] T040 [P] `layer_boundaries_test` — `ReportDefinition` and the tree types import no Flutter/rendering (Principle II) in `packages/jet_print/test/layer_boundaries_test.dart`
+- [X] T041 Final golden review — confirm the full suite is byte-identical end-to-end; any deliberate visual change is called out and goldens updated in review (expected: none)
 - [ ] T042 Manual GUI walkthrough — author the invoice (page chrome + per-invoice group header/footer + nested lines + one-per-page) entirely in the playground designer (SC-004)
 
 ---

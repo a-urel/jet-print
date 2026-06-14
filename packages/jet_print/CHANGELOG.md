@@ -6,16 +6,74 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Changed
+
+- **BREAKING — the report model is reified (spec 024-band-model-reification).**
+  The flat `ReportTemplate` band list — where a band's role was *inferred* from
+  `type` + group-name + `collectionField` + sibling position — is replaced by an
+  explicit, id'd section tree, `ReportDefinition`:
+  - `ReportDefinition { name, page, parameters, variables, furniture:
+    PageFurniture, body: ReportBody }`. `PageFurniture` holds the record-blind
+    page chrome (page/column header & footer, background — the last three
+    reserved, not yet laid out); `ReportBody` holds the once-bands
+    (title/summary/no-data) and the master `DetailScope`.
+  - `DetailScope { id, collectionField?, groups: GroupLevel[], children:
+    ScopeNode[] }` with the sealed `ScopeNode = BandNode(Band) |
+    NestedScope(DetailScope)`. `children` is ordered and heterogeneous, so the
+    authored interleaving of per-row bands and nested scopes (e.g. "meta band →
+    lines scope → total band") is preserved.
+  - Groups are first-class `GroupLevel`s that **own** their key expression,
+    header/footer bands, and pagination flags (keep-together, reprint-header,
+    start-new-page) — one editing home, fixing the "same flag on both the group
+    header and footer band" smell. `ReportGroup.startNewPage` (spec 023) is now
+    `GroupLevel.startNewPage`.
+  - Every `Band` carries a stable `id`; its rendering role is **stated** by its
+    position in the tree, with `BandType` retained for labels, glyphs, identity,
+    and faithful migration (and validated consistent with its slot).
+  - The engine, serialization, and designer consume `ReportDefinition`
+    directly. Rendering is **byte-identical** to the previous engine for every
+    existing report (golden-locked, Constitution IV).
+  - New author-time `validate(ReportDefinition)` returns `Diagnostic`s for the
+    semantic invariants — unique ids/group-names, record-blind furniture
+    rejecting `$F{}` field bindings, parseable group keys — surfaced in the
+    designer (`controller.diagnostics`) before render.
+
+### Removed
+
+- **BREAKING — the legacy flat model is gone.** `ReportTemplate`, the
+  `ReportBand` class (the `BandType` enum stays), and the public `ReportGroup`
+  type are removed, along with `JetReportEngine.render(ReportTemplate)`,
+  `JetReportFormat.encode`/`decode`/`encodeJson`/`decodeJson`, and the v1 codec.
+  Use `JetReportEngine.renderDefinition`, `JetReportFormat.encodeDefinition`/
+  `decodeDefinition`, and `encodeDefinitionJson`/`decodeDefinitionJson`.
+
+### Migration
+
+- **v1 → v2 schema migration (lossless).** A document saved in the v1 (flat)
+  format loads forward automatically: `JetReportFormat.decodeDefinitionJson`
+  migrates a v1 JSON map to a `ReportDefinition` — every v1 construct maps to a
+  v2 home and master-level band/sub-scope order is preserved. The schema version
+  is now `kReportDefinitionSchemaVersion` (`2`).
+
 ### Added
 
-- **Per-group page breaks (`ReportGroup.startNewPage`).** A group can begin each
+- **The designer authors the reified tree natively.** The controller, Outline
+  and Properties panels, and canvas all edit a `ReportDefinition`; bands, groups,
+  and scopes are addressed by stable id (selection survives add/remove/reorder).
+  Groups and detail scopes are first-class, selectable entities with a single
+  inspector each (the Group inspector edits the key + all three pagination flags
+  in one place). Full band/group/scope **lifecycle** — add, remove, reorder, and
+  retype, each one undoable step — is available from the Outline panel
+  (`controller.addBand`/`addDetailBand`/`addGroupBand`/`removeBand`/`moveBand`/
+  `retypeBand`, plus `createGroup`/`deleteGroup`/`createScope`/`deleteScope`);
+  "retype" relocates a band to the matching slot, keeping its id.
+- **Per-group page breaks (`GroupLevel.startNewPage`).** A group can begin each
   instance after its first on a fresh page; the first instance never forces a
   leading blank page. Combined with grouping per record (e.g. one group per
   invoice) this yields one record per page. Additive and optional — serialized
-  only when `true`, so `kReportSchemaVersion` is unchanged and existing reports
-  round-trip byte-identically. Editable in the designer: selecting a group
-  header/footer band reveals a **Group → Start on new page** toggle in the
-  Properties panel (`controller.setGroupStartNewPage`), as one undoable step.
+  only when `true`, so existing reports round-trip byte-identically. Edited via
+  the first-class Group inspector (`controller.setGroupStartNewPage(groupId,
+  value)`), as one undoable step.
 - **Host & system fonts in font pickers (spec 022-host-fonts).** A host can now
   contribute its own fonts, selectable in every designer picker and rendered
   byte-identically across canvas, preview, PDF, and PNG:

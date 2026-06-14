@@ -87,6 +87,41 @@ void main() {
             '${violations.join('\n')}',
       );
     });
+
+    test('the reified tree types (spec 024) stay pure domain (Principle II)',
+        () {
+      // FR-001 / Principle II: ReportDefinition and the band/scope/group tree
+      // are the public report model — they may use package:flutter/foundation
+      // (listEquals) but MUST import no rendering/designer seam and no Flutter
+      // UI library. Asserted explicitly (not just via the recursive domain
+      // scan) so the reification invariant is self-documenting and survives a
+      // file move/rename.
+      const List<String> treeTypes = <String>[
+        'band.dart',
+        'detail_scope.dart',
+        'group_level.dart',
+        'report_definition.dart',
+      ];
+      final List<String> violations = <String>[];
+      for (final String name in treeTypes) {
+        final File file = File('${domainDir.path}/$name');
+        expect(file.existsSync(), isTrue,
+            reason: 'Missing reified tree type ${file.path}');
+        for (final String uri in _directive
+            .allMatches(file.readAsStringSync())
+            .map((Match m) => m.group(1)!)) {
+          if (_reachesOtherSeam(uri) || _isFlutterUi(uri)) {
+            violations.add('$name -> $uri');
+          }
+        }
+      }
+      expect(
+        violations,
+        isEmpty,
+        reason: 'The reified tree types must stay pure domain. Violations:\n'
+            '${violations.join('\n')}',
+      );
+    });
   });
 
   group('layer boundaries — data seam', () {
