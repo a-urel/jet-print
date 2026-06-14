@@ -242,6 +242,26 @@ RenderedReport renderInvoice({
       ),
     );
 
+/// Renders the invoice **authored in the reified band model** ([invoiceSampleDefinition])
+/// through the native [JetReportEngine.renderDefinition] path (spec 024). This
+/// is the end-to-end confirmation of the new architecture: a hand-built
+/// `ReportDefinition` (page furniture + a master `DetailScope` with a
+/// first-class `GroupLevel` and a nested `lines` scope) renders the same
+/// one-invoice-per-page output as the flat-template path ([renderInvoice]).
+RenderedReport renderInvoiceDefinition({
+  JetDataSource? source,
+  List<JetFontFamily> fonts = const <JetFontFamily>[],
+}) =>
+    JetReportEngine().renderDefinition(
+      invoiceSampleDefinition(),
+      source ?? invoiceDataSource(),
+      options: RenderOptions(
+        locale: const Locale('en'),
+        knownFields: _schemaFieldNames(invoiceSchema.fields),
+        fonts: fonts,
+      ),
+    );
+
 /// The flat set of every field name the schema declares, top-level and nested
 /// (so collection-scoped bindings like `$F{lineTotal}` are recognized too).
 Set<String> _schemaFieldNames(List<FieldDef> fields) => <String>{
