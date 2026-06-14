@@ -59,18 +59,22 @@ const JetDataSchema _invoice = JetDataSchema(
 );
 
 void main() {
-  testWidgets('only leaf fields are draggable (collection nodes are not)', (
+  testWidgets(
+      'leaf fields and collection drag handles are draggable; '
+      'collapsed children are not', (
     WidgetTester tester,
   ) async {
     await pumpDesignerWith(tester, dataSchema: _invoice);
 
-    // The two top-level scalar fields are draggable; `lines` (collection) is a
-    // branch and not wrapped in a Draggable. (description is collapsed.)
+    // Two top-level scalar fields (`invoiceNo`, `total`) are draggable as leaf
+    // rows. The `lines` collection branch also gets a drag-handle Draggable
+    // (Task 6 — Surface B); `description` is inside the collapsed branch so it
+    // is not rendered. Total = 3.
     final Finder panelDraggables = find.descendant(
       of: find.byKey(kRightPanelKey),
       matching: find.byWidgetPredicate((Widget w) => w is Draggable),
     );
-    expect(panelDraggables, findsNWidgets(2));
+    expect(panelDraggables, findsNWidgets(3));
     expect(find.text('lines'), findsOneWidget);
   });
 

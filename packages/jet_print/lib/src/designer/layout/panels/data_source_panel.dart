@@ -3,8 +3,12 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../data/data_schema.dart';
 import '../../../data/field_def.dart';
+import '../../../domain/detail_scope.dart';
+import '../../../domain/report_definition.dart';
 import '../../canvas/field_drag_data.dart';
+import '../../controller/jet_report_designer_controller.dart';
 import '../../designer_schema_scope.dart';
+import '../../designer_scope.dart';
 import '../../field_type_glyph.dart';
 import '../../l10n/jet_print_localizations.dart';
 import '../region_chrome.dart';
@@ -55,7 +59,7 @@ Widget _datasetNode(JetDataSchema schema) {
 
 /// One field at [depth]: a collapsible branch for a nested collection (its
 /// children are the collection's own fields), or a leaf row for a scalar.
-Widget _fieldNode(FieldDef field, int depth) {
+Widget _fieldNode(FieldDef field, int depth, {String? parentCollection}) {
   if (field.type == JetFieldType.collection) {
     return TreeBranch(
       icon: fieldTypeGlyph(JetFieldType.collection),
@@ -64,8 +68,12 @@ Widget _fieldNode(FieldDef field, int depth) {
       // Collections start collapsed so deep structures don't flood the panel;
       // the disclosure chevron advertises that children are inside.
       initiallyExpanded: false,
+      actions: <Widget>[
+        _CollectionActions(field: field, parentCollection: parentCollection),
+      ],
       children: <Widget>[
-        for (final FieldDef child in field.fields) _fieldNode(child, depth + 1),
+        for (final FieldDef child in field.fields)
+          _fieldNode(child, depth + 1, parentCollection: field.name),
       ],
     );
   }
@@ -168,4 +176,73 @@ class _FieldDragChip extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The trailing affordances on a Data Source collection field: a drag handle
+/// (drop on the canvas to create a list under the drop band's scope) and a "+"
+/// that creates a list bound to this collection without aiming — under the scope
+/// already bound to its parent collection, or the root for a top-level one.
+class _CollectionActions extends StatelessWidget {
+  const _CollectionActions({required this.field, this.parentCollection});
+
+  final FieldDef field;
+  final String? parentCollection;
+
+  @override
+  Widget build(BuildContext context) {
+    final ShadThemeData theme = ShadTheme.of(context);
+    final ShadColorScheme colors = theme.colorScheme;
+    final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Draggable<FieldDragData>(
+          key: ValueKey<String>(
+              'jet_print.designer.datasource.dragList.${field.name}'),
+          data: FieldDragData(fieldName: field.name, isCollection: true),
+          dragAnchorStrategy: pointerDragAnchorStrategy,
+          feedback: _FieldDragChip(name: field.name, theme: theme),
+          child: Icon(LucideIcons.gripVertical,
+              size: 13, color: colors.mutedForeground),
+        ),
+        const SizedBox(width: 6),
+        Semantics(
+          button: true,
+          label: l10n.dataSourceAddList,
+          child: GestureDetector(
+            key: ValueKey<String>(
+                'jet_print.designer.datasource.addList.${field.name}'),
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              final JetReportDesignerController c =
+                  DesignerScope.of(context, listen: false);
+              c.createListWithBand(
+                _resolveParentScope(c.definition, parentCollection),
+                collectionField: field.name,
+              );
+            },
+            child: Icon(LucideIcons.plus,
+                size: 14, color: colors.mutedForeground),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The scope a new list for a collection should nest under: the scope already
+/// bound to [parentCollection] (its parent in the schema tree), or the root
+/// scope for a top-level collection / when no bound parent scope exists yet.
+String _resolveParentScope(ReportDefinition def, String? parentCollection) {
+  if (parentCollection == null) return def.body.root.id;
+  String? found;
+  void walk(DetailScope s) {
+    found ??= s.collectionField == parentCollection ? s.id : null;
+    for (final ScopeNode n in s.children) {
+      if (n is NestedScope) walk(n.scope);
+    }
+  }
+
+  walk(def.body.root);
+  return found ?? def.body.root.id;
 }

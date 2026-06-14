@@ -217,5 +217,7 @@
   "propertiesOutlineWidth": "Genişlik",
   "propertiesList": "Liste",
   "propertiesListRootSource": "Ana veri kümesi (kök)",
-  "bindingCollectionMissing": "Liste bir koleksiyon alanına bağlı değil"
+  "bindingCollectionMissing": "Liste bir koleksiyon alanına bağlı değil",
+
+  "dataSourceAddList": "Liste olarak ekle"
 }

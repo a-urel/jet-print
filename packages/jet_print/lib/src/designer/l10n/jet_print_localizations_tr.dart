@@ -613,4 +613,7 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   @override
   String get bindingCollectionMissing =>
       'Liste bir koleksiyon alanına bağlı değil';
+
+  @override
+  String get dataSourceAddList => 'Liste olarak ekle';
 }

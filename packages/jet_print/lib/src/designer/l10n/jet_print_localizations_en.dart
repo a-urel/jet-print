@@ -612,4 +612,7 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   @override
   String get bindingCollectionMissing =>
       'List is not bound to a collection field';
+
+  @override
+  String get dataSourceAddList => 'Add as list';
 }

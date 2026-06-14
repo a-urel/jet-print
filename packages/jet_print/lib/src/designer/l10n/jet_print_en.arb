@@ -830,5 +830,10 @@
   "bindingCollectionMissing": "List is not bound to a collection field",
   "@bindingCollectionMissing": {
     "description": "Inline warning when a nested list scope has no collection field bound."
+  },
+
+  "dataSourceAddList": "Add as list",
+  "@dataSourceAddList": {
+    "description": "Data Source collection field action: create a nested list bound to this collection."
   }
 }

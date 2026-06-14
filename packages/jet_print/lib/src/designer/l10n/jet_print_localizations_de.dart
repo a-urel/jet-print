@@ -613,4 +613,7 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   @override
   String get bindingCollectionMissing =>
       'Liste ist an kein Sammlungsfeld gebunden';
+
+  @override
+  String get dataSourceAddList => 'Als Liste hinzufügen';
 }

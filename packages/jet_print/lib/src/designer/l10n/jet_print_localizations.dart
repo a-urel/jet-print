@@ -1288,6 +1288,12 @@ abstract class JetPrintLocalizations {
   /// In en, this message translates to:
   /// **'List is not bound to a collection field'**
   String get bindingCollectionMissing;
+
+  /// Data Source collection field action: create a nested list bound to this collection.
+  ///
+  /// In en, this message translates to:
+  /// **'Add as list'**
+  String get dataSourceAddList;
 }
 
 class _JetPrintLocalizationsDelegate
