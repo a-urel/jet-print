@@ -219,5 +219,8 @@
   "propertiesListRootSource": "Ana veri kümesi (kök)",
   "bindingCollectionMissing": "Liste bir koleksiyon alanına bağlı değil",
 
-  "dataSourceAddList": "Liste olarak ekle"
+  "dataSourceAddList": "Liste olarak ekle",
+
+  "outlineListLabel": "Liste: {field}",
+  "outlineListUnbound": "Liste (bağsız)"
 }

@@ -1294,6 +1294,18 @@ abstract class JetPrintLocalizations {
   /// In en, this message translates to:
   /// **'Add as list'**
   String get dataSourceAddList;
+
+  /// Outline label for a nested list scope bound to a collection field.
+  ///
+  /// In en, this message translates to:
+  /// **'List: {field}'**
+  String outlineListLabel(String field);
+
+  /// Outline label for a nested list scope with no collection field bound yet.
+  ///
+  /// In en, this message translates to:
+  /// **'List (unbound)'**
+  String get outlineListUnbound;
 }
 
 class _JetPrintLocalizationsDelegate

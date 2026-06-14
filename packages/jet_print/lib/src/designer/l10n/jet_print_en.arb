@@ -835,5 +835,15 @@
   "dataSourceAddList": "Add as list",
   "@dataSourceAddList": {
     "description": "Data Source collection field action: create a nested list bound to this collection."
+  },
+
+  "outlineListLabel": "List: {field}",
+  "@outlineListLabel": {
+    "description": "Outline label for a nested list scope bound to a collection field.",
+    "placeholders": { "field": { "type": "String" } }
+  },
+  "outlineListUnbound": "List (unbound)",
+  "@outlineListUnbound": {
+    "description": "Outline label for a nested list scope with no collection field bound yet."
   }
 }

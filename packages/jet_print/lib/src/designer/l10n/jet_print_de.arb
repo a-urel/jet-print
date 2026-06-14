@@ -219,5 +219,8 @@
   "propertiesListRootSource": "Hauptdatensatz (Stamm)",
   "bindingCollectionMissing": "Liste ist an kein Sammlungsfeld gebunden",
 
-  "dataSourceAddList": "Als Liste hinzufügen"
+  "dataSourceAddList": "Als Liste hinzufügen",
+
+  "outlineListLabel": "Liste: {field}",
+  "outlineListUnbound": "Liste (ungebunden)"
 }

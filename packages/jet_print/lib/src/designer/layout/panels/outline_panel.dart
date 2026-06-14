@@ -137,10 +137,12 @@ class _OutlinePanelState extends State<OutlinePanel> {
       rowKey: ValueKey<String>(scopeBase),
       toggleKey: ValueKey<String>('$scopeBase.toggle'),
       depth: depth,
-      icon: LucideIcons.rows3,
+      icon: isRoot ? LucideIcons.rows3 : LucideIcons.list,
       label: isRoot
           ? l10n.propertiesScope
-          : (scope.collectionField ?? l10n.propertiesScope),
+          : (scope.collectionField != null
+              ? l10n.outlineListLabel(scope.collectionField!)
+              : l10n.outlineListUnbound),
       expanded: expanded,
       selected: selection.scopeId == scope.id,
       onToggle: () => _toggle(scope.id),
