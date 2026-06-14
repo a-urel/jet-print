@@ -818,6 +818,30 @@ class JetReportDesignerController extends ChangeNotifier {
     ));
   }
 
+  /// Creates a nested list (scope) iterating [collectionField] under
+  /// [parentScopeId], pre-populated with one empty detail band, and selects that
+  /// band — as ONE undoable step. The data-first entry point used by a Data
+  /// Source collection drop/＋ and the Outline "Add list" action to build a
+  /// master/detail. A no-op for an unknown parent scope.
+  void createListWithBand(String parentScopeId, {String? collectionField}) {
+    if (findScope(_document.definition, parentScopeId) == null) return;
+    final Band band = Band(
+        id: _ids.next('band'),
+        type: BandType.detail,
+        height: _defaultBandHeight(BandType.detail));
+    final DetailScope scope = DetailScope(
+      id: _ids.next('scope'),
+      collectionField: collectionField,
+      children: <ScopeNode>[BandNode(band)],
+    );
+    _commit(DefinitionEditCommand(
+      label: 'Add list',
+      transform: (ReportDefinition d) =>
+          addScopeChild(d, parentScopeId, NestedScope(scope)),
+      selection: Selection.band(band.id),
+    ));
+  }
+
   /// Removes the nested scope [scopeId] (and everything it contains) as one
   /// undoable step, clearing the selection.
   void deleteScope(String scopeId) => _commit(DeleteScopeCommand(scopeId));
