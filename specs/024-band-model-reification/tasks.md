@@ -59,17 +59,17 @@ fixtures render identically to their pre-migration baseline.
 
 ### Tests (write first; must fail)
 
-- [ ] T017 [P] [US1] Engine-parity golden test — each `test/fixtures/v1/*` (migrated) renders **byte-identical** `PageFrame`s vs the recorded baseline, in `packages/jet_print/test/rendering/engine_parity_golden_test.dart` (C6)
-- [ ] T018 [P] [US1] Migration-render-equality test — a migrated v1 report renders identically to a definition authored directly, in `packages/jet_print/test/rendering/migrated_equals_native_test.dart` (C7)
-- [ ] T019 [P] [US1] Semantics tests — multi-level grouping cascade, deep master/detail, `keepTogether`/`reprint`/`startNewPage`, `noData`, furniture page-scoped substitution — against the new engine, in `packages/jet_print/test/rendering/native_engine_semantics_test.dart` (C8)
-- [ ] T019a [P] [US1] Failing test that a definition representing a deferred capability renders today's behavior without error (the extra structure is inert), in `packages/jet_print/test/rendering/deferred_capability_inert_test.dart` (C9)
+- [X] T017 [P] [US1] Engine-parity golden test — each `test/fixtures/v1/*` (migrated) renders **byte-identical** `PageFrame`s vs the recorded baseline, in `packages/jet_print/test/rendering/engine_parity_golden_test.dart` (C6)
+- [X] T018 [P] [US1] Migration-render-equality test — a migrated v1 report renders identically to a definition authored directly, in `packages/jet_print/test/rendering/migrated_equals_native_test.dart` (C7)
+- [X] T019 [P] [US1] Semantics tests — multi-level grouping cascade, deep master/detail, `keepTogether`/`reprint`/`startNewPage`, `noData`, furniture page-scoped substitution — against the new engine, in `packages/jet_print/test/rendering/native_engine_semantics_test.dart` (C8)
+- [X] T019a [P] [US1] Failing test that a definition representing a deferred capability renders today's behavior without error (the extra structure is inert), in `packages/jet_print/test/rendering/deferred_capability_inert_test.dart` (C9)
 
 ### Implementation (to green)
 
-- [ ] T020 [US1] Temporary internal `ReportTemplate → ReportDefinition` converter (lossless for legacy-producible shapes: flat furniture/title/summary/noData bands; template groups + groupHeader/groupFooter bands; master detail bands; `collectionField` detail bands with nested children) in `packages/jet_print/lib/src/rendering/legacy/report_template_adapter.dart`
-- [ ] T021 [US1] Rewrite `ReportFiller` to traverse `ReportBody`/`DetailScope`/`GroupLevel` natively (emit the same `FilledBand` stream) in `packages/jet_print/lib/src/rendering/fill/report_filler.dart`
-- [ ] T022 [US1] Rewrite `ReportLayouter` to read furniture from `PageFurniture` and group-pagination flags from `GroupLevel` in `packages/jet_print/lib/src/rendering/layout/report_layouter.dart`
-- [ ] T023 [US1] `JetReportEngine.render` accepts `ReportDefinition`; the designer/preview path feeds the legacy model through the converter (T020) in `packages/jet_print/lib/src/rendering/engine/jet_report_engine.dart`
+- [X] T020 [US1] Temporary internal `ReportTemplate → ReportDefinition` converter (lossless for legacy-producible shapes: flat furniture/title/summary/noData bands; template groups + groupHeader/groupFooter bands; master detail bands; `collectionField` detail bands with nested children) in `packages/jet_print/lib/src/rendering/legacy/report_template_adapter.dart`
+- [X] T021 [US1] Rewrite `ReportFiller` to traverse `ReportBody`/`DetailScope`/`GroupLevel` natively (emit the same `FilledBand` stream) in `packages/jet_print/lib/src/rendering/fill/report_filler.dart`
+- [X] T022 [US1] Rewrite `ReportLayouter` to read furniture from `PageFurniture` and group-pagination flags from `GroupLevel` in `packages/jet_print/lib/src/rendering/layout/report_layouter.dart`
+- [X] T023 [US1] `JetReportEngine.render` accepts `ReportDefinition`; the designer/preview path feeds the legacy model through the converter (T020) in `packages/jet_print/lib/src/rendering/engine/jet_report_engine.dart`
 
 **Checkpoint**: full golden suite byte-identical; US1 (MVP) deliverable — every existing report renders unchanged.
 
