@@ -602,4 +602,14 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
 
   @override
   String get propertiesOutlineWidth => 'Width';
+
+  @override
+  String get propertiesList => 'List';
+
+  @override
+  String get propertiesListRootSource => 'Main dataset (root)';
+
+  @override
+  String get bindingCollectionMissing =>
+      'List is not bound to a collection field';
 }

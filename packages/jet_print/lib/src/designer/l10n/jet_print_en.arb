@@ -818,5 +818,17 @@
   "propertiesOutlineWidth": "Width",
   "@propertiesOutlineWidth": {
     "description": "Row label for a shape's outline-width field in the Appearance section (021)."
+  },
+  "propertiesList": "List",
+  "@propertiesList": {
+    "description": "Inspector section label for the collection a detail band iterates."
+  },
+  "propertiesListRootSource": "Main dataset (root)",
+  "@propertiesListRootSource": {
+    "description": "Read-only inspector value: the root detail band iterates the records themselves (no collection field)."
+  },
+  "bindingCollectionMissing": "List is not bound to a collection field",
+  "@bindingCollectionMissing": {
+    "description": "Inline warning when a nested list scope has no collection field bound."
   }
 }

@@ -1270,6 +1270,24 @@ abstract class JetPrintLocalizations {
   /// In en, this message translates to:
   /// **'Width'**
   String get propertiesOutlineWidth;
+
+  /// Inspector section label for the collection a detail band iterates.
+  ///
+  /// In en, this message translates to:
+  /// **'List'**
+  String get propertiesList;
+
+  /// Read-only inspector value: the root detail band iterates the records themselves (no collection field).
+  ///
+  /// In en, this message translates to:
+  /// **'Main dataset (root)'**
+  String get propertiesListRootSource;
+
+  /// Inline warning when a nested list scope has no collection field bound.
+  ///
+  /// In en, this message translates to:
+  /// **'List is not bound to a collection field'**
+  String get bindingCollectionMissing;
 }
 
 class _JetPrintLocalizationsDelegate

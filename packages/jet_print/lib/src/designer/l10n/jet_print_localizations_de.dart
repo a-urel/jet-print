@@ -603,4 +603,14 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
 
   @override
   String get propertiesOutlineWidth => 'Breite';
+
+  @override
+  String get propertiesList => 'Liste';
+
+  @override
+  String get propertiesListRootSource => 'Hauptdatensatz (Stamm)';
+
+  @override
+  String get bindingCollectionMissing =>
+      'Liste ist an kein Sammlungsfeld gebunden';
 }

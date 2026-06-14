@@ -603,4 +603,14 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
 
   @override
   String get propertiesOutlineWidth => 'Genişlik';
+
+  @override
+  String get propertiesList => 'Liste';
+
+  @override
+  String get propertiesListRootSource => 'Ana veri kümesi (kök)';
+
+  @override
+  String get bindingCollectionMissing =>
+      'Liste bir koleksiyon alanına bağlı değil';
 }

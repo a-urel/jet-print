@@ -16,6 +16,7 @@ import '../../../domain/elements/text_element.dart';
 import '../../../domain/geometry.dart';
 import '../../../domain/group_level.dart';
 import '../../../domain/page_format.dart';
+import '../../../domain/report_band.dart' show BandType;
 import '../../../domain/report_element.dart';
 import '../../../domain/styles/color.dart';
 import '../../../domain/styles/text_style.dart';
@@ -132,7 +133,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     if (selection.isReport) {
       children = _reportInspector(controller, theme, l10n);
     } else if (selection.bandId case final String bandId) {
-      children = _bandInspector(controller, bandId, theme, l10n);
+      children = _bandInspector(controller, bandId, theme, l10n, schema);
     } else if (selection.groupId case final String groupId
         when findGroup(controller.definition, groupId) != null) {
       children = _groupInspector(controller, groupId, theme, l10n);
@@ -526,6 +527,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     String bandId,
     ShadThemeData theme,
     JetPrintLocalizations l10n,
+    JetDataSchema? schema,
   ) {
     final Band? band = findBand(controller.definition, bandId);
     if (band == null) return const <Widget>[];
@@ -547,6 +549,11 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
         onCommit: (double v) => controller.setBandHeight(bandId, v),
       ),
     ];
+    if (band.type == BandType.detail) {
+      children
+        ..add(const SizedBox(height: 18))
+        ..addAll(_bandListSection(controller, bandId, theme, l10n, schema));
+    }
     // A group's key + pagination flags are edited from the band the author
     // sees: its group HEADER band — or its FOOTER when the group has no header,
     // so the flags are never unreachable (2026-06-14 design note). Exactly one
@@ -656,6 +663,10 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
           onSet: (String v) => controller.setScopeCollection(scopeId, v),
           onClear: () => controller.setScopeCollection(scopeId, null),
         ),
+        if ((scope.collectionField ?? '').isEmpty) ...<Widget>[
+          const SizedBox(height: 6),
+          _InlineWarning(text: l10n.bindingCollectionMissing, theme: theme),
+        ],
       ],
     ];
   }
@@ -679,6 +690,50 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     return <FieldDef>[
       for (final FieldDef f in fieldsInScopeForChain(schema, ancestors))
         if (f.type == JetFieldType.collection) f,
+    ];
+  }
+
+  /// The "List" section on a DETAIL band (Surface A): the collection its
+  /// enclosing scope iterates, editable where the author looks. A root-scope
+  /// detail band shows a read-only "main dataset" label (the root iterates the
+  /// records themselves, no collection field); a nested-list detail band shows
+  /// the same schema-aware binding picker the scope inspector uses, plus an
+  /// inline warning when the list is unbound.
+  List<Widget> _bandListSection(
+    JetReportDesignerController controller,
+    String bandId,
+    ShadThemeData theme,
+    JetPrintLocalizations l10n,
+    JetDataSchema? schema,
+  ) {
+    final DetailScope? scope = findScopeOfBand(controller.definition, bandId);
+    if (scope == null) return const <Widget>[];
+    final bool isRoot = controller.definition.body.root.id == scope.id;
+    if (isRoot) {
+      return <Widget>[
+        SectionLabel(l10n.propertiesList),
+        const SizedBox(height: 8),
+        Text(l10n.propertiesListRootSource, style: theme.textTheme.muted),
+      ];
+    }
+    return <Widget>[
+      SectionLabel(l10n.propertiesList),
+      const SizedBox(height: 8),
+      _BindingField(
+        fieldKey: const ValueKey<String>('$_p.field.bandCollection'),
+        value: scope.collectionField ?? '',
+        placeholder: l10n.bindingCollectionHint,
+        clearTooltip: l10n.bindingClearTooltip,
+        fields: _scopeCollectionChoices(schema, controller, scope.id),
+        pickerTooltip: l10n.bindingFieldPickerTooltip,
+        pickerKeyPrefix: '$_p.field.bandCollection.pick',
+        onSet: (String v) => controller.setScopeCollection(scope.id, v),
+        onClear: () => controller.setScopeCollection(scope.id, null),
+      ),
+      if ((scope.collectionField ?? '').isEmpty) ...<Widget>[
+        const SizedBox(height: 6),
+        _InlineWarning(text: l10n.bindingCollectionMissing, theme: theme),
+      ],
     ];
   }
 
@@ -942,6 +997,31 @@ class _Header extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.small.copyWith(fontWeight: FontWeight.w600),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+/// A compact inline warning row: a small alert glyph plus muted destructive
+/// text, used to flag an unbound list where the author edits it.
+class _InlineWarning extends StatelessWidget {
+  const _InlineWarning({required this.text, required this.theme});
+
+  final String text;
+  final ShadThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final ShadColorScheme colors = theme.colorScheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Icon(LucideIcons.triangleAlert, size: 13, color: colors.destructive),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(text,
+              style: theme.textTheme.muted.copyWith(color: colors.destructive)),
         ),
       ],
     );

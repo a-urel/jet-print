@@ -214,5 +214,8 @@
   "propertiesAppearance": "Darstellung",
   "propertiesFill": "Füllung",
   "propertiesOutline": "Kontur",
-  "propertiesOutlineWidth": "Breite"
+  "propertiesOutlineWidth": "Breite",
+  "propertiesList": "Liste",
+  "propertiesListRootSource": "Hauptdatensatz (Stamm)",
+  "bindingCollectionMissing": "Liste ist an kein Sammlungsfeld gebunden"
 }
