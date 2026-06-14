@@ -385,12 +385,15 @@ class _OutlinePanelState extends State<OutlinePanel> {
   }
 
   /// The singleton slots a band can be retyped into (FR-012 / FR-001a).
+  ///
+  /// The reserved furniture types (columnHeader, columnFooter, background) are
+  /// deliberately omitted: they are modelled and round-trip through
+  /// serialization, but the layouter does not lay them out yet, so offering
+  /// them as authorable targets would mislead. The domain/data layers keep full
+  /// support; only this UI affordance hides them.
   static const List<BandType> _retypeTargets = <BandType>[
     BandType.pageHeader,
     BandType.pageFooter,
-    BandType.columnHeader,
-    BandType.columnFooter,
-    BandType.background,
     BandType.title,
     BandType.summary,
     BandType.noData,

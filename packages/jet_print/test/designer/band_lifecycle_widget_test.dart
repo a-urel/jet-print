@@ -117,4 +117,27 @@ void main() {
     expect(c.definition.body.title?.type, BandType.title);
     expect(_detailIds(c), <String>['d2']);
   });
+
+  testWidgets(
+      'the retype menu hides the reserved (not-laid-out) band types',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c =
+        JetReportDesignerController(definition: _seed());
+    await pumpDesignerWith(tester, controller: c);
+    await _openOutline(tester);
+
+    // Open the retype menu on d1 (all singleton slots but pageHeader are free).
+    await _tapKey(tester, 'jet_print.designer.outline.band.d1.retype');
+
+    Finder option(String type) => find.byKey(
+        ValueKey<String>('jet_print.designer.outline.band.d1.retype.$type'));
+
+    // A real, laid-out target is still offered...
+    expect(option('title'), findsOneWidget,
+        reason: 'sanity: the menu is open and offers laid-out slots');
+    // ...but the reserved types (columnHeader/columnFooter/background) are not.
+    expect(option('columnHeader'), findsNothing);
+    expect(option('columnFooter'), findsNothing);
+    expect(option('background'), findsNothing);
+  });
 }
