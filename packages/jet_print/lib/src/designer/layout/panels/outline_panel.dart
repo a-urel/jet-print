@@ -201,6 +201,16 @@ class _OutlinePanelState extends State<OutlinePanel> {
         label: l10n.outlineAddBand,
         onPick: () => controller.addDetailBand(scope.id),
       ),
+      _MenuOption(
+        optionKey: ValueKey<String>('$scopeBase.add.list'),
+        label: l10n.outlineAddList,
+        onPick: () => controller.createListWithBand(scope.id),
+      ),
+      _MenuOption(
+        optionKey: ValueKey<String>('$scopeBase.add.group'),
+        label: l10n.outlineAddGroup,
+        onPick: () => controller.createGroupWithHeader(scope.id),
+      ),
       for (final GroupLevel g in scope.groups)
         if (g.header == null)
           _MenuOption(

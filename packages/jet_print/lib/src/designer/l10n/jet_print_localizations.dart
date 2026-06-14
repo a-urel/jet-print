@@ -647,6 +647,18 @@ abstract class JetPrintLocalizations {
   /// **'Add band'**
   String get outlineAddBand;
 
+  /// Outline scope '+' menu: add a nested list (a child collection rendered master/detail).
+  ///
+  /// In en, this message translates to:
+  /// **'Add list'**
+  String get outlineAddList;
+
+  /// Outline scope '+' menu: add a group level (split the same records by a key).
+  ///
+  /// In en, this message translates to:
+  /// **'Add group'**
+  String get outlineAddGroup;
+
   /// Outline row action: add a group header band (spec 024).
   ///
   /// In en, this message translates to:

@@ -379,6 +379,14 @@
   "@outlineAddBand": {
     "description": "Outline row action: add a per-row band to a scope (spec 024)."
   },
+  "outlineAddList": "Add list",
+  "@outlineAddList": {
+    "description": "Outline scope '+' menu: add a nested list (a child collection rendered master/detail)."
+  },
+  "outlineAddGroup": "Add group",
+  "@outlineAddGroup": {
+    "description": "Outline scope '+' menu: add a group level (split the same records by a key)."
+  },
   "outlineAddHeader": "Add header",
   "@outlineAddHeader": {
     "description": "Outline row action: add a group header band (spec 024)."

@@ -284,6 +284,12 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get outlineAddBand => 'Bant ekle';
 
   @override
+  String get outlineAddList => 'Liste ekle';
+
+  @override
+  String get outlineAddGroup => 'Grup ekle';
+
+  @override
   String get outlineAddHeader => 'Başlık ekle';
 
   @override

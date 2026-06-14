@@ -284,6 +284,12 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get outlineAddBand => 'Add band';
 
   @override
+  String get outlineAddList => 'Add list';
+
+  @override
+  String get outlineAddGroup => 'Add group';
+
+  @override
   String get outlineAddHeader => 'Add header';
 
   @override

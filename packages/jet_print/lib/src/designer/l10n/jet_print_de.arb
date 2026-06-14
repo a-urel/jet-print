@@ -104,6 +104,8 @@
   "outlineRemove": "Band entfernen",
   "outlineRetype": "Bandtyp ändern",
   "outlineAddBand": "Band hinzufügen",
+  "outlineAddList": "Liste hinzufügen",
+  "outlineAddGroup": "Gruppe hinzufügen",
   "outlineAddHeader": "Kopf hinzufügen",
   "outlineAddFooter": "Fuß hinzufügen",
   "bindingExpressionHint": "Feld oder Ausdruck",

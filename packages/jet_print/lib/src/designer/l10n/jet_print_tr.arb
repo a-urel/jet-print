@@ -104,6 +104,8 @@
   "outlineRemove": "Bandı kaldır",
   "outlineRetype": "Bant türünü değiştir",
   "outlineAddBand": "Bant ekle",
+  "outlineAddList": "Liste ekle",
+  "outlineAddGroup": "Grup ekle",
   "outlineAddHeader": "Başlık ekle",
   "outlineAddFooter": "Alt bilgi ekle",
   "bindingExpressionHint": "Alan veya ifade",
