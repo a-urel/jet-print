@@ -144,6 +144,7 @@ class TreeBranch extends StatefulWidget {
     required this.depth,
     required this.children,
     this.initiallyExpanded = true,
+    this.actions = const <Widget>[],
     super.key,
   });
 
@@ -158,6 +159,11 @@ class TreeBranch extends StatefulWidget {
 
   /// Whether the branch starts open.
   final bool initiallyExpanded;
+
+  /// Trailing affordances shown at the row's right edge (e.g. a collection's
+  /// add-list "+"). They manage their own gestures, so tapping/dragging one does
+  /// not toggle the branch. Empty by default.
+  final List<Widget> actions;
 
   /// The rows revealed while the branch is expanded.
   final List<Widget> children;
@@ -210,6 +216,7 @@ class _TreeBranchState extends State<TreeBranch> {
                     ),
                   ),
                 ),
+                ...widget.actions,
               ],
             ),
           ),
