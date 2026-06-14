@@ -132,7 +132,6 @@ class _OutlinePanelState extends State<OutlinePanel> {
   ) {
     final bool isRoot = controller.definition.body.root.id == scope.id;
     final bool expanded = !_collapsed.contains(scope.id);
-    final ShadColorScheme colors = theme.colorScheme;
     final String scopeBase = 'jet_print.designer.outline.scope.${scope.id}';
     rows.add(_branchRow(
       rowKey: ValueKey<String>(scopeBase),
@@ -147,50 +146,18 @@ class _OutlinePanelState extends State<OutlinePanel> {
       onToggle: () => _toggle(scope.id),
       onSelect: () => controller.selectScope(scope.id),
       theme: theme,
-      actions: <Widget>[
-        _act('$scopeBase.addBand', LucideIcons.plus, l10n.outlineAddBand,
-            () => controller.addDetailBand(scope.id), colors),
-      ],
+      actions: <Widget>[_addMenu(controller, scope, theme, l10n)],
     ));
     if (!expanded) return;
+    // Groups are not shown as separate nodes (Jasper-style): they surface
+    // through their header/footer bands. Document order under the scope is the
+    // group headers (outer→inner), then the ordered children, then the group
+    // footers (inner→outer). A group's settings are edited on its header band;
+    // a missing group band is added from the scope's "+" menu.
     for (final GroupLevel group in scope.groups) {
-      final bool groupExpanded = !_collapsed.contains(group.id);
-      final String groupBase = 'jet_print.designer.outline.group.${group.id}';
-      rows.add(_branchRow(
-        rowKey: ValueKey<String>(groupBase),
-        toggleKey: ValueKey<String>('$groupBase.toggle'),
-        depth: depth + 1,
-        icon: LucideIcons.group,
-        label: group.name,
-        expanded: groupExpanded,
-        selected: selection.groupId == group.id,
-        onToggle: () => _toggle(group.id),
-        onSelect: () => controller.selectGroup(group.id),
-        theme: theme,
-        actions: <Widget>[
-          if (group.header == null)
-            _act(
-                '$groupBase.addHeader',
-                LucideIcons.plus,
-                l10n.outlineAddHeader,
-                () => controller.addGroupBand(group.id, header: true),
-                colors),
-          if (group.footer == null)
-            _act(
-                '$groupBase.addFooter',
-                LucideIcons.plus,
-                l10n.outlineAddFooter,
-                () => controller.addGroupBand(group.id, header: false),
-                colors),
-        ],
-      ));
-      if (groupExpanded) {
-        for (final Band? band in <Band?>[group.header, group.footer]) {
-          if (band != null) {
-            _addBandRows(
-                rows, band, depth + 2, controller, selection, theme, l10n);
-          }
-        }
+      if (group.header != null) {
+        _addBandRows(
+            rows, group.header!, depth + 1, controller, selection, theme, l10n);
       }
     }
     for (final ScopeNode node in scope.children) {
@@ -204,6 +171,58 @@ class _OutlinePanelState extends State<OutlinePanel> {
               rows, inner, depth + 1, controller, selection, theme, l10n);
       }
     }
+    for (final GroupLevel group in scope.groups.reversed) {
+      if (group.footer != null) {
+        _addBandRows(
+            rows, group.footer!, depth + 1, controller, selection, theme, l10n);
+      }
+    }
+  }
+
+  /// The scope "+" affordance: a menu that adds a per-row detail band, or adds a
+  /// missing group header/footer band for one of the scope's groups. Group bands
+  /// are added here because the group node was removed from the tree (2026-06-14
+  /// design note). Always offers at least the detail option.
+  Widget _addMenu(
+    JetReportDesignerController controller,
+    DetailScope scope,
+    ShadThemeData theme,
+    JetPrintLocalizations l10n,
+  ) {
+    final String scopeBase = 'jet_print.designer.outline.scope.${scope.id}';
+    // Disambiguate the group-band options by name only when more than one group
+    // could receive them.
+    final bool many = scope.groups.length > 1;
+    String groupLabel(String base, GroupLevel g) =>
+        many ? '$base · ${g.name}' : base;
+    final List<_MenuOption> options = <_MenuOption>[
+      _MenuOption(
+        optionKey: ValueKey<String>('$scopeBase.add.detail'),
+        label: l10n.outlineAddBand,
+        onPick: () => controller.addDetailBand(scope.id),
+      ),
+      for (final GroupLevel g in scope.groups)
+        if (g.header == null)
+          _MenuOption(
+            optionKey: ValueKey<String>('$scopeBase.add.groupHeader.${g.id}'),
+            label: groupLabel(l10n.outlineAddHeader, g),
+            onPick: () => controller.addGroupBand(g.id, header: true),
+          ),
+      for (final GroupLevel g in scope.groups)
+        if (g.footer == null)
+          _MenuOption(
+            optionKey: ValueKey<String>('$scopeBase.add.groupFooter.${g.id}'),
+            label: groupLabel(l10n.outlineAddFooter, g),
+            onPick: () => controller.addGroupBand(g.id, header: false),
+          ),
+    ];
+    return _TypeMenu(
+      triggerKey: ValueKey<String>('$scopeBase.add'),
+      icon: LucideIcons.plus,
+      tooltip: l10n.outlineAddBand,
+      options: options,
+      colors: theme.colorScheme,
+    );
   }
 
   /// Appends a band branch (selectable → Properties) and, when expanded, a leaf

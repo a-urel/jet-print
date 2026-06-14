@@ -605,6 +605,12 @@ abstract class JetPrintLocalizations {
   /// **'Reprint header on each page'**
   String get propertiesGroupReprintHeader;
 
+  /// Read-only hint shown when the group row is selected, pointing the author to the group header band where the key + pagination flags are edited (2026-06-14 design note).
+  ///
+  /// In en, this message translates to:
+  /// **'Edit page & group settings on the group header band.'**
+  String get propertiesGroupOnHeaderHint;
+
   /// Properties panel header label for a selected detail scope (spec 024).
   ///
   /// In en, this message translates to:

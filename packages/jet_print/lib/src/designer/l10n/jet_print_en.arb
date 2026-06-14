@@ -351,6 +351,10 @@
   "@propertiesGroupReprintHeader": {
     "description": "Properties panel toggle label: reprint a group header atop each continuation page (spec 024)."
   },
+  "propertiesGroupOnHeaderHint": "Edit page & group settings on the group header band.",
+  "@propertiesGroupOnHeaderHint": {
+    "description": "Read-only hint shown when the group row is selected, pointing the author to the group header band where the key + pagination flags are edited (2026-06-14 design note)."
+  },
   "propertiesScope": "Scope",
   "@propertiesScope": {
     "description": "Properties panel header label for a selected detail scope (spec 024)."

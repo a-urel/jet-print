@@ -97,6 +97,7 @@
   "propertiesGroupKey": "Gruppenschlüssel",
   "propertiesGroupKeepTogether": "Zusammenhalten",
   "propertiesGroupReprintHeader": "Kopf auf jeder Seite wiederholen",
+  "propertiesGroupOnHeaderHint": "Seiten- und Gruppeneinstellungen am Gruppenkopf-Band bearbeiten.",
   "propertiesScope": "Bereich",
   "outlineMoveUp": "Nach oben",
   "outlineMoveDown": "Nach unten",

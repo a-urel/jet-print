@@ -97,6 +97,7 @@
   "propertiesGroupKey": "Grup anahtarı",
   "propertiesGroupKeepTogether": "Birlikte tut",
   "propertiesGroupReprintHeader": "Başlığı her sayfada yinele",
+  "propertiesGroupOnHeaderHint": "Sayfa ve grup ayarlarını grup başlığı bandında düzenleyin.",
   "propertiesScope": "Kapsam",
   "outlineMoveUp": "Yukarı taşı",
   "outlineMoveDown": "Aşağı taşı",

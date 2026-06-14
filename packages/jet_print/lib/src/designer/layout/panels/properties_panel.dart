@@ -529,7 +529,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
   ) {
     final Band? band = findBand(controller.definition, bandId);
     if (band == null) return const <Widget>[];
-    return <Widget>[
+    final List<Widget> children = <Widget>[
       _Header(
         icon: LucideIcons.rows3,
         title: bandTypeLabel(band.type, l10n),
@@ -547,9 +547,31 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
         onCommit: (double v) => controller.setBandHeight(bandId, v),
       ),
     ];
+    // A group's key + pagination flags are edited from the band the author
+    // sees: its group HEADER band — or its FOOTER when the group has no header,
+    // so the flags are never unreachable (2026-06-14 design note). Exactly one
+    // band per group carries the section.
+    final GroupLevel? group = findGroupOfBand(controller.definition, bandId);
+    if (group != null && (group.header?.id ?? group.footer?.id) == bandId) {
+      children
+        ..add(const SizedBox(height: 18))
+        ..add(_Header(
+          icon: LucideIcons.group,
+          title: '${l10n.propertiesGroup} · ${group.name}',
+          theme: theme,
+        ))
+        ..add(const SizedBox(height: 14))
+        ..addAll(_groupSection(controller, group.id, theme, l10n));
+    }
+    return children;
   }
 
-  // --- Group (first-class: key + flags in ONE place, spec 024 / C11) ---------
+  // --- Group (first-class entity; its flags are edited from its header band) -
+  //
+  // The group's key + the three pagination flags are edited from the group's
+  // carrier band via [_groupSection] (see [_bandInspector]), not from this
+  // abstract node. Selecting the group row shows a read-only summary that points
+  // the author to the group header band (2026-06-14 design note).
 
   List<Widget> _groupInspector(
     JetReportDesignerController controller,
@@ -561,7 +583,27 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     if (group == null) return const <Widget>[];
     return <Widget>[
       _Header(icon: LucideIcons.group, title: group.name, theme: theme),
-      const SizedBox(height: 14),
+      const SizedBox(height: 12),
+      Text(
+        l10n.propertiesGroupOnHeaderHint,
+        style: theme.textTheme.muted
+            .copyWith(color: theme.colorScheme.mutedForeground),
+      ),
+    ];
+  }
+
+  /// The group's editable key + the three pagination flags, surfaced on the
+  /// group's carrier band by [_bandInspector]. Each flag writes through to the
+  /// one [GroupLevel] — the single source of truth (spec 024 / C11).
+  List<Widget> _groupSection(
+    JetReportDesignerController controller,
+    String groupId,
+    ShadThemeData theme,
+    JetPrintLocalizations l10n,
+  ) {
+    final GroupLevel? group = findGroup(controller.definition, groupId);
+    if (group == null) return const <Widget>[];
+    return <Widget>[
       SectionLabel(l10n.propertiesGroupKey),
       const SizedBox(height: 8),
       _TextInput(
@@ -571,21 +613,9 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
         onCommit: (String v) => controller.setGroupKey(groupId, v),
       ),
       const SizedBox(height: 12),
-      // All three pagination flags live here — the group's single home.
-      ShadSwitch(
-        key: const ValueKey<String>('$_p.field.groupKeepTogether'),
-        value: group.keepTogether,
-        onChanged: (bool v) => controller.setGroupKeepTogether(groupId, v),
-        label: Text(l10n.propertiesGroupKeepTogether),
-      ),
-      const SizedBox(height: 8),
-      ShadSwitch(
-        key: const ValueKey<String>('$_p.field.groupReprintHeader'),
-        value: group.reprintHeaderOnEachPage,
-        onChanged: (bool v) => controller.setGroupReprintHeader(groupId, v),
-        label: Text(l10n.propertiesGroupReprintHeader),
-      ),
-      const SizedBox(height: 8),
+      // keepTogether + reprintHeaderOnEachPage are implemented and golden-tested
+      // but hidden from the UI for now (2026-06-14 design note) — only
+      // start-new-page is surfaced. The controller setters remain available.
       ShadSwitch(
         key: const ValueKey<String>('$_p.field.groupNewPage'),
         value: group.startNewPage,

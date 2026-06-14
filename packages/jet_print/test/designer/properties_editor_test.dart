@@ -422,10 +422,11 @@ void main() {
       expect(_bandById(c, 'detail').height, 260);
     });
 
-    testWidgets('a group exposes a Start-on-new-page toggle',
+    testWidgets('the group header band exposes a Start-on-new-page toggle',
         (WidgetTester tester) async {
-      // The page-break flag is a GROUP property now (spec 024): it lives in the
-      // Group inspector, no longer on the group-header band.
+      // The page-break flag is a GROUP property (spec 024) written through the
+      // one GroupLevel, but it is edited from the band the author sees — the
+      // group's header band (2026-06-14 design note), not an abstract node.
       final JetReportDesignerController c = JetReportDesignerController(
         definition: const ReportDefinition(
           name: 'r',
@@ -451,7 +452,7 @@ void main() {
       );
       await pumpDesignerWith(tester, controller: c);
       await _openProperties(tester);
-      c.selectGroup('g1'); // the group itself
+      c.selectBand('gh'); // the group's header band carries the group section
       await tester.pumpAndSettle();
 
       final Finder toggle = _field('groupNewPage');

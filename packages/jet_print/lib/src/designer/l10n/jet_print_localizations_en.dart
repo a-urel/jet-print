@@ -262,6 +262,10 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get propertiesGroupReprintHeader => 'Reprint header on each page';
 
   @override
+  String get propertiesGroupOnHeaderHint =>
+      'Edit page & group settings on the group header band.';
+
+  @override
   String get propertiesScope => 'Scope';
 
   @override

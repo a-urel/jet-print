@@ -262,6 +262,10 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   String get propertiesGroupReprintHeader => 'Kopf auf jeder Seite wiederholen';
 
   @override
+  String get propertiesGroupOnHeaderHint =>
+      'Seiten- und Gruppeneinstellungen am Gruppenkopf-Band bearbeiten.';
+
+  @override
   String get propertiesScope => 'Bereich';
 
   @override

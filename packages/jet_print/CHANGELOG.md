@@ -60,9 +60,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **The designer authors the reified tree natively.** The controller, Outline
   and Properties panels, and canvas all edit a `ReportDefinition`; bands, groups,
   and scopes are addressed by stable id (selection survives add/remove/reorder).
-  Groups and detail scopes are first-class, selectable entities with a single
-  inspector each (the Group inspector edits the key + all three pagination flags
-  in one place). Full band/group/scope **lifecycle** — add, remove, reorder, and
+  Groups and detail scopes are first-class entities; in the Outline a group
+  surfaces through its header/footer bands (no separate node, Jasper-style), and
+  its key + *start on new page* are edited on its header band, writing through to
+  the one `GroupLevel` (keep-together and reprint-header are implemented but not
+  yet surfaced in the UI). Full band/group/scope **lifecycle** — add, remove, reorder, and
   retype, each one undoable step — is available from the Outline panel
   (`controller.addBand`/`addDetailBand`/`addGroupBand`/`removeBand`/`moveBand`/
   `retypeBand`, plus `createGroup`/`deleteGroup`/`createScope`/`deleteScope`);
@@ -71,9 +73,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   instance after its first on a fresh page; the first instance never forces a
   leading blank page. Combined with grouping per record (e.g. one group per
   invoice) this yields one record per page. Additive and optional — serialized
-  only when `true`, so existing reports round-trip byte-identically. Edited via
-  the first-class Group inspector (`controller.setGroupStartNewPage(groupId,
-  value)`), as one undoable step.
+  only when `true`, so existing reports round-trip byte-identically. Edited by
+  selecting the group's header band, which surfaces the group's key + a
+  *start on new page* toggle in the Properties panel
+  (`controller.setGroupStartNewPage(groupId, value)`), as one undoable step.
 - **Host & system fonts in font pickers (spec 022-host-fonts).** A host can now
   contribute its own fonts, selectable in every designer picker and rendered
   byte-identically across canvas, preview, PDF, and PNG:

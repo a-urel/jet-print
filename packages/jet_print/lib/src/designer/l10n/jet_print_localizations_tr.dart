@@ -262,6 +262,10 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get propertiesGroupReprintHeader => 'Başlığı her sayfada yinele';
 
   @override
+  String get propertiesGroupOnHeaderHint =>
+      'Sayfa ve grup ayarlarını grup başlığı bandında düzenleyin.';
+
+  @override
   String get propertiesScope => 'Kapsam';
 
   @override

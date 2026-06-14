@@ -54,28 +54,79 @@ Future<void> _tapKey(WidgetTester tester, String key) async {
 }
 
 void main() {
-  testWidgets('the scope add-band affordance appends a detail band (T035)',
+  testWidgets('the scope add menu appends a detail band (T035)',
       (WidgetTester tester) async {
     final JetReportDesignerController c =
         JetReportDesignerController(definition: _seed());
     await pumpDesignerWith(tester, controller: c);
     await _openOutline(tester);
 
-    await _tapKey(tester, 'jet_print.designer.outline.scope.root.addBand');
+    // The scope "+" is now a menu: open it, then pick "add detail band".
+    await _tapKey(tester, 'jet_print.designer.outline.scope.root.add');
+    await _tapKey(tester, 'jet_print.designer.outline.scope.root.add.detail');
     expect(_detailIds(c), hasLength(3),
-        reason: 'the scope "+" affordance adds a per-row band');
+        reason: 'the scope "+" menu adds a per-row band');
   });
 
-  testWidgets('the group add-header affordance adds a group header (T035)',
+  testWidgets('the scope add menu adds a group header (T035)',
       (WidgetTester tester) async {
     final JetReportDesignerController c =
         JetReportDesignerController(definition: _seed());
     await pumpDesignerWith(tester, controller: c);
     await _openOutline(tester);
 
-    await _tapKey(tester, 'jet_print.designer.outline.group.g1.addHeader');
+    // Group-band adding moved from the (removed) group node to the scope menu.
+    await _tapKey(tester, 'jet_print.designer.outline.scope.root.add');
+    await _tapKey(
+        tester, 'jet_print.designer.outline.scope.root.add.groupHeader.g1');
     expect(c.definition.body.root.groups.single.header?.type,
         BandType.groupHeader);
+  });
+
+  testWidgets('the outline shows group bands directly, with no group node',
+      (WidgetTester tester) async {
+    // A group with both bands plus a detail band: the group surfaces through its
+    // header/footer bands (Jasper-style), not a separate selectable node.
+    final JetReportDesignerController c = JetReportDesignerController(
+      definition: const ReportDefinition(
+        name: 'r',
+        page: PageFormat.a4Portrait,
+        body: ReportBody(
+          root: DetailScope(
+            id: 'root',
+            groups: <GroupLevel>[
+              GroupLevel(
+                id: 'g1',
+                name: 'category',
+                key: r'$F{category}',
+                header: Band(id: 'gh', type: BandType.groupHeader, height: 24),
+                footer: Band(id: 'gf', type: BandType.groupFooter, height: 24),
+              ),
+            ],
+            children: <ScopeNode>[
+              BandNode(Band(id: 'd1', type: BandType.detail, height: 80)),
+            ],
+          ),
+        ),
+      ),
+    );
+    await pumpDesignerWith(tester, controller: c);
+    await _openOutline(tester);
+
+    expect(
+        find.byKey(
+            const ValueKey<String>('jet_print.designer.outline.group.g1')),
+        findsNothing,
+        reason: 'groups are no longer shown as a separate node');
+    expect(
+        find.byKey(
+            const ValueKey<String>('jet_print.designer.outline.band.gh')),
+        findsOneWidget,
+        reason: 'the group header band sits directly under the scope');
+    expect(
+        find.byKey(
+            const ValueKey<String>('jet_print.designer.outline.band.gf')),
+        findsOneWidget);
   });
 
   testWidgets('the band remove affordance deletes the band (T035)',
@@ -118,8 +169,7 @@ void main() {
     expect(_detailIds(c), <String>['d2']);
   });
 
-  testWidgets(
-      'the retype menu hides the reserved (not-laid-out) band types',
+  testWidgets('the retype menu hides the reserved (not-laid-out) band types',
       (WidgetTester tester) async {
     final JetReportDesignerController c =
         JetReportDesignerController(definition: _seed());
