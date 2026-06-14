@@ -21,6 +21,7 @@ import 'package:flutter/services.dart'
 import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../domain/detail_scope.dart';
 import '../../domain/geometry.dart';
 import '../../domain/report_definition.dart';
 import '../controller/band_walker.dart';
@@ -596,6 +597,17 @@ class _DesignCanvasState extends State<DesignCanvas> {
         JetOffset(local.dx / transform.scale, local.dy / transform.scale);
     final String? bandId = layout.bandIdNear(page);
     if (bandId == null) return;
+    if (data.isCollection) {
+      // A collection nests under the scope that owns the drop band (furniture /
+      // once-bands resolve to the root master scope).
+      final DetailScope? enclosing =
+          findScopeOfBand(controller.definition, bandId);
+      controller.createListWithBand(
+        enclosing?.id ?? controller.definition.body.root.id,
+        collectionField: data.fieldName,
+      );
+      return;
+    }
     controller.createBoundElement(
       bandId: bandId,
       at: layout.toBandLocal(bandId, page),
