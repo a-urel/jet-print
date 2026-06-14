@@ -1,0 +1,10 @@
+{
+  "@@locale": "de",
+
+  "tabInvoice": "Rechnung",
+  "tabLabel": "Etikett",
+  "tabList": "Liste",
+  "tabReceipt": "Beleg",
+  "tabNestedLists": "Verschachtelte Listen",
+  "comingSoon": "Demnächst"
+}

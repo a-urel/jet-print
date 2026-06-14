@@ -73,6 +73,10 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+  # Generate AppLocalizations from lib/l10n/*.arb (see l10n.yaml) — the gen-l10n
+  # pipeline runs on `flutter pub get`, exactly like the jet_print library.
+  generate: true
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

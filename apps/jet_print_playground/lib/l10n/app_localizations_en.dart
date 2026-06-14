@@ -1,0 +1,28 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for English (`en`).
+class AppLocalizationsEn extends AppLocalizations {
+  AppLocalizationsEn([String locale = 'en']) : super(locale);
+
+  @override
+  String get tabInvoice => 'Invoice';
+
+  @override
+  String get tabLabel => 'Label';
+
+  @override
+  String get tabList => 'List';
+
+  @override
+  String get tabReceipt => 'Receipt';
+
+  @override
+  String get tabNestedLists => 'Nested Lists';
+
+  @override
+  String get comingSoon => 'Coming soon';
+}

@@ -1,0 +1,33 @@
+{
+  "@@locale": "en",
+
+  "tabInvoice": "Invoice",
+  "@tabInvoice": {
+    "description": "Tab label for the invoice designer demo (the live report)."
+  },
+
+  "tabLabel": "Label",
+  "@tabLabel": {
+    "description": "Tab label for the label-printing report demo (placeholder)."
+  },
+
+  "tabList": "List",
+  "@tabList": {
+    "description": "Tab label for the list report demo (placeholder)."
+  },
+
+  "tabReceipt": "Receipt",
+  "@tabReceipt": {
+    "description": "Tab label for the receipt report demo (placeholder)."
+  },
+
+  "tabNestedLists": "Nested Lists",
+  "@tabNestedLists": {
+    "description": "Tab label for the nested-lists report demo (placeholder)."
+  },
+
+  "comingSoon": "Coming soon",
+  "@comingSoon": {
+    "description": "Placeholder note shown on a report demo tab that isn't built yet."
+  }
+}

@@ -25,6 +25,34 @@ void main() {
   );
 
   testWidgets(
+    'the shell shows five tabs: the invoice designer plus four placeholders',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(const JetPrintPlaygroundApp());
+
+      // All five tab labels are present in the strip. The app launches in its
+      // first supported locale (English), so the labels resolve through
+      // AppLocalizations to their English values. Scope the match to the tab
+      // strip (ShadTab) so e.g. "Invoice" matches the tab — not the identical
+      // report name the designer's top bar also shows.
+      for (final String label in const <String>[
+        'Invoice',
+        'Label',
+        'List',
+        'Receipt',
+        'Nested Lists',
+      ]) {
+        expect(find.widgetWithText(ShadTab<String>, label), findsOneWidget,
+            reason: '"$label" tab label');
+      }
+      // The Invoice tab is selected on launch, so its designer is on-screen.
+      expect(find.byType(JetReportDesigner), findsOneWidget);
+      // The four placeholder demos are each wired with a localized "Coming soon"
+      // card, built and kept alive Offstage by ShadTabs' default maintainState.
+      expect(find.text('Coming soon', skipOffstage: false), findsNWidgets(4));
+    },
+  );
+
+  testWidgets(
     'the app owns a controller and wires the Save/Open callbacks (FR-022)',
     (WidgetTester tester) async {
       await tester.pumpWidget(const JetPrintPlaygroundApp());

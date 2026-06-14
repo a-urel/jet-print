@@ -1,0 +1,10 @@
+{
+  "@@locale": "tr",
+
+  "tabInvoice": "Fatura",
+  "tabLabel": "Etiket",
+  "tabList": "Liste",
+  "tabReceipt": "Makbuz",
+  "tabNestedLists": "İç İçe Listeler",
+  "comingSoon": "Yakında"
+}

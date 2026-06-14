@@ -1,0 +1,20 @@
+# gen-l10n configuration for the playground app.
+#
+# Localizes the demo tab labels and the "coming soon" placeholder text across
+# en/de/tr — mirroring the jet_print library's own gen-l10n setup. Modern
+# gen-l10n always writes the output as real source, so the generated
+# AppLocalizations lands next to the ARB files (and is committed, like the
+# library's JetPrintLocalizations).
+arb-dir: lib/l10n
+output-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+# English must be the FIRST supported locale so an unsupported active locale (or
+# a missing key) resolves to English rather than to whichever locale sorts first
+# alphabetically.
+preferred-supported-locales:
+  - en
+# Non-nullable `of(context)` getter — the app always wires the delegate and reads
+# strings unconditionally, so a nullable getter would be noise.
+nullable-getter: false
