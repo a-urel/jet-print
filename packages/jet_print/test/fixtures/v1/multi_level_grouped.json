@@ -1,0 +1,172 @@
+{
+  "schemaVersion": 1,
+  "name": "Multi-level grouped",
+  "page": {
+    "width": 595.28,
+    "height": 841.89,
+    "margins": {
+      "l": 28.35,
+      "t": 28.35,
+      "r": 28.35,
+      "b": 28.35
+    }
+  },
+  "bands": [
+    {
+      "type": "title",
+      "height": 24.0,
+      "elements": [
+        {
+          "type": "text",
+          "id": "t",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "Sales by region"
+        }
+      ]
+    },
+    {
+      "type": "groupHeader",
+      "height": 20.0,
+      "group": "region",
+      "elements": [
+        {
+          "type": "text",
+          "id": "rh",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "region",
+          "expression": "$F{region}"
+        }
+      ]
+    },
+    {
+      "type": "groupHeader",
+      "height": 18.0,
+      "group": "category",
+      "elements": [
+        {
+          "type": "text",
+          "id": "ch",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "category",
+          "expression": "$F{category}"
+        }
+      ]
+    },
+    {
+      "type": "detail",
+      "height": 18.0,
+      "elements": [
+        {
+          "type": "text",
+          "id": "amt",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "amount",
+          "expression": "$F{amount}",
+          "format": "#,##0.00"
+        }
+      ]
+    },
+    {
+      "type": "groupFooter",
+      "height": 18.0,
+      "group": "category",
+      "elements": [
+        {
+          "type": "text",
+          "id": "cf",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "categoryTotal",
+          "expression": "$V{categoryTotal}"
+        }
+      ]
+    },
+    {
+      "type": "groupFooter",
+      "height": 20.0,
+      "group": "region",
+      "elements": [
+        {
+          "type": "text",
+          "id": "rf",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "regionTotal",
+          "expression": "$V{regionTotal}"
+        }
+      ]
+    },
+    {
+      "type": "summary",
+      "height": 24.0,
+      "elements": [
+        {
+          "type": "text",
+          "id": "s",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "grand total",
+          "expression": "$V{regionTotal}"
+        }
+      ]
+    }
+  ],
+  "variables": [
+    {
+      "name": "regionTotal",
+      "expression": "$F{amount}",
+      "calculation": "sum",
+      "resetScope": "group",
+      "resetGroup": "region"
+    },
+    {
+      "name": "categoryTotal",
+      "expression": "$F{amount}",
+      "calculation": "sum",
+      "resetScope": "group",
+      "resetGroup": "category"
+    }
+  ],
+  "groups": [
+    {
+      "name": "region",
+      "expression": "$F{region}"
+    },
+    {
+      "name": "category",
+      "expression": "$F{category}"
+    }
+  ]
+}

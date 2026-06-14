@@ -28,13 +28,12 @@ Finder _valueIn(String name, String text) =>
 
 /// Whether the field [name]'s trigger paints a swatch in [expected] — the
 /// compact color box reflects the current color by fill, not by hex text.
-bool _hasSwatch(WidgetTester tester, String name, Color expected) =>
-    tester
-        .widgetList<Container>(
-            find.descendant(of: _field(name), matching: find.byType(Container)))
-        .any((Container c) =>
-            c.decoration is BoxDecoration &&
-            (c.decoration! as BoxDecoration).color == expected);
+bool _hasSwatch(WidgetTester tester, String name, Color expected) => tester
+    .widgetList<Container>(
+        find.descendant(of: _field(name), matching: find.byType(Container)))
+    .any((Container c) =>
+        c.decoration is BoxDecoration &&
+        (c.decoration! as BoxDecoration).color == expected);
 
 // --- PAGE section (018) seams ---
 Finder _preview = find.byKey(const ValueKey<String>('$_p.pagePreview'));
@@ -323,6 +322,48 @@ void main() {
       expect(c.template.bands[1].height, 260);
     });
 
+    testWidgets('a group-header band exposes a Start-on-new-page toggle',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = JetReportDesignerController(
+        template: const ReportTemplate(
+          name: 'r',
+          page: PageFormat.a4Portrait,
+          groups: <ReportGroup>[
+            ReportGroup(name: 'invoice', expression: r'$F{invoiceNo}'),
+          ],
+          bands: <ReportBand>[
+            ReportBand(
+                type: BandType.groupHeader, height: 30, group: 'invoice'),
+            ReportBand(type: BandType.detail, height: 40),
+          ],
+        ),
+      );
+      await pumpDesignerWith(tester, controller: c);
+      await _openProperties(tester);
+      c.selectBand(0); // the group-header band
+      await tester.pumpAndSettle();
+
+      final Finder toggle = _field('groupNewPage');
+      expect(toggle, findsOneWidget);
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+      expect(
+        c.template.groups
+            .firstWhere((ReportGroup g) => g.name == 'invoice')
+            .startNewPage,
+        isTrue,
+      );
+    });
+
+    testWidgets('a non-group band shows no group toggle',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      c.selectBand(1); // detail band in the default template
+      await tester.pumpAndSettle();
+      expect(_field('groupNewPage'), findsNothing);
+    });
+
     testWidgets('the selected report shows read-only info, no geometry fields',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
@@ -424,8 +465,7 @@ void main() {
       // Each option names its size, e.g. "A4 (210 × 297 mm)".
       expect(
           find.descendant(
-              of: _paperOption('A4'),
-              matching: find.text('A4 (210 × 297 mm)')),
+              of: _paperOption('A4'), matching: find.text('A4 (210 × 297 mm)')),
           findsOneWidget);
       await tester.tap(_paperOption('Letter'));
       await tester.pumpAndSettle();

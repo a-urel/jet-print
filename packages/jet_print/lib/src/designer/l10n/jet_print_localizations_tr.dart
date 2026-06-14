@@ -247,6 +247,12 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get propertiesBinding => 'Bağlantı';
 
   @override
+  String get propertiesGroup => 'Grup';
+
+  @override
+  String get propertiesGroupNewPage => 'Yeni sayfa başlat';
+
+  @override
   String get bindingExpressionHint => 'Alan veya ifade';
 
   @override

@@ -20,6 +20,38 @@ void main() {
     );
   });
 
+  test('the sample groups by invoice with data-bound group header/footer', () {
+    final ReportTemplate t = invoiceSampleTemplate();
+
+    // One group, keyed on the invoice number, keeping each invoice together.
+    expect(t.groups, hasLength(1));
+    final ReportGroup invoice = t.groups.single;
+    expect(invoice.name, 'invoice');
+    expect(invoice.expression, r'$F{invoiceNo}');
+    expect(invoice.keepTogether, isTrue);
+    expect(invoice.startNewPage, isTrue); // one invoice per page
+
+    final List<BandType> types = t.bands.map((ReportBand b) => b.type).toList();
+    // Page chrome (header/footer) plus the per-invoice group header/footer that
+    // bracket the detail body.
+    expect(types, contains(BandType.pageHeader));
+    expect(types, contains(BandType.groupHeader));
+    expect(types, contains(BandType.detail));
+    expect(types, contains(BandType.groupFooter));
+    expect(types, contains(BandType.pageFooter));
+
+    // The group header/footer bands reference the declared group.
+    for (final BandType groupBand in <BandType>[
+      BandType.groupHeader,
+      BandType.groupFooter,
+    ]) {
+      expect(
+        t.bands.firstWhere((ReportBand b) => b.type == groupBand).group,
+        'invoice',
+      );
+    }
+  });
+
   test('the sample template is a master/detail layout with bound tokens', () {
     final ReportTemplate t = invoiceSampleTemplate();
 

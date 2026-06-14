@@ -92,6 +92,8 @@
   "formatPresetDateTime": "Datum & Uhrzeit",
   "errorUnresolvedToken": "#FEHLER",
   "propertiesBinding": "Bindung",
+  "propertiesGroup": "Gruppe",
+  "propertiesGroupNewPage": "Auf neuer Seite beginnen",
   "bindingExpressionHint": "Feld oder Ausdruck",
   "bindingImageFieldHint": "Feldname",
   "bindingClearTooltip": "Bindung entfernen",

@@ -200,11 +200,14 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
             // Offer only the Google-Fonts catalog; the built-in Default stays
             // as the silent render fallback but is hidden from the picker (022).
             showBuiltInFonts: false,
-            // Render the LIVE template against the bundled sample data so design
-            // edits show up on the next preview entry — with the host fonts, so
-            // preview/PDF/PNG match the canvas.
-            renderReport: (ReportTemplate template) =>
-                renderInvoice(template: template, fonts: widget.fonts),
+            // Preview the invoice authored in the REIFIED band model, rendered
+            // through the native `renderDefinition` path (spec 024) — the
+            // end-to-end confirmation of the new architecture. (While the
+            // designer canvas still authors the legacy template, the preview
+            // shows the canonical reified definition; once the designer is
+            // migrated it will render the live tree the canvas hands over.)
+            renderReport: (ReportTemplate _) =>
+                renderInvoiceDefinition(fonts: widget.fonts),
             onSaveRequested: _save,
             onOpenRequested: _open,
             onExportPdf: _exportPdf,

@@ -75,7 +75,11 @@ bool _isWhiteBoxSeamTest(File file) {
       // preload is an unexported `src/` helper with an injectable loader so
       // the family/byte wiring is unit-testable without dart:ui; its unit
       // test is white-box (Principle III).
-      path.endsWith('/test/designer/font_preload_test.dart');
+      path.endsWith('/test/designer/font_preload_test.dart') ||
+      // Band-walker (024): the reified-model tree navigation/transform helper
+      // (`band_walker.dart`) is an unexported `src/` module the designer
+      // migration is built on; its unit test is white-box (Principle III).
+      path.endsWith('/test/designer/controller/band_walker_test.dart');
 }
 
 void main() {

@@ -575,6 +575,18 @@ abstract class JetPrintLocalizations {
   /// **'Binding'**
   String get propertiesBinding;
 
+  /// Properties panel section label for the selected group band's group settings (023).
+  ///
+  /// In en, this message translates to:
+  /// **'Group'**
+  String get propertiesGroup;
+
+  /// Properties panel toggle label: start each group instance on a new page (023).
+  ///
+  /// In en, this message translates to:
+  /// **'Start on new page'**
+  String get propertiesGroupNewPage;
+
   /// Placeholder for the text binding input (a field reference or a full expression).
   ///
   /// In en, this message translates to:

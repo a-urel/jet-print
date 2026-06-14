@@ -14,6 +14,7 @@ class ReportGroup {
     required this.expression,
     this.keepTogether = false,
     this.reprintHeaderOnEachPage = false,
+    this.startNewPage = false,
   });
 
   /// Reads a [ReportGroup] from its [toJson] map.
@@ -23,6 +24,7 @@ class ReportGroup {
         keepTogether: json['keepTogether'] as bool? ?? false,
         reprintHeaderOnEachPage:
             json['reprintHeaderOnEachPage'] as bool? ?? false,
+        startNewPage: json['startNewPage'] as bool? ?? false,
       );
 
   /// The group name (referenced by a variable's `resetGroup`).
@@ -40,12 +42,21 @@ class ReportGroup {
   /// continuation page the group spans (008b). Default false.
   final bool reprintHeaderOnEachPage;
 
+  /// When true, every instance of this group after the first starts on a fresh
+  /// page: the layout engine inserts a page break before the group's header so
+  /// the group never shares a page with the previous one (this group break, and
+  /// any inner groups it cascades, begin the new page). The very first instance
+  /// does not force a leading blank page. Combine with grouping per record to
+  /// get one record per page. Default false.
+  final bool startNewPage;
+
   /// Serializes to a JSON-safe map.
   Map<String, Object?> toJson() => <String, Object?>{
         'name': name,
         'expression': expression,
         if (keepTogether) 'keepTogether': true,
         if (reprintHeaderOnEachPage) 'reprintHeaderOnEachPage': true,
+        if (startNewPage) 'startNewPage': true,
       };
 
   @override
@@ -54,14 +65,16 @@ class ReportGroup {
       other.name == name &&
       other.expression == expression &&
       other.keepTogether == keepTogether &&
-      other.reprintHeaderOnEachPage == reprintHeaderOnEachPage;
+      other.reprintHeaderOnEachPage == reprintHeaderOnEachPage &&
+      other.startNewPage == startNewPage;
 
   @override
-  int get hashCode =>
-      Object.hash(name, expression, keepTogether, reprintHeaderOnEachPage);
+  int get hashCode => Object.hash(
+      name, expression, keepTogether, reprintHeaderOnEachPage, startNewPage);
 
   @override
   String toString() => 'ReportGroup($name, "$expression"'
       '${keepTogether ? ', keepTogether' : ''}'
-      '${reprintHeaderOnEachPage ? ', reprintHeaderOnEachPage' : ''})';
+      '${reprintHeaderOnEachPage ? ', reprintHeaderOnEachPage' : ''}'
+      '${startNewPage ? ', startNewPage' : ''})';
 }

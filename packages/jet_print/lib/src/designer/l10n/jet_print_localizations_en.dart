@@ -247,6 +247,12 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get propertiesBinding => 'Binding';
 
   @override
+  String get propertiesGroup => 'Group';
+
+  @override
+  String get propertiesGroupNewPage => 'Start on new page';
+
+  @override
   String get bindingExpressionHint => 'Field or expression';
 
   @override

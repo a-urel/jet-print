@@ -48,6 +48,27 @@ void main() {
       expect(g.reprintHeaderOnEachPage, isFalse);
     });
 
+    test('startNewPage defaults to false and is omitted from JSON', () {
+      const ReportGroup g = ReportGroup(name: 'a', expression: 'x');
+      expect(g.startNewPage, isFalse);
+      expect(g.toJson().containsKey('startNewPage'), isFalse);
+    });
+
+    test('startNewPage round-trips when true', () {
+      const ReportGroup g =
+          ReportGroup(name: 'a', expression: 'x', startNewPage: true);
+      final ReportGroup decoded = ReportGroup.fromJson(g.toJson());
+      expect(decoded.startNewPage, isTrue);
+      expect(decoded, g);
+    });
+
+    test('startNewPage participates in equality', () {
+      expect(
+          const ReportGroup(name: 'a', expression: 'x', startNewPage: true) ==
+              const ReportGroup(name: 'a', expression: 'x'),
+          isFalse);
+    });
+
     test('flags participate in equality', () {
       expect(
           const ReportGroup(name: 'a', expression: 'x', keepTogether: true) ==

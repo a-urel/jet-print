@@ -29,6 +29,7 @@ import 'commands/set_band_height_command.dart';
 import 'commands/set_barcode_color_command.dart';
 import 'commands/set_binding_command.dart';
 import 'commands/set_format_command.dart';
+import 'commands/set_group_start_new_page_command.dart';
 import 'commands/set_page_format_command.dart';
 import 'commands/set_shape_kind_command.dart';
 import 'commands/set_shape_style_command.dart';
@@ -755,6 +756,13 @@ class JetReportDesignerController extends ChangeNotifier {
       path: path,
       collectionField: collectionField,
     ));
+  }
+
+  /// Sets whether the group named [group] starts each of its instances (after
+  /// the first) on a fresh page (023 — `ReportGroup.startNewPage`). One undoable
+  /// step; a no-op (no history) for an unknown group or an unchanged value.
+  void setGroupStartNewPage(String group, bool value) {
+    _commit(SetGroupStartNewPageCommand(group: group, value: value));
   }
 
   List<JetRect> _siblingBounds(int bandIndex, String excludeId) => <JetRect>[

@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "name": "Deep master/detail",
+  "page": {
+    "width": 595.28,
+    "height": 841.89,
+    "margins": {
+      "l": 28.35,
+      "t": 28.35,
+      "r": 28.35,
+      "b": 28.35
+    }
+  },
+  "bands": [
+    {
+      "type": "detail",
+      "height": 20.0,
+      "elements": [
+        {
+          "type": "text",
+          "id": "order",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "orderNo",
+          "expression": "$F{orderNo}"
+        }
+      ]
+    },
+    {
+      "type": "detail",
+      "height": 18.0,
+      "collectionField": "lines",
+      "elements": [
+        {
+          "type": "text",
+          "id": "line",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "description",
+          "expression": "$F{description}"
+        }
+      ],
+      "children": [
+        {
+          "type": "detail",
+          "height": 16.0,
+          "collectionField": "notes",
+          "elements": [
+            {
+              "type": "text",
+              "id": "note",
+              "bounds": {
+                "x": 0.0,
+                "y": 2.0,
+                "w": 300.0,
+                "h": 16.0
+              },
+              "text": "note",
+              "expression": "$F{note}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

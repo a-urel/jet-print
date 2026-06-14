@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 1,
+  "name": "Furniture reserved",
+  "page": {
+    "width": 595.28,
+    "height": 841.89,
+    "margins": {
+      "l": 28.35,
+      "t": 28.35,
+      "r": 28.35,
+      "b": 28.35
+    }
+  },
+  "bands": [
+    {
+      "type": "background",
+      "height": 0.0,
+      "elements": [
+        {
+          "type": "text",
+          "id": "wm",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "DRAFT"
+        }
+      ]
+    },
+    {
+      "type": "title",
+      "height": 24.0,
+      "elements": [
+        {
+          "type": "text",
+          "id": "t",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "Ledger"
+        }
+      ]
+    },
+    {
+      "type": "pageHeader",
+      "height": 18.0,
+      "elements": [
+        {
+          "type": "text",
+          "id": "ph",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "Ledger"
+        }
+      ]
+    },
+    {
+      "type": "columnHeader",
+      "height": 16.0,
+      "elements": [
+        {
+          "type": "text",
+          "id": "cqh",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "Item"
+        }
+      ]
+    },
+    {
+      "type": "detail",
+      "height": 18.0,
+      "elements": [
+        {
+          "type": "text",
+          "id": "it",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "item",
+          "expression": "$F{item}"
+        }
+      ]
+    },
+    {
+      "type": "columnFooter",
+      "height": 16.0,
+      "elements": [
+        {
+          "type": "text",
+          "id": "cqf",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "subtotal"
+        }
+      ]
+    },
+    {
+      "type": "pageFooter",
+      "height": 18.0,
+      "elements": [
+        {
+          "type": "text",
+          "id": "pf",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "Page"
+        }
+      ]
+    },
+    {
+      "type": "summary",
+      "height": 24.0,
+      "elements": [
+        {
+          "type": "text",
+          "id": "sm",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "End"
+        }
+      ]
+    }
+  ]
+}

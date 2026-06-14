@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "name": "Default",
+  "page": {
+    "width": 595.28,
+    "height": 841.89,
+    "margins": {
+      "l": 28.35,
+      "t": 28.35,
+      "r": 28.35,
+      "b": 28.35
+    }
+  },
+  "bands": [
+    {
+      "type": "pageHeader",
+      "height": 20.0,
+      "elements": [
+        {
+          "type": "text",
+          "id": "hdr",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "Report"
+        }
+      ]
+    },
+    {
+      "type": "detail",
+      "height": 22.0,
+      "elements": [
+        {
+          "type": "text",
+          "id": "name",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "name",
+          "expression": "$F{name}"
+        }
+      ]
+    },
+    {
+      "type": "pageFooter",
+      "height": 20.0,
+      "elements": [
+        {
+          "type": "text",
+          "id": "pg",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "Page",
+          "expression": "\"Page \" + $V{PAGE_NUMBER} + \" of \" + $V{PAGE_COUNT}"
+        }
+      ]
+    }
+  ]
+}

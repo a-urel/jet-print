@@ -8,6 +8,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Per-group page breaks (`ReportGroup.startNewPage`).** A group can begin each
+  instance after its first on a fresh page; the first instance never forces a
+  leading blank page. Combined with grouping per record (e.g. one group per
+  invoice) this yields one record per page. Additive and optional — serialized
+  only when `true`, so `kReportSchemaVersion` is unchanged and existing reports
+  round-trip byte-identically. Editable in the designer: selecting a group
+  header/footer band reveals a **Group → Start on new page** toggle in the
+  Properties panel (`controller.setGroupStartNewPage`), as one undoable step.
 - **Host & system fonts in font pickers (spec 022-host-fonts).** A host can now
   contribute its own fonts, selectable in every designer picker and rendered
   byte-identically across canvas, preview, PDF, and PNG:

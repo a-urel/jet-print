@@ -752,6 +752,59 @@ void main() {
         'big');
   });
 
+  List<String?> rectIdsOn(LayoutResult r, int page) => r.pages[page].primitives
+      .whereType<RectPrimitive>()
+      .map((RectPrimitive p) => p.elementId)
+      .toList();
+
+  test('startNewPage starts every group instance after the first on a new page',
+      () {
+    final ReportTemplate tpl = _tplWithGroups(<ReportGroup>[
+      ReportGroup(name: 'g', expression: r'$F{g}', startNewPage: true),
+    ]);
+    // Three instances of group g; together they fit one page (60 <= capacity
+    // 80), so only startNewPage can force the split into three pages.
+    final FilledReport filled = _filled(<FilledBand>[
+      _gband(BandType.groupHeader, group: 'g', height: 10, id: 'GH1'),
+      _gband(BandType.detail, height: 10, id: 'd1'),
+      _gband(BandType.groupHeader, group: 'g', height: 10, id: 'GH2'),
+      _gband(BandType.detail, height: 10, id: 'd2'),
+      _gband(BandType.groupHeader, group: 'g', height: 10, id: 'GH3'),
+      _gband(BandType.detail, height: 10, id: 'd3'),
+    ]);
+    final LayoutResult r = ReportLayouter().layout(tpl, filled);
+    expect(r.pages.length, 3);
+    expect(rectIdsOn(r, 0), <String>['GH1', 'd1']);
+    expect(rectIdsOn(r, 1), <String>['GH2', 'd2']);
+    expect(rectIdsOn(r, 2), <String>['GH3', 'd3']);
+    // The first instance does not push a leading blank page: GH1 sits at
+    // bodyTop on page 1.
+    expect(
+        r.pages[0].primitives
+            .whereType<RectPrimitive>()
+            .firstWhere((RectPrimitive p) => p.elementId == 'GH1')
+            .bounds
+            .y,
+        10);
+  });
+
+  test('startNewPage off (default) keeps fitting group instances on one page',
+      () {
+    final ReportTemplate tpl = _tplWithGroups(<ReportGroup>[
+      const ReportGroup(name: 'g', expression: r'$F{g}'),
+    ]);
+    final FilledReport filled = _filled(<FilledBand>[
+      _gband(BandType.groupHeader, group: 'g', height: 10, id: 'GH1'),
+      _gband(BandType.detail, height: 10, id: 'd1'),
+      _gband(BandType.groupHeader, group: 'g', height: 10, id: 'GH2'),
+      _gband(BandType.detail, height: 10, id: 'd2'),
+      _gband(BandType.groupHeader, group: 'g', height: 10, id: 'GH3'),
+      _gband(BandType.detail, height: 10, id: 'd3'),
+    ]);
+    final LayoutResult r = ReportLayouter().layout(tpl, filled);
+    expect(r.pages.length, 1);
+  });
+
   test('keepTogether accounts for repeated outer headers (splits, not moved)',
       () {
     final ReportTemplate tpl = _tplWithGroups(<ReportGroup>[

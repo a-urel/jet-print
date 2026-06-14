@@ -7,11 +7,13 @@ library;
 import 'package:intl/intl.dart';
 
 import '../../data/jet_data_source.dart';
+import '../../domain/report_definition.dart';
 import '../../domain/report_parameter.dart';
 import '../../domain/report_template.dart';
 import '../fill/report_diagnostics.dart';
 import '../fill/report_filler.dart';
 import '../layout/report_layouter.dart';
+import '../legacy/report_template_adapter.dart';
 import '../text/font_registry.dart';
 import '../text/metrics_text_measurer.dart';
 import 'render_options.dart';
@@ -55,8 +57,23 @@ class JetReportEngine {
 
   /// Fills [template] with [source]'s records (and [options]), paginates, and
   /// returns a lazily-paginated [RenderedReport].
+  ///
+  /// Transitional (spec 024): the legacy [ReportTemplate] is adapted to a
+  /// [ReportDefinition] and rendered through the native [renderDefinition] path,
+  /// byte-identically. Removed once hosts/the designer author definitions
+  /// directly (US2).
   RenderedReport render(
     ReportTemplate template,
+    JetDataSource source, {
+    RenderOptions options = const RenderOptions(),
+  }) =>
+      renderDefinition(convertTemplate(template), source, options: options);
+
+  /// Fills [definition] with [source]'s records (and [options]), paginates, and
+  /// returns a lazily-paginated [RenderedReport] — the native render path over
+  /// the reified model (spec 024).
+  RenderedReport renderDefinition(
+    ReportDefinition definition,
     JetDataSource source, {
     RenderOptions options = const RenderOptions(),
   }) {
@@ -71,11 +88,11 @@ class JetReportEngine {
       ..registerHostFonts(options.fonts);
     final ReportDiagnostics paramDiagnostics = ReportDiagnostics();
     final Map<String, Object?> params =
-        _effectiveParameters(template, options, paramDiagnostics);
+        _effectiveParameters(definition, options, paramDiagnostics);
     final FillResult fill = _withLocale(
       localeTag,
-      () => ReportFiller().fill(
-        template,
+      () => ReportFiller().fillDefinition(
+        definition,
         source,
         params: params,
         knownFields: options.knownFields,
@@ -85,10 +102,10 @@ class JetReportEngine {
     final LazyLayout lazy = _withLocale(
       localeTag,
       () => ReportLayouter(measurer: MetricsTextMeasurer(fonts))
-          .layoutLazy(template, fill.report),
+          .layoutLazyDefinition(definition, fill.report),
     );
     return RenderedReport(
-      title: template.name,
+      title: definition.name,
       pageCount: lazy.pageCount,
       fonts: fonts,
       // Lazy builds run later, outside render()'s scope — re-enter the render
@@ -109,18 +126,18 @@ class JetReportEngine {
       Intl.withLocale<T>(localeTag, body) as T;
 
   /// The parameter values the render actually uses: the host-supplied map,
-  /// backfilled with declared defaults. A parameter the template declares
+  /// backfilled with declared defaults. A parameter the definition declares
   /// with neither a supplied value nor a default gets a diagnostic and
   /// resolves as empty (FR-012 / FR-013 / SC-007).
   static Map<String, Object?> _effectiveParameters(
-    ReportTemplate template,
+    ReportDefinition definition,
     RenderOptions options,
     ReportDiagnostics diagnostics,
   ) {
     final Map<String, Object?> effective = <String, Object?>{
       ...options.parameters,
     };
-    for (final ReportParameter parameter in template.parameters) {
+    for (final ReportParameter parameter in definition.parameters) {
       if (effective.containsKey(parameter.name)) continue;
       if (parameter.defaultValue != null) {
         effective[parameter.name] = parameter.defaultValue;

@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "name": "Empty data",
+  "page": {
+    "width": 595.28,
+    "height": 841.89,
+    "margins": {
+      "l": 28.35,
+      "t": 28.35,
+      "r": 28.35,
+      "b": 28.35
+    }
+  },
+  "bands": [
+    {
+      "type": "title",
+      "height": 24.0,
+      "elements": [
+        {
+          "type": "text",
+          "id": "t",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "Catalog"
+        }
+      ]
+    },
+    {
+      "type": "detail",
+      "height": 20.0,
+      "elements": [
+        {
+          "type": "text",
+          "id": "row",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "name",
+          "expression": "$F{name}"
+        }
+      ]
+    },
+    {
+      "type": "noData",
+      "height": 30.0,
+      "elements": [
+        {
+          "type": "text",
+          "id": "empty",
+          "bounds": {
+            "x": 0.0,
+            "y": 2.0,
+            "w": 300.0,
+            "h": 16.0
+          },
+          "text": "No records found."
+        }
+      ]
+    }
+  ]
+}
