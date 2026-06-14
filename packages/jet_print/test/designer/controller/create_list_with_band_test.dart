@@ -4,7 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
 void main() {
-  test('createListWithBand adds a bound nested scope with a detail band, selecting the band', () {
+  test(
+      'createListWithBand adds a bound nested scope with a detail band, selecting the band',
+      () {
     final JetReportDesignerController c = JetReportDesignerController();
     addTearDown(c.dispose);
 
@@ -22,7 +24,8 @@ void main() {
         reason: 'the new detail band is selected');
   });
 
-  test('createListWithBand is one undo step (undo removes both scope and band)', () {
+  test('createListWithBand is one undo step (undo removes both scope and band)',
+      () {
     final JetReportDesignerController c = JetReportDesignerController();
     addTearDown(c.dispose);
     final ReportDefinition before = c.definition;
@@ -30,7 +33,8 @@ void main() {
     c.createListWithBand(c.definition.body.root.id, collectionField: 'lines');
     c.undo();
 
-    expect(c.definition, before, reason: 'a single undo reverts the whole gesture');
+    expect(c.definition, before,
+        reason: 'a single undo reverts the whole gesture');
   });
 
   test('createListWithBand is a no-op for an unknown parent scope', () {

@@ -17,13 +17,14 @@ const JetDataSchema _invoice = JetDataSchema(
 );
 
 void main() {
-  testWidgets('"+" on a top-level collection creates a list under root bound to it',
+  testWidgets(
+      '"+" on a top-level collection creates a list under root bound to it',
       (WidgetTester tester) async {
     final JetReportDesignerController c =
         await pumpDesignerWith(tester, dataSchema: _invoice);
     // Data Source tab is shown by default; tap the add-list "+" for `lines`.
-    final Finder add = find.byKey(const ValueKey<String>(
-        'jet_print.designer.datasource.addList.lines'));
+    final Finder add = find.byKey(
+        const ValueKey<String>('jet_print.designer.datasource.addList.lines'));
     await tester.ensureVisible(add);
     await tester.pumpAndSettle();
     await tester.tap(add);

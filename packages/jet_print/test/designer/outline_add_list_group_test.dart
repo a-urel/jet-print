@@ -19,7 +19,8 @@ Future<void> _openOutline(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('scope "+" menu "Add list" creates a nested list with a detail band',
+  testWidgets(
+      'scope "+" menu "Add list" creates a nested list with a detail band',
       (WidgetTester tester) async {
     final JetReportDesignerController c = await pumpDesignerWith(tester);
     await _openOutline(tester);
@@ -27,7 +28,8 @@ void main() {
     await _tapKey(tester, 'jet_print.designer.outline.scope.root.add');
     await _tapKey(tester, 'jet_print.designer.outline.scope.root.add.list');
 
-    expect(c.definition.body.root.children.whereType<NestedScope>(), hasLength(1));
+    expect(
+        c.definition.body.root.children.whereType<NestedScope>(), hasLength(1));
   });
 
   testWidgets('scope "+" menu "Add group" creates a group with a header band',

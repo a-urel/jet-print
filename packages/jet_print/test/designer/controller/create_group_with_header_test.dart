@@ -4,7 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
 void main() {
-  test('createGroupWithHeader adds a group with a header band, selecting it', () {
+  test('createGroupWithHeader adds a group with a header band, selecting it',
+      () {
     final JetReportDesignerController c = JetReportDesignerController();
     addTearDown(c.dispose);
 
@@ -15,16 +16,20 @@ void main() {
     final GroupLevel g = groups.single;
     expect(g.header, isNotNull, reason: 'the group has a header band');
     expect(g.header!.type, BandType.groupHeader);
-    expect(c.selection.bandId, g.header!.id, reason: 'the header band is selected');
+    expect(c.selection.bandId, g.header!.id,
+        reason: 'the header band is selected');
   });
 
-  test('createGroupWithHeader leaves a valid definition (parseable placeholder key, no errors)', () {
+  test(
+      'createGroupWithHeader leaves a valid definition (parseable placeholder key, no errors)',
+      () {
     final JetReportDesignerController c = JetReportDesignerController();
     addTearDown(c.dispose);
     c.createGroupWithHeader(c.definition.body.root.id);
     final bool anyErrors = c.diagnostics
         .any((Diagnostic d) => d.severity == DiagnosticSeverity.error);
-    expect(anyErrors, isFalse, reason: 'the placeholder key parses; ids/names are unique');
+    expect(anyErrors, isFalse,
+        reason: 'the placeholder key parses; ids/names are unique');
   });
 
   test('createGroupWithHeader is one undo step', () {

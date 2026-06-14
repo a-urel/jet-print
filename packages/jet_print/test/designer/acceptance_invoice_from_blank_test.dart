@@ -26,9 +26,13 @@ void main() {
 
     // 3) Drop a couple of bound fields into the line band (Data Source scalar drag).
     c.createBoundElement(
-        bandId: lineBandId, at: const JetOffset(8, 8), expression: r'$F{description}');
+        bandId: lineBandId,
+        at: const JetOffset(8, 8),
+        expression: r'$F{description}');
     c.createBoundElement(
-        bandId: lineBandId, at: const JetOffset(180, 8), expression: r'$F{lineTotal}');
+        bandId: lineBandId,
+        at: const JetOffset(180, 8),
+        expression: r'$F{lineTotal}');
 
     // Assert the shape (re-read from the current definition — the model is
     // immutable so `list` captured above is a stale snapshot).
@@ -43,7 +47,8 @@ void main() {
 
     // Assert validity: no error diagnostics (everything is bound/parseable).
     expect(
-        c.diagnostics.where((Diagnostic d) => d.severity == DiagnosticSeverity.error),
+        c.diagnostics
+            .where((Diagnostic d) => d.severity == DiagnosticSeverity.error),
         isEmpty);
   });
 }

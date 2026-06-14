@@ -18,7 +18,8 @@ const JetDataSchema _invoice = JetDataSchema(
 );
 
 void main() {
-  testWidgets('root detail band shows the read-only main-dataset label, no picker',
+  testWidgets(
+      'root detail band shows the read-only main-dataset label, no picker',
       (WidgetTester tester) async {
     final JetReportDesignerController c =
         await pumpDesignerWith(tester, dataSchema: _invoice);
@@ -34,7 +35,8 @@ void main() {
         findsNothing);
   });
 
-  testWidgets('nested-list detail band shows the bound collection in a picker field',
+  testWidgets(
+      'nested-list detail band shows the bound collection in a picker field',
       (WidgetTester tester) async {
     final JetReportDesignerController c =
         await pumpDesignerWith(tester, dataSchema: _invoice);
@@ -49,7 +51,8 @@ void main() {
     expect(field, findsOneWidget);
   });
 
-  testWidgets('an unbound nested list warns inline', (WidgetTester tester) async {
+  testWidgets('an unbound nested list warns inline',
+      (WidgetTester tester) async {
     final JetReportDesignerController c =
         await pumpDesignerWith(tester, dataSchema: _invoice);
     await openPropertiesTab(tester);
@@ -57,6 +60,7 @@ void main() {
     c.createListWithBand(c.definition.body.root.id); // no collectionField
     await tester.pumpAndSettle();
 
-    expect(find.text('List is not bound to a collection field'), findsOneWidget);
+    expect(
+        find.text('List is not bound to a collection field'), findsOneWidget);
   });
 }

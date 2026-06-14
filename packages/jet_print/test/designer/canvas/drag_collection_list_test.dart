@@ -21,11 +21,11 @@ void main() {
     final JetReportDesignerController c =
         await pumpDesignerWith(tester, dataSchema: _invoice);
 
-    final Finder handle = find.byKey(const ValueKey<String>(
-        'jet_print.designer.datasource.dragList.lines'));
+    final Finder handle = find.byKey(
+        const ValueKey<String>('jet_print.designer.datasource.dragList.lines'));
     final Offset from = tester.getCenter(handle);
-    final Offset to = tester.getTopLeft(find.byKey(kDesignPageKey)) +
-        const Offset(120, 60);
+    final Offset to =
+        tester.getTopLeft(find.byKey(kDesignPageKey)) + const Offset(120, 60);
     await tester.drag(handle, to - from);
     await tester.pumpAndSettle();
 

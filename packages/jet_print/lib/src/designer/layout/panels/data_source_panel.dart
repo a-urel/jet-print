@@ -221,8 +221,8 @@ class _CollectionActions extends StatelessWidget {
                 collectionField: field.name,
               );
             },
-            child: Icon(LucideIcons.plus,
-                size: 14, color: colors.mutedForeground),
+            child:
+                Icon(LucideIcons.plus, size: 14, color: colors.mutedForeground),
           ),
         ),
       ],
