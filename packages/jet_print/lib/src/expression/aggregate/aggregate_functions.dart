@@ -11,6 +11,9 @@ import '../ast.dart';
 /// The aggregate function names mapped to their fold strategy. `MIN`/`MAX`
 /// collide with the scalar math functions of the same name; disambiguation is
 /// by arity + band (see [topLevelAggregate] and the synthesizer).
+///
+/// `JetCalculation.first` and `JetCalculation.last` are intentionally excluded:
+/// they are variable-only fold strategies and have no inline-aggregate syntax.
 const Map<String, JetCalculation> _aggregates = <String, JetCalculation>{
   'SUM': JetCalculation.sum,
   'AVG': JetCalculation.average,
@@ -37,7 +40,11 @@ String? aggregateNameFor(JetCalculation calculation) {
 /// A recognized inline aggregate: its [calculation] and single [argument].
 class AggregateCall {
   const AggregateCall(this.calculation, this.argument);
+
+  /// The fold strategy (SUM / AVG / COUNT / MIN / MAX) for this aggregate.
   final JetCalculation calculation;
+
+  /// The single expression passed to the aggregate function (e.g. `$F{price}`).
   final Expr argument;
 }
 

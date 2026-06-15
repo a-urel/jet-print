@@ -29,4 +29,14 @@ void main() {
   test('a non-top-level aggregate (nested in arithmetic) is not detected', () {
     expect(topLevelAggregate(Expression.parse(r'SUM($F{x}) + 1').root), isNull);
   });
+
+  test('aggregateNameFor inverts the table and returns null off-table', () {
+    expect(aggregateNameFor(JetCalculation.sum), 'SUM');
+    expect(aggregateNameFor(JetCalculation.average), 'AVG');
+    expect(aggregateNameFor(JetCalculation.count), 'COUNT');
+    expect(aggregateNameFor(JetCalculation.min), 'MIN');
+    expect(aggregateNameFor(JetCalculation.max), 'MAX');
+    expect(aggregateNameFor(JetCalculation.none), isNull);
+    expect(aggregateNameFor(JetCalculation.first), isNull);
+  });
 }
