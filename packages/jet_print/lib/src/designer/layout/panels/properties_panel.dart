@@ -2051,8 +2051,19 @@ class _BindingField extends StatefulWidget {
 }
 
 class _BindingFieldState extends State<_BindingField> {
+  /// Wraps a stored bare field name as the `[name]` shorthand for display.
+  static String _wrap(String v) => v.isEmpty ? '' : '[$v]';
+
+  /// Strips a surrounding `[ ]` to recover the bare field name on commit.
+  static String _strip(String v) {
+    final String t = v.trim();
+    return t.length >= 2 && t.startsWith('[') && t.endsWith(']')
+        ? t.substring(1, t.length - 1).trim()
+        : t;
+  }
+
   late final TextEditingController _controller =
-      TextEditingController(text: widget.value);
+      TextEditingController(text: _wrap(widget.value));
   final ShadPopoverController _picker = ShadPopoverController();
   final FocusNode _focus = FocusNode();
 
@@ -2066,7 +2077,7 @@ class _BindingFieldState extends State<_BindingField> {
   void didUpdateWidget(_BindingField oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!_focus.hasFocus && widget.value != oldWidget.value) {
-      _controller.text = widget.value;
+      _controller.text = _wrap(widget.value);
     }
   }
 
@@ -2075,7 +2086,7 @@ class _BindingFieldState extends State<_BindingField> {
   }
 
   void _commit() {
-    final String text = _controller.text.trim();
+    final String text = _strip(_controller.text);
     if (text.isEmpty) {
       if (widget.value.isNotEmpty) widget.onClear();
     } else if (text != widget.value) {
@@ -2093,7 +2104,7 @@ class _BindingFieldState extends State<_BindingField> {
   /// undoable edit through the same `onSet` path typing commits.
   void _pick(String field) {
     _picker.hide();
-    _controller.text = field;
+    _controller.text = _wrap(field);
     if (field != widget.value) widget.onSet(field);
   }
 
