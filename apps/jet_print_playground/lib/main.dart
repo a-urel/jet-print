@@ -109,9 +109,10 @@ class _JetPrintPlaygroundAppState extends State<JetPrintPlaygroundApp> {
   }
 }
 
-/// The playground shell: a [ShadTabs] strip whose first tab is the live invoice
-/// designer ([_InvoiceDesignerTab]) and whose remaining tabs are placeholders
-/// for future report demos ([_ComingSoonReport]).
+/// The playground shell: a [ShadTabs] strip whose first two tabs are live
+/// designers ([_DesignerTab]) — a blank canvas and the invoice sample, both
+/// over the same data — and whose remaining tabs are placeholders for future
+/// report demos ([_ComingSoonReport]).
 ///
 /// The strip is `scrollable` so the tabs size to their labels and sit
 /// left-aligned, leaving the right end free for the app-global theme/language
@@ -159,11 +160,26 @@ class _PlaygroundHome extends StatelessWidget {
               scrollable: true,
               tabs: <ShadTab<String>>[
                 ShadTab<String>(
+                  value: 'bos',
+                  leading: const Icon(LucideIcons.squareDashed, size: 16),
+                  // A blank canvas over the SAME invoice data — for exercising
+                  // the designer by hand from nothing.
+                  expandContent: true,
+                  content: _FillTabHeight(
+                    child: _DesignerTab(
+                        fonts: fonts, seed: emptyDesignDefinition()),
+                  ),
+                  child: Text(l10n.tabEmpty),
+                ),
+                ShadTab<String>(
                   value: 'fatura',
                   leading: const Icon(LucideIcons.fileText, size: 16),
                   // The designer is the hero: fill the space below the strip.
                   expandContent: true,
-                  content: _InvoiceDesignerTab(fonts: fonts),
+                  content: _FillTabHeight(
+                    child: _DesignerTab(
+                        fonts: fonts, seed: invoiceSampleDefinition()),
+                  ),
                   child: Text(l10n.tabInvoice),
                 ),
                 _comingSoon('etiket', l10n.tabLabel, LucideIcons.tag),
@@ -204,29 +220,64 @@ class _PlaygroundHome extends StatelessWidget {
   }
 }
 
-/// The **Fatura** tab: the full invoice designer.
+/// Bounds a designer tab body's height so it survives sitting **offstage** in
+/// [ShadTabs].
+///
+/// `ShadTabs` wraps only the *selected* tab's body in an [Expanded]; a
+/// maintained-but-unselected tab (the default `maintainState` keep-alive that
+/// lets edits survive a tab switch) is laid out as a bare [Column] child — i.e.
+/// with **unbounded height**. The workspace's `StackFit.expand` [IndexedStack]
+/// can't accept that and asserts, even while invisible. Since the offstage copy
+/// is never painted, any finite height is fine — fall back to the screen height
+/// — while the selected copy (already bounded by the `Expanded`) passes straight
+/// through. Only the designer tabs need this; the placeholder cards size to
+/// their content under unbounded height already.
+class _FillTabHeight extends StatelessWidget {
+  const _FillTabHeight({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) =>
+            constraints.hasBoundedHeight
+                ? child
+                : SizedBox(
+                    height: MediaQuery.sizeOf(context).height,
+                    child: child,
+                  ),
+      );
+}
+
+/// A live designer tab over the invoice data ([invoiceSchema]), seeded with
+/// [seed] — the fully-authored [invoiceSampleDefinition] for the Fatura tab, or
+/// the blank [emptyDesignDefinition] for the empty manual-testing tab. Both
+/// share the same data source, so the same fields are bindable on either.
 ///
 /// Owns the [JetReportDesignerController] and implements the host side of the
 /// persistence seam (FR-022): Save encodes the live definition to a file picked
 /// with `file_selector`, Open decodes a picked file back into the controller.
 /// The library itself performs no file I/O — this is the consumer's job.
-class _InvoiceDesignerTab extends StatefulWidget {
-  const _InvoiceDesignerTab({required this.fonts});
+class _DesignerTab extends StatefulWidget {
+  const _DesignerTab({required this.fonts, required this.seed});
 
   /// The host-contributed fonts, shared by the designer (picker + canvas) and
   /// the render callback (preview + export) — see [JetPrintPlaygroundApp.fonts].
   final List<JetFontFamily> fonts;
 
+  /// The initial design the controller opens with (the invoice sample, or a
+  /// blank canvas) — authored in the reified band model (spec 024).
+  final ReportDefinition seed;
+
   @override
-  State<_InvoiceDesignerTab> createState() => _InvoiceDesignerTabState();
+  State<_DesignerTab> createState() => _DesignerTabState();
 }
 
-class _InvoiceDesignerTabState extends State<_InvoiceDesignerTab> {
-  // Seed the designer with the bundled invoice sample — authored in the reified
-  // band model (spec 024) — so the data-aware master/detail design is editable
-  // on first run (FR-021).
-  final JetReportDesignerController _controller =
-      JetReportDesignerController(definition: invoiceSampleDefinition());
+class _DesignerTabState extends State<_DesignerTab> {
+  // Seed the designer with the tab's starting design so it's editable on first
+  // run (FR-021). `late` so the field initializer can read `widget.seed`.
+  late final JetReportDesignerController _controller =
+      JetReportDesignerController(definition: widget.seed);
 
   /// The file type the designer reads/writes: a JSON document produced by
   /// `JetReportFormat.encodeJson`.

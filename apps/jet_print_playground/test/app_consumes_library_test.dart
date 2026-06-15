@@ -6,8 +6,10 @@
 //  * the edit → save → reopen path the app implements (a JetReportFormat round
 //    trip) preserves an edit — exercised directly through the public API, since
 //    the native file picker cannot run in a widget test.
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
+import 'package:jet_print_playground/invoice_sample.dart';
 import 'package:jet_print_playground/main.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
@@ -25,16 +27,18 @@ void main() {
   );
 
   testWidgets(
-    'the shell shows five tabs: the invoice designer plus four placeholders',
+    'the shell shows six tabs: the empty + invoice designers plus four '
+    'placeholders',
     (WidgetTester tester) async {
       await tester.pumpWidget(const JetPrintPlaygroundApp());
 
-      // All five tab labels are present in the strip. The app launches in its
+      // All six tab labels are present in the strip. The app launches in its
       // first supported locale (English), so the labels resolve through
       // AppLocalizations to their English values. Scope the match to the tab
       // strip (ShadTab) so e.g. "Invoice" matches the tab — not the identical
       // report name the designer's top bar also shows.
       for (final String label in const <String>[
+        'Empty',
         'Invoice',
         'Label',
         'List',
@@ -44,11 +48,41 @@ void main() {
         expect(find.widgetWithText(ShadTab<String>, label), findsOneWidget,
             reason: '"$label" tab label');
       }
-      // The Invoice tab is selected on launch, so its designer is on-screen.
+      // The Invoice tab is selected on launch, so its designer is on-screen; the
+      // empty designer is kept alive Offstage and skipped by the default finder.
       expect(find.byType(JetReportDesigner), findsOneWidget);
       // The four placeholder demos are each wired with a localized "Coming soon"
       // card, built and kept alive Offstage by ShadTabs' default maintainState.
       expect(find.text('Coming soon', skipOffstage: false), findsNWidgets(4));
+    },
+  );
+
+  testWidgets(
+    'the Empty tab activates a blank designer over the same invoice data',
+    (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(900, 700));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(const JetPrintPlaygroundApp());
+      await tester.pumpAndSettle();
+
+      // Switching to the Empty tab puts the invoice designer offstage — the
+      // reverse of the launch state — which must not crash on layout (both
+      // designer tabs are kept alive with unbounded height when unselected).
+      await tester.tap(find.widgetWithText(ShadTab<String>, 'Empty'));
+      await tester.pumpAndSettle();
+
+      // The now-selected designer is the blank seed (no elements), wired to the
+      // SAME invoice schema as the Fatura tab.
+      final JetReportDesigner designer =
+          tester.widget<JetReportDesigner>(find.byType(JetReportDesigner));
+      expect(designer.dataSchema, same(invoiceSchema),
+          reason: 'the empty tab shares the invoice data source');
+      final ReportDefinition definition = designer.controller!.definition;
+      expect(definition.name, 'Empty');
+      final Iterable<ReportElement> elements = definition.body.root.children
+          .whereType<BandNode>()
+          .expand((BandNode n) => n.band.elements);
+      expect(elements, isEmpty, reason: 'the seed design is blank');
     },
   );
 

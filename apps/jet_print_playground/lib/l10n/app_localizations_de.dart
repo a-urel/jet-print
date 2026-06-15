@@ -9,6 +9,9 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
+  String get tabEmpty => 'Leer';
+
+  @override
   String get tabInvoice => 'Rechnung';
 
   @override

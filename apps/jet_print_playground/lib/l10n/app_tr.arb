@@ -1,6 +1,7 @@
 {
   "@@locale": "tr",
 
+  "tabEmpty": "Boş",
   "tabInvoice": "Fatura",
   "tabLabel": "Etiket",
   "tabList": "Liste",

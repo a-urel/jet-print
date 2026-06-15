@@ -1,6 +1,11 @@
 {
   "@@locale": "en",
 
+  "tabEmpty": "Empty",
+  "@tabEmpty": {
+    "description": "Tab label for the blank designer canvas (manual design testing over the invoice data)."
+  },
+
   "tabInvoice": "Invoice",
   "@tabInvoice": {
     "description": "Tab label for the invoice designer demo (the live report)."

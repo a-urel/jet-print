@@ -100,6 +100,12 @@ abstract class AppLocalizations {
     Locale('tr')
   ];
 
+  /// Tab label for the blank designer canvas (manual design testing over the invoice data).
+  ///
+  /// In en, this message translates to:
+  /// **'Empty'**
+  String get tabEmpty;
+
   /// Tab label for the invoice designer demo (the live report).
   ///
   /// In en, this message translates to:

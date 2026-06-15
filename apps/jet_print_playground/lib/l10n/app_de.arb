@@ -1,6 +1,7 @@
 {
   "@@locale": "de",
 
+  "tabEmpty": "Leer",
   "tabInvoice": "Rechnung",
   "tabLabel": "Etikett",
   "tabList": "Liste",
