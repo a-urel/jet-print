@@ -77,7 +77,8 @@ Widget _fieldNode(FieldDef field, int depth, {String? parentCollection}) {
       ],
     );
   }
-  return _FieldRow(field: field, depth: depth);
+  return _FieldRow(
+      field: field, depth: depth, parentCollection: parentCollection);
 }
 
 /// A short, technical type caption shown trailing a leaf field (not localized —
@@ -95,15 +96,24 @@ String _labelFor(JetFieldType type) => switch (type) {
 /// A leaf field row: its data-type glyph, the field name, and the type token.
 /// Branch (dataset / collection) rows come from the shared [TreeBranch].
 class _FieldRow extends StatelessWidget {
-  const _FieldRow({required this.field, required this.depth});
+  const _FieldRow(
+      {required this.field, required this.depth, this.parentCollection});
 
   final FieldDef field;
   final int depth;
+  final String? parentCollection;
 
   @override
   Widget build(BuildContext context) {
     final ShadThemeData theme = ShadTheme.of(context);
     final ShadColorScheme colors = theme.colorScheme;
+    final JetReportDesignerController controller = DesignerScope.of(context);
+    final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
+    // A scalar field can seed a group only when there is a scope to host it: the
+    // root for a top-level field, or the scope already bound to its parent
+    // collection. No host → no "＋ group" affordance.
+    final String? targetScope =
+        _boundScopeForField(controller.definition, parentCollection);
     final Widget row = Padding(
       padding: EdgeInsets.only(
         left: treeRowInset(depth),
@@ -128,6 +138,22 @@ class _FieldRow extends StatelessWidget {
             _labelFor(field.type),
             style: theme.textTheme.muted.copyWith(fontSize: 11),
           ),
+          if (targetScope != null) ...<Widget>[
+            const SizedBox(width: 6),
+            Semantics(
+              button: true,
+              label: l10n.dataSourceAddGroup,
+              child: GestureDetector(
+                key: ValueKey<String>(
+                    'jet_print.designer.datasource.addGroup.${field.name}'),
+                behavior: HitTestBehavior.opaque,
+                onTap: () => DesignerScope.of(context, listen: false)
+                    .createGroupBoundToField(targetScope, field.name),
+                child: Icon(LucideIcons.plus,
+                    size: 14, color: colors.mutedForeground),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -245,4 +271,22 @@ String _resolveParentScope(ReportDefinition def, String? parentCollection) {
 
   walk(def.body.root);
   return found ?? def.body.root.id;
+}
+
+/// The scope a new group keyed on a scalar field should attach to: the root
+/// scope for a top-level field ([parentCollection] null), or the scope already
+/// bound to [parentCollection]. Null when a nested field's collection has no
+/// bound scope yet — there is nowhere to put the group, so no affordance shows.
+String? _boundScopeForField(ReportDefinition def, String? parentCollection) {
+  if (parentCollection == null) return def.body.root.id;
+  String? found;
+  void walk(DetailScope s) {
+    found ??= s.collectionField == parentCollection ? s.id : null;
+    for (final ScopeNode n in s.children) {
+      if (n is NestedScope) walk(n.scope);
+    }
+  }
+
+  walk(def.body.root);
+  return found;
 }
