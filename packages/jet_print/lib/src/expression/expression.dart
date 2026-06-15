@@ -24,6 +24,10 @@ class Expression {
   factory Expression.parse(String source) =>
       Expression._(Parser(tokenize(source)).parseExpression());
 
+  /// The parsed AST root (internal seam — used by the aggregate synthesizer and
+  /// the value-template compiler to inspect/rewrite expressions).
+  Expr get root => _root;
+
   /// Evaluates this expression against [context], returning a [JetValue]
   /// (possibly a [JetError]).
   JetValue evaluate(EvalContext context) => evaluator.evaluate(_root, context);
