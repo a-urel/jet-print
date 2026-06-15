@@ -11,8 +11,10 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'invoice_sample.dart';
 import 'l10n/app_localizations.dart';
+import 'label_sample.dart';
 import 'nested_list_sample.dart';
 import 'rendered_invoice_example.dart';
+import 'rendered_label_example.dart';
 import 'rendered_nested_list_example.dart';
 
 Future<void> main() async {
@@ -196,7 +198,24 @@ class _PlaygroundHome extends StatelessWidget {
                   ),
                   child: Text(l10n.tabInvoice),
                 ),
-                _comingSoon('etiket', l10n.tabLabel, LucideIcons.tag),
+                ShadTab<String>(
+                  value: 'etiket',
+                  leading: const Icon(LucideIcons.tag, size: 16),
+                  expandContent: true,
+                  // A live designer over the address-label data — 100 records
+                  // chunked into rows of three, laid out as a 3-column label
+                  // sheet (label_sample.dart).
+                  content: _FillTabHeight(
+                    child: _DesignerTab(
+                      fonts: fonts,
+                      seed: labelSampleDefinition(),
+                      dataSchema: labelSchema,
+                      renderReport: (ReportDefinition def) =>
+                          renderLabelDefinition(definition: def, fonts: fonts),
+                    ),
+                  ),
+                  child: Text(l10n.tabLabel),
+                ),
                 _comingSoon('liste', l10n.tabList, LucideIcons.list),
                 _comingSoon('makbuz', l10n.tabReceipt, LucideIcons.receipt),
                 ShadTab<String>(
