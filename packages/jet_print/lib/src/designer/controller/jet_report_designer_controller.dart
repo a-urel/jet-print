@@ -806,6 +806,15 @@ class JetReportDesignerController extends ChangeNotifier {
         update: (GroupLevel g) => g.copyWith(key: key),
       ));
 
+  /// Renames group [groupId] (a display label only; groups are referenced by
+  /// id, not name) as one undoable step. A no-op for an unknown group or an
+  /// unchanged name.
+  void setGroupName(String groupId, String name) => _commit(UpdateGroupCommand(
+        groupId: groupId,
+        label: 'Set group name',
+        update: (GroupLevel g) => g.copyWith(name: name),
+      ));
+
   /// Sets group [groupId]'s `keepTogether` flag as one undoable step.
   void setGroupKeepTogether(String groupId, bool value) =>
       _commit(UpdateGroupCommand(
