@@ -1301,6 +1301,12 @@ abstract class JetPrintLocalizations {
   /// **'Add as list'**
   String get dataSourceAddList;
 
+  /// Data Source scalar field action: create a group level keyed to this field.
+  ///
+  /// In en, this message translates to:
+  /// **'Add as group'**
+  String get dataSourceAddGroup;
+
   /// Outline label for a nested list scope bound to a collection field.
   ///
   /// In en, this message translates to:

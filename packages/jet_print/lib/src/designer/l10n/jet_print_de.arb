@@ -221,6 +221,7 @@
   "bindingCollectionMissing": "Liste ist an kein Sammlungsfeld gebunden",
 
   "dataSourceAddList": "Als Liste hinzufügen",
+  "dataSourceAddGroup": "Als Gruppe hinzufügen",
 
   "outlineListLabel": "Liste: {field}",
   "outlineListUnbound": "Liste (ungebunden)"

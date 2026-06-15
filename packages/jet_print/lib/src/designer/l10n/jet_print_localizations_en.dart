@@ -620,6 +620,9 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get dataSourceAddList => 'Add as list';
 
   @override
+  String get dataSourceAddGroup => 'Add as group';
+
+  @override
   String outlineListLabel(String field) {
     return 'List: $field';
   }

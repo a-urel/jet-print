@@ -840,6 +840,10 @@
   "@dataSourceAddList": {
     "description": "Data Source collection field action: create a nested list bound to this collection."
   },
+  "dataSourceAddGroup": "Add as group",
+  "@dataSourceAddGroup": {
+    "description": "Data Source scalar field action: create a group level keyed to this field."
+  },
 
   "outlineListLabel": "List: {field}",
   "@outlineListLabel": {
