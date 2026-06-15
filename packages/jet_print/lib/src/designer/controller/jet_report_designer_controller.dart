@@ -802,7 +802,7 @@ class JetReportDesignerController extends ChangeNotifier {
   /// (spec 026), replacing the placeholder-key path. A no-op for an unknown
   /// scope or a blank [fieldName].
   void createGroupBoundToField(String scopeId, String fieldName) {
-    if (fieldName.isEmpty) return;
+    if (fieldName.trim().isEmpty) return;
     if (findScope(_document.definition, scopeId) == null) return;
     final String groupId = _ids.next('group');
     final Band header = Band(

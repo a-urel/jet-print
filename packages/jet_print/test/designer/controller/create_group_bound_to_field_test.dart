@@ -45,4 +45,14 @@ void main() {
     c.createGroupBoundToField(c.definition.body.root.id, '');
     expect(c.definition, before);
   });
+
+  test('leaves a valid definition (the \$F{field} key parses, no errors)', () {
+    final JetReportDesignerController c = JetReportDesignerController();
+    addTearDown(c.dispose);
+    c.createGroupBoundToField(c.definition.body.root.id, 'invoiceNo');
+    final bool anyErrors = c.diagnostics
+        .any((Diagnostic d) => d.severity == DiagnosticSeverity.error);
+    expect(anyErrors, isFalse,
+        reason: 'a field-bound group is born without diagnostic errors');
+  });
 }
