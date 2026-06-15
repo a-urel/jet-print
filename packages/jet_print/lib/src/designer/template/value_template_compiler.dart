@@ -14,6 +14,7 @@
 /// adds no evaluation code and no parallel render path (Constitution IV).
 library;
 
+import '../../expression/aggregate/aggregate_functions.dart';
 import '../../expression/ast.dart';
 import '../../expression/expression_exception.dart';
 import '../../expression/lexer.dart';
@@ -101,9 +102,14 @@ ValueParse parseValueField(String raw) {
 
   if (raw.length >= 2 && raw.startsWith('{') && raw.endsWith('}')) {
     try {
-      return BindingValue(_compileTemplate(raw.substring(1, raw.length - 1)));
+      final String expr = _compileTemplate(raw.substring(1, raw.length - 1));
+      Parser(tokenize(expr))
+          .parseExpression(); // validate (malformed → literal)
+      return BindingValue(expr);
     } on _TemplateError {
       // Malformed template → treat the whole value as literal.
+    } on ExpressionException {
+      // Malformed compiled expression → treat whole value as literal.
     }
   }
 
@@ -157,7 +163,16 @@ String _compileTemplate(String inner) {
       i = scan.next;
     } else if (_isAlpha(c)) {
       final int identEnd = _scanIdentEnd(inner, i);
-      if (identEnd < inner.length && inner[identEnd] == '[') {
+      if (identEnd < inner.length &&
+          inner[identEnd] == '(' &&
+          aggregateCalculationFor(inner.substring(i, identEnd)) != null) {
+        // Inline aggregate: FN( <expr with [field] tokens> ).
+        flushLiteral();
+        final String fn = inner.substring(i, identEnd).toUpperCase();
+        final _CallScan scan = _scanBalancedParens(inner, identEnd);
+        parts.add('$fn(${_compileArg(scan.body)})');
+        i = scan.next;
+      } else if (identEnd < inner.length && inner[identEnd] == '[') {
         // Function sugar: ident[field].
         flushLiteral();
         final String fn = inner.substring(i, identEnd).toUpperCase();
@@ -209,11 +224,56 @@ int _scanIdentEnd(String s, int start) {
   return i;
 }
 
+class _CallScan {
+  const _CallScan(this.body, this.next);
+  final String body; // text between the outer parens
+  final int next; // index just past the closing ')'
+}
+
+/// Scans `( … )` starting at the `(` at [open], honoring nested parens; returns
+/// the inner text and the index past the matching `)`.
+_CallScan _scanBalancedParens(String s, int open) {
+  int depth = 0;
+  for (int i = open; i < s.length; i++) {
+    if (s[i] == '(') {
+      depth++;
+    } else if (s[i] == ')') {
+      depth--;
+      if (depth == 0) return _CallScan(s.substring(open + 1, i), i + 1);
+    }
+  }
+  throw const _TemplateError();
+}
+
+/// Compiles an aggregate argument: replaces each `[name]` token with `$F{name}`
+/// and passes all other expression syntax through unchanged.
+String _compileArg(String arg) {
+  final StringBuffer out = StringBuffer();
+  int i = 0;
+  while (i < arg.length) {
+    if (arg[i] == '[') {
+      final _FieldScan scan = _scanField(arg, i);
+      out.write('\$F{${scan.name}}');
+      i = scan.next;
+    } else {
+      out.write(arg[i]);
+      i++;
+    }
+  }
+  return out.toString();
+}
+
 // ── expression → template token ──────────────────────────────────────────────
 
 /// Renders [root] as a display token, or null if it is outside the grammar.
 String? _exprToToken(Expr root) {
   if (root is FieldRefExpr) return '[${root.name}]';
+  final AggregateCall? agg = topLevelAggregate(root);
+  if (agg != null) {
+    final String? arg = _argToToken(agg.argument);
+    final String? fn = aggregateNameFor(agg.calculation);
+    if (arg != null && fn != null) return '{$fn($arg)}';
+  }
   if (root is CallExpr && root.name == 'CONCAT') {
     final String? body = _partsToToken(root.arguments);
     return body == null ? null : '{$body}';
@@ -249,6 +309,64 @@ String? _partToken(Expr e) {
   }
   return null;
 }
+
+/// Renders an aggregate-argument [Expr] back to `[field]`-token template text,
+/// or null if it contains a construct outside the round-trippable grammar.
+String? _argToToken(Expr e) {
+  if (e is FieldRefExpr) return '[${e.name}]';
+  if (e is ParamRefExpr) return '\$P{${e.name}}';
+  if (e is VariableRefExpr) return '\$V{${e.name}}';
+  if (e is LiteralExpr) {
+    final JetValue v = e.value;
+    if (v is JetNumber) return _formatArgNumber(v.value);
+    if (v is JetString) return '"${v.value.replaceAll('"', r'\"')}"';
+    if (v is JetBool) return v.value ? 'true' : 'false';
+    return null;
+  }
+  if (e is UnaryExpr) {
+    final String? operand = _argToToken(e.operand);
+    if (operand == null) return null;
+    return '${e.op == UnaryOp.negate ? '-' : '!'}$operand';
+  }
+  if (e is BinaryExpr) {
+    final String? l = _argToToken(e.left);
+    final String? r = _argToToken(e.right);
+    final String? op = _binarySymbol(e.op);
+    if (l == null || r == null || op == null) return null;
+    return '$l $op $r';
+  }
+  if (e is CallExpr) {
+    final List<String> args = <String>[];
+    for (final Expr a in e.arguments) {
+      final String? t = _argToToken(a);
+      if (t == null) return null;
+      args.add(t);
+    }
+    return '${e.name.toLowerCase()}(${args.join(', ')})';
+  }
+  return null;
+}
+
+/// Binary operator → source symbol for argument round-tripping.
+String? _binarySymbol(BinaryOp op) => switch (op) {
+      BinaryOp.add => '+',
+      BinaryOp.subtract => '-',
+      BinaryOp.multiply => '*',
+      BinaryOp.divide => '/',
+      BinaryOp.modulo => '%',
+      BinaryOp.equal => '==',
+      BinaryOp.notEqual => '!=',
+      BinaryOp.less => '<',
+      BinaryOp.lessEqual => '<=',
+      BinaryOp.greater => '>',
+      BinaryOp.greaterEqual => '>=',
+      BinaryOp.and => '&&',
+      BinaryOp.or => '||',
+    };
+
+/// Renders a numeric literal without a trailing `.0` for integers.
+String _formatArgNumber(double v) =>
+    v == v.truncateToDouble() ? v.toInt().toString() : v.toString();
 
 // ── escaping helpers ─────────────────────────────────────────────────────────
 

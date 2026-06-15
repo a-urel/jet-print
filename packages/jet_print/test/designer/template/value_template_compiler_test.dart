@@ -111,4 +111,33 @@ void main() {
       expect(reverseCompile(parsed.expression).text, '[name]');
     });
   });
+
+  group('inline aggregates (028)', () {
+    test('a single-field aggregate compiles to a call', () {
+      expect(parseValueField('{SUM([customerTotal])}'),
+          const BindingValue(r'SUM($F{customerTotal})'));
+    });
+
+    test('an expression-argument aggregate compiles', () {
+      expect(parseValueField('{SUM([qty] * [unitPrice])}'),
+          const BindingValue(r'SUM($F{qty} * $F{unitPrice})'));
+    });
+
+    test('case-insensitive function name normalizes to upper', () {
+      expect(parseValueField('{avg([orderTotal])}'),
+          const BindingValue(r'AVG($F{orderTotal})'));
+    });
+
+    test('reverse-compiles a stored aggregate back to the sugar', () {
+      expect(reverseCompile(r'SUM($F{customerTotal})'),
+          const ValueDisplay('{SUM([customerTotal])}'));
+    });
+
+    test('round-trips an expression-argument aggregate', () {
+      const stored = r'SUM($F{qty} * $F{unitPrice})';
+      final display = reverseCompile(stored);
+      expect(display, const ValueDisplay('{SUM([qty] * [unitPrice])}'));
+      expect(parseValueField(display.text), const BindingValue(stored));
+    });
+  });
 }
