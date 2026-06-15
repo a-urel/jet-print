@@ -93,7 +93,7 @@ const double kHandleHitSize = 16;
 const Map<DesignerToolType, JetSize> kDefaultElementSize =
     <DesignerToolType, JetSize>{
   DesignerToolType.text: JetSize(144, 18),
-  DesignerToolType.shape: JetSize(96, 48),
+  DesignerToolType.shape: JetSize(96, 96),
   DesignerToolType.image: JetSize(96, 96),
   DesignerToolType.barcode: JetSize(96, 48),
 };

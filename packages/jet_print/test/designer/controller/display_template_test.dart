@@ -83,8 +83,10 @@ void main() {
   test('a live resize shows the resized element while the model stays put', () {
     final JetReportDesignerController c = JetReportDesignerController();
     addTearDown(c.dispose);
+    // The detail band (200pt) has room for the default square to grow into; the
+    // page header (64pt) would clamp it, masking the live-resize behavior.
     c.createElement(DesignerToolType.shape,
-        bandId: _band0, at: const JetOffset(10, 10));
+        bandId: 'detail', at: const JetOffset(10, 10));
     final String id = c.selection.singleOrNull!;
     final JetRect committed = _boundsIn(c.definition, id);
 

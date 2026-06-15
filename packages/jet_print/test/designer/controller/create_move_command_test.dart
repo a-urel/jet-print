@@ -56,6 +56,17 @@ void main() {
       c.dispose();
     });
 
+    test('creates a shape with a square footprint (width == height)', () {
+      final JetReportDesignerController c = JetReportDesignerController()
+        ..open(_twoBandFixture());
+      // Dropped well inside the band so the default size is not clamped.
+      c.createElement(DesignerToolType.shape,
+          bandId: 'detail', at: const JetOffset(20, 20));
+      final JetRect b = _detail(c).last.bounds;
+      expect(b.width, b.height);
+      c.dispose();
+    });
+
     test('clamps a near-edge drop inside the band ∩ page content area', () {
       final JetReportDesignerController c = JetReportDesignerController()
         ..open(_twoBandFixture());
