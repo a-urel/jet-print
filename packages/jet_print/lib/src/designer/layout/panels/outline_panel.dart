@@ -1,6 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../data/data_schema.dart';
+import '../../../data/field_def.dart';
 import '../../../domain/band.dart';
 import '../../../domain/detail_scope.dart';
 import '../../../domain/elements/barcode_element.dart';
@@ -14,10 +16,12 @@ import '../../../domain/report_element.dart';
 import '../../controller/band_walker.dart';
 import '../../controller/jet_report_designer_controller.dart';
 import '../../controller/selection.dart';
+import '../../designer_schema_scope.dart';
 import '../../designer_scope.dart';
 import '../../l10n/band_type_label.dart';
 import '../../l10n/jet_print_localizations.dart';
 import '../region_chrome.dart';
+import 'scope_field_choices.dart';
 
 /// Subtle accent tint marking the row whose object is currently selected; matches
 /// the canvas selection accent at a low alpha so the highlight reads on white.
@@ -66,6 +70,7 @@ class _OutlinePanelState extends State<OutlinePanel> {
     final Selection selection = controller.selection;
     final ShadThemeData theme = ShadTheme.of(context);
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
+    final JetDataSchema? schema = DesignerSchemaScope.of(context);
 
     final List<Widget> rows = <Widget>[
       _branchRow(
@@ -95,7 +100,8 @@ class _OutlinePanelState extends State<OutlinePanel> {
         }
       }
       // The data body: the master scope and everything it owns.
-      _addScopeRows(rows, def.body.root, 1, controller, selection, theme, l10n);
+      _addScopeRows(
+          rows, def.body.root, 1, controller, selection, theme, l10n, schema);
       // Below the data body, in visual order.
       for (final Band? band in <Band?>[
         def.body.noData,
@@ -129,6 +135,7 @@ class _OutlinePanelState extends State<OutlinePanel> {
     Selection selection,
     ShadThemeData theme,
     JetPrintLocalizations l10n,
+    JetDataSchema? schema,
   ) {
     final bool isRoot = controller.definition.body.root.id == scope.id;
     final bool expanded = !_collapsed.contains(scope.id);
@@ -148,7 +155,7 @@ class _OutlinePanelState extends State<OutlinePanel> {
       onToggle: () => _toggle(scope.id),
       onSelect: () => controller.selectScope(scope.id),
       theme: theme,
-      actions: <Widget>[_addMenu(controller, scope, theme, l10n)],
+      actions: <Widget>[_addMenu(controller, scope, theme, l10n, schema)],
     ));
     if (!expanded) return;
     // Groups are not shown as separate nodes (Jasper-style): they surface
@@ -169,8 +176,8 @@ class _OutlinePanelState extends State<OutlinePanel> {
               rows, band, depth + 1, controller, selection, theme, l10n,
               reorderable: true);
         case NestedScope(scope: final DetailScope inner):
-          _addScopeRows(
-              rows, inner, depth + 1, controller, selection, theme, l10n);
+          _addScopeRows(rows, inner, depth + 1, controller, selection, theme,
+              l10n, schema);
       }
     }
     for (final GroupLevel group in scope.groups.reversed) {
@@ -190,6 +197,7 @@ class _OutlinePanelState extends State<OutlinePanel> {
     DetailScope scope,
     ShadThemeData theme,
     JetPrintLocalizations l10n,
+    JetDataSchema? schema,
   ) {
     final String scopeBase = 'jet_print.designer.outline.scope.${scope.id}';
     // Disambiguate the group-band options by name only when more than one group
@@ -197,6 +205,7 @@ class _OutlinePanelState extends State<OutlinePanel> {
     final bool many = scope.groups.length > 1;
     String groupLabel(String base, GroupLevel g) =>
         many ? '$base · ${g.name}' : base;
+    final List<FieldDef> groupFields = _groupFields(controller, scope, schema);
     final List<_MenuOption> options = <_MenuOption>[
       _MenuOption(
         optionKey: ValueKey<String>('$scopeBase.add.detail'),
@@ -211,7 +220,17 @@ class _OutlinePanelState extends State<OutlinePanel> {
       _MenuOption(
         optionKey: ValueKey<String>('$scopeBase.add.group'),
         label: l10n.outlineAddGroup,
-        onPick: () => controller.createGroupWithHeader(scope.id),
+        enabled: groupFields.isNotEmpty,
+        children: <_MenuOption>[
+          for (final FieldDef f in groupFields)
+            _MenuOption(
+              optionKey:
+                  ValueKey<String>('$scopeBase.add.group.field.${f.name}'),
+              label: f.name,
+              onPick: () =>
+                  controller.createGroupBoundToField(scope.id, f.name),
+            ),
+        ],
       ),
       for (final GroupLevel g in scope.groups)
         if (g.header == null)
@@ -236,6 +255,15 @@ class _OutlinePanelState extends State<OutlinePanel> {
       colors: theme.colorScheme,
     );
   }
+
+  /// The scalar fields a new group on [scope] may key on — the choices behind
+  /// the "Add group ▸" submenu (empty disables it).
+  List<FieldDef> _groupFields(
+    JetReportDesignerController controller,
+    DetailScope scope,
+    JetDataSchema? schema,
+  ) =>
+      scalarFieldsForScope(schema, controller.definition, scope.id);
 
   /// Appends a band branch (selectable → Properties) and, when expanded, a leaf
   /// per element it contains. Trailing lifecycle affordances (FR-012): move
@@ -516,17 +544,23 @@ class _OutlinePanelState extends State<OutlinePanel> {
   }
 }
 
-/// One option in a [_TypeMenu].
+/// One option in a [_TypeMenu]. A leaf option carries an [onPick]; a submenu
+/// parent carries [children] (and no [onPick]). [enabled] greys a parent out
+/// (e.g. "Add group" when no scalar field is in scope).
 class _MenuOption {
   const _MenuOption({
     required this.optionKey,
     required this.label,
-    required this.onPick,
+    this.onPick,
+    this.children = const <_MenuOption>[],
+    this.enabled = true,
   });
 
   final Key optionKey;
   final String label;
-  final VoidCallback onPick;
+  final VoidCallback? onPick;
+  final List<_MenuOption> children;
+  final bool enabled;
 }
 
 /// A compact popup that picks a target band type/slot: the trigger is a keyed
@@ -560,21 +594,26 @@ class _TypeMenuState extends State<_TypeMenu> {
     super.dispose();
   }
 
+  Widget _item(_MenuOption opt) => ShadContextMenuItem(
+        key: opt.optionKey,
+        enabled: opt.enabled,
+        onPressed: opt.children.isEmpty
+            ? () {
+                _menu.hide();
+                opt.onPick?.call();
+              }
+            : null,
+        items: <Widget>[for (final _MenuOption c in opt.children) _item(c)],
+        child: Text(opt.label),
+      );
+
   @override
   Widget build(BuildContext context) {
     final bool enabled = widget.options.isNotEmpty;
     return ShadContextMenu(
       controller: _menu,
       items: <Widget>[
-        for (final _MenuOption opt in widget.options)
-          ShadContextMenuItem(
-            key: opt.optionKey,
-            onPressed: () {
-              _menu.hide();
-              opt.onPick();
-            },
-            child: Text(opt.label),
-          ),
+        for (final _MenuOption opt in widget.options) _item(opt),
       ],
       child: MergeSemantics(
         child: Semantics(
