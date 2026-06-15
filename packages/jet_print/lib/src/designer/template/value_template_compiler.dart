@@ -329,8 +329,8 @@ String? _argToToken(Expr e) {
     return '${e.op == UnaryOp.negate ? '-' : '!'}$operand';
   }
   if (e is BinaryExpr) {
-    final String? l = _argToToken(e.left);
-    final String? r = _argToToken(e.right);
+    final String? l = _argOperand(e.left);
+    final String? r = _argOperand(e.right);
     final String? op = _binarySymbol(e.op);
     if (l == null || r == null || op == null) return null;
     return '$l $op $r';
@@ -347,6 +347,16 @@ String? _argToToken(Expr e) {
   return null;
 }
 
+/// Renders [e] as a binary operand, wrapping a nested binary in parens so the
+/// reversed token re-parses to the same tree (the forward `_compileArg` passes
+/// author-written parens through, so a parenthesized operand is reachable).
+String? _argOperand(Expr e) {
+  final String? t = _argToToken(e);
+  if (t == null) return null;
+  return e is BinaryExpr ? '($t)' : t;
+}
+
+// Mirrors ast.dart's private _binarySymbol — keep the two in sync.
 /// Binary operator → source symbol for argument round-tripping.
 String? _binarySymbol(BinaryOp op) => switch (op) {
       BinaryOp.add => '+',

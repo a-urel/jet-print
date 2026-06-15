@@ -139,5 +139,20 @@ void main() {
       expect(display, const ValueDisplay('{SUM([qty] * [unitPrice])}'));
       expect(parseValueField(display.text), const BindingValue(stored));
     });
+
+    test('a parenthesized operand round-trips losslessly', () {
+      const stored = r'SUM(($F{a} + $F{b}) * $F{c})';
+      final display = reverseCompile(stored);
+      expect(display, const ValueDisplay('{SUM(([a] + [b]) * [c])}'));
+      expect(parseValueField(display.text), const BindingValue(stored));
+    });
+
+    test('a malformed aggregate falls back to literal', () {
+      // Unterminated paren and two adjacent field tokens (no operator) are not
+      // valid templates/expressions → the whole value is treated as literal.
+      expect(parseValueField('{SUM([a}'), const LiteralValue('{SUM([a}'));
+      expect(parseValueField('{SUM([a][b])}'),
+          const LiteralValue('{SUM([a][b])}'));
+    });
   });
 }
