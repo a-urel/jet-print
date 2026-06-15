@@ -1,8 +1,9 @@
-/// Resolves the scalar (non-collection) fields a new group on a scope may key
-/// on: the fields in scope at [scopeId] per the data [schema], with collection
-/// fields excluded. Shared by the Outline "Add group" submenu and the Data
-/// Source scalar "＋ group" affordance so both offer identical, schema-correct
-/// choices. Empty when no schema is attached or the scope does not resolve.
+/// Scope-level field resolution for the Outline "+" menu submenus: the scalar
+/// fields a new group may key on ([scalarFieldsForScope]) and the collection
+/// fields a new child list may iterate ([collectionFieldsForScope]). Both read
+/// the fields resolvable at a scope's level and filter by kind, so the Outline
+/// menu offers only schema-correct, bindable choices. Empty when no schema is
+/// attached or the scope does not resolve.
 library;
 
 import '../../../data/binding_scope.dart';
@@ -12,7 +13,10 @@ import '../../../domain/detail_scope.dart';
 import '../../../domain/report_definition.dart';
 import '../../controller/band_walker.dart';
 
-List<FieldDef> scalarFieldsForScope(
+/// All fields resolvable at [scopeId]'s level — the shared core of the two
+/// filters below. Empty when no schema is attached or the scope does not
+/// resolve.
+List<FieldDef> _inScopeFields(
   JetDataSchema? schema,
   ReportDefinition def,
   String scopeId,
@@ -20,8 +24,28 @@ List<FieldDef> scalarFieldsForScope(
   if (schema == null) return const <FieldDef>[];
   final List<DetailScope> chain = scopePathToScope(def, scopeId);
   if (chain.isEmpty) return const <FieldDef>[];
-  return <FieldDef>[
-    for (final FieldDef f in fieldsInScopeForChain(schema, chain))
-      if (f.type != JetFieldType.collection) f,
-  ];
+  return fieldsInScopeForChain(schema, chain);
 }
+
+/// The scalar (non-collection) fields a new group on [scopeId] may key on.
+List<FieldDef> scalarFieldsForScope(
+  JetDataSchema? schema,
+  ReportDefinition def,
+  String scopeId,
+) =>
+    <FieldDef>[
+      for (final FieldDef f in _inScopeFields(schema, def, scopeId))
+        if (f.type != JetFieldType.collection) f,
+    ];
+
+/// The collection fields visible at [scopeId]'s level — the ones a direct child
+/// list of [scopeId] may iterate.
+List<FieldDef> collectionFieldsForScope(
+  JetDataSchema? schema,
+  ReportDefinition def,
+  String scopeId,
+) =>
+    <FieldDef>[
+      for (final FieldDef f in _inScopeFields(schema, def, scopeId))
+        if (f.type == JetFieldType.collection) f,
+    ];

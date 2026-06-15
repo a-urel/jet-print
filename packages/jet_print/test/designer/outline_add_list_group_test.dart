@@ -28,6 +28,15 @@ const JetDataSchema _collectionsOnly = JetDataSchema(
   ],
 );
 
+// A schema with no collection field anywhere — nothing for a list to bind to.
+const JetDataSchema _scalarsOnly = JetDataSchema(
+  name: 'Flat',
+  fields: <FieldDef>[
+    FieldDef('invoiceNo', type: JetFieldType.string),
+    FieldDef('customerName', type: JetFieldType.string),
+  ],
+);
+
 Future<void> _tapKey(WidgetTester tester, String key) async {
   final Finder f = find.byKey(ValueKey<String>(key));
   await tester.ensureVisible(f);
@@ -54,17 +63,38 @@ Future<void> _openOutline(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('scope "+" "Add list" creates a nested list with a detail band',
+  testWidgets('"Add list ▸ lines" creates a nested list bound to that collection',
       (WidgetTester tester) async {
     final JetReportDesignerController c =
         await pumpDesignerWith(tester, dataSchema: _invoice);
     await _openOutline(tester);
 
     await _tapKey(tester, 'jet_print.designer.outline.scope.root.add');
-    await _tapKey(tester, 'jet_print.designer.outline.scope.root.add.list');
+    await _hover(tester, 'jet_print.designer.outline.scope.root.add.list');
+    await _tapKey(tester,
+        'jet_print.designer.outline.scope.root.add.list.field.lines');
+
+    final List<NestedScope> nested =
+        c.definition.body.root.children.whereType<NestedScope>().toList();
+    expect(nested, hasLength(1));
+    expect(nested.single.scope.collectionField, 'lines',
+        reason: 'the list is born bound to the picked collection');
+  });
+
+  testWidgets('"Add list" creates nothing when no collection is in scope',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c =
+        await pumpDesignerWith(tester, dataSchema: _scalarsOnly);
+    await _openOutline(tester);
+
+    await _tapKey(tester, 'jet_print.designer.outline.scope.root.add');
+    await _hover(tester, 'jet_print.designer.outline.scope.root.add.list');
 
     expect(
-        c.definition.body.root.children.whereType<NestedScope>(), hasLength(1));
+        find.byKey(const ValueKey<String>(
+            'jet_print.designer.outline.scope.root.add.list.field.invoiceNo')),
+        findsNothing);
+    expect(c.definition.body.root.children.whereType<NestedScope>(), isEmpty);
   });
 
   testWidgets('"Add group" submenu creates a group bound to the picked field',

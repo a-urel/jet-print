@@ -206,6 +206,8 @@ class _OutlinePanelState extends State<OutlinePanel> {
     String groupLabel(String base, GroupLevel g) =>
         many ? '$base · ${g.name}' : base;
     final List<FieldDef> groupFields = _groupFields(controller, scope, schema);
+    final List<FieldDef> listCollections =
+        collectionFieldsForScope(schema, controller.definition, scope.id);
     final List<_MenuOption> options = <_MenuOption>[
       _MenuOption(
         optionKey: ValueKey<String>('$scopeBase.add.detail'),
@@ -215,7 +217,17 @@ class _OutlinePanelState extends State<OutlinePanel> {
       _MenuOption(
         optionKey: ValueKey<String>('$scopeBase.add.list'),
         label: l10n.outlineAddList,
-        onPick: () => controller.createListWithBand(scope.id),
+        enabled: listCollections.isNotEmpty,
+        children: <_MenuOption>[
+          for (final FieldDef f in listCollections)
+            _MenuOption(
+              optionKey:
+                  ValueKey<String>('$scopeBase.add.list.field.${f.name}'),
+              label: f.name,
+              onPick: () => controller.createListWithBand(scope.id,
+                  collectionField: f.name),
+            ),
+        ],
       ),
       _MenuOption(
         optionKey: ValueKey<String>('$scopeBase.add.group'),
