@@ -795,6 +795,33 @@ class JetReportDesignerController extends ChangeNotifier {
     ));
   }
 
+  /// Creates a group level on scope [scopeId] keyed to scalar field [fieldName]
+  /// (`$F{fieldName}`) and named after it, together with its header band, and
+  /// selects the header band — as ONE undoable step. The data-bound creation
+  /// path: every authored group is born resolvable against the data source
+  /// (spec 026), replacing the placeholder-key path. A no-op for an unknown
+  /// scope or a blank [fieldName].
+  void createGroupBoundToField(String scopeId, String fieldName) {
+    if (fieldName.isEmpty) return;
+    if (findScope(_document.definition, scopeId) == null) return;
+    final String groupId = _ids.next('group');
+    final Band header = Band(
+        id: _ids.next('band'),
+        type: BandType.groupHeader,
+        height: _defaultBandHeight(BandType.groupHeader));
+    final GroupLevel group = GroupLevel(
+      id: groupId,
+      name: fieldName,
+      key: '\$F{$fieldName}',
+      header: header,
+    );
+    _commit(DefinitionEditCommand(
+      label: 'Add group',
+      transform: (ReportDefinition d) => addGroup(d, scopeId, group),
+      selection: Selection.band(header.id),
+    ));
+  }
+
   /// Removes the group [groupId] (and its header/footer bands) as one undoable
   /// step, clearing the selection.
   void deleteGroup(String groupId) => _commit(DeleteGroupCommand(groupId));
