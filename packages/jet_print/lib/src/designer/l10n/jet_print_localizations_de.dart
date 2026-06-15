@@ -250,6 +250,9 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   String get propertiesGroup => 'Gruppe';
 
   @override
+  String get propertiesGroupName => 'Gruppenname';
+
+  @override
   String get propertiesGroupNewPage => 'Auf neuer Seite beginnen';
 
   @override

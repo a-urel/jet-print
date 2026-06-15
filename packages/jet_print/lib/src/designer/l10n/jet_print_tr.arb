@@ -93,6 +93,7 @@
   "errorUnresolvedToken": "#HATA",
   "propertiesBinding": "Bağlantı",
   "propertiesGroup": "Grup",
+  "propertiesGroupName": "Grup adı",
   "propertiesGroupNewPage": "Yeni sayfa başlat",
   "propertiesGroupKey": "Grup anahtarı",
   "propertiesGroupKeepTogether": "Birlikte tut",

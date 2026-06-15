@@ -468,6 +468,42 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     ];
   }
 
+  /// The group key shown in the inspector: a simple `$F{field}` reads as the
+  /// editable `[field]` shorthand; any other expression (a composite, or the
+  /// placeholder constant) is shown verbatim and editable (NOT the read-only
+  /// `{…}` token `reverseCompile` would produce).
+  String _groupKeyDisplay(String key) {
+    final ValueDisplay d = reverseCompile(key);
+    return d.editable ? d.text : key;
+  }
+
+  /// Maps the group-key field input to a stored 005a expression: a `[field]`
+  /// shorthand compiles to `$F{field}`; any other input is the expression
+  /// verbatim (it is already 005a, e.g. `$F{x}`, `YEAR($F{date})`, `0`).
+  String _compileKey(String input) => switch (parseValueField(input)) {
+        BindingValue(:final String expression) => expression,
+        LiteralValue(:final String text) => text,
+      };
+
+  /// The scalar (non-collection) fields a group key can reference, resolved at
+  /// the group's header (or footer) band level — the scalar counterpart of the
+  /// list collection picker.
+  List<FieldDef> _groupKeyChoices(
+    JetDataSchema? schema,
+    JetReportDesignerController controller,
+    GroupLevel group,
+  ) {
+    if (schema == null) return const <FieldDef>[];
+    final String? bandId = group.header?.id ?? group.footer?.id;
+    if (bandId == null) return const <FieldDef>[];
+    final List<DetailScope> chain =
+        scopePathToBand(controller.definition, bandId);
+    return <FieldDef>[
+      for (final FieldDef f in fieldsInScopeForChain(schema, chain))
+        if (f.type != JetFieldType.collection) f,
+    ];
+  }
+
   /// The type of the field a text element binds, when its value is a single
   /// `[field]` binding to a field of known type in scope — used to gate the
   /// Format presets to the ones that can apply. Returns null (every preset
@@ -568,7 +604,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
           theme: theme,
         ))
         ..add(const SizedBox(height: 14))
-        ..addAll(_groupSection(controller, group.id, theme, l10n));
+        ..addAll(_groupSection(controller, group.id, theme, l10n, schema));
     }
     return children;
   }
@@ -599,25 +635,39 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     ];
   }
 
-  /// The group's editable key + the three pagination flags, surfaced on the
-  /// group's carrier band by [_bandInspector]. Each flag writes through to the
-  /// one [GroupLevel] — the single source of truth (spec 024 / C11).
+  /// The group's editable name + key (with field picker) + the three pagination
+  /// flags, surfaced on the group's carrier band by [_bandInspector]. Each edit
+  /// writes through to the one [GroupLevel] — the single source of truth
+  /// (spec 024 / C11).
   List<Widget> _groupSection(
     JetReportDesignerController controller,
     String groupId,
     ShadThemeData theme,
     JetPrintLocalizations l10n,
+    JetDataSchema? schema,
   ) {
     final GroupLevel? group = findGroup(controller.definition, groupId);
     if (group == null) return const <Widget>[];
     return <Widget>[
+      SectionLabel(l10n.propertiesGroupName),
+      const SizedBox(height: 8),
+      _TextInput(
+        fieldKey: const ValueKey<String>('$_p.field.groupName'),
+        value: group.name,
+        placeholder: l10n.propertiesGroupName,
+        onCommit: (String v) => controller.setGroupName(groupId, v),
+      ),
+      const SizedBox(height: 12),
       SectionLabel(l10n.propertiesGroupKey),
       const SizedBox(height: 8),
       _TextInput(
         fieldKey: const ValueKey<String>('$_p.field.groupKey'),
-        value: group.key,
+        value: _groupKeyDisplay(group.key),
         placeholder: l10n.bindingExpressionHint,
-        onCommit: (String v) => controller.setGroupKey(groupId, v),
+        fields: _groupKeyChoices(schema, controller, group),
+        pickerTooltip: l10n.bindingFieldPickerTooltip,
+        pickerKeyPrefix: '$_p.field.groupKey.pick',
+        onCommit: (String v) => controller.setGroupKey(groupId, _compileKey(v)),
       ),
       const SizedBox(height: 12),
       // keepTogether + reprintHeaderOnEachPage are implemented and golden-tested
@@ -1407,21 +1457,37 @@ class _PresetDropdownState extends State<_PresetDropdown> {
 
 /// A plain single-line text field bound to a model string [value], committing
 /// the trimmed text on Enter or blur — each commit one undoable model edit. Used
-/// for the report's primary Name property. A blank entry reverts to the current
-/// value (the report keeps a name); while the field is focused the live value is
-/// never written over the user's in-progress text.
+/// for the report's primary Name property and the group name/key fields. A blank
+/// entry reverts to the current value (the report keeps a name); while the field
+/// is focused the live value is never written over the user's in-progress text.
+///
+/// When [fields] is non-empty, a field-picker suffix button is shown; picking a
+/// field inserts the `[field]` shorthand and commits immediately.
 class _TextInput extends StatefulWidget {
   const _TextInput({
     required this.fieldKey,
     required this.value,
     required this.placeholder,
     required this.onCommit,
+    this.fields = const <FieldDef>[],
+    this.pickerTooltip = '',
+    this.pickerKeyPrefix = '',
   });
 
   final Key fieldKey;
   final String value;
   final String placeholder;
   final ValueChanged<String> onCommit;
+
+  /// In-scope fields offered by an optional suffix picker; empty ⇒ no picker.
+  /// Picking inserts the `[field]` shorthand (the caller compiles it).
+  final List<FieldDef> fields;
+
+  /// Tooltip for the picker button (used only when [fields] is non-empty).
+  final String pickerTooltip;
+
+  /// Key namespace for the picker test seam (used only when [fields] is non-empty).
+  final String pickerKeyPrefix;
 
   @override
   State<_TextInput> createState() => _TextInputState();
@@ -1431,6 +1497,7 @@ class _TextInputState extends State<_TextInput> {
   late final TextEditingController _controller =
       TextEditingController(text: widget.value);
   final FocusNode _focus = FocusNode();
+  final ShadPopoverController _picker = ShadPopoverController();
 
   @override
   void initState() {
@@ -1461,9 +1528,16 @@ class _TextInputState extends State<_TextInput> {
     if (text != widget.value) widget.onCommit(text);
   }
 
+  void _pick(String field) {
+    _picker.hide();
+    _controller.text = '[$field]';
+    _commit();
+  }
+
   @override
   void dispose() {
     _focus.removeListener(_onFocusChange);
+    _picker.dispose();
     _focus.dispose();
     _controller.dispose();
     super.dispose();
@@ -1477,6 +1551,15 @@ class _TextInputState extends State<_TextInput> {
       focusNode: _focus,
       placeholder: Text(widget.placeholder),
       onSubmitted: (_) => _commit(),
+      trailing: widget.fields.isEmpty
+          ? null
+          : _FieldPicker(
+              controller: _picker,
+              fields: widget.fields,
+              tooltip: widget.pickerTooltip,
+              keyPrefix: widget.pickerKeyPrefix,
+              onPick: _pick,
+            ),
     );
   }
 }

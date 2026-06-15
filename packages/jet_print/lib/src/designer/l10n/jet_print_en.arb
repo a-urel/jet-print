@@ -335,6 +335,10 @@
   "@propertiesGroup": {
     "description": "Properties panel section label for the selected group band's group settings (023)."
   },
+  "propertiesGroupName": "Group name",
+  "@propertiesGroupName": {
+    "description": "Inspector label for a group's display name (editable)."
+  },
   "propertiesGroupNewPage": "Start on new page",
   "@propertiesGroupNewPage": {
     "description": "Properties panel toggle label: start each group instance on a new page (023)."

@@ -93,6 +93,7 @@
   "errorUnresolvedToken": "#FEHLER",
   "propertiesBinding": "Bindung",
   "propertiesGroup": "Gruppe",
+  "propertiesGroupName": "Gruppenname",
   "propertiesGroupNewPage": "Auf neuer Seite beginnen",
   "propertiesGroupKey": "Gruppenschlüssel",
   "propertiesGroupKeepTogether": "Zusammenhalten",

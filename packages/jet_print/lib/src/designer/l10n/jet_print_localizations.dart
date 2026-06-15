@@ -581,6 +581,12 @@ abstract class JetPrintLocalizations {
   /// **'Group'**
   String get propertiesGroup;
 
+  /// Inspector label for a group's display name (editable).
+  ///
+  /// In en, this message translates to:
+  /// **'Group name'**
+  String get propertiesGroupName;
+
   /// Properties panel toggle label: start each group instance on a new page (023).
   ///
   /// In en, this message translates to:

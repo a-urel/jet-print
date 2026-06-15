@@ -250,6 +250,9 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get propertiesGroup => 'Grup';
 
   @override
+  String get propertiesGroupName => 'Grup adı';
+
+  @override
   String get propertiesGroupNewPage => 'Yeni sayfa başlat';
 
   @override
