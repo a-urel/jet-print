@@ -11,7 +11,9 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'invoice_sample.dart';
 import 'l10n/app_localizations.dart';
+import 'nested_list_sample.dart';
 import 'rendered_invoice_example.dart';
+import 'rendered_nested_list_example.dart';
 
 Future<void> main() async {
   // Loading the bundled font assets needs the binding up before runApp.
@@ -167,7 +169,13 @@ class _PlaygroundHome extends StatelessWidget {
                   expandContent: true,
                   content: _FillTabHeight(
                     child: _DesignerTab(
-                        fonts: fonts, seed: emptyDesignDefinition()),
+                      fonts: fonts,
+                      seed: emptyDesignDefinition(),
+                      dataSchema: invoiceSchema,
+                      renderReport: (ReportDefinition def) =>
+                          renderInvoiceDefinition(
+                              definition: def, fonts: fonts),
+                    ),
                   ),
                   child: Text(l10n.tabEmpty),
                 ),
@@ -178,15 +186,37 @@ class _PlaygroundHome extends StatelessWidget {
                   expandContent: true,
                   content: _FillTabHeight(
                     child: _DesignerTab(
-                        fonts: fonts, seed: invoiceSampleDefinition()),
+                      fonts: fonts,
+                      seed: invoiceSampleDefinition(),
+                      dataSchema: invoiceSchema,
+                      renderReport: (ReportDefinition def) =>
+                          renderInvoiceDefinition(
+                              definition: def, fonts: fonts),
+                    ),
                   ),
                   child: Text(l10n.tabInvoice),
                 ),
                 _comingSoon('etiket', l10n.tabLabel, LucideIcons.tag),
                 _comingSoon('liste', l10n.tabList, LucideIcons.list),
                 _comingSoon('makbuz', l10n.tabReceipt, LucideIcons.receipt),
-                _comingSoon(
-                    'nested-lists', l10n.tabNestedLists, LucideIcons.listTree),
+                ShadTab<String>(
+                  value: 'nested-lists',
+                  leading: const Icon(LucideIcons.listTree, size: 16),
+                  expandContent: true,
+                  // A live designer over the customers data — Customer ▸ Order ▸
+                  // Line, two nested scopes deep (nested_list_sample.dart).
+                  content: _FillTabHeight(
+                    child: _DesignerTab(
+                      fonts: fonts,
+                      seed: nestedListsDefinition(),
+                      dataSchema: customersSchema,
+                      renderReport: (ReportDefinition def) =>
+                          renderNestedListsDefinition(
+                              definition: def, fonts: fonts),
+                    ),
+                  ),
+                  child: Text(l10n.tabNestedLists),
+                ),
               ],
             ),
           ),
@@ -259,15 +289,31 @@ class _FillTabHeight extends StatelessWidget {
 /// with `file_selector`, Open decodes a picked file back into the controller.
 /// The library itself performs no file I/O — this is the consumer's job.
 class _DesignerTab extends StatefulWidget {
-  const _DesignerTab({required this.fonts, required this.seed});
+  const _DesignerTab({
+    required this.fonts,
+    required this.seed,
+    required this.dataSchema,
+    required this.renderReport,
+  });
 
   /// The host-contributed fonts, shared by the designer (picker + canvas) and
   /// the render callback (preview + export) — see [JetPrintPlaygroundApp.fonts].
   final List<JetFontFamily> fonts;
 
-  /// The initial design the controller opens with (the invoice sample, or a
-  /// blank canvas) — authored in the reified band model (spec 024).
+  /// The initial design the controller opens with (the invoice sample, the
+  /// nested-list sample, or a blank canvas) — authored in the reified band
+  /// model (spec 024).
   final ReportDefinition seed;
+
+  /// The data structure bound in this tab — drives the field palette and
+  /// binding validation. Each sample brings its own schema (invoice vs.
+  /// customers).
+  final JetDataSchema dataSchema;
+
+  /// Renders the live definition for the preview/export seam — the sample's own
+  /// render entry point ([renderInvoiceDefinition] / [renderNestedListsDefinition]),
+  /// closed over [fonts].
+  final ReportRenderCallback renderReport;
 
   @override
   State<_DesignerTab> createState() => _DesignerTabState();
@@ -332,7 +378,8 @@ class _DesignerTabState extends State<_DesignerTab> {
   Widget build(BuildContext context) {
     return JetReportWorkspace(
       controller: _controller,
-      dataSchema: invoiceSchema,
+      // Each sample brings its own data structure (invoice vs. customers).
+      dataSchema: widget.dataSchema,
       // The SAME host-font list reaches the designer picker/canvas here and the
       // engine via renderReport below (FR-012).
       fonts: widget.fonts,
@@ -342,8 +389,7 @@ class _DesignerTabState extends State<_DesignerTab> {
       // Preview renders the LIVE definition the designer hands over, through the
       // native `renderDefinition` path (spec 024) — so every edit on the reified
       // canvas shows up in the preview.
-      renderReport: (ReportDefinition definition) =>
-          renderInvoiceDefinition(definition: definition, fonts: widget.fonts),
+      renderReport: widget.renderReport,
       onSaveRequested: _save,
       onOpenRequested: _open,
       onExportPdf: _exportPdf,

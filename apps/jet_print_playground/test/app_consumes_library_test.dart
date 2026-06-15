@@ -27,8 +27,8 @@ void main() {
   );
 
   testWidgets(
-    'the shell shows six tabs: the empty + invoice designers plus four '
-    'placeholders',
+    'the shell shows six tabs: the empty + invoice + nested-list designers '
+    'plus three placeholders',
     (WidgetTester tester) async {
       await tester.pumpWidget(const JetPrintPlaygroundApp());
 
@@ -49,11 +49,12 @@ void main() {
             reason: '"$label" tab label');
       }
       // The Invoice tab is selected on launch, so its designer is on-screen; the
-      // empty designer is kept alive Offstage and skipped by the default finder.
+      // empty and nested-list designers are kept alive Offstage and skipped by
+      // the default finder.
       expect(find.byType(JetReportDesigner), findsOneWidget);
-      // The four placeholder demos are each wired with a localized "Coming soon"
+      // The three placeholder demos are each wired with a localized "Coming soon"
       // card, built and kept alive Offstage by ShadTabs' default maintainState.
-      expect(find.text('Coming soon', skipOffstage: false), findsNWidgets(4));
+      expect(find.text('Coming soon', skipOffstage: false), findsNWidgets(3));
     },
   );
 
