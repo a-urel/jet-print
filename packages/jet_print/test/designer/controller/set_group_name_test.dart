@@ -4,7 +4,7 @@ import 'package:jet_print/jet_print.dart';
 void main() {
   ReportDefinition grouped() {
     final JetReportDesignerController c = JetReportDesignerController();
-    c.createGroupWithHeader(c.definition.body.root.id);
+    c.createGroupBoundToField(c.definition.body.root.id, 'invoiceNo');
     final ReportDefinition d = c.definition;
     c.dispose();
     return d;
@@ -21,7 +21,7 @@ void main() {
     expect(c.definition.body.root.groups.single.name, 'invoice');
     expect(c.canUndo, isTrue);
     c.undo();
-    expect(c.definition.body.root.groups.single.name, groupId);
+    expect(c.definition.body.root.groups.single.name, 'invoiceNo');
   });
 
   test('setGroupName is a no-op for an unknown group', () {

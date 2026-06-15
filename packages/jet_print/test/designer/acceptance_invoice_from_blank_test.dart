@@ -12,10 +12,9 @@ void main() {
 
     final String root = c.definition.body.root.id;
 
-    // 1) Group the records by invoice (Outline "Add group" → edit key in band).
-    c.createGroupWithHeader(root);
-    final String groupId = c.definition.body.root.groups.single.id;
-    c.setGroupKey(groupId, r'$F{invoiceNo}');
+    // 1) Group the records by invoice (Outline "Add group ▸ invoiceNo", or the
+    //    Data Source "+ group" on invoiceNo — both bind the key at creation).
+    c.createGroupBoundToField(root, 'invoiceNo');
 
     // 2) Add the line-items list (Data Source "+ as list" on `lines`).
     c.createListWithBand(root, collectionField: 'lines');

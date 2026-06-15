@@ -1,5 +1,5 @@
 // The group source: a rename field and a schema field-picker on the key that
-// stores $F{field}; manual expression edits and the placeholder '0' key stay
+// stores $F{field}; manual expression edits and a non-field (constant) key stay
 // editable.
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -23,7 +23,8 @@ Future<JetReportDesignerController> _withGroupSelected(
     WidgetTester tester) async {
   final JetReportDesignerController c =
       await pumpDesignerWith(tester, dataSchema: _invoice);
-  c.createGroupWithHeader(c.definition.body.root.id); // selects the header band
+  c.createGroupBoundToField(
+      c.definition.body.root.id, 'invoiceNo'); // selects the header band
   await openPropertiesTab(tester);
   await tester.pumpAndSettle();
   return c;
@@ -45,9 +46,19 @@ void main() {
   });
 
   testWidgets(
-      'the placeholder key 0 shows editable and the picker stores \$F{field}',
+      'a non-field key shows editable and the picker stores \$F{field}',
       (WidgetTester tester) async {
-    final JetReportDesignerController c = await _withGroupSelected(tester);
+    // Groups are born bound; to exercise the "non-field key stays editable"
+    // path, set a constant key manually (before the first pump so the input
+    // seeds with it).
+    final JetReportDesignerController c = JetReportDesignerController();
+    c.createGroupBoundToField(c.definition.body.root.id, 'invoiceNo');
+    c.setGroupKey(c.definition.body.root.groups.single.id, '0');
+    // pumpDesignerWith registers the dispose tear-down for the passed controller.
+    await pumpDesignerWith(tester, controller: c, dataSchema: _invoice);
+    await openPropertiesTab(tester);
+    await tester.pumpAndSettle();
+
     final ShadInput keyInput = tester.widget<ShadInput>(find.byKey(
         const ValueKey<String>(
             'jet_print.designer.properties.field.groupKey')));
