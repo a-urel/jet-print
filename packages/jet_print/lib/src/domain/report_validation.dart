@@ -34,8 +34,10 @@ import 'report_element.dart';
 /// * I7 representable-but-not-yet-rendered shapes (per-scope grouping; multiple
 ///   per-row bands) — reported as **info**.
 /// * I8 inline aggregates (`SUM`/`AVG`/… top-level calls) appear only in the
-///   summary band or a root group footer; anywhere else is an error, because
-///   only those bands are expanded by the aggregate synthesizer.
+///   summary band, a root group footer, or a nested-scope footer (spec 029, a
+///   collection total); anywhere else is an error, because only those bands are
+///   expanded by the aggregate synthesizer. A scope `footer` is slot-checked
+///   (`groupFooter`) and is forbidden on the root (which has no collection).
 List<Diagnostic> validate(ReportDefinition def) {
   final List<Diagnostic> out = <Diagnostic>[];
   final Map<String, int> idCounts = <String, int>{};
@@ -105,6 +107,19 @@ List<Diagnostic> validate(ReportDefinition def) {
     } else if (!isRoot && scope.collectionField == null) {
       out.add(Diagnostic(DiagnosticSeverity.error,
           'nested scope "${scope.id}" is missing its collectionField'));
+    }
+
+    // Spec 029 — a nested scope may carry a footer (a collection total). The root
+    // scope must not (it has no collection). The footer is slot-checked and is an
+    // aggregate sink; it is NOT record-blind (it renders against the parent row).
+    if (isRoot) {
+      if (scope.footer != null) {
+        out.add(Diagnostic(DiagnosticSeverity.error,
+            'root scope "${scope.id}" must not carry a footer'));
+      }
+    } else {
+      slotBand(scope.footer, BandType.groupFooter);
+      aggregateBand(scope.footer, supported: true);
     }
 
     // I7 — per-scope grouping is representable but not yet rendered.

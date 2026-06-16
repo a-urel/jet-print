@@ -328,5 +328,71 @@ void main() {
               'a non-root (nested-scope) group footer is not an aggregate sink');
       expect(aggErrors.single.elementId, 'nf.el');
     });
+
+    test('a footer on the ROOT scope is an error', () {
+      final def = ReportDefinition(
+        name: 'r',
+        page: PageFormat.a4Portrait,
+        body: ReportBody(
+            root: DetailScope(
+                id: 'root',
+                footer:
+                    Band(id: 'rf', type: BandType.groupFooter, height: 12))),
+      );
+      expect(
+        validate(def)
+            .where((d) => d.severity == DiagnosticSeverity.error)
+            .map((d) => d.message),
+        anyElement(contains('root')),
+      );
+    });
+
+    test('an inline aggregate in a NESTED-scope footer is valid (a sink)', () {
+      final def = ReportDefinition(
+        name: 'r',
+        page: PageFormat.a4Portrait,
+        body: ReportBody(
+            root: DetailScope(id: 'root', children: <ScopeNode>[
+          NestedScope(DetailScope(
+              id: 'lines',
+              collectionField: 'lines',
+              footer: Band(
+                  id: 'lf',
+                  type: BandType.groupFooter,
+                  height: 12,
+                  elements: <ReportElement>[
+                    TextElement(
+                      id: 'ot',
+                      bounds: const JetRect(x: 0, y: 0, width: 100, height: 12),
+                      text: 'ot',
+                      expression: r'SUM($F{lineTotal})',
+                    ),
+                  ]))),
+        ])),
+      );
+      expect(
+          validate(def).where((d) => d.message.contains('aggregate')), isEmpty,
+          reason: 'a nested-scope footer is an aggregate sink in B1');
+    });
+
+    test('a nested footer with the wrong band type is a slot error', () {
+      final def = ReportDefinition(
+        name: 'r',
+        page: PageFormat.a4Portrait,
+        body: ReportBody(
+            root: DetailScope(id: 'root', children: <ScopeNode>[
+          NestedScope(DetailScope(
+              id: 'lines',
+              collectionField: 'lines',
+              footer: Band(id: 'lf', type: BandType.detail, height: 12))),
+        ])),
+      );
+      expect(
+        validate(def)
+            .where((d) => d.severity == DiagnosticSeverity.error)
+            .map((d) => d.message),
+        anyElement(contains('groupFooter')),
+      );
+    });
   });
 }
