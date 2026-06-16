@@ -66,21 +66,15 @@ const JetDataSchema customersSchema = JetDataSchema(
 /// * Under it, `orders` is a [NestedScope]; each order emits one per-row
 ///   `detail` band (number · date · its `$F{orderTotal}` · the line column
 ///   titles) followed by the `lines` [NestedScope] — the list within the list.
-/// * [ReportBody.summary] surfaces the single aggregate the engine computes
-///   live: `grandTotal`, a [JetCalculation.sum] over each customer's
-///   `$F{customerTotal}` that resets once per report
-///   ([VariableResetScope.report]).
+/// * [ReportBody.summary] surfaces the one aggregate the engine computes live:
+///   the grand total, authored **inline** in the summary element as
+///   `{SUM([customerTotal])}` (stored `SUM($F{customerTotal})`). At fill time
+///   the engine expands that inline aggregate into a hidden report-scoped
+///   variable — a [JetCalculation.sum] over each customer's `$F{customerTotal}`
+///   resetting once per report — so no `ReportVariable` need be declared.
 ReportDefinition nestedListsDefinition() => const ReportDefinition(
       name: 'Nested Lists',
       page: PageFormat.a4Portrait,
-      variables: <ReportVariable>[
-        ReportVariable(
-          name: 'grandTotal',
-          expression: r'$F{customerTotal}',
-          calculation: JetCalculation.sum,
-          resetScope: VariableResetScope.report,
-        ),
-      ],
       furniture: PageFurniture(
         pageHeader: Band(
           id: 'pageHeader',
@@ -133,7 +127,7 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
               text: 'grandTotal',
               style: JetTextStyle(
                   align: JetTextAlign.right, weight: JetFontWeight.bold),
-              expression: r'$V{grandTotal}',
+              expression: r'SUM($F{customerTotal})',
               format: '#,##0.00',
             ),
           ],

@@ -198,7 +198,13 @@ List<Diagnostic> validate(ReportDefinition def) {
 Set<String> _recordFieldRefs(ReportElement el) {
   if (el is TextElement && el.expression != null) {
     try {
-      return Expression.parse(el.expression!).references.fields;
+      final Expression expr = Expression.parse(el.expression!);
+      // A top-level inline aggregate (e.g. `SUM($F{total})`) folds its operand
+      // over the data rows — its inner field refs are aggregate operands, not a
+      // record-blind binding, so they don't count here. (Bands that aren't an
+      // aggregate sink reject the aggregate itself via the I8 check.)
+      if (topLevelAggregate(expr.root) != null) return const <String>{};
+      return expr.references.fields;
     } on ExpressionException {
       return const <String>{};
     }

@@ -239,6 +239,10 @@ void main() {
       );
       expect(
           validate(def).where((d) => d.message.contains('aggregate')), isEmpty);
+      // The aggregate's operand field is folded over data rows, so the
+      // record-blind summary is NOT flagged for referencing it: clean overall.
+      expect(validate(def), isEmpty,
+          reason: 'a summary inline aggregate validates completely clean');
     });
 
     test(
