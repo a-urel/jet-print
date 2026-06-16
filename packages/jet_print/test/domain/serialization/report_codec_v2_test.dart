@@ -300,6 +300,52 @@ void main() {
       expect(nested.scope.totals, const <ScopeTotal>[]);
     });
 
+    Map<String, Object?> defWithTotals(Object? totals) => <String, Object?>{
+          'schemaVersion': 2,
+          'name': 'x',
+          'page': PageFormat.a4Portrait.toJson(),
+          'body': <String, Object?>{
+            'root': <String, Object?>{
+              'id': 'root',
+              'totals': totals,
+            },
+          },
+        };
+
+    test('rejects a non-list "totals"', () {
+      expect(
+        () => JetReportFormat.decodeDefinition(
+            defWithTotals(<String, Object?>{'name': 'x'})),
+        throwsA(isA<ReportFormatException>()),
+      );
+    });
+
+    test('rejects a non-map "totals" entry', () {
+      expect(
+        () => JetReportFormat.decodeDefinition(
+            defWithTotals(<Object?>['not a map'])),
+        throwsA(isA<ReportFormatException>()),
+      );
+    });
+
+    test('rejects a "totals" entry missing "name"', () {
+      expect(
+        () => JetReportFormat.decodeDefinition(defWithTotals(<Object?>[
+          <String, Object?>{'expression': r'SUM($F{lineTotal})'},
+        ])),
+        throwsA(isA<ReportFormatException>()),
+      );
+    });
+
+    test('rejects a "totals" entry missing "expression"', () {
+      expect(
+        () => JetReportFormat.decodeDefinition(defWithTotals(<Object?>[
+          <String, Object?>{'name': 'orderTotal'},
+        ])),
+        throwsA(isA<ReportFormatException>()),
+      );
+    });
+
     test('a scope without totals omits the "totals" key', () {
       final Map<String, Object?> json = JetReportFormat.encodeDefinition(
         const ReportDefinition(

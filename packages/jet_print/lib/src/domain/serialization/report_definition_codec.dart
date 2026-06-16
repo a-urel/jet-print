@@ -242,11 +242,26 @@ DetailScope _decodeScope(
 }
 
 List<ScopeTotal> _decodeScopeTotals(Object? raw) {
-  if (raw is! List) return const <ScopeTotal>[];
+  if (raw == null) return const <ScopeTotal>[];
+  if (raw is! List) {
+    throw const ReportFormatException('scope "totals" must be a list.');
+  }
   return <ScopeTotal>[
     for (final Object? e in raw)
-      if (e is Map) ScopeTotal(e['name'] as String, e['expression'] as String),
+      if (e is! Map)
+        throw const ReportFormatException(
+            'Each "totals" entry must be a JSON object.')
+      else
+        ScopeTotal(_requireString(e, 'name'), _requireString(e, 'expression')),
   ];
+}
+
+String _requireString(Map<Object?, Object?> entry, String key) {
+  final Object? value = entry[key];
+  if (value is! String) {
+    throw ReportFormatException('A "totals" entry "$key" must be a string.');
+  }
+  return value;
 }
 
 ScopeNode _decodeNode(
