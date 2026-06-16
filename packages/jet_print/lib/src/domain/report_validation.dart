@@ -22,6 +22,7 @@ import 'group_level.dart';
 import 'report_band.dart' show BandType;
 import 'report_definition.dart';
 import 'report_element.dart';
+import 'scope_total.dart';
 
 /// Validates [def]'s semantic invariants (I1–I8), returning a [Diagnostic] for
 /// each violation in document order. Returns an empty list for a valid
@@ -120,6 +121,41 @@ List<Diagnostic> validate(ReportDefinition def) {
     } else {
       slotBand(scope.footer, BandType.groupFooter);
       aggregateBand(scope.footer, supported: true);
+    }
+
+    // Spec 030 — a nested scope may publish named roll-up totals onto its parent
+    // row. The root has no parent row, so it must not. Each expression must be a
+    // top-level aggregate (a published total is by definition a roll-up); names
+    // are unique within the scope. (A name shadowing a real data field is a
+    // FILL-time diagnostic — the schema is unknown here.)
+    if (isRoot && scope.totals.isNotEmpty) {
+      out.add(Diagnostic(DiagnosticSeverity.error,
+          'root scope "${scope.id}" must not publish totals'));
+    }
+    if (!isRoot) {
+      final Set<String> seenTotals = <String>{};
+      for (final ScopeTotal t in scope.totals) {
+        if (!seenTotals.add(t.name)) {
+          out.add(Diagnostic(
+              DiagnosticSeverity.error,
+              'duplicate published-total name "${t.name}" in scope '
+              '"${scope.id}"'));
+        }
+        AggregateCall? agg;
+        try {
+          agg = topLevelAggregate(Expression.parse(t.expression).root);
+        } on ExpressionException catch (e) {
+          out.add(Diagnostic(DiagnosticSeverity.error,
+              'published total "${t.name}" failed to parse: ${e.message}'));
+          continue;
+        }
+        if (agg == null) {
+          out.add(Diagnostic(
+              DiagnosticSeverity.error,
+              'published total "${t.name}" is not a top-level aggregate '
+              '(SUM/AVG/COUNT/MIN/MAX)'));
+        }
+      }
     }
 
     // I7 — per-scope grouping is representable but not yet rendered.
