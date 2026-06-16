@@ -17,6 +17,7 @@ import '../report_definition.dart';
 import '../report_element.dart';
 import '../report_parameter.dart';
 import '../report_variable.dart';
+import '../scope_total.dart';
 import 'element_codec.dart';
 import 'migration.dart';
 import 'report_format_exception.dart';
@@ -88,6 +89,11 @@ Map<String, Object?> _encodeScope(
           _encodeNode(node, registry),
       ],
     if (scope.footer != null) 'footer': _encodeBand(scope.footer!, registry),
+    if (scope.totals.isNotEmpty)
+      'totals': <Map<String, Object?>>[
+        for (final ScopeTotal t in scope.totals)
+          <String, Object?>{'name': t.name, 'expression': t.expression},
+      ],
   };
 }
 
@@ -231,7 +237,16 @@ DetailScope _decodeScope(
               _decodeNode((n! as Map).cast<String, Object?>(), registry),
           ],
     footer: _decodeBandOrNull(json['footer'], registry),
+    totals: _decodeScopeTotals(json['totals']),
   );
+}
+
+List<ScopeTotal> _decodeScopeTotals(Object? raw) {
+  if (raw is! List) return const <ScopeTotal>[];
+  return <ScopeTotal>[
+    for (final Object? e in raw)
+      if (e is Map) ScopeTotal(e['name'] as String, e['expression'] as String),
+  ];
 }
 
 ScopeNode _decodeNode(

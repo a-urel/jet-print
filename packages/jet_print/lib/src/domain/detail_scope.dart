@@ -11,6 +11,7 @@ import 'package:flutter/foundation.dart' show listEquals;
 
 import 'band.dart';
 import 'group_level.dart';
+import 'scope_total.dart';
 
 /// One entry in a [DetailScope]'s ordered contents: either a per-row [Band]
 /// (wrapped in [BandNode]) or a nested [DetailScope] (wrapped in [NestedScope]).
@@ -69,6 +70,7 @@ class DetailScope {
     this.groups = const <GroupLevel>[],
     this.children = const <ScopeNode>[],
     this.footer,
+    this.totals = const <ScopeTotal>[],
   });
 
   /// Stable identity.
@@ -89,6 +91,10 @@ class DetailScope {
   /// total (spec 029). Null on the root scope.
   final Band? footer;
 
+  /// Named roll-up totals this scope publishes onto its parent row (spec 030);
+  /// empty on the root.
+  final List<ScopeTotal> totals;
+
   /// Returns a copy with the given fields replaced.
   DetailScope copyWith({
     String? id,
@@ -96,6 +102,7 @@ class DetailScope {
     List<GroupLevel>? groups,
     List<ScopeNode>? children,
     Band? footer,
+    List<ScopeTotal>? totals,
   }) =>
       DetailScope(
         id: id ?? this.id,
@@ -103,6 +110,7 @@ class DetailScope {
         groups: groups ?? this.groups,
         children: children ?? this.children,
         footer: footer ?? this.footer,
+        totals: totals ?? this.totals,
       );
 
   @override
@@ -112,15 +120,17 @@ class DetailScope {
       other.collectionField == collectionField &&
       listEquals(other.groups, groups) &&
       listEquals(other.children, children) &&
-      other.footer == footer;
+      other.footer == footer &&
+      listEquals(other.totals, totals);
 
   @override
   int get hashCode => Object.hash(id, collectionField, Object.hashAll(groups),
-      Object.hashAll(children), footer);
+      Object.hashAll(children), footer, Object.hashAll(totals));
 
   @override
   String toString() => 'DetailScope($id'
       '${collectionField == null ? '' : ', collection: $collectionField'}, '
       '${groups.length} group(s), ${children.length} child(ren)'
-      '${footer == null ? '' : ', footer: ${footer!.id}'})';
+      '${footer == null ? '' : ', footer: ${footer!.id}'}'
+      '${totals.isEmpty ? '' : ', ${totals.length} total(s)'})';
 }

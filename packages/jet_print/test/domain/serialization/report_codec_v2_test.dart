@@ -10,6 +10,7 @@ import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/domain/report_element.dart';
 import 'package:jet_print/src/domain/report_parameter.dart';
 import 'package:jet_print/src/domain/report_variable.dart';
+import 'package:jet_print/src/domain/scope_total.dart';
 import 'package:jet_print/src/domain/serialization/report_format.dart';
 import 'package:jet_print/src/domain/serialization/report_format_exception.dart';
 import 'package:jet_print/src/domain/value_type.dart';
@@ -237,6 +238,78 @@ void main() {
       );
       final Map<Object?, Object?> root = (json['body']! as Map)['root']! as Map;
       expect(root.containsKey('footer'), isFalse);
+    });
+
+    test('round-trips nested scope totals (spec 030, B2)', () {
+      const ReportDefinition def = ReportDefinition(
+        name: 'Totals',
+        page: PageFormat.a4Portrait,
+        body: ReportBody(
+          root: DetailScope(
+            id: 'root',
+            children: <ScopeNode>[
+              NestedScope(DetailScope(
+                id: 'root/c0',
+                collectionField: 'lines',
+                totals: <ScopeTotal>[
+                  ScopeTotal('orderTotal', r'SUM($F{lineTotal})'),
+                  ScopeTotal('orderCount', r'COUNT($F{lineTotal})'),
+                ],
+                children: <ScopeNode>[
+                  BandNode(Band(
+                      id: 'root/c0/c0', type: BandType.detail, height: 10)),
+                ],
+              )),
+            ],
+          ),
+        ),
+      );
+      final ReportDefinition back = JetReportFormat.decodeDefinition(
+          JetReportFormat.encodeDefinition(def));
+      expect(back, equals(def));
+      final NestedScope nested = back.body.root.children.single as NestedScope;
+      expect(nested.scope.totals, const <ScopeTotal>[
+        ScopeTotal('orderTotal', r'SUM($F{lineTotal})'),
+        ScopeTotal('orderCount', r'COUNT($F{lineTotal})'),
+      ]);
+    });
+
+    test('decodes a scope with no totals key as totals == [] (back-compat)',
+        () {
+      final ReportDefinition back =
+          JetReportFormat.decodeDefinition(<String, Object?>{
+        'schemaVersion': 2,
+        'name': 'x',
+        'page': PageFormat.a4Portrait.toJson(),
+        'body': <String, Object?>{
+          'root': <String, Object?>{
+            'id': 'root',
+            'children': <Object?>[
+              <String, Object?>{
+                'kind': 'scope',
+                'scope': <String, Object?>{
+                  'id': 'root/c0',
+                  'collectionField': 'lines',
+                },
+              },
+            ],
+          },
+        },
+      });
+      final NestedScope nested = back.body.root.children.single as NestedScope;
+      expect(nested.scope.totals, const <ScopeTotal>[]);
+    });
+
+    test('a scope without totals omits the "totals" key', () {
+      final Map<String, Object?> json = JetReportFormat.encodeDefinition(
+        const ReportDefinition(
+          name: 'x',
+          page: PageFormat.a4Portrait,
+          body: ReportBody(root: DetailScope(id: 'root')),
+        ),
+      );
+      final Map<Object?, Object?> root = (json['body']! as Map)['root']! as Map;
+      expect(root.containsKey('totals'), isFalse);
     });
 
     test('fail-fasts on a missing schemaVersion', () {
