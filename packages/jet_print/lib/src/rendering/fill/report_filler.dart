@@ -18,6 +18,7 @@ import '../../domain/report_group.dart';
 import '../../domain/report_variable.dart';
 import '../../expression/aggregate/aggregate_synthesizer.dart';
 import '../../expression/aggregate/nested_footer.dart';
+import '../../expression/aggregate/scope_totals.dart';
 import '../../expression/aggregate/variable_accumulator.dart';
 import '../../expression/aggregate/variable_calculator.dart';
 import '../../expression/eval_context.dart';
@@ -240,6 +241,50 @@ class ReportFiller {
       ];
     }
 
+    // Spec 030 (B2) — a single bottom-up rollup pass per master row, run BEFORE
+    // `calc.advance`. For each nested child scope it: derives the child rows,
+    // recursively augments each (so a child's own published totals are fields
+    // on it), folds each published `ScopeTotal` over the augmented child rows
+    // (a fresh accumulator → reset per parent), injects the result as a field
+    // on this `row`, and replaces this row's collection value+schema with the
+    // augmented child rows so `emitNode`'s unchanged `childRowsOf` yields rows
+    // already carrying their published totals. Each published total folds once;
+    // the master calculator/layout/render are untouched and just see richer
+    // rows. Returns `row` unchanged when there is nothing to inject or replace.
+    DataRow augmentForScope(DetailScope scope, DataRow row) {
+      final Map<String, JetValue> extras = <String, JetValue>{};
+      final Map<String, List<DataRow>> replaced = <String, List<DataRow>>{};
+      for (final ScopeNode node in scope.children) {
+        if (node is! NestedScope) continue;
+        final DetailScope cs = node.scope;
+        final String field = cs.collectionField!;
+        final List<DataRow> childRows = childRowsOf(row, field);
+        final List<DataRow> augChildren = <DataRow>[
+          for (final DataRow cr in childRows) augmentForScope(cs, cr),
+        ];
+        for (final ScopeAgg a in prepareScopeTotals(cs.totals)) {
+          final VariableAccumulator acc = VariableAccumulator(a.calculation);
+          for (final DataRow acr in augChildren) {
+            acc.fold(a.argument.evaluate(contextFactory(
+              row: acr,
+              params: params,
+              variables: const <String, JetValue>{},
+              functions: _functions,
+            )));
+          }
+          if (row.hasField(a.name)) {
+            diagnostics.warning(
+                'published total "${a.name}" shadows a data field on scope '
+                '"${cs.id}"; the computed total is used');
+          }
+          extras[a.name] = acc.value;
+        }
+        if (augChildren.isNotEmpty) replaced[field] = augChildren;
+      }
+      if (extras.isEmpty && replaced.isEmpty) return row;
+      return _augmentRow(row, extras, replaced);
+    }
+
     // A per-row band renders at the current scope row; a nested scope iterates
     // its collection and emits its own children per child row — mirroring the
     // legacy `emitDataBand` recursion exactly.
@@ -318,7 +363,11 @@ class ReportFiller {
     DataRow? prevRow;
     try {
       while (ds.moveNext()) {
-        final DataRow row = ds.current;
+        // Inject this master row's published totals (and augment its nested
+        // collection tree) BEFORE the calculator advances, so the Phase A
+        // grand total over a published total (e.g. SUM($F{customerTotal}))
+        // sums it live through the unchanged calculator.
+        final DataRow row = augmentForScope(definition.body.root, ds.current);
         calc.advance(row, params: params);
         final Set<String> broken = calc.brokenGroups;
         if (!hadRows) {
@@ -373,6 +422,39 @@ class ReportFiller {
       resetScope: v.resetScope,
       resetGroup: nameOfGroupId[reset],
     );
+  }
+
+  /// Rebuilds the immutable [row] (spec 030, B2) with [extras] published-total
+  /// fields appended and each [replaced] nested collection swapped for its
+  /// augmented child rows. A replaced collection's [FieldDef] is re-typed to the
+  /// augmented child schema (which now includes deeper published-total names) so
+  /// `childRowsOf`'s re-projection preserves them; a published total's
+  /// [JetValue] is stored directly (it round-trips unchanged through
+  /// `JetValue.from`). A total that shadows an existing field overwrites its
+  /// value (the computed total wins) without duplicating the schema entry.
+  static DataRow _augmentRow(DataRow row, Map<String, JetValue> extras,
+      Map<String, List<DataRow>> replaced) {
+    final List<FieldDef> fields = <FieldDef>[
+      for (final FieldDef f in row.fields)
+        if (replaced.containsKey(f.name) && replaced[f.name]!.isNotEmpty)
+          FieldDef(f.name, type: f.type, fields: replaced[f.name]!.first.fields)
+        else
+          f,
+      for (final String name in extras.keys)
+        if (!row.hasField(name)) FieldDef(name, type: JetFieldType.double),
+    ];
+    final Map<String, Object?> values = <String, Object?>{
+      for (final FieldDef f in row.fields) f.name: row.field(f.name),
+      for (final MapEntry<String, List<DataRow>> e in replaced.entries)
+        e.key: <Map<String, Object?>>[
+          for (final DataRow cr in e.value)
+            <String, Object?>{
+              for (final FieldDef cf in cr.fields) cf.name: cr.field(cf.name),
+            },
+        ],
+      for (final MapEntry<String, JetValue> e in extras.entries) e.key: e.value,
+    };
+    return DataRow(fields: fields, values: values);
   }
 
   /// Best-effort child schema for a collection whose [FieldDef] declares no
