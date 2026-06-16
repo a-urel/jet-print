@@ -128,6 +128,7 @@ Iterable<Band> allBands(ReportDefinition def) sync* {
           addScope(inner);
       }
     }
+    if (s.footer != null) out.add(s.footer!);
   }
 
   for (final Band? b in <Band?>[
@@ -231,6 +232,7 @@ DetailScope? findScopeOfBand(ReportDefinition def, String bandId) {
     for (final GroupLevel g in s.groups) {
       if (g.header?.id == bandId || g.footer?.id == bandId) return s;
     }
+    if (s.footer?.id == bandId) return s;
     for (final ScopeNode n in s.children) {
       switch (n) {
         case BandNode(band: final Band b):
@@ -280,6 +282,10 @@ List<DetailScope> scopePathToBand(ReportDefinition def, String bandId) {
         result.addAll(here);
         return true;
       }
+    }
+    if (s.footer?.id == bandId) {
+      result.addAll(here);
+      return true;
     }
     for (final ScopeNode n in s.children) {
       switch (n) {

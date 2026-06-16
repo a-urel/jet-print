@@ -120,4 +120,69 @@ void main() {
       expect(findScope(d, 'nope'), isNull);
     });
   });
+
+  group('band_walker nested DetailScope.footer (spec 031)', () {
+    // root → NestedScope(DetailScope(id:'lines', footer: lf w/ element 'ot')).
+    ReportDefinition defWithFooter() => ReportDefinition(
+          name: 'R',
+          page: PageFormat.a4Portrait,
+          body: ReportBody(
+            root: DetailScope(
+              id: 'root',
+              children: <ScopeNode>[
+                NestedScope(DetailScope(
+                  id: 'lines',
+                  collectionField: 'lines',
+                  footer: const Band(
+                    id: 'lf',
+                    type: BandType.groupFooter,
+                    height: 12,
+                    elements: <ReportElement>[
+                      TextElement(
+                        id: 'ot',
+                        bounds: JetRect(x: 0, y: 0, width: 80, height: 12),
+                        text: 'ot',
+                        expression: r'$F{orderTotal}',
+                      ),
+                    ],
+                  ),
+                  children: <ScopeNode>[
+                    BandNode(_band('lineRow', BandType.detail)),
+                  ],
+                )),
+              ],
+            ),
+          ),
+        );
+
+    test('allBands includes the nested footer band', () {
+      final Set<String> ids =
+          allBands(defWithFooter()).map((Band b) => b.id).toSet();
+      expect(ids, contains('lf'));
+    });
+
+    test('findBand reaches the nested footer band', () {
+      expect(findBand(defWithFooter(), 'lf'), isNotNull);
+    });
+
+    test('findBandOfElement locates the nested footer element', () {
+      expect(findBandOfElement(defWithFooter(), 'ot')?.id, 'lf');
+    });
+
+    test('allIds includes the nested footer band + element ids', () {
+      final List<String> ids = allIds(defWithFooter()).toList();
+      expect(ids, contains('lf'));
+      expect(ids, contains('ot'));
+    });
+
+    test('scopePathToBand resolves the nested footer band', () {
+      final List<DetailScope> path = scopePathToBand(defWithFooter(), 'lf');
+      expect(path, isNotEmpty);
+      expect(path.last.id, 'lines');
+    });
+
+    test('findScopeOfBand owns the nested footer band', () {
+      expect(findScopeOfBand(defWithFooter(), 'lf')?.id, 'lines');
+    });
+  });
 }
