@@ -375,6 +375,151 @@ void main() {
       expect(ordered, <String>['L1', 'L1.a', 'L1.b', 'L2', 'L2.a']);
     });
 
+    test('a nested-scope footer sums its collection and resets per parent', () {
+      final def = ReportDefinition(
+          name: 'nestedFooter',
+          page: tallPage,
+          body: ReportBody(
+              root: DetailScope(id: 'root', children: <ScopeNode>[
+            NestedScope(DetailScope(
+                id: 'lines',
+                collectionField: 'lines',
+                footer: Band(
+                    id: 'lf',
+                    type: BandType.groupFooter,
+                    height: 16,
+                    elements: <ReportElement>[
+                      TextElement(
+                          id: 'ot',
+                          bounds:
+                              const JetRect(x: 0, y: 0, width: 100, height: 14),
+                          text: 'ot',
+                          expression: r'SUM($F{lineTotal})')
+                    ]),
+                children: <ScopeNode>[
+                  BandNode(Band(
+                      id: 'l',
+                      type: BandType.detail,
+                      height: 16,
+                      elements: <ReportElement>[
+                        TextElement(
+                            id: 'lt',
+                            bounds: const JetRect(
+                                x: 0, y: 0, width: 100, height: 14),
+                            text: 'lt',
+                            expression: r'$F{lineTotal}')
+                      ])),
+                ])),
+          ])));
+      final source = JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{
+          'lines': <Map<String, Object?>>[
+            <String, Object?>{'lineTotal': 10},
+            <String, Object?>{'lineTotal': 20}
+          ]
+        },
+        <String, Object?>{
+          'lines': <Map<String, Object?>>[
+            <String, Object?>{'lineTotal': 5}
+          ]
+        },
+      ]);
+      final report = const JetReportEngine().renderDefinition(def, source);
+      expect(runsFor(report, 'ot'), <String>['30.0', '5.0'],
+          reason: 'the footer sums each parent\'s lines and resets per parent');
+    });
+
+    test('an empty nested collection emits no footer', () {
+      final def = ReportDefinition(
+          name: 'emptyNested',
+          page: tallPage,
+          body: ReportBody(
+              root: DetailScope(id: 'root', children: <ScopeNode>[
+            NestedScope(DetailScope(
+                id: 'lines',
+                collectionField: 'lines',
+                footer: Band(
+                    id: 'lf',
+                    type: BandType.groupFooter,
+                    height: 16,
+                    elements: <ReportElement>[
+                      TextElement(
+                          id: 'ot',
+                          bounds:
+                              const JetRect(x: 0, y: 0, width: 100, height: 14),
+                          text: 'ot',
+                          expression: r'SUM($F{lineTotal})')
+                    ]),
+                children: <ScopeNode>[
+                  BandNode(Band(
+                      id: 'l',
+                      type: BandType.detail,
+                      height: 16,
+                      elements: <ReportElement>[
+                        TextElement(
+                            id: 'lt',
+                            bounds: const JetRect(
+                                x: 0, y: 0, width: 100, height: 14),
+                            text: 'lt',
+                            expression: r'$F{lineTotal}')
+                      ])),
+                ])),
+          ])));
+      final source = JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'lines': <Map<String, Object?>>[]},
+      ]);
+      final report = const JetReportEngine().renderDefinition(def, source);
+      expect(runsFor(report, 'ot'), isEmpty, reason: 'no rows → no footer');
+    });
+
+    test('a nested footer with an expression argument folds the product', () {
+      final def = ReportDefinition(
+          name: 'exprArg',
+          page: tallPage,
+          body: ReportBody(
+              root: DetailScope(id: 'root', children: <ScopeNode>[
+            NestedScope(DetailScope(
+                id: 'lines',
+                collectionField: 'lines',
+                footer: Band(
+                    id: 'lf',
+                    type: BandType.groupFooter,
+                    height: 16,
+                    elements: <ReportElement>[
+                      TextElement(
+                          id: 'ot',
+                          bounds:
+                              const JetRect(x: 0, y: 0, width: 100, height: 14),
+                          text: 'ot',
+                          expression: r'SUM($F{qty} * $F{price})')
+                    ]),
+                children: <ScopeNode>[
+                  BandNode(Band(
+                      id: 'l',
+                      type: BandType.detail,
+                      height: 16,
+                      elements: <ReportElement>[
+                        TextElement(
+                            id: 'lt',
+                            bounds: const JetRect(
+                                x: 0, y: 0, width: 100, height: 14),
+                            text: 'lt',
+                            expression: r'$F{qty}')
+                      ])),
+                ])),
+          ])));
+      final source = JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{
+          'lines': <Map<String, Object?>>[
+            <String, Object?>{'qty': 2, 'price': 3.0},
+            <String, Object?>{'qty': 4, 'price': 0.5}
+          ]
+        },
+      ]);
+      final report = const JetReportEngine().renderDefinition(def, source);
+      expect(runsFor(report, 'ot'), <String>['8.0'], reason: '2*3 + 4*0.5 = 8');
+    });
+
     test(
         'a sum variable computes at its reset scope: group subtotal + grand '
         'total; group header/footer render at key boundaries', () {

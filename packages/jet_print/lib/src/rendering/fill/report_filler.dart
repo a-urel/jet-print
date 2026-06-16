@@ -17,6 +17,8 @@ import '../../domain/report_element.dart';
 import '../../domain/report_group.dart';
 import '../../domain/report_variable.dart';
 import '../../expression/aggregate/aggregate_synthesizer.dart';
+import '../../expression/aggregate/nested_footer.dart';
+import '../../expression/aggregate/variable_accumulator.dart';
 import '../../expression/aggregate/variable_calculator.dart';
 import '../../expression/eval_context.dart';
 import '../../expression/expression.dart';
@@ -246,11 +248,40 @@ class ReportFiller {
         case BandNode(band: final Band b):
           addBand(b, scopeRow, calc.values);
         case NestedScope(scope: final DetailScope s):
-          for (final DataRow childRow
-              in childRowsOf(scopeRow, s.collectionField!)) {
+          final List<DataRow> childRows =
+              childRowsOf(scopeRow, s.collectionField!);
+          if (childRows.isEmpty)
+            break; // empty collection → no bands, no footer
+          final PreparedFooter? footer =
+              s.footer == null ? null : prepareNestedFooter(s.footer!);
+          final List<VariableAccumulator>? accs = footer == null
+              ? null
+              : <VariableAccumulator>[
+                  for (final NestedAgg a in footer.aggs)
+                    VariableAccumulator(a.calculation),
+                ];
+          for (final DataRow childRow in childRows) {
             for (final ScopeNode child in s.children) {
               emitNode(child, childRow);
             }
+            if (footer != null) {
+              for (int k = 0; k < footer.aggs.length; k++) {
+                accs![k].fold(footer.aggs[k].argument.evaluate(contextFactory(
+                  row: childRow,
+                  params: params,
+                  variables: calc.values,
+                  functions: _functions,
+                )));
+              }
+            }
+          }
+          if (footer != null) {
+            final Map<String, JetValue> vars = <String, JetValue>{
+              ...calc.values,
+              for (int k = 0; k < footer.aggs.length; k++)
+                footer.aggs[k].name: accs![k].value,
+            };
+            addBand(footer.band, scopeRow, vars);
           }
       }
     }
