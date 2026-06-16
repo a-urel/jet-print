@@ -163,10 +163,10 @@ String _compileTemplate(String inner) {
       i = scan.next;
     } else if (_isAlpha(c)) {
       final int identEnd = _scanIdentEnd(inner, i);
-      if (identEnd < inner.length &&
-          inner[identEnd] == '(' &&
-          aggregateCalculationFor(inner.substring(i, identEnd)) != null) {
-        // Inline aggregate: FN( <expr with [field] tokens> ).
+      if (identEnd < inner.length && inner[identEnd] == '(') {
+        // Function call FN( <args with [field] tokens> ) — aggregate or scalar.
+        // The registry is UPPERCASE; the inner arg list (incl. nested calls) is
+        // normalized by _compileArg.
         flushLiteral();
         final String fn = inner.substring(i, identEnd).toUpperCase();
         final _CallScan scan = _scanBalancedParens(inner, identEnd);
@@ -245,18 +245,31 @@ _CallScan _scanBalancedParens(String s, int open) {
   throw const _TemplateError();
 }
 
-/// Compiles an aggregate argument: replaces each `[name]` token with `$F{name}`
-/// and passes all other expression syntax through unchanged.
+/// Compiles an aggregate/call argument: replaces each `[name]` token with
+/// `$F{name}`, UPPERCASEs any nested function-call identifier (the registry is
+/// case-sensitive UPPERCASE), and passes all other expression syntax —
+/// operators, commas, parens, string/number/bool literals, `$P{}`/`$V{}`
+/// tokens — through unchanged.
 String _compileArg(String arg) {
   final StringBuffer out = StringBuffer();
   int i = 0;
   while (i < arg.length) {
-    if (arg[i] == '[') {
+    final String c = arg[i];
+    if (c == '[') {
       final _FieldScan scan = _scanField(arg, i);
       out.write('\$F{${scan.name}}');
       i = scan.next;
+    } else if (_isAlpha(c)) {
+      final int identEnd = _scanIdentEnd(arg, i);
+      final String ident = arg.substring(i, identEnd);
+      // A nested call (`ident(`) takes the UPPERCASE registry name; a bare
+      // identifier (`true`/`false`, or a `$P{}`/`$V{}` body) passes through.
+      out.write(identEnd < arg.length && arg[identEnd] == '('
+          ? ident.toUpperCase()
+          : ident);
+      i = identEnd;
     } else {
-      out.write(arg[i]);
+      out.write(c);
       i++;
     }
   }
@@ -281,6 +294,12 @@ String? _exprToToken(Expr root) {
   // A single function-of-field call, e.g. UPPER($F{name}) → {upper[name]}.
   final String? part = _partToken(root);
   if (part != null && root is CallExpr) return '{$part}';
+
+  // Any other call (multi-arg, mixed args, nested) → {fn(args)} via _argToToken.
+  if (root is CallExpr) {
+    final String? body = _argToToken(root);
+    if (body != null) return '{$body}';
+  }
   return null;
 }
 

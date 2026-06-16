@@ -155,4 +155,69 @@ void main() {
           const LiteralValue('{SUM([a][b])}'));
     });
   });
+
+  group('general N-ary function calls (032)', () {
+    test('forward: IF with field/operator/field args', () {
+      expect(
+        parseValueField('{IF([qty] > 0, [a], [b])}'),
+        const BindingValue(r'IF($F{qty} > 0, $F{a}, $F{b})'),
+      );
+    });
+
+    test('forward: ROUND with a precision literal', () {
+      expect(parseValueField('{ROUND([total], 2)}'),
+          const BindingValue(r'ROUND($F{total}, 2)'));
+    });
+
+    test('forward: COALESCE of two fields', () {
+      expect(parseValueField('{COALESCE([nick], [name])}'),
+          const BindingValue(r'COALESCE($F{nick}, $F{name})'));
+    });
+
+    test('forward: SUBSTRING with two numeric args', () {
+      expect(parseValueField('{SUBSTRING([code], 0, 3)}'),
+          const BindingValue(r'SUBSTRING($F{code}, 0, 3)'));
+    });
+
+    test('forward: nested call name is uppercased to the registry name', () {
+      expect(parseValueField('{UPPER(coalesce([a], [b]))}'),
+          const BindingValue(r'UPPER(COALESCE($F{a}, $F{b}))'));
+    });
+
+    test('reverse: a general CallExpr round-trips to a friendly token', () {
+      final ValueDisplay d = reverseCompile(r'IF($F{qty} > 0, $F{a}, $F{b})');
+      expect(d.editable, isTrue);
+      expect(d.text, '{if([qty] > 0, [a], [b])}');
+      expect(parseValueField(d.text),
+          const BindingValue(r'IF($F{qty} > 0, $F{a}, $F{b})'));
+    });
+
+    test('reverse: nested call round-trips to evaluating UPPERCASE storage',
+        () {
+      final ValueDisplay d = reverseCompile(r'UPPER(COALESCE($F{a}, $F{b}))');
+      expect(d.editable, isTrue);
+      expect(parseValueField(d.text),
+          const BindingValue(r'UPPER(COALESCE($F{a}, $F{b}))'));
+    });
+
+    test('unknown bare identifier arg is not a valid call → literal fallback',
+        () {
+      expect(
+          parseValueField('{Price(USD)}'), const LiteralValue('{Price(USD)}'));
+    });
+  });
+
+  group('existing forms unchanged (032 regression guard)', () {
+    test('single-field sugar still reverses to lowercase sugar', () {
+      expect(reverseCompile(r'UPPER($F{name})').text, '{upper[name]}');
+    });
+    test('single-arg scalar reverses to sugar, not call form', () {
+      expect(reverseCompile(r'ROUND($F{x})').text, '{round[x]}');
+    });
+    test('aggregate form unchanged', () {
+      expect(reverseCompile(r'SUM($F{qty})').text, '{SUM([qty])}');
+      expect(parseValueField('{SUM([qty] * [price])}'),
+          const BindingValue(r'SUM($F{qty} * $F{price})'));
+    });
+  });
 }
