@@ -520,6 +520,63 @@ void main() {
       expect(runsFor(report, 'ot'), <String>['8.0'], reason: '2*3 + 4*0.5 = 8');
     });
 
+    test('a nested footer can show a parent field alongside its aggregate', () {
+      final def = ReportDefinition(
+          name: 'footerParentField',
+          page: tallPage,
+          body: ReportBody(
+              root: DetailScope(id: 'root', children: <ScopeNode>[
+            NestedScope(DetailScope(
+                id: 'lines',
+                collectionField: 'lines',
+                footer: Band(
+                    id: 'lf',
+                    type: BandType.groupFooter,
+                    height: 16,
+                    elements: <ReportElement>[
+                      TextElement(
+                          id: 'who',
+                          bounds:
+                              const JetRect(x: 0, y: 0, width: 100, height: 14),
+                          text: 'who',
+                          expression: r'$F{orderNo}'),
+                      TextElement(
+                          id: 'ot',
+                          bounds: const JetRect(
+                              x: 110, y: 0, width: 100, height: 14),
+                          text: 'ot',
+                          expression: r'SUM($F{lineTotal})'),
+                    ]),
+                children: <ScopeNode>[
+                  BandNode(Band(
+                      id: 'l',
+                      type: BandType.detail,
+                      height: 16,
+                      elements: <ReportElement>[
+                        TextElement(
+                            id: 'lt',
+                            bounds: const JetRect(
+                                x: 0, y: 0, width: 100, height: 14),
+                            text: 'lt',
+                            expression: r'$F{lineTotal}')
+                      ])),
+                ])),
+          ])));
+      final source = JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{
+          'orderNo': 'A',
+          'lines': <Map<String, Object?>>[
+            <String, Object?>{'lineTotal': 10},
+            <String, Object?>{'lineTotal': 20}
+          ]
+        },
+      ]);
+      final report = const JetReportEngine().renderDefinition(def, source);
+      expect(runsFor(report, 'who'), <String>['A'],
+          reason: 'the footer resolves the parent (order) row field');
+      expect(runsFor(report, 'ot'), <String>['30.0']);
+    });
+
     test(
         'a sum variable computes at its reset scope: group subtotal + grand '
         'total; group header/footer render at key boundaries', () {

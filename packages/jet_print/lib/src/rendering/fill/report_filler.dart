@@ -250,10 +250,13 @@ class ReportFiller {
         case NestedScope(scope: final DetailScope s):
           final List<DataRow> childRows =
               childRowsOf(scopeRow, s.collectionField!);
-          if (childRows.isEmpty)
+          if (childRows.isEmpty) {
             break; // empty collection → no bands, no footer
+          }
           final PreparedFooter? footer =
               s.footer == null ? null : prepareNestedFooter(s.footer!);
+          // Fresh accumulators each invocation → the footer total resets per
+          // parent.
           final List<VariableAccumulator>? accs = footer == null
               ? null
               : <VariableAccumulator>[
