@@ -3,10 +3,11 @@
 /// through `package:jet_print/jet_print.dart` only.
 ///
 /// The data mirrors the `customersSchema` shape: customers, each with an
-/// `orders` collection, each order with a `lines` collection. Totals roll up
-/// consistently (line totals → `orderTotal` → `customerTotal`), so the single
-/// engine-computed aggregate — the report `grandTotal` — equals the sum of the
-/// displayed customer totals (32.0 + 14.5 + 235.0 = 281.5).
+/// `orders` collection, each order with a `lines` collection. The only stored
+/// money figure is each line's `lineTotal`; every total above it is computed
+/// live via published scope totals (spec 030) — line totals roll up into the
+/// per-order `orderTotal`, those into each `customerTotal`, and those into the
+/// report `grandTotal` (13.5+12.0+6.5 + 7.5+5.0+2.0 + 100.0+75.0+60.0 = 281.5).
 library;
 
 import 'package:flutter/widgets.dart' show Locale;
@@ -26,12 +27,10 @@ const List<Map<String, Object?>> kSampleCustomers = <Map<String, Object?>>[
   <String, Object?>{
     'customerName': 'Acme GmbH',
     'customerCode': 'C-001',
-    'customerTotal': 32.0,
     'orders': <Map<String, Object?>>[
       <String, Object?>{
         'orderNo': 'SO-1042',
         'date': '2026-05-12',
-        'orderTotal': 25.5,
         'lines': <Map<String, Object?>>[
           <String, Object?>{
             'description': 'Widget',
@@ -50,7 +49,6 @@ const List<Map<String, Object?>> kSampleCustomers = <Map<String, Object?>>[
       <String, Object?>{
         'orderNo': 'SO-1051',
         'date': '2026-05-20',
-        'orderTotal': 6.5,
         'lines': <Map<String, Object?>>[
           <String, Object?>{
             'description': 'Sprocket',
@@ -65,12 +63,10 @@ const List<Map<String, Object?>> kSampleCustomers = <Map<String, Object?>>[
   <String, Object?>{
     'customerName': 'Globex SARL',
     'customerCode': 'C-002',
-    'customerTotal': 14.5,
     'orders': <Map<String, Object?>>[
       <String, Object?>{
         'orderNo': 'SO-1043',
         'date': '2026-05-14',
-        'orderTotal': 14.5,
         'lines': <Map<String, Object?>>[
           <String, Object?>{
             'description': 'Bolt',
@@ -97,12 +93,10 @@ const List<Map<String, Object?>> kSampleCustomers = <Map<String, Object?>>[
   <String, Object?>{
     'customerName': 'Initech Ltd',
     'customerCode': 'C-003',
-    'customerTotal': 235.0,
     'orders': <Map<String, Object?>>[
       <String, Object?>{
         'orderNo': 'SO-1044',
         'date': '2026-05-19',
-        'orderTotal': 175.0,
         'lines': <Map<String, Object?>>[
           <String, Object?>{
             'description': 'Consulting',
@@ -121,7 +115,6 @@ const List<Map<String, Object?>> kSampleCustomers = <Map<String, Object?>>[
       <String, Object?>{
         'orderNo': 'SO-1060',
         'date': '2026-06-01',
-        'orderTotal': 60.0,
         'lines': <Map<String, Object?>>[
           <String, Object?>{
             'description': 'Support',

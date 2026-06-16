@@ -16,6 +16,7 @@ import '../../domain/report_definition.dart';
 import '../../domain/report_element.dart';
 import '../../domain/report_group.dart';
 import '../../domain/report_variable.dart';
+import '../../domain/scope_total.dart';
 import '../../expression/aggregate/aggregate_synthesizer.dart';
 import '../../expression/aggregate/nested_footer.dart';
 import '../../expression/aggregate/scope_totals.dart';
@@ -80,11 +81,24 @@ class ReportFiller {
     final Set<String> warnedFields = <String>{};
     final Set<String> ignoredPageRefs = <String>{};
 
+    // Spec 030 (B2): a nested scope's published `ScopeTotal` is injected as a
+    // field on its parent row, so enclosing scopes / group footers / the
+    // summary reference it as `$F{name}`. Under a schema-aware render these
+    // computed names aren't in the caller's `knownFields`, so widen that set
+    // with every published total name; otherwise the unresolved-binding gate
+    // (FR-007) would render `#ERROR` for a legitimately-injected field.
+    final Set<String>? effectiveKnownFields = knownFields == null
+        ? null
+        : <String>{
+            ...knownFields,
+            ..._publishedTotalNames(definition.body.root)
+          };
+
     final ElementResolver resolver = ElementResolver(
       functions: _functions,
       diagnostics: diagnostics,
       warnedFields: warnedFields,
-      knownFields: knownFields,
+      knownFields: effectiveKnownFields,
       unresolvedFieldToken: unresolvedFieldToken,
     );
 
@@ -447,6 +461,25 @@ class ReportFiller {
       resetScope: v.resetScope,
       resetGroup: nameOfGroupId[reset],
     );
+  }
+
+  /// Every published-total name declared anywhere in [scope]'s nested-scope
+  /// tree (spec 030, B2) — the synthetic fields the rollup injects onto parent
+  /// rows, so the schema-aware resolver must treat them as known.
+  static Set<String> _publishedTotalNames(DetailScope scope) {
+    final Set<String> names = <String>{};
+    void walk(DetailScope s) {
+      for (final ScopeNode node in s.children) {
+        if (node is! NestedScope) continue;
+        for (final ScopeTotal t in node.scope.totals) {
+          names.add(t.name);
+        }
+        walk(node.scope);
+      }
+    }
+
+    walk(scope);
+    return names;
   }
 
   /// Rebuilds the immutable [row] (spec 030, B2) with [extras] published-total

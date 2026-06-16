@@ -977,6 +977,146 @@ void main() {
     });
 
     test(
+        'published scope-total names resolve under a schema-aware render '
+        '(knownFields gate accepts injected fields)', () {
+      // Same recursive shape, but rendered schema-aware: knownFields declares
+      // only the real data fields (lineTotal + the collections), NOT the
+      // computed custTotal/ordTotal. The injected published totals must still
+      // resolve — a field-namespace injection that consumers reference as
+      // $F{...} cannot be rejected by the unresolved-binding gate (spec 030).
+      final def = ReportDefinition(
+        name: 'recursive-schema-aware',
+        page: tallPage,
+        body: ReportBody(
+          summary: Band(
+            id: 'summary',
+            type: BandType.summary,
+            height: 16,
+            elements: <ReportElement>[
+              TextElement(
+                id: 'gt',
+                bounds: const JetRect(x: 0, y: 0, width: 100, height: 14),
+                text: 'gt',
+                expression: r'SUM($F{custTotal})',
+              ),
+            ],
+          ),
+          root: DetailScope(id: 'root', children: <ScopeNode>[
+            NestedScope(DetailScope(
+              id: 'orders',
+              collectionField: 'orders',
+              totals: const <ScopeTotal>[
+                ScopeTotal('custTotal', r'SUM($F{ordTotal})'),
+              ],
+              footer: Band(
+                id: 'cf',
+                type: BandType.groupFooter,
+                height: 14,
+                elements: <ReportElement>[
+                  TextElement(
+                    id: 'ct',
+                    bounds: const JetRect(x: 0, y: 0, width: 100, height: 12),
+                    text: 'ct',
+                    expression: r'$F{custTotal}',
+                  ),
+                ],
+              ),
+              children: <ScopeNode>[
+                NestedScope(DetailScope(
+                  id: 'lines',
+                  collectionField: 'lines',
+                  totals: const <ScopeTotal>[
+                    ScopeTotal('ordTotal', r'SUM($F{lineTotal})'),
+                  ],
+                  footer: Band(
+                    id: 'lf',
+                    type: BandType.groupFooter,
+                    height: 12,
+                    elements: <ReportElement>[
+                      TextElement(
+                        id: 'ot',
+                        bounds:
+                            const JetRect(x: 0, y: 0, width: 100, height: 10),
+                        text: 'ot',
+                        expression: r'$F{ordTotal}',
+                      ),
+                    ],
+                  ),
+                  children: <ScopeNode>[
+                    BandNode(Band(
+                      id: 'l',
+                      type: BandType.detail,
+                      height: 10,
+                      elements: <ReportElement>[
+                        TextElement(
+                          id: 'lt',
+                          bounds:
+                              const JetRect(x: 0, y: 0, width: 100, height: 10),
+                          text: 'lt',
+                          expression: r'$F{lineTotal}',
+                        ),
+                      ],
+                    )),
+                  ],
+                )),
+              ],
+            )),
+          ]),
+        ),
+      );
+      final source = JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{
+          'orders': <Map<String, Object?>>[
+            <String, Object?>{
+              'lines': <Map<String, Object?>>[
+                <String, Object?>{'lineTotal': 10},
+                <String, Object?>{'lineTotal': 20},
+              ],
+            },
+            <String, Object?>{
+              'lines': <Map<String, Object?>>[
+                <String, Object?>{'lineTotal': 5},
+              ],
+            },
+          ],
+        },
+        <String, Object?>{
+          'orders': <Map<String, Object?>>[
+            <String, Object?>{
+              'lines': <Map<String, Object?>>[
+                <String, Object?>{'lineTotal': 12},
+              ],
+            },
+          ],
+        },
+      ]);
+      final report = const JetReportEngine().renderDefinition(
+        def,
+        source,
+        // Only the real data fields are known — NOT the published totals.
+        options: const RenderOptions(
+          knownFields: <String>{'orders', 'lines', 'lineTotal'},
+        ),
+      );
+      expect(runsFor(report, 'ot'), <String>['30.0', '5.0', '12.0'],
+          reason: 'the injected ordTotal resolves despite not being in '
+              'knownFields');
+      expect(runsFor(report, 'ct'), <String>['35.0', '12.0'],
+          reason: 'the injected custTotal resolves despite not being in '
+              'knownFields');
+      expect(runsFor(report, 'gt'), <String>['47.0']);
+      // No unresolved-binding warning for the computed names.
+      expect(
+        report.diagnostics.entries.where((Diagnostic d) =>
+            d.message.contains('not in the data source') &&
+            (d.message.contains('custTotal') ||
+                d.message.contains('ordTotal'))),
+        isEmpty,
+        reason: 'published totals are valid injected fields, not missing ones',
+      );
+    });
+
+    test(
         'two sibling nested scopes publishing the same total name warn '
         '(cross-sibling collision)', () {
       // Validation enforces name-uniqueness only WITHIN one scope, so two
