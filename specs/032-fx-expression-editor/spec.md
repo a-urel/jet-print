@@ -24,7 +24,11 @@ Two gaps, one user-facing and one structural:
    exposes only `[field]` insertion. Everything richer — aggregates, string/math
    functions, conditionals — must be typed from memory in a single-line input,
    with errors surfaced only as a post-blur red hint. There is no function list,
-   no field/function palette, and no room to read a long expression.
+   no field/function palette, and no room to read a long expression. This applies
+   even to forms the grammar *already* round-trips (aggregates like `SUM`/`AVG`/
+   `COUNT`, single-field sugar like `{upper[name]}`): they save fine but are
+   undiscoverable. This is the discoverability gap, distinct from the grammar gap
+   below.
 
 2. **The friendly template grammar is narrower than the engine.** Today
    `value_template_compiler.dart` only round-trips `[field]` references, literal
