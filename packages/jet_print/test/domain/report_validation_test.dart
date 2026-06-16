@@ -343,7 +343,7 @@ void main() {
         validate(def)
             .where((d) => d.severity == DiagnosticSeverity.error)
             .map((d) => d.message),
-        anyElement(contains('root')),
+        anyElement(contains('footer')),
       );
     });
 
@@ -373,6 +373,22 @@ void main() {
       expect(
           validate(def).where((d) => d.message.contains('aggregate')), isEmpty,
           reason: 'a nested-scope footer is an aggregate sink in B1');
+    });
+
+    test('a nested scope without a footer emits no footer diagnostic', () {
+      final def = ReportDefinition(
+          name: 'r',
+          page: PageFormat.a4Portrait,
+          body: ReportBody(
+              root: DetailScope(id: 'root', children: <ScopeNode>[
+            NestedScope(DetailScope(
+                id: 'lines',
+                collectionField: 'lines',
+                children: <ScopeNode>[
+                  BandNode(Band(id: 'l', type: BandType.detail, height: 12)),
+                ])),
+          ])));
+      expect(validate(def).where((d) => d.message.contains('footer')), isEmpty);
     });
 
     test('a nested footer with the wrong band type is a slot error', () {

@@ -111,7 +111,7 @@ List<Diagnostic> validate(ReportDefinition def) {
 
     // Spec 029 — a nested scope may carry a footer (a collection total). The root
     // scope must not (it has no collection). The footer is slot-checked and is an
-    // aggregate sink; it is NOT record-blind (it renders against the parent row).
+    // aggregate sink; no record-blind check — it renders against the parent collection row.
     if (isRoot) {
       if (scope.footer != null) {
         out.add(Diagnostic(DiagnosticSeverity.error,
