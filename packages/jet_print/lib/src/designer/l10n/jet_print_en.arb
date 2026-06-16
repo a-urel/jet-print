@@ -283,6 +283,59 @@
   "@valueFieldPickerTooltip": {
     "description": "Accessible label / tooltip for the value input's suffix button that opens the data-source field picker."
   },
+  "valueFieldFxTooltip": "Build an expression",
+  "@valueFieldFxTooltip": {
+    "description": "Tooltip for the value field's fx button that opens the expression editor (032)."
+  },
+  "exprEditorTitle": "Expression",
+  "@exprEditorTitle": {
+    "description": "Title of the expression editor dialog (032)."
+  },
+  "exprEditorFieldsLabel": "Fields",
+  "@exprEditorFieldsLabel": {
+    "description": "Label for the fields palette in the expression editor (032)."
+  },
+  "exprEditorFunctionsLabel": "Functions",
+  "@exprEditorFunctionsLabel": {
+    "description": "Label for the functions palette in the expression editor (032)."
+  },
+  "exprGroupString": "String",
+  "@exprGroupString": {
+    "description": "Label for the string-functions group in the expression editor (032)."
+  },
+  "exprGroupMath": "Math",
+  "@exprGroupMath": {
+    "description": "Label for the math-functions group in the expression editor (032)."
+  },
+  "exprGroupLogic": "Logic",
+  "@exprGroupLogic": {
+    "description": "Label for the logic-functions group in the expression editor (032)."
+  },
+  "exprGroupAggregate": "Aggregate",
+  "@exprGroupAggregate": {
+    "description": "Label for the aggregate-functions group in the expression editor (032)."
+  },
+  "exprStatusValid": "Valid",
+  "@exprStatusValid": {
+    "description": "Status shown when the expression is valid (032)."
+  },
+  "exprStatusSyntaxError": "Incomplete or invalid expression",
+  "@exprStatusSyntaxError": {
+    "description": "Status shown when the expression has a syntax error (032)."
+  },
+  "exprStatusUnresolved": "Field not in the data source: {name}",
+  "@exprStatusUnresolved": {
+    "description": "Status shown when the expression references an out-of-scope field (032).",
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "exprEditorCancel": "Cancel",
+  "@exprEditorCancel": {
+    "description": "Cancel button in the expression editor (032)."
+  },
+  "exprEditorInsert": "Insert",
+  "@exprEditorInsert": {
+    "description": "Insert button in the expression editor that commits the expression (032)."
+  },
   "propertiesFormat": "Format",
   "@propertiesFormat": {
     "description": "Properties panel section label for a text element's number/date display format (013)."

@@ -211,6 +211,47 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get valueFieldPickerTooltip => 'Insert a data field';
 
   @override
+  String get valueFieldFxTooltip => 'Build an expression';
+
+  @override
+  String get exprEditorTitle => 'Expression';
+
+  @override
+  String get exprEditorFieldsLabel => 'Fields';
+
+  @override
+  String get exprEditorFunctionsLabel => 'Functions';
+
+  @override
+  String get exprGroupString => 'String';
+
+  @override
+  String get exprGroupMath => 'Math';
+
+  @override
+  String get exprGroupLogic => 'Logic';
+
+  @override
+  String get exprGroupAggregate => 'Aggregate';
+
+  @override
+  String get exprStatusValid => 'Valid';
+
+  @override
+  String get exprStatusSyntaxError => 'Incomplete or invalid expression';
+
+  @override
+  String exprStatusUnresolved(String name) {
+    return 'Field not in the data source: $name';
+  }
+
+  @override
+  String get exprEditorCancel => 'Cancel';
+
+  @override
+  String get exprEditorInsert => 'Insert';
+
+  @override
   String get propertiesFormat => 'Format';
 
   @override
