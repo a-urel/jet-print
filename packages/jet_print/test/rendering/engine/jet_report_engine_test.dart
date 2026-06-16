@@ -1307,6 +1307,159 @@ void main() {
       expect(runsFor(report, 'ot'), isEmpty,
           reason: 'empty collection → no footer, no published total');
     });
+
+    test(
+        'a published total over an unresolvable field warns and folds to 0 '
+        '(FR-009)', () {
+      // The `lines` collection has only `lineTotal`, but the published total
+      // aggregates over `doesNotExist` — a field that is neither in the child
+      // schema nor a published total. The fold context surfaces the standard
+      // unresolved-field warning; every contribution is JetNull, so the SUM
+      // accumulator skips them all and the total folds to 0.0 (no crash, no
+      // #ERROR for the total itself).
+      final def = ReportDefinition(
+        name: 'unresolvablePublishedTotal',
+        page: tallPage,
+        body: ReportBody(
+          root: DetailScope(id: 'root', children: <ScopeNode>[
+            NestedScope(DetailScope(
+              id: 'lines',
+              collectionField: 'lines',
+              totals: const <ScopeTotal>[
+                ScopeTotal('ordTotal', r'SUM($F{doesNotExist})'),
+              ],
+              footer: Band(
+                id: 'lf',
+                type: BandType.groupFooter,
+                height: 12,
+                elements: <ReportElement>[
+                  TextElement(
+                    id: 'ot',
+                    bounds: const JetRect(x: 0, y: 0, width: 100, height: 10),
+                    text: 'ot',
+                    expression: r'$F{ordTotal}',
+                  ),
+                ],
+              ),
+              children: <ScopeNode>[
+                BandNode(Band(
+                  id: 'l',
+                  type: BandType.detail,
+                  height: 10,
+                  elements: <ReportElement>[
+                    TextElement(
+                      id: 'lt',
+                      bounds: const JetRect(x: 0, y: 0, width: 100, height: 10),
+                      text: 'lt',
+                      expression: r'$F{lineTotal}',
+                    ),
+                  ],
+                )),
+              ],
+            )),
+          ]),
+        ),
+      );
+      final source = JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{
+          'lines': <Map<String, Object?>>[
+            <String, Object?>{'lineTotal': 10},
+            <String, Object?>{'lineTotal': 20},
+          ],
+        },
+      ]);
+      final report = const JetReportEngine().renderDefinition(def, source);
+      // The missing-field warning is surfaced (the FillEvalContext text).
+      expect(
+        report.diagnostics.entries.where((Diagnostic d) =>
+            d.severity == DiagnosticSeverity.warning &&
+            d.message.contains('"doesNotExist"') &&
+            d.message.contains('not in the data schema')),
+        isNotEmpty,
+        reason: 'an aggregate over a missing field warns about that field',
+      );
+      // The report still renders: the total folds to 0.0 (all contributions
+      // were JetNull), not #ERROR, and the line detail still renders normally.
+      expect(runsFor(report, 'ot'), <String>['0.0'],
+          reason: 'SUM over all-JetNull contributions folds to 0.0, no crash');
+      expect(runsFor(report, 'lt'), <String>['10.0', '20.0'],
+          reason: 'the rest of the report renders unaffected');
+    });
+
+    test(
+        'a published total whose name shadows a real parent-row field warns '
+        'and the computed total wins (FR-010)', () {
+      // The master row carries a real `amount` field (value 999). A nested
+      // `lines` scope publishes a total ALSO named `amount` (SUM of lineTotal),
+      // injected onto that same master (parent) row — so `row.hasField('amount')`
+      // is true at injection. The shadow must warn, and the master-scope band's
+      // $F{amount} must render the COMPUTED total (30.0), not the original 999.
+      final def = ReportDefinition(
+        name: 'shadowPublishedTotal',
+        page: tallPage,
+        body: ReportBody(
+          root: DetailScope(id: 'root', children: <ScopeNode>[
+            NestedScope(DetailScope(
+              id: 'lines',
+              collectionField: 'lines',
+              totals: const <ScopeTotal>[
+                ScopeTotal('amount', r'SUM($F{lineTotal})'),
+              ],
+              children: <ScopeNode>[
+                BandNode(Band(
+                  id: 'l',
+                  type: BandType.detail,
+                  height: 10,
+                  elements: <ReportElement>[
+                    TextElement(
+                      id: 'lt',
+                      bounds: const JetRect(x: 0, y: 0, width: 100, height: 10),
+                      text: 'lt',
+                      expression: r'$F{lineTotal}',
+                    ),
+                  ],
+                )),
+              ],
+            )),
+            // A master-scope band (no collectionField context) reading the
+            // shadowed parent-row field.
+            BandNode(Band(
+              id: 'mb',
+              type: BandType.detail,
+              height: 10,
+              elements: <ReportElement>[
+                TextElement(
+                  id: 'amt',
+                  bounds: const JetRect(x: 0, y: 0, width: 100, height: 10),
+                  text: 'amt',
+                  expression: r'$F{amount}',
+                ),
+              ],
+            )),
+          ]),
+        ),
+      );
+      final source = JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{
+          'amount': 999,
+          'lines': <Map<String, Object?>>[
+            <String, Object?>{'lineTotal': 10},
+            <String, Object?>{'lineTotal': 20},
+          ],
+        },
+      ]);
+      final report = const JetReportEngine().renderDefinition(def, source);
+      expect(
+        report.diagnostics.entries.where((Diagnostic d) =>
+            d.severity == DiagnosticSeverity.warning &&
+            d.message.contains('"amount"') &&
+            d.message.contains('collides')),
+        isNotEmpty,
+        reason: 'a published total shadowing a real parent-row field must warn',
+      );
+      expect(runsFor(report, 'amt'), <String>['30.0'],
+          reason: 'the computed total (10+20=30) wins over the original 999');
+    });
   });
 
   group('determinism (FR-010 / SC-004)', () {
