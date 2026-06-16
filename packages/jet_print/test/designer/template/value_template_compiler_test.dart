@@ -196,14 +196,39 @@ void main() {
         () {
       final ValueDisplay d = reverseCompile(r'UPPER(COALESCE($F{a}, $F{b}))');
       expect(d.editable, isTrue);
+      expect(d.text, '{upper(coalesce([a], [b]))}');
       expect(parseValueField(d.text),
           const BindingValue(r'UPPER(COALESCE($F{a}, $F{b}))'));
     });
 
     test('unknown bare identifier arg is not a valid call → literal fallback',
         () {
+      // `USD` compiles as a bare identifier that the engine parser rejects, so
+      // the compiled expression is invalid → the whole value stays literal.
       expect(
           parseValueField('{Price(USD)}'), const LiteralValue('{Price(USD)}'));
+    });
+
+    test('forward: string-literal arg with parens is preserved (scanner)', () {
+      expect(parseValueField('{FORMAT([date], "MM(dd)")}'),
+          const BindingValue(r'FORMAT($F{date}, "MM(dd)")'));
+    });
+
+    test(
+        'forward: UNBALANCED paren inside a string literal does not corrupt '
+        'the depth count (scanner)', () {
+      // An open paren with no match inside the string must be skipped, not
+      // counted — otherwise the body is truncated and the value degrades to
+      // literal text. The string literal itself is valid expression syntax.
+      expect(parseValueField('{FORMAT([date], "MM(dd")}'),
+          const BindingValue(r'FORMAT($F{date}, "MM(dd")'));
+    });
+
+    test(
+        'forward: identifier-with-paren inside a string literal is NOT '
+        'uppercased', () {
+      expect(parseValueField('{FORMAT([x], "total(net)")}'),
+          const BindingValue(r'FORMAT($F{x}, "total(net)")'));
     });
   });
 
