@@ -42,6 +42,11 @@ ReportDefinition mapBands(ReportDefinition def, Band Function(Band) transform) {
         collectionField: s.collectionField,
         groups: <GroupLevel>[for (final GroupLevel g in s.groups) group(g)],
         children: <ScopeNode>[for (final ScopeNode n in s.children) node(n)],
+        // A nested scope's footer is a band too (spec 029) — map it through
+        // [transform], and preserve the scope's published totals (spec 030):
+        // both were silently dropped when this rebuilt the scope field-by-field.
+        footer: slot(s.footer),
+        totals: s.totals,
       );
 
   return def.copyWith(
@@ -100,6 +105,11 @@ ReportDefinition mapGroups(
                 NestedScope(scope(inner)),
             },
         ],
+        // Group mapping touches no bands, so the scope's footer + published
+        // totals pass through unchanged — but they must still be carried over,
+        // not dropped by rebuilding the scope field-by-field.
+        footer: s.footer,
+        totals: s.totals,
       );
   return def.copyWith(body: def.body.copyWith(root: scope(def.body.root)));
 }

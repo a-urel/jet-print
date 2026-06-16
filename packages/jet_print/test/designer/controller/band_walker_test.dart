@@ -9,6 +9,7 @@ import 'package:jet_print/src/domain/page_format.dart';
 import 'package:jet_print/src/domain/report_band.dart' show BandType;
 import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/domain/report_element.dart';
+import 'package:jet_print/src/domain/scope_total.dart';
 
 TextElement _txt(String id) => TextElement(
     id: id, bounds: const JetRect(x: 0, y: 0, width: 10, height: 10), text: id);
@@ -133,6 +134,9 @@ void main() {
                 NestedScope(DetailScope(
                   id: 'lines',
                   collectionField: 'lines',
+                  totals: const <ScopeTotal>[
+                    ScopeTotal('orderTotal', r'SUM($F{lineTotal})'),
+                  ],
                   footer: const Band(
                     id: 'lf',
                     type: BandType.groupFooter,
@@ -183,6 +187,33 @@ void main() {
 
     test('findScopeOfBand owns the nested footer band', () {
       expect(findScopeOfBand(defWithFooter(), 'lf')?.id, 'lines');
+    });
+
+    test('mapBands preserves the nested footer band and the scope totals', () {
+      // Regression: rebuilding the scope field-by-field used to drop both the
+      // nested footer (spec 029) and the published totals (spec 030) — so a
+      // single element edit silently destroyed live totals.
+      final ReportDefinition mapped =
+          mapBands(defWithFooter(), (Band b) => b.copyWith(height: 99));
+      // Footer survives AND is transformed.
+      expect(findBand(mapped, 'lf')?.height, 99);
+      // Totals survive untouched.
+      expect(findScope(mapped, 'lines')?.totals.map((ScopeTotal t) => t.name),
+          contains('orderTotal'));
+    });
+
+    test('updateBand on a sibling preserves the scope footer + totals', () {
+      final ReportDefinition updated = updateBand(
+          defWithFooter(), 'lineRow', (Band b) => b.copyWith(height: 7));
+      expect(findBand(updated, 'lf'), isNotNull);
+      expect(findScope(updated, 'lines')?.totals.length, 1);
+    });
+
+    test('mapGroups preserves the nested footer band + totals', () {
+      final ReportDefinition mapped = mapGroups(
+          defWithFooter(), (GroupLevel g) => g.copyWith(startNewPage: true));
+      expect(findBand(mapped, 'lf'), isNotNull);
+      expect(findScope(mapped, 'lines')?.totals.length, 1);
     });
   });
 }

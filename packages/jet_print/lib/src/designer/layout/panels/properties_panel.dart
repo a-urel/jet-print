@@ -25,6 +25,7 @@ import '../../../rendering/frame/primitive.dart';
 import '../../../rendering/text/font_registry.dart';
 import '../../../rendering/text/ui_font_family.dart';
 import '../../controller/band_walker.dart';
+import '../../controller/binding_resolution.dart';
 import '../../controller/jet_report_designer_controller.dart';
 import '../../designer_font_scope.dart';
 import '../../designer_schema_scope.dart';
@@ -460,12 +461,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     if (schema == null) return const <FieldDef>[];
     final Band? band = findBandOfElement(controller.definition, elementId);
     if (band == null) return const <FieldDef>[];
-    final List<DetailScope> chain =
-        scopePathToBand(controller.definition, band.id);
-    return <FieldDef>[
-      for (final FieldDef f in fieldsInScopeForChain(schema, chain))
-        if (f.type != JetFieldType.collection) f,
-    ];
+    return resolvableFieldChoices(controller.definition, schema, band.id);
   }
 
   /// The group key shown in the inspector: a simple `$F{field}` reads as the
@@ -522,9 +518,8 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     final String name = simple.group(1)!;
     final Band? band = findBandOfElement(controller.definition, elementId);
     if (band == null) return null;
-    final List<DetailScope> chain =
-        scopePathToBand(controller.definition, band.id);
-    for (final FieldDef f in fieldsInScopeForChain(schema, chain)) {
+    for (final FieldDef f
+        in resolvableFieldChoices(controller.definition, schema, band.id)) {
       if (f.name == name) return f.type;
     }
     return null;
@@ -544,11 +539,10 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     if (schema == null) return false;
     final Band? band = findBandOfElement(controller.definition, elementId);
     if (band == null) return false;
-    final List<DetailScope> chain =
-        scopePathToBand(controller.definition, band.id);
-    final List<FieldDef> scope = fieldsInScopeForChain(schema, chain);
-    if (expression != null) return !expressionResolves(scope, expression);
-    if (imageField != null) return !fieldResolves(scope, imageField);
+    final Set<String> names =
+        resolvableNamesForBand(controller.definition, schema, band.id);
+    if (expression != null) return !expressionResolvesNames(names, expression);
+    if (imageField != null) return !names.contains(imageField);
     return false;
   }
 

@@ -165,5 +165,74 @@ void main() {
       expect(choices.every((FieldDef f) => f.type != JetFieldType.collection),
           isTrue);
     });
+
+    test('lines footer picker excludes customerTotal (SC-004 mirror)', () {
+      // The picker must offer exactly what the band can resolve: 'lf' sees the
+      // lines + orders scopes, NOT the root, so customerTotal (published onto
+      // root rows) must never appear as a value choice for the lines footer.
+      final List<FieldDef> choices = resolvableFieldChoices(def, _schema, 'lf');
+      expect(byName(choices, 'customerTotal'), isNull);
+    });
+
+    test('a published total sharing a schema field name is not double-listed',
+        () {
+      // A nested scope publishing a total whose name collides with an in-scope
+      // schema field must surface once (schema field wins; no synthetic dupe).
+      final JetDataSchema schema = JetDataSchema(
+        name: 'C',
+        fields: const <FieldDef>[
+          FieldDef('orderTotal', type: JetFieldType.string),
+          FieldDef('orders', type: JetFieldType.collection, fields: <FieldDef>[
+            FieldDef('orderNo', type: JetFieldType.string),
+            FieldDef('lines', type: JetFieldType.collection, fields: <FieldDef>[
+              FieldDef('lineTotal', type: JetFieldType.double),
+            ]),
+          ]),
+        ],
+      );
+      // Root-scope band: it sees the root schema field `orderTotal` AND the
+      // `orderTotal` published by the orders→lines chain is NOT on the root
+      // (only `customerTotal` is). Use the customer footer 'cf', whose render
+      // row carries the orders-published customerTotal; add a colliding root
+      // schema field of the same name to force the dedup path.
+      final ReportDefinition d = ReportDefinition(
+        name: 'R',
+        page: PageFormat.a4Portrait,
+        body: ReportBody(
+          root: DetailScope(
+            id: 'root',
+            groups: <GroupLevel>[
+              GroupLevel(
+                id: 'root/customer',
+                name: 'customer',
+                key: r'$F{orderNo}',
+                footer: _band('cf2', BandType.groupFooter),
+              ),
+            ],
+            children: <ScopeNode>[
+              NestedScope(DetailScope(
+                id: 'orders',
+                collectionField: 'orders',
+                totals: const <ScopeTotal>[
+                  // Collides with the root schema field 'orderTotal'.
+                  ScopeTotal('orderTotal', r'SUM($F{lineTotal})'),
+                ],
+                children: const <ScopeNode>[
+                  BandNode(
+                      Band(id: 'orderRow2', type: BandType.detail, height: 20)),
+                ],
+              )),
+            ],
+          ),
+        ),
+      );
+      final List<FieldDef> choices = resolvableFieldChoices(d, schema, 'cf2');
+      final Iterable<FieldDef> matches =
+          choices.where((FieldDef f) => f.name == 'orderTotal');
+      expect(matches.length, 1);
+      // The real schema field (string) takes precedence over the synthetic
+      // double published total.
+      expect(matches.single.type, JetFieldType.string);
+    });
   });
 }
