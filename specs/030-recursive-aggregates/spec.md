@@ -144,9 +144,11 @@ level, not across the report.
 ### User Story 4 - Guardrails (Priority: P2)
 
 - A `totals` entry on the **root** scope is a validation error.
-- A `ScopeTotal.name` equal to a real field of the parent collection, or
-  duplicated within a scope, is a validation error.
+- A `ScopeTotal.name` duplicated within a scope is a validation error.
 - A non-aggregate `ScopeTotal.expression` (`$F{x} + 1`) is a validation error.
+- A published name that **shadows a real data field** of its parent collection
+  surfaces a **fill-time** diagnostic (the schema is unknown at validation time);
+  the computed total wins so the report reflects the author's intent.
 - A total whose argument references an unresolvable name (master field,
   non-adjacent scope, typo) surfaces a fill-time diagnostic and resolves to null,
   never a silently-wrong number.
@@ -182,12 +184,15 @@ level, not across the report.
 - **FR-007**: `emitNode` MUST consume the rollup-augmented row tree so each
   aggregate folds **exactly once** and the B1 footer display reads injected totals
   as fields (no recomputation, no second render path).
-- **FR-008**: Validation MUST reject: a root-scope `totals`; a non-top-level-
-  aggregate `ScopeTotal.expression`; a `ScopeTotal.name` duplicated within a scope
-  or colliding with a declared field of the parent collection's schema.
+- **FR-008**: Validation (schema-free) MUST reject: a root-scope `totals`; a
+  non-top-level-aggregate `ScopeTotal.expression`; a `ScopeTotal.name` duplicated
+  within a scope.
 - **FR-009**: A `ScopeTotal` argument referencing a name absent from its child-row
   field namespace (after injection) MUST surface the existing unresolved-field
   fill-time diagnostic and resolve to null — never a silently-wrong value.
+- **FR-010**: At fill time, a `ScopeTotal.name` that **shadows a declared field**
+  of its parent collection MUST surface a diagnostic; the computed total takes
+  precedence over the shadowed field (author intent), never silently dropped.
 
 ### Key Entities
 
@@ -209,9 +214,10 @@ level, not across the report.
   live data-derived grand total over the injected `customerTotal`.
 - **SC-003**: A two-customer engine test proves per-parent reset at the customer
   level (`[35, 12]`, not `47`), with the deeper order/line totals also resetting.
-- **SC-004**: Guardrails: a root-scope `totals`, a name/field collision, a
-  duplicate name, and a non-aggregate expression are each validation errors; a
-  total over an unresolvable name surfaces a diagnostic and resolves to null.
+- **SC-004**: Guardrails: a root-scope `totals`, a duplicate name, and a
+  non-aggregate expression are each validation errors; a total over an
+  unresolvable name, and a published name that shadows a real field, each surface
+  a fill-time diagnostic (the latter with the computed total winning).
 - **SC-005**: `DetailScope.totals` round-trips through the codec; a definition
   without the key loads unchanged.
 - **SC-006**: The master `VariableCalculator` and the layout/render/paging stages
