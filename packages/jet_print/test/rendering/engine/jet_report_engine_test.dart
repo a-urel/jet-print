@@ -477,6 +477,111 @@ void main() {
       expect(runsFor(report, 'grand'), <String>['35.0'],
           reason: 'the grand total spans the whole report');
     });
+
+    test('an inline summary aggregate renders the same as a hand variable', () {
+      final inline = ReportDefinition(
+        name: 'inline',
+        page: tallPage,
+        body: ReportBody(
+          summary: Band(
+            id: 'body/summary',
+            type: BandType.summary,
+            height: 18,
+            elements: <ReportElement>[
+              TextElement(
+                id: 'grand',
+                bounds: const JetRect(x: 0, y: 0, width: 200, height: 16),
+                text: 'grand',
+                expression: r'SUM($F{amount})',
+              ),
+            ],
+          ),
+          root: const DetailScope(
+            id: 'root',
+            children: <ScopeNode>[
+              BandNode(Band(
+                id: 'root/c0',
+                type: BandType.detail,
+                height: 18,
+                elements: <ReportElement>[
+                  TextElement(
+                    id: 'amount',
+                    bounds: JetRect(x: 0, y: 0, width: 200, height: 16),
+                    text: 'amount',
+                    expression: r'$F{amount}',
+                  ),
+                ],
+              )),
+            ],
+          ),
+        ),
+      );
+      final source = JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'amount': 10},
+        <String, Object?>{'amount': 20},
+        <String, Object?>{'amount': 5},
+      ]);
+      final report = const JetReportEngine().renderDefinition(inline, source);
+      expect(runsFor(report, 'grand'), <String>['35.0'],
+          reason: 'the inline SUM folds over all master rows at report scope');
+    });
+
+    test('an inline group-footer aggregate matches a group-scoped variable',
+        () {
+      final inline = ReportDefinition(
+        name: 'inlineGroup',
+        page: tallPage,
+        body: ReportBody(
+          root: DetailScope(
+            id: 'root',
+            groups: <GroupLevel>[
+              GroupLevel(
+                id: 'byCategory',
+                name: 'byCategory',
+                key: r'$F{category}',
+                footer: Band(
+                  id: 'root/g0/footer',
+                  type: BandType.groupFooter,
+                  height: 18,
+                  elements: <ReportElement>[
+                    TextElement(
+                      id: 'subtotal',
+                      bounds: const JetRect(x: 0, y: 0, width: 200, height: 16),
+                      text: 'subtotal',
+                      expression: r'SUM($F{amount})',
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            children: <ScopeNode>[
+              BandNode(Band(
+                id: 'root/c0',
+                type: BandType.detail,
+                height: 18,
+                elements: <ReportElement>[
+                  TextElement(
+                    id: 'amount',
+                    bounds: const JetRect(x: 0, y: 0, width: 200, height: 16),
+                    text: 'amount',
+                    expression: r'$F{amount}',
+                  ),
+                ],
+              )),
+            ],
+          ),
+        ),
+      );
+      final source = JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'category': 'A', 'amount': 10},
+        <String, Object?>{'category': 'A', 'amount': 20},
+        <String, Object?>{'category': 'B', 'amount': 5},
+      ]);
+      final report = const JetReportEngine().renderDefinition(inline, source);
+      expect(runsFor(report, 'subtotal'), <String>['30.0', '5.0'],
+          reason:
+              'the inline SUM resets at the group boundary like a group variable');
+    });
   });
 
   group('determinism (FR-010 / SC-004)', () {

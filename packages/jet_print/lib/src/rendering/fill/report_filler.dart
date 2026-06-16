@@ -16,6 +16,7 @@ import '../../domain/report_definition.dart';
 import '../../domain/report_element.dart';
 import '../../domain/report_group.dart';
 import '../../domain/report_variable.dart';
+import '../../expression/aggregate/aggregate_synthesizer.dart';
 import '../../expression/aggregate/variable_calculator.dart';
 import '../../expression/eval_context.dart';
 import '../../expression/expression.dart';
@@ -53,7 +54,7 @@ class ReportFiller {
     return r;
   }
 
-  /// Fills [definition] over [source] natively (spec 024) — the reified
+  /// Fills [rawDefinition] over [source] natively (spec 024) — the reified
   /// counterpart of [fill]. Produces a [FilledReport] **byte-identical** to
   /// filling the equivalent legacy template: groups are keyed internally by
   /// their display [GroupLevel.name] (so a variable's `resetGroup` *id* is
@@ -61,12 +62,17 @@ class ReportFiller {
   /// the band stream is emitted in the same title → groups → detail → footers →
   /// summary order, walking `body.root.children` in authored order.
   FillResult fillDefinition(
-    ReportDefinition definition,
+    ReportDefinition rawDefinition,
     JetDataSource source, {
     Map<String, Object?> params = const <String, Object?>{},
     Set<String>? knownFields,
     String unresolvedFieldToken = '#ERROR',
   }) {
+    // Expand inline aggregates (spec 028) before any group/variable logic: a
+    // stored SUM($F{...}) in a summary/group-footer band becomes a hidden
+    // band-scoped variable + $V{} reference, so it computes through the
+    // unchanged calculator. Returns the definition unchanged when there are none.
+    final ReportDefinition definition = expandAggregates(rawDefinition);
     final ReportDiagnostics diagnostics = ReportDiagnostics();
     final Set<String> warnedFields = <String>{};
     final Set<String> ignoredPageRefs = <String>{};
