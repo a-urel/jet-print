@@ -479,7 +479,7 @@ void main() {
     });
 
     test('an inline summary aggregate renders the same as a hand variable', () {
-      final inline = ReportDefinition(
+      final ReportDefinition inline = ReportDefinition(
         name: 'inline',
         page: tallPage,
         body: ReportBody(
@@ -516,19 +516,21 @@ void main() {
           ),
         ),
       );
-      final source = JetInMemoryDataSource(<Map<String, Object?>>[
+      final JetInMemoryDataSource source =
+          JetInMemoryDataSource(<Map<String, Object?>>[
         <String, Object?>{'amount': 10},
         <String, Object?>{'amount': 20},
         <String, Object?>{'amount': 5},
       ]);
-      final report = const JetReportEngine().renderDefinition(inline, source);
+      final RenderedReport report =
+          const JetReportEngine().renderDefinition(inline, source);
       expect(runsFor(report, 'grand'), <String>['35.0'],
           reason: 'the inline SUM folds over all master rows at report scope');
     });
 
     test('an inline group-footer aggregate matches a group-scoped variable',
         () {
-      final inline = ReportDefinition(
+      final ReportDefinition inline = ReportDefinition(
         name: 'inlineGroup',
         page: tallPage,
         body: ReportBody(
@@ -572,12 +574,14 @@ void main() {
           ),
         ),
       );
-      final source = JetInMemoryDataSource(<Map<String, Object?>>[
+      final JetInMemoryDataSource source =
+          JetInMemoryDataSource(<Map<String, Object?>>[
         <String, Object?>{'category': 'A', 'amount': 10},
         <String, Object?>{'category': 'A', 'amount': 20},
         <String, Object?>{'category': 'B', 'amount': 5},
       ]);
-      final report = const JetReportEngine().renderDefinition(inline, source);
+      final RenderedReport report =
+          const JetReportEngine().renderDefinition(inline, source);
       expect(runsFor(report, 'subtotal'), <String>['30.0', '5.0'],
           reason:
               'the inline SUM resets at the group boundary like a group variable');

@@ -9,7 +9,8 @@ import 'package:jet_print/jet_print.dart';
 // Implementation imports: the rendered display-list primitives aren't part of
 // the public surface, so this equivalence proof reaches into them the same way
 // the engine's own tests do (jet_report_engine_test.dart's `_allRuns`).
-import 'package:jet_print/src/rendering/frame/primitive.dart';
+import 'package:jet_print/src/rendering/frame/primitive.dart'
+    show TextRunPrimitive;
 import 'package:jet_print/src/rendering/text/text_measurer.dart' show TextLine;
 import 'package:jet_print_playground/nested_list_sample.dart';
 import 'package:jet_print_playground/rendered_nested_list_example.dart';
