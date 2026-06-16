@@ -97,9 +97,15 @@ class _ExpressionEditorDialog extends StatefulWidget {
 
 class _ExpressionEditorDialogState extends State<_ExpressionEditorDialog> {
   late final TextEditingController _controller =
-      TextEditingController(text: widget.initialText)..addListener(_onChange);
-  late EditorStatus _status =
-      statusFor(_controller.text, widget.resolvableNames);
+      TextEditingController(text: widget.initialText);
+  EditorStatus _status = const StatusValid();
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_onChange);
+    _status = statusFor(_controller.text, widget.resolvableNames);
+  }
 
   void _onChange() => setState(
       () => _status = statusFor(_controller.text, widget.resolvableNames));
@@ -110,9 +116,12 @@ class _ExpressionEditorDialogState extends State<_ExpressionEditorDialog> {
     final TextEditingValue v = _controller.value;
     final int start = v.selection.start < 0 ? v.text.length : v.selection.start;
     final int end = v.selection.end < 0 ? v.text.length : v.selection.end;
+    final String next = v.text.replaceRange(start, end, snippet);
     _controller.value = TextEditingValue(
-      text: v.text.replaceRange(start, end, snippet),
-      selection: TextSelection.collapsed(offset: start + caretInSnippet),
+      text: next,
+      selection: TextSelection.collapsed(
+        offset: (start + caretInSnippet).clamp(0, next.length),
+      ),
     );
   }
 
@@ -166,6 +175,7 @@ class _ExpressionEditorDialogState extends State<_ExpressionEditorDialog> {
                 for (final FieldDef f in widget.fields)
                   ShadButton.ghost(
                     key: ValueKey<String>('$_k.field.${f.name}'),
+                    size: ShadButtonSize.sm,
                     onPressed: () =>
                         _insertAtCaret('[${f.name}]', '[${f.name}]'.length),
                     child: Text(f.name),
@@ -239,6 +249,7 @@ class _FunctionPalette extends StatelessWidget {
                     // MIN/MAX appear in BOTH math and aggregate groups — key by
                     // name AND group so the two buttons don't collide.
                     key: ValueKey<String>('$_k.fn.${f.name}.${group.name}'),
+                    size: ShadButtonSize.sm,
                     onPressed: () => onPick(f.insertSnippet, f.caretOffset),
                     child: Text(f.name),
                   ),

@@ -77,12 +77,16 @@ void main() {
     expect(_editorText(tester), '{SUM([qty])}');
   });
 
-  testWidgets('tapping a field chip inserts its [token]',
+  testWidgets('tapping a field chip inserts its [token] at the caret',
       (WidgetTester tester) async {
     await _open(tester, initial: '');
     await tester.tap(_fieldChip('qty'));
     await tester.pumpAndSettle();
-    expect(_editorText(tester), contains('[qty]'));
+    final EditableText e = tester.widget<EditableText>(find.descendant(
+        of: find.byKey(_editorKey), matching: find.byType(EditableText)));
+    expect(e.controller.text, '[qty]'); // appended to empty seed, not replaced
+    expect(
+        e.controller.selection.baseOffset, '[qty]'.length); // caret after token
   });
 
   testWidgets('valid in-scope expression shows the valid status',
