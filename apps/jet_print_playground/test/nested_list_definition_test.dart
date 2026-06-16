@@ -55,6 +55,45 @@ void main() {
       expect((lines.children.single as BandNode).band.type, BandType.detail);
     });
 
+    test('orderTotal is a live nested-footer aggregate (spec 029)', () {
+      final DetailScope lines =
+          _findScope(nestedListsDefinition().body.root, 'lines');
+      expect(lines.footer, isNotNull);
+      expect(
+        lines.footer!.elements
+            .whereType<TextElement>()
+            .map((e) => e.expression),
+        contains(r'SUM($F{lineTotal})'),
+      );
+    });
+
+    test('rendered per-order footer totals equal the data line-sums', () {
+      final RenderedReport report = renderNestedListsDefinition();
+
+      // Expected: for each order in the sample data, the sum of its lines'
+      // lineTotal, formatted exactly as the footer element formats it
+      // (`#,##0.00`). Derived from the SAME source the render fills.
+      final List<String> expected = <String>[
+        for (final Map<String, Object?> customer in _sampleRows())
+          for (final Map<String, Object?> order
+              in (customer['orders']! as List<Object?>).cast())
+            _formatTotal((order['lines']! as List<Object?>)
+                .cast<Map<String, Object?>>()
+                .fold<double>(
+                    0, (sum, line) => sum + (line['lineTotal']! as num))),
+      ];
+
+      // Actual: the rendered runs of the live footer total element (id 'ot' —
+      // distinct from the removed precomputed 'orderTotal' so this proves the
+      // SUM([lineTotal]) footer, not the data field), in paint order, one per
+      // order.
+      final List<String> actual = _runsForId(report, 'ot');
+
+      expect(actual, expected,
+          reason:
+              'each live lines-scope footer total equals the data line-sum');
+    });
+
     test('the grand total is authored inline (no declared variable)', () {
       final ReportDefinition def = nestedListsDefinition();
       expect(def.variables, isEmpty,
@@ -101,6 +140,105 @@ void main() {
 /// The sample data the render test exercises — the same source
 /// [renderNestedListsDefinition] fills (Customer ▸ Order ▸ Line).
 JetDataSource _sampleSource() => customersDataSource();
+
+/// Recursively finds the [DetailScope] with [id] within [root]'s nested-scope
+/// tree (depth-first over [NestedScope] children). Throws if not found.
+DetailScope _findScope(DetailScope root, String id) {
+  if (root.id == id) return root;
+  for (final ScopeNode node in root.children) {
+    if (node is NestedScope) {
+      final DetailScope? found = _tryFindScope(node.scope, id);
+      if (found != null) return found;
+    }
+  }
+  throw StateError('no scope with id "$id"');
+}
+
+DetailScope? _tryFindScope(DetailScope root, String id) {
+  if (root.id == id) return root;
+  for (final ScopeNode node in root.children) {
+    if (node is NestedScope) {
+      final DetailScope? found = _tryFindScope(node.scope, id);
+      if (found != null) return found;
+    }
+  }
+  return null;
+}
+
+/// The raw sample rows backing [customersDataSource] — duplicated here (the
+/// in-memory source copies its rows privately) so the value-equality proof
+/// derives the expected per-order sums from the SAME numbers the source feeds
+/// the engine. Kept in lock-step with `rendered_nested_list_example.dart`.
+List<Map<String, Object?>> _sampleRows() => <Map<String, Object?>>[
+      <String, Object?>{
+        'customerName': 'Acme GmbH',
+        'customerCode': 'C-001',
+        'orders': <Map<String, Object?>>[
+          <String, Object?>{
+            'orderNo': 'SO-1042',
+            'lines': <Map<String, Object?>>[
+              <String, Object?>{'lineTotal': 13.5},
+              <String, Object?>{'lineTotal': 12.0},
+            ],
+          },
+          <String, Object?>{
+            'orderNo': 'SO-1051',
+            'lines': <Map<String, Object?>>[
+              <String, Object?>{'lineTotal': 6.5},
+            ],
+          },
+        ],
+      },
+      <String, Object?>{
+        'customerName': 'Globex SARL',
+        'customerCode': 'C-002',
+        'orders': <Map<String, Object?>>[
+          <String, Object?>{
+            'orderNo': 'SO-1043',
+            'lines': <Map<String, Object?>>[
+              <String, Object?>{'lineTotal': 7.5},
+              <String, Object?>{'lineTotal': 5.0},
+              <String, Object?>{'lineTotal': 2.0},
+            ],
+          },
+        ],
+      },
+      <String, Object?>{
+        'customerName': 'Initech Ltd',
+        'customerCode': 'C-003',
+        'orders': <Map<String, Object?>>[
+          <String, Object?>{
+            'orderNo': 'SO-1044',
+            'lines': <Map<String, Object?>>[
+              <String, Object?>{'lineTotal': 100.0},
+              <String, Object?>{'lineTotal': 75.0},
+            ],
+          },
+          <String, Object?>{
+            'orderNo': 'SO-1060',
+            'lines': <Map<String, Object?>>[
+              <String, Object?>{'lineTotal': 60.0},
+            ],
+          },
+        ],
+      },
+    ];
+
+/// Formats a total the way the footer element does. The engine applies the
+/// numeric `format` `#,##0.00` via `intl`'s `NumberFormat` (see
+/// `apply_jet_format.dart`); for these sub-thousand values that is exactly two
+/// fixed decimals with no grouping separator — i.e. `toStringAsFixed(2)`.
+String _formatTotal(double value) => value.toStringAsFixed(2);
+
+/// The rendered text runs of the element with [elementId], in paint order
+/// across all pages — the live footer-total values, one per emitted footer.
+List<String> _runsForId(RenderedReport report, String elementId) => <String>[
+      for (int i = 0; i < report.pageCount; i++)
+        for (final TextRunPrimitive p
+            in report.pageAt(i).frame.primitives.whereType<TextRunPrimitive>())
+          if (p.elementId == elementId)
+            p.lines.map((TextLine l) => l.text).join(),
+    ];
 
 /// Every rendered text run on every page of [report], in paint order — the
 /// comparable shape used to prove two definitions render identically. Mirrors
@@ -265,24 +403,6 @@ ReportDefinition _legacyGrandTotalDefinition() => const ReportDefinition(
                       expression: r'$F{date}',
                     ),
                     TextElement(
-                      id: 'orderTotalLabel',
-                      bounds: JetRect(x: 320, y: 2, width: 105, height: 16),
-                      text: 'Order total',
-                      style: JetTextStyle(
-                          align: JetTextAlign.right,
-                          color: JetColor(0xFF888888)),
-                    ),
-                    TextElement(
-                      id: 'orderTotal',
-                      bounds: JetRect(x: 430, y: 2, width: 110, height: 16),
-                      text: 'orderTotal',
-                      style: JetTextStyle(
-                          align: JetTextAlign.right,
-                          weight: JetFontWeight.bold),
-                      expression: r'$F{orderTotal}',
-                      format: '#,##0.00',
-                    ),
-                    TextElement(
                       id: 'colDescription',
                       bounds: JetRect(x: 24, y: 22, width: 236, height: 14),
                       text: 'Description',
@@ -359,6 +479,31 @@ ReportDefinition _legacyGrandTotalDefinition() => const ReportDefinition(
                       ],
                     )),
                   ],
+                  footer: Band(
+                    id: 'linesFooter',
+                    type: BandType.groupFooter,
+                    height: 18,
+                    elements: <ReportElement>[
+                      TextElement(
+                        id: 'orderTotalLabel2',
+                        bounds: JetRect(x: 320, y: 1, width: 105, height: 16),
+                        text: 'Order total',
+                        style: JetTextStyle(
+                            align: JetTextAlign.right,
+                            color: JetColor(0xFF888888)),
+                      ),
+                      TextElement(
+                        id: 'ot',
+                        bounds: JetRect(x: 430, y: 1, width: 110, height: 16),
+                        text: 'orderTotal',
+                        style: JetTextStyle(
+                            align: JetTextAlign.right,
+                            weight: JetFontWeight.bold),
+                        expression: r'SUM($F{lineTotal})',
+                        format: '#,##0.00',
+                      ),
+                    ],
+                  ),
                 )),
               ],
             )),
