@@ -23,7 +23,7 @@ import 'report_band.dart' show BandType;
 import 'report_definition.dart';
 import 'report_element.dart';
 
-/// Validates [def]'s semantic invariants (I1–I7), returning a [Diagnostic] for
+/// Validates [def]'s semantic invariants (I1–I8), returning a [Diagnostic] for
 /// each violation in document order. Returns an empty list for a valid
 /// definition. **Never throws.**
 ///
@@ -33,6 +33,9 @@ import 'report_element.dart';
 ///   rule — reported as **errors/warnings**.
 /// * I7 representable-but-not-yet-rendered shapes (per-scope grouping; multiple
 ///   per-row bands) — reported as **info**.
+/// * I8 inline aggregates (`SUM`/`AVG`/… top-level calls) appear only in the
+///   summary band or a root group footer; anywhere else is an error, because
+///   only those bands are expanded by the aggregate synthesizer.
 List<Diagnostic> validate(ReportDefinition def) {
   final List<Diagnostic> out = <Diagnostic>[];
   final Map<String, int> idCounts = <String, int>{};
@@ -71,7 +74,7 @@ List<Diagnostic> validate(ReportDefinition def) {
       out.add(Diagnostic(
         DiagnosticSeverity.error,
         'element "${el.id}" uses an aggregate '
-        '(${aggregateNameFor(agg.calculation)}) in band "${band.id}", which is '
+        '(${aggregateNameFor(agg.calculation)!}) in band "${band.id}", which is '
         'not a summary or group footer; aggregates are only computed there',
         elementId: el.id,
       ));

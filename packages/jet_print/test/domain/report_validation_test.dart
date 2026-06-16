@@ -280,5 +280,49 @@ void main() {
           reason: 'header aggregate flagged, footer aggregate allowed');
       expect(aggErrors.single.elementId, 'gh.el');
     });
+
+    test('an inline aggregate in a NESTED-scope group footer is an error', () {
+      final def = ReportDefinition(
+        name: 'r',
+        page: PageFormat.a4Portrait,
+        body: ReportBody(
+          root: DetailScope(id: 'root', children: <ScopeNode>[
+            NestedScope(DetailScope(
+              id: 'lines',
+              collectionField: 'lines',
+              groups: <GroupLevel>[
+                GroupLevel(
+                  id: 'ng',
+                  name: 'ng',
+                  key: r'$F{k}',
+                  footer: Band(
+                    id: 'nf',
+                    type: BandType.groupFooter,
+                    height: 16,
+                    elements: <ReportElement>[
+                      TextElement(
+                        id: 'nf.el',
+                        bounds:
+                            const JetRect(x: 0, y: 0, width: 100, height: 16),
+                        text: 'nf',
+                        expression: r'SUM($F{amount})',
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            )),
+          ]),
+        ),
+      );
+      final aggErrors = validate(def)
+          .where((d) => d.severity == DiagnosticSeverity.error)
+          .where((d) => d.message.contains('aggregate'))
+          .toList();
+      expect(aggErrors, hasLength(1),
+          reason:
+              'a non-root (nested-scope) group footer is not an aggregate sink');
+      expect(aggErrors.single.elementId, 'nf.el');
+    });
   });
 }
