@@ -111,6 +111,13 @@ ReportDefinition _representative() => ReportDefinition(
                 NestedScope(DetailScope(
                   id: 'root/c1/c1',
                   collectionField: 'notes',
+                  footer: Band(
+                      id: 'root/c1/c1/footer',
+                      type: BandType.groupFooter,
+                      height: 14,
+                      elements: <ReportElement>[
+                        _txt('notesTotal', expression: r'$V{notesSum}')
+                      ]),
                   children: <ScopeNode>[
                     BandNode(Band(
                         id: 'root/c1/c1/c0',
@@ -158,6 +165,78 @@ void main() {
           JetReportFormat.decodeDefinitionJson(
               JetReportFormat.encodeDefinitionJson(def)),
           equals(def));
+    });
+
+    test('round-trips a nested scope footer (spec 029)', () {
+      const ReportDefinition def = ReportDefinition(
+        name: 'Footer',
+        page: PageFormat.a4Portrait,
+        body: ReportBody(
+          root: DetailScope(
+            id: 'root',
+            children: <ScopeNode>[
+              NestedScope(DetailScope(
+                id: 'root/c0',
+                collectionField: 'lines',
+                footer: Band(
+                    id: 'root/c0/footer',
+                    type: BandType.groupFooter,
+                    height: 14),
+                children: <ScopeNode>[
+                  BandNode(Band(
+                      id: 'root/c0/c0', type: BandType.detail, height: 10)),
+                ],
+              )),
+            ],
+          ),
+        ),
+      );
+      final ReportDefinition back = JetReportFormat.decodeDefinition(
+          JetReportFormat.encodeDefinition(def));
+      expect(back, equals(def));
+      final NestedScope nested = back.body.root.children.single as NestedScope;
+      expect(
+          nested.scope.footer,
+          const Band(
+              id: 'root/c0/footer', type: BandType.groupFooter, height: 14));
+    });
+
+    test('decodes a scope with no footer key as footer == null (back-compat)',
+        () {
+      final ReportDefinition back =
+          JetReportFormat.decodeDefinition(<String, Object?>{
+        'schemaVersion': 2,
+        'name': 'x',
+        'page': PageFormat.a4Portrait.toJson(),
+        'body': <String, Object?>{
+          'root': <String, Object?>{
+            'id': 'root',
+            'children': <Object?>[
+              <String, Object?>{
+                'kind': 'scope',
+                'scope': <String, Object?>{
+                  'id': 'root/c0',
+                  'collectionField': 'lines',
+                },
+              },
+            ],
+          },
+        },
+      });
+      final NestedScope nested = back.body.root.children.single as NestedScope;
+      expect(nested.scope.footer, isNull);
+    });
+
+    test('a scope without a footer omits the "footer" key', () {
+      final Map<String, Object?> json = JetReportFormat.encodeDefinition(
+        const ReportDefinition(
+          name: 'x',
+          page: PageFormat.a4Portrait,
+          body: ReportBody(root: DetailScope(id: 'root')),
+        ),
+      );
+      final Map<Object?, Object?> root = (json['body']! as Map)['root']! as Map;
+      expect(root.containsKey('footer'), isFalse);
     });
 
     test('fail-fasts on a missing schemaVersion', () {

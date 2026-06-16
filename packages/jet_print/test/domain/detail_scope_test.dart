@@ -80,5 +80,19 @@ void main() {
       expect(const BandNode(_detail),
           isNot(const NestedScope(DetailScope(id: 's'))));
     });
+
+    test(
+        'a scope with a footer differs from one without and copyWith '
+        'preserves it', () {
+      const Band footer = Band(id: 'f', type: BandType.groupFooter, height: 12);
+      const DetailScope a =
+          DetailScope(id: 's', collectionField: 'lines', footer: footer);
+      const DetailScope b = DetailScope(id: 's', collectionField: 'lines');
+      expect(a, isNot(b));
+      expect(a.hashCode, isNot(b.hashCode));
+      expect(a.copyWith(id: 's2').footer, footer);
+      expect(a.footer, footer);
+      expect(b.footer, isNull);
+    });
   });
 }

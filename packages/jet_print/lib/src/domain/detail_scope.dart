@@ -68,6 +68,7 @@ class DetailScope {
     this.collectionField,
     this.groups = const <GroupLevel>[],
     this.children = const <ScopeNode>[],
+    this.footer,
   });
 
   /// Stable identity.
@@ -84,18 +85,24 @@ class DetailScope {
   /// preserving authored interleaving.
   final List<ScopeNode> children;
 
+  /// Emitted once after this scope's rows — the structural home of a collection
+  /// total (spec 029). Null on the root scope.
+  final Band? footer;
+
   /// Returns a copy with the given fields replaced.
   DetailScope copyWith({
     String? id,
     String? collectionField,
     List<GroupLevel>? groups,
     List<ScopeNode>? children,
+    Band? footer,
   }) =>
       DetailScope(
         id: id ?? this.id,
         collectionField: collectionField ?? this.collectionField,
         groups: groups ?? this.groups,
         children: children ?? this.children,
+        footer: footer ?? this.footer,
       );
 
   @override
@@ -104,14 +111,16 @@ class DetailScope {
       other.id == id &&
       other.collectionField == collectionField &&
       listEquals(other.groups, groups) &&
-      listEquals(other.children, children);
+      listEquals(other.children, children) &&
+      other.footer == footer;
 
   @override
-  int get hashCode => Object.hash(
-      id, collectionField, Object.hashAll(groups), Object.hashAll(children));
+  int get hashCode => Object.hash(id, collectionField, Object.hashAll(groups),
+      Object.hashAll(children), footer);
 
   @override
   String toString() => 'DetailScope($id'
       '${collectionField == null ? '' : ', collection: $collectionField'}, '
-      '${groups.length} group(s), ${children.length} child(ren))';
+      '${groups.length} group(s), ${children.length} child(ren)'
+      '${footer == null ? '' : ', footer: ${footer!.id}'})';
 }

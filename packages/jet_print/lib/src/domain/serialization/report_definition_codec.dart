@@ -87,6 +87,7 @@ Map<String, Object?> _encodeScope(
         for (final ScopeNode node in scope.children)
           _encodeNode(node, registry),
       ],
+    if (scope.footer != null) 'footer': _encodeBand(scope.footer!, registry),
   };
 }
 
@@ -229,6 +230,7 @@ DetailScope _decodeScope(
             for (final Object? n in children as List)
               _decodeNode((n! as Map).cast<String, Object?>(), registry),
           ],
+    footer: _decodeBandOrNull(json['footer'], registry),
   );
 }
 
