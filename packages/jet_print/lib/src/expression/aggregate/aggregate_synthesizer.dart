@@ -13,6 +13,9 @@
 /// synthesized variable's `$F{...}` resolves to nothing on a master row, so the
 /// fill pass emits an unresolved-field diagnostic and the value falls back —
 /// never a silently-wrong number.
+///
+/// Synthesized variables are named `__agg<n>`; a user-declared variable with
+/// that name would be shadowed, so the `__agg` prefix is reserved.
 library;
 
 import '../../domain/band.dart';
@@ -44,8 +47,8 @@ ReportDefinition expandAggregates(ReportDefinition def) {
     if (agg == null) return null;
     final String inner =
         expr.substring(expr.indexOf('(') + 1, expr.lastIndexOf(')'));
-    final String key =
-        '${scope.name}|${resetGroup ?? ''}|${agg.calculation.name}|$inner';
+    final String key = '${scope.name}\x00${resetGroup ?? ''}\x00'
+        '${agg.calculation.name}\x00$inner';
     final String name = nameByKey.putIfAbsent(key, () {
       final String n = '__agg${nameByKey.length}';
       synth.add(ReportVariable(
@@ -88,6 +91,8 @@ ReportDefinition expandAggregates(ReportDefinition def) {
   final Band? summary =
       rewriteBand(def.body.summary, VariableResetScope.report, null);
 
+  // This list is discarded when synth.isEmpty (the early `return def` fires
+  // first), so building it here does not defeat the no-op identity guarantee.
   final List<GroupLevel> groups = <GroupLevel>[
     for (final GroupLevel g in def.body.root.groups)
       _rewriteGroup(g, rewriteBand),

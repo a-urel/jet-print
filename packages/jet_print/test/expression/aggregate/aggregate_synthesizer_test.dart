@@ -112,4 +112,46 @@ void main() {
         body: ReportBody(root: DetailScope(id: 'root')));
     expect(expandAggregates(def), def);
   });
+
+  test('an aggregate in an unsupported band (detail) is left unchanged', () {
+    final def = ReportDefinition(
+        name: 'r',
+        page: PageFormat.a4Portrait,
+        body: ReportBody(
+            root: DetailScope(id: 'root', children: <ScopeNode>[
+          BandNode(Band(
+              id: 'd',
+              type: BandType.detail,
+              height: 16,
+              elements: <ReportElement>[_agg('x', r'SUM($F{amount})')])),
+        ])));
+    final out = expandAggregates(def);
+    expect(out.variables, isEmpty);
+    final el = (out.body.root.children.single as BandNode).band.elements.single
+        as TextElement;
+    expect(el.expression, r'SUM($F{amount})',
+        reason: 'detail-band aggregates are not expanded in Phase A');
+  });
+
+  test('the same aggregate in two different group footers makes two variables',
+      () {
+    Band footer(String id) => Band(
+        id: id,
+        type: BandType.groupFooter,
+        height: 16,
+        elements: <ReportElement>[_agg(id, r'SUM($F{amount})')]);
+    final def = ReportDefinition(
+      name: 'r',
+      page: PageFormat.a4Portrait,
+      body: ReportBody(
+          root: DetailScope(id: 'root', groups: <GroupLevel>[
+        GroupLevel(id: 'a', name: 'a', key: r'$F{a}', footer: footer('fa')),
+        GroupLevel(id: 'b', name: 'b', key: r'$F{b}', footer: footer('fb')),
+      ])),
+    );
+    final vars = expandAggregates(def).variables;
+    expect(vars, hasLength(2),
+        reason: 'different reset groups must not de-dup');
+    expect(vars.map((v) => v.resetGroup).toSet(), <String>{'a', 'b'});
+  });
 }
