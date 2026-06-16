@@ -222,9 +222,10 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
                       text: 'date',
                       expression: r'$F{date}',
                     ),
-                    // The per-order total moved to the `lines`-scope footer
-                    // (a live SUM([lineTotal]) aggregate, spec 029); the order
-                    // row no longer shows the precomputed `$F{orderTotal}`.
+                    // The per-order total lives on the `lines` scope as a
+                    // published total `orderTotal = SUM($F{lineTotal})` (spec 030,
+                    // B2), displayed in the lines footer and rolled up into the
+                    // customer total; the order row itself shows no total.
                     TextElement(
                       id: 'colDescription',
                       bounds: JetRect(x: 24, y: 22, width: 236, height: 14),
