@@ -186,5 +186,99 @@ void main() {
       expect(
           _has(validate(def), DiagnosticSeverity.error, 'collection'), isTrue);
     });
+
+    test('an inline aggregate outside summary/group-footer is an error', () {
+      final def = ReportDefinition(
+        name: 'r',
+        page: PageFormat.a4Portrait,
+        body: ReportBody(
+          root: DetailScope(id: 'root', children: <ScopeNode>[
+            BandNode(Band(
+              id: 'd',
+              type: BandType.detail,
+              height: 16,
+              elements: <ReportElement>[
+                TextElement(
+                  id: 'bad',
+                  bounds: const JetRect(x: 0, y: 0, width: 100, height: 16),
+                  text: 'bad',
+                  expression: r'SUM($F{amount})',
+                ),
+              ],
+            )),
+          ]),
+        ),
+      );
+      final errors = validate(def)
+          .where((d) => d.severity == DiagnosticSeverity.error)
+          .map((d) => d.message);
+      expect(errors, anyElement(contains('aggregate')));
+    });
+
+    test('an inline aggregate in summary is valid (no aggregate diagnostic)',
+        () {
+      final def = ReportDefinition(
+        name: 'r',
+        page: PageFormat.a4Portrait,
+        body: ReportBody(
+          summary: Band(
+            id: 's',
+            type: BandType.summary,
+            height: 16,
+            elements: <ReportElement>[
+              TextElement(
+                id: 'ok',
+                bounds: const JetRect(x: 0, y: 0, width: 100, height: 16),
+                text: 'ok',
+                expression: r'SUM($F{amount})',
+              ),
+            ],
+          ),
+          root: const DetailScope(id: 'root'),
+        ),
+      );
+      expect(
+          validate(def).where((d) => d.message.contains('aggregate')), isEmpty);
+    });
+
+    test(
+        'an inline aggregate in a group FOOTER is valid, but in a group HEADER '
+        'is an error', () {
+      Band band(String id, BandType type) => Band(
+            id: id,
+            type: type,
+            height: 16,
+            elements: <ReportElement>[
+              TextElement(
+                id: '$id.el',
+                bounds: const JetRect(x: 0, y: 0, width: 100, height: 16),
+                text: id,
+                expression: r'SUM($F{amount})',
+              ),
+            ],
+          );
+      final def = ReportDefinition(
+        name: 'r',
+        page: PageFormat.a4Portrait,
+        body: ReportBody(
+          root: DetailScope(id: 'root', groups: <GroupLevel>[
+            GroupLevel(
+              id: 'g',
+              name: 'g',
+              key: r'$F{k}',
+              header: band('gh', BandType.groupHeader),
+              footer: band('gf', BandType.groupFooter),
+            ),
+          ]),
+        ),
+      );
+      final aggErrors = validate(def)
+          .where((d) => d.severity == DiagnosticSeverity.error)
+          .where((d) => d.message.contains('aggregate'))
+          .toList();
+      expect(aggErrors, hasLength(1),
+          reason: 'header aggregate flagged, footer aggregate allowed');
+      expect(aggErrors.single.elementId, 'gh.el');
+    });
   });
 }

@@ -9,6 +9,7 @@
 /// [Diagnostic] type — never rendering/designer/Flutter UI.
 library;
 
+import '../expression/aggregate/aggregate_functions.dart';
 import '../expression/expression.dart';
 import '../expression/expression_exception.dart';
 import 'band.dart';
@@ -50,6 +51,30 @@ List<Diagnostic> validate(ReportDefinition def) {
           elementId: el.id,
         ));
       }
+    }
+  }
+
+  // Inline aggregates are only computed in the summary band and root group
+  // footers (the synthesizer expands only those). Flag an aggregate authored in
+  // any other band — it would never be computed and silently error at fill.
+  void aggregateBand(Band? band, {required bool supported}) {
+    if (band == null || supported) return;
+    for (final ReportElement el in band.elements) {
+      if (el is! TextElement || el.expression == null) continue;
+      AggregateCall? agg;
+      try {
+        agg = topLevelAggregate(Expression.parse(el.expression!).root);
+      } on ExpressionException {
+        continue;
+      }
+      if (agg == null) continue;
+      out.add(Diagnostic(
+        DiagnosticSeverity.error,
+        'element "${el.id}" uses an aggregate '
+        '(${aggregateNameFor(agg.calculation)}) in band "${band.id}", which is '
+        'not a summary or group footer; aggregates are only computed there',
+        elementId: el.id,
+      ));
     }
   }
 
@@ -101,6 +126,10 @@ List<Diagnostic> validate(ReportDefinition def) {
       }
       slotBand(g.header, BandType.groupHeader);
       slotBand(g.footer, BandType.groupFooter);
+      // Only a ROOT group footer is an aggregate sink; headers never are, and
+      // nested-scope group footers are not expanded.
+      aggregateBand(g.header, supported: false);
+      aggregateBand(g.footer, supported: isRoot);
     }
 
     // Children: I5 per-row band type, I7 multiple per-row bands, recurse scopes.
@@ -110,6 +139,7 @@ List<Diagnostic> validate(ReportDefinition def) {
         case BandNode(band: final Band b):
           bandNodes++;
           slotBand(b, BandType.detail);
+          aggregateBand(b, supported: false);
         case NestedScope(scope: final DetailScope s):
           walkScope(s, isRoot: false);
       }
@@ -131,10 +161,21 @@ List<Diagnostic> validate(ReportDefinition def) {
       isRecordBlind: true);
   slotBand(def.furniture.background, BandType.background, isRecordBlind: true);
 
+  // Furniture is never an aggregate sink.
+  aggregateBand(def.furniture.pageHeader, supported: false);
+  aggregateBand(def.furniture.pageFooter, supported: false);
+  aggregateBand(def.furniture.columnHeader, supported: false);
+  aggregateBand(def.furniture.columnFooter, supported: false);
+  aggregateBand(def.furniture.background, supported: false);
+
   // Body once-bands (record-blind) + the scope tree.
   slotBand(def.body.title, BandType.title, isRecordBlind: true);
   slotBand(def.body.summary, BandType.summary, isRecordBlind: true);
   slotBand(def.body.noData, BandType.noData, isRecordBlind: true);
+  // Only the summary band is an aggregate sink among the once-bands.
+  aggregateBand(def.body.title, supported: false);
+  aggregateBand(def.body.summary, supported: true);
+  aggregateBand(def.body.noData, supported: false);
   walkScope(def.body.root, isRoot: true);
 
   // I1 — duplicate ids (reported once per offending id, in first-seen order).
