@@ -63,7 +63,8 @@ Future<void> _openOutline(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('"Add list ▸ lines" creates a nested list bound to that collection',
+  testWidgets(
+      '"Add list ▸ lines" creates a nested list bound to that collection',
       (WidgetTester tester) async {
     final JetReportDesignerController c =
         await pumpDesignerWith(tester, dataSchema: _invoice);
@@ -71,8 +72,8 @@ void main() {
 
     await _tapKey(tester, 'jet_print.designer.outline.scope.root.add');
     await _hover(tester, 'jet_print.designer.outline.scope.root.add.list');
-    await _tapKey(tester,
-        'jet_print.designer.outline.scope.root.add.list.field.lines');
+    await _tapKey(
+        tester, 'jet_print.designer.outline.scope.root.add.list.field.lines');
 
     final List<NestedScope> nested =
         c.definition.body.root.children.whereType<NestedScope>().toList();

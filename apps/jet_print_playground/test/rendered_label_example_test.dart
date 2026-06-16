@@ -33,7 +33,8 @@ void main() {
         report.diagnostics.entries
             .where((Diagnostic d) => d.severity == DiagnosticSeverity.error),
         isEmpty,
-        reason: 'a fully-bound label definition + matching data renders cleanly',
+        reason:
+            'a fully-bound label definition + matching data renders cleanly',
       );
     });
   });

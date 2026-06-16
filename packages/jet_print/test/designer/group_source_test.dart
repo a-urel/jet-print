@@ -45,8 +45,7 @@ void main() {
     expect(c.definition.body.root.groups.single.name, 'invoice');
   });
 
-  testWidgets(
-      'a non-field key shows editable and the picker stores \$F{field}',
+  testWidgets('a non-field key shows editable and the picker stores \$F{field}',
       (WidgetTester tester) async {
     // Groups are born bound; to exercise the "non-field key stays editable"
     // path, set a constant key manually (before the first pump so the input

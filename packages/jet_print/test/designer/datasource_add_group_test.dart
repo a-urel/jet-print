@@ -18,7 +18,8 @@ const JetDataSchema _invoice = JetDataSchema(
 );
 
 void main() {
-  testWidgets('"+ group" on a top-level scalar creates a root group bound to it',
+  testWidgets(
+      '"+ group" on a top-level scalar creates a root group bound to it',
       (WidgetTester tester) async {
     final JetReportDesignerController c =
         await pumpDesignerWith(tester, dataSchema: _invoice);
