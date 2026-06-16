@@ -976,6 +976,87 @@ void main() {
           reason: 'grand total sums custTotal via the unchanged Phase A path');
     });
 
+    test(
+        'two sibling nested scopes publishing the same total name warn '
+        '(cross-sibling collision)', () {
+      // Validation enforces name-uniqueness only WITHIN one scope, so two
+      // sibling NestedScopes under the same parent can each publish 'total'
+      // over a different collection. The second silently overwrites the first
+      // in the parent row's extras — that collision must surface a warning.
+      final def = ReportDefinition(
+        name: 'siblingCollision',
+        page: tallPage,
+        body: ReportBody(
+          root: DetailScope(id: 'root', children: <ScopeNode>[
+            NestedScope(DetailScope(
+              id: 'a',
+              collectionField: 'a',
+              totals: const <ScopeTotal>[
+                ScopeTotal('total', r'SUM($F{amount})'),
+              ],
+              children: <ScopeNode>[
+                BandNode(Band(
+                  id: 'ab',
+                  type: BandType.detail,
+                  height: 10,
+                  elements: <ReportElement>[
+                    TextElement(
+                      id: 'aa',
+                      bounds: const JetRect(x: 0, y: 0, width: 100, height: 10),
+                      text: 'aa',
+                      expression: r'$F{amount}',
+                    ),
+                  ],
+                )),
+              ],
+            )),
+            NestedScope(DetailScope(
+              id: 'b',
+              collectionField: 'b',
+              totals: const <ScopeTotal>[
+                ScopeTotal('total', r'SUM($F{amount})'),
+              ],
+              children: <ScopeNode>[
+                BandNode(Band(
+                  id: 'bb',
+                  type: BandType.detail,
+                  height: 10,
+                  elements: <ReportElement>[
+                    TextElement(
+                      id: 'ba',
+                      bounds: const JetRect(x: 0, y: 0, width: 100, height: 10),
+                      text: 'ba',
+                      expression: r'$F{amount}',
+                    ),
+                  ],
+                )),
+              ],
+            )),
+          ]),
+        ),
+      );
+      final source = JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{
+          'a': <Map<String, Object?>>[
+            <String, Object?>{'amount': 1},
+          ],
+          'b': <Map<String, Object?>>[
+            <String, Object?>{'amount': 2},
+          ],
+        },
+      ]);
+      final report = const JetReportEngine().renderDefinition(def, source);
+      expect(
+        report.diagnostics.entries.where((Diagnostic d) =>
+            d.severity == DiagnosticSeverity.warning &&
+            d.message.contains('"total"') &&
+            d.message.contains('"b"')),
+        isNotEmpty,
+        reason: 'the second sibling publishing the same total name collides '
+            'with the first and must surface a warning',
+      );
+    });
+
     test('an expression-argument published total folds the per-row product',
         () {
       final def = ReportDefinition(

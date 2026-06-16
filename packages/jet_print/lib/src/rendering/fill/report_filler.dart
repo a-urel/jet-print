@@ -241,6 +241,25 @@ class ReportFiller {
       ];
     }
 
+    // Spec 030 (B2) — the parsed published-total fold specs depend only on the
+    // static definition, so prepare them ONCE here (mirroring how `calcVars` /
+    // `calcGroups` / `expandAggregates` are hoisted above the row loop) rather
+    // than re-parsing each total's expression on every master row. Keyed by the
+    // owning nested scope's id — unique by validation invariant I1 — so
+    // `augmentForScope` can look each scope's specs up in O(1).
+    final Map<String, List<ScopeAgg>> scopeAggsById =
+        <String, List<ScopeAgg>>{};
+    void collectScopeAggs(DetailScope scope) {
+      for (final ScopeNode node in scope.children) {
+        if (node is! NestedScope) continue;
+        final DetailScope cs = node.scope;
+        scopeAggsById[cs.id] = prepareScopeTotals(cs.totals);
+        collectScopeAggs(cs);
+      }
+    }
+
+    collectScopeAggs(definition.body.root);
+
     // Spec 030 (B2) — a single bottom-up rollup pass per master row, run BEFORE
     // `calc.advance`. For each nested child scope it: derives the child rows,
     // recursively augments each (so a child's own published totals are fields
@@ -262,7 +281,7 @@ class ReportFiller {
         final List<DataRow> augChildren = <DataRow>[
           for (final DataRow cr in childRows) augmentForScope(cs, cr),
         ];
-        for (final ScopeAgg a in prepareScopeTotals(cs.totals)) {
+        for (final ScopeAgg a in scopeAggsById[cs.id] ?? const <ScopeAgg>[]) {
           final VariableAccumulator acc = VariableAccumulator(a.calculation);
           for (final DataRow acr in augChildren) {
             acc.fold(a.argument.evaluate(contextFactory(
@@ -272,10 +291,16 @@ class ReportFiller {
               functions: _functions,
             )));
           }
-          if (row.hasField(a.name)) {
+          // A published total can collide either with a real data field on the
+          // parent row (FR-010 shadow) or with a sibling scope's total already
+          // published into `extras` this invocation — validation enforces
+          // name-uniqueness only WITHIN one scope, not across siblings. Warn in
+          // both cases; the computed value is still injected (last-wins).
+          if (row.hasField(a.name) || extras.containsKey(a.name)) {
             diagnostics.warning(
-                'published total "${a.name}" shadows a data field on scope '
-                '"${cs.id}"; the computed total is used');
+                'published total "${a.name}" on scope "${cs.id}" collides with '
+                'an existing field or a sibling scope\'s published total of the '
+                'same name; the computed total is used');
           }
           extras[a.name] = acc.value;
         }
