@@ -315,7 +315,7 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
                             color: JetColor(0xFF888888)),
                       ),
                       TextElement(
-                        id: 'ot',
+                        id: 'orderTotalFooter',
                         bounds: JetRect(x: 430, y: 1, width: 110, height: 16),
                         text: 'orderTotal',
                         style: JetTextStyle(

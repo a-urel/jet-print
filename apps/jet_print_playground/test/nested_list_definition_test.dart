@@ -5,6 +5,7 @@
 // rendering it through the native renderDefinition path is clean — all through
 // `package:jet_print/jet_print.dart` only.
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 import 'package:jet_print/jet_print.dart';
 // Implementation imports: the rendered display-list primitives aren't part of
 // the public surface, so this equivalence proof reaches into them the same way
@@ -74,7 +75,7 @@ void main() {
       // lineTotal, formatted exactly as the footer element formats it
       // (`#,##0.00`). Derived from the SAME source the render fills.
       final List<String> expected = <String>[
-        for (final Map<String, Object?> customer in _sampleRows())
+        for (final Map<String, Object?> customer in kSampleCustomers)
           for (final Map<String, Object?> order
               in (customer['orders']! as List<Object?>).cast())
             _formatTotal((order['lines']! as List<Object?>)
@@ -83,11 +84,11 @@ void main() {
                     0, (sum, line) => sum + (line['lineTotal']! as num))),
       ];
 
-      // Actual: the rendered runs of the live footer total element (id 'ot' —
-      // distinct from the removed precomputed 'orderTotal' so this proves the
-      // SUM([lineTotal]) footer, not the data field), in paint order, one per
-      // order.
-      final List<String> actual = _runsForId(report, 'ot');
+      // Actual: the rendered runs of the live footer total element (id
+      // 'orderTotalFooter' — distinct from the removed precomputed 'orderTotal'
+      // data field so this proves the SUM([lineTotal]) footer, not the data
+      // field), in paint order, one per order.
+      final List<String> actual = _runsForId(report, 'orderTotalFooter');
 
       expect(actual, expected,
           reason:
@@ -165,70 +166,12 @@ DetailScope? _tryFindScope(DetailScope root, String id) {
   return null;
 }
 
-/// The raw sample rows backing [customersDataSource] — duplicated here (the
-/// in-memory source copies its rows privately) so the value-equality proof
-/// derives the expected per-order sums from the SAME numbers the source feeds
-/// the engine. Kept in lock-step with `rendered_nested_list_example.dart`.
-List<Map<String, Object?>> _sampleRows() => <Map<String, Object?>>[
-      <String, Object?>{
-        'customerName': 'Acme GmbH',
-        'customerCode': 'C-001',
-        'orders': <Map<String, Object?>>[
-          <String, Object?>{
-            'orderNo': 'SO-1042',
-            'lines': <Map<String, Object?>>[
-              <String, Object?>{'lineTotal': 13.5},
-              <String, Object?>{'lineTotal': 12.0},
-            ],
-          },
-          <String, Object?>{
-            'orderNo': 'SO-1051',
-            'lines': <Map<String, Object?>>[
-              <String, Object?>{'lineTotal': 6.5},
-            ],
-          },
-        ],
-      },
-      <String, Object?>{
-        'customerName': 'Globex SARL',
-        'customerCode': 'C-002',
-        'orders': <Map<String, Object?>>[
-          <String, Object?>{
-            'orderNo': 'SO-1043',
-            'lines': <Map<String, Object?>>[
-              <String, Object?>{'lineTotal': 7.5},
-              <String, Object?>{'lineTotal': 5.0},
-              <String, Object?>{'lineTotal': 2.0},
-            ],
-          },
-        ],
-      },
-      <String, Object?>{
-        'customerName': 'Initech Ltd',
-        'customerCode': 'C-003',
-        'orders': <Map<String, Object?>>[
-          <String, Object?>{
-            'orderNo': 'SO-1044',
-            'lines': <Map<String, Object?>>[
-              <String, Object?>{'lineTotal': 100.0},
-              <String, Object?>{'lineTotal': 75.0},
-            ],
-          },
-          <String, Object?>{
-            'orderNo': 'SO-1060',
-            'lines': <Map<String, Object?>>[
-              <String, Object?>{'lineTotal': 60.0},
-            ],
-          },
-        ],
-      },
-    ];
-
-/// Formats a total the way the footer element does. The engine applies the
-/// numeric `format` `#,##0.00` via `intl`'s `NumberFormat` (see
-/// `apply_jet_format.dart`); for these sub-thousand values that is exactly two
-/// fixed decimals with no grouping separator — i.e. `toStringAsFixed(2)`.
-String _formatTotal(double value) => value.toStringAsFixed(2);
+/// Formats a total exactly the way the footer element does: the engine applies
+/// the numeric `format` `#,##0.00` via `intl`'s `NumberFormat` (see
+/// `apply_jet_format.dart`), so the proof formats with the same
+/// `NumberFormat('#,##0.00')` — self-healing for values ≥1000 where
+/// `toStringAsFixed(2)` would diverge (no grouping separator).
+String _formatTotal(double value) => NumberFormat('#,##0.00').format(value);
 
 /// The rendered text runs of the element with [elementId], in paint order
 /// across all pages — the live footer-total values, one per emitted footer.
@@ -479,6 +422,7 @@ ReportDefinition _legacyGrandTotalDefinition() => const ReportDefinition(
                       ],
                     )),
                   ],
+                  // Same lines-scope footer as the primary definition — must stay in sync.
                   footer: Band(
                     id: 'linesFooter',
                     type: BandType.groupFooter,
@@ -493,7 +437,7 @@ ReportDefinition _legacyGrandTotalDefinition() => const ReportDefinition(
                             color: JetColor(0xFF888888)),
                       ),
                       TextElement(
-                        id: 'ot',
+                        id: 'orderTotalFooter',
                         bounds: JetRect(x: 430, y: 1, width: 110, height: 16),
                         text: 'orderTotal',
                         style: JetTextStyle(
