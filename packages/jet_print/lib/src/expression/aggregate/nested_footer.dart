@@ -48,7 +48,10 @@ class PreparedFooter {
   final List<NestedAgg> aggs;
 }
 
-/// Prepares [footer] (see [PreparedFooter]).
+/// Prepares [footer] for filler-local folding: returns the band with each inline
+/// aggregate element rewritten to `$V{__naggN}` and the matching [NestedAgg] specs
+/// in [PreparedFooter.aggs]; returns [footer] unchanged with no specs when it holds
+/// no aggregate. Pure.
 PreparedFooter prepareNestedFooter(Band footer) {
   final List<NestedAgg> aggs = <NestedAgg>[];
   bool changed = false;
