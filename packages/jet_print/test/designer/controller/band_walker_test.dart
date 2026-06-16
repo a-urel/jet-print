@@ -1,5 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/designer/controller/band_walker.dart';
+import 'package:jet_print/src/designer/controller/commands/scope_commands.dart';
+import 'package:jet_print/src/designer/controller/designer_document.dart';
+import 'package:jet_print/src/designer/controller/selection.dart';
 import 'package:jet_print/src/domain/band.dart';
 import 'package:jet_print/src/domain/detail_scope.dart';
 import 'package:jet_print/src/domain/elements/text_element.dart';
@@ -214,6 +217,95 @@ void main() {
           defWithFooter(), (GroupLevel g) => g.copyWith(startNewPage: true));
       expect(findBand(mapped, 'lf'), isNotNull);
       expect(findScope(mapped, 'lines')?.totals.length, 1);
+    });
+
+    test('removeBandFromTree of an unrelated band keeps footer + totals', () {
+      // Removing the per-row band must not destroy the scope's footer (spec
+      // 029) or its published totals (spec 030).
+      final ReportDefinition removed =
+          removeBandFromTree(defWithFooter(), 'lineRow');
+      expect(findBand(removed, 'lineRow'), isNull);
+      expect(findBand(removed, 'lf'), isNotNull);
+      expect(findScope(removed, 'lines')?.totals.length, 1);
+    });
+
+    test('removeBandFromTree of the footer band nulls footer, keeps totals',
+        () {
+      // Deleting the nested footer band itself should clear the scope's footer
+      // but leave the published totals intact.
+      final ReportDefinition removed =
+          removeBandFromTree(defWithFooter(), 'lf');
+      expect(findBand(removed, 'lf'), isNull);
+      expect(findScope(removed, 'lines')?.footer, isNull);
+      expect(findScope(removed, 'lines')?.totals.length, 1);
+    });
+
+    test('reorderScopeChild preserves the footer + totals', () {
+      // Add a second per-row band so there is something to reorder.
+      final ReportDefinition base = defWithFooter();
+      final DetailScope lines = findScope(base, 'lines')!;
+      final ReportDefinition withTwo = mapScopes(
+        base,
+        (DetailScope s) => s.id == 'lines'
+            ? s.copyWith(children: <ScopeNode>[
+                ...lines.children,
+                BandNode(_band('lineRow2', BandType.detail)),
+              ])
+            : s,
+      );
+      final ReportDefinition reordered =
+          reorderScopeChild(withTwo, 'lines', 'lineRow2', -1);
+      expect(findBand(reordered, 'lf'), isNotNull);
+      expect(findScope(reordered, 'lines')?.footer?.id, 'lf');
+      expect(findScope(reordered, 'lines')?.totals.length, 1);
+    });
+  });
+
+  group('SetScopeCollectionCommand preserves footer + totals (spec 031)', () {
+    DesignerDocument docWithFooter() => DesignerDocument(
+          definition: ReportDefinition(
+            name: 'R',
+            page: PageFormat.a4Portrait,
+            body: ReportBody(
+              root: DetailScope(
+                id: 'root',
+                children: <ScopeNode>[
+                  NestedScope(DetailScope(
+                    id: 'lines',
+                    collectionField: 'lines',
+                    totals: const <ScopeTotal>[
+                      ScopeTotal('orderTotal', r'SUM($F{lineTotal})'),
+                    ],
+                    footer: _band('lf', BandType.groupFooter),
+                    children: <ScopeNode>[
+                      BandNode(_band('lineRow', BandType.detail)),
+                    ],
+                  )),
+                ],
+              ),
+            ),
+          ),
+          selection: Selection.empty,
+        );
+
+    test('rebinding the collection keeps footer + totals', () {
+      final DesignerDocument after = const SetScopeCollectionCommand(
+              scopeId: 'lines', collectionField: 'rows')
+          .apply(docWithFooter());
+      final DetailScope scope = findScope(after.definition, 'lines')!;
+      expect(scope.collectionField, 'rows');
+      expect(scope.footer?.id, 'lf');
+      expect(scope.totals.length, 1);
+    });
+
+    test('clearing the collection (null) keeps footer + totals', () {
+      final DesignerDocument after = const SetScopeCollectionCommand(
+              scopeId: 'lines', collectionField: null)
+          .apply(docWithFooter());
+      final DetailScope scope = findScope(after.definition, 'lines')!;
+      expect(scope.collectionField, isNull);
+      expect(scope.footer?.id, 'lf');
+      expect(scope.totals.length, 1);
     });
   });
 }

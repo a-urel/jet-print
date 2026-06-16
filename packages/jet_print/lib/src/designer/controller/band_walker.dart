@@ -543,6 +543,10 @@ ReportDefinition removeBandFromTree(ReportDefinition def, String bandId) {
       collectionField: s.collectionField,
       groups: groups,
       children: children,
+      // Removal may target the scope's own footer band (spec 029); otherwise it
+      // passes through. Published totals (spec 030) are never touched by removal.
+      footer: s.footer?.id == bandId ? null : s.footer,
+      totals: s.totals,
     );
   });
 }
@@ -568,5 +572,9 @@ ReportDefinition reorderScopeChild(
         collectionField: s.collectionField,
         groups: s.groups,
         children: children,
+        // Reordering touches only [children]; the scope's footer (spec 029) and
+        // published totals (spec 030) must carry through unchanged.
+        footer: s.footer,
+        totals: s.totals,
       );
     });

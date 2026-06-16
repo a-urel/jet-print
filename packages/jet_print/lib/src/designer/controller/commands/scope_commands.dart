@@ -82,6 +82,10 @@ class SetScopeCollectionCommand extends EditCommand {
                   collectionField: collectionField,
                   groups: s.groups,
                   children: s.children,
+                  // Rebinding (or clearing) the collection must not drop the
+                  // scope's footer (spec 029) or published totals (spec 030).
+                  footer: s.footer,
+                  totals: s.totals,
                 )
               : s,
         ),
