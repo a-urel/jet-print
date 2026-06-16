@@ -10,6 +10,7 @@
 library;
 
 import '../domain/detail_scope.dart';
+import '../domain/scope_total.dart';
 import 'data_schema.dart';
 import 'field_def.dart';
 
@@ -63,3 +64,25 @@ bool expressionResolves(List<FieldDef> scopeFields, String expression) {
 /// Whether the single field [name] (e.g. an image binding) is in [scopeFields].
 bool fieldResolves(List<FieldDef> scopeFields, String name) =>
     scopeFields.any((FieldDef f) => f.name == name);
+
+/// The published-total names injected onto [scope]'s rows: the names published
+/// by [scope]'s DIRECT child scopes (spec 030 — a child scope's `totals` land on
+/// its parent's rows). NOT recursive (a grandchild's totals land on the child's
+/// rows, not here).
+Set<String> publishedTotalsForScope(DetailScope scope) => <String>{
+      for (final ScopeNode n in scope.children)
+        if (n is NestedScope)
+          for (final ScopeTotal t in n.scope.totals) t.name,
+    };
+
+/// Whether every `$F{}` reference in [expression] resolves against the resolvable
+/// [names]. Mirrors [expressionResolves] but over a name set, so a caller holding
+/// the resolvable-name set (schema fields + published totals) can check an
+/// expression without synthesizing [FieldDef]s. An expression with no field
+/// references always resolves.
+bool expressionResolvesNames(Set<String> names, String expression) {
+  for (final String ref in fieldRefsIn(expression)) {
+    if (!names.contains(ref)) return false;
+  }
+  return true;
+}

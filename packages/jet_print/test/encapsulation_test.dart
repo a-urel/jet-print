@@ -79,7 +79,12 @@ bool _isWhiteBoxSeamTest(File file) {
       // Band-walker (024): the reified-model tree navigation/transform helper
       // (`band_walker.dart`) is an unexported `src/` module the designer
       // migration is built on; its unit test is white-box (Principle III).
-      path.endsWith('/test/designer/controller/band_walker_test.dart');
+      path.endsWith('/test/designer/controller/band_walker_test.dart') ||
+      // Binding-resolution (031): the author-time resolvable-names helper
+      // (`binding_resolution.dart`) composes the band-walk with the data seam
+      // to account for spec-030 published totals; it is an unexported `src/`
+      // module and its unit test is white-box (Principle III).
+      path.endsWith('/test/designer/controller/binding_resolution_test.dart');
 }
 
 void main() {
