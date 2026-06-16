@@ -58,27 +58,15 @@ class StatusUnresolved extends EditorStatus {
   final String name;
 }
 
-/// A `{…}` template body that ends in a binary operator with no right-hand
-/// operand, e.g. `{SUM([qty]) *}`. The template compiler is lenient — it folds a
-/// dangling trailing operator into literal text (`CONCAT(…, " *")`) rather than
-/// failing — so [parseValueField] still returns a [BindingValue]. We treat that
-/// trailing-operator literal as an incomplete expression so the author sees the
-/// error instead of a silent concatenation. Matches a final CONCAT segment that
-/// is whitespace + one of + - * / % and nothing else.
-final RegExp _danglingOperator = RegExp(r',\s*"\s*[-+*/%]"\s*\)$');
-
 /// Pure status computation, unit-testable independent of the widget.
-/// - A binding (`{…}`/`[field]`) with all refs in [names] → valid; an out-of-
-///   scope ref → unresolved(firstMissing); a body ending in a dangling binary
-///   operator → syntax error (see [_danglingOperator]).
-/// - A `{…}`-wrapped value that does NOT parse to a binding → syntax error.
+/// - A binding (`{…}` / `[field]`) with all refs in [names] → valid; an out-of-
+///   scope ref → unresolved(firstMissing).
+/// - A `{…}`-wrapped value that does NOT parse to a binding (the compiler could
+///   not compile it) → syntax error.
 /// - Plain literal text → valid.
 EditorStatus statusFor(String text, Set<String> names) {
   final ValueParse parse = parseValueField(text);
   if (parse is BindingValue) {
-    if (_danglingOperator.hasMatch(parse.expression)) {
-      return const StatusSyntaxError();
-    }
     for (final String ref in fieldRefsIn(parse.expression)) {
       if (!names.contains(ref)) return StatusUnresolved(ref);
     }

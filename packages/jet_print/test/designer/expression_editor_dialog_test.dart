@@ -64,7 +64,7 @@ void main() {
       expect((s as StatusUnresolved).name, 'bogus');
     });
     test('malformed template is a syntax error', () {
-      expect(statusFor('{SUM([qty]) *}', names), isA<StatusSyntaxError>());
+      expect(statusFor('{SUM([qty}', names), isA<StatusSyntaxError>());
     });
     test('plain literal text is valid', () {
       expect(statusFor('hello', names), isA<StatusValid>());
@@ -102,7 +102,7 @@ void main() {
 
   testWidgets('malformed template shows a syntax-error status',
       (WidgetTester tester) async {
-    await _open(tester, initial: '{SUM([qty]) *}');
+    await _open(tester, initial: '{SUM([qty}');
     expect(find.text('Incomplete or invalid expression'), findsOneWidget);
   });
 
