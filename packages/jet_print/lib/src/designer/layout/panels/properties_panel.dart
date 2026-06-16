@@ -38,6 +38,7 @@ import '../../margin_presets.dart';
 import '../../paper_presets.dart';
 import '../../template/value_template_compiler.dart';
 import '../region_chrome.dart';
+import 'expression_editor_dialog.dart';
 
 part 'style_editors.dart';
 
@@ -233,6 +234,8 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
           focusNode: _textFocus,
           fields: _valueFieldChoices(schema, controller, id),
           pickerTooltip: l10n.valueFieldPickerTooltip,
+          fxTooltip: l10n.valueFieldFxTooltip,
+          resolvableNames: _resolvableNames(schema, controller, id),
           onCommit: (String v) => controller.setValue(id, v),
         ),
         if (element.expression case final String expr
@@ -544,6 +547,20 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     if (expression != null) return !expressionResolvesNames(names, expression);
     if (imageField != null) return !names.contains(imageField);
     return false;
+  }
+
+  /// The resolvable name set for [elementId]'s band — schema fields in scope plus
+  /// published totals (spec 031). Empty when no schema/band, so the fx editor's
+  /// unresolved check stays silent exactly like the inline field.
+  Set<String> _resolvableNames(
+    JetDataSchema? schema,
+    JetReportDesignerController controller,
+    String elementId,
+  ) {
+    if (schema == null) return const <String>{};
+    final Band? band = findBandOfElement(controller.definition, elementId);
+    if (band == null) return const <String>{};
+    return resolvableNamesForBand(controller.definition, schema, band.id);
   }
 
   // --- Band ------------------------------------------------------------------
@@ -1787,6 +1804,8 @@ class _ValueField extends StatefulWidget {
     required this.placeholder,
     required this.fields,
     required this.pickerTooltip,
+    required this.fxTooltip,
+    required this.resolvableNames,
     required this.onCommit,
     this.focusNode,
   });
@@ -1801,6 +1820,14 @@ class _ValueField extends StatefulWidget {
 
   /// Accessible label / tooltip for the suffix picker button.
   final String pickerTooltip;
+
+  /// Accessible label / tooltip for the fx (expression editor) button.
+  final String fxTooltip;
+
+  /// The band's resolvable name set (schema fields in scope ∪ published totals,
+  /// spec 031), passed to the fx editor so its unresolved check matches the
+  /// inline field's. Empty ⇒ the editor stays silent (no schema/band).
+  final Set<String> resolvableNames;
   final ValueChanged<String> onCommit;
 
   /// An externally-owned focus node (the panel's double-tap focus target);
@@ -1851,6 +1878,19 @@ class _ValueFieldState extends State<_ValueField> {
     widget.onCommit('[$field]');
   }
 
+  /// Opens the fx expression editor (032) seeded with the field's current text,
+  /// and commits its result through the same `onCommit` path as the inline field
+  /// — one undoable edit. Null (Cancel/dismiss) leaves the value untouched.
+  Future<void> _openFx() async {
+    final String? result = await showExpressionEditor(
+      context,
+      initialText: widget.display.text,
+      resolvableNames: widget.resolvableNames,
+      fields: widget.fields,
+    );
+    if (result != null) widget.onCommit(result);
+  }
+
   @override
   void dispose() {
     _focus.removeListener(_onFocusChange);
@@ -1869,13 +1909,40 @@ class _ValueFieldState extends State<_ValueField> {
       readOnly: !widget.display.editable,
       placeholder: Text(widget.placeholder),
       onSubmitted: widget.onCommit,
-      trailing: widget.fields.isEmpty
+      // Editable values carry an fx affordance (opens the expression editor);
+      // the field picker rides beside it only when fields are in scope. A
+      // read-only value (exotic/legacy binding) keeps no trailing affordances.
+      trailing: !widget.display.editable
           ? null
-          : _FieldPicker(
-              controller: _picker,
-              fields: widget.fields,
-              tooltip: widget.pickerTooltip,
-              onPick: _pick,
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Semantics(
+                  label: widget.fxTooltip,
+                  button: true,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: _openFx,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: Icon(
+                        LucideIcons.squareFunction,
+                        key: const ValueKey<String>('$_p.field.value.fx'),
+                        size: 14,
+                        color:
+                            ShadTheme.of(context).colorScheme.mutedForeground,
+                      ),
+                    ),
+                  ),
+                ),
+                if (widget.fields.isNotEmpty)
+                  _FieldPicker(
+                    controller: _picker,
+                    fields: widget.fields,
+                    tooltip: widget.pickerTooltip,
+                    onPick: _pick,
+                  ),
+              ],
             ),
     );
   }
