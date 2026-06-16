@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/in_memory_data_source.dart';
 import 'package:jet_print/src/domain/band.dart';
 import 'package:jet_print/src/domain/detail_scope.dart';
+import 'package:jet_print/src/domain/diagnostic.dart';
 import 'package:jet_print/src/domain/elements/text_element.dart';
 import 'package:jet_print/src/domain/geometry.dart';
 import 'package:jet_print/src/domain/group_level.dart';
@@ -728,6 +729,70 @@ void main() {
           const JetReportEngine().renderDefinition(inline, source);
       expect(runsFor(report, 'grand'), <String>['35.0'],
           reason: 'the inline SUM folds over all master rows at report scope');
+    });
+
+    test(
+        'a nested footer aggregate over a non-collection field warns '
+        '(FR-007 boundary)', () {
+      // 'customerName' is a MASTER field, absent from the 'lines' child rows.
+      // A SUM($F{customerName}) in the lines footer must warn rather than
+      // silently produce a plausible-but-wrong value.
+      final def = ReportDefinition(
+          name: 'nonCollectionField',
+          page: tallPage,
+          body: ReportBody(
+              root: DetailScope(id: 'root', children: <ScopeNode>[
+            NestedScope(DetailScope(
+                id: 'lines',
+                collectionField: 'lines',
+                footer: Band(
+                    id: 'lf',
+                    type: BandType.groupFooter,
+                    height: 16,
+                    elements: <ReportElement>[
+                      TextElement(
+                          id: 'bad',
+                          bounds:
+                              const JetRect(x: 0, y: 0, width: 100, height: 14),
+                          text: 'bad',
+                          expression: r'SUM($F{customerName})')
+                    ]),
+                children: <ScopeNode>[
+                  BandNode(Band(
+                      id: 'l',
+                      type: BandType.detail,
+                      height: 16,
+                      elements: <ReportElement>[
+                        TextElement(
+                            id: 'lt',
+                            bounds: const JetRect(
+                                x: 0, y: 0, width: 100, height: 14),
+                            text: 'lt',
+                            expression: r'$F{lineTotal}')
+                      ])),
+                ])),
+          ])));
+      final source = JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{
+          'customerName': 'Acme',
+          'lines': <Map<String, Object?>>[
+            <String, Object?>{'lineTotal': 10},
+            <String, Object?>{'lineTotal': 20},
+          ]
+        },
+      ]);
+      final report = const JetReportEngine().renderDefinition(def, source);
+      // (a) a warning diagnostic names the unresolved field — the non-silent
+      //     signal required by FR-007 / SC-004.
+      expect(
+        report.diagnostics.entries.where((Diagnostic d) =>
+            d.severity == DiagnosticSeverity.warning &&
+            d.message.contains('customerName')),
+        isNotEmpty,
+        reason:
+            'a footer aggregate over a non-collection field surfaces a warning '
+            'naming the missing field',
+      );
     });
 
     test('an inline group-footer aggregate matches a group-scoped variable',
