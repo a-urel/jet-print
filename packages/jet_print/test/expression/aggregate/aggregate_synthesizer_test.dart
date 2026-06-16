@@ -105,6 +105,87 @@ void main() {
         r'$F{qty} * $F{unitPrice}');
   });
 
+  test('an aggregate inside a larger expression is lifted in place (032 #2)',
+      () {
+    final def = ReportDefinition(
+      name: 'r',
+      page: PageFormat.a4Portrait,
+      body: ReportBody(
+          summary: Band(
+              id: 's',
+              type: BandType.summary,
+              height: 16,
+              elements: <ReportElement>[
+                _agg('g', r'SUM($F{customerTotal}) + 50000')
+              ]),
+          root: const DetailScope(id: 'root')),
+    );
+    final out = expandAggregates(def);
+    expect(out.variables, hasLength(1));
+    final v = out.variables.single;
+    expect(v.calculation, JetCalculation.sum);
+    expect(v.expression, r'$F{customerTotal}');
+    final el = out.body.summary!.elements.single as TextElement;
+    expect(el.expression, '\$V{${v.name}} + 50000');
+  });
+
+  test('two aggregates in one expression lift to two variables (032 #2)', () {
+    final def = ReportDefinition(
+      name: 'r',
+      page: PageFormat.a4Portrait,
+      body: ReportBody(
+          summary: Band(
+              id: 's',
+              type: BandType.summary,
+              height: 16,
+              elements: <ReportElement>[_agg('g', r'SUM($F{a}) - SUM($F{b})')]),
+          root: const DetailScope(id: 'root')),
+    );
+    final out = expandAggregates(def);
+    expect(out.variables, hasLength(2));
+    final el = out.body.summary!.elements.single as TextElement;
+    expect(el.expression, r'$V{__agg0} - $V{__agg1}');
+  });
+
+  test('an aggregate nested in a scalar call is lifted, call kept (032 #2)',
+      () {
+    final def = ReportDefinition(
+      name: 'r',
+      page: PageFormat.a4Portrait,
+      body: ReportBody(
+          summary: Band(
+              id: 's',
+              type: BandType.summary,
+              height: 16,
+              elements: <ReportElement>[_agg('g', r'ROUND(SUM($F{x}), 2)')]),
+          root: const DetailScope(id: 'root')),
+    );
+    final out = expandAggregates(def);
+    expect(out.variables, hasLength(1));
+    expect(out.variables.single.expression, r'$F{x}');
+    final el = out.body.summary!.elements.single as TextElement;
+    expect(el.expression, r'ROUND($V{__agg0}, 2)');
+  });
+
+  test('an aggregate name inside a string literal is not lifted (032 #2)', () {
+    final def = ReportDefinition(
+      name: 'r',
+      page: PageFormat.a4Portrait,
+      body: ReportBody(
+          summary: Band(
+              id: 's',
+              type: BandType.summary,
+              height: 16,
+              elements: <ReportElement>[_agg('g', r'CONCAT("SUM(x)", $F{a})')]),
+          root: const DetailScope(id: 'root')),
+    );
+    final out = expandAggregates(def);
+    expect(out.variables, isEmpty,
+        reason: 'the SUM( inside the quoted string must not be matched');
+    final el = out.body.summary!.elements.single as TextElement;
+    expect(el.expression, r'CONCAT("SUM(x)", $F{a})');
+  });
+
   test('no aggregates → definition returned unchanged', () {
     const def = ReportDefinition(
         name: 'r',

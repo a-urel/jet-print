@@ -42,6 +42,20 @@ Two gaps, one user-facing and one structural:
    these into the value field has it silently treated as **literal text**. An fx
    editor offering these functions would be unable to actually save them.
 
+3. **Top-level operators outside a call are silently swallowed.** *(amendment —
+   see Clarifications 2026-06-16 #2)* Even after gap 2 is closed, a `{…}` body
+   whose root is a binary/unary expression rather than a single call or token —
+   `{SUM([customerTotal]) + 500}`, `{[price] * [qty]}`, `{-[balance]}` — is not
+   recognized. `_compileTemplate` scans the body as a **concatenation template**,
+   so the `+ 500` becomes a literal string run and the whole value compiles to
+   `CONCAT(SUM($F{customerTotal}), "+500")` — *string* concatenation, not the
+   intended *numeric* `SUM(...) + 500`. The status line still reports **valid**,
+   so the meaning change is invisible. Symmetrically, `_exprToToken` has no
+   branch for a top-level `BinaryExpr`/`UnaryExpr`, so such an expression
+   reverse-compiles **read-only** showing raw `$F{}` syntax
+   (`{SUM($F{customerTotal}) + 500}`) instead of the friendly editable token. The
+   engine already evaluates these operators; the projection is the only gap.
+
 The engine already *evaluates* all of these functions (they are registered in
 `string_functions`/`math_functions`/`logic_functions`/`format_functions`). The
 gap is purely in the friendly↔expression **projection**, so closing it is a
@@ -73,6 +87,29 @@ designer/presentation change, not an engine change — consistent with how specs
   directions, so the palette can offer and save the full function set. The
   generalization also benefits the inline Value field.
 
+### Session 2026-06-16 (amendment #2: top-level expressions)
+
+- Q: `{SUM([customerTotal]) + 500}` compiles to `CONCAT(SUM(...), "+500")` (string
+  concat, not numeric add) because top-level operators outside a call are treated
+  as literal template text. Extend the grammar to support a full top-level
+  expression, or leave it? → A: **Extend the grammar.** A `{…}` body is first
+  attempted as a *single expression* (the existing `Parser` is the arbiter); only
+  if it does not parse does it fall back to today's concatenation-template scan.
+  This reuses the existing expression engine rather than adding a parallel one.
+- Q: This flips ambiguous forms like `{[a] * [b]}` from string-concat (today) to
+  numeric (`$F{a} * $F{b}`). Preserve the old string meaning for legacy stored
+  `CONCAT($F{a}, " * ", $F{b})` via escaping, or accept reinterpretation? → A:
+  **Accept reinterpretation.** No escaping. A legacy operator-joined CONCAT now
+  reverse-displays as the numeric form and, on re-save, becomes the numeric
+  expression. The round-trip property fixtures are relaxed accordingly. Rationale:
+  the string `"5 * 3"` is almost never the author's intent, and the simpler rule
+  avoids a backslash-escaping surface in displayed tokens.
+- Q: Should `SUM` keep its uppercase display inside a top-level expression? → A:
+  **No — accept the existing `_argToToken` lowercasing.** `{SUM([t]) + 500}`
+  reverse-displays as `{sum([t]) + 500}` (re-uppercased to `SUM` on parse, so it
+  round-trips). This matches how function names already render inside argument
+  positions; preserving per-name casing is out of scope.
+
 ## Scope
 
 **In scope**:
@@ -87,6 +124,30 @@ designer/presentation change, not an engine change — consistent with how specs
     the existing recursive `_argToToken`. The existing single-field sugar
     (`{upper[name]}`), aggregate, and `CONCAT` reverse forms are **kept unchanged**
     so current round-trips, canvas tokens, and tests stay byte-identical.
+- **Top-level expressions** (`value_template_compiler.dart`, amendment #2):
+  - **Forward** (`_compileTemplate`): before the concat-template scan, attempt the
+    whole `{…}` body as a single expression — run it through the existing
+    `_compileArg` (`[field]` → `$F{…}`, call-name uppercasing, operators/commas/
+    string literals passed through) and `Parser`-validate the result. On success,
+    that compiled expression is the binding. On any parse failure — or when the
+    body contains a `\` escape — fall through to the **unchanged** concatenation
+    scan. Concatenation forms (`{[first] [last]}`, `{Total: [qty]}`) fail the
+    whole-body parse (juxtaposition / stray text) and are preserved automatically.
+  - **Reverse** (`_exprToToken`): a top-level `BinaryExpr` or `UnaryExpr` renders
+    as a `{…}` editable token via the existing recursive `_argToToken`, instead of
+    falling through to the read-only raw-expression display.
+- **Inline-aggregate lifting inside an expression** (`aggregate_synthesizer.dart`,
+  amendment #2 — a **narrow engine/fill-time change**): `expandAggregates` must
+  lift an aggregate that is a *sub-term* of a larger expression, not only one that
+  is the whole expression. `rewriteExpression` scans the expression source for
+  every aggregate call (`SUM(…)`, `AVG(…)`, …) anywhere in the tree — skipping
+  quoted string literals and validating each candidate is a single-arg aggregate
+  via the existing `topLevelAggregate` — synthesizes a hidden `__agg<n>` variable
+  for each, and substitutes `$V{__agg<n>}` in place. So `SUM($F{customerTotal}) +
+  50000` becomes `$V{__agg0} + 50000` (one report-scoped SUM variable + the
+  literal add) instead of an un-expanded `SUM` that renders `!ERR`. This reuses
+  the unchanged variable/accumulator pipeline (spec 028); it adds no new
+  aggregation engine and no new render path.
 - **fx button**: a second affordance in `_ValueField`'s `trailing:` slot, beside
   the existing field-picker glyph, shown whenever the value is **editable**.
   Tapping opens the editor dialog.
@@ -110,7 +171,10 @@ designer/presentation change, not an engine change — consistent with how specs
 
 - Any engine, domain, or serialization change — all functions are already
   registered and evaluated; this only widens the friendly↔expression projection
-  and adds author-time UI.
+  and adds author-time UI. *(Amendment #2 narrows this to ONE exception: the
+  fill-time `expandAggregates` transform is extended to lift sub-term aggregates,
+  reusing the spec-028 variable pipeline — see FR-015. No new evaluation engine,
+  render path, or golden change.)*
 - A **live result preview** (evaluating against sample data) — no sample data is
   plumbed into the designer; the status line shows syntax + resolution only.
 - Editing the **raw** engine syntax (`$F{}`, `$P{}`, `$V{}`) directly — the
@@ -170,7 +234,22 @@ inline field benefits without fx-specific code.
 
 Existing simple bindings and sugar (`[name]`, `{upper[name]}`, `{SUM([qty])}`,
 CONCAT templates) display and round-trip exactly as before; no canvas token,
-golden, or stored expression changes for them.
+golden, or stored expression changes for them. *(Exception: operator-joined field
+forms `{[a] op [b]}` are reinterpreted as numeric — see User Story 6.)*
+
+### User Story 6 - Top-level arithmetic around a call (P1, amendment #2)
+
+The author types `{SUM([customerTotal]) + 500}` into the value field (or the fx
+editor). Before, it silently compiled to `CONCAT(SUM(...), "+500")` — the `+ 500`
+was string-concatenated and the result re-displayed as `{sum[customerTotal]+500}`.
+Now it compiles to the numeric expression `SUM($F{customerTotal}) + 500` and
+reverse-displays as the editable token `{sum([customerTotal]) + 500}`.
+
+**Acceptance**: a `{…}` body that is a valid top-level expression
+(`{SUM([t]) + 500}`, `{[price] * [qty]}`, `{([a] + [b]) * 2}`) compiles to that
+expression (not a `CONCAT` of literal runs) and reverse-compiles to an **editable**
+friendly token; concatenation forms (`{[first] [last]}`, `{Total: [qty]}`) are
+unaffected.
 
 ## Requirements *(mandatory)*
 
@@ -184,9 +263,11 @@ golden, or stored expression changes for them.
 - **FR-002**: `_exprToToken` MUST reverse-compile a general `CallExpr` to a
   `{fn(args)}` friendly token via the recursive `_argToToken`, for calls not
   already covered by the single-field-sugar, aggregate, or `CONCAT` branches.
-- **FR-003**: The single-field sugar (`{upper[name]}`), aggregate, and `CONCAT`
-  forward/reverse forms MUST remain byte-identical to today (no regression in
-  existing round-trip tests, canvas tokens, or goldens).
+- **FR-003**: The single-field sugar (`{upper[name]}`), aggregate, and **literal-run**
+  `CONCAT` forms (`{[first] [last]}`, `{Total: [qty]}`) MUST remain byte-identical
+  to today (no regression in existing round-trip tests, canvas tokens, or goldens).
+  *(Operator-joined field forms `{[a] op [b]}` are the deliberate exception — see
+  FR-014.)*
 - **FR-004**: The `_ValueField` `trailing:` slot MUST present an **fx** button
   beside the existing field-picker glyph, with a stable key
   (`'<p>.field.value.fx'`), shown whenever the value is editable.
@@ -215,7 +296,39 @@ golden, or stored expression changes for them.
 - **FR-011**: No engine, domain, or serialization behavior changes; no new
   evaluation code or render path; goldens unchanged. New localized strings are
   added only for the new UI affordances (fx tooltip, dialog labels/actions,
-  status messages).
+  status messages). *(Amendment #2 adds one narrow fill-time exception — FR-015 —
+  that still introduces no new evaluation engine, render path, or golden change.)*
+- **FR-012** *(amendment #2)*: `_compileTemplate` MUST first attempt the whole
+  `{…}` body as a single expression (via `_compileArg` + `Parser` validation) and,
+  on success, use it as the binding — so `{SUM([t]) + 500}` compiles to
+  `SUM($F{t}) + 500` (numeric), not `CONCAT(...)`. The attempt MUST be skipped when
+  the body contains a `\` escape, and MUST fall back to the existing
+  concatenation-template scan on any parse failure, leaving concatenation forms
+  (`{[first] [last]}`, `{Total: [qty]}`) byte-identical to today.
+- **FR-013** *(amendment #2)*: `_exprToToken` MUST reverse-compile a top-level
+  `BinaryExpr`/`UnaryExpr` to an editable `{…}` token via `_argToToken`, rather
+  than the read-only raw-expression fallback.
+- **FR-014** *(amendment #2)*: Ambiguous operator-joined field forms (`{[a] * [b]}`)
+  now compile to the numeric expression; legacy stored `CONCAT($F{a}, " op ", $F{b})`
+  is reinterpreted to the numeric form on reverse/re-save (no escaping). Round-trip
+  fixtures that assumed string-concat for operator-joined fields are updated to the
+  numeric meaning; all non-operator concat fixtures stay unchanged.
+- **FR-016** *(amendment #2)*: `_compileArg` MUST expand function-of-field sugar
+  (`fn[field]` → `FN($F{field})`) so the sugar composes inside an expression
+  (`sum[total] + 50000`, `ROUND(sum[x], 2)`). This also heals a stale stored
+  `CONCAT(SUM(…), "+n")` — whose value-field display is the sugar form
+  `{sum[total]+n}` — into the numeric expression on the next commit, with no
+  manual re-typing of parentheses.
+- **FR-015** *(amendment #2)*: `expandAggregates` MUST lift an inline aggregate
+  that appears as a **sub-term** of a larger expression (not only when it is the
+  whole expression): every aggregate call in the source is replaced in place by a
+  synthesized `$V{__agg<n>}` reference (skipping quoted strings; arity validated
+  via `topLevelAggregate`), so `SUM([t]) + 500`, `SUM([a]) - SUM([b])`, and
+  `ROUND(SUM([x]), 2)` compute through the existing variable/accumulator pipeline
+  rather than rendering `!ERR`. Whole-expression aggregates, de-duplication, and
+  scope inference are byte-for-byte unchanged. This is the one **engine/fill-time**
+  change in amendment #2; it adds no new aggregation engine, render path, or
+  golden change.
 
 ### Key Entities
 
@@ -238,8 +351,10 @@ golden, or stored expression changes for them.
   and reverse-compiles back to the same friendly token (not literal text).
 - **SC-003**: The inline Value field saves and round-trips the same general calls
   (the generalization lives in the shared compiler).
-- **SC-004**: Every existing simple/sugar/aggregate/CONCAT token compiles and
-  reverse-compiles byte-identically to before; no golden changes.
+- **SC-004**: Every existing simple/sugar/aggregate/literal-run-CONCAT token
+  compiles and reverse-compiles byte-identically to before; no golden changes.
+  (Operator-joined field forms `{[a] op [b]}` are reinterpreted as numeric per
+  FR-014 — they do not appear in goldens.)
 - **SC-005**: Field-palette and function-palette selections insert the expected
   caret-positioned tokens; the status line shows valid / error / unresolved for
   the corresponding inputs; Insert commits via `setValue` (one undo) and Cancel
@@ -248,3 +363,8 @@ golden, or stored expression changes for them.
   function (drift guard), and every catalog snippet parses to a `BindingValue`.
 - **SC-007**: `flutter analyze` + `dart format` clean; the full `jet_print` test
   suite and the playground analyze/test are green; all goldens unchanged.
+- **SC-008** *(amendment #2)*: A `{…}` body that is a valid top-level expression
+  (`{SUM([t]) + 500}`, `{[price] * [qty]}`, `{([a] + [b]) * 2}`) compiles to the
+  corresponding numeric engine expression (not a `CONCAT` of literal runs) and
+  reverse-compiles to an editable friendly token; `{[first] [last]}` and
+  `{Total: [qty]}` still compile to `CONCAT` unchanged.

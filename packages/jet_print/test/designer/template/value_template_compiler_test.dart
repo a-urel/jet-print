@@ -81,11 +81,6 @@ void main() {
           '{[firstName] [lastName]}');
     });
 
-    test('an out-of-grammar expression is shown read-only', () {
-      final ValueDisplay d = reverseCompile(r'$F{a} + $F{b}');
-      expect(d.editable, isFalse);
-    });
-
     test('an unparseable expression is shown read-only', () {
       expect(reverseCompile(r'$F{a} +').editable, isFalse);
     });
@@ -229,6 +224,67 @@ void main() {
         'uppercased', () {
       expect(parseValueField('{FORMAT([x], "total(net)")}'),
           const BindingValue(r'FORMAT($F{x}, "total(net)")'));
+    });
+  });
+
+  group('top-level expressions (032 amendment #2)', () {
+    test('forward: aggregate plus a literal is numeric, not CONCAT', () {
+      // The bug: this used to compile to CONCAT(SUM(...), "+500") (string concat).
+      expect(parseValueField('{SUM([customerTotal]) + 500}'),
+          const BindingValue(r'SUM($F{customerTotal}) + 500'));
+    });
+
+    test('forward: two fields joined by an operator are numeric', () {
+      expect(parseValueField('{[price] * [qty]}'),
+          const BindingValue(r'$F{price} * $F{qty}'));
+    });
+
+    test('forward: a parenthesized top-level expression compiles', () {
+      expect(parseValueField('{([a] + [b]) * 2}'),
+          const BindingValue(r'($F{a} + $F{b}) * 2'));
+    });
+
+    test('forward: a unary negation compiles', () {
+      expect(
+          parseValueField('{-[balance]}'), const BindingValue(r'-$F{balance}'));
+    });
+
+    test('reverse: a top-level binary is an editable friendly token', () {
+      final ValueDisplay d = reverseCompile(r'SUM($F{customerTotal}) + 500');
+      expect(d.editable, isTrue);
+      expect(d.text, '{sum([customerTotal]) + 500}');
+      expect(parseValueField(d.text),
+          const BindingValue(r'SUM($F{customerTotal}) + 500'));
+    });
+
+    test('reverse: an operator-joined field pair is editable', () {
+      final ValueDisplay d = reverseCompile(r'$F{price} * $F{qty}');
+      expect(d.editable, isTrue);
+      expect(d.text, '{[price] * [qty]}');
+    });
+
+    test('forward: function-of-field sugar works inside a top-level expression',
+        () {
+      // The value field shows a stored CONCAT(SUM(...), "+n") as the sugar form
+      // `{sum[customerTotal]+50000}`; re-committing it must heal to arithmetic.
+      expect(parseValueField('{sum[customerTotal] + 50000}'),
+          const BindingValue(r'SUM($F{customerTotal}) + 50000'));
+      expect(parseValueField('{sum[customerTotal]+50000}'),
+          const BindingValue(r'SUM($F{customerTotal})+50000'));
+    });
+
+    test('concatenation forms are unaffected (fall back to CONCAT)', () {
+      expect(parseValueField('{[firstName] [lastName]}'),
+          const BindingValue(r'CONCAT($F{firstName}, " ", $F{lastName})'));
+      expect(parseValueField('{Total: [qty]}'),
+          const BindingValue(r'CONCAT("Total: ", $F{qty})'));
+    });
+
+    test('a body with a backslash escape skips the expression attempt', () {
+      // The `\*` is a literal star, so the body is a concatenation template,
+      // not the numeric `[price] * [qty]`.
+      expect(parseValueField(r'{[price] \* [qty]}'),
+          const BindingValue(r'CONCAT($F{price}, " * ", $F{qty})'));
     });
   });
 

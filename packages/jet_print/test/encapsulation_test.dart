@@ -54,6 +54,10 @@ bool _isWhiteBoxSeamTest(File file) {
       // public API only.
       path.contains('/test/designer/template/') ||
       path.endsWith('/test/designer/binding_token_test.dart') ||
+      // fx expression editor (032): the editor dialog and its l10n are
+      // unexported `src/` modules; the dialog's widget test exercises them
+      // directly as a designer-internal seam (the binding_token precedent).
+      path.endsWith('/test/designer/expression_editor_dialog_test.dart') ||
       // Canvas-rulers (014): the pure measurement helpers (RulerScale/RulerTick
       // and the points↔mm + selection-extent metrics) are unexported `src/`
       // modules deliberately isolated from Flutter so the tricky math is

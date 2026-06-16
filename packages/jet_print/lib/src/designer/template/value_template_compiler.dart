@@ -138,6 +138,24 @@ class _TemplateError implements Exception {
 }
 
 String _compileTemplate(String inner) {
+  // Amendment #2: try the whole body as a single expression first, so top-level
+  // operators (`{SUM([t]) + 500}`, `{[price] * [qty]}`, `{-[x]}`) compile to the
+  // numeric expression instead of a CONCAT of literal runs. The existing parser
+  // is the arbiter: concatenation forms (juxtaposed tokens, stray text) fail to
+  // parse and fall through to the part-by-part scan below. A `\` escape marks a
+  // template literal, not an expression — skip the attempt so it stays literal.
+  if (!inner.contains(r'\')) {
+    final String compiled = _compileArg(inner);
+    if (compiled.trim().isNotEmpty) {
+      try {
+        Parser(tokenize(compiled)).parseExpression();
+        return compiled;
+      } on ExpressionException {
+        // Not a single valid expression → fall back to the concatenation scan.
+      }
+    }
+  }
+
   final List<String> parts = <String>[];
   final StringBuffer literal = StringBuffer();
 
@@ -296,12 +314,21 @@ String _compileArg(String arg) {
     } else if (_isAlpha(c)) {
       final int identEnd = _scanIdentEnd(arg, i);
       final String ident = arg.substring(i, identEnd);
-      // A nested call (`ident(`) takes the UPPERCASE registry name; a bare
-      // identifier (`true`/`false`, or a `$P{}`/`$V{}` body) passes through.
-      out.write(identEnd < arg.length && arg[identEnd] == '('
-          ? ident.toUpperCase()
-          : ident);
-      i = identEnd;
+      if (identEnd < arg.length && arg[identEnd] == '[') {
+        // Function-of-field sugar inside an expression: `fn[field]` expands to
+        // `FN($F{field})`, so the sugar form composes with operators
+        // (`sum[total] + 50000`) and nests in calls (`ROUND(sum[x], 2)`).
+        final _FieldScan scan = _scanField(arg, identEnd);
+        out.write('${ident.toUpperCase()}(\$F{${scan.name}})');
+        i = scan.next;
+      } else {
+        // A nested call (`ident(`) takes the UPPERCASE registry name; a bare
+        // identifier (`true`/`false`, or a `$P{}`/`$V{}` body) passes through.
+        out.write(identEnd < arg.length && arg[identEnd] == '('
+            ? ident.toUpperCase()
+            : ident);
+        i = identEnd;
+      }
     } else {
       out.write(c);
       i++;
@@ -331,6 +358,13 @@ String? _exprToToken(Expr root) {
 
   // Any other call (multi-arg, mixed args, nested) → {fn(args)} via _argToToken.
   if (root is CallExpr) {
+    final String? body = _argToToken(root);
+    if (body != null) return '{$body}';
+  }
+  // Amendment #2: a top-level operator expression renders as an editable
+  // `{ … }` token via the same recursive argument renderer, instead of the
+  // read-only raw-expression fallback in [reverseCompile].
+  if (root is BinaryExpr || root is UnaryExpr) {
     final String? body = _argToToken(root);
     if (body != null) return '{$body}';
   }
