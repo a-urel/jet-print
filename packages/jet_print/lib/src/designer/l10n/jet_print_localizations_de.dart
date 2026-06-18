@@ -701,4 +701,8 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
 
   @override
   String get propertiesRowSpacing => 'Zeilenabstand';
+
+  @override
+  String get propertiesColumnLayoutInactive =>
+      'Spaltenlayout ist inaktiv: Der Bericht ist kein einzelnes Detailband.';
 }

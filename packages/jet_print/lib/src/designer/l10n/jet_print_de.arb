@@ -248,5 +248,6 @@
   "propertiesColumnCount": "Spalten",
   "propertiesColumnWidth": "Spaltenbreite",
   "propertiesColumnSpacing": "Spaltenabstand",
-  "propertiesRowSpacing": "Zeilenabstand"
+  "propertiesRowSpacing": "Zeilenabstand",
+  "propertiesColumnLayoutInactive": "Spaltenlayout ist inaktiv: Der Bericht ist kein einzelnes Detailband."
 }

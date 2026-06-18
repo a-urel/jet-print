@@ -699,4 +699,8 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
 
   @override
   String get propertiesRowSpacing => 'Row spacing';
+
+  @override
+  String get propertiesColumnLayoutInactive =>
+      'Column layout is inactive: the report isn\'t a single detail band.';
 }

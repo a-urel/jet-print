@@ -9,6 +9,7 @@ import '../../../data/field_def.dart';
 import '../../../domain/band.dart';
 import '../../../domain/column_layout.dart';
 import '../../../domain/detail_scope.dart';
+import '../../../domain/diagnostic.dart';
 import '../../../domain/elements/barcode_element.dart';
 import '../../../domain/elements/image_element.dart';
 import '../../../domain/elements/image_source.dart';
@@ -47,6 +48,17 @@ part 'style_editors.dart';
 
 /// Stable test-seam key prefix for the inspector's fields and empty state.
 const String _p = 'jet_print.designer.properties';
+
+/// Whether [message] is one of the spec-034 column-layout diagnostics emitted by
+/// `validate()` (`_validateColumns`). Matched by stable English prefix because
+/// the domain `Diagnostic` carries no code; the designer renders these strings
+/// verbatim (spec 035 / FR-010), so this coupling is intentional and local. The
+/// stray "column layout on band … is ignored" warning is deliberately excluded —
+/// the localized inactive notice covers that case.
+bool _isColumnDiagnostic(String message) =>
+    message.startsWith('columnLayout ') ||
+    message.startsWith('label height (') ||
+    message.contains('overflows cell width');
 
 /// A text element whose whole expression is exactly one `$F{field}` reference —
 /// a simple field binding, the only form whose value type the Format picker
@@ -952,6 +964,33 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
         label: l10n.propertiesColumnLayoutRemove,
         onRemove: () => controller.removeColumnLayout(bandId),
       ));
+
+    // Inactive notice (FR-009): a layout exists but the report shape no longer
+    // activates the grid. Presented as the localized twin of the engine's
+    // stray-`columnLayout` warning, so that raw warning is filtered out below.
+    if (!eligible) {
+      out
+        ..add(const SizedBox(height: 8))
+        ..add(_InlineWarning(
+            text: l10n.propertiesColumnLayoutInactive, theme: theme));
+    }
+
+    // Verbatim column diagnostics for this band (FR-008/FR-010): reuse
+    // `validate()` output — never re-derive the grid math — filtered to this
+    // band (band-level ids + this band's element ids) and to the spec-034
+    // column-diagnostic messages.
+    final Set<String> elementIds =
+        band.elements.map((ReportElement e) => e.id).toSet();
+    for (final Diagnostic d in controller.diagnostics) {
+      final String? id = d.elementId;
+      final bool mine =
+          id == bandId || (id != null && elementIds.contains(id));
+      if (!mine || !_isColumnDiagnostic(d.message)) continue;
+      out.add(const SizedBox(height: 6));
+      out.add(d.severity == DiagnosticSeverity.error
+          ? _UnresolvedHint(message: d.message)
+          : _InlineWarning(text: d.message, theme: theme));
+    }
     return out;
   }
 

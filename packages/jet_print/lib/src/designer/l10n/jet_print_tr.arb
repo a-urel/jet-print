@@ -248,5 +248,6 @@
   "propertiesColumnCount": "Sütunlar",
   "propertiesColumnWidth": "Sütun genişliği",
   "propertiesColumnSpacing": "Sütun aralığı",
-  "propertiesRowSpacing": "Satır aralığı"
+  "propertiesRowSpacing": "Satır aralığı",
+  "propertiesColumnLayoutInactive": "Sütun düzeni etkin değil: rapor tek bir ayrıntı bandı değil."
 }

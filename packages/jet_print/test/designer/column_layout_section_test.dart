@@ -1,5 +1,5 @@
 // Properties "Column Layout" section: add / edit / remove + gating (spec 035 /
-// Task 2). Drives the public JetReportDesigner via the shared harness.
+// Task 2 + Task 3). Drives the public JetReportDesigner via the shared harness.
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
@@ -54,6 +54,31 @@ ReportDefinition _withTitle() => const ReportDefinition(
 
 Band _detail(JetReportDesignerController c) =>
     (c.definition.body.root.children.single as BandNode).band;
+
+Finder _textContains(String needle) =>
+    find.byWidgetPredicate((Widget w) => w is Text && (w.data?.contains(needle) ?? false));
+
+/// Orphaned: a title makes the body ineligible, yet the detail band still
+/// carries a column layout (the user added it earlier, then added a title).
+ReportDefinition _orphaned() => const ReportDefinition(
+      name: 'r',
+      page: PageFormat.a4Portrait,
+      body: ReportBody(
+        title: Band(id: 'title', type: BandType.title, height: 30),
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+              id: 'detail',
+              type: BandType.detail,
+              height: 80,
+              columnLayout: ColumnLayout(
+                  columnCount: 2, columnWidth: 100, columnSpacing: 0, rowSpacing: 0),
+            )),
+          ],
+        ),
+      ),
+    );
 
 void main() {
   testWidgets('Add is enabled on a pure single-detail body and creates a default layout',
@@ -124,5 +149,39 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(_detail(c).columnLayout, isNull);
+  });
+
+  testWidgets('a grid wider than the body shows a verbatim error row',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c =
+        await pumpDesignerWith(tester, controller: JetReportDesignerController(definition: _pure()));
+    await _openProperties(tester);
+    c.selectBand('detail');
+    await tester.pumpAndSettle();
+    await tester.tap(_add);
+    await tester.pumpAndSettle();
+
+    // Make the single column wider than the whole page body.
+    final double tooWide = c.definition.page.width;
+    await tester.enterText(_editable('columnWidth'), tooWide.toStringAsFixed(0));
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    expect(_textContains('wider than the page body'), findsOneWidget);
+  });
+
+  testWidgets('an orphaned layout shows the inactive notice and stays editable',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c = await pumpDesignerWith(tester,
+        controller: JetReportDesignerController(definition: _orphaned()));
+    await _openProperties(tester);
+    c.selectBand('detail');
+    await tester.pumpAndSettle();
+
+    expect(_field('columnCount'), findsOneWidget); // fields still shown
+    expect(_remove, findsOneWidget); // remove still available
+    expect(_textContains('inactive'), findsOneWidget); // localized notice
+    // The raw engine "is ignored" stray-band warning is NOT also shown.
+    expect(_textContains('is ignored'), findsNothing);
   });
 }

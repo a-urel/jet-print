@@ -1450,6 +1450,12 @@ abstract class JetPrintLocalizations {
   /// In en, this message translates to:
   /// **'Row spacing'**
   String get propertiesRowSpacing;
+
+  /// Notice shown when a band carries a column layout but the report shape no longer satisfies the activation gate (spec 035 / FR-009).
+  ///
+  /// In en, this message translates to:
+  /// **'Column layout is inactive: the report isn\'t a single detail band.'**
+  String get propertiesColumnLayoutInactive;
 }
 
 class _JetPrintLocalizationsDelegate

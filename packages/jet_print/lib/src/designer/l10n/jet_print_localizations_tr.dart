@@ -700,4 +700,8 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
 
   @override
   String get propertiesRowSpacing => 'Satır aralığı';
+
+  @override
+  String get propertiesColumnLayoutInactive =>
+      'Sütun düzeni etkin değil: rapor tek bir ayrıntı bandı değil.';
 }
