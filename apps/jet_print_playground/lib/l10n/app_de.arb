@@ -6,6 +6,6 @@
   "tabLabel": "Etikett",
   "tabBarcode": "Barcode",
   "tabList": "Liste",
-  "tabReceipt": "Beleg",
+  "tabPackingSlip": "Lieferschein",
   "comingSoon": "Demnächst"
 }

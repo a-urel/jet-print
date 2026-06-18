@@ -24,7 +24,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tabList => 'Liste';
 
   @override
-  String get tabReceipt => 'Beleg';
+  String get tabPackingSlip => 'Lieferschein';
 
   @override
   String get comingSoon => 'Demnächst';

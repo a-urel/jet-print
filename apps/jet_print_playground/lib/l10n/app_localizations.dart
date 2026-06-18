@@ -130,11 +130,11 @@ abstract class AppLocalizations {
   /// **'List'**
   String get tabList;
 
-  /// Tab label for the receipt report demo (placeholder).
+  /// Tab label for the packing-slip / delivery-note designer demo.
   ///
   /// In en, this message translates to:
-  /// **'Receipt'**
-  String get tabReceipt;
+  /// **'Packing slip'**
+  String get tabPackingSlip;
 
   /// Placeholder note shown on a report demo tab that isn't built yet.
   ///

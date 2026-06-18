@@ -26,9 +26,9 @@
     "description": "Tab label for the list report designer demo."
   },
 
-  "tabReceipt": "Receipt",
-  "@tabReceipt": {
-    "description": "Tab label for the receipt report demo (placeholder)."
+  "tabPackingSlip": "Packing slip",
+  "@tabPackingSlip": {
+    "description": "Tab label for the packing-slip / delivery-note designer demo."
   },
 
   "comingSoon": "Coming soon",
