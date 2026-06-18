@@ -104,6 +104,26 @@ void main() {
     expect(layout.rowSpacing, 0);
   });
 
+  testWidgets('no section header until a layout exists; header appears with it',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c = await pumpDesignerWith(tester,
+        controller: JetReportDesignerController(definition: _pure()));
+    await _openProperties(tester);
+    c.selectBand('detail');
+    await tester.pumpAndSettle();
+
+    // No layout yet: the Add button is self-describing, so the "Column Layout"
+    // section header is not shown.
+    expect(_add, findsOneWidget);
+    expect(find.text('Column Layout'), findsNothing);
+
+    await tester.tap(_add);
+    await tester.pumpAndSettle();
+
+    // Once a layout exists, the editor is headed by the section title.
+    expect(find.text('Column Layout'), findsOneWidget);
+  });
+
   testWidgets('Add does nothing on an ineligible body', (WidgetTester tester) async {
     final JetReportDesignerController c = await pumpDesignerWith(tester,
         controller: JetReportDesignerController(definition: _withTitle()));

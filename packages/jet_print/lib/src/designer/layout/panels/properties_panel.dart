@@ -886,16 +886,10 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     final bool eligible =
         def.isPureSingleDetailBody && def.soleDetailBand?.id == bandId;
 
-    final List<Widget> out = <Widget>[
-      const SizedBox(height: 18),
-      _Header(
-        icon: LucideIcons.columns3,
-        title: l10n.propertiesColumnLayout,
-        theme: theme,
-      ),
-      const SizedBox(height: 14),
-    ];
+    final List<Widget> out = <Widget>[const SizedBox(height: 18)];
 
+    // No layout yet: the "Add column layout" button is self-describing, so a
+    // section header would be redundant — show the button alone.
     if (layout == null) {
       out.add(_ColumnLayoutAddButton(
         enabled: eligible,
@@ -917,6 +911,15 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
       ));
       return out;
     }
+
+    // A layout exists: head the editor with the section title.
+    out
+      ..add(_Header(
+        icon: LucideIcons.columns3,
+        title: l10n.propertiesColumnLayout,
+        theme: theme,
+      ))
+      ..add(const SizedBox(height: 14));
 
     out
       ..add(_LabeledRow(
