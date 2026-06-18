@@ -7,6 +7,8 @@ import '../../domain/band.dart';
 import '../../domain/column_layout.dart';
 import '../../domain/detail_scope.dart';
 import '../../domain/diagnostic.dart';
+import '../../domain/elements/barcode_element.dart'
+    show BarcodeSymbology, QrErrorCorrectionLevel;
 import '../../domain/elements/shape_element.dart';
 import '../../domain/elements/text_element.dart';
 import '../../domain/geometry.dart';
@@ -37,6 +39,9 @@ import 'commands/resize_command.dart';
 import 'commands/scope_commands.dart';
 import 'commands/set_band_height_command.dart';
 import 'commands/set_barcode_color_command.dart';
+import 'commands/set_barcode_data_command.dart';
+import 'commands/set_barcode_options_command.dart';
+import 'commands/set_barcode_symbology_command.dart';
 import 'commands/set_binding_command.dart';
 import 'commands/set_column_layout_command.dart';
 import 'commands/set_definition_name_command.dart';
@@ -769,6 +774,30 @@ class JetReportDesignerController extends ChangeNotifier {
   /// bounds.
   void setBarcodeColor(String id, JetColor color) =>
       _commit(SetBarcodeColorCommand(id: id, color: color));
+
+  /// Changes the barcode [id]'s symbology.
+  void setBarcodeSymbology(String id, BarcodeSymbology symbology) =>
+      _commit(SetBarcodeSymbologyCommand(id: id, symbology: symbology));
+
+  /// Sets the barcode [id]'s literal data (clears any bound field).
+  void setBarcodeData(String id, String data) =>
+      _commit(SetBarcodeDataCommand(id: id, data: data));
+
+  /// Binds the barcode [id]'s value to [field] (null clears the binding).
+  void setBarcodeDataField(String id, String? field) =>
+      _commit(SetBarcodeDataFieldCommand(id: id, field: field));
+
+  /// Toggles HRI text under the barcode [id].
+  void setBarcodeShowText(String id, bool value) =>
+      _commit(SetBarcodeOptionsCommand(id: id, showText: value));
+
+  /// Toggles the quiet zone of the barcode [id].
+  void setBarcodeQuietZone(String id, bool value) =>
+      _commit(SetBarcodeOptionsCommand(id: id, quietZone: value));
+
+  /// Sets the QR error-correction level of the barcode [id].
+  void setBarcodeEccLevel(String id, QrErrorCorrectionLevel level) =>
+      _commit(SetBarcodeOptionsCommand(id: id, eccLevel: level));
 
   /// Binds the [ImageElement] [id] to read its picture from the data [field]
   /// (US2 / FR-013). No-op for a non-image or absent id, or when already bound
