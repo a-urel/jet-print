@@ -158,7 +158,7 @@ ReportDefinition packingSlipDefinition() => const ReportDefinition(
               header: Band(
                 id: 'shipmentHeader',
                 type: BandType.groupHeader,
-                height: 124,
+                height: 144,
                 elements: <ReportElement>[
                   // --- Ship-To block (left) ---
                   TextElement(
@@ -177,7 +177,7 @@ ReportDefinition packingSlipDefinition() => const ReportDefinition(
                   ),
                   TextElement(
                     id: 'shipToAddress',
-                    bounds: JetRect(x: 0, y: 32, width: 250, height: 44),
+                    bounds: JetRect(x: 0, y: 32, width: 250, height: 68),
                     text: 'shipToAddress',
                     expression: r'$F{shipToAddress}',
                   ),
@@ -198,7 +198,7 @@ ReportDefinition packingSlipDefinition() => const ReportDefinition(
                   ),
                   TextElement(
                     id: 'billToAddress',
-                    bounds: JetRect(x: 260, y: 32, width: 200, height: 44),
+                    bounds: JetRect(x: 260, y: 32, width: 200, height: 68),
                     text: 'billToAddress',
                     expression: r'$F{billToAddress}',
                   ),
@@ -223,26 +223,26 @@ ReportDefinition packingSlipDefinition() => const ReportDefinition(
                   // --- Meta row (shipment / order / date / carrier) ---
                   TextElement(
                     id: 'metaShipmentNo',
-                    bounds: JetRect(x: 0, y: 88, width: 180, height: 14),
+                    bounds: JetRect(x: 0, y: 108, width: 180, height: 14),
                     text: 'shipmentNo',
                     style: JetTextStyle(weight: JetFontWeight.bold),
                     expression: r'"Shipment: " + $F{shipmentNo}',
                   ),
                   TextElement(
                     id: 'metaOrderNo',
-                    bounds: JetRect(x: 190, y: 88, width: 200, height: 14),
+                    bounds: JetRect(x: 190, y: 108, width: 200, height: 14),
                     text: 'orderNo',
                     expression: r'"Order: " + $F{orderNo}',
                   ),
                   TextElement(
                     id: 'metaDate',
-                    bounds: JetRect(x: 0, y: 104, width: 180, height: 14),
+                    bounds: JetRect(x: 0, y: 124, width: 180, height: 14),
                     text: 'date',
                     expression: r'"Date: " + $F{shipDate}',
                   ),
                   TextElement(
                     id: 'metaCarrier',
-                    bounds: JetRect(x: 190, y: 104, width: 280, height: 14),
+                    bounds: JetRect(x: 190, y: 124, width: 280, height: 14),
                     text: 'carrier',
                     expression: r'"Carrier: " + $F{carrier}',
                   ),
