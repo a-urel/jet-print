@@ -1579,6 +1579,8 @@ void main() {
       required String id,
       BarcodeSymbology symbology = BarcodeSymbology.auto,
       String data = '1234567890',
+      String? dataField,
+      JetDataSchema? schema,
     }) async {
       final JetReportDesignerController c = JetReportDesignerController(
         definition: ReportDefinition(
@@ -1599,6 +1601,7 @@ void main() {
                           const JetRect(x: 10, y: 10, width: 80, height: 80),
                       symbology: symbology,
                       data: data,
+                      dataField: dataField,
                     ),
                   ],
                 )),
@@ -1609,12 +1612,22 @@ void main() {
       );
       // Note: pumpDesignerWith already registers addTearDown(c.dispose); do not
       // add a second teardown here or the controller will be disposed twice.
-      await pumpDesignerWith(tester, controller: c);
+      await pumpDesignerWith(tester, controller: c, dataSchema: schema);
       await _openProperties(tester);
       c.select(id);
       await tester.pumpAndSettle();
       return c;
     }
+
+    /// The selected barcode element in [c].
+    BarcodeElement barcode(JetReportDesignerController c, String id) =>
+        _elementById(c, id) as BarcodeElement;
+
+    /// A one-field product schema for exercising the Data field picker.
+    final JetDataSchema productSchema = JetDataSchema(
+      name: 'Products',
+      fields: <FieldDef>[FieldDef('sku', type: JetFieldType.string)],
+    );
 
     testWidgets('barcode inspector shows symbology + data + options',
         (WidgetTester tester) async {
@@ -1668,6 +1681,65 @@ void main() {
       await pumpBarcode(tester,
           id: 'b1', symbology: BarcodeSymbology.code128, data: 'HELLO');
       expect(find.text('Value is not valid for this symbology'), findsNothing);
+    });
+
+    // --- Data: one field-or-literal input, no Literal/Field switch ----------
+    testWidgets('the Data input is one field, with no Literal/Field switch',
+        (WidgetTester tester) async {
+      await pumpBarcode(tester, id: 'b1', data: 'HELLO');
+      // One unified value-style input showing the literal.
+      expect(_field('barcodeData.b1'), findsOneWidget);
+      expect(_valueIn('barcodeData.b1', 'HELLO'), findsOneWidget);
+      // The old literal↔field toggle is gone.
+      expect(find.text('Literal'), findsNothing);
+      expect(find.text('Field'), findsNothing);
+    });
+
+    testWidgets('typing a [field] token binds the data field',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c =
+          await pumpBarcode(tester, id: 'b1', data: 'HELLO');
+      await tester.enterText(_editable('barcodeData.b1'), '[sku]');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(barcode(c, 'b1').dataField, 'sku');
+    });
+
+    testWidgets('typing plain text sets a literal and clears the binding',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c =
+          await pumpBarcode(tester, id: 'b1', data: '', dataField: 'sku');
+      await tester.enterText(_editable('barcodeData.b1'), '9501101530003');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(barcode(c, 'b1').data, '9501101530003');
+      expect(barcode(c, 'b1').dataField, isNull);
+    });
+
+    testWidgets('a bound field shows its [field] token in the input',
+        (WidgetTester tester) async {
+      await pumpBarcode(tester,
+          id: 'b1', data: '', dataField: 'sku', schema: productSchema);
+      expect(_valueIn('barcodeData.b1', '[sku]'), findsOneWidget);
+    });
+
+    testWidgets('the field picker inserts a [field] binding (no fx button)',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpBarcode(tester,
+          id: 'b1', data: 'HELLO', schema: productSchema);
+      // No expression affordance — barcode is field-or-literal.
+      expect(find.byKey(const ValueKey<String>('$_p.field.value.fx')),
+          findsNothing);
+      // The field picker is present; tapping it and choosing a field binds it.
+      final Finder pick =
+          find.byKey(const ValueKey<String>('$_p.field.barcodeData.pick'));
+      expect(pick, findsOneWidget);
+      await tester.tap(pick);
+      await tester.pumpAndSettle();
+      await tester.tap(
+          find.byKey(const ValueKey<String>('$_p.field.barcodeData.pick.sku')));
+      await tester.pumpAndSettle();
+      expect(barcode(c, 'b1').dataField, 'sku');
     });
   });
 

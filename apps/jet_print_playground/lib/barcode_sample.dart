@@ -76,6 +76,11 @@ List<ReportElement> _cellElements() => <ReportElement>[
       ),
       // A real EAN-13 retail barcode bound to the row's product number; its
       // human-readable text prints the digits under the bars (showText).
+      //
+      // Symbology is left at [BarcodeSymbology.auto] (the default for new
+      // elements): the engine infers EAN-13 from the 13-digit numeric value at
+      // fill time. The literal fallback below — a valid EAN-13 — drives the
+      // design-time canvas, so auto-inference shows a real EAN-13 there too.
       BarcodeElement(
         id: 'barcode',
         bounds: JetRect(
@@ -84,7 +89,7 @@ List<ReportElement> _cellElements() => <ReportElement>[
           width: _cellWidth - _pad * 2,
           height: _rowHeight - 36 - 8,
         ),
-        symbology: BarcodeSymbology.ean13,
+        symbology: BarcodeSymbology.auto,
         // Literal fallback (a valid EAN-13) for the headless/no-row case; the
         // bound field below wins whenever a row is present.
         data: '4006381333931',

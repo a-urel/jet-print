@@ -787,6 +787,20 @@ class JetReportDesignerController extends ChangeNotifier {
   void setBarcodeDataField(String id, String? field) =>
       _commit(SetBarcodeDataFieldCommand(id: id, field: field));
 
+  /// Sets the barcode [id]'s data from a value-field [raw] string: a bare
+  /// `[field]` token binds the value to that field (keeping the prior literal as
+  /// a fallback); any other text is a literal (and clears the binding). Mirrors
+  /// [setValue]'s single-input UX, but barcode is field-or-literal — no
+  /// expressions (spec 036). One undoable step.
+  void setBarcodeValue(String id, String raw) {
+    final String? field = parseFieldToken(raw);
+    if (field != null) {
+      _commit(SetBarcodeDataFieldCommand(id: id, field: field));
+    } else {
+      _commit(SetBarcodeDataCommand(id: id, data: raw));
+    }
+  }
+
   /// Toggles HRI text under the barcode [id].
   void setBarcodeShowText(String id, bool value) =>
       _commit(SetBarcodeOptionsCommand(id: id, showText: value));

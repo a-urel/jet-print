@@ -455,39 +455,24 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                 ),
               ),
               // --- Data --------------------------------------------------------
+              // One field-or-literal input, like the text Value field: a bare
+              // `[field]` token (typed or inserted via the picker) binds to that
+              // field; any other text is a literal. The input's contents carry
+              // the mode, so there is no separate literal/field switch. No fx
+              // affordance — barcode is field-or-literal, not expressions (036).
               _LabeledRow(
                 label: l10n.propertiesBarcodeData,
-                child: element.dataField != null
-                    ? _BindingField(
-                        fieldKey:
-                            ValueKey<String>('$_p.field.barcodeField.$id'),
-                        value: element.dataField!,
-                        placeholder: l10n.bindingImageFieldHint,
-                        clearTooltip: l10n.bindingClearTooltip,
-                        onSet: (String v) =>
-                            controller.setBarcodeDataField(id, v),
-                        onClear: () => controller.setBarcodeDataField(id, null),
-                      )
-                    : _BindingField(
-                        fieldKey: ValueKey<String>('$_p.field.barcodeData.$id'),
-                        value: element.data,
-                        placeholder: l10n.valueFieldHint,
-                        clearTooltip: l10n.bindingClearTooltip,
-                        onSet: (String v) => controller.setBarcodeData(id, v),
-                        onClear: () => controller.setBarcodeData(id, ''),
-                      ),
-              ),
-              // Mode toggle: literal ↔ bound field. The label tracks the mode
-              // (Literal when off, Field when on) so both keys stay live.
-              _LabeledRow(
-                label: element.dataField != null
-                    ? l10n.barcodeDataField
-                    : l10n.barcodeDataLiteral,
-                child: ShadSwitch(
-                  value: element.dataField != null,
-                  onChanged: (bool bound) => bound
-                      ? controller.setBarcodeDataField(id, element.data)
-                      : controller.setBarcodeData(id, element.dataField ?? ''),
+                child: _ValueField(
+                  fieldKey: ValueKey<String>('$_p.field.barcodeData.$id'),
+                  display: element.dataField != null
+                      ? ValueDisplay('[${element.dataField}]')
+                      : ValueDisplay(element.data),
+                  placeholder: l10n.valueFieldHint,
+                  fields: _valueFieldChoices(schema, controller, id),
+                  pickerTooltip: l10n.valueFieldPickerTooltip,
+                  pickerKeyPrefix: '$_p.field.barcodeData.pick',
+                  showFx: false,
+                  onCommit: (String v) => controller.setBarcodeValue(id, v),
                 ),
               ),
               // Inline hints.
@@ -2286,9 +2271,11 @@ class _ValueField extends StatefulWidget {
     required this.placeholder,
     required this.fields,
     required this.pickerTooltip,
-    required this.fxTooltip,
-    required this.resolvableNames,
     required this.onCommit,
+    this.fxTooltip = '',
+    this.resolvableNames = const <String>{},
+    this.showFx = true,
+    this.pickerKeyPrefix = '$_p.field.value.pick',
     this.descendantOperands = const <String>{},
     this.descendantFields = const <FieldDef>[],
     this.focusNode,
@@ -2307,6 +2294,14 @@ class _ValueField extends StatefulWidget {
 
   /// Accessible label / tooltip for the fx (expression editor) button.
   final String fxTooltip;
+
+  /// Whether to show the fx (expression editor) affordance. Off for the barcode
+  /// Data input, which is field-or-literal — no expressions (spec 036).
+  final bool showFx;
+
+  /// Key namespace for the field picker (so each reuse — value vs. barcode data
+  /// — has its own stable test seam). Defaults to the value field's namespace.
+  final String pickerKeyPrefix;
 
   /// The band's resolvable name set (schema fields in scope ∪ published totals,
   /// spec 031), passed to the fx editor so its unresolved check matches the
@@ -2404,38 +2399,42 @@ class _ValueFieldState extends State<_ValueField> {
       readOnly: !widget.display.editable,
       placeholder: Text(widget.placeholder),
       onSubmitted: widget.onCommit,
-      // Editable values carry an fx affordance (opens the expression editor);
-      // the field picker rides beside it only when fields are in scope. A
-      // read-only value (exotic/legacy binding) keeps no trailing affordances.
-      trailing: !widget.display.editable
+      // Editable values carry an fx affordance (opens the expression editor)
+      // when [showFx]; the field picker rides beside it only when fields are in
+      // scope. A read-only value (exotic/legacy binding), or an input with
+      // neither affordance, keeps no trailing widget.
+      trailing: !widget.display.editable ||
+              (!widget.showFx && widget.fields.isEmpty)
           ? null
           : Row(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Semantics(
-                  label: widget.fxTooltip,
-                  button: true,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: _openFx,
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: Icon(
-                        LucideIcons.squareFunction,
-                        key: const ValueKey<String>('$_p.field.value.fx'),
-                        size: 14,
-                        color:
-                            ShadTheme.of(context).colorScheme.mutedForeground,
+                if (widget.showFx)
+                  Semantics(
+                    label: widget.fxTooltip,
+                    button: true,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: _openFx,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: Icon(
+                          LucideIcons.squareFunction,
+                          key: const ValueKey<String>('$_p.field.value.fx'),
+                          size: 14,
+                          color:
+                              ShadTheme.of(context).colorScheme.mutedForeground,
+                        ),
                       ),
                     ),
                   ),
-                ),
                 if (widget.fields.isNotEmpty)
                   _FieldPicker(
                     controller: _picker,
                     fields: widget.fields,
                     tooltip: widget.pickerTooltip,
                     onPick: _pick,
+                    keyPrefix: widget.pickerKeyPrefix,
                   ),
               ],
             ),

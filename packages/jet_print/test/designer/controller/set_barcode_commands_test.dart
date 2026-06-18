@@ -108,6 +108,57 @@ void main() {
     });
   });
 
+  group('setBarcodeValue (field-or-literal single input)', () {
+    test('a bare [field] token binds the data field', () {
+      final JetReportDesignerController c = _controller();
+      c.setBarcodeValue('b1', '[sku]');
+      expect(_barcode(c, 'b1').dataField, 'sku');
+      c.dispose();
+    });
+
+    test('a [field] token trims whitespace inside the brackets', () {
+      final JetReportDesignerController c = _controller();
+      c.setBarcodeValue('b1', '[  sku  ]');
+      expect(_barcode(c, 'b1').dataField, 'sku');
+      c.dispose();
+    });
+
+    test('plain text is a literal and clears any bound field', () {
+      final JetReportDesignerController c = _controller(dataField: 'sku');
+      c.setBarcodeValue('b1', '9501101530003');
+      expect(_barcode(c, 'b1').data, '9501101530003');
+      expect(_barcode(c, 'b1').dataField, isNull);
+      c.dispose();
+    });
+
+    test('binding keeps the prior literal as a fallback', () {
+      // _element seeds data: 'INITIAL'; binding a field must not erase it.
+      final JetReportDesignerController c = _controller();
+      c.setBarcodeValue('b1', '[sku]');
+      expect(_barcode(c, 'b1').data, 'INITIAL');
+      expect(_barcode(c, 'b1').dataField, 'sku');
+      c.dispose();
+    });
+
+    test('a value that is not a bare token stays literal (no expressions)', () {
+      // Brackets embedded in other text are NOT a field token → literal.
+      final JetReportDesignerController c = _controller();
+      c.setBarcodeValue('b1', 'SKU-[sku]-X');
+      expect(_barcode(c, 'b1').data, 'SKU-[sku]-X');
+      expect(_barcode(c, 'b1').dataField, isNull);
+      c.dispose();
+    });
+
+    test('is undoable', () {
+      final JetReportDesignerController c = _controller();
+      c.setBarcodeValue('b1', '[sku]');
+      expect(c.canUndo, isTrue);
+      c.undo();
+      expect(_barcode(c, 'b1').dataField, isNull);
+      c.dispose();
+    });
+  });
+
   group('setBarcode options', () {
     test('toggles showText to false', () {
       final JetReportDesignerController c = _controller();

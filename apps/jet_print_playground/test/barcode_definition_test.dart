@@ -71,7 +71,9 @@ void main() {
           band.elements.whereType<BarcodeElement>().toList();
       expect(barcodes, hasLength(1));
       final BarcodeElement barcode = barcodes.single;
-      expect(barcode.symbology, BarcodeSymbology.ean13);
+      // Symbology stays at the default auto; the engine infers EAN-13 from the
+      // 13-digit numeric value at fill time.
+      expect(barcode.symbology, BarcodeSymbology.auto);
       expect(barcode.dataField, 'sku');
       expect(barcode.bounds.x + barcode.bounds.width, lessThanOrEqualTo(260.0));
     });
