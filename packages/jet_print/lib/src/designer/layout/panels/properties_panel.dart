@@ -60,6 +60,19 @@ bool _isColumnDiagnostic(String message) =>
     message.startsWith('label height (') ||
     message.contains('overflows cell width');
 
+/// The [layout] with [count] columns, refitting `columnWidth` so the grid fills
+/// the page body exactly (spec 035 UX: changing the column count always refits
+/// the width, so adding a column never overflows the page). A `count < 1` —
+/// which the validator flags — commits as-is, guarding the divide-by-zero.
+ColumnLayout _withColumnCount(
+    JetReportDesignerController controller, ColumnLayout layout, int count) {
+  if (count < 1) return layout.copyWith(columnCount: count);
+  final PageFormat page = controller.definition.page;
+  final double bodyWidth = page.width - page.margins.left - page.margins.right;
+  final double width = (bodyWidth - (count - 1) * layout.columnSpacing) / count;
+  return layout.copyWith(columnCount: count, columnWidth: width);
+}
+
 /// A text element whose whole expression is exactly one `$F{field}` reference —
 /// a simple field binding, the only form whose value type the Format picker
 /// infers (functions/CONCAT templates produce a transformed value, so they
@@ -929,7 +942,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
           prefix: LucideIcons.columns3,
           value: layout.columnCount.toDouble(),
           onCommit: (double v) => controller.setColumnLayout(
-              bandId, layout.copyWith(columnCount: v.round())),
+              bandId, _withColumnCount(controller, layout, v.round())),
         ),
       ))
       ..add(_LabeledRow(

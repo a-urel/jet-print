@@ -138,21 +138,32 @@ void main() {
     expect(_detail(c).columnLayout, isNull);
   });
 
-  testWidgets('editing the Columns field commits the rounded value',
+  testWidgets('changing the column count refits the width so the grid fits',
       (WidgetTester tester) async {
     final JetReportDesignerController c =
         await pumpDesignerWith(tester, controller: JetReportDesignerController(definition: _pure()));
     await _openProperties(tester);
     c.selectBand('detail');
     await tester.pumpAndSettle();
-    await tester.tap(_add);
+    await tester.tap(_add); // default 2 cols at bodyWidth/2
     await tester.pumpAndSettle();
 
     await tester.enterText(_editable('columnCount'), '3');
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
 
-    expect(_detail(c).columnLayout!.columnCount, 3);
+    final ColumnLayout layout = _detail(c).columnLayout!;
+    final double bodyWidth = c.definition.page.width -
+        c.definition.page.margins.left -
+        c.definition.page.margins.right;
+    expect(layout.columnCount, 3);
+    // Width refit so the 3-column grid fills the body exactly (spacing 0).
+    expect(layout.columnWidth, closeTo(bodyWidth / 3, 1e-9));
+    final double grid = layout.columnCount * layout.columnWidth +
+        (layout.columnCount - 1) * layout.columnSpacing;
+    expect(grid, closeTo(bodyWidth, 1e-9));
+    // No 'wider than the page body' error after a count bump.
+    expect(validate(c.definition), isEmpty);
   });
 
   testWidgets('Remove clears the layout', (WidgetTester tester) async {
