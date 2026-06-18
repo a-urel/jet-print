@@ -72,10 +72,11 @@ is **designer-only**: an editor, validation surfacing, and a canvas cue.
 - **Validation feedback** in the section: surface `controller.diagnostics`
   filtered to the active band (band-level + per-element cell-overflow), plus an
   **inactive notice** when a layout exists on an ineligible body.
-- **Localization** of the designer-authored chrome strings (section/field
-  labels, Add tooltip, inactive notice) via new keys in the three `.arb` files
-  (`en`/`de`/`tr`) and generated `JetPrintLocalizations`. Diagnostic rows show
-  `validate()`'s strings verbatim (see FR-010).
+- **Localization** of every column-section string (section/field labels, Add
+  tooltip, inactive notice, **and** the diagnostic rows) via new keys in the
+  three `.arb` files (`en`/`de`/`tr`) and generated `JetPrintLocalizations`. The
+  diagnostic rows are designer-generated friendly messages, not the engine's raw
+  strings (see FR-008/FR-010).
 - A **canvas cue**: when a layout is active (`columnLayout != null &&
   isPureSingleDetailBody`), draw the editable band frame at `columnWidth` and
   `columnCount − 1` faint read-only ghost cells at the real pitch.
@@ -117,10 +118,12 @@ summary, groups, or footer."* No column layout can be created in this shape.
 
 With a layout active, the author sets Column width so the grid
 (`columnCount · columnWidth + (columnCount − 1) · columnSpacing`) exceeds the
-page body width. The section shows an inline **error** row (the verbatim
-"grid wider than page body" `validate()` diagnostic). The value remains as typed (author
-fixes it); the engine still renders via its clamp/fallback, but the author sees
-the problem at author time.
+page body width. The section shows an inline **error** row — a friendly,
+localized message ("the columns don't fit the page width — reduce the column
+count or width"), no raw float. The value remains as typed (author fixes it);
+the engine still renders via its clamp/fallback, but the author sees the problem
+at author time. (Changing the column **count** instead refits the width to fit,
+so this error arises only from a direct width edit.)
 
 ### User Story 4 - Remove restores a plain band (P2)
 
@@ -139,9 +142,10 @@ band with no layout) would be disabled in this shape.
 
 ### User Story 6 - Cell overflow warning (P2)
 
-An element positioned so `bounds.x + bounds.width > columnWidth` produces the
-verbatim per-element **warning** ("overflows cell width; it will be clipped")
-in the section, and visually crosses the editable cell boundary on the canvas.
+Elements positioned so `bounds.x + bounds.width > columnWidth` produce a
+**single** friendly, localized **warning** row carrying the count ("N elements
+extend past the column and will be clipped"), and visually cross the editable
+cell boundary on the canvas.
 
 ## Requirements *(mandatory)*
 
@@ -163,8 +167,12 @@ in the section, and visually crosses the editable cell boundary on the canvas.
   commit-on-blur numeric fields — Columns (`columnCount`, integer, rounded from
   the field value), Column width (`columnWidth`), Column spacing
   (`columnSpacing`), Row spacing (`rowSpacing`) — each committing via
-  `setColumnLayout(bandId, layout.copyWith(...))`, **regardless of body
-  eligibility** (so an orphaned layout stays editable).
+  `setColumnLayout`, **regardless of body eligibility** (so an orphaned layout
+  stays editable). Changing the **Columns** field MUST **refit** `columnWidth`
+  to fill the page body evenly (`(bodyWidth − (count−1)·columnSpacing) / count`,
+  guarded for `count ≥ 1`), so adding a column never overflows the page; the
+  Column width field commits literally (a width set directly may overflow and
+  surfaces as an FR-008 error). *(Refit added 2026-06-18 per user feedback.)*
 - **FR-005**: When the band has a `columnLayout`, the section MUST show a
   **Remove** action that clears it via `removeColumnLayout(bandId)`.
 - **FR-006**: `removeColumnLayout` MUST clear **only** `columnLayout`, preserving
@@ -178,26 +186,29 @@ in the section, and visually crosses the editable cell boundary on the canvas.
   notification), as new commands `SetColumnLayoutCommand` and
   `RemoveColumnLayoutCommand`. Both MUST no-op safely when the band id is not
   found.
-- **FR-008**: The section MUST surface validation by reading
-  `controller.diagnostics` (the existing `validate()` output) filtered to the
-  active band — band-level diagnostics where `elementId == bandId`, and
-  per-element cell-overflow diagnostics where `elementId` is one of the band's
-  element ids. Errors MUST render in the destructive inline style; warnings in
-  the warning inline style. The UI MUST NOT re-implement the grid arithmetic.
+- **FR-008** *(revised 2026-06-18 — see FR-010)*: When the layout is active, the
+  section MUST surface **friendly, localized** column diagnostics derived from
+  the same geometry the engine validates — its checks and the
+  `bodyWidth`/`bodyCapacity` formulas MUST mirror `_validateColumns` exactly so
+  the two cannot disagree — but presented in plain language and **de-duplicated**:
+  the per-element cell-overflow case MUST collapse into a **single** row carrying
+  the count (not one row per element). Errors MUST render in the destructive
+  inline style; warnings in the warning inline style. The section MUST NOT
+  surface the engine's raw `validate()` strings.
 - **FR-009**: When a `columnLayout` exists but the body is **not** a pure
   single-detail body, the section MUST show an **inactive notice** distinct from
   the field-validation rows, explaining the layout will not render as a grid.
-- **FR-010**: All new **designer-authored** chrome — section label, field
-  labels, the Add tooltip, and the inactive notice — MUST be localized via new
-  keys in the `en`, `de`, and `tr` `.arb` files and generated
-  `JetPrintLocalizations`. The surfaced **diagnostic rows** render
-  `validate()`'s message strings **verbatim** (developer-English), since the
-  domain `Diagnostic` carries no stable code and localizing the interpolated
-  engine strings would require either a domain change (defeating
-  "designer-only") or re-deriving the grid arithmetic (defeating FR-008's
-  "reuse `validate()`"). The raw `validate()` strings MUST remain unchanged.
-  (Decision 2026-06-18; revisable later via a domain `Diagnostic` code without
-  touching this UI.)
+- **FR-010** *(revised 2026-06-18)*: **All** column-section strings — the section
+  label, field labels, the Add tooltip, the inactive notice, AND the column
+  diagnostic rows (FR-008) — MUST be localized via new keys in the `en`, `de`,
+  and `tr` `.arb` files and generated `JetPrintLocalizations`; the clipped-count
+  message MUST use an ICU plural. No raw developer strings and no unrounded
+  floats appear in the UI. (Supersedes the initial "render `validate()` strings
+  verbatim" decision: user feedback found the verbatim engine strings —
+  English, with raw floats, one per element — not human-friendly. Rather than
+  add a domain `Diagnostic` code, the designer generates these messages itself
+  from the same geometry it already holds; the engine's `validate()` strings are
+  unchanged and remain the source of truth for the render/export path.)
 - **FR-011**: When a detail band has an active layout (`columnLayout != null &&
   isPureSingleDetailBody`), the canvas MUST draw the editable band frame at
   `columnWidth` and MUST draw `columnCount − 1` faint, **read-only,
@@ -231,8 +242,10 @@ in the section, and visually crosses the editable cell boundary on the canvas.
 - **SC-002**: The **Add column layout** action is enabled iff
   `def.isPureSingleDetailBody` and the band has no layout; the disabled state
   carries the explanatory tooltip.
-- **SC-003**: A grid-too-wide fixture shows an error row in the section (the
-  verbatim `validate()` message); a cell-overflow element shows a warning row.
+- **SC-003**: A grid-too-wide fixture shows a friendly, localized error row in
+  the section (no raw float, no developer phrasing); a fixture with N
+  cell-overflowing elements shows a **single** localized warning row carrying
+  the count N.
 - **SC-004**: **Remove** clears `columnLayout` while a widget test asserts the
   band's `elements` and `height` survive (spec-031 regression guard).
 - **SC-005**: An orphaned-layout fixture (layout present, body ineligible) shows

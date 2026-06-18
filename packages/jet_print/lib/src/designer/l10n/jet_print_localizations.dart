@@ -1456,6 +1456,36 @@ abstract class JetPrintLocalizations {
   /// In en, this message translates to:
   /// **'Column layout is inactive: the report isn\'t a single detail band.'**
   String get propertiesColumnLayoutInactive;
+
+  /// Friendly column-layout error: the column count is below one.
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least one column.'**
+  String get propertiesColumnErrTooFew;
+
+  /// Friendly column-layout error: a non-positive width or negative spacing.
+  ///
+  /// In en, this message translates to:
+  /// **'Column width must be greater than zero, and spacing can\'t be negative.'**
+  String get propertiesColumnErrDimensions;
+
+  /// Friendly column-layout error: the grid is wider than the page body.
+  ///
+  /// In en, this message translates to:
+  /// **'The columns don\'t fit the page width — reduce the column count or width.'**
+  String get propertiesColumnErrGridTooWide;
+
+  /// Friendly column-layout error: the label height exceeds the page body, so no rows fit.
+  ///
+  /// In en, this message translates to:
+  /// **'The label is taller than the page — reduce the band height so a row fits.'**
+  String get propertiesColumnErrLabelTooTall;
+
+  /// Friendly column-layout warning: how many elements overflow the column (cell) width and will be clipped.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 element extends past the column and will be clipped.} other{{count} elements extend past the column and will be clipped.}}'**
+  String propertiesColumnElementsClipped(int count);
 }
 
 class _JetPrintLocalizationsDelegate

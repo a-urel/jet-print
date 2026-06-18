@@ -9,7 +9,6 @@ import '../../../data/field_def.dart';
 import '../../../domain/band.dart';
 import '../../../domain/column_layout.dart';
 import '../../../domain/detail_scope.dart';
-import '../../../domain/diagnostic.dart';
 import '../../../domain/elements/barcode_element.dart';
 import '../../../domain/elements/image_element.dart';
 import '../../../domain/elements/image_source.dart';
@@ -49,16 +48,50 @@ part 'style_editors.dart';
 /// Stable test-seam key prefix for the inspector's fields and empty state.
 const String _p = 'jet_print.designer.properties';
 
-/// Whether [message] is one of the spec-034 column-layout diagnostics emitted by
-/// `validate()` (`_validateColumns`). Matched by stable English prefix because
-/// the domain `Diagnostic` carries no code; the designer renders these strings
-/// verbatim (spec 035 / FR-010), so this coupling is intentional and local. The
-/// stray "column layout on band … is ignored" warning is deliberately excluded —
-/// the localized inactive notice covers that case.
-bool _isColumnDiagnostic(String message) =>
-    message.startsWith('columnLayout ') ||
-    message.startsWith('label height (') ||
-    message.contains('overflows cell width');
+/// One friendly, localized column-layout diagnostic for display.
+typedef _ColumnDiagnostic = ({bool isError, String message});
+
+/// Friendly, localized column-layout diagnostics for the active label band
+/// (spec 035 UX). Derived from the SAME geometry the engine's `validate()`
+/// checks (`_validateColumns`) — the conditions and the bodyWidth/bodyCapacity
+/// formulas mirror it exactly — but presented in plain language, localized, and
+/// **de-duplicated**: one row for ALL clipped elements rather than the engine's
+/// one-developer-string-per-element. The engine's raw strings are no longer
+/// surfaced here.
+List<_ColumnDiagnostic> _columnDiagnostics(ReportDefinition def, Band band,
+    ColumnLayout cl, JetPrintLocalizations l10n) {
+  final List<_ColumnDiagnostic> out = <_ColumnDiagnostic>[];
+  if (cl.columnCount < 1) {
+    out.add((isError: true, message: l10n.propertiesColumnErrTooFew));
+  }
+  if (cl.columnWidth <= 0 || cl.columnSpacing < 0 || cl.rowSpacing < 0) {
+    out.add((isError: true, message: l10n.propertiesColumnErrDimensions));
+  }
+  final PageFormat page = def.page;
+  final double bodyWidth = page.width - page.margins.left - page.margins.right;
+  if (cl.columnCount >= 1 && cl.columnWidth > 0) {
+    final double grid = cl.columnCount * cl.columnWidth +
+        (cl.columnCount - 1) * cl.columnSpacing;
+    if (grid > bodyWidth) {
+      out.add((isError: true, message: l10n.propertiesColumnErrGridTooWide));
+    }
+  }
+  final double headerH = def.furniture.pageHeader?.height ?? 0;
+  final double footerH = def.furniture.pageFooter?.height ?? 0;
+  final double bodyCapacity =
+      page.height - page.margins.top - page.margins.bottom - headerH - footerH;
+  if (band.height > bodyCapacity) {
+    out.add((isError: true, message: l10n.propertiesColumnErrLabelTooTall));
+  }
+  final int clipped = band.elements
+      .where((ReportElement e) => e.bounds.x + e.bounds.width > cl.columnWidth)
+      .length;
+  if (clipped > 0) {
+    out.add(
+        (isError: false, message: l10n.propertiesColumnElementsClipped(clipped)));
+  }
+  return out;
+}
 
 /// The [layout] with [count] columns, refitting `columnWidth` so the grid fills
 /// the page body exactly (spec 035 UX: changing the column count always refits
@@ -981,31 +1014,24 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
         onRemove: () => controller.removeColumnLayout(bandId),
       ));
 
-    // Inactive notice (FR-009): a layout exists but the report shape no longer
-    // activates the grid. Presented as the localized twin of the engine's
-    // stray-`columnLayout` warning, so that raw warning is filtered out below.
+    // When the report shape no longer activates the grid, the geometry checks
+    // are moot — show only the inactive notice (FR-009). Otherwise surface the
+    // friendly, localized column diagnostics (spec 035 UX): derived from the
+    // same geometry the engine validates, but rounded, plain-language, and with
+    // the per-element overflows collapsed into one row.
     if (!eligible) {
       out
         ..add(const SizedBox(height: 8))
         ..add(_InlineNotice(
             text: l10n.propertiesColumnLayoutInactive, theme: theme));
-    }
-
-    // Verbatim column diagnostics for this band (FR-008/FR-010): reuse
-    // `validate()` output — never re-derive the grid math — filtered to this
-    // band (band-level ids + this band's element ids) and to the spec-034
-    // column-diagnostic messages.
-    final Set<String> elementIds =
-        band.elements.map((ReportElement e) => e.id).toSet();
-    for (final Diagnostic d in controller.diagnostics) {
-      final String? id = d.elementId;
-      final bool mine =
-          id == bandId || (id != null && elementIds.contains(id));
-      if (!mine || !_isColumnDiagnostic(d.message)) continue;
-      out.add(const SizedBox(height: 6));
-      out.add(d.severity == DiagnosticSeverity.error
-          ? _UnresolvedHint(message: d.message)
-          : _InlineWarning(text: d.message, theme: theme));
+    } else {
+      for (final _ColumnDiagnostic d
+          in _columnDiagnostics(def, band, layout, l10n)) {
+        out.add(const SizedBox(height: 6));
+        out.add(d.isError
+            ? _UnresolvedHint(message: d.message)
+            : _InlineWarning(text: d.message, theme: theme));
+      }
     }
     return out;
   }

@@ -948,5 +948,28 @@
   "propertiesColumnLayoutInactive": "Column layout is inactive: the report isn't a single detail band.",
   "@propertiesColumnLayoutInactive": {
     "description": "Notice shown when a band carries a column layout but the report shape no longer satisfies the activation gate (spec 035 / FR-009)."
+  },
+  "propertiesColumnErrTooFew": "Add at least one column.",
+  "@propertiesColumnErrTooFew": {
+    "description": "Friendly column-layout error: the column count is below one."
+  },
+  "propertiesColumnErrDimensions": "Column width must be greater than zero, and spacing can't be negative.",
+  "@propertiesColumnErrDimensions": {
+    "description": "Friendly column-layout error: a non-positive width or negative spacing."
+  },
+  "propertiesColumnErrGridTooWide": "The columns don't fit the page width — reduce the column count or width.",
+  "@propertiesColumnErrGridTooWide": {
+    "description": "Friendly column-layout error: the grid is wider than the page body."
+  },
+  "propertiesColumnErrLabelTooTall": "The label is taller than the page — reduce the band height so a row fits.",
+  "@propertiesColumnErrLabelTooTall": {
+    "description": "Friendly column-layout error: the label height exceeds the page body, so no rows fit."
+  },
+  "propertiesColumnElementsClipped": "{count, plural, =1{1 element extends past the column and will be clipped.} other{{count} elements extend past the column and will be clipped.}}",
+  "@propertiesColumnElementsClipped": {
+    "description": "Friendly column-layout warning: how many elements overflow the column (cell) width and will be clipped.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
   }
 }

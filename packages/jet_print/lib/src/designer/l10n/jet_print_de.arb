@@ -249,5 +249,10 @@
   "propertiesColumnWidth": "Spaltenbreite",
   "propertiesColumnSpacing": "Spaltenabstand",
   "propertiesRowSpacing": "Zeilenabstand",
-  "propertiesColumnLayoutInactive": "Spaltenlayout ist inaktiv: Der Bericht ist kein einzelnes Detailband."
+  "propertiesColumnLayoutInactive": "Spaltenlayout ist inaktiv: Der Bericht ist kein einzelnes Detailband.",
+  "propertiesColumnErrTooFew": "Mindestens eine Spalte hinzufügen.",
+  "propertiesColumnErrDimensions": "Die Spaltenbreite muss größer als null sein, und Abstände dürfen nicht negativ sein.",
+  "propertiesColumnErrGridTooWide": "Die Spalten passen nicht auf die Seitenbreite — Spaltenanzahl oder -breite verringern.",
+  "propertiesColumnErrLabelTooTall": "Das Etikett ist höher als die Seite — Bandhöhe verringern, damit eine Zeile passt.",
+  "propertiesColumnElementsClipped": "{count, plural, =1{1 Element ragt über die Spalte hinaus und wird abgeschnitten.} other{{count} Elemente ragen über die Spalte hinaus und werden abgeschnitten.}}"
 }

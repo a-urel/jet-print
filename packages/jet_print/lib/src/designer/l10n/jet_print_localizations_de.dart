@@ -705,4 +705,31 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   @override
   String get propertiesColumnLayoutInactive =>
       'Spaltenlayout ist inaktiv: Der Bericht ist kein einzelnes Detailband.';
+
+  @override
+  String get propertiesColumnErrTooFew => 'Mindestens eine Spalte hinzufügen.';
+
+  @override
+  String get propertiesColumnErrDimensions =>
+      'Die Spaltenbreite muss größer als null sein, und Abstände dürfen nicht negativ sein.';
+
+  @override
+  String get propertiesColumnErrGridTooWide =>
+      'Die Spalten passen nicht auf die Seitenbreite — Spaltenanzahl oder -breite verringern.';
+
+  @override
+  String get propertiesColumnErrLabelTooTall =>
+      'Das Etikett ist höher als die Seite — Bandhöhe verringern, damit eine Zeile passt.';
+
+  @override
+  String propertiesColumnElementsClipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count Elemente ragen über die Spalte hinaus und werden abgeschnitten.',
+      one: '1 Element ragt über die Spalte hinaus und wird abgeschnitten.',
+    );
+    return '$_temp0';
+  }
 }

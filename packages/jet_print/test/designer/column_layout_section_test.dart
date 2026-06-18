@@ -182,7 +182,7 @@ void main() {
     expect(_detail(c).columnLayout, isNull);
   });
 
-  testWidgets('a grid wider than the body shows a verbatim error row',
+  testWidgets('a grid wider than the body shows a friendly error row',
       (WidgetTester tester) async {
     final JetReportDesignerController c =
         await pumpDesignerWith(tester, controller: JetReportDesignerController(definition: _pure()));
@@ -192,13 +192,57 @@ void main() {
     await tester.tap(_add);
     await tester.pumpAndSettle();
 
-    // Make the single column wider than the whole page body.
+    // Make the single column wider than the whole page body (a direct width
+    // edit, which is not refit — so the grid overflows).
     final double tooWide = c.definition.page.width;
     await tester.enterText(_editable('columnWidth'), tooWide.toStringAsFixed(0));
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
 
-    expect(_textContains('wider than the page body'), findsOneWidget);
+    // Friendly localized message — no raw float, no developer phrasing.
+    expect(_textContains("don't fit the page width"), findsOneWidget);
+    expect(_textContains('wider than the page body'), findsNothing);
+  });
+
+  testWidgets('clipped elements collapse into one friendly count row',
+      (WidgetTester tester) async {
+    // A pure single-detail body whose detail band already carries a layout with
+    // a narrow column, plus three elements that each overflow it.
+    final ReportDefinition def = ReportDefinition(
+      name: 'r',
+      page: PageFormat.a4Portrait,
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+              id: 'detail',
+              type: BandType.detail,
+              height: 80,
+              columnLayout: const ColumnLayout(
+                  columnCount: 2, columnWidth: 50, columnSpacing: 0, rowSpacing: 0),
+              elements: <ReportElement>[
+                for (final String id in <String>['a', 'b', 'c'])
+                  TextElement(
+                    id: id,
+                    bounds: JetRect(x: 0, y: 0, width: 120, height: 16),
+                    text: id,
+                  ),
+              ],
+            )),
+          ],
+        ),
+      ),
+    );
+    final JetReportDesignerController c = await pumpDesignerWith(tester,
+        controller: JetReportDesignerController(definition: def));
+    await _openProperties(tester);
+    c.selectBand('detail');
+    await tester.pumpAndSettle();
+
+    // One row summarising all three, not three separate developer strings.
+    expect(_textContains('3 elements extend past the column'), findsOneWidget);
+    expect(_textContains('overflows cell width'), findsNothing);
   });
 
   testWidgets('an orphaned layout shows the inactive notice and stays editable',

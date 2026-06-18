@@ -703,4 +703,30 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   @override
   String get propertiesColumnLayoutInactive =>
       'Column layout is inactive: the report isn\'t a single detail band.';
+
+  @override
+  String get propertiesColumnErrTooFew => 'Add at least one column.';
+
+  @override
+  String get propertiesColumnErrDimensions =>
+      'Column width must be greater than zero, and spacing can\'t be negative.';
+
+  @override
+  String get propertiesColumnErrGridTooWide =>
+      'The columns don\'t fit the page width — reduce the column count or width.';
+
+  @override
+  String get propertiesColumnErrLabelTooTall =>
+      'The label is taller than the page — reduce the band height so a row fits.';
+
+  @override
+  String propertiesColumnElementsClipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count elements extend past the column and will be clipped.',
+      one: '1 element extends past the column and will be clipped.',
+    );
+    return '$_temp0';
+  }
 }

@@ -704,4 +704,30 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   @override
   String get propertiesColumnLayoutInactive =>
       'Sütun düzeni etkin değil: rapor tek bir ayrıntı bandı değil.';
+
+  @override
+  String get propertiesColumnErrTooFew => 'En az bir sütun ekleyin.';
+
+  @override
+  String get propertiesColumnErrDimensions =>
+      'Sütun genişliği sıfırdan büyük olmalı ve boşluklar negatif olamaz.';
+
+  @override
+  String get propertiesColumnErrGridTooWide =>
+      'Sütunlar sayfa genişliğine sığmıyor — sütun sayısını veya genişliğini azaltın.';
+
+  @override
+  String get propertiesColumnErrLabelTooTall =>
+      'Etiket sayfadan uzun — bir satır sığması için bant yüksekliğini azaltın.';
+
+  @override
+  String propertiesColumnElementsClipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count öğe sütunun dışına taşıyor ve kırpılacak.',
+      one: '1 öğe sütunun dışına taşıyor ve kırpılacak.',
+    );
+    return '$_temp0';
+  }
 }
