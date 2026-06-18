@@ -56,43 +56,43 @@ void main() {
       expect((lines.children.single as BandNode).band.type, BandType.detail);
     });
 
-    test('the whole total chain is live via published scope totals (spec 030)',
+    test(
+        'every footer level is authored inline as SUM(\$F{lineTotal}) (spec 033)',
         () {
-      final DetailScope root = nestedListsDefinition().body.root;
+      final ReportDefinition def = nestedListsDefinition();
+      final DetailScope root = def.body.root;
 
-      // The `lines` scope publishes orderTotal = SUM($F{lineTotal}) onto its
-      // parent (order) row, and its footer DISPLAYS that published field
-      // ($F{orderTotal}) — one computation, reused — not the inline aggregate.
+      // The `lines` scope footer folds its own rows inline — no ScopeTotal.
       final DetailScope lines = _findScope(root, 'lines');
-      expect(
-        lines.totals,
-        contains(const ScopeTotal('orderTotal', r'SUM($F{lineTotal})')),
-      );
+      expect(lines.totals, isEmpty,
+          reason: 'no ScopeTotal on lines scope: inline fold replaces it');
       expect(lines.footer, isNotNull);
-      expect(
-        lines.footer!.elements
-            .whereType<TextElement>()
-            .map((TextElement e) => e.expression),
-        contains(r'$F{orderTotal}'),
-        reason: 'the footer shows the published field, not the inline SUM',
-      );
+      final TextElement orderTotalFooter = lines.footer!.elements
+          .firstWhere((ReportElement e) => e.id == 'orderTotalFooter')
+          as TextElement;
+      expect(orderTotalFooter.expression, r'SUM($F{lineTotal})',
+          reason: 'lines footer folds the same-scope lines inline (spec 029)');
 
-      // The `orders` scope rolls those published order totals up, publishing
-      // customerTotal = SUM($F{orderTotal}) onto its parent (customer) row.
+      // The `orders` scope carries no ScopeTotal: the customer footer + summary
+      // descend [orders, lines] via spec 033 inline folding.
       final DetailScope orders = _findScope(root, 'orders');
-      expect(
-        orders.totals,
-        contains(const ScopeTotal('customerTotal', r'SUM($F{orderTotal})')),
-      );
+      expect(orders.totals, isEmpty,
+          reason: 'no ScopeTotal on orders scope: inline fold replaces it');
 
-      // The summary grand total is unchanged: it sums the (now live) injected
-      // customerTotal field across customers.
-      final TextElement grand = nestedListsDefinition()
-          .body
-          .summary!
-          .elements
+      // The customer group footer element is authored inline as SUM($F{lineTotal}).
+      final GroupLevel customer = root.groups.single;
+      final TextElement customerTotal = customer.footer!.elements
+          .firstWhere((ReportElement e) => e.id == 'customerTotal')
+          as TextElement;
+      expect(customerTotal.expression, r'SUM($F{lineTotal})',
+          reason:
+              'customer footer descends [orders, lines] inline (spec 033)');
+
+      // The summary grand total is also inline — descends [orders, lines].
+      final TextElement grand = def.body.summary!.elements
           .firstWhere((ReportElement e) => e.id == 'grandTotal') as TextElement;
-      expect(grand.expression, r'SUM($F{customerTotal})');
+      expect(grand.expression, r'SUM($F{lineTotal})',
+          reason: 'grand total descends [orders, lines] inline (spec 033)');
     });
 
     test('rendered customer footer totals + grand total are live data sums',
@@ -154,12 +154,14 @@ void main() {
               'the aggregate is inline in the summary, not a declared variable');
       final TextElement el = def.body.summary!.elements
           .firstWhere((ReportElement e) => e.id == 'grandTotal') as TextElement;
-      expect(el.expression, r'SUM($F{customerTotal})');
+      expect(el.expression, r'SUM($F{lineTotal})');
       // Surfaced once at the end, in the summary band.
       expect(def.body.summary?.type, BandType.summary);
     });
 
-    test('inline grand total renders identically to the hand-declared variable',
+    test(
+        'migrated inline sample renders identically to the legacy '
+        'published-total design',
         () {
       final RenderedReport inlineReport = const JetReportEngine()
           .renderDefinition(nestedListsDefinition(), _sampleSource());
@@ -167,8 +169,9 @@ void main() {
           .renderDefinition(_legacyGrandTotalDefinition(), _sampleSource());
       expect(_textRuns(inlineReport), _textRuns(legacyReport),
           reason:
-              'inline SUM(\$F{customerTotal}) renders identically to the prior '
-              '\$V{grandTotal} variable');
+              'inline SUM(\$F{lineTotal}) at every footer level renders '
+              'byte-identical output to the legacy published-total chain '
+              '(SC-001 equivalence — migration correctness proof)');
     });
 
     test('is pristine under the library validator (no diagnostics)', () {

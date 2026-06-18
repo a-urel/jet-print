@@ -5,6 +5,7 @@
 /// JetReportEngine.
 library;
 
+import '../../data/aggregate_path.dart';
 import '../../data/data_row.dart';
 import '../../data/data_set.dart';
 import '../../data/field_def.dart';
@@ -18,6 +19,7 @@ import '../../domain/report_group.dart';
 import '../../domain/report_variable.dart';
 import '../../domain/scope_total.dart';
 import '../../expression/aggregate/aggregate_synthesizer.dart';
+import '../../expression/aggregate/descendant_aggregate.dart';
 import '../../expression/aggregate/nested_footer.dart';
 import '../../expression/aggregate/scope_totals.dart';
 import '../../expression/aggregate/variable_accumulator.dart';
@@ -72,11 +74,23 @@ class ReportFiller {
     Set<String>? knownFields,
     String unresolvedFieldToken = '#ERROR',
   }) {
+    // Open the source early so its declared schema is available for the
+    // descendant-lift pre-pass (spec 033). The cursor is positioned before
+    // the first row, exactly as if opened later.
+    final DataSet ds = source.open(params);
+    final List<FieldDef> rootFields = ds.fields;
+
+    // Spec 033: lift descendant-operand aggregates (SUM($F{lineTotal}) where
+    // lineTotal lives in a nested collection) to $V{__dagg<n>} references
+    // BEFORE expandAggregates. Same-scope / not-found operands are left in
+    // place and handled by expandAggregates as before.
+    final DescendantLift lift = liftDescendantAggregates(rawDefinition, rootFields);
     // Expand inline aggregates (spec 028) before any group/variable logic: a
     // stored SUM($F{...}) in a summary/group-footer band becomes a hidden
     // band-scoped variable + $V{} reference, so it computes through the
     // unchanged calculator. Returns the definition unchanged when there are none.
-    final ReportDefinition definition = expandAggregates(rawDefinition);
+    final ReportDefinition definition = expandAggregates(lift.definition);
+    final List<DescendantAggregate> descAggs = lift.aggregates;
     final ReportDiagnostics diagnostics = ReportDiagnostics();
     final Set<String> warnedFields = <String>{};
     final Set<String> ignoredPageRefs = <String>{};
@@ -146,6 +160,28 @@ class ReportFiller {
       functions: _functions,
       contextFactory: contextFactory,
     )..start();
+
+    // Spec 033: split lifted aggregates by reset scope and build per-name
+    // accumulators. Accumulators fold every master row's descendant leaves;
+    // group-scoped ones are reset at a group break (mirroring calc's own reset).
+    final List<DescendantAggregate> summaryDescAggs = <DescendantAggregate>[
+      for (final DescendantAggregate a in descAggs)
+        if (a.resetScope == VariableResetScope.report) a,
+    ];
+    final List<DescendantAggregate> groupDescAggs = <DescendantAggregate>[
+      for (final DescendantAggregate a in descAggs)
+        if (a.resetScope == VariableResetScope.group) a,
+    ];
+    final Map<String, VariableAccumulator> descAcc = <String, VariableAccumulator>{
+      for (final DescendantAggregate a in descAggs)
+        a.name: VariableAccumulator(a.calculation),
+    };
+    // Parallels `prevValues`: the group-scoped descendant values through the
+    // previous row, used when a group footer is emitted at a break.
+    Map<String, JetValue> descGroupSnapshot = <String, JetValue>{
+      for (final DescendantAggregate a in groupDescAggs)
+        a.name: JetValue.from(unresolvedFieldToken),
+    };
 
     void scanPageScoped(String expression, String site) {
       final Set<String> refs = <String>{};
@@ -255,6 +291,33 @@ class ReportFiller {
       ];
     }
 
+    // Spec 033: fold one master row's descendant leaves into accumulator [a].
+    void foldDescInto(DescendantAggregate a, DataRow row) {
+      if (a.ambiguous) return; // fallback rendered at emit
+      foldDescendantLeaves(
+        rows: <DataRow>[row],
+        path: a.path,
+        acc: descAcc[a.name]!,
+        eval: (DataRow leaf) => a.argument.evaluate(contextFactory(
+          row: leaf,
+          params: params,
+          variables: calc.values,
+          functions: _functions,
+        )),
+        childRowsOf: childRowsOf,
+      );
+    }
+
+    // Returns the current accumulator values for [aggs], substituting the
+    // unresolved-field fallback for ambiguous operands.
+    Map<String, JetValue> descValues(Iterable<DescendantAggregate> aggs) =>
+        <String, JetValue>{
+          for (final DescendantAggregate a in aggs)
+            a.name: a.ambiguous
+                ? JetValue.from(unresolvedFieldToken)
+                : descAcc[a.name]!.value,
+        };
+
     // Spec 030 (B2) — the parsed published-total fold specs depend only on the
     // static definition, so prepare them ONCE here (mirroring how `calcVars` /
     // `calcGroups` / `expandAggregates` are hoisted above the row loop) rather
@@ -339,8 +402,21 @@ class ReportFiller {
           }
           final PreparedFooter? footer =
               s.footer == null ? null : prepareNestedFooter(s.footer!);
-          // Fresh accumulators each invocation → the footer total resets per
-          // parent.
+          // Classify each footer aggregate operand once: same-scope folds over the
+          // immediate child rows (spec 029); a descendant leaf folds over the whole
+          // subtree (spec 033); an ambiguous operand renders the fallback (FR-010).
+          final List<FieldDef> childFields = childRows.first.fields;
+          final List<List<String>?> descPaths = <List<String>?>[]; // null → same-scope
+          final List<bool> ambiguousAgg = <bool>[];
+          if (footer != null) {
+            for (final NestedAgg a in footer.aggs) {
+              final Set<String> refs = a.argument.references.fields;
+              AggregatePath? resolved =
+                  refs.length == 1 ? resolveAggregatePath(childFields, refs.single) : null;
+              descPaths.add(resolved is DescendPath ? resolved.path : null);
+              ambiguousAgg.add(resolved is Ambiguous);
+            }
+          }
           final List<VariableAccumulator>? accs = footer == null
               ? null
               : <VariableAccumulator>[
@@ -353,20 +429,44 @@ class ReportFiller {
             }
             if (footer != null) {
               for (int k = 0; k < footer.aggs.length; k++) {
-                accs![k].fold(footer.aggs[k].argument.evaluate(contextFactory(
-                  row: childRow,
-                  params: params,
-                  variables: calc.values,
-                  functions: _functions,
-                )));
+                // Same-scope: fold over the immediate child rows, as spec 029.
+                if (descPaths[k] == null && !ambiguousAgg[k]) {
+                  accs![k].fold(footer.aggs[k].argument.evaluate(contextFactory(
+                    row: childRow,
+                    params: params,
+                    variables: calc.values,
+                    functions: _functions,
+                  )));
+                }
               }
             }
           }
           if (footer != null) {
+            // Descendant folds run once over the whole subtree of this scope instance.
+            for (int k = 0; k < footer.aggs.length; k++) {
+              final List<String>? path = descPaths[k];
+              if (path != null) {
+                foldDescendantLeaves(
+                  rows: childRows,
+                  path: path,
+                  acc: accs![k],
+                  eval: (DataRow leaf) =>
+                      footer.aggs[k].argument.evaluate(contextFactory(
+                    row: leaf,
+                    params: params,
+                    variables: calc.values,
+                    functions: _functions,
+                  )),
+                  childRowsOf: childRowsOf,
+                );
+              }
+            }
             final Map<String, JetValue> vars = <String, JetValue>{
               ...calc.values,
               for (int k = 0; k < footer.aggs.length; k++)
-                footer.aggs[k].name: accs![k].value,
+                footer.aggs[k].name: ambiguousAgg[k]
+                    ? JetValue.from(unresolvedFieldToken)
+                    : accs![k].value,
             };
             addBand(footer.band, scopeRow, vars);
           }
@@ -396,7 +496,8 @@ class ReportFiller {
 
     emitOnce(definition.body.title, null);
 
-    final DataSet ds = source.open(params);
+    // `ds` was opened early (above) to read its schema for the descendant-lift
+    // pre-pass. The cursor is still positioned before the first row.
     bool hadRows = false;
     Map<String, JetValue> prevValues = const <String, JetValue>{};
     DataRow? prevRow;
@@ -412,14 +513,28 @@ class ReportFiller {
         if (!hadRows) {
           emitGroupHeaders(groupOrder, row);
         } else if (broken.isNotEmpty) {
-          emitGroupFooters(
-              brokenInOrder(broken, reversed: true), prevRow, prevValues);
+          // Spec 033: emit the broken group footer(s) with the completed-group
+          // descendant snapshot (parallels prevValues for the master calculator).
+          emitGroupFooters(brokenInOrder(broken, reversed: true), prevRow,
+              <String, JetValue>{...prevValues, ...descGroupSnapshot});
+          // Reset group-scoped descendant accumulators whose group broke, then
+          // emit new headers — mirroring VariableCalculator.advance's reset order.
+          for (final DescendantAggregate a in groupDescAggs) {
+            if (broken.contains(a.resetGroup)) descAcc[a.name]!.reset();
+          }
           emitGroupHeaders(brokenInOrder(broken, reversed: false), row);
         }
         emitDetail(row);
         hadRows = true;
         prevValues = calc.values;
         prevRow = row;
+        // Fold this master row's descendant leaves into all accumulators, then
+        // snapshot the group-scoped values (so the next break reads a completed
+        // group, just as prevValues captures the completed master row).
+        for (final DescendantAggregate a in descAggs) {
+          foldDescInto(a, row);
+        }
+        descGroupSnapshot = descValues(groupDescAggs);
       }
     } finally {
       ds.close();
@@ -431,8 +546,14 @@ class ReportFiller {
           'details');
       emitOnce(definition.body.noData, null);
     } else {
-      emitGroupFooters(groupOrder.reversed.toList(), prevRow, prevValues);
-      emitOnce(definition.body.summary, null);
+      // End-of-data: emit final group footers with the last completed-group
+      // descendant snapshot, then the summary with the report-scoped totals.
+      emitGroupFooters(groupOrder.reversed.toList(), prevRow,
+          <String, JetValue>{...prevValues, ...descGroupSnapshot});
+      if (definition.body.summary != null) {
+        addBand(definition.body.summary!, null,
+            <String, JetValue>{...calc.values, ...descValues(summaryDescAggs)});
+      }
     }
 
     return FillResult(
@@ -519,9 +640,14 @@ class ReportFiller {
   /// child fields (e.g. the schema was inferred): the union of all entry keys
   /// in first-seen order, each typed via [FieldDef.inferType] over that
   /// column's values — mirroring `JetInMemoryDataSource`'s inference so the
-  /// three public sources stay output-identical (SC-006). A nested list value
-  /// infers [JetFieldType.unknown], but its raw value is preserved on the
-  /// child row, so deeper collection bands still iterate it.
+  /// three public sources stay output-identical (SC-006).
+  ///
+  /// A column whose values are themselves lists of row maps is recognised as a
+  /// nested [JetFieldType.collection] and carries its own recursively-inferred
+  /// child schema (spec 033) — so a descendant-leaf aggregate at this scope's
+  /// footer can resolve its operand by descending the typed collection chain
+  /// (`resolveAggregatePath`). The raw list value is still preserved on the
+  /// child row, so deeper collection bands continue to iterate it.
   static List<FieldDef> _inferChildFields(List<Map<String, Object?>> rows) {
     final List<String> names = <String>[];
     final Set<String> seen = <String>{};
@@ -532,12 +658,34 @@ class ReportFiller {
     }
     return <FieldDef>[
       for (final String name in names)
-        FieldDef(
-          name,
-          type: FieldDef.inferType(
-            rows.map((Map<String, Object?> r) => r[name]),
-          ),
-        ),
+        _inferColumn(name, rows.map((Map<String, Object?> r) => r[name])),
     ];
+  }
+
+  /// Infers one column [name]'s [FieldDef] over its [values]. A column whose
+  /// non-null values are all lists of row maps is a nested
+  /// [JetFieldType.collection], typed with the recursively-inferred schema of
+  /// every entry across all of those lists; any other column delegates to the
+  /// scalar [FieldDef.inferType].
+  static FieldDef _inferColumn(String name, Iterable<Object?> values) {
+    final List<Object?> nonNull =
+        values.where((Object? v) => v != null).toList();
+    final bool isCollection = nonNull.isNotEmpty &&
+        nonNull.every((Object? v) =>
+            v is List && v.every((Object? e) => e is Map));
+    if (!isCollection) {
+      return FieldDef(name, type: FieldDef.inferType(values));
+    }
+    final List<Map<String, Object?>> entries = <Map<String, Object?>>[
+      for (final Object? v in nonNull)
+        for (final Object? e in v as List)
+          (e as Map).map((Object? k, Object? ev) =>
+              MapEntry<String, Object?>(k.toString(), ev)),
+    ];
+    return FieldDef(
+      name,
+      type: JetFieldType.collection,
+      fields: _inferChildFields(entries),
+    );
   }
 }

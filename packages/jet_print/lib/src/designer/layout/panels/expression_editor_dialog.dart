@@ -10,6 +10,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../data/binding_scope.dart';
 import '../../../data/field_def.dart';
+import '../../../expression/expression.dart';
 import '../../l10n/jet_print_localizations.dart';
 import '../../template/expression_function_catalog.dart';
 import '../../template/value_template_compiler.dart';
@@ -19,11 +20,16 @@ const String _k = 'jet_print.designer.exprEditor';
 /// Opens the expression editor seeded with [initialText]; returns the committed
 /// text on Insert, or null on Cancel/dismiss. [resolvableNames] is the band's
 /// resolvable name set (spec 031); [fields] is the in-scope field palette.
+/// [descendantOperands] is the set of descendant leaf names valid as aggregate
+/// operands (spec 033); [descendantFields] is the palette of marked deeper
+/// field buttons.
 Future<String?> showExpressionEditor(
   BuildContext context, {
   required String initialText,
   required Set<String> resolvableNames,
   required List<FieldDef> fields,
+  Set<String> descendantOperands = const <String>{},
+  List<FieldDef> descendantFields = const <FieldDef>[],
 }) {
   return showShadDialog<String>(
     context: context,
@@ -31,6 +37,8 @@ Future<String?> showExpressionEditor(
       initialText: initialText,
       resolvableNames: resolvableNames,
       fields: fields,
+      descendantOperands: descendantOperands,
+      descendantFields: descendantFields,
     ),
   );
 }
@@ -59,16 +67,29 @@ class StatusUnresolved extends EditorStatus {
 }
 
 /// Pure status computation, unit-testable independent of the widget.
-/// - A binding (`{…}` / `[field]`) with all refs in [names] → valid; an out-of-
-///   scope ref → unresolved(firstMissing).
-/// - A `{…}`-wrapped value that does NOT parse to a binding (the compiler could
-///   not compile it) → syntax error.
+/// - A binding (`{…}` / `[field]`): every `$F{}` ref must resolve — it is
+///   resolvable when it is in [names], or when it is an aggregate operand and a
+///   [descendantOperands] leaf (spec 033). A bare descendant ref (not an
+///   aggregate operand) stays unresolved (FR-006). First out-of-scope ref →
+///   unresolved(that name).
+/// - A `{…}`-wrapped value that does NOT parse to a binding → syntax error.
 /// - Plain literal text → valid.
-EditorStatus statusFor(String text, Set<String> names) {
+EditorStatus statusFor(String text, Set<String> names,
+    {Set<String> descendantOperands = const <String>{}}) {
   final ValueParse parse = parseValueField(text);
   if (parse is BindingValue) {
+    Set<String> operandRefs;
+    try {
+      operandRefs = Expression.parse(parse.expression).aggregateOperandFields;
+    } on Object {
+      operandRefs = const <String>{};
+    }
     for (final String ref in fieldRefsIn(parse.expression)) {
-      if (!names.contains(ref)) return StatusUnresolved(ref);
+      if (names.contains(ref)) continue;
+      if (operandRefs.contains(ref) && descendantOperands.contains(ref)) {
+        continue;
+      }
+      return StatusUnresolved(ref);
     }
     return const StatusValid();
   }
@@ -84,11 +105,21 @@ class _ExpressionEditorDialog extends StatefulWidget {
     required this.initialText,
     required this.resolvableNames,
     required this.fields,
+    this.descendantOperands = const <String>{},
+    this.descendantFields = const <FieldDef>[],
   });
 
   final String initialText;
   final Set<String> resolvableNames;
   final List<FieldDef> fields;
+
+  /// Descendant leaf names valid as aggregate operands (spec 033). Empty when
+  /// no schema or the band has no nested collections.
+  final Set<String> descendantOperands;
+
+  /// Fx palette choices for descendant operands — rendered marked as deeper
+  /// fields (FR-007). Empty when [descendantOperands] is empty.
+  final List<FieldDef> descendantFields;
 
   @override
   State<_ExpressionEditorDialog> createState() =>
@@ -104,11 +135,13 @@ class _ExpressionEditorDialogState extends State<_ExpressionEditorDialog> {
   void initState() {
     super.initState();
     _controller.addListener(_onChange);
-    _status = statusFor(_controller.text, widget.resolvableNames);
+    _status = statusFor(_controller.text, widget.resolvableNames,
+        descendantOperands: widget.descendantOperands);
   }
 
-  void _onChange() => setState(
-      () => _status = statusFor(_controller.text, widget.resolvableNames));
+  void _onChange() => setState(() => _status = statusFor(
+      _controller.text, widget.resolvableNames,
+      descendantOperands: widget.descendantOperands));
 
   /// Inserts [snippet] at the caret (replacing any selection) and moves the
   /// caret to [caretInSnippet] within it.
@@ -179,6 +212,22 @@ class _ExpressionEditorDialogState extends State<_ExpressionEditorDialog> {
                     onPressed: () =>
                         _insertAtCaret('[${f.name}]', '[${f.name}]'.length),
                     child: Text(f.name),
+                  ),
+                // Descendant leaves (spec 033) — valid only inside an aggregate.
+                // Rendered marked (↳, italic) and tooltip'd as "deeper" so they
+                // read distinctly from in-scope fields.
+                for (final FieldDef f in widget.descendantFields)
+                  ShadTooltip(
+                    builder: (BuildContext context) =>
+                        Text(l10n.exprEditorDeeperFieldHint),
+                    child: ShadButton.ghost(
+                      key: ValueKey<String>('$_k.deepField.${f.name}'),
+                      size: ShadButtonSize.sm,
+                      onPressed: () =>
+                          _insertAtCaret('[${f.name}]', '[${f.name}]'.length),
+                      child: Text('↳ ${f.name}',
+                          style: const TextStyle(fontStyle: FontStyle.italic)),
+                    ),
                   ),
               ],
             ),

@@ -1,83 +1,90 @@
-/// The playground's nested-list sample: a three-level master/detail report —
-/// **Customer ▸ Order ▸ Line** — authored entirely through the library's public
-/// API (`package:jet_print/jet_print.dart`), the way an external consumer would.
-///
-/// Where the invoice sample nests one collection (`lines`) under a grouped
-/// master, this one nests *two* (`orders`, then `lines` inside each order) to
-/// show off the reified band model's arbitrary-depth nesting (spec 024):
-/// `DetailScope.children` is an ordered list of [ScopeNode]s, and a
-/// [NestedScope] simply wraps another [DetailScope] — so a list inside a list
-/// is just recursion.
-///
-/// Field/label names are illustrative sample data and intentionally not
-/// localized; only the designer's own chrome is.
+// SC-001 parity proof (spec 033): the now-inline-authored shipped sample
+// (`nestedListsDefinition()`) renders byte-identical totals to the
+// published-total design (`_publishedTotalDefinition()`) when both are filled
+// over the same declared-schema source.
+//
+// After the spec-033 migration, `nestedListsDefinition()` IS the inline
+// variant.  This test is repurposed to keep proving SC-001 equivalence by
+// comparing it against a hand-kept published-total reference built in-test —
+// the same role the original parity test served, with the sides swapped.
+//
+// WHY declared schema: source-level inference does NOT type nested List<Map> as
+// collections (a known deferred gap), so the inline sample's root-scope descend
+// paths ([orders, lines]) need `ds.fields` to carry the typed schema.
+// The published-total version works either way; rendering both over a
+// declared-schema source is a fair, working comparison.
 library;
 
+import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
+import 'package:jet_print/src/rendering/frame/primitive.dart'
+    show TextRunPrimitive;
+import 'package:jet_print/src/rendering/text/text_measurer.dart' show TextLine;
+import 'package:jet_print_playground/nested_list_sample.dart';
+import 'package:jet_print_playground/rendered_nested_list_example.dart';
 
-/// The customers data structure: master fields plus a nested `orders`
-/// collection, each order carrying its own nested `lines` collection
-/// (master/detail/detail). Attach it via `dataSchema:`.
-///
-/// The only stored money figure is `lineTotal` (the real per-line data the
-/// roll-up sums). Order totals, customer totals, and the grand total are
-/// **not** data fields — they are computed live as inline multi-level
-/// aggregates (spec 033): each footer element authors `SUM($F{lineTotal})`
-/// directly, and the engine descends the [orders, lines] path at fill time
-/// to fold over all descendant leaf rows. No `ScopeTotal` declarations are
-/// needed; the whole Customer ▸ Order ▸ Line chain is live with a single
-/// authoring expression at each level.
-const JetDataSchema customersSchema = JetDataSchema(
-  name: 'Customers',
-  fields: <FieldDef>[
-    FieldDef('customerName', type: JetFieldType.string),
-    FieldDef('customerCode', type: JetFieldType.string),
-    FieldDef(
-      'orders',
-      type: JetFieldType.collection,
-      fields: <FieldDef>[
-        FieldDef('orderNo', type: JetFieldType.string),
-        FieldDef('date', type: JetFieldType.dateTime),
-        FieldDef(
-          'lines',
-          type: JetFieldType.collection,
-          fields: <FieldDef>[
-            FieldDef('description', type: JetFieldType.string),
-            FieldDef('qty', type: JetFieldType.integer),
-            FieldDef('unitPrice', type: JetFieldType.double),
-            FieldDef('lineTotal', type: JetFieldType.double),
-          ],
-        ),
-      ],
-    ),
-  ],
-);
+void main() {
+  group('SC-001 parity: inline (shipped sample) vs published-total', () {
+    test('validate(nestedListsDefinition()) is empty (SC-003)', () {
+      expect(validate(nestedListsDefinition()), isEmpty);
+    });
 
-/// The nested-list report authored in the reified band model (spec 024).
+    test(
+        'inline sample render has no errors in diagnostics',
+        () {
+          final RenderedReport report = const JetReportEngine()
+              .renderDefinition(nestedListsDefinition(), _declaredSource());
+          expect(
+            report.diagnostics.entries
+                .where((Diagnostic d) => d.severity == DiagnosticSeverity.error),
+            isEmpty,
+            reason: 'inline multi-level sample + declared-schema source '
+                'renders cleanly (no #ERROR / unresolved)',
+          );
+        });
+
+    test(
+        'inline sample renders byte-identical to published-total (SC-001)',
+        () {
+          final RenderedReport inlineReport = const JetReportEngine()
+              .renderDefinition(nestedListsDefinition(), _declaredSource());
+          final RenderedReport publishedReport = const JetReportEngine()
+              .renderDefinition(_publishedTotalDefinition(), _declaredSource());
+
+          expect(
+            _textRuns(inlineReport),
+            _textRuns(publishedReport),
+            reason: 'inline SUM(\$F{lineTotal}) at every footer level renders '
+                'byte-identical totals to the published-total chain (SC-001)',
+          );
+        });
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Helpers (top-level)
+// ---------------------------------------------------------------------------
+
+/// Declared-schema source — REQUIRED so the inline variant's root-scope
+/// descend paths ([orders, lines]) resolve. Both renders use the same source
+/// factory so the comparison is apples-to-apples.
+JetDataSource _declaredSource() =>
+    JetInMemoryDataSource(kSampleCustomers, fields: customersSchema.fields);
+
+// ---------------------------------------------------------------------------
+// Published-total reference variant (the legacy design, kept for SC-001)
+// ---------------------------------------------------------------------------
+
+/// The published-total design that predates the spec-033 migration — kept
+/// in-test as the SC-001 reference.  Identical structure to
+/// [nestedListsDefinition], but total expressions use the published-field
+/// pattern (`$F{orderTotal}` / `$F{customerTotal}`) and both scopes carry
+/// their [ScopeTotal] declarations.
 ///
-/// Shape, top to bottom:
-/// * [PageFurniture] holds the record-blind chrome (a `Customers` running title
-///   and a `Page N of M` footer).
-/// * [ReportBody.root] is the master [DetailScope] iterating customers. The
-///   **customer** is a first-class [GroupLevel] (keyed on `$F{customerCode}`)
-///   so it can own a header (name/code) *and* a footer showing the live
-///   customer total — the supported way to wrap a nested list in
-///   header+footer chrome, mirroring the invoice's per-invoice group.
-/// * Under it, `orders` is a [NestedScope]; each order emits one per-row
-///   `detail` band (number · date · the line column titles) followed by the
-///   `lines` [NestedScope] — the list within the list.
-///
-/// The whole total chain is **live** via inline multi-level aggregates (spec
-/// 033) — no figure above `lineTotal` is data, and no [ScopeTotal]
-/// declarations are needed:
-/// * the `lines` scope footer folds its own rows with `SUM($F{lineTotal})`
-///   (same-scope fold — spec 029 path), giving the per-order total;
-/// * the customer group footer uses the identical expression
-///   `SUM($F{lineTotal})`, and the engine descends [orders, lines] to fold
-///   all descendant leaf rows within that customer (spec 033 path);
-/// * [ReportBody.summary] does the same descent over all customers, authoring
-///   the grand total as `SUM($F{lineTotal})` (spec 033 path).
-ReportDefinition nestedListsDefinition() => const ReportDefinition(
+/// This is the counterpart to what [nestedListsDefinition] used to look like
+/// before the migration; keeping it here lets the parity test prove that the
+/// now-inline shipped sample renders byte-identical output (SC-001).
+ReportDefinition _publishedTotalDefinition() => const ReportDefinition(
       name: 'Nested Lists',
       page: PageFormat.a4Portrait,
       furniture: PageFurniture(
@@ -132,7 +139,8 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
               text: 'grandTotal',
               style: JetTextStyle(
                   align: JetTextAlign.right, weight: JetFontWeight.bold),
-              expression: r'SUM($F{lineTotal})',
+              // Sums the injected customerTotal field published by the orders scope.
+              expression: r'SUM($F{customerTotal})',
               format: '#,##0.00',
             ),
           ],
@@ -186,7 +194,8 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
                     text: 'customerTotal',
                     style: JetTextStyle(
                         align: JetTextAlign.right, weight: JetFontWeight.bold),
-                    expression: r'SUM($F{lineTotal})',
+                    // Displays the published field injected by the orders scope.
+                    expression: r'$F{customerTotal}',
                     format: '#,##0.00',
                   ),
                 ],
@@ -197,9 +206,11 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
             NestedScope(DetailScope(
               id: 'orders',
               collectionField: 'orders',
-              // No ScopeTotal: the inline SUM($F{lineTotal}) at the customer
-              // footer + summary descend [orders, lines] at fill time (spec 033).
-
+              // Publishes customerTotal = SUM($F{orderTotal}) onto each customer
+              // row so the customer group footer can display it.
+              totals: <ScopeTotal>[
+                ScopeTotal('customerTotal', r'SUM($F{orderTotal})'),
+              ],
               children: <ScopeNode>[
                 BandNode(Band(
                   id: 'orderRow',
@@ -219,10 +230,6 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
                       text: 'date',
                       expression: r'$F{date}',
                     ),
-                    // The per-order total lives on the `lines` scope as a
-                    // published total `orderTotal = SUM($F{lineTotal})` (spec 030,
-                    // B2), displayed in the lines footer and rolled up into the
-                    // customer total; the order row itself shows no total.
                     TextElement(
                       id: 'colDescription',
                       bounds: JetRect(x: 24, y: 22, width: 236, height: 14),
@@ -300,8 +307,12 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
                       ],
                     )),
                   ],
-                  // No ScopeTotal: the footer folds the same-scope child rows
-                  // inline (spec 029 path). No published field needed.
+                  // Publishes orderTotal = SUM($F{lineTotal}) onto each order row
+                  // so the footer and the enclosing orders scope can reference it.
+                  totals: <ScopeTotal>[
+                    ScopeTotal('orderTotal', r'SUM($F{lineTotal})'),
+                  ],
+                  // Displays the published field — one computation reused.
                   footer: Band(
                     id: 'linesFooter',
                     type: BandType.groupFooter,
@@ -322,8 +333,8 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
                         style: JetTextStyle(
                             align: JetTextAlign.right,
                             weight: JetFontWeight.bold),
-                        // Same-scope fold over the order's lines (spec 029).
-                        expression: r'SUM($F{lineTotal})',
+                        // Displays the published field (not an inline aggregate).
+                        expression: r'$F{orderTotal}',
                         format: '#,##0.00',
                       ),
                     ],
@@ -335,3 +346,16 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
         ),
       ),
     );
+
+// ---------------------------------------------------------------------------
+// Helpers (mirrored from nested_list_definition_test.dart)
+// ---------------------------------------------------------------------------
+
+/// Every rendered text run on every page of [report], in paint order —
+/// the comparable shape used to prove two definitions render identically.
+List<String> _textRuns(RenderedReport report) => <String>[
+      for (int i = 0; i < report.pageCount; i++)
+        for (final TextRunPrimitive p
+            in report.pageAt(i).frame.primitives.whereType<TextRunPrimitive>())
+          p.lines.map((TextLine l) => l.text).join(),
+    ];

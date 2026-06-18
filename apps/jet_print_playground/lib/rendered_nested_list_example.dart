@@ -5,9 +5,12 @@
 /// The data mirrors the `customersSchema` shape: customers, each with an
 /// `orders` collection, each order with a `lines` collection. The only stored
 /// money figure is each line's `lineTotal`; every total above it is computed
-/// live via published scope totals (spec 030) — line totals roll up into the
-/// per-order `orderTotal`, those into each `customerTotal`, and those into the
-/// report `grandTotal` (13.5+12.0+6.5 + 7.5+5.0+2.0 + 100.0+75.0+60.0 = 281.5).
+/// live via inline multi-level aggregates (spec 033) — each footer authors
+/// `SUM($F{lineTotal})` and the engine descends the [orders, lines] path at
+/// fill time. The declared schema (`customersSchema.fields`) is passed to the
+/// data source so nested `List<Map>` columns are typed as collections and
+/// descend paths resolve correctly at the root scope
+/// (13.5+12.0+6.5 + 7.5+5.0+2.0 + 100.0+75.0+60.0 = 281.5).
 library;
 
 import 'package:flutter/widgets.dart' show Locale;
@@ -131,7 +134,13 @@ const List<Map<String, Object?>> kSampleCustomers = <Map<String, Object?>>[
 /// Three customers with nested orders and line items, matching
 /// [customersSchema], built from the shared [kSampleCustomers] rows — the
 /// single source of truth the tests also derive their expected sums from.
-JetDataSource customersDataSource() => JetInMemoryDataSource(kSampleCustomers);
+///
+/// The declared schema (`fields: customersSchema.fields`) is required: source-
+/// level inference does NOT type nested `List<Map>` columns as collections, so
+/// without it the root-scope descend paths for inline multi-level aggregates
+/// (spec 033) would silently render 0.
+JetDataSource customersDataSource() =>
+    JetInMemoryDataSource(kSampleCustomers, fields: customersSchema.fields);
 
 /// Renders [nestedListsDefinition] over [customersDataSource] through the
 /// native [JetReportEngine.renderDefinition] path — the same single call the

@@ -220,6 +220,10 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get exprEditorFieldsLabel => 'Alanlar';
 
   @override
+  String get exprEditorDeeperFieldHint =>
+      'İç içe bir koleksiyondan — yalnızca bir toplama işlevi içinde (örn. SUM)';
+
+  @override
   String get exprEditorFunctionsLabel => 'Fonksiyonlar';
 
   @override

@@ -20,6 +20,7 @@ import '../../../domain/report_band.dart' show BandType;
 import '../../../domain/report_element.dart';
 import '../../../domain/styles/color.dart';
 import '../../../domain/styles/text_style.dart';
+import '../../../expression/expression.dart';
 import '../../../rendering/elements/shape_path.dart';
 import '../../../rendering/frame/primitive.dart';
 import '../../../rendering/text/font_registry.dart';
@@ -236,6 +237,8 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
           pickerTooltip: l10n.valueFieldPickerTooltip,
           fxTooltip: l10n.valueFieldFxTooltip,
           resolvableNames: _resolvableNames(schema, controller, id),
+          descendantOperands: _descendantOperands(schema, controller, id),
+          descendantFields: _descendantFields(schema, controller, id),
           onCommit: (String v) => controller.setValue(id, v),
         ),
         if (element.expression case final String expr
@@ -544,9 +547,32 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     if (band == null) return false;
     final Set<String> names =
         resolvableNamesForBand(controller.definition, schema, band.id);
-    if (expression != null) return !expressionResolvesNames(names, expression);
+    if (expression != null) {
+      final Set<String> deep =
+          descendantOperandNamesForBand(controller.definition, schema, band.id);
+      return !_resolvesAggregateAware(names, deep, expression);
+    }
     if (imageField != null) return !names.contains(imageField);
     return false;
+  }
+
+  /// True when every `$F{}` ref in [expression] is in [names], or is an
+  /// aggregate operand and a descendant operand (spec 033). Mirrors the fx
+  /// editor's statusFor resolution for the inline Unresolved hint.
+  bool _resolvesAggregateAware(
+      Set<String> names, Set<String> deep, String expression) {
+    Set<String> operandRefs;
+    try {
+      operandRefs = Expression.parse(expression).aggregateOperandFields;
+    } on Object {
+      operandRefs = const <String>{};
+    }
+    for (final String ref in fieldRefsIn(expression)) {
+      if (names.contains(ref)) continue;
+      if (operandRefs.contains(ref) && deep.contains(ref)) continue;
+      return false;
+    }
+    return true;
   }
 
   /// The resolvable name set for [elementId]'s band — schema fields in scope plus
@@ -561,6 +587,34 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     final Band? band = findBandOfElement(controller.definition, elementId);
     if (band == null) return const <String>{};
     return resolvableNamesForBand(controller.definition, schema, band.id);
+  }
+
+  /// Descendant leaf names valid as aggregate operands for [elementId]'s band
+  /// (spec 033): leaves of nested collections below the band's scope. Empty
+  /// when no schema/band, so behavior is unchanged where no source is attached.
+  Set<String> _descendantOperands(
+    JetDataSchema? schema,
+    JetReportDesignerController controller,
+    String elementId,
+  ) {
+    if (schema == null) return const <String>{};
+    final Band? band = findBandOfElement(controller.definition, elementId);
+    if (band == null) return const <String>{};
+    return descendantOperandNamesForBand(controller.definition, schema, band.id);
+  }
+
+  /// The fx-palette choices for [elementId]'s descendant operands — one
+  /// [FieldDef] per descendant leaf, rendered marked as a deeper field. Empty
+  /// when no schema/band.
+  List<FieldDef> _descendantFields(
+    JetDataSchema? schema,
+    JetReportDesignerController controller,
+    String elementId,
+  ) {
+    if (schema == null) return const <FieldDef>[];
+    final Band? band = findBandOfElement(controller.definition, elementId);
+    if (band == null) return const <FieldDef>[];
+    return descendantFieldChoicesForBand(controller.definition, schema, band.id);
   }
 
   // --- Band ------------------------------------------------------------------
@@ -1807,6 +1861,8 @@ class _ValueField extends StatefulWidget {
     required this.fxTooltip,
     required this.resolvableNames,
     required this.onCommit,
+    this.descendantOperands = const <String>{},
+    this.descendantFields = const <FieldDef>[],
     this.focusNode,
   });
 
@@ -1829,6 +1885,15 @@ class _ValueField extends StatefulWidget {
   /// inline field's. Empty ⇒ the editor stays silent (no schema/band).
   final Set<String> resolvableNames;
   final ValueChanged<String> onCommit;
+
+  /// Descendant leaf names valid as aggregate operands (spec 033), forwarded to
+  /// the fx editor so its status check accepts a deep aggregate. Empty ⇒ no
+  /// schema/band, behavior unchanged.
+  final Set<String> descendantOperands;
+
+  /// The fx-palette choices for [descendantOperands] — rendered marked as
+  /// deeper fields. Empty when [descendantOperands] is empty.
+  final List<FieldDef> descendantFields;
 
   /// An externally-owned focus node (the panel's double-tap focus target);
   /// null ⇒ the field owns a private one.
@@ -1887,6 +1952,8 @@ class _ValueFieldState extends State<_ValueField> {
       initialText: widget.display.text,
       resolvableNames: widget.resolvableNames,
       fields: widget.fields,
+      descendantOperands: widget.descendantOperands,
+      descendantFields: widget.descendantFields,
     );
     if (result != null) widget.onCommit(result);
   }

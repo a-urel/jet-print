@@ -9,7 +9,12 @@
 /// [Diagnostic] type — never rendering/designer/Flutter UI.
 library;
 
+import '../data/aggregate_path.dart';
+import '../data/binding_scope.dart';
+import '../data/data_schema.dart';
+import '../data/field_def.dart';
 import '../expression/aggregate/aggregate_functions.dart';
+import '../expression/ast.dart';
 import '../expression/expression.dart';
 import '../expression/expression_exception.dart';
 import 'band.dart';
@@ -39,7 +44,14 @@ import 'scope_total.dart';
 ///   collection total); anywhere else is an error, because only those bands are
 ///   expanded by the aggregate synthesizer. A scope `footer` is slot-checked
 ///   (`groupFooter`) and is forbidden on the root (which has no collection).
-List<Diagnostic> validate(ReportDefinition def) {
+///
+/// When [schema] is provided, an additional operand check is applied to each
+/// aggregate in a sink band: same-scope or unique-descend → no diagnostic;
+/// `Ambiguous` → error; `NotFound` → error UNLESS the operand is a
+/// published-total name (spec 030 `ScopeTotal`) — those are legitimately not
+/// in the schema. When [schema] is null, behavior is unchanged (backward
+/// compatible with all existing callers).
+List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
   final List<Diagnostic> out = <Diagnostic>[];
   final Map<String, int> idCounts = <String, int>{};
 
@@ -56,6 +68,70 @@ List<Diagnostic> validate(ReportDefinition def) {
           'data row',
           elementId: el.id,
         ));
+      }
+    }
+  }
+
+  // Collect ALL published-total names from the scope tree once (spec 030).
+  // These names are legitimately not in the schema — they are injected at fill
+  // time — so a NotFound result for them must not produce a diagnostic.
+  final Set<String> publishedTotalNames = <String>{};
+  if (schema != null) {
+    void collectTotals(DetailScope s) {
+      for (final ScopeNode node in s.children) {
+        if (node is NestedScope) {
+          for (final ScopeTotal t in node.scope.totals) {
+            publishedTotalNames.add(t.name);
+          }
+          collectTotals(node.scope);
+        }
+      }
+    }
+
+    collectTotals(def.body.root);
+  }
+
+  // Schema-aware I8 operand check for a single sink band.
+  // [scopeFields] are the schema fields visible at the band's scope.
+  // Runs only when [schema != null].
+  void checkOperands(Band? band, List<FieldDef> scopeFields) {
+    if (band == null || schema == null) return;
+    for (final ReportElement el in band.elements) {
+      if (el is! TextElement || el.expression == null) continue;
+      AggregateCall? agg;
+      try {
+        agg = topLevelAggregate(Expression.parse(el.expression!).root);
+      } on ExpressionException {
+        continue;
+      }
+      if (agg == null) continue;
+      // Extract the single $F{name} field ref from the aggregate's argument.
+      final Expr arg = agg.argument;
+      if (arg is! FieldRefExpr) continue;
+      final String operand = arg.name;
+      final AggregatePath path =
+          resolveAggregatePath(scopeFields, operand);
+      switch (path) {
+        case SameScope():
+        case DescendPath():
+          break; // valid
+        case Ambiguous():
+          out.add(Diagnostic(
+            DiagnosticSeverity.error,
+            'element "${el.id}" aggregate operand "\$$operand" is ambiguous — '
+            'the same field name appears in multiple descendant collections; '
+            'use a published total to make the intent explicit',
+            elementId: el.id,
+          ));
+        case NotFound():
+          // Published-total names are injected at fill time — not in the schema.
+          if (publishedTotalNames.contains(operand)) break;
+          out.add(Diagnostic(
+            DiagnosticSeverity.error,
+            'element "${el.id}" aggregate operand "\$$operand" was not found '
+            'in the schema',
+            elementId: el.id,
+          ));
       }
     }
   }
@@ -98,7 +174,10 @@ List<Diagnostic> validate(ReportDefinition def) {
     if (isRecordBlind) recordBlind(band);
   }
 
-  void walkScope(DetailScope scope, {required bool isRoot}) {
+  // [chain] is the list of DetailScopes from root down to (but NOT including)
+  // the current scope, used to descend schema fields for nested-scope footers.
+  void walkScope(DetailScope scope,
+      {required bool isRoot, required List<DetailScope> chain}) {
     claim(scope.id);
 
     // I6 — collectionField rule.
@@ -121,6 +200,14 @@ List<Diagnostic> validate(ReportDefinition def) {
     } else {
       slotBand(scope.footer, BandType.groupFooter);
       aggregateBand(scope.footer, supported: true);
+      // Schema-aware operand check for the nested-scope footer.
+      // The footer band aggregates fold over the scope's OWN rows, so resolve
+      // against the fields descended to this scope (chain includes this scope).
+      if (schema != null) {
+        final List<FieldDef> scopeFields =
+            fieldsInScopeForChain(schema, <DetailScope>[...chain, scope]);
+        checkOperands(scope.footer, scopeFields);
+      }
     }
 
     // Spec 030 — a nested scope may publish named roll-up totals onto its parent
@@ -184,6 +271,10 @@ List<Diagnostic> validate(ReportDefinition def) {
       // nested-scope group footers are not expanded.
       aggregateBand(g.header, supported: false);
       aggregateBand(g.footer, supported: isRoot);
+      // Schema-aware operand check for root group footers (master scope fields).
+      if (isRoot && schema != null) {
+        checkOperands(g.footer, schema.fields);
+      }
     }
 
     // Children: I5 per-row band type, I7 multiple per-row bands, recurse scopes.
@@ -195,7 +286,7 @@ List<Diagnostic> validate(ReportDefinition def) {
           slotBand(b, BandType.detail);
           aggregateBand(b, supported: false);
         case NestedScope(scope: final DetailScope s):
-          walkScope(s, isRoot: false);
+          walkScope(s, isRoot: false, chain: <DetailScope>[...chain, scope]);
       }
     }
     if (bandNodes > 1) {
@@ -230,7 +321,11 @@ List<Diagnostic> validate(ReportDefinition def) {
   aggregateBand(def.body.title, supported: false);
   aggregateBand(def.body.summary, supported: true);
   aggregateBand(def.body.noData, supported: false);
-  walkScope(def.body.root, isRoot: true);
+  // Schema-aware operand check for the summary band (master scope fields).
+  if (schema != null) {
+    checkOperands(def.body.summary, schema.fields);
+  }
+  walkScope(def.body.root, isRoot: true, chain: const <DetailScope>[]);
 
   // I1 — duplicate ids (reported once per offending id, in first-seen order).
   for (final MapEntry<String, int> e in idCounts.entries) {

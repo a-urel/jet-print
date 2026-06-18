@@ -88,7 +88,17 @@ bool _isWhiteBoxSeamTest(File file) {
       // (`binding_resolution.dart`) composes the band-walk with the data seam
       // to account for spec-030 published totals; it is an unexported `src/`
       // module and its unit test is white-box (Principle III).
-      path.endsWith('/test/designer/controller/binding_resolution_test.dart');
+      path.endsWith('/test/designer/controller/binding_resolution_test.dart') ||
+      // Descendant operand names (033): the two new helpers on the same
+      // `binding_resolution.dart` module exercise `resolveAggregatePath`
+      // (`aggregate_path.dart`), also unexported `src/`; white-box (Principle III).
+      path.endsWith(
+          '/test/designer/controller/binding_resolution_descendant_test.dart') ||
+      // fx expression editor status (033): the descendant-scope status test
+      // exercises the editor dialog directly (same seam as
+      // expression_editor_dialog_test.dart); white-box (Principle III).
+      path.endsWith(
+          '/test/designer/expression_editor_status_descendant_test.dart');
 }
 
 void main() {
