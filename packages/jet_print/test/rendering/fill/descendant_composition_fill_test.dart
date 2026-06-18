@@ -119,6 +119,7 @@ ReportDefinition _makeDefinition() => ReportDefinition(
                 type: BandType.groupFooter,
                 height: 12,
                 elements: <ReportElement>[
+                  _el('whichCustomer', expr: r'$F{customerCode}'),
                   _el('scaledTotal', expr: r'SUM($F{lineTotal}) * 1.1'),
                   _el('sumPlusCount',
                       expr: r'SUM($F{lineTotal}) + COUNT($F{orderNo})'),
@@ -186,6 +187,22 @@ void main() {
           reason: 'no errors expected: ${res.diagnostics.entries}');
     });
 
+    // Resolves the rendered customerCode from a footer band so that each
+    // value assertion is tied to a verified customer identity, not just a
+    // positional index.
+    String customerCode(FilledBand b) =>
+        (b.elements.firstWhere((ReportElement e) => e.id == 'whichCustomer')
+                as TextElement)
+            .text;
+
+    FilledBand footerFor(String code) {
+      final FilledBand? b =
+          footers.where((FilledBand f) => customerCode(f) == code).firstOrNull;
+      expect(b, isNotNull,
+          reason: 'expected a footer for customer $code but none found');
+      return b!;
+    }
+
     group('SUM([lineTotal]) * 1.1 — sub-term lift with scalar multiplier', () {
       String scaledText(FilledBand b) =>
           (b.elements.firstWhere((ReportElement e) => e.id == 'scaledTotal')
@@ -193,18 +210,21 @@ void main() {
               .text;
 
       test('customer A: (10+20+5) * 1.1 = 38.5', () {
+        final FilledBand footer = footerFor('A');
         // SUM of all lineTotal leaves under customer A = 35; * 1.1 = 38.5
-        expect(scaledText(footers[0]), '38.5',
+        expect(scaledText(footer), '38.5',
             reason: 'A: SUM(10+20+5)=35, 35*1.1=38.5');
       });
 
       test('customer B: (100+200) * 1.1 = 330.0', () {
-        expect(scaledText(footers[1]), '330.0',
+        final FilledBand footer = footerFor('B');
+        expect(scaledText(footer), '330.0',
             reason: 'B: SUM(100+200)=300, 300*1.1=330.0');
       });
 
       test('customer C (no orders): 0 * 1.1 = 0.0', () {
-        expect(scaledText(footers[2]), '0.0',
+        final FilledBand footer = footerFor('C');
+        expect(scaledText(footer), '0.0',
             reason: 'C: no lines → SUM=0, 0*1.1=0.0');
       });
     });
@@ -222,17 +242,20 @@ void main() {
       // Each sub-term lifts independently via _expandInlineAggregates.
 
       test('customer A: SUM(lineTotal)=35 + COUNT(orderNo)=2 = 37.0', () {
-        expect(sumPlusCountText(footers[0]), '37.0',
+        final FilledBand footer = footerFor('A');
+        expect(sumPlusCountText(footer), '37.0',
             reason: 'A: 35 + 2 = 37');
       });
 
       test('customer B: SUM(lineTotal)=300 + COUNT(orderNo)=1 = 301.0', () {
-        expect(sumPlusCountText(footers[1]), '301.0',
+        final FilledBand footer = footerFor('B');
+        expect(sumPlusCountText(footer), '301.0',
             reason: 'B: 300 + 1 = 301');
       });
 
       test('customer C (no orders): SUM=0 + COUNT=0 = 0.0', () {
-        expect(sumPlusCountText(footers[2]), '0.0',
+        final FilledBand footer = footerFor('C');
+        expect(sumPlusCountText(footer), '0.0',
             reason: 'C: 0 + 0 = 0');
       });
     });
