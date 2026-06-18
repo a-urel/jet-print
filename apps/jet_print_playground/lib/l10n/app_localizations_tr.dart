@@ -24,8 +24,5 @@ class AppLocalizationsTr extends AppLocalizations {
   String get tabReceipt => 'Makbuz';
 
   @override
-  String get tabNestedLists => 'İç İçe Listeler';
-
-  @override
   String get comingSoon => 'Yakında';
 }

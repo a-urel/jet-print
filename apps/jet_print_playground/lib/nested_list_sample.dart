@@ -19,28 +19,24 @@ import 'package:jet_print/jet_print.dart';
 /// collection, each order carrying its own nested `lines` collection
 /// (master/detail/detail). Attach it via `dataSchema:`.
 ///
-/// `customerTotal` is a **precomputed** scalar field: the engine's *variable*
-/// calculator only accumulates over master rows, so a root variable can't
-/// live-sum a nested collection. The customer subtotal is therefore data,
-/// exactly as the invoice sample binds a precomputed `total`.
-///
-/// `orderTotal` is now **unused** data, kept only for shape parity: the
-/// per-order total is computed live by the `lines`-scope footer (spec 029) as
-/// `{SUM([lineTotal])}` (see [nestedListsDefinition]). `customerTotal`/the
-/// report grand total remain precomputed/inline-report-scoped until Phase B2.
+/// The only stored money figure is `lineTotal` (the real per-line data the
+/// roll-up sums). `orderTotal` and `customerTotal` are **not** data fields —
+/// they are computed live as published scope totals (spec 030): the `lines`
+/// scope publishes `orderTotal = SUM($F{lineTotal})` onto each order row, the
+/// `orders` scope rolls those up into `customerTotal = SUM($F{orderTotal})` on
+/// each customer row, and the summary sums those into the grand total. The
+/// whole Customer ▸ Order ▸ Line chain is live; nothing is precomputed.
 const JetDataSchema customersSchema = JetDataSchema(
   name: 'Customers',
   fields: <FieldDef>[
     FieldDef('customerName', type: JetFieldType.string),
     FieldDef('customerCode', type: JetFieldType.string),
-    FieldDef('customerTotal', type: JetFieldType.double),
     FieldDef(
       'orders',
       type: JetFieldType.collection,
       fields: <FieldDef>[
         FieldDef('orderNo', type: JetFieldType.string),
         FieldDef('date', type: JetFieldType.dateTime),
-        FieldDef('orderTotal', type: JetFieldType.double),
         FieldDef(
           'lines',
           type: JetFieldType.collection,
@@ -63,21 +59,24 @@ const JetDataSchema customersSchema = JetDataSchema(
 ///   and a `Page N of M` footer).
 /// * [ReportBody.root] is the master [DetailScope] iterating customers. The
 ///   **customer** is a first-class [GroupLevel] (keyed on `$F{customerCode}`)
-///   so it can own a header (name/code) *and* a footer (its precomputed
-///   `$F{customerTotal}`) — the supported way to wrap a nested list in
+///   so it can own a header (name/code) *and* a footer showing the live
+///   `$F{customerTotal}` — the supported way to wrap a nested list in
 ///   header+footer chrome, mirroring the invoice's per-invoice group.
 /// * Under it, `orders` is a [NestedScope]; each order emits one per-row
 ///   `detail` band (number · date · the line column titles) followed by the
-///   `lines` [NestedScope] — the list within the list. The `lines` scope owns a
-///   `footer` band carrying the live per-order total, authored **inline** as
-///   `{SUM([lineTotal])}` (stored `SUM($F{lineTotal})`): the filler sums each
-///   order's child line rows and emits the footer after them (spec 029).
-/// * [ReportBody.summary] surfaces the one aggregate the engine computes live:
-///   the grand total, authored **inline** in the summary element as
-///   `{SUM([customerTotal])}` (stored `SUM($F{customerTotal})`). At fill time
-///   the engine expands that inline aggregate into a hidden report-scoped
-///   variable — a [JetCalculation.sum] over each customer's `$F{customerTotal}`
-///   resetting once per report — so no `ReportVariable` need be declared.
+///   `lines` [NestedScope] — the list within the list.
+///
+/// The whole total chain is **live** via published scope totals (spec 030),
+/// computed bottom-up — no figure above `lineTotal` is data:
+/// * the `lines` scope publishes `orderTotal = SUM($F{lineTotal})` (its
+///   [DetailScope.totals]) onto each order row, and its `footer` band simply
+///   displays that published field (`$F{orderTotal}`) — one computation reused;
+/// * the `orders` scope rolls those up, publishing
+///   `customerTotal = SUM($F{orderTotal})` onto each customer row, which the
+///   customer group footer displays as `$F{customerTotal}`;
+/// * [ReportBody.summary] sums those into the grand total, authored **inline**
+///   in the summary element as `{SUM([customerTotal])}` (stored
+///   `SUM($F{customerTotal})`) over the now-live injected field.
 ReportDefinition nestedListsDefinition() => const ReportDefinition(
       name: 'Nested Lists',
       page: PageFormat.a4Portrait,
@@ -198,6 +197,12 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
             NestedScope(DetailScope(
               id: 'orders',
               collectionField: 'orders',
+              // Rolls the published per-order totals up one more level (spec
+              // 030): `customerTotal = SUM($F{orderTotal})` is injected onto
+              // each customer row, where the customer group footer displays it.
+              totals: <ScopeTotal>[
+                ScopeTotal('customerTotal', r'SUM($F{orderTotal})'),
+              ],
               children: <ScopeNode>[
                 BandNode(Band(
                   id: 'orderRow',
@@ -217,9 +222,10 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
                       text: 'date',
                       expression: r'$F{date}',
                     ),
-                    // The per-order total moved to the `lines`-scope footer
-                    // (a live SUM([lineTotal]) aggregate, spec 029); the order
-                    // row no longer shows the precomputed `$F{orderTotal}`.
+                    // The per-order total lives on the `lines` scope as a
+                    // published total `orderTotal = SUM($F{lineTotal})` (spec 030,
+                    // B2), displayed in the lines footer and rolled up into the
+                    // customer total; the order row itself shows no total.
                     TextElement(
                       id: 'colDescription',
                       bounds: JetRect(x: 24, y: 22, width: 236, height: 14),
@@ -297,10 +303,15 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
                       ],
                     )),
                   ],
-                  // The per-order total is now a LIVE `lines`-scope footer
-                  // aggregate (spec 029): the filler sums each order's child
-                  // line rows and emits this band after them. `SUM($F{lineTotal})`
-                  // is the stored form of the inline `{SUM([lineTotal])}`.
+                  // The `lines` scope PUBLISHES the per-order total as a named
+                  // roll-up (spec 030): `orderTotal = SUM($F{lineTotal})` is
+                  // injected onto each order row, so the footer below — and the
+                  // enclosing `orders` scope — reference one computed value.
+                  totals: <ScopeTotal>[
+                    ScopeTotal('orderTotal', r'SUM($F{lineTotal})'),
+                  ],
+                  // The footer just DISPLAYS the published field ($F{orderTotal})
+                  // rather than recomputing the aggregate inline.
                   footer: Band(
                     id: 'linesFooter',
                     type: BandType.groupFooter,
@@ -321,7 +332,7 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
                         style: JetTextStyle(
                             align: JetTextAlign.right,
                             weight: JetFontWeight.bold),
-                        expression: r'SUM($F{lineTotal})',
+                        expression: r'$F{orderTotal}',
                         format: '#,##0.00',
                       ),
                     ],

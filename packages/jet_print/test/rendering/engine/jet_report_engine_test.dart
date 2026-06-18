@@ -17,6 +17,7 @@ import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/domain/report_element.dart';
 import 'package:jet_print/src/domain/report_parameter.dart';
 import 'package:jet_print/src/domain/report_variable.dart';
+import 'package:jet_print/src/domain/scope_total.dart';
 import 'package:jet_print/src/domain/value_type.dart';
 import 'package:jet_print/src/rendering/engine/jet_report_engine.dart';
 import 'package:jet_print/src/rendering/engine/render_options.dart';
@@ -852,6 +853,612 @@ void main() {
       expect(runsFor(report, 'subtotal'), <String>['30.0', '5.0'],
           reason:
               'the inline SUM resets at the group boundary like a group variable');
+    });
+
+    test(
+        'a parent total sums a child scope\'s published total, resetting per '
+        'parent; the grand total sums it via the unchanged Phase A path', () {
+      // Customer A: order#1 lines [10,20]=30, order#2 lines [5]=5 → custTotal 35
+      // Customer B: order#1 lines [12]=12 → custTotal 12 ; grand total 47.
+      final def = ReportDefinition(
+        name: 'recursive',
+        page: tallPage,
+        body: ReportBody(
+          summary: Band(
+            id: 'summary',
+            type: BandType.summary,
+            height: 16,
+            elements: <ReportElement>[
+              TextElement(
+                id: 'gt',
+                bounds: const JetRect(x: 0, y: 0, width: 100, height: 14),
+                text: 'gt',
+                expression: r'SUM($F{custTotal})',
+              ),
+            ],
+          ),
+          root: DetailScope(id: 'root', children: <ScopeNode>[
+            NestedScope(DetailScope(
+              id: 'orders',
+              collectionField: 'orders',
+              totals: const <ScopeTotal>[
+                ScopeTotal('custTotal', r'SUM($F{ordTotal})'),
+              ],
+              footer: Band(
+                id: 'cf',
+                type: BandType.groupFooter,
+                height: 14,
+                elements: <ReportElement>[
+                  TextElement(
+                    id: 'ct',
+                    bounds: const JetRect(x: 0, y: 0, width: 100, height: 12),
+                    text: 'ct',
+                    expression: r'$F{custTotal}',
+                  ),
+                ],
+              ),
+              children: <ScopeNode>[
+                NestedScope(DetailScope(
+                  id: 'lines',
+                  collectionField: 'lines',
+                  totals: const <ScopeTotal>[
+                    ScopeTotal('ordTotal', r'SUM($F{lineTotal})'),
+                  ],
+                  footer: Band(
+                    id: 'lf',
+                    type: BandType.groupFooter,
+                    height: 12,
+                    elements: <ReportElement>[
+                      TextElement(
+                        id: 'ot',
+                        bounds:
+                            const JetRect(x: 0, y: 0, width: 100, height: 10),
+                        text: 'ot',
+                        expression: r'$F{ordTotal}',
+                      ),
+                    ],
+                  ),
+                  children: <ScopeNode>[
+                    BandNode(Band(
+                      id: 'l',
+                      type: BandType.detail,
+                      height: 10,
+                      elements: <ReportElement>[
+                        TextElement(
+                          id: 'lt',
+                          bounds:
+                              const JetRect(x: 0, y: 0, width: 100, height: 10),
+                          text: 'lt',
+                          expression: r'$F{lineTotal}',
+                        ),
+                      ],
+                    )),
+                  ],
+                )),
+              ],
+            )),
+          ]),
+        ),
+      );
+      final source = JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{
+          'orders': <Map<String, Object?>>[
+            <String, Object?>{
+              'lines': <Map<String, Object?>>[
+                <String, Object?>{'lineTotal': 10},
+                <String, Object?>{'lineTotal': 20},
+              ],
+            },
+            <String, Object?>{
+              'lines': <Map<String, Object?>>[
+                <String, Object?>{'lineTotal': 5},
+              ],
+            },
+          ],
+        },
+        <String, Object?>{
+          'orders': <Map<String, Object?>>[
+            <String, Object?>{
+              'lines': <Map<String, Object?>>[
+                <String, Object?>{'lineTotal': 12},
+              ],
+            },
+          ],
+        },
+      ]);
+      final report = const JetReportEngine().renderDefinition(def, source);
+      expect(runsFor(report, 'ot'), <String>['30.0', '5.0', '12.0'],
+          reason: 'per-order footer reads the published ordTotal field');
+      expect(runsFor(report, 'ct'), <String>['35.0', '12.0'],
+          reason: 'per-customer footer reads the recursive custTotal field, '
+              'reset per parent');
+      expect(runsFor(report, 'gt'), <String>['47.0'],
+          reason: 'grand total sums custTotal via the unchanged Phase A path');
+    });
+
+    test(
+        'published scope-total names resolve under a schema-aware render '
+        '(knownFields gate accepts injected fields)', () {
+      // Same recursive shape, but rendered schema-aware: knownFields declares
+      // only the real data fields (lineTotal + the collections), NOT the
+      // computed custTotal/ordTotal. The injected published totals must still
+      // resolve — a field-namespace injection that consumers reference as
+      // $F{...} cannot be rejected by the unresolved-binding gate (spec 030).
+      final def = ReportDefinition(
+        name: 'recursive-schema-aware',
+        page: tallPage,
+        body: ReportBody(
+          summary: Band(
+            id: 'summary',
+            type: BandType.summary,
+            height: 16,
+            elements: <ReportElement>[
+              TextElement(
+                id: 'gt',
+                bounds: const JetRect(x: 0, y: 0, width: 100, height: 14),
+                text: 'gt',
+                expression: r'SUM($F{custTotal})',
+              ),
+            ],
+          ),
+          root: DetailScope(id: 'root', children: <ScopeNode>[
+            NestedScope(DetailScope(
+              id: 'orders',
+              collectionField: 'orders',
+              totals: const <ScopeTotal>[
+                ScopeTotal('custTotal', r'SUM($F{ordTotal})'),
+              ],
+              footer: Band(
+                id: 'cf',
+                type: BandType.groupFooter,
+                height: 14,
+                elements: <ReportElement>[
+                  TextElement(
+                    id: 'ct',
+                    bounds: const JetRect(x: 0, y: 0, width: 100, height: 12),
+                    text: 'ct',
+                    expression: r'$F{custTotal}',
+                  ),
+                ],
+              ),
+              children: <ScopeNode>[
+                NestedScope(DetailScope(
+                  id: 'lines',
+                  collectionField: 'lines',
+                  totals: const <ScopeTotal>[
+                    ScopeTotal('ordTotal', r'SUM($F{lineTotal})'),
+                  ],
+                  footer: Band(
+                    id: 'lf',
+                    type: BandType.groupFooter,
+                    height: 12,
+                    elements: <ReportElement>[
+                      TextElement(
+                        id: 'ot',
+                        bounds:
+                            const JetRect(x: 0, y: 0, width: 100, height: 10),
+                        text: 'ot',
+                        expression: r'$F{ordTotal}',
+                      ),
+                    ],
+                  ),
+                  children: <ScopeNode>[
+                    BandNode(Band(
+                      id: 'l',
+                      type: BandType.detail,
+                      height: 10,
+                      elements: <ReportElement>[
+                        TextElement(
+                          id: 'lt',
+                          bounds:
+                              const JetRect(x: 0, y: 0, width: 100, height: 10),
+                          text: 'lt',
+                          expression: r'$F{lineTotal}',
+                        ),
+                      ],
+                    )),
+                  ],
+                )),
+              ],
+            )),
+          ]),
+        ),
+      );
+      final source = JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{
+          'orders': <Map<String, Object?>>[
+            <String, Object?>{
+              'lines': <Map<String, Object?>>[
+                <String, Object?>{'lineTotal': 10},
+                <String, Object?>{'lineTotal': 20},
+              ],
+            },
+            <String, Object?>{
+              'lines': <Map<String, Object?>>[
+                <String, Object?>{'lineTotal': 5},
+              ],
+            },
+          ],
+        },
+        <String, Object?>{
+          'orders': <Map<String, Object?>>[
+            <String, Object?>{
+              'lines': <Map<String, Object?>>[
+                <String, Object?>{'lineTotal': 12},
+              ],
+            },
+          ],
+        },
+      ]);
+      final report = const JetReportEngine().renderDefinition(
+        def,
+        source,
+        // Only the real data fields are known — NOT the published totals.
+        options: const RenderOptions(
+          knownFields: <String>{'orders', 'lines', 'lineTotal'},
+        ),
+      );
+      expect(runsFor(report, 'ot'), <String>['30.0', '5.0', '12.0'],
+          reason: 'the injected ordTotal resolves despite not being in '
+              'knownFields');
+      expect(runsFor(report, 'ct'), <String>['35.0', '12.0'],
+          reason: 'the injected custTotal resolves despite not being in '
+              'knownFields');
+      expect(runsFor(report, 'gt'), <String>['47.0']);
+      // No unresolved-binding warning for the computed names.
+      expect(
+        report.diagnostics.entries.where((Diagnostic d) =>
+            d.message.contains('not in the data source') &&
+            (d.message.contains('custTotal') ||
+                d.message.contains('ordTotal'))),
+        isEmpty,
+        reason: 'published totals are valid injected fields, not missing ones',
+      );
+    });
+
+    test(
+        'two sibling nested scopes publishing the same total name warn '
+        '(cross-sibling collision)', () {
+      // Validation enforces name-uniqueness only WITHIN one scope, so two
+      // sibling NestedScopes under the same parent can each publish 'total'
+      // over a different collection. The second silently overwrites the first
+      // in the parent row's extras — that collision must surface a warning.
+      final def = ReportDefinition(
+        name: 'siblingCollision',
+        page: tallPage,
+        body: ReportBody(
+          root: DetailScope(id: 'root', children: <ScopeNode>[
+            NestedScope(DetailScope(
+              id: 'a',
+              collectionField: 'a',
+              totals: const <ScopeTotal>[
+                ScopeTotal('total', r'SUM($F{amount})'),
+              ],
+              children: <ScopeNode>[
+                BandNode(Band(
+                  id: 'ab',
+                  type: BandType.detail,
+                  height: 10,
+                  elements: <ReportElement>[
+                    TextElement(
+                      id: 'aa',
+                      bounds: const JetRect(x: 0, y: 0, width: 100, height: 10),
+                      text: 'aa',
+                      expression: r'$F{amount}',
+                    ),
+                  ],
+                )),
+              ],
+            )),
+            NestedScope(DetailScope(
+              id: 'b',
+              collectionField: 'b',
+              totals: const <ScopeTotal>[
+                ScopeTotal('total', r'SUM($F{amount})'),
+              ],
+              children: <ScopeNode>[
+                BandNode(Band(
+                  id: 'bb',
+                  type: BandType.detail,
+                  height: 10,
+                  elements: <ReportElement>[
+                    TextElement(
+                      id: 'ba',
+                      bounds: const JetRect(x: 0, y: 0, width: 100, height: 10),
+                      text: 'ba',
+                      expression: r'$F{amount}',
+                    ),
+                  ],
+                )),
+              ],
+            )),
+          ]),
+        ),
+      );
+      final source = JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{
+          'a': <Map<String, Object?>>[
+            <String, Object?>{'amount': 1},
+          ],
+          'b': <Map<String, Object?>>[
+            <String, Object?>{'amount': 2},
+          ],
+        },
+      ]);
+      final report = const JetReportEngine().renderDefinition(def, source);
+      expect(
+        report.diagnostics.entries.where((Diagnostic d) =>
+            d.severity == DiagnosticSeverity.warning &&
+            d.message.contains('"total"') &&
+            d.message.contains('"b"')),
+        isNotEmpty,
+        reason: 'the second sibling publishing the same total name collides '
+            'with the first and must surface a warning',
+      );
+    });
+
+    test('an expression-argument published total folds the per-row product',
+        () {
+      final def = ReportDefinition(
+        name: 'exprArgTotal',
+        page: tallPage,
+        body: ReportBody(
+          root: DetailScope(id: 'root', children: <ScopeNode>[
+            NestedScope(DetailScope(
+              id: 'lines',
+              collectionField: 'lines',
+              totals: const <ScopeTotal>[
+                ScopeTotal('lineExt', r'SUM($F{qty} * $F{unitPrice})'),
+              ],
+              footer: Band(
+                id: 'lf',
+                type: BandType.groupFooter,
+                height: 12,
+                elements: <ReportElement>[
+                  TextElement(
+                    id: 'ext',
+                    bounds: const JetRect(x: 0, y: 0, width: 100, height: 10),
+                    text: 'ext',
+                    expression: r'$F{lineExt}',
+                  ),
+                ],
+              ),
+              children: <ScopeNode>[
+                BandNode(Band(
+                  id: 'l',
+                  type: BandType.detail,
+                  height: 10,
+                  elements: <ReportElement>[
+                    TextElement(
+                      id: 'lt',
+                      bounds: const JetRect(x: 0, y: 0, width: 100, height: 10),
+                      text: 'lt',
+                      expression: r'$F{qty}',
+                    ),
+                  ],
+                )),
+              ],
+            )),
+          ]),
+        ),
+      );
+      final source = JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{
+          'lines': <Map<String, Object?>>[
+            <String, Object?>{'qty': 2, 'unitPrice': 3.0},
+            <String, Object?>{'qty': 4, 'unitPrice': 0.5},
+          ],
+        },
+      ]);
+      final report = const JetReportEngine().renderDefinition(def, source);
+      expect(runsFor(report, 'ext'), <String>['8.0'],
+          reason: '2*3 + 4*0.5 = 8 folded over the augmented child rows');
+    });
+
+    test('an empty nested collection publishes no total and emits no footer',
+        () {
+      final def = ReportDefinition(
+        name: 'emptyPublished',
+        page: tallPage,
+        body: ReportBody(
+          root: DetailScope(id: 'root', children: <ScopeNode>[
+            NestedScope(DetailScope(
+              id: 'lines',
+              collectionField: 'lines',
+              totals: const <ScopeTotal>[
+                ScopeTotal('ordTotal', r'SUM($F{lineTotal})'),
+              ],
+              footer: Band(
+                id: 'lf',
+                type: BandType.groupFooter,
+                height: 12,
+                elements: <ReportElement>[
+                  TextElement(
+                    id: 'ot',
+                    bounds: const JetRect(x: 0, y: 0, width: 100, height: 10),
+                    text: 'ot',
+                    expression: r'$F{ordTotal}',
+                  ),
+                ],
+              ),
+              children: <ScopeNode>[
+                BandNode(Band(
+                  id: 'l',
+                  type: BandType.detail,
+                  height: 10,
+                  elements: <ReportElement>[
+                    TextElement(
+                      id: 'lt',
+                      bounds: const JetRect(x: 0, y: 0, width: 100, height: 10),
+                      text: 'lt',
+                      expression: r'$F{lineTotal}',
+                    ),
+                  ],
+                )),
+              ],
+            )),
+          ]),
+        ),
+      );
+      final source = JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'lines': <Map<String, Object?>>[]},
+      ]);
+      final report = const JetReportEngine().renderDefinition(def, source);
+      expect(runsFor(report, 'ot'), isEmpty,
+          reason: 'empty collection → no footer, no published total');
+    });
+
+    test(
+        'a published total over an unresolvable field warns and folds to 0 '
+        '(FR-009)', () {
+      // The `lines` collection has only `lineTotal`, but the published total
+      // aggregates over `doesNotExist` — a field that is neither in the child
+      // schema nor a published total. The fold context surfaces the standard
+      // unresolved-field warning; every contribution is JetNull, so the SUM
+      // accumulator skips them all and the total folds to 0.0 (no crash, no
+      // #ERROR for the total itself).
+      final def = ReportDefinition(
+        name: 'unresolvablePublishedTotal',
+        page: tallPage,
+        body: ReportBody(
+          root: DetailScope(id: 'root', children: <ScopeNode>[
+            NestedScope(DetailScope(
+              id: 'lines',
+              collectionField: 'lines',
+              totals: const <ScopeTotal>[
+                ScopeTotal('ordTotal', r'SUM($F{doesNotExist})'),
+              ],
+              footer: Band(
+                id: 'lf',
+                type: BandType.groupFooter,
+                height: 12,
+                elements: <ReportElement>[
+                  TextElement(
+                    id: 'ot',
+                    bounds: const JetRect(x: 0, y: 0, width: 100, height: 10),
+                    text: 'ot',
+                    expression: r'$F{ordTotal}',
+                  ),
+                ],
+              ),
+              children: <ScopeNode>[
+                BandNode(Band(
+                  id: 'l',
+                  type: BandType.detail,
+                  height: 10,
+                  elements: <ReportElement>[
+                    TextElement(
+                      id: 'lt',
+                      bounds: const JetRect(x: 0, y: 0, width: 100, height: 10),
+                      text: 'lt',
+                      expression: r'$F{lineTotal}',
+                    ),
+                  ],
+                )),
+              ],
+            )),
+          ]),
+        ),
+      );
+      final source = JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{
+          'lines': <Map<String, Object?>>[
+            <String, Object?>{'lineTotal': 10},
+            <String, Object?>{'lineTotal': 20},
+          ],
+        },
+      ]);
+      final report = const JetReportEngine().renderDefinition(def, source);
+      // The missing-field warning is surfaced (the FillEvalContext text).
+      expect(
+        report.diagnostics.entries.where((Diagnostic d) =>
+            d.severity == DiagnosticSeverity.warning &&
+            d.message.contains('"doesNotExist"') &&
+            d.message.contains('not in the data schema')),
+        isNotEmpty,
+        reason: 'an aggregate over a missing field warns about that field',
+      );
+      // The report still renders: the total folds to 0.0 (all contributions
+      // were JetNull), not #ERROR, and the line detail still renders normally.
+      expect(runsFor(report, 'ot'), <String>['0.0'],
+          reason: 'SUM over all-JetNull contributions folds to 0.0, no crash');
+      expect(runsFor(report, 'lt'), <String>['10.0', '20.0'],
+          reason: 'the rest of the report renders unaffected');
+    });
+
+    test(
+        'a published total whose name shadows a real parent-row field warns '
+        'and the computed total wins (FR-010)', () {
+      // The master row carries a real `amount` field (value 999). A nested
+      // `lines` scope publishes a total ALSO named `amount` (SUM of lineTotal),
+      // injected onto that same master (parent) row — so `row.hasField('amount')`
+      // is true at injection. The shadow must warn, and the master-scope band's
+      // $F{amount} must render the COMPUTED total (30.0), not the original 999.
+      final def = ReportDefinition(
+        name: 'shadowPublishedTotal',
+        page: tallPage,
+        body: ReportBody(
+          root: DetailScope(id: 'root', children: <ScopeNode>[
+            NestedScope(DetailScope(
+              id: 'lines',
+              collectionField: 'lines',
+              totals: const <ScopeTotal>[
+                ScopeTotal('amount', r'SUM($F{lineTotal})'),
+              ],
+              children: <ScopeNode>[
+                BandNode(Band(
+                  id: 'l',
+                  type: BandType.detail,
+                  height: 10,
+                  elements: <ReportElement>[
+                    TextElement(
+                      id: 'lt',
+                      bounds: const JetRect(x: 0, y: 0, width: 100, height: 10),
+                      text: 'lt',
+                      expression: r'$F{lineTotal}',
+                    ),
+                  ],
+                )),
+              ],
+            )),
+            // A master-scope band (no collectionField context) reading the
+            // shadowed parent-row field.
+            BandNode(Band(
+              id: 'mb',
+              type: BandType.detail,
+              height: 10,
+              elements: <ReportElement>[
+                TextElement(
+                  id: 'amt',
+                  bounds: const JetRect(x: 0, y: 0, width: 100, height: 10),
+                  text: 'amt',
+                  expression: r'$F{amount}',
+                ),
+              ],
+            )),
+          ]),
+        ),
+      );
+      final source = JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{
+          'amount': 999,
+          'lines': <Map<String, Object?>>[
+            <String, Object?>{'lineTotal': 10},
+            <String, Object?>{'lineTotal': 20},
+          ],
+        },
+      ]);
+      final report = const JetReportEngine().renderDefinition(def, source);
+      expect(
+        report.diagnostics.entries.where((Diagnostic d) =>
+            d.severity == DiagnosticSeverity.warning &&
+            d.message.contains('"amount"') &&
+            d.message.contains('collides')),
+        isNotEmpty,
+        reason: 'a published total shadowing a real parent-row field must warn',
+      );
+      expect(runsFor(report, 'amt'), <String>['30.0'],
+          reason: 'the computed total (10+20=30) wins over the original 999');
     });
   });
 

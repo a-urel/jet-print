@@ -20,6 +20,7 @@ import 'package:jet_print/src/domain/page_format.dart';
 import 'package:jet_print/src/domain/report_band.dart' show BandType;
 import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/domain/report_element.dart';
+import 'package:jet_print/src/domain/scope_total.dart';
 
 const JetDataSchema _schema = JetDataSchema(
   name: 'Invoice',
@@ -110,6 +111,66 @@ void main() {
         ),
       );
       expect(_names(_fieldsInScopeOf(def, 'subLine')), <String>['sku']);
+    });
+  });
+
+  group('publishedTotalsForScope', () {
+    test('returns names published by direct child scopes', () {
+      const DetailScope scope = DetailScope(
+        id: 'orders',
+        collectionField: 'orders',
+        children: <ScopeNode>[
+          NestedScope(DetailScope(
+            id: 'lines',
+            collectionField: 'lines',
+            totals: <ScopeTotal>[
+              ScopeTotal('orderTotal', r'SUM($F{lineTotal})')
+            ],
+          )),
+        ],
+      );
+      expect(publishedTotalsForScope(scope), <String>{'orderTotal'});
+    });
+
+    test('is not recursive and empty without nested children', () {
+      const DetailScope leaf =
+          DetailScope(id: 'lines', collectionField: 'lines');
+      expect(publishedTotalsForScope(leaf), isEmpty);
+      // A grandchild's totals do NOT appear (only DIRECT children).
+      const DetailScope grandparent = DetailScope(
+        id: 'customers',
+        collectionField: 'customers',
+        children: <ScopeNode>[
+          NestedScope(DetailScope(
+            id: 'orders',
+            collectionField: 'orders',
+            children: <ScopeNode>[
+              NestedScope(DetailScope(
+                id: 'lines',
+                collectionField: 'lines',
+                totals: <ScopeTotal>[
+                  ScopeTotal('orderTotal', r'SUM($F{lineTotal})'),
+                ],
+              )),
+            ],
+          )),
+        ],
+      );
+      expect(publishedTotalsForScope(grandparent), isEmpty);
+    });
+  });
+
+  group('expressionResolvesNames', () {
+    test(r'checks $F{} refs against a name set', () {
+      expect(
+          expressionResolvesNames(
+              <String>{'customerTotal'}, r'SUM($F{customerTotal})'),
+          isTrue);
+      expect(
+          expressionResolvesNames(
+              <String>{'customerTotal'}, r'SUM($F{orderTotal})'),
+          isFalse);
+      expect(expressionResolvesNames(<String>{}, r'$P{p}'), isTrue);
     });
   });
 

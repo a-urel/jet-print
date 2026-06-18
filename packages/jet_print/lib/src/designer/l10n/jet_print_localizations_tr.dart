@@ -211,6 +211,47 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get valueFieldPickerTooltip => 'Veri alanı ekle';
 
   @override
+  String get valueFieldFxTooltip => 'İfade oluştur';
+
+  @override
+  String get exprEditorTitle => 'İfade';
+
+  @override
+  String get exprEditorFieldsLabel => 'Alanlar';
+
+  @override
+  String get exprEditorFunctionsLabel => 'Fonksiyonlar';
+
+  @override
+  String get exprGroupString => 'Metin';
+
+  @override
+  String get exprGroupMath => 'Matematik';
+
+  @override
+  String get exprGroupLogic => 'Mantık';
+
+  @override
+  String get exprGroupAggregate => 'Toplam';
+
+  @override
+  String get exprStatusValid => 'Geçerli';
+
+  @override
+  String get exprStatusSyntaxError => 'Eksik veya geçersiz ifade';
+
+  @override
+  String exprStatusUnresolved(String name) {
+    return 'Alan veri kaynağında yok: $name';
+  }
+
+  @override
+  String get exprEditorCancel => 'İptal';
+
+  @override
+  String get exprEditorInsert => 'Ekle';
+
+  @override
   String get propertiesFormat => 'Biçim';
 
   @override

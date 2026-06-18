@@ -10,6 +10,7 @@ import 'package:jet_print/src/domain/report_band.dart' show BandType;
 import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/domain/report_element.dart';
 import 'package:jet_print/src/domain/report_validation.dart';
+import 'package:jet_print/src/domain/scope_total.dart';
 
 TextElement _txt(String id, {String? expression}) => TextElement(
       id: id,
@@ -409,6 +410,77 @@ void main() {
             .map((d) => d.message),
         anyElement(contains('groupFooter')),
       );
+    });
+
+    test('totals on the ROOT scope is an error', () {
+      final def = ReportDefinition(
+          name: 'r',
+          page: PageFormat.a4Portrait,
+          body: ReportBody(
+              root: DetailScope(
+                  id: 'root',
+                  totals: const <ScopeTotal>[ScopeTotal('x', r'SUM($F{a})')])));
+      expect(
+          validate(def)
+              .where((d) => d.severity == DiagnosticSeverity.error)
+              .map((d) => d.message),
+          anyElement(contains('root')));
+    });
+
+    test('a published total on a nested scope is valid', () {
+      final def = ReportDefinition(
+          name: 'r',
+          page: PageFormat.a4Portrait,
+          body: ReportBody(
+              root: DetailScope(id: 'root', children: <ScopeNode>[
+            NestedScope(DetailScope(
+                id: 'lines',
+                collectionField: 'lines',
+                totals: const <ScopeTotal>[
+                  ScopeTotal('orderTotal', r'SUM($F{lineTotal})')
+                ])),
+          ])));
+      expect(validate(def).where((d) => d.severity == DiagnosticSeverity.error),
+          isEmpty);
+    });
+
+    test('a non-aggregate published total is an error', () {
+      final def = ReportDefinition(
+          name: 'r',
+          page: PageFormat.a4Portrait,
+          body: ReportBody(
+              root: DetailScope(id: 'root', children: <ScopeNode>[
+            NestedScope(DetailScope(
+                id: 'lines',
+                collectionField: 'lines',
+                totals: const <ScopeTotal>[ScopeTotal('t', r'$F{x} + 1')])),
+          ])));
+      expect(
+          validate(def)
+              .where((d) => d.severity == DiagnosticSeverity.error)
+              .map((d) => d.message),
+          anyElement(contains('aggregate')));
+    });
+
+    test('duplicate published-total names in one scope is an error', () {
+      final def = ReportDefinition(
+          name: 'r',
+          page: PageFormat.a4Portrait,
+          body: ReportBody(
+              root: DetailScope(id: 'root', children: <ScopeNode>[
+            NestedScope(DetailScope(
+                id: 'lines',
+                collectionField: 'lines',
+                totals: const <ScopeTotal>[
+                  ScopeTotal('t', r'SUM($F{a})'),
+                  ScopeTotal('t', r'SUM($F{b})')
+                ])),
+          ])));
+      expect(
+          validate(def)
+              .where((d) => d.severity == DiagnosticSeverity.error)
+              .map((d) => d.message),
+          anyElement(contains('duplicate')));
     });
   });
 }

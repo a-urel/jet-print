@@ -81,11 +81,6 @@ void main() {
           '{[firstName] [lastName]}');
     });
 
-    test('an out-of-grammar expression is shown read-only', () {
-      final ValueDisplay d = reverseCompile(r'$F{a} + $F{b}');
-      expect(d.editable, isFalse);
-    });
-
     test('an unparseable expression is shown read-only', () {
       expect(reverseCompile(r'$F{a} +').editable, isFalse);
     });
@@ -153,6 +148,157 @@ void main() {
       expect(parseValueField('{SUM([a}'), const LiteralValue('{SUM([a}'));
       expect(parseValueField('{SUM([a][b])}'),
           const LiteralValue('{SUM([a][b])}'));
+    });
+  });
+
+  group('general N-ary function calls (032)', () {
+    test('forward: IF with field/operator/field args', () {
+      expect(
+        parseValueField('{IF([qty] > 0, [a], [b])}'),
+        const BindingValue(r'IF($F{qty} > 0, $F{a}, $F{b})'),
+      );
+    });
+
+    test('forward: ROUND with a precision literal', () {
+      expect(parseValueField('{ROUND([total], 2)}'),
+          const BindingValue(r'ROUND($F{total}, 2)'));
+    });
+
+    test('forward: COALESCE of two fields', () {
+      expect(parseValueField('{COALESCE([nick], [name])}'),
+          const BindingValue(r'COALESCE($F{nick}, $F{name})'));
+    });
+
+    test('forward: SUBSTRING with two numeric args', () {
+      expect(parseValueField('{SUBSTRING([code], 0, 3)}'),
+          const BindingValue(r'SUBSTRING($F{code}, 0, 3)'));
+    });
+
+    test('forward: nested call name is uppercased to the registry name', () {
+      expect(parseValueField('{UPPER(coalesce([a], [b]))}'),
+          const BindingValue(r'UPPER(COALESCE($F{a}, $F{b}))'));
+    });
+
+    test('reverse: a general CallExpr round-trips to a friendly token', () {
+      final ValueDisplay d = reverseCompile(r'IF($F{qty} > 0, $F{a}, $F{b})');
+      expect(d.editable, isTrue);
+      expect(d.text, '{if([qty] > 0, [a], [b])}');
+      expect(parseValueField(d.text),
+          const BindingValue(r'IF($F{qty} > 0, $F{a}, $F{b})'));
+    });
+
+    test('reverse: nested call round-trips to evaluating UPPERCASE storage',
+        () {
+      final ValueDisplay d = reverseCompile(r'UPPER(COALESCE($F{a}, $F{b}))');
+      expect(d.editable, isTrue);
+      expect(d.text, '{upper(coalesce([a], [b]))}');
+      expect(parseValueField(d.text),
+          const BindingValue(r'UPPER(COALESCE($F{a}, $F{b}))'));
+    });
+
+    test('unknown bare identifier arg is not a valid call → literal fallback',
+        () {
+      // `USD` compiles as a bare identifier that the engine parser rejects, so
+      // the compiled expression is invalid → the whole value stays literal.
+      expect(
+          parseValueField('{Price(USD)}'), const LiteralValue('{Price(USD)}'));
+    });
+
+    test('forward: string-literal arg with parens is preserved (scanner)', () {
+      expect(parseValueField('{FORMAT([date], "MM(dd)")}'),
+          const BindingValue(r'FORMAT($F{date}, "MM(dd)")'));
+    });
+
+    test(
+        'forward: UNBALANCED paren inside a string literal does not corrupt '
+        'the depth count (scanner)', () {
+      // An open paren with no match inside the string must be skipped, not
+      // counted — otherwise the body is truncated and the value degrades to
+      // literal text. The string literal itself is valid expression syntax.
+      expect(parseValueField('{FORMAT([date], "MM(dd")}'),
+          const BindingValue(r'FORMAT($F{date}, "MM(dd")'));
+    });
+
+    test(
+        'forward: identifier-with-paren inside a string literal is NOT '
+        'uppercased', () {
+      expect(parseValueField('{FORMAT([x], "total(net)")}'),
+          const BindingValue(r'FORMAT($F{x}, "total(net)")'));
+    });
+  });
+
+  group('top-level expressions (032 amendment #2)', () {
+    test('forward: aggregate plus a literal is numeric, not CONCAT', () {
+      // The bug: this used to compile to CONCAT(SUM(...), "+500") (string concat).
+      expect(parseValueField('{SUM([customerTotal]) + 500}'),
+          const BindingValue(r'SUM($F{customerTotal}) + 500'));
+    });
+
+    test('forward: two fields joined by an operator are numeric', () {
+      expect(parseValueField('{[price] * [qty]}'),
+          const BindingValue(r'$F{price} * $F{qty}'));
+    });
+
+    test('forward: a parenthesized top-level expression compiles', () {
+      expect(parseValueField('{([a] + [b]) * 2}'),
+          const BindingValue(r'($F{a} + $F{b}) * 2'));
+    });
+
+    test('forward: a unary negation compiles', () {
+      expect(
+          parseValueField('{-[balance]}'), const BindingValue(r'-$F{balance}'));
+    });
+
+    test('reverse: a top-level binary is an editable friendly token', () {
+      final ValueDisplay d = reverseCompile(r'SUM($F{customerTotal}) + 500');
+      expect(d.editable, isTrue);
+      expect(d.text, '{sum([customerTotal]) + 500}');
+      expect(parseValueField(d.text),
+          const BindingValue(r'SUM($F{customerTotal}) + 500'));
+    });
+
+    test('reverse: an operator-joined field pair is editable', () {
+      final ValueDisplay d = reverseCompile(r'$F{price} * $F{qty}');
+      expect(d.editable, isTrue);
+      expect(d.text, '{[price] * [qty]}');
+    });
+
+    test('forward: function-of-field sugar works inside a top-level expression',
+        () {
+      // The value field shows a stored CONCAT(SUM(...), "+n") as the sugar form
+      // `{sum[customerTotal]+50000}`; re-committing it must heal to arithmetic.
+      expect(parseValueField('{sum[customerTotal] + 50000}'),
+          const BindingValue(r'SUM($F{customerTotal}) + 50000'));
+      expect(parseValueField('{sum[customerTotal]+50000}'),
+          const BindingValue(r'SUM($F{customerTotal})+50000'));
+    });
+
+    test('concatenation forms are unaffected (fall back to CONCAT)', () {
+      expect(parseValueField('{[firstName] [lastName]}'),
+          const BindingValue(r'CONCAT($F{firstName}, " ", $F{lastName})'));
+      expect(parseValueField('{Total: [qty]}'),
+          const BindingValue(r'CONCAT("Total: ", $F{qty})'));
+    });
+
+    test('a body with a backslash escape skips the expression attempt', () {
+      // The `\*` is a literal star, so the body is a concatenation template,
+      // not the numeric `[price] * [qty]`.
+      expect(parseValueField(r'{[price] \* [qty]}'),
+          const BindingValue(r'CONCAT($F{price}, " * ", $F{qty})'));
+    });
+  });
+
+  group('existing forms unchanged (032 regression guard)', () {
+    test('single-field sugar still reverses to lowercase sugar', () {
+      expect(reverseCompile(r'UPPER($F{name})').text, '{upper[name]}');
+    });
+    test('single-arg scalar reverses to sugar, not call form', () {
+      expect(reverseCompile(r'ROUND($F{x})').text, '{round[x]}');
+    });
+    test('aggregate form unchanged', () {
+      expect(reverseCompile(r'SUM($F{qty})').text, '{SUM([qty])}');
+      expect(parseValueField('{SUM([qty] * [price])}'),
+          const BindingValue(r'SUM($F{qty} * $F{price})'));
     });
   });
 }

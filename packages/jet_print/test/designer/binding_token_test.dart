@@ -19,7 +19,14 @@ void main() {
         '{[firstName] [lastName]}');
   });
 
+  test('a top-level operator expression shows as a friendly token (032 #2)',
+      () {
+    expect(fieldTokenLabel(r'$F{a} + $F{b}'), '{[a] + [b]}');
+  });
+
   test('a legacy/out-of-grammar expression shows verbatim in braces', () {
-    expect(fieldTokenLabel(r'$F{a} + $F{b}'), '{\$F{a} + \$F{b}}');
+    // A bare param reference falls outside the friendly template grammar, so it
+    // is shown read-only/verbatim rather than as an editable token.
+    expect(fieldTokenLabel(r'$P{x}'), '{\$P{x}}');
   });
 }

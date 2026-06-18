@@ -42,6 +42,11 @@ ReportDefinition mapBands(ReportDefinition def, Band Function(Band) transform) {
         collectionField: s.collectionField,
         groups: <GroupLevel>[for (final GroupLevel g in s.groups) group(g)],
         children: <ScopeNode>[for (final ScopeNode n in s.children) node(n)],
+        // A nested scope's footer is a band too (spec 029) — map it through
+        // [transform], and preserve the scope's published totals (spec 030):
+        // both were silently dropped when this rebuilt the scope field-by-field.
+        footer: slot(s.footer),
+        totals: s.totals,
       );
 
   return def.copyWith(
@@ -100,6 +105,11 @@ ReportDefinition mapGroups(
                 NestedScope(scope(inner)),
             },
         ],
+        // Group mapping touches no bands, so the scope's footer + published
+        // totals pass through unchanged — but they must still be carried over,
+        // not dropped by rebuilding the scope field-by-field.
+        footer: s.footer,
+        totals: s.totals,
       );
   return def.copyWith(body: def.body.copyWith(root: scope(def.body.root)));
 }
@@ -128,6 +138,7 @@ Iterable<Band> allBands(ReportDefinition def) sync* {
           addScope(inner);
       }
     }
+    if (s.footer != null) out.add(s.footer!);
   }
 
   for (final Band? b in <Band?>[
@@ -231,6 +242,7 @@ DetailScope? findScopeOfBand(ReportDefinition def, String bandId) {
     for (final GroupLevel g in s.groups) {
       if (g.header?.id == bandId || g.footer?.id == bandId) return s;
     }
+    if (s.footer?.id == bandId) return s;
     for (final ScopeNode n in s.children) {
       switch (n) {
         case BandNode(band: final Band b):
@@ -280,6 +292,10 @@ List<DetailScope> scopePathToBand(ReportDefinition def, String bandId) {
         result.addAll(here);
         return true;
       }
+    }
+    if (s.footer?.id == bandId) {
+      result.addAll(here);
+      return true;
     }
     for (final ScopeNode n in s.children) {
       switch (n) {
@@ -527,6 +543,10 @@ ReportDefinition removeBandFromTree(ReportDefinition def, String bandId) {
       collectionField: s.collectionField,
       groups: groups,
       children: children,
+      // Removal may target the scope's own footer band (spec 029); otherwise it
+      // passes through. Published totals (spec 030) are never touched by removal.
+      footer: s.footer?.id == bandId ? null : s.footer,
+      totals: s.totals,
     );
   });
 }
@@ -552,5 +572,9 @@ ReportDefinition reorderScopeChild(
         collectionField: s.collectionField,
         groups: s.groups,
         children: children,
+        // Reordering touches only [children]; the scope's footer (spec 029) and
+        // published totals (spec 030) must carry through unchanged.
+        footer: s.footer,
+        totals: s.totals,
       );
     });

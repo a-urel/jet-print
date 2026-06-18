@@ -17,6 +17,7 @@ import '../report_definition.dart';
 import '../report_element.dart';
 import '../report_parameter.dart';
 import '../report_variable.dart';
+import '../scope_total.dart';
 import 'element_codec.dart';
 import 'migration.dart';
 import 'report_format_exception.dart';
@@ -88,6 +89,11 @@ Map<String, Object?> _encodeScope(
           _encodeNode(node, registry),
       ],
     if (scope.footer != null) 'footer': _encodeBand(scope.footer!, registry),
+    if (scope.totals.isNotEmpty)
+      'totals': <Map<String, Object?>>[
+        for (final ScopeTotal t in scope.totals)
+          <String, Object?>{'name': t.name, 'expression': t.expression},
+      ],
   };
 }
 
@@ -231,7 +237,31 @@ DetailScope _decodeScope(
               _decodeNode((n! as Map).cast<String, Object?>(), registry),
           ],
     footer: _decodeBandOrNull(json['footer'], registry),
+    totals: _decodeScopeTotals(json['totals']),
   );
+}
+
+List<ScopeTotal> _decodeScopeTotals(Object? raw) {
+  if (raw == null) return const <ScopeTotal>[];
+  if (raw is! List) {
+    throw const ReportFormatException('scope "totals" must be a list.');
+  }
+  return <ScopeTotal>[
+    for (final Object? e in raw)
+      if (e is! Map)
+        throw const ReportFormatException(
+            'Each "totals" entry must be a JSON object.')
+      else
+        ScopeTotal(_requireString(e, 'name'), _requireString(e, 'expression')),
+  ];
+}
+
+String _requireString(Map<Object?, Object?> entry, String key) {
+  final Object? value = entry[key];
+  if (value is! String) {
+    throw ReportFormatException('A "totals" entry "$key" must be a string.');
+  }
+  return value;
 }
 
 ScopeNode _decodeNode(

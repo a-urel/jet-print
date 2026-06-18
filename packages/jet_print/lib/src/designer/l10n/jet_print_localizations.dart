@@ -503,6 +503,84 @@ abstract class JetPrintLocalizations {
   /// **'Insert a data field'**
   String get valueFieldPickerTooltip;
 
+  /// Tooltip for the value field's fx button that opens the expression editor (032).
+  ///
+  /// In en, this message translates to:
+  /// **'Build an expression'**
+  String get valueFieldFxTooltip;
+
+  /// Title of the expression editor dialog (032).
+  ///
+  /// In en, this message translates to:
+  /// **'Expression'**
+  String get exprEditorTitle;
+
+  /// Label for the fields palette in the expression editor (032).
+  ///
+  /// In en, this message translates to:
+  /// **'Fields'**
+  String get exprEditorFieldsLabel;
+
+  /// Label for the functions palette in the expression editor (032).
+  ///
+  /// In en, this message translates to:
+  /// **'Functions'**
+  String get exprEditorFunctionsLabel;
+
+  /// Label for the string-functions group in the expression editor (032).
+  ///
+  /// In en, this message translates to:
+  /// **'String'**
+  String get exprGroupString;
+
+  /// Label for the math-functions group in the expression editor (032).
+  ///
+  /// In en, this message translates to:
+  /// **'Math'**
+  String get exprGroupMath;
+
+  /// Label for the logic-functions group in the expression editor (032).
+  ///
+  /// In en, this message translates to:
+  /// **'Logic'**
+  String get exprGroupLogic;
+
+  /// Label for the aggregate-functions group in the expression editor (032).
+  ///
+  /// In en, this message translates to:
+  /// **'Aggregate'**
+  String get exprGroupAggregate;
+
+  /// Status shown when the expression is valid (032).
+  ///
+  /// In en, this message translates to:
+  /// **'Valid'**
+  String get exprStatusValid;
+
+  /// Status shown when the expression has a syntax error (032).
+  ///
+  /// In en, this message translates to:
+  /// **'Incomplete or invalid expression'**
+  String get exprStatusSyntaxError;
+
+  /// Status shown when the expression references an out-of-scope field (032).
+  ///
+  /// In en, this message translates to:
+  /// **'Field not in the data source: {name}'**
+  String exprStatusUnresolved(String name);
+
+  /// Cancel button in the expression editor (032).
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get exprEditorCancel;
+
+  /// Insert button in the expression editor that commits the expression (032).
+  ///
+  /// In en, this message translates to:
+  /// **'Insert'**
+  String get exprEditorInsert;
+
   /// Properties panel section label for a text element's number/date display format (013).
   ///
   /// In en, this message translates to:

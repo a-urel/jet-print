@@ -54,6 +54,10 @@ bool _isWhiteBoxSeamTest(File file) {
       // public API only.
       path.contains('/test/designer/template/') ||
       path.endsWith('/test/designer/binding_token_test.dart') ||
+      // fx expression editor (032): the editor dialog and its l10n are
+      // unexported `src/` modules; the dialog's widget test exercises them
+      // directly as a designer-internal seam (the binding_token precedent).
+      path.endsWith('/test/designer/expression_editor_dialog_test.dart') ||
       // Canvas-rulers (014): the pure measurement helpers (RulerScale/RulerTick
       // and the points↔mm + selection-extent metrics) are unexported `src/`
       // modules deliberately isolated from Flutter so the tricky math is
@@ -79,7 +83,12 @@ bool _isWhiteBoxSeamTest(File file) {
       // Band-walker (024): the reified-model tree navigation/transform helper
       // (`band_walker.dart`) is an unexported `src/` module the designer
       // migration is built on; its unit test is white-box (Principle III).
-      path.endsWith('/test/designer/controller/band_walker_test.dart');
+      path.endsWith('/test/designer/controller/band_walker_test.dart') ||
+      // Binding-resolution (031): the author-time resolvable-names helper
+      // (`binding_resolution.dart`) composes the band-walk with the data seam
+      // to account for spec-030 published totals; it is an unexported `src/`
+      // module and its unit test is white-box (Principle III).
+      path.endsWith('/test/designer/controller/binding_resolution_test.dart');
 }
 
 void main() {

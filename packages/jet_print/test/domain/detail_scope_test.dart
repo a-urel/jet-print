@@ -3,6 +3,7 @@ import 'package:jet_print/src/domain/band.dart';
 import 'package:jet_print/src/domain/detail_scope.dart';
 import 'package:jet_print/src/domain/group_level.dart';
 import 'package:jet_print/src/domain/report_band.dart' show BandType;
+import 'package:jet_print/src/domain/scope_total.dart';
 
 const Band _detail = Band(id: 'd', type: BandType.detail, height: 10);
 
@@ -93,6 +94,23 @@ void main() {
       expect(a.copyWith(id: 's2').footer, footer);
       expect(a.footer, footer);
       expect(b.footer, isNull);
+    });
+
+    test(
+        'a scope with totals differs from one without; copyWith preserves '
+        'them and copyWith(totals:) replaces', () {
+      const ScopeTotal t = ScopeTotal('orderTotal', r'SUM($F{lineTotal})');
+      const DetailScope a = DetailScope(
+          id: 's', collectionField: 'lines', totals: <ScopeTotal>[t]);
+      const DetailScope b = DetailScope(id: 's', collectionField: 'lines');
+      expect(a, isNot(b));
+      expect(a.hashCode, isNot(b.hashCode));
+      expect(b.totals, isEmpty);
+      // copyWith with an unrelated field preserves the existing totals.
+      expect(a.copyWith(id: 's2').totals, <ScopeTotal>[t]);
+      // copyWith(totals:) replaces them.
+      const ScopeTotal u = ScopeTotal('x', r'SUM($F{y})');
+      expect(a.copyWith(totals: const <ScopeTotal>[u]).totals, <ScopeTotal>[u]);
     });
   });
 }

@@ -27,12 +27,12 @@ void main() {
   );
 
   testWidgets(
-    'the shell shows six tabs: the empty + invoice + label + nested-list '
-    'designers plus two placeholders',
+    'the shell shows five tabs: the empty + invoice + label + list '
+    'designers plus one placeholder',
     (WidgetTester tester) async {
       await tester.pumpWidget(const JetPrintPlaygroundApp());
 
-      // All six tab labels are present in the strip. The app launches in its
+      // All five tab labels are present in the strip. The app launches in its
       // first supported locale (English), so the labels resolve through
       // AppLocalizations to their English values. Scope the match to the tab
       // strip (ShadTab) so e.g. "Invoice" matches the tab — not the identical
@@ -41,21 +41,20 @@ void main() {
         'Empty',
         'Invoice',
         'Label',
-        'List',
         'Receipt',
-        'Nested Lists',
+        'List',
       ]) {
         expect(find.widgetWithText(ShadTab<String>, label), findsOneWidget,
             reason: '"$label" tab label');
       }
       // The Invoice tab is selected on launch, so its designer is on-screen; the
-      // empty, label, and nested-list designers are kept alive Offstage and
-      // skipped by the default finder.
+      // empty, label, and list designers are kept alive Offstage and skipped by
+      // the default finder.
       expect(find.byType(JetReportDesigner), findsOneWidget);
-      // The two placeholder demos (List, Receipt) are each wired with a
-      // localized "Coming soon" card, built and kept alive Offstage by
-      // ShadTabs' default maintainState.
-      expect(find.text('Coming soon', skipOffstage: false), findsNWidgets(2));
+      // The one placeholder demo (Receipt) is wired with a localized "Coming
+      // soon" card, built and kept alive Offstage by ShadTabs' default
+      // maintainState.
+      expect(find.text('Coming soon', skipOffstage: false), findsNWidgets(1));
     },
   );
 

@@ -138,6 +138,24 @@ class _TemplateError implements Exception {
 }
 
 String _compileTemplate(String inner) {
+  // Amendment #2: try the whole body as a single expression first, so top-level
+  // operators (`{SUM([t]) + 500}`, `{[price] * [qty]}`, `{-[x]}`) compile to the
+  // numeric expression instead of a CONCAT of literal runs. The existing parser
+  // is the arbiter: concatenation forms (juxtaposed tokens, stray text) fail to
+  // parse and fall through to the part-by-part scan below. A `\` escape marks a
+  // template literal, not an expression — skip the attempt so it stays literal.
+  if (!inner.contains(r'\')) {
+    final String compiled = _compileArg(inner);
+    if (compiled.trim().isNotEmpty) {
+      try {
+        Parser(tokenize(compiled)).parseExpression();
+        return compiled;
+      } on ExpressionException {
+        // Not a single valid expression → fall back to the concatenation scan.
+      }
+    }
+  }
+
   final List<String> parts = <String>[];
   final StringBuffer literal = StringBuffer();
 
@@ -163,10 +181,10 @@ String _compileTemplate(String inner) {
       i = scan.next;
     } else if (_isAlpha(c)) {
       final int identEnd = _scanIdentEnd(inner, i);
-      if (identEnd < inner.length &&
-          inner[identEnd] == '(' &&
-          aggregateCalculationFor(inner.substring(i, identEnd)) != null) {
-        // Inline aggregate: FN( <expr with [field] tokens> ).
+      if (identEnd < inner.length && inner[identEnd] == '(') {
+        // Function call FN( <args with [field] tokens> ) — aggregate or scalar.
+        // The registry is UPPERCASE; the inner arg list (incl. nested calls) is
+        // normalized by _compileArg.
         flushLiteral();
         final String fn = inner.substring(i, identEnd).toUpperCase();
         final _CallScan scan = _scanBalancedParens(inner, identEnd);
@@ -230,33 +248,89 @@ class _CallScan {
   final int next; // index just past the closing ')'
 }
 
-/// Scans `( … )` starting at the `(` at [open], honoring nested parens; returns
-/// the inner text and the index past the matching `)`.
+/// Scans `( … )` starting at the `(` at [open], honoring nested parens and
+/// skipping over single-/double-quoted string literals (so parens inside a
+/// string don't corrupt the depth count); returns the inner text and the index
+/// past the matching `)`.
 _CallScan _scanBalancedParens(String s, int open) {
   int depth = 0;
-  for (int i = open; i < s.length; i++) {
-    if (s[i] == '(') {
+  int i = open;
+  while (i < s.length) {
+    final String c = s[i];
+    if (c == '"' || c == "'") {
+      final String q = c;
+      i++;
+      while (i < s.length && s[i] != q) {
+        if (s[i] == r'\') i++; // skip the escaped char
+        i++;
+      }
+      if (i < s.length) i++; // consume the closing quote
+    } else if (c == '(') {
       depth++;
-    } else if (s[i] == ')') {
+      i++;
+    } else if (c == ')') {
       depth--;
       if (depth == 0) return _CallScan(s.substring(open + 1, i), i + 1);
+      i++;
+    } else {
+      i++;
     }
   }
   throw const _TemplateError();
 }
 
-/// Compiles an aggregate argument: replaces each `[name]` token with `$F{name}`
-/// and passes all other expression syntax through unchanged.
+/// Compiles a function-call argument: replaces each `[name]` token with
+/// `$F{name}`, UPPERCASEs any nested function-call identifier (the registry is
+/// case-sensitive UPPERCASE), and passes all other expression syntax —
+/// operators, commas, parens, string/number/bool literals, `$P{}`/`$V{}`
+/// tokens — through unchanged. Quoted string literals (single or double, with
+/// `\` escapes) pass through verbatim: no field-substitution or uppercasing
+/// happens inside a string.
 String _compileArg(String arg) {
   final StringBuffer out = StringBuffer();
   int i = 0;
   while (i < arg.length) {
-    if (arg[i] == '[') {
+    final String c = arg[i];
+    if (c == '[') {
       final _FieldScan scan = _scanField(arg, i);
       out.write('\$F{${scan.name}}');
       i = scan.next;
+    } else if (c == '"' || c == "'") {
+      final String q = c;
+      out.write(c);
+      i++;
+      while (i < arg.length && arg[i] != q) {
+        if (arg[i] == r'\' && i + 1 < arg.length) {
+          out.write(arg[i]); // the backslash
+          i++;
+        }
+        out.write(arg[i]); // the (possibly escaped) char
+        i++;
+      }
+      if (i < arg.length) {
+        out.write(arg[i]); // the closing quote
+        i++;
+      }
+    } else if (_isAlpha(c)) {
+      final int identEnd = _scanIdentEnd(arg, i);
+      final String ident = arg.substring(i, identEnd);
+      if (identEnd < arg.length && arg[identEnd] == '[') {
+        // Function-of-field sugar inside an expression: `fn[field]` expands to
+        // `FN($F{field})`, so the sugar form composes with operators
+        // (`sum[total] + 50000`) and nests in calls (`ROUND(sum[x], 2)`).
+        final _FieldScan scan = _scanField(arg, identEnd);
+        out.write('${ident.toUpperCase()}(\$F{${scan.name}})');
+        i = scan.next;
+      } else {
+        // A nested call (`ident(`) takes the UPPERCASE registry name; a bare
+        // identifier (`true`/`false`, or a `$P{}`/`$V{}` body) passes through.
+        out.write(identEnd < arg.length && arg[identEnd] == '('
+            ? ident.toUpperCase()
+            : ident);
+        i = identEnd;
+      }
     } else {
-      out.write(arg[i]);
+      out.write(c);
       i++;
     }
   }
@@ -281,6 +355,19 @@ String? _exprToToken(Expr root) {
   // A single function-of-field call, e.g. UPPER($F{name}) → {upper[name]}.
   final String? part = _partToken(root);
   if (part != null && root is CallExpr) return '{$part}';
+
+  // Any other call (multi-arg, mixed args, nested) → {fn(args)} via _argToToken.
+  if (root is CallExpr) {
+    final String? body = _argToToken(root);
+    if (body != null) return '{$body}';
+  }
+  // Amendment #2: a top-level operator expression renders as an editable
+  // `{ … }` token via the same recursive argument renderer, instead of the
+  // read-only raw-expression fallback in [reverseCompile].
+  if (root is BinaryExpr || root is UnaryExpr) {
+    final String? body = _argToToken(root);
+    if (body != null) return '{$body}';
+  }
   return null;
 }
 

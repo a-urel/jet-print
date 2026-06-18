@@ -87,6 +87,7 @@ export 'src/domain/report_parameter.dart' show ReportParameter;
 export 'src/domain/report_validation.dart' show validate;
 export 'src/domain/report_variable.dart'
     show JetCalculation, ReportVariable, VariableResetScope;
+export 'src/domain/scope_total.dart' show ScopeTotal;
 export 'src/domain/serialization/report_format.dart' show JetReportFormat;
 export 'src/domain/serialization/report_format_exception.dart'
     show ReportFormatException;

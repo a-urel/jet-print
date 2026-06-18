@@ -56,16 +56,68 @@ void main() {
       expect((lines.children.single as BandNode).band.type, BandType.detail);
     });
 
-    test('orderTotal is a live nested-footer aggregate (spec 029)', () {
-      final DetailScope lines =
-          _findScope(nestedListsDefinition().body.root, 'lines');
+    test('the whole total chain is live via published scope totals (spec 030)',
+        () {
+      final DetailScope root = nestedListsDefinition().body.root;
+
+      // The `lines` scope publishes orderTotal = SUM($F{lineTotal}) onto its
+      // parent (order) row, and its footer DISPLAYS that published field
+      // ($F{orderTotal}) — one computation, reused — not the inline aggregate.
+      final DetailScope lines = _findScope(root, 'lines');
+      expect(
+        lines.totals,
+        contains(const ScopeTotal('orderTotal', r'SUM($F{lineTotal})')),
+      );
       expect(lines.footer, isNotNull);
       expect(
         lines.footer!.elements
             .whereType<TextElement>()
-            .map((e) => e.expression),
-        contains(r'SUM($F{lineTotal})'),
+            .map((TextElement e) => e.expression),
+        contains(r'$F{orderTotal}'),
+        reason: 'the footer shows the published field, not the inline SUM',
       );
+
+      // The `orders` scope rolls those published order totals up, publishing
+      // customerTotal = SUM($F{orderTotal}) onto its parent (customer) row.
+      final DetailScope orders = _findScope(root, 'orders');
+      expect(
+        orders.totals,
+        contains(const ScopeTotal('customerTotal', r'SUM($F{orderTotal})')),
+      );
+
+      // The summary grand total is unchanged: it sums the (now live) injected
+      // customerTotal field across customers.
+      final TextElement grand = nestedListsDefinition()
+          .body
+          .summary!
+          .elements
+          .firstWhere((ReportElement e) => e.id == 'grandTotal') as TextElement;
+      expect(grand.expression, r'SUM($F{customerTotal})');
+    });
+
+    test('rendered customer footer totals + grand total are live data sums',
+        () {
+      final RenderedReport report = renderNestedListsDefinition();
+
+      // Expected per-customer total = sum over that customer's orders of
+      // (sum of that order's line lineTotals), derived from the SAME data the
+      // render fills, formatted exactly as the footer formats (`#,##0.00`).
+      final List<String> expectedCustomerTotals = <String>[
+        for (final Map<String, Object?> customer in kSampleCustomers)
+          _formatTotal(_customerSum(customer)),
+      ];
+      final List<String> actualCustomerTotals =
+          _runsForId(report, 'customerTotal');
+      expect(actualCustomerTotals, expectedCustomerTotals,
+          reason: 'each customer footer total equals the live roll-up of its '
+              'orders’ line-sums (SC-001)');
+
+      // The grand total = the overall sum across all customers.
+      final double grand = kSampleCustomers.fold<double>(
+          0, (double sum, Map<String, Object?> c) => sum + _customerSum(c));
+      final List<String> actualGrand = _runsForId(report, 'grandTotal');
+      expect(actualGrand, <String>[_formatTotal(grand)],
+          reason: 'the grand total equals the overall live data sum (SC-002)');
     });
 
     test('rendered per-order footer totals equal the data line-sums', () {
@@ -165,6 +217,24 @@ DetailScope? _tryFindScope(DetailScope root, String id) {
   }
   return null;
 }
+
+/// The data-derived total for one [customer]: the sum, over each of its orders,
+/// of that order's line `lineTotal`s — the live roll-up the published scope
+/// totals must reproduce. The single source of truth for the value proof.
+double _customerSum(Map<String, Object?> customer) =>
+    (customer['orders']! as List<Object?>)
+        .cast<Map<String, Object?>>()
+        .fold<double>(
+          0,
+          (double sum, Map<String, Object?> order) =>
+              sum +
+              (order['lines']! as List<Object?>)
+                  .cast<Map<String, Object?>>()
+                  .fold<double>(
+                      0,
+                      (double s, Map<String, Object?> l) =>
+                          s + (l['lineTotal']! as num)),
+        );
 
 /// Formats a total exactly the way the footer element does: the engine applies
 /// the numeric `format` `#,##0.00` via `intl`'s `NumberFormat` (see
@@ -326,6 +396,9 @@ ReportDefinition _legacyGrandTotalDefinition() => const ReportDefinition(
             NestedScope(DetailScope(
               id: 'orders',
               collectionField: 'orders',
+              totals: <ScopeTotal>[
+                ScopeTotal('customerTotal', r'SUM($F{orderTotal})'),
+              ],
               children: <ScopeNode>[
                 BandNode(Band(
                   id: 'orderRow',
@@ -422,7 +495,12 @@ ReportDefinition _legacyGrandTotalDefinition() => const ReportDefinition(
                       ],
                     )),
                   ],
-                  // Same lines-scope footer as the primary definition — must stay in sync.
+                  // Same lines-scope totals + footer as the primary definition
+                  // — must stay in sync (publishes orderTotal, footer displays
+                  // the published field).
+                  totals: <ScopeTotal>[
+                    ScopeTotal('orderTotal', r'SUM($F{lineTotal})'),
+                  ],
                   footer: Band(
                     id: 'linesFooter',
                     type: BandType.groupFooter,
@@ -443,7 +521,7 @@ ReportDefinition _legacyGrandTotalDefinition() => const ReportDefinition(
                         style: JetTextStyle(
                             align: JetTextAlign.right,
                             weight: JetFontWeight.bold),
-                        expression: r'SUM($F{lineTotal})',
+                        expression: r'$F{orderTotal}',
                         format: '#,##0.00',
                       ),
                     ],
