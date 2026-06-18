@@ -2,14 +2,14 @@
 /// entirely through the library's public API (`package:jet_print/jet_print.dart`),
 /// the way an external consumer would.
 ///
-/// The engine flows `detail` bands top-to-bottom only — native multi-column
-/// flow (`columnHeader`/`columnFooter`) is reserved but not laid out yet. So a
-/// 3-across-then-wrap label sheet is achieved by **reshaping the data**: the
-/// flat address list is pre-chunked into rows of three (see
-/// `rendered_label_example.dart`), and each row becomes one master record whose
-/// fields are prefix-namespaced per cell — `c0*`, `c1*`, `c2*`. The single
-/// `detail` band is one label-row tall and lays three column blocks side by
-/// side at fixed X offsets; the engine then flows those rows down the page.
+/// Built on the engine's **native multi-column label support** (spec 034): the
+/// detail band carries a [ColumnLayout], so a single label cell is authored
+/// once — in cell-local coordinates — and the engine repeats it across the grid
+/// in horizontal print order (left-to-right, wrapping down, then to the next
+/// page). The data is a **flat** address list (one address per master row); the
+/// grid placement does the columns. (Before spec 034 this sheet faked columns
+/// by pre-chunking the data into `c0*`/`c1*`/`c2*` rows and hand-placing three
+/// blocks in one band — no longer needed.)
 ///
 /// Field/label names are illustrative sample data and intentionally not
 /// localized; only the designer's own chrome is.
@@ -17,92 +17,95 @@ library;
 
 import 'package:jet_print/jet_print.dart';
 
-/// How many label cells sit across one row. Each cell `i` (0-based) is bound to
-/// the `c{i}*` fields of the chunked master record.
+/// How many label cells sit across one row — the grid's [ColumnLayout.columnCount].
 const int labelColumns = 3;
 
-// --- Page-relative geometry (A4 portrait content area ≈ 538 × 785 pt) ---------
+// --- Cell geometry (cell-local; the grid offsets each repeat) -----------------
+//
+// A4 portrait content area ≈ 538 × 785 pt. The grid is [labelColumns] cells of
+// [_cellWidth] separated by [_columnSpacing]: 3 × 170 + 2 × 9 = 528 ≤ 538, so it
+// fits the body. Eight [_rowHeight]-tall rows (8 × 98 = 784 ≤ 785) fill the page
+// height, so each A4 page carries 8 × [labelColumns] = 24 labels.
 
-/// Horizontal pitch between cells: content width (≈538) ÷ [labelColumns].
-const double _columnPitch = 179;
-
-/// Drawn width of a single label tile (pitch minus the inter-cell gutter).
+/// Drawn width of a single label tile — the grid's [ColumnLayout.columnWidth].
 const double _cellWidth = 170;
 
-/// Height of one label row. Eight rows (8 × 98 = 784) fill the content height,
-/// so each A4 page carries 8 × [labelColumns] = 24 labels.
+/// Horizontal gutter between cells — the grid's [ColumnLayout.columnSpacing].
+const double _columnSpacing = 9;
+
+/// Height of one label row (one detail-band instance).
 const double _rowHeight = 98;
+
+/// Vertical gap between label rows — the grid's [ColumnLayout.rowSpacing].
+const double _rowSpacing = 0;
 
 /// Inner padding from the tile's border to its text.
 const double _pad = 10;
 
-/// The address fields each cell carries, in stacking order. Names are
-/// per-cell-prefixed at bind time (`c0Name`, `c1Name`, …).
-const List<String> _cellFields = <String>['Name', 'Street', 'City', 'Country'];
-
-/// The flat data schema the chunked rows satisfy: [labelColumns] cells, each
-/// with the four address fields, prefixed `c{i}{Field}`. Attach via `dataSchema:`.
+/// The flat data schema one address record satisfies — the four address fields,
+/// one record per label cell. Attach via `dataSchema:`.
 final JetDataSchema labelSchema = JetDataSchema(
   name: 'Labels',
   fields: <FieldDef>[
-    for (int i = 0; i < labelColumns; i++)
-      for (final String f in _cellFields)
-        FieldDef('c$i$f', type: JetFieldType.string),
+    FieldDef('name', type: JetFieldType.string),
+    FieldDef('street', type: JetFieldType.string),
+    FieldDef('city', type: JetFieldType.string),
+    FieldDef('country', type: JetFieldType.string),
   ],
 );
 
-/// Builds the elements for one label cell at column [index]: a light border
-/// tile plus the four-line address bound to that cell's `c{index}*` fields.
-List<ReportElement> _cellElements(int index) {
-  final double x = index * _columnPitch;
-  final String p = 'c$index'; // field/id prefix for this cell
-  return <ReportElement>[
-    // The cut-tile border (data-blind; drawn for every cell slot).
-    ShapeElement(
-      id: '${p}Border',
-      bounds: JetRect(x: x, y: 2, width: _cellWidth, height: _rowHeight - 6),
-      kind: ShapeKind.rectangle,
-      style: const JetBoxStyle(stroke: JetColor(0xFFCCCCCC), strokeWidth: 0.75),
-    ),
-    TextElement(
-      id: '${p}Name',
-      bounds:
-          JetRect(x: x + _pad, y: 12, width: _cellWidth - _pad * 2, height: 18),
-      text: '${p}Name',
-      style: const JetTextStyle(fontSize: 11, weight: JetFontWeight.bold),
-      expression: '\$F{${p}Name}',
-    ),
-    TextElement(
-      id: '${p}Street',
-      bounds:
-          JetRect(x: x + _pad, y: 32, width: _cellWidth - _pad * 2, height: 16),
-      text: '${p}Street',
-      expression: '\$F{${p}Street}',
-    ),
-    TextElement(
-      id: '${p}City',
-      bounds:
-          JetRect(x: x + _pad, y: 50, width: _cellWidth - _pad * 2, height: 16),
-      text: '${p}City',
-      expression: '\$F{${p}City}',
-    ),
-    TextElement(
-      id: '${p}Country',
-      bounds:
-          JetRect(x: x + _pad, y: 68, width: _cellWidth - _pad * 2, height: 16),
-      text: '${p}Country',
-      style: const JetTextStyle(fontSize: 9, color: JetColor(0xFF888888)),
-      expression: '\$F{${p}Country}',
-    ),
-  ];
-}
+/// Builds the elements for **one** label cell, in cell-local coordinates (the
+/// grid repeats this cell across the columns): a light border tile plus the
+/// four-line address bound to the flat `name`/`street`/`city`/`country` fields.
+List<ReportElement> _cellElements() => <ReportElement>[
+      // The cut-tile border (data-blind; drawn for every cell slot).
+      ShapeElement(
+        id: 'border',
+        bounds: JetRect(x: 0, y: 2, width: _cellWidth, height: _rowHeight - 6),
+        kind: ShapeKind.rectangle,
+        style:
+            const JetBoxStyle(stroke: JetColor(0xFFCCCCCC), strokeWidth: 0.75),
+      ),
+      TextElement(
+        id: 'name',
+        bounds:
+            JetRect(x: _pad, y: 12, width: _cellWidth - _pad * 2, height: 18),
+        text: 'Name',
+        style: const JetTextStyle(fontSize: 11, weight: JetFontWeight.bold),
+        expression: '\$F{name}',
+      ),
+      TextElement(
+        id: 'street',
+        bounds:
+            JetRect(x: _pad, y: 32, width: _cellWidth - _pad * 2, height: 16),
+        text: 'Street',
+        expression: '\$F{street}',
+      ),
+      TextElement(
+        id: 'city',
+        bounds:
+            JetRect(x: _pad, y: 50, width: _cellWidth - _pad * 2, height: 16),
+        text: 'City',
+        expression: '\$F{city}',
+      ),
+      TextElement(
+        id: 'country',
+        bounds:
+            JetRect(x: _pad, y: 68, width: _cellWidth - _pad * 2, height: 16),
+        text: 'Country',
+        style: const JetTextStyle(fontSize: 9, color: JetColor(0xFF888888)),
+        expression: '\$F{country}',
+      ),
+    ];
 
-/// The 3-column label-sheet report, authored in the reified band model.
+/// The 3-column label-sheet report, authored in the reified band model with a
+/// native [ColumnLayout].
 ///
 /// Furniture-free (labels carry no page header/footer): the body's root
-/// [DetailScope] iterates the chunked rows, and its single per-row `detail`
-/// band ([_rowHeight] tall) lays [labelColumns] cells side by side. The engine
-/// flows the rows down the page, wrapping to the next page after eight.
+/// [DetailScope] iterates the flat address rows, and its single per-row `detail`
+/// band — one label cell, [_rowHeight] tall — carries the [ColumnLayout] that
+/// repeats it across [labelColumns] columns. The engine places the cells in
+/// horizontal order and wraps down the page, then to the next page.
 ReportDefinition labelSampleDefinition() => ReportDefinition(
       name: 'Labels',
       page: PageFormat.a4Portrait,
@@ -111,12 +114,16 @@ ReportDefinition labelSampleDefinition() => ReportDefinition(
           id: 'root',
           children: <ScopeNode>[
             BandNode(Band(
-              id: 'labelRow',
+              id: 'labelCell',
               type: BandType.detail,
               height: _rowHeight,
-              elements: <ReportElement>[
-                for (int i = 0; i < labelColumns; i++) ..._cellElements(i),
-              ],
+              columnLayout: const ColumnLayout(
+                columnCount: labelColumns,
+                columnWidth: _cellWidth,
+                columnSpacing: _columnSpacing,
+                rowSpacing: _rowSpacing,
+              ),
+              elements: _cellElements(),
             )),
           ],
         ),

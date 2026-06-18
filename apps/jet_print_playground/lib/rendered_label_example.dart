@@ -3,11 +3,10 @@
 /// `package:jet_print/jet_print.dart` only.
 ///
 /// 100 synthetic addresses are generated deterministically (cycling fixed name/
-/// street/city/country arrays — no RNG, so the output is stable) and then
-/// **chunked into rows of three** to match [labelSchema]: each master record
-/// carries three cells' worth of fields, prefixed `c0*`, `c1*`, `c2*`. The
-/// last row holds a single filled cell (100 ÷ 3 = 33 full rows + 1), so its
-/// `c1*`/`c2*` keys are absent and those tiles render blank.
+/// street/city/country arrays — no RNG, so the output is stable) and fed to the
+/// engine as a **flat** list — one address per master row, matching
+/// [labelSchema]. The detail band's [ColumnLayout] (see `label_sample.dart`)
+/// places them three-across-then-wrap; the data is not pre-chunked.
 library;
 
 import 'package:flutter/widgets.dart' show Locale;
@@ -117,30 +116,10 @@ List<Map<String, String>> _addresses() => <Map<String, String>>[
         },
     ];
 
-/// Groups the flat [addresses] into rows of [labelColumns], emitting one master
-/// map per row with each cell's fields prefixed `c{column}{Field}`. A trailing
-/// partial row simply omits the missing cells' keys (they render blank).
-List<Map<String, Object?>> chunkIntoRows(List<Map<String, String>> addresses) {
-  final List<Map<String, Object?>> rows = <Map<String, Object?>>[];
-  for (int start = 0; start < addresses.length; start += labelColumns) {
-    final Map<String, Object?> row = <String, Object?>{};
-    for (int col = 0; col < labelColumns; col++) {
-      final int idx = start + col;
-      if (idx >= addresses.length) break;
-      final Map<String, String> a = addresses[idx];
-      row['c${col}Name'] = a['name'];
-      row['c${col}Street'] = a['street'];
-      row['c${col}City'] = a['city'];
-      row['c${col}Country'] = a['country'];
-    }
-    rows.add(row);
-  }
-  return rows;
-}
-
-/// The chunked label rows as an in-memory data source, matching [labelSchema].
-JetDataSource labelDataSource() =>
-    JetInMemoryDataSource(chunkIntoRows(_addresses()));
+/// The flat address rows as an in-memory data source, matching [labelSchema] —
+/// one address per master row. The detail band's [ColumnLayout] turns them into
+/// a 3-across-then-wrap sheet; no pre-chunking.
+JetDataSource labelDataSource() => JetInMemoryDataSource(_addresses());
 
 /// Renders [labelSampleDefinition] over [labelDataSource] through the native
 /// [JetReportEngine.renderDefinition] path — the same single call the designer

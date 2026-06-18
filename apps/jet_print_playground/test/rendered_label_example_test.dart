@@ -1,33 +1,31 @@
 // Rendered-label example: data source + render through
-// `package:jet_print/jet_print.dart` only. Confirms the 100 synthetic
-// addresses chunk into rows of three and render as a clean, multi-page label
-// sheet.
+// `package:jet_print/jet_print.dart` only. Confirms the 100 synthetic addresses
+// are a flat list (one per master row) and render as a clean, multi-page,
+// 3-column label sheet via the detail band's native ColumnLayout.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
-import 'package:jet_print_playground/label_sample.dart';
 import 'package:jet_print_playground/rendered_label_example.dart';
 
 void main() {
   group('rendered label example', () {
-    test('chunks 100 addresses into 34 rows of up to three cells', () {
+    test('ships 100 flat address rows, one address per record', () {
       final DataSet ds = labelDataSource().open();
       int rows = 0;
       while (ds.moveNext()) {
-        // Every row fills its first cell; only the trailing row may be partial.
-        expect(ds.current.field('c0Name'), isNotNull,
-            reason: 'each row carries at least one label');
+        // Each row is a single address (flat fields, no per-cell prefix).
+        expect(ds.current.field('name'), isNotNull,
+            reason: 'each row is one address');
         rows++;
       }
       ds.close();
-      // 100 ÷ 3 = 33 full rows + 1 partial.
-      expect(rows, (labelRecordCount / labelColumns).ceil());
-      expect(rows, 34);
+      expect(rows, labelRecordCount);
+      expect(rows, 100);
     });
 
     test('renders the label sheet across multiple pages without diagnostics',
         () {
       final RenderedReport report = renderLabelDefinition();
-      // 34 rows ÷ 8 per page → 5 pages.
+      // 100 cells ÷ (3 cols × 8 rows = 24 per page) → 5 pages.
       expect(report.pageCount, greaterThan(1));
       expect(
         report.diagnostics.entries
