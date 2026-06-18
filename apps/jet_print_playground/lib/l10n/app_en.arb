@@ -16,6 +16,11 @@
     "description": "Tab label for the label-printing report demo (placeholder)."
   },
 
+  "tabBarcode": "Barcode",
+  "@tabBarcode": {
+    "description": "Tab label for the barcode product-label report demo."
+  },
+
   "tabList": "List",
   "@tabList": {
     "description": "Tab label for the list report designer demo."

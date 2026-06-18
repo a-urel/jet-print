@@ -10,8 +10,7 @@ const String _p = 'jet_print.designer.properties';
 Finder _add = find.byKey(const ValueKey<String>('$_p.field.columnLayoutAdd'));
 Finder _remove =
     find.byKey(const ValueKey<String>('$_p.field.columnLayoutRemove'));
-Finder _field(String name) =>
-    find.byKey(ValueKey<String>('$_p.field.$name'));
+Finder _field(String name) => find.byKey(ValueKey<String>('$_p.field.$name'));
 Finder _editable(String name) =>
     find.descendant(of: _field(name), matching: find.byType(EditableText));
 
@@ -55,8 +54,8 @@ ReportDefinition _withTitle() => const ReportDefinition(
 Band _detail(JetReportDesignerController c) =>
     (c.definition.body.root.children.single as BandNode).band;
 
-Finder _textContains(String needle) =>
-    find.byWidgetPredicate((Widget w) => w is Text && (w.data?.contains(needle) ?? false));
+Finder _textContains(String needle) => find.byWidgetPredicate(
+    (Widget w) => w is Text && (w.data?.contains(needle) ?? false));
 
 /// Orphaned: a title makes the body ineligible, yet the detail band still
 /// carries a column layout (the user added it earlier, then added a title).
@@ -73,7 +72,10 @@ ReportDefinition _orphaned() => const ReportDefinition(
               type: BandType.detail,
               height: 80,
               columnLayout: ColumnLayout(
-                  columnCount: 2, columnWidth: 100, columnSpacing: 0, rowSpacing: 0),
+                  columnCount: 2,
+                  columnWidth: 100,
+                  columnSpacing: 0,
+                  rowSpacing: 0),
             )),
           ],
         ),
@@ -81,10 +83,11 @@ ReportDefinition _orphaned() => const ReportDefinition(
     );
 
 void main() {
-  testWidgets('Add is enabled on a pure single-detail body and creates a default layout',
+  testWidgets(
+      'Add is enabled on a pure single-detail body and creates a default layout',
       (WidgetTester tester) async {
-    final JetReportDesignerController c =
-        await pumpDesignerWith(tester, controller: JetReportDesignerController(definition: _pure()));
+    final JetReportDesignerController c = await pumpDesignerWith(tester,
+        controller: JetReportDesignerController(definition: _pure()));
     await _openProperties(tester);
     c.selectBand('detail');
     await tester.pumpAndSettle();
@@ -124,7 +127,8 @@ void main() {
     expect(find.text('Column Layout'), findsOneWidget);
   });
 
-  testWidgets('Add does nothing on an ineligible body', (WidgetTester tester) async {
+  testWidgets('Add does nothing on an ineligible body',
+      (WidgetTester tester) async {
     final JetReportDesignerController c = await pumpDesignerWith(tester,
         controller: JetReportDesignerController(definition: _withTitle()));
     await _openProperties(tester);
@@ -140,8 +144,8 @@ void main() {
 
   testWidgets('changing the column count refits the width so the grid fits',
       (WidgetTester tester) async {
-    final JetReportDesignerController c =
-        await pumpDesignerWith(tester, controller: JetReportDesignerController(definition: _pure()));
+    final JetReportDesignerController c = await pumpDesignerWith(tester,
+        controller: JetReportDesignerController(definition: _pure()));
     await _openProperties(tester);
     c.selectBand('detail');
     await tester.pumpAndSettle();
@@ -167,8 +171,8 @@ void main() {
   });
 
   testWidgets('Remove clears the layout', (WidgetTester tester) async {
-    final JetReportDesignerController c =
-        await pumpDesignerWith(tester, controller: JetReportDesignerController(definition: _pure()));
+    final JetReportDesignerController c = await pumpDesignerWith(tester,
+        controller: JetReportDesignerController(definition: _pure()));
     await _openProperties(tester);
     c.selectBand('detail');
     await tester.pumpAndSettle();
@@ -184,8 +188,8 @@ void main() {
 
   testWidgets('a grid wider than the body shows a friendly error row',
       (WidgetTester tester) async {
-    final JetReportDesignerController c =
-        await pumpDesignerWith(tester, controller: JetReportDesignerController(definition: _pure()));
+    final JetReportDesignerController c = await pumpDesignerWith(tester,
+        controller: JetReportDesignerController(definition: _pure()));
     await _openProperties(tester);
     c.selectBand('detail');
     await tester.pumpAndSettle();
@@ -195,7 +199,8 @@ void main() {
     // Make the single column wider than the whole page body (a direct width
     // edit, which is not refit — so the grid overflows).
     final double tooWide = c.definition.page.width;
-    await tester.enterText(_editable('columnWidth'), tooWide.toStringAsFixed(0));
+    await tester.enterText(
+        _editable('columnWidth'), tooWide.toStringAsFixed(0));
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
 
@@ -220,7 +225,10 @@ void main() {
               type: BandType.detail,
               height: 80,
               columnLayout: const ColumnLayout(
-                  columnCount: 2, columnWidth: 50, columnSpacing: 0, rowSpacing: 0),
+                  columnCount: 2,
+                  columnWidth: 50,
+                  columnSpacing: 0,
+                  rowSpacing: 0),
               elements: <ReportElement>[
                 for (final String id in <String>['a', 'b', 'c'])
                   TextElement(

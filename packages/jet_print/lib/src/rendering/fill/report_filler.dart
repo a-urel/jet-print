@@ -84,7 +84,8 @@ class ReportFiller {
     // lineTotal lives in a nested collection) to $V{__dagg<n>} references
     // BEFORE expandAggregates. Same-scope / not-found operands are left in
     // place and handled by expandAggregates as before.
-    final DescendantLift lift = liftDescendantAggregates(rawDefinition, rootFields);
+    final DescendantLift lift =
+        liftDescendantAggregates(rawDefinition, rootFields);
     // Expand inline aggregates (spec 028) before any group/variable logic: a
     // stored SUM($F{...}) in a summary/group-footer band becomes a hidden
     // band-scoped variable + $V{} reference, so it computes through the
@@ -172,7 +173,8 @@ class ReportFiller {
       for (final DescendantAggregate a in descAggs)
         if (a.resetScope == VariableResetScope.group) a,
     ];
-    final Map<String, VariableAccumulator> descAcc = <String, VariableAccumulator>{
+    final Map<String, VariableAccumulator> descAcc =
+        <String, VariableAccumulator>{
       for (final DescendantAggregate a in descAggs)
         a.name: VariableAccumulator(a.calculation),
     };
@@ -406,13 +408,15 @@ class ReportFiller {
           // immediate child rows (spec 029); a descendant leaf folds over the whole
           // subtree (spec 033); an ambiguous operand renders the fallback (FR-010).
           final List<FieldDef> childFields = childRows.first.fields;
-          final List<List<String>?> descPaths = <List<String>?>[]; // null → same-scope
+          final List<List<String>?> descPaths =
+              <List<String>?>[]; // null → same-scope
           final List<bool> ambiguousAgg = <bool>[];
           if (footer != null) {
             for (final NestedAgg a in footer.aggs) {
               final Set<String> refs = a.argument.references.fields;
-              AggregatePath? resolved =
-                  refs.length == 1 ? resolveAggregatePath(childFields, refs.single) : null;
+              AggregatePath? resolved = refs.length == 1
+                  ? resolveAggregatePath(childFields, refs.single)
+                  : null;
               descPaths.add(resolved is DescendPath ? resolved.path : null);
               ambiguousAgg.add(resolved is Ambiguous);
             }
@@ -671,8 +675,8 @@ class ReportFiller {
     final List<Object?> nonNull =
         values.where((Object? v) => v != null).toList();
     final bool isCollection = nonNull.isNotEmpty &&
-        nonNull.every((Object? v) =>
-            v is List && v.every((Object? e) => e is Map));
+        nonNull.every(
+            (Object? v) => v is List && v.every((Object? e) => e is Map));
     if (!isCollection) {
       return FieldDef(name, type: FieldDef.inferType(values));
     }

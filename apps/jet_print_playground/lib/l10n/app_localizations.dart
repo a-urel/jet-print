@@ -118,6 +118,12 @@ abstract class AppLocalizations {
   /// **'Label'**
   String get tabLabel;
 
+  /// Tab label for the barcode product-label report demo.
+  ///
+  /// In en, this message translates to:
+  /// **'Barcode'**
+  String get tabBarcode;
+
   /// Tab label for the list report designer demo.
   ///
   /// In en, this message translates to:

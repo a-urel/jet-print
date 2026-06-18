@@ -129,7 +129,8 @@ ReportDefinition _ambiguousDef() => ReportDefinition(
               collectionField: 'orders',
               totals: const <ScopeTotal>[],
               children: const <ScopeNode>[
-                BandNode(Band(id: 'orderRow2', type: BandType.detail, height: 20)),
+                BandNode(
+                    Band(id: 'orderRow2', type: BandType.detail, height: 20)),
               ],
             )),
             NestedScope(DetailScope(

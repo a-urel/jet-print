@@ -9,10 +9,12 @@ import 'package:jet_print/jet_print.dart';
 import 'package:jet_print_google_fonts/jet_print_google_fonts.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import 'barcode_sample.dart';
 import 'invoice_sample.dart';
 import 'l10n/app_localizations.dart';
 import 'label_sample.dart';
 import 'nested_list_sample.dart';
+import 'rendered_barcode_example.dart';
 import 'rendered_invoice_example.dart';
 import 'rendered_label_example.dart';
 import 'rendered_nested_list_example.dart';
@@ -215,6 +217,26 @@ class _PlaygroundHome extends StatelessWidget {
                     ),
                   ),
                   child: Text(l10n.tabLabel),
+                ),
+                ShadTab<String>(
+                  value: 'barkod',
+                  leading: const Icon(LucideIcons.barcode, size: 16),
+                  expandContent: true,
+                  // A live designer over the product data — 28 flat records laid
+                  // out as a 2-column product-label sheet via the detail band's
+                  // native ColumnLayout, each cell carrying a real EAN-13 barcode
+                  // bound to the product number (barcode_sample.dart).
+                  content: _FillTabHeight(
+                    child: _DesignerTab(
+                      fonts: fonts,
+                      seed: barcodeSampleDefinition(),
+                      dataSchema: barcodeSchema,
+                      renderReport: (ReportDefinition def) =>
+                          renderBarcodeDefinition(
+                              definition: def, fonts: fonts),
+                    ),
+                  ),
+                  child: Text(l10n.tabBarcode),
                 ),
                 _comingSoon('makbuz', l10n.tabReceipt, LucideIcons.receipt),
                 ShadTab<String>(

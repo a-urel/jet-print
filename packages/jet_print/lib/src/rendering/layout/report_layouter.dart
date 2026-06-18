@@ -425,8 +425,9 @@ class ReportLayouter {
       final double labelHeight = def.soleDetailBand!.height;
       final int cols = columns.columnCount < 1 ? 1 : columns.columnCount;
       final double pitch = labelHeight + columns.rowSpacing;
-      int rowsPerPage =
-          pitch <= 0 ? 1 : ((bodyCapacity + columns.rowSpacing) / pitch).floor();
+      int rowsPerPage = pitch <= 0
+          ? 1
+          : ((bodyCapacity + columns.rowSpacing) / pitch).floor();
       if (rowsPerPage < 1) rowsPerPage = 1;
       final int cellsPerPage = rowsPerPage * cols;
 
@@ -497,8 +498,9 @@ class ReportLayouter {
       }
 
       final List<_OpenGroup> openStack = <_OpenGroup>[];
-      final List<List<_PlacedBand>> linearPlans =
-          <List<_PlacedBand>>[<_PlacedBand>[]];
+      final List<List<_PlacedBand>> linearPlans = <List<_PlacedBand>>[
+        <_PlacedBand>[]
+      ];
       double cursorY = bodyTop;
 
       void reEmitHeaders() {

@@ -29,10 +29,7 @@ ReportDefinition _def(ColumnLayout? grid) => ReportDefinition(
       body: ReportBody(
         root: DetailScope(id: 'root', children: <ScopeNode>[
           BandNode(Band(
-              id: 'd',
-              type: BandType.detail,
-              height: 30,
-              columnLayout: grid)),
+              id: 'd', type: BandType.detail, height: 30, columnLayout: grid)),
         ]),
       ),
     );
@@ -56,10 +53,11 @@ FilledReport _filled(int n) => FilledReport(
       ],
     );
 
-JetRect _boundsOf(LayoutResult r, int page, String id) => r.pages[page].primitives
-    .whereType<RectPrimitive>()
-    .firstWhere((RectPrimitive p) => p.elementId == id)
-    .bounds;
+JetRect _boundsOf(LayoutResult r, int page, String id) =>
+    r.pages[page].primitives
+        .whereType<RectPrimitive>()
+        .firstWhere((RectPrimitive p) => p.elementId == id)
+        .bounds;
 
 void main() {
   test('6 labels fill a 2x2 grid across two pages in horizontal order', () {
@@ -83,9 +81,11 @@ void main() {
   });
 
   test('page count is ceil(detailCount / cellsPerPage)', () {
-    expect(ReportLayouter().layoutDefinition(_def(_grid), _filled(4)).pages.length,
+    expect(
+        ReportLayouter().layoutDefinition(_def(_grid), _filled(4)).pages.length,
         1);
-    expect(ReportLayouter().layoutDefinition(_def(_grid), _filled(5)).pages.length,
+    expect(
+        ReportLayouter().layoutDefinition(_def(_grid), _filled(5)).pages.length,
         2);
   });
 

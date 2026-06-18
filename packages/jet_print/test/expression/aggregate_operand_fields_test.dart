@@ -22,7 +22,8 @@ void main() {
   });
 
   test('a non-aggregate call argument is not an aggregate operand', () {
-    expect(Expression.parse(r'UPPER($F{name})').aggregateOperandFields, isEmpty);
+    expect(
+        Expression.parse(r'UPPER($F{name})').aggregateOperandFields, isEmpty);
   });
 
   test('a field used both bare and as an operand is reported (operand wins)',

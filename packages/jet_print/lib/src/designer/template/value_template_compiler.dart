@@ -116,6 +116,18 @@ ValueParse parseValueField(String raw) {
   return LiteralValue(_unescape(raw));
 }
 
+/// Parses a value-field [raw] string for a field-or-literal binding: a bare
+/// `[field]` token returns that trimmed field name (bind to it); any other text
+/// returns null (treat the whole value as a literal).
+///
+/// Unlike [parseValueField], this recognizes ONLY the simple `[field]` form — no
+/// `{ … }` templates, no expressions. It backs the barcode Data input, whose
+/// value is field-or-literal (spec 036), through the same single-input UX and
+/// `[field]` token the value field uses.
+String? parseFieldToken(String raw) {
+  return _simpleField.firstMatch(raw)?.group(1)?.trim();
+}
+
 /// Turns a stored [expression] into its display token for the value field/canvas.
 ValueDisplay reverseCompile(String expression) {
   final Expr root;

@@ -254,5 +254,16 @@
   "propertiesColumnErrDimensions": "Sütun genişliği sıfırdan büyük olmalı ve boşluklar negatif olamaz.",
   "propertiesColumnErrGridTooWide": "Sütunlar sayfa genişliğine sığmıyor — sütun sayısını veya genişliğini azaltın.",
   "propertiesColumnErrLabelTooTall": "Etiket sayfadan uzun — bir satır sığması için bant yüksekliğini azaltın.",
-  "propertiesColumnElementsClipped": "{count, plural, =1{1 öğe sütunun dışına taşıyor ve kırpılacak.} other{{count} öğe sütunun dışına taşıyor ve kırpılacak.}}"
+  "propertiesColumnElementsClipped": "{count, plural, =1{1 öğe sütunun dışına taşıyor ve kırpılacak.} other{{count} öğe sütunun dışına taşıyor ve kırpılacak.}}",
+
+  "propertiesSymbology": "Semboloji",
+  "barcodeSymbologyAuto": "Otomatik",
+  "propertiesBarcodeData": "Veri",
+  "barcodeDataLiteral": "Değişmez",
+  "barcodeDataField": "Alan",
+  "barcodeShowText": "Metni göster",
+  "barcodeQuietZone": "Sessiz bölge",
+  "barcodeEccLevel": "Hata düzeltme",
+  "barcodeInvalidValue": "Değer bu semboloji için geçersiz",
+  "barcodeAutoInferred": "Otomatik → {symbology}"
 }

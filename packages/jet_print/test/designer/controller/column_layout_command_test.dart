@@ -51,13 +51,16 @@ void main() {
     expect(_detail(c).columnLayout, layout);
   });
 
-  test('removeColumnLayout clears the layout, preserving id/type/height/elements',
+  test(
+      'removeColumnLayout clears the layout, preserving id/type/height/elements',
       () {
     final JetReportDesignerController c =
         JetReportDesignerController(definition: _pureSingleDetail());
     addTearDown(c.dispose);
-    c.setColumnLayout('detail',
-        const ColumnLayout(columnCount: 3, columnWidth: 120, columnSpacing: 0, rowSpacing: 0));
+    c.setColumnLayout(
+        'detail',
+        const ColumnLayout(
+            columnCount: 3, columnWidth: 120, columnSpacing: 0, rowSpacing: 0));
 
     c.removeColumnLayout('detail');
 
@@ -74,8 +77,10 @@ void main() {
         JetReportDesignerController(definition: _pureSingleDetail());
     addTearDown(c.dispose);
 
-    c.setColumnLayout('nope',
-        const ColumnLayout(columnCount: 2, columnWidth: 200, columnSpacing: 0, rowSpacing: 0));
+    c.setColumnLayout(
+        'nope',
+        const ColumnLayout(
+            columnCount: 2, columnWidth: 200, columnSpacing: 0, rowSpacing: 0));
 
     expect(_detail(c).columnLayout, isNull);
     expect(c.canUndo, isFalse);

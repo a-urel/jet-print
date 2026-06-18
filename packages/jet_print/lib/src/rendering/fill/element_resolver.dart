@@ -9,6 +9,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import '../../data/data_row.dart';
+import '../../domain/elements/barcode_element.dart';
 import '../../domain/elements/image_element.dart';
 import '../../domain/elements/image_source.dart';
 import '../../domain/elements/text_element.dart';
@@ -68,6 +69,9 @@ class ElementResolver {
     Map<String, Object?> params = const <String, Object?>{},
     Map<String, JetValue> variables = const <String, JetValue>{},
   }) {
+    if (element is BarcodeElement) {
+      return _resolveBarcode(element, row);
+    }
     if (element is TextElement && element.expression != null) {
       return _resolveText(element,
           row: row, params: params, variables: variables);
@@ -199,4 +203,27 @@ class ElementResolver {
       bounds: el.bounds,
       source: BytesImageSource(bytes),
       fit: el.fit);
+
+  BarcodeElement _resolveBarcode(BarcodeElement el, DataRow? row) {
+    String value = el.data;
+    final String? field = el.dataField;
+    if (field != null) {
+      final Set<String>? known = knownFields;
+      if (known != null && !known.contains(field)) {
+        if (warnedFields.add(field)) {
+          diagnostics.warning('Field "$field" is not in the data source',
+              elementId: el.id);
+        }
+        value = '';
+      } else if (row != null && row.hasField(field)) {
+        final Object? v = row.field(field);
+        value = v?.toString() ?? '';
+      } else {
+        value = '';
+      }
+    }
+
+    // Flatten the binding so the renderer sees a literal.
+    return field == null ? el : el.copyWith(data: value, dataField: () => null);
+  }
 }

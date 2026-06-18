@@ -49,5 +49,68 @@ void main() {
         expect(registry.decode(registry.encode(e)), e);
       }
     });
+
+    test('defaults: auto symbology fields are off-by-default sensible', () {
+      const el = BarcodeElement(
+        id: 'b1',
+        bounds: JetRect(x: 0, y: 0, width: 80, height: 40),
+        symbology: BarcodeSymbology.auto,
+        data: 'X',
+      );
+      expect(el.dataField, isNull);
+      expect(el.showText, isTrue);
+      expect(el.quietZone, isTrue);
+      expect(el.eccLevel, QrErrorCorrectionLevel.m);
+    });
+
+    test('copyWith replaces named fields and preserves the rest', () {
+      const el = BarcodeElement(
+        id: 'b1',
+        bounds: JetRect(x: 0, y: 0, width: 80, height: 40),
+        symbology: BarcodeSymbology.auto,
+        data: 'X',
+      );
+      final next = el.copyWith(
+        symbology: BarcodeSymbology.ean13,
+        dataField: () => 'sku',
+        showText: false,
+        quietZone: false,
+        eccLevel: QrErrorCorrectionLevel.h,
+      );
+      expect(next.symbology, BarcodeSymbology.ean13);
+      expect(next.dataField, 'sku');
+      expect(next.showText, isFalse);
+      expect(next.quietZone, isFalse);
+      expect(next.eccLevel, QrErrorCorrectionLevel.h);
+      expect(next.id, 'b1');
+      expect(next.data, 'X');
+    });
+
+    test('copyWith can clear dataField back to null', () {
+      const el = BarcodeElement(
+        id: 'b1',
+        bounds: JetRect(x: 0, y: 0, width: 80, height: 40),
+        symbology: BarcodeSymbology.auto,
+        data: 'X',
+        dataField: 'sku',
+      );
+      expect(el.copyWith(dataField: () => null).dataField, isNull);
+      expect(el.copyWith().dataField, 'sku'); // omitted → unchanged
+    });
+
+    test('equality accounts for the new fields', () {
+      const a = BarcodeElement(
+          id: 'b1',
+          bounds: JetRect(x: 0, y: 0, width: 1, height: 1),
+          symbology: BarcodeSymbology.auto,
+          data: 'X');
+      const b = BarcodeElement(
+          id: 'b1',
+          bounds: JetRect(x: 0, y: 0, width: 1, height: 1),
+          symbology: BarcodeSymbology.auto,
+          data: 'X',
+          showText: false);
+      expect(a == b, isFalse);
+    });
   });
 }

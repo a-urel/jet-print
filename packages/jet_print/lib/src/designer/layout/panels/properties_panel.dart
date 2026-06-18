@@ -23,6 +23,9 @@ import '../../../domain/report_element.dart';
 import '../../../domain/styles/color.dart';
 import '../../../domain/styles/text_style.dart';
 import '../../../expression/expression.dart';
+import '../../../rendering/elements/barcode/barcode_encoder.dart';
+import '../../../rendering/elements/barcode/package_barcode_encoder.dart';
+import '../../../rendering/elements/barcode/symbology_inference.dart';
 import '../../../rendering/elements/shape_path.dart';
 import '../../../rendering/frame/primitive.dart';
 import '../../../rendering/text/font_registry.dart';
@@ -87,8 +90,10 @@ List<_ColumnDiagnostic> _columnDiagnostics(ReportDefinition def, Band band,
       .where((ReportElement e) => e.bounds.x + e.bounds.width > cl.columnWidth)
       .length;
   if (clipped > 0) {
-    out.add(
-        (isError: false, message: l10n.propertiesColumnElementsClipped(clipped)));
+    out.add((
+      isError: false,
+      message: l10n.propertiesColumnElementsClipped(clipped)
+    ));
   }
   return out;
 }
@@ -415,21 +420,144 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                 _unresolved(schema, controller, id, imageField: s.field))
           _UnresolvedHint(message: l10n.bindingUnresolved),
       ],
-      // Barcode color (021 / US3): the shared color editor — no None, bars
-      // always have a color — bound to BarcodeElement.color through one
-      // setBarcodeColor commit per pick (C8). The placeholder rendering (and
-      // later the real bars) reflects it on canvas/preview/export.
+      // Barcode inspector (036): symbology picker, data editor (field or
+      // literal), toggles (showText / quietZone), ECC level, and color.
+      // Each control writes through one controller method → one undo step.
       if (element is BarcodeElement) ...<Widget>[
         const SizedBox(height: 12),
         KeyedSubtree(
           key: ValueKey<String>('$_p.barcode.$id'),
-          child: _LabeledRow(
-            label: l10n.propertiesColor,
-            child: _ColorField(
-              keyBase: '$_p.field.barcodeColor',
-              value: element.color,
-              onCommit: (JetColor? c) => controller.setBarcodeColor(id, c!),
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              // --- Symbology ---------------------------------------------------
+              _LabeledRow(
+                label: l10n.propertiesSymbology,
+                child: ShadSelect<BarcodeSymbology>(
+                  selectedOptionBuilder:
+                      (BuildContext context, BarcodeSymbology value) => Text(
+                          value == BarcodeSymbology.auto
+                              ? l10n.barcodeSymbologyAuto
+                              : value.name),
+                  initialValue: element.symbology,
+                  options: <Widget>[
+                    for (final BarcodeSymbology s in BarcodeSymbology.values)
+                      ShadOption<BarcodeSymbology>(
+                        value: s,
+                        child: Text(s == BarcodeSymbology.auto
+                            ? l10n.barcodeSymbologyAuto
+                            : s.name),
+                      ),
+                  ],
+                  onChanged: (BarcodeSymbology? v) {
+                    if (v != null) controller.setBarcodeSymbology(id, v);
+                  },
+                ),
+              ),
+              // --- Data --------------------------------------------------------
+              // One field-or-literal input, like the text Value field: a bare
+              // `[field]` token (typed or inserted via the picker) binds to that
+              // field; any other text is a literal. The input's contents carry
+              // the mode, so there is no separate literal/field switch. No fx
+              // affordance — barcode is field-or-literal, not expressions (036).
+              _LabeledRow(
+                label: l10n.propertiesBarcodeData,
+                child: _ValueField(
+                  fieldKey: ValueKey<String>('$_p.field.barcodeData.$id'),
+                  display: element.dataField != null
+                      ? ValueDisplay('[${element.dataField}]')
+                      : ValueDisplay(element.data),
+                  placeholder: l10n.valueFieldHint,
+                  fields: _valueFieldChoices(schema, controller, id),
+                  pickerTooltip: l10n.valueFieldPickerTooltip,
+                  pickerKeyPrefix: '$_p.field.barcodeData.pick',
+                  showFx: false,
+                  onCommit: (String v) => controller.setBarcodeValue(id, v),
+                ),
+              ),
+              // Inline hints.
+              if (element.dataField != null &&
+                  element.dataField!.isNotEmpty &&
+                  _unresolved(schema, controller, id,
+                      barcodeField: element.dataField))
+                _UnresolvedHint(message: l10n.bindingUnresolved),
+              // Literal-value validity hint (FR-005/FR-015): a non-empty literal
+              // that cannot be encoded for its resolved symbology. A bound
+              // field's value is unknown at design time, so no validity hint
+              // there — only the unresolved-field hint above.
+              if (element.dataField == null &&
+                  element.data.isNotEmpty &&
+                  _barcodeLiteralInvalid(element))
+                _UnresolvedHint(message: l10n.barcodeInvalidValue),
+              if (element.symbology == BarcodeSymbology.auto &&
+                  element.data.isNotEmpty &&
+                  element.dataField == null)
+                _InlineNotice(
+                  text: l10n.barcodeAutoInferred(
+                      resolveConcreteSymbology(element.symbology, element.data)
+                          .name),
+                  theme: ShadTheme.of(context),
+                ),
+              // --- Show text (1D only) -----------------------------------------
+              if (!isTwoDSymbology(
+                  resolveConcreteSymbology(element.symbology, element.data)))
+                _LabeledRow(
+                  label: l10n.barcodeShowText,
+                  child: ShadSwitch(
+                    value: element.showText,
+                    onChanged: (bool v) => controller.setBarcodeShowText(id, v),
+                  ),
+                ),
+              // --- Quiet zone --------------------------------------------------
+              _LabeledRow(
+                label: l10n.barcodeQuietZone,
+                child: ShadSwitch(
+                  value: element.quietZone,
+                  onChanged: (bool v) => controller.setBarcodeQuietZone(id, v),
+                ),
+              ),
+              // --- ECC level (QR only) -----------------------------------------
+              if (resolveConcreteSymbology(element.symbology, element.data) ==
+                  BarcodeSymbology.qrCode)
+                _LabeledRow(
+                  label: l10n.barcodeEccLevel,
+                  child: ShadSelect<QrErrorCorrectionLevel>(
+                    selectedOptionBuilder:
+                        (BuildContext context, QrErrorCorrectionLevel value) =>
+                            Text(value.name.toUpperCase()),
+                    initialValue: element.eccLevel,
+                    options: <Widget>[
+                      for (final QrErrorCorrectionLevel e
+                          in QrErrorCorrectionLevel.values)
+                        ShadOption<QrErrorCorrectionLevel>(
+                          value: e,
+                          child: Text(e.name.toUpperCase()),
+                        ),
+                    ],
+                    onChanged: (QrErrorCorrectionLevel? v) {
+                      if (v != null) controller.setBarcodeEccLevel(id, v);
+                    },
+                  ),
+                ),
+              // --- Color -------------------------------------------------------
+              const SizedBox(height: 12),
+              _LabeledRow(
+                label: l10n.propertiesColor,
+                // A compact swatch-only box, left-aligned so it keeps its
+                // intrinsic size instead of stretching across the row — matching
+                // the text/shape color inputs.
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: _ColorField(
+                    keyBase: '$_p.field.barcodeColor',
+                    value: element.color,
+                    compact: true,
+                    onCommit: (JetColor? c) =>
+                        controller.setBarcodeColor(id, c!),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -601,6 +729,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     String elementId, {
     String? expression,
     String? imageField,
+    String? barcodeField,
   }) {
     if (schema == null) return false;
     final Band? band = findBandOfElement(controller.definition, elementId);
@@ -613,7 +742,23 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
       return !_resolvesAggregateAware(names, deep, expression);
     }
     if (imageField != null) return !names.contains(imageField);
+    if (barcodeField != null) return !names.contains(barcodeField);
     return false;
+  }
+
+  /// True when [element]'s literal value cannot be encoded for its resolved
+  /// symbology (FR-005/FR-015). Drives the design-time validity hint. Only
+  /// meaningful for a literal (a bound field's value is unknown at design time).
+  bool _barcodeLiteralInvalid(BarcodeElement element) {
+    final BarcodeEncodeResult result = const PackageBarcodeEncoder().encode(
+      element.symbology,
+      element.data,
+      width: element.bounds.width,
+      height: element.bounds.height,
+      showText: element.showText,
+      eccLevel: element.eccLevel,
+    );
+    return result is BarcodeInvalid;
   }
 
   /// True when every `$F{}` ref in [expression] is in [names], or is an
@@ -660,7 +805,8 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     if (schema == null) return const <String>{};
     final Band? band = findBandOfElement(controller.definition, elementId);
     if (band == null) return const <String>{};
-    return descendantOperandNamesForBand(controller.definition, schema, band.id);
+    return descendantOperandNamesForBand(
+        controller.definition, schema, band.id);
   }
 
   /// The fx-palette choices for [elementId]'s descendant operands — one
@@ -674,7 +820,8 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     if (schema == null) return const <FieldDef>[];
     final Band? band = findBandOfElement(controller.definition, elementId);
     if (band == null) return const <FieldDef>[];
-    return descendantFieldChoicesForBand(controller.definition, schema, band.id);
+    return descendantFieldChoicesForBand(
+        controller.definition, schema, band.id);
   }
 
   // --- Band ------------------------------------------------------------------
@@ -984,8 +1131,8 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
           fieldKey: const ValueKey<String>('$_p.field.columnWidth'),
           prefix: LucideIcons.moveHorizontal,
           value: layout.columnWidth,
-          onCommit: (double v) =>
-              controller.setColumnLayout(bandId, layout.copyWith(columnWidth: v)),
+          onCommit: (double v) => controller.setColumnLayout(
+              bandId, layout.copyWith(columnWidth: v)),
         ),
       ))
       ..add(_LabeledRow(
@@ -1004,8 +1151,8 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
           fieldKey: const ValueKey<String>('$_p.field.rowSpacing'),
           prefix: LucideIcons.moveVertical,
           value: layout.rowSpacing,
-          onCommit: (double v) =>
-              controller.setColumnLayout(bandId, layout.copyWith(rowSpacing: v)),
+          onCommit: (double v) => controller.setColumnLayout(
+              bandId, layout.copyWith(rowSpacing: v)),
         ),
       ))
       ..add(const SizedBox(height: 8))
@@ -1346,8 +1493,8 @@ class _InlineNotice extends StatelessWidget {
         const SizedBox(width: 6),
         Expanded(
           child: Text(text,
-              style:
-                  theme.textTheme.muted.copyWith(color: colors.mutedForeground)),
+              style: theme.textTheme.muted
+                  .copyWith(color: colors.mutedForeground)),
         ),
       ],
     );
@@ -1384,8 +1531,9 @@ class _ColumnLayoutAddButton extends StatelessWidget {
         child: Text(label, overflow: TextOverflow.ellipsis, maxLines: 1),
       ),
     );
-    final Widget content =
-        enabled ? button : ShadTooltip(builder: (_) => Text(disabledTooltip), child: button);
+    final Widget content = enabled
+        ? button
+        : ShadTooltip(builder: (_) => Text(disabledTooltip), child: button);
     // Align to intrinsic width: the parent Column uses CrossAxisAlignment.stretch,
     // so without this wrapper both buttons expand to full panel width.
     return Align(alignment: Alignment.centerLeft, child: content);
@@ -1394,7 +1542,8 @@ class _ColumnLayoutAddButton extends StatelessWidget {
 
 /// The "Remove column layout" affordance — restores a plain detail band.
 class _ColumnLayoutRemoveButton extends StatelessWidget {
-  const _ColumnLayoutRemoveButton({required this.label, required this.onRemove});
+  const _ColumnLayoutRemoveButton(
+      {required this.label, required this.onRemove});
 
   final String label;
   final VoidCallback onRemove;
@@ -1432,11 +1581,14 @@ class _LabeledRow extends StatelessWidget {
       child: Row(
         children: <Widget>[
           SizedBox(
-            width: 64,
+            width: 70,
             child: Text(
               label,
-              style:
-                  theme.textTheme.muted.copyWith(color: colors.mutedForeground),
+              // Smaller than the body muted style so the common property labels
+              // (Symbology, Show text, Quiet zone, Column spacing…) fit on one
+              // line in the narrow label column instead of wrapping.
+              style: theme.textTheme.muted
+                  .copyWith(color: colors.mutedForeground, fontSize: 12),
             ),
           ),
           const SizedBox(width: 8),
@@ -2130,9 +2282,11 @@ class _ValueField extends StatefulWidget {
     required this.placeholder,
     required this.fields,
     required this.pickerTooltip,
-    required this.fxTooltip,
-    required this.resolvableNames,
     required this.onCommit,
+    this.fxTooltip = '',
+    this.resolvableNames = const <String>{},
+    this.showFx = true,
+    this.pickerKeyPrefix = '$_p.field.value.pick',
     this.descendantOperands = const <String>{},
     this.descendantFields = const <FieldDef>[],
     this.focusNode,
@@ -2151,6 +2305,14 @@ class _ValueField extends StatefulWidget {
 
   /// Accessible label / tooltip for the fx (expression editor) button.
   final String fxTooltip;
+
+  /// Whether to show the fx (expression editor) affordance. Off for the barcode
+  /// Data input, which is field-or-literal — no expressions (spec 036).
+  final bool showFx;
+
+  /// Key namespace for the field picker (so each reuse — value vs. barcode data
+  /// — has its own stable test seam). Defaults to the value field's namespace.
+  final String pickerKeyPrefix;
 
   /// The band's resolvable name set (schema fields in scope ∪ published totals,
   /// spec 031), passed to the fx editor so its unresolved check matches the
@@ -2248,38 +2410,42 @@ class _ValueFieldState extends State<_ValueField> {
       readOnly: !widget.display.editable,
       placeholder: Text(widget.placeholder),
       onSubmitted: widget.onCommit,
-      // Editable values carry an fx affordance (opens the expression editor);
-      // the field picker rides beside it only when fields are in scope. A
-      // read-only value (exotic/legacy binding) keeps no trailing affordances.
-      trailing: !widget.display.editable
+      // Editable values carry an fx affordance (opens the expression editor)
+      // when [showFx]; the field picker rides beside it only when fields are in
+      // scope. A read-only value (exotic/legacy binding), or an input with
+      // neither affordance, keeps no trailing widget.
+      trailing: !widget.display.editable ||
+              (!widget.showFx && widget.fields.isEmpty)
           ? null
           : Row(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Semantics(
-                  label: widget.fxTooltip,
-                  button: true,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: _openFx,
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: Icon(
-                        LucideIcons.squareFunction,
-                        key: const ValueKey<String>('$_p.field.value.fx'),
-                        size: 14,
-                        color:
-                            ShadTheme.of(context).colorScheme.mutedForeground,
+                if (widget.showFx)
+                  Semantics(
+                    label: widget.fxTooltip,
+                    button: true,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: _openFx,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: Icon(
+                          LucideIcons.squareFunction,
+                          key: const ValueKey<String>('$_p.field.value.fx'),
+                          size: 14,
+                          color:
+                              ShadTheme.of(context).colorScheme.mutedForeground,
+                        ),
                       ),
                     ),
                   ),
-                ),
                 if (widget.fields.isNotEmpty)
                   _FieldPicker(
                     controller: _picker,
                     fields: widget.fields,
                     tooltip: widget.pickerTooltip,
                     onPick: _pick,
+                    keyPrefix: widget.pickerKeyPrefix,
                   ),
               ],
             ),

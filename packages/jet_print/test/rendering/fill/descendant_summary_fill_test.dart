@@ -196,15 +196,16 @@ void main() {
       // Summary should have grand total 335.
       final FilledBand summary = res.report.bands.last;
       expect(summary.type, BandType.summary);
-      final String summaryText =
-          (summary.elements.firstWhere((ReportElement e) => e.id == 'summaryTotal')
-                  as TextElement)
-              .text;
-      expect(summaryText, '335.0', reason: 'grand total = 10+20+5+100+200 = 335');
+      final String summaryText = (summary.elements
+                  .firstWhere((ReportElement e) => e.id == 'summaryTotal')
+              as TextElement)
+          .text;
+      expect(summaryText, '335.0',
+          reason: 'grand total = 10+20+5+100+200 = 335');
 
       // No diagnostics errors.
       expect(res.diagnostics.hasErrors, isFalse,
-          reason: 'no errors expected: ${ res.diagnostics.entries}');
+          reason: 'no errors expected: ${res.diagnostics.entries}');
     });
 
     test(
@@ -220,10 +221,10 @@ void main() {
 
       final FilledBand summary = res.report.bands.last;
       expect(summary.type, BandType.summary);
-      final String summaryText =
-          (summary.elements.firstWhere((ReportElement e) => e.id == 'summaryTotal')
-                  as TextElement)
-              .text;
+      final String summaryText = (summary.elements
+                  .firstWhere((ReportElement e) => e.id == 'summaryTotal')
+              as TextElement)
+          .text;
       // 5 lines: 10, 20, 5, 100, 200. Sum=335. AVG = 335/5 = 67.0
       expect(summaryText, '67.0',
           reason: 'flat AVG over all 5 lines = 335 / 5 = 67');

@@ -50,8 +50,7 @@ class Ambiguous extends AggregatePath {
 }
 
 /// Resolves [operand] against [scopeFields]. See [AggregatePath].
-AggregatePath resolveAggregatePath(
-    List<FieldDef> scopeFields, String operand) {
+AggregatePath resolveAggregatePath(List<FieldDef> scopeFields, String operand) {
   for (final FieldDef f in scopeFields) {
     if (f.name == operand && f.type != JetFieldType.collection) {
       return const SameScope();

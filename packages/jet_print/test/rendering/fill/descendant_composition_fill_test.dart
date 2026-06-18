@@ -178,8 +178,7 @@ void main() {
     });
 
     test('emits one footer per customer (3 customers)', () {
-      expect(footers, hasLength(3),
-          reason: 'one footer per customer: A, B, C');
+      expect(footers, hasLength(3), reason: 'one footer per customer: A, B, C');
     });
 
     test('no diagnostics errors', () {
@@ -243,20 +242,17 @@ void main() {
 
       test('customer A: SUM(lineTotal)=35 + COUNT(orderNo)=2 = 37.0', () {
         final FilledBand footer = footerFor('A');
-        expect(sumPlusCountText(footer), '37.0',
-            reason: 'A: 35 + 2 = 37');
+        expect(sumPlusCountText(footer), '37.0', reason: 'A: 35 + 2 = 37');
       });
 
       test('customer B: SUM(lineTotal)=300 + COUNT(orderNo)=1 = 301.0', () {
         final FilledBand footer = footerFor('B');
-        expect(sumPlusCountText(footer), '301.0',
-            reason: 'B: 300 + 1 = 301');
+        expect(sumPlusCountText(footer), '301.0', reason: 'B: 300 + 1 = 301');
       });
 
       test('customer C (no orders): SUM=0 + COUNT=0 = 0.0', () {
         final FilledBand footer = footerFor('C');
-        expect(sumPlusCountText(footer), '0.0',
-            reason: 'C: 0 + 0 = 0');
+        expect(sumPlusCountText(footer), '0.0', reason: 'C: 0 + 0 = 0');
       });
     });
   });

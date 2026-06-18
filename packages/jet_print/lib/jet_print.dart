@@ -65,7 +65,7 @@ export 'src/domain/column_layout.dart' show ColumnLayout;
 export 'src/domain/detail_scope.dart'
     show BandNode, DetailScope, NestedScope, ScopeNode;
 export 'src/domain/elements/barcode_element.dart'
-    show BarcodeElement, BarcodeSymbology;
+    show BarcodeElement, BarcodeSymbology, QrErrorCorrectionLevel;
 export 'src/domain/elements/image_element.dart' show ImageElement;
 export 'src/domain/elements/image_source.dart'
     show

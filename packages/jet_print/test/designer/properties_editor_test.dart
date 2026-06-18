@@ -1543,7 +1543,10 @@ void main() {
       await _openProperties(tester);
       final String id = await addBarcode(tester, c);
 
-      expect(_valueIn('barcodeColor', '#000000'), findsOneWidget,
+      // The compact swatch trigger shows the current color (no inline hex); a
+      // new barcode is black.
+      expect(_field('barcodeColor'), findsOneWidget);
+      expect(barcodeOf(c, id).color, JetColor.black,
           reason: 'a new barcode is black');
 
       await tester.tap(_field('barcodeColor'));
@@ -1567,6 +1570,179 @@ void main() {
       await tester.pumpAndSettle();
       expect(_field('barcodeColor.none'), findsNothing);
       expect(_field('barcodeColor.hex'), findsOneWidget);
+    });
+  });
+
+  // --- Barcode inspector (036) -------------------------------------------
+  group('properties — barcode inspector (036)', () {
+    /// Pumps the designer with a controller pre-loaded with a barcode element
+    /// with the given [id] and [symbology], selects it, and opens Properties.
+    Future<JetReportDesignerController> pumpBarcode(
+      WidgetTester tester, {
+      required String id,
+      BarcodeSymbology symbology = BarcodeSymbology.auto,
+      String data = '1234567890',
+      String? dataField,
+      JetDataSchema? schema,
+    }) async {
+      final JetReportDesignerController c = JetReportDesignerController(
+        definition: ReportDefinition(
+          name: 'Barcode',
+          page: PageFormat.a4Portrait,
+          body: ReportBody(
+            root: DetailScope(
+              id: 'root',
+              children: <ScopeNode>[
+                BandNode(Band(
+                  id: 'detail',
+                  type: BandType.detail,
+                  height: 120,
+                  elements: <ReportElement>[
+                    BarcodeElement(
+                      id: id,
+                      bounds:
+                          const JetRect(x: 10, y: 10, width: 80, height: 80),
+                      symbology: symbology,
+                      data: data,
+                      dataField: dataField,
+                    ),
+                  ],
+                )),
+              ],
+            ),
+          ),
+        ),
+      );
+      // Note: pumpDesignerWith already registers addTearDown(c.dispose); do not
+      // add a second teardown here or the controller will be disposed twice.
+      await pumpDesignerWith(tester, controller: c, dataSchema: schema);
+      await _openProperties(tester);
+      c.select(id);
+      await tester.pumpAndSettle();
+      return c;
+    }
+
+    /// The selected barcode element in [c].
+    BarcodeElement barcode(JetReportDesignerController c, String id) =>
+        _elementById(c, id) as BarcodeElement;
+
+    /// A one-field product schema for exercising the Data field picker.
+    final JetDataSchema productSchema = JetDataSchema(
+      name: 'Products',
+      fields: <FieldDef>[FieldDef('sku', type: JetFieldType.string)],
+    );
+
+    testWidgets('barcode inspector shows symbology + data + options',
+        (WidgetTester tester) async {
+      await pumpBarcode(tester, id: 'b1');
+      expect(find.text('Symbology'), findsOneWidget);
+      expect(find.text('Data'), findsOneWidget);
+      expect(find.text('Show text'), findsOneWidget);
+      expect(find.text('Quiet zone'), findsOneWidget);
+    });
+
+    testWidgets('ECC row only appears for QR', (WidgetTester tester) async {
+      await pumpBarcode(tester, id: 'b1', symbology: BarcodeSymbology.qrCode);
+      expect(find.text('Error correction'), findsOneWidget);
+
+      await pumpBarcode(tester, id: 'b2', symbology: BarcodeSymbology.code128);
+      expect(find.text('Error correction'), findsNothing);
+    });
+
+    testWidgets('show-text row absent for 2D symbology (QR)',
+        (WidgetTester tester) async {
+      await pumpBarcode(tester, id: 'b1', symbology: BarcodeSymbology.qrCode);
+      expect(find.text('Show text'), findsNothing);
+    });
+
+    testWidgets('show-text row present for 1D symbology (Code 128)',
+        (WidgetTester tester) async {
+      await pumpBarcode(tester, id: 'b1', symbology: BarcodeSymbology.code128);
+      expect(find.text('Show text'), findsOneWidget);
+    });
+
+    testWidgets('auto mode with 1D literal still shows show-text + no ECC',
+        (WidgetTester tester) async {
+      // '1234567890' → code128 (10 digits, not 8/12/13/14) → 1D
+      await pumpBarcode(tester,
+          id: 'b1', symbology: BarcodeSymbology.auto, data: '1234567890');
+      expect(find.text('Show text'), findsOneWidget);
+      expect(find.text('Error correction'), findsNothing);
+    });
+
+    testWidgets('a literal invalid for a pinned symbology shows the hint',
+        (WidgetTester tester) async {
+      // 'ABC' is not valid EAN-13 (needs 12/13 digits) → invalid-value hint.
+      await pumpBarcode(tester,
+          id: 'b1', symbology: BarcodeSymbology.ean13, data: 'ABC');
+      expect(
+          find.text('Value is not valid for this symbology'), findsOneWidget);
+    });
+
+    testWidgets('a valid literal shows no invalid hint',
+        (WidgetTester tester) async {
+      await pumpBarcode(tester,
+          id: 'b1', symbology: BarcodeSymbology.code128, data: 'HELLO');
+      expect(find.text('Value is not valid for this symbology'), findsNothing);
+    });
+
+    // --- Data: one field-or-literal input, no Literal/Field switch ----------
+    testWidgets('the Data input is one field, with no Literal/Field switch',
+        (WidgetTester tester) async {
+      await pumpBarcode(tester, id: 'b1', data: 'HELLO');
+      // One unified value-style input showing the literal.
+      expect(_field('barcodeData.b1'), findsOneWidget);
+      expect(_valueIn('barcodeData.b1', 'HELLO'), findsOneWidget);
+      // The old literal↔field toggle is gone.
+      expect(find.text('Literal'), findsNothing);
+      expect(find.text('Field'), findsNothing);
+    });
+
+    testWidgets('typing a [field] token binds the data field',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c =
+          await pumpBarcode(tester, id: 'b1', data: 'HELLO');
+      await tester.enterText(_editable('barcodeData.b1'), '[sku]');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(barcode(c, 'b1').dataField, 'sku');
+    });
+
+    testWidgets('typing plain text sets a literal and clears the binding',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c =
+          await pumpBarcode(tester, id: 'b1', data: '', dataField: 'sku');
+      await tester.enterText(_editable('barcodeData.b1'), '9501101530003');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(barcode(c, 'b1').data, '9501101530003');
+      expect(barcode(c, 'b1').dataField, isNull);
+    });
+
+    testWidgets('a bound field shows its [field] token in the input',
+        (WidgetTester tester) async {
+      await pumpBarcode(tester,
+          id: 'b1', data: '', dataField: 'sku', schema: productSchema);
+      expect(_valueIn('barcodeData.b1', '[sku]'), findsOneWidget);
+    });
+
+    testWidgets('the field picker inserts a [field] binding (no fx button)',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpBarcode(tester,
+          id: 'b1', data: 'HELLO', schema: productSchema);
+      // No expression affordance — barcode is field-or-literal.
+      expect(find.byKey(const ValueKey<String>('$_p.field.value.fx')),
+          findsNothing);
+      // The field picker is present; tapping it and choosing a field binds it.
+      final Finder pick =
+          find.byKey(const ValueKey<String>('$_p.field.barcodeData.pick'));
+      expect(pick, findsOneWidget);
+      await tester.tap(pick);
+      await tester.pumpAndSettle();
+      await tester.tap(
+          find.byKey(const ValueKey<String>('$_p.field.barcodeData.pick.sku')));
+      await tester.pumpAndSettle();
+      expect(barcode(c, 'b1').dataField, 'sku');
     });
   });
 

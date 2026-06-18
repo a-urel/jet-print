@@ -729,4 +729,36 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get propertiesSymbology => 'Symbology';
+
+  @override
+  String get barcodeSymbologyAuto => 'Auto';
+
+  @override
+  String get propertiesBarcodeData => 'Data';
+
+  @override
+  String get barcodeDataLiteral => 'Literal';
+
+  @override
+  String get barcodeDataField => 'Field';
+
+  @override
+  String get barcodeShowText => 'Show text';
+
+  @override
+  String get barcodeQuietZone => 'Quiet zone';
+
+  @override
+  String get barcodeEccLevel => 'Error correction';
+
+  @override
+  String get barcodeInvalidValue => 'Value is not valid for this symbology';
+
+  @override
+  String barcodeAutoInferred(String symbology) {
+    return 'Auto → $symbology';
+  }
 }

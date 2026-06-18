@@ -73,7 +73,8 @@ TextElement _txt(String id, {required String expression}) => TextElement(
       expression: expression,
     );
 
-Band _band(String id, BandType type, {List<ReportElement> elements = const []}) =>
+Band _band(String id, BandType type,
+        {List<ReportElement> elements = const []}) =>
     Band(id: id, type: type, height: 20, elements: elements);
 
 /// Minimal report: summary band with [summaryExpr], customer group footer with
@@ -100,8 +101,7 @@ ReportDefinition _report({
     id: 'orders',
     collectionField: 'orders',
     children: <ScopeNode>[
-      BandNode(
-          Band(id: 'orders/detail', type: BandType.detail, height: 12)),
+      BandNode(Band(id: 'orders/detail', type: BandType.detail, height: 12)),
       const NestedScope(linesScope),
     ],
     footer: ordersFooterExpr == null
@@ -124,10 +124,9 @@ ReportDefinition _report({
               id: 'g0',
               name: 'customer',
               key: r'$F{customerId}',
-              footer: _band('g0/footer', BandType.groupFooter,
-                  elements: [
-                    _txt('g0/footer/t', expression: customerFooterExpr)
-                  ]),
+              footer: _band('g0/footer', BandType.groupFooter, elements: [
+                _txt('g0/footer/t', expression: customerFooterExpr)
+              ]),
             ),
           ],
   );
@@ -172,7 +171,8 @@ void main() {
       expect(ds.where((d) => d.message.contains('operand')), isEmpty);
     });
 
-    test('no schema: ambiguous-looking operand causes no operand diagnostic', () {
+    test('no schema: ambiguous-looking operand causes no operand diagnostic',
+        () {
       final def = _report(summaryExpr: r'SUM($F{lineTotal})');
       // Without a schema we can't detect ambiguity — no error.
       final ds = validate(def);
@@ -207,8 +207,7 @@ void main() {
     test(
         'schema: unique-descend lineTotal at root group footer → no diagnostic',
         () {
-      final def =
-          _report(customerFooterExpr: r'SUM($F{lineTotal})');
+      final def = _report(customerFooterExpr: r'SUM($F{lineTotal})');
       final ds = validate(def, schema: _schema);
       expect(ds.where((d) => d.severity == DiagnosticSeverity.error), isEmpty);
     });

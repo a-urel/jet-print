@@ -47,7 +47,7 @@ ReportElement buildDefaultElement(
       return BarcodeElement(
         id: id,
         bounds: bounds,
-        symbology: BarcodeSymbology.qrCode,
+        symbology: BarcodeSymbology.auto,
         data: '1234567890',
       );
   }

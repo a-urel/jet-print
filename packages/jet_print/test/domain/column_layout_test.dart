@@ -16,9 +16,13 @@ void main() {
   });
 
   test('copyWith replaces only the given field', () {
-    expect(a.copyWith(columnCount: 4),
+    expect(
+        a.copyWith(columnCount: 4),
         const ColumnLayout(
-            columnCount: 4, columnWidth: 180, columnSpacing: 12, rowSpacing: 8));
+            columnCount: 4,
+            columnWidth: 180,
+            columnSpacing: 12,
+            rowSpacing: 8));
   });
 
   test('toJson / fromJson round-trips value-equal', () {

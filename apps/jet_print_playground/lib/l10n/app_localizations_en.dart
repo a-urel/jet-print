@@ -18,6 +18,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabLabel => 'Label';
 
   @override
+  String get tabBarcode => 'Barcode';
+
+  @override
   String get tabList => 'List';
 
   @override

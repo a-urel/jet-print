@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/data_row.dart';
 import 'package:jet_print/src/data/field_def.dart';
+import 'package:jet_print/src/domain/elements/barcode_element.dart';
 import 'package:jet_print/src/domain/elements/image_element.dart';
 import 'package:jet_print/src/domain/elements/image_source.dart';
 import 'package:jet_print/src/domain/elements/shape_element.dart';
@@ -165,5 +166,58 @@ void main() {
     const ShapeElement el =
         ShapeElement(id: 's', bounds: r, kind: ShapeKind.rectangle);
     expect(resolver(d).resolve(el, row: row(<String, Object?>{})), same(el));
+  });
+
+  // --- BarcodeElement resolution (036) ---
+
+  test('barcode dataField resolves to the row value (flattened)', () {
+    final ReportDiagnostics d = ReportDiagnostics();
+    const BarcodeElement el = BarcodeElement(
+        id: 'b1',
+        bounds: JetRect(x: 0, y: 0, width: 80, height: 40),
+        symbology: BarcodeSymbology.code128,
+        data: '',
+        dataField: 'sku');
+    final BarcodeElement resolved = resolver(d).resolve(
+      el,
+      row: row(<String, Object?>{'sku': 'ABC-123'}),
+    ) as BarcodeElement;
+    expect(resolved.data, 'ABC-123');
+    expect(resolved.dataField, isNull);
+    expect(d.entries, isEmpty);
+  });
+
+  test('unknown dataField warns once and resolves empty', () {
+    final ReportDiagnostics d = ReportDiagnostics();
+    final JetFunctionRegistry f = JetFunctionRegistry();
+    registerBuiltInFunctions(f);
+    final ElementResolver res = ElementResolver(
+      functions: f,
+      diagnostics: d,
+      knownFields: <String>{'sku'},
+    );
+    const BarcodeElement el = BarcodeElement(
+        id: 'b1',
+        bounds: JetRect(x: 0, y: 0, width: 80, height: 40),
+        symbology: BarcodeSymbology.code128,
+        data: '',
+        dataField: 'bogus');
+    final BarcodeElement resolved = res.resolve(
+      el,
+      row: row(<String, Object?>{'sku': 'x'}),
+    ) as BarcodeElement;
+    expect(resolved.data, '');
+    expect(resolved.dataField, isNull);
+    expect(d.entries.where((Diagnostic m) => m.elementId == 'b1'), isNotEmpty);
+  });
+
+  test('literal data passes through (no dataField)', () {
+    final ReportDiagnostics d = ReportDiagnostics();
+    const BarcodeElement el = BarcodeElement(
+        id: 'b1',
+        bounds: JetRect(x: 0, y: 0, width: 80, height: 40),
+        symbology: BarcodeSymbology.code128,
+        data: 'HELLO');
+    expect((resolver(d).resolve(el) as BarcodeElement).data, 'HELLO');
   });
 }

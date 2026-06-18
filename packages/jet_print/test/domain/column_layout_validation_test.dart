@@ -16,7 +16,8 @@ const PageFormat _page =
     PageFormat(width: 200, height: 100, margins: JetEdgeInsets.all(10));
 
 ReportDefinition _labels(ColumnLayout grid,
-    {double bandHeight = 30, List<ReportElement> elements = const <ReportElement>[]}) =>
+        {double bandHeight = 30,
+        List<ReportElement> elements = const <ReportElement>[]}) =>
     ReportDefinition(
       name: 'labels',
       page: _page,
@@ -48,9 +49,8 @@ void main() {
   });
 
   test('columnCount < 1 is an error', () {
-    final List<Diagnostic> e = _errors(_labels(
-        const ColumnLayout(
-            columnCount: 0, columnWidth: 80, columnSpacing: 20, rowSpacing: 10)));
+    final List<Diagnostic> e = _errors(_labels(const ColumnLayout(
+        columnCount: 0, columnWidth: 80, columnSpacing: 20, rowSpacing: 10)));
     expect(e.single.message, contains('columnCount'));
   });
 
@@ -86,17 +86,15 @@ void main() {
     expect(w.single.message, contains('overflows cell width'));
   });
 
-  test('columnLayout on a non-detail (furniture) band is ignored with a warning',
+  test(
+      'columnLayout on a non-detail (furniture) band is ignored with a warning',
       () {
     final ReportDefinition def = ReportDefinition(
       name: 'x',
       page: _page,
       furniture: const PageFurniture(
         pageHeader: Band(
-            id: 'ph',
-            type: BandType.pageHeader,
-            height: 10,
-            columnLayout: ok),
+            id: 'ph', type: BandType.pageHeader, height: 10, columnLayout: ok),
       ),
       body: const ReportBody(
           root: DetailScope(id: 'root', children: <ScopeNode>[

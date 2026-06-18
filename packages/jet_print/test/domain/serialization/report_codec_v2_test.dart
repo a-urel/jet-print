@@ -381,7 +381,8 @@ void main() {
       );
     });
 
-    test('Band.columnLayout round-trips and is omitted when null (spec 034)', () {
+    test('Band.columnLayout round-trips and is omitted when null (spec 034)',
+        () {
       const ColumnLayout grid = ColumnLayout(
           columnCount: 3, columnWidth: 180, columnSpacing: 12, rowSpacing: 8);
       final ReportDefinition def = ReportDefinition(
@@ -390,7 +391,10 @@ void main() {
         body: const ReportBody(
           root: DetailScope(id: 'root', children: <ScopeNode>[
             BandNode(Band(
-                id: 'd', type: BandType.detail, height: 80, columnLayout: grid)),
+                id: 'd',
+                type: BandType.detail,
+                height: 80,
+                columnLayout: grid)),
           ]),
         ),
       );

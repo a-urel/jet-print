@@ -26,7 +26,11 @@ void main() {
     const Band withGrid =
         Band(id: 'd', type: BandType.detail, height: 80, columnLayout: grid);
     expect(withGrid.copyWith(height: 90).columnLayout, grid);
-    expect(withGrid.copyWith(columnLayout: grid.copyWith(columnCount: 2))
-        .columnLayout!.columnCount, 2);
+    expect(
+        withGrid
+            .copyWith(columnLayout: grid.copyWith(columnCount: 2))
+            .columnLayout!
+            .columnCount,
+        2);
   });
 }

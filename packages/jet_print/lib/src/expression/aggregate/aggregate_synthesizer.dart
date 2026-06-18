@@ -376,8 +376,7 @@ DescendantLift liftDescendantAggregates(
     };
   }
 
-  Band? rewriteBand(
-      Band? band, VariableResetScope scope, String? group) {
+  Band? rewriteBand(Band? band, VariableResetScope scope, String? group) {
     if (band == null) return null;
     bool changed = false;
     final List<ReportElement> els = <ReportElement>[];
@@ -413,8 +412,7 @@ DescendantLift liftDescendantAggregates(
   final Band? summary =
       rewriteBand(def.body.summary, VariableResetScope.report, null);
   final List<GroupLevel> groups = <GroupLevel>[
-    for (final GroupLevel g in def.body.root.groups)
-      _liftGroup(g, rewriteBand),
+    for (final GroupLevel g in def.body.root.groups) _liftGroup(g, rewriteBand),
   ];
 
   if (specs.isEmpty) return DescendantLift(def, const <DescendantAggregate>[]);

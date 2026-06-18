@@ -369,7 +369,8 @@ void main() {
         '(amount exists in both salesLines and payments)', () {
       final FillResult res = ReportFiller().fillDefinition(
         _makeAmbiguousSummaryDef(),
-        JetInMemoryDataSource(_ambiguousRootRows(), fields: _ambiguousRootSchema),
+        JetInMemoryDataSource(_ambiguousRootRows(),
+            fields: _ambiguousRootSchema),
       );
 
       // The summary is always the last band in the report.
@@ -394,7 +395,8 @@ void main() {
         '(amount exists in both salesLines and payments)', () {
       final FillResult res = ReportFiller().fillDefinition(
         _makeAmbiguousSummaryDef(),
-        JetInMemoryDataSource(_ambiguousRootRows(), fields: _ambiguousRootSchema),
+        JetInMemoryDataSource(_ambiguousRootRows(),
+            fields: _ambiguousRootSchema),
       );
 
       final List<FilledBand> footers = res.report.bands
@@ -433,8 +435,7 @@ void main() {
           _ambiguousNestedRows(),
           fields: <FieldDef>[
             FieldDef('orders',
-                type: JetFieldType.collection,
-                fields: _ambiguousNestedSchema),
+                type: JetFieldType.collection, fields: _ambiguousNestedSchema),
           ],
         ),
       );
@@ -444,16 +445,14 @@ void main() {
           .toList();
 
       // One master row with one order → one footer emitted.
-      expect(footers, hasLength(1),
-          reason: 'one footer per order-iteration');
+      expect(footers, hasLength(1), reason: 'one footer per order-iteration');
 
       // Band-type guard (mirrors the other sink tests) before text assertion.
       expect(footers.first.type, BandType.groupFooter,
           reason: 'orders nested-scope footer has type groupFooter');
 
       expect(_textOf(footers.first, 'orderTotal'), '#ERROR',
-          reason:
-              'amount is ambiguous at orders scope (items vs discounts) → '
+          reason: 'amount is ambiguous at orders scope (items vs discounts) → '
               'fallback token');
 
       // Fill-time diagnostics contract: ambiguous-operand fallback is silent —
@@ -504,8 +503,7 @@ void main() {
           .toList();
 
       // Two customers → two group footers.
-      expect(footers, hasLength(2),
-          reason: 'one footer per customer');
+      expect(footers, hasLength(2), reason: 'one footer per customer');
 
       // C1: AVG(10, 20, 30) = 60/3 = 20.0
       expect(_textOf(footers[0], 'customerAvg'), equals('20.0'),

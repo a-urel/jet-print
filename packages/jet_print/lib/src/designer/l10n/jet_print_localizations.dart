@@ -1486,6 +1486,66 @@ abstract class JetPrintLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 element extends past the column and will be clipped.} other{{count} elements extend past the column and will be clipped.}}'**
   String propertiesColumnElementsClipped(int count);
+
+  /// Barcode symbology picker label
+  ///
+  /// In en, this message translates to:
+  /// **'Symbology'**
+  String get propertiesSymbology;
+
+  /// Auto-detect symbology option
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get barcodeSymbologyAuto;
+
+  /// Barcode literal/field data label
+  ///
+  /// In en, this message translates to:
+  /// **'Data'**
+  String get propertiesBarcodeData;
+
+  /// Use a literal barcode value
+  ///
+  /// In en, this message translates to:
+  /// **'Literal'**
+  String get barcodeDataLiteral;
+
+  /// Bind the barcode value to a field
+  ///
+  /// In en, this message translates to:
+  /// **'Field'**
+  String get barcodeDataField;
+
+  /// Toggle human-readable text under 1D barcodes
+  ///
+  /// In en, this message translates to:
+  /// **'Show text'**
+  String get barcodeShowText;
+
+  /// Toggle the barcode quiet-zone margin
+  ///
+  /// In en, this message translates to:
+  /// **'Quiet zone'**
+  String get barcodeQuietZone;
+
+  /// QR error-correction level label
+  ///
+  /// In en, this message translates to:
+  /// **'Error correction'**
+  String get barcodeEccLevel;
+
+  /// Inline hint: data invalid for the chosen symbology
+  ///
+  /// In en, this message translates to:
+  /// **'Value is not valid for this symbology'**
+  String get barcodeInvalidValue;
+
+  /// Inline hint showing the inferred symbology
+  ///
+  /// In en, this message translates to:
+  /// **'Auto → {symbology}'**
+  String barcodeAutoInferred(String symbology);
 }
 
 class _JetPrintLocalizationsDelegate
