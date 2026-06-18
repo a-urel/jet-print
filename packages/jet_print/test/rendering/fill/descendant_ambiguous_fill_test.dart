@@ -378,6 +378,15 @@ void main() {
       expect(_textOf(summary, 'grandTotal'), '#ERROR',
           reason:
               'amount is ambiguous (salesLines vs payments) → fallback token');
+
+      // Fill-time diagnostics contract: ambiguous-operand fallback is silent —
+      // the filler substitutes the #ERROR token directly without emitting a
+      // diagnostic. Validation is an author-time concern (Task 7 / FR-011).
+      expect(res.diagnostics.hasErrors, isFalse,
+          reason: 'ambiguous fill is a silent graceful fallback, not an error: '
+              '${res.diagnostics.entries}');
+      expect(res.diagnostics.entries, isEmpty,
+          reason: 'no diagnostics emitted during ambiguous fill');
     });
 
     test(
@@ -402,6 +411,15 @@ void main() {
             reason:
                 'amount is ambiguous at master scope → footer fallback token');
       }
+
+      // Fill-time diagnostics contract: ambiguous-operand fallback is silent —
+      // the filler substitutes the #ERROR token directly without emitting a
+      // diagnostic. Validation is an author-time concern (Task 7 / FR-011).
+      expect(res.diagnostics.hasErrors, isFalse,
+          reason: 'ambiguous fill is a silent graceful fallback, not an error: '
+              '${res.diagnostics.entries}');
+      expect(res.diagnostics.entries, isEmpty,
+          reason: 'no diagnostics emitted during ambiguous fill');
     });
 
     test(
@@ -429,10 +447,23 @@ void main() {
       expect(footers, hasLength(1),
           reason: 'one footer per order-iteration');
 
+      // Band-type guard (mirrors the other sink tests) before text assertion.
+      expect(footers.first.type, BandType.groupFooter,
+          reason: 'orders nested-scope footer has type groupFooter');
+
       expect(_textOf(footers.first, 'orderTotal'), '#ERROR',
           reason:
               'amount is ambiguous at orders scope (items vs discounts) → '
               'fallback token');
+
+      // Fill-time diagnostics contract: ambiguous-operand fallback is silent —
+      // the filler substitutes the #ERROR token directly without emitting a
+      // diagnostic. Validation is an author-time concern (Task 7 / FR-011).
+      expect(res.diagnostics.hasErrors, isFalse,
+          reason: 'ambiguous fill is a silent graceful fallback, not an error: '
+              '${res.diagnostics.entries}');
+      expect(res.diagnostics.entries, isEmpty,
+          reason: 'no diagnostics emitted during ambiguous fill');
     });
   });
 
@@ -477,10 +508,10 @@ void main() {
           reason: 'one footer per customer');
 
       // C1: AVG(10, 20, 30) = 60/3 = 20.0
-      expect(_textOf(footers[0], 'customerAvg'), startsWith('20'),
+      expect(_textOf(footers[0], 'customerAvg'), equals('20.0'),
           reason: 'C1 average = 20.0');
       // C2: AVG(100) = 100.0
-      expect(_textOf(footers[1], 'customerAvg'), startsWith('100'),
+      expect(_textOf(footers[1], 'customerAvg'), equals('100.0'),
           reason: 'C2 average = 100.0');
 
       expect(res.diagnostics.hasErrors, isFalse,
