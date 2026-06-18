@@ -123,5 +123,9 @@ void main() {
     await tester.pumpAndSettle();
     // customerName is a top-level scalar in customersSchema — always offered.
     expect(_valuePickItem('customerName'), findsOneWidget);
+    // The formerly published-total `customerTotal` (a ScopeTotal from spec-030)
+    // was removed when the sample migrated to inline aggregates (spec-033).
+    // Assert it is fully purged from the picker so no stale entry leaks through.
+    expect(_valuePickItem('customerTotal'), findsNothing);
   });
 }
