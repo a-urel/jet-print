@@ -1276,9 +1276,11 @@ class _ColumnLayoutAddButton extends StatelessWidget {
         child: Text(label, overflow: TextOverflow.ellipsis, maxLines: 1),
       ),
     );
-    if (enabled) return button;
-    // The disabled button still hosts a hover tooltip explaining why.
-    return ShadTooltip(builder: (_) => Text(disabledTooltip), child: button);
+    final Widget content =
+        enabled ? button : ShadTooltip(builder: (_) => Text(disabledTooltip), child: button);
+    // Align to intrinsic width: the parent Column uses CrossAxisAlignment.stretch,
+    // so without this wrapper both buttons expand to full panel width.
+    return Align(alignment: Alignment.centerLeft, child: content);
   }
 }
 
@@ -1290,14 +1292,17 @@ class _ColumnLayoutRemoveButton extends StatelessWidget {
   final VoidCallback onRemove;
 
   @override
-  Widget build(BuildContext context) => ShadButton.ghost(
-        key: const ValueKey<String>('$_p.field.columnLayoutRemove'),
-        size: ShadButtonSize.sm,
-        onPressed: onRemove,
-        leading: const Icon(LucideIcons.trash2, size: 14),
-        // Flex child prevents the inner Row from overflowing at narrow widths.
-        child: Flexible(
-          child: Text(label, overflow: TextOverflow.ellipsis, maxLines: 1),
+  Widget build(BuildContext context) => Align(
+        alignment: Alignment.centerLeft,
+        child: ShadButton.ghost(
+          key: const ValueKey<String>('$_p.field.columnLayoutRemove'),
+          size: ShadButtonSize.sm,
+          onPressed: onRemove,
+          leading: const Icon(LucideIcons.trash2, size: 14),
+          // Flex child prevents the inner Row from overflowing at narrow widths.
+          child: Flexible(
+            child: Text(label, overflow: TextOverflow.ellipsis, maxLines: 1),
+          ),
         ),
       );
 }
