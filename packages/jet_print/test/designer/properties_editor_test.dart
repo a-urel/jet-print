@@ -1653,6 +1653,22 @@ void main() {
       expect(find.text('Show text'), findsOneWidget);
       expect(find.text('Error correction'), findsNothing);
     });
+
+    testWidgets('a literal invalid for a pinned symbology shows the hint',
+        (WidgetTester tester) async {
+      // 'ABC' is not valid EAN-13 (needs 12/13 digits) → invalid-value hint.
+      await pumpBarcode(tester,
+          id: 'b1', symbology: BarcodeSymbology.ean13, data: 'ABC');
+      expect(
+          find.text('Value is not valid for this symbology'), findsOneWidget);
+    });
+
+    testWidgets('a valid literal shows no invalid hint',
+        (WidgetTester tester) async {
+      await pumpBarcode(tester,
+          id: 'b1', symbology: BarcodeSymbology.code128, data: 'HELLO');
+      expect(find.text('Value is not valid for this symbology'), findsNothing);
+    });
   });
 
   // --- Shape gallery (020 / US1) -------------------------------------------

@@ -19,8 +19,6 @@ import '../../expression/expression_exception.dart';
 import '../../expression/format/apply_jet_format.dart';
 import '../../expression/function_registry.dart';
 import '../../expression/value.dart';
-import '../elements/barcode/barcode_encoder.dart';
-import '../elements/barcode/package_barcode_encoder.dart';
 import 'fill_eval_context.dart';
 import 'report_diagnostics.dart';
 
@@ -63,12 +61,6 @@ class ElementResolver {
   /// Image elements already diagnosed for a URL-only source, so a band that
   /// repeats per row warns once per element, not once per instance.
   final Set<String> _warnedUrlImages = <String>{};
-
-  /// Barcode elements already diagnosed for an invalid/unresolvable value.
-  final Set<String> _warnedBarcodes = <String>{};
-
-  /// The encoder used to validate barcode data for diagnostics.
-  static const BarcodeEncoder _barcodeEncoder = PackageBarcodeEncoder();
 
   /// Returns the resolved copy of [element].
   ReportElement resolve(
@@ -228,22 +220,6 @@ class ElementResolver {
         value = v?.toString() ?? '';
       } else {
         value = '';
-      }
-    }
-
-    // Validity diagnostic (FR-005/FR-016): warn once per element when a
-    // non-empty value cannot be encoded for its (resolved) symbology.
-    if (value.isNotEmpty) {
-      final BarcodeEncodeResult r = _barcodeEncoder.encode(
-        el.symbology,
-        value,
-        width: el.bounds.width,
-        height: el.bounds.height,
-        showText: el.showText,
-        eccLevel: el.eccLevel,
-      );
-      if (r is BarcodeInvalid && _warnedBarcodes.add(el.id)) {
-        diagnostics.warning(r.reason, elementId: el.id);
       }
     }
 

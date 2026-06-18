@@ -23,6 +23,8 @@ import '../../../domain/report_element.dart';
 import '../../../domain/styles/color.dart';
 import '../../../domain/styles/text_style.dart';
 import '../../../expression/expression.dart';
+import '../../../rendering/elements/barcode/barcode_encoder.dart';
+import '../../../rendering/elements/barcode/package_barcode_encoder.dart';
 import '../../../rendering/elements/barcode/symbology_inference.dart';
 import '../../../rendering/elements/shape_path.dart';
 import '../../../rendering/frame/primitive.dart';
@@ -475,9 +477,12 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                         onClear: () => controller.setBarcodeData(id, ''),
                       ),
               ),
-              // Mode toggle: literal ↔ bound field.
+              // Mode toggle: literal ↔ bound field. The label tracks the mode
+              // (Literal when off, Field when on) so both keys stay live.
               _LabeledRow(
-                label: l10n.barcodeDataField,
+                label: element.dataField != null
+                    ? l10n.barcodeDataField
+                    : l10n.barcodeDataLiteral,
                 child: ShadSwitch(
                   value: element.dataField != null,
                   onChanged: (bool bound) => bound
@@ -491,6 +496,14 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                   _unresolved(schema, controller, id,
                       barcodeField: element.dataField))
                 _UnresolvedHint(message: l10n.bindingUnresolved),
+              // Literal-value validity hint (FR-005/FR-015): a non-empty literal
+              // that cannot be encoded for its resolved symbology. A bound
+              // field's value is unknown at design time, so no validity hint
+              // there — only the unresolved-field hint above.
+              if (element.dataField == null &&
+                  element.data.isNotEmpty &&
+                  _barcodeLiteralInvalid(element))
+                _UnresolvedHint(message: l10n.barcodeInvalidValue),
               if (element.symbology == BarcodeSymbology.auto &&
                   element.data.isNotEmpty &&
                   element.dataField == null)
@@ -738,6 +751,21 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     if (imageField != null) return !names.contains(imageField);
     if (barcodeField != null) return !names.contains(barcodeField);
     return false;
+  }
+
+  /// True when [element]'s literal value cannot be encoded for its resolved
+  /// symbology (FR-005/FR-015). Drives the design-time validity hint. Only
+  /// meaningful for a literal (a bound field's value is unknown at design time).
+  bool _barcodeLiteralInvalid(BarcodeElement element) {
+    final BarcodeEncodeResult result = const PackageBarcodeEncoder().encode(
+      element.symbology,
+      element.data,
+      width: element.bounds.width,
+      height: element.bounds.height,
+      showText: element.showText,
+      eccLevel: element.eccLevel,
+    );
+    return result is BarcodeInvalid;
   }
 
   /// True when every `$F{}` ref in [expression] is in [names], or is an

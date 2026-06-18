@@ -1,23 +1,12 @@
-// Commands: set_barcode_symbology, set_barcode_data, set_barcode_options (036).
+// Barcode controller mutators (036): symbology, data/field, and options.
 //
-// Black-box: drives commands directly via .apply() on a DesignerDocument,
-// mirroring the set_barcode_color_command_test.dart harness.
+// Black-box: drives ONLY the public controller surface (mirroring
+// set_barcode_color_command_test.dart). The undoable commands behind each
+// method are an implementation detail — asserted via the public element API.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
-import 'package:jet_print/src/designer/controller/commands/set_barcode_data_command.dart';
-import 'package:jet_print/src/designer/controller/commands/set_barcode_options_command.dart';
-import 'package:jet_print/src/designer/controller/commands/set_barcode_symbology_command.dart';
-import 'package:jet_print/src/designer/controller/designer_document.dart';
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-ReportDefinition _reportDef({
-  String id = 'b1',
-  String? dataField,
-}) =>
-    ReportDefinition(
+ReportDefinition _report(List<ReportElement> elements) => ReportDefinition(
       name: 'Barcode commands test',
       page: PageFormat.a4Portrait,
       body: ReportBody(
@@ -25,225 +14,128 @@ ReportDefinition _reportDef({
           id: 'root',
           children: <ScopeNode>[
             BandNode(Band(
-              id: 'detail',
-              type: BandType.detail,
-              height: 120,
-              elements: <ReportElement>[
-                BarcodeElement(
-                  id: id,
-                  bounds: const JetRect(x: 0, y: 0, width: 60, height: 60),
-                  symbology: BarcodeSymbology.code128,
-                  data: 'INITIAL',
-                  dataField: dataField,
-                ),
-              ],
-            )),
+                id: 'detail',
+                type: BandType.detail,
+                height: 120,
+                elements: elements)),
           ],
         ),
       ),
     );
 
-DesignerDocument _docWithBarcode({String id = 'b1', String? dataField}) =>
-    DesignerDocument(
-      definition: _reportDef(id: id, dataField: dataField),
-      selection: Selection.empty,
-    );
-
-BarcodeElement _findBarcode(DesignerDocument doc, String id) =>
-    doc.definition.body.root.children
+BarcodeElement _barcode(JetReportDesignerController c, String id) =>
+    c.definition.body.root.children
         .whereType<BandNode>()
         .expand((BandNode n) => n.band.elements)
         .firstWhere((ReportElement e) => e.id == id) as BarcodeElement;
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
+const JetRect _bounds = JetRect(x: 0, y: 0, width: 60, height: 60);
+
+BarcodeElement _element({String id = 'b1', String? dataField}) =>
+    BarcodeElement(
+      id: id,
+      bounds: _bounds,
+      symbology: BarcodeSymbology.code128,
+      data: 'INITIAL',
+      dataField: dataField,
+    );
+
+JetReportDesignerController _controller({String? dataField}) =>
+    JetReportDesignerController(
+      definition: _report(<ReportElement>[_element(dataField: dataField)]),
+    );
 
 void main() {
-  group('SetBarcodeSymbologyCommand', () {
-    test('updates symbology, preserving data/bounds/color', () {
-      final doc = _docWithBarcode(id: 'b1');
-      final next = SetBarcodeSymbologyCommand(
-              id: 'b1', symbology: BarcodeSymbology.ean13)
-          .apply(doc);
-      final el = _findBarcode(next, 'b1');
-      expect(el.symbology, BarcodeSymbology.ean13);
-      expect(el.data, 'INITIAL'); // preserved
-      expect(el.bounds, const JetRect(x: 0, y: 0, width: 60, height: 60));
+  group('setBarcodeSymbology', () {
+    test('updates symbology, preserving data/bounds', () {
+      final JetReportDesignerController c = _controller();
+      c.setBarcodeSymbology('b1', BarcodeSymbology.ean13);
+      expect(_barcode(c, 'b1').symbology, BarcodeSymbology.ean13);
+      expect(_barcode(c, 'b1').data, 'INITIAL'); // preserved
+      expect(_barcode(c, 'b1').bounds, _bounds);
+      c.dispose();
     });
 
-    test('non-barcode id is a no-op (element unchanged)', () {
-      final doc = _docWithBarcode(id: 'b1');
-      final next = SetBarcodeSymbologyCommand(
-              id: 'missing', symbology: BarcodeSymbology.qrCode)
-          .apply(doc);
-      // Document still has the original element unchanged
-      final el = _findBarcode(next, 'b1');
-      expect(el.symbology, BarcodeSymbology.code128);
+    test('is undoable', () {
+      final JetReportDesignerController c = _controller();
+      c.setBarcodeSymbology('b1', BarcodeSymbology.qrCode);
+      expect(_barcode(c, 'b1').symbology, BarcodeSymbology.qrCode);
+      expect(c.canUndo, isTrue);
+      c.undo();
+      expect(_barcode(c, 'b1').symbology, BarcodeSymbology.code128);
+      c.dispose();
     });
 
-    test('label is set', () {
-      expect(
-        const SetBarcodeSymbologyCommand(
-                id: 'x', symbology: BarcodeSymbology.code128)
-            .label,
-        'Edit barcode symbology',
-      );
+    test('a missing target is a no-op', () {
+      final JetReportDesignerController c = _controller();
+      c.setBarcodeSymbology('missing', BarcodeSymbology.qrCode);
+      expect(_barcode(c, 'b1').symbology, BarcodeSymbology.code128);
+      c.dispose();
     });
   });
 
-  group('SetBarcodeDataCommand', () {
+  group('setBarcodeData', () {
     test('sets literal data and clears dataField', () {
-      final doc = _docWithBarcode(id: 'b1', dataField: 'sku');
-      final next = SetBarcodeDataCommand(id: 'b1', data: 'LITERAL').apply(doc);
-      final el = _findBarcode(next, 'b1');
-      expect(el.data, 'LITERAL');
-      expect(el.dataField, isNull);
+      final JetReportDesignerController c = _controller(dataField: 'sku');
+      c.setBarcodeData('b1', 'LITERAL');
+      expect(_barcode(c, 'b1').data, 'LITERAL');
+      expect(_barcode(c, 'b1').dataField, isNull);
+      c.dispose();
     });
 
     test('clears dataField even when it was already null', () {
-      final doc = _docWithBarcode(id: 'b1');
-      final next = SetBarcodeDataCommand(id: 'b1', data: 'X').apply(doc);
-      final el = _findBarcode(next, 'b1');
-      expect(el.dataField, isNull);
-    });
-
-    test('label is set', () {
-      expect(
-        const SetBarcodeDataCommand(id: 'x', data: 'v').label,
-        'Edit barcode data',
-      );
+      final JetReportDesignerController c = _controller();
+      c.setBarcodeData('b1', 'X');
+      expect(_barcode(c, 'b1').dataField, isNull);
+      c.dispose();
     });
   });
 
-  group('SetBarcodeDataFieldCommand', () {
-    test('sets the bound field', () {
-      final doc = _docWithBarcode(id: 'b1');
-      final el = _findBarcode(
-        SetBarcodeDataFieldCommand(id: 'b1', field: 'sku').apply(doc),
-        'b1',
-      );
-      expect(el.dataField, 'sku');
+  group('setBarcodeDataField', () {
+    test('sets the bound field and is undoable', () {
+      final JetReportDesignerController c = _controller();
+      c.setBarcodeDataField('b1', 'sku');
+      expect(_barcode(c, 'b1').dataField, 'sku');
+      expect(c.canUndo, isTrue);
+      c.dispose();
     });
 
     test('clears the bound field when null is passed', () {
-      final doc = _docWithBarcode(id: 'b1', dataField: 'sku');
-      final el = _findBarcode(
-        SetBarcodeDataFieldCommand(id: 'b1', field: null).apply(doc),
-        'b1',
-      );
-      expect(el.dataField, isNull);
-    });
-
-    test('label is set', () {
-      expect(
-        const SetBarcodeDataFieldCommand(id: 'x', field: null).label,
-        'Edit barcode field',
-      );
+      final JetReportDesignerController c = _controller(dataField: 'sku');
+      c.setBarcodeDataField('b1', null);
+      expect(_barcode(c, 'b1').dataField, isNull);
+      c.dispose();
     });
   });
 
-  group('SetBarcodeOptionsCommand', () {
+  group('setBarcode options', () {
     test('toggles showText to false', () {
-      final doc = _docWithBarcode(id: 'b1');
-      final el = _findBarcode(
-        SetBarcodeOptionsCommand(id: 'b1', showText: false).apply(doc),
-        'b1',
-      );
-      expect(el.showText, isFalse);
+      final JetReportDesignerController c = _controller();
+      c.setBarcodeShowText('b1', false);
+      expect(_barcode(c, 'b1').showText, isFalse);
+      c.dispose();
     });
 
     test('toggles quietZone to false', () {
-      final doc = _docWithBarcode(id: 'b1');
-      final el = _findBarcode(
-        SetBarcodeOptionsCommand(id: 'b1', quietZone: false).apply(doc),
-        'b1',
-      );
-      expect(el.quietZone, isFalse);
+      final JetReportDesignerController c = _controller();
+      c.setBarcodeQuietZone('b1', false);
+      expect(_barcode(c, 'b1').quietZone, isFalse);
+      c.dispose();
     });
 
     test('sets QR ecc level', () {
-      final doc = _docWithBarcode(id: 'b1');
-      final el = _findBarcode(
-        SetBarcodeOptionsCommand(id: 'b1', eccLevel: QrErrorCorrectionLevel.h)
-            .apply(doc),
-        'b1',
-      );
-      expect(el.eccLevel, QrErrorCorrectionLevel.h);
+      final JetReportDesignerController c = _controller();
+      c.setBarcodeEccLevel('b1', QrErrorCorrectionLevel.h);
+      expect(_barcode(c, 'b1').eccLevel, QrErrorCorrectionLevel.h);
+      c.dispose();
     });
 
     test('omitted options are unchanged', () {
-      final doc = _docWithBarcode(id: 'b1');
-      final el = _findBarcode(
-        SetBarcodeOptionsCommand(id: 'b1', showText: false).apply(doc),
-        'b1',
-      );
-      // quietZone and eccLevel default are preserved
-      expect(el.quietZone, isTrue);
-      expect(el.eccLevel, QrErrorCorrectionLevel.m);
-    });
-
-    test('label is set', () {
-      expect(
-        const SetBarcodeOptionsCommand(id: 'x').label,
-        'Edit barcode options',
-      );
-    });
-  });
-
-  group('Controller dispatch', () {
-    ReportDefinition report() => _reportDef(id: 'b1');
-
-    BarcodeElement barcode(JetReportDesignerController c) =>
-        c.definition.body.root.children
-            .whereType<BandNode>()
-            .expand((BandNode n) => n.band.elements)
-            .firstWhere((ReportElement e) => e.id == 'b1') as BarcodeElement;
-
-    test('setBarcodeSymbology dispatches and is undoable', () {
-      final c = JetReportDesignerController(definition: report());
-      c.setBarcodeSymbology('b1', BarcodeSymbology.qrCode);
-      expect(barcode(c).symbology, BarcodeSymbology.qrCode);
-      expect(c.canUndo, isTrue);
-      c.undo();
-      expect(barcode(c).symbology, BarcodeSymbology.code128);
-      c.dispose();
-    });
-
-    test('setBarcodeData dispatches and clears dataField', () {
-      final c = JetReportDesignerController(definition: report());
-      c.setBarcodeData('b1', 'NEW');
-      expect(barcode(c).data, 'NEW');
-      expect(barcode(c).dataField, isNull);
-      c.dispose();
-    });
-
-    test('setBarcodeDataField dispatches and is undoable', () {
-      final c = JetReportDesignerController(definition: report());
-      c.setBarcodeDataField('b1', 'productCode');
-      expect(barcode(c).dataField, 'productCode');
-      expect(c.canUndo, isTrue);
-      c.dispose();
-    });
-
-    test('setBarcodeShowText dispatches', () {
-      final c = JetReportDesignerController(definition: report());
+      final JetReportDesignerController c = _controller();
       c.setBarcodeShowText('b1', false);
-      expect(barcode(c).showText, isFalse);
-      c.dispose();
-    });
-
-    test('setBarcodeQuietZone dispatches', () {
-      final c = JetReportDesignerController(definition: report());
-      c.setBarcodeQuietZone('b1', false);
-      expect(barcode(c).quietZone, isFalse);
-      c.dispose();
-    });
-
-    test('setBarcodeEccLevel dispatches', () {
-      final c = JetReportDesignerController(definition: report());
-      c.setBarcodeEccLevel('b1', QrErrorCorrectionLevel.h);
-      expect(barcode(c).eccLevel, QrErrorCorrectionLevel.h);
+      // quietZone and eccLevel defaults are preserved.
+      expect(_barcode(c, 'b1').quietZone, isTrue);
+      expect(_barcode(c, 'b1').eccLevel, QrErrorCorrectionLevel.m);
       c.dispose();
     });
   });

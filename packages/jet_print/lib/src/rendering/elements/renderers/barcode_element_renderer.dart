@@ -47,7 +47,12 @@ class BarcodeElementRenderer extends ElementRenderer<BarcodeElement> {
     // Quiet-zone inset (FR-007).
     final double margin = el.quietZone
         ? (0.1 * (bounds.width < bounds.height ? bounds.width : bounds.height))
-            .clamp(0, 0.25 * bounds.width)
+            .clamp(
+                0,
+                0.25 *
+                    (bounds.width < bounds.height
+                        ? bounds.width
+                        : bounds.height))
             .toDouble()
         : 0;
     final double cx = bounds.x + margin;

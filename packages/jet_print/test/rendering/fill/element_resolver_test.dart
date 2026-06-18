@@ -207,17 +207,7 @@ void main() {
       row: row(<String, Object?>{'sku': 'x'}),
     ) as BarcodeElement;
     expect(resolved.data, '');
-    expect(d.entries.where((Diagnostic m) => m.elementId == 'b1'), isNotEmpty);
-  });
-
-  test('invalid value for a pinned symbology emits a diagnostic', () {
-    final ReportDiagnostics d = ReportDiagnostics();
-    const BarcodeElement el = BarcodeElement(
-        id: 'b1',
-        bounds: JetRect(x: 0, y: 0, width: 80, height: 40),
-        symbology: BarcodeSymbology.ean13,
-        data: 'ABC');
-    resolver(d).resolve(el);
+    expect(resolved.dataField, isNull);
     expect(d.entries.where((Diagnostic m) => m.elementId == 'b1'), isNotEmpty);
   });
 
