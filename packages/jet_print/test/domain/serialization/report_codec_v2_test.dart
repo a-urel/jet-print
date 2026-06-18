@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/domain/band.dart';
+import 'package:jet_print/src/domain/column_layout.dart';
 import 'package:jet_print/src/domain/detail_scope.dart';
 import 'package:jet_print/src/domain/elements/text_element.dart';
 import 'package:jet_print/src/domain/geometry.dart';
@@ -378,6 +379,43 @@ void main() {
         }),
         throwsA(isA<ReportFormatException>()),
       );
+    });
+
+    test('Band.columnLayout round-trips and is omitted when null (spec 034)', () {
+      const ColumnLayout grid = ColumnLayout(
+          columnCount: 3, columnWidth: 180, columnSpacing: 12, rowSpacing: 8);
+      final ReportDefinition def = ReportDefinition(
+        name: 'labels',
+        page: PageFormat.a4Portrait,
+        body: const ReportBody(
+          root: DetailScope(id: 'root', children: <ScopeNode>[
+            BandNode(Band(
+                id: 'd', type: BandType.detail, height: 80, columnLayout: grid)),
+          ]),
+        ),
+      );
+
+      final Map<String, Object?> json = JetReportFormat.encodeDefinition(def);
+      expect(JetReportFormat.decodeDefinition(json), def);
+
+      // Absent when null: a plain band emits no 'columnLayout' key.
+      final Map<String, Object?> plain = JetReportFormat.encodeDefinition(
+        ReportDefinition(
+          name: 'plain',
+          page: PageFormat.a4Portrait,
+          body: const ReportBody(
+            root: DetailScope(id: 'root', children: <ScopeNode>[
+              BandNode(Band(id: 'd', type: BandType.detail, height: 80)),
+            ]),
+          ),
+        ),
+      );
+      final Map<String, Object?> rootScope =
+          (plain['body']! as Map)['root']! as Map<String, Object?>;
+      final Map<String, Object?> bandJson =
+          ((rootScope['children']! as List).single as Map)['band']
+              as Map<String, Object?>;
+      expect(bandJson.containsKey('columnLayout'), isFalse);
     });
   });
 }

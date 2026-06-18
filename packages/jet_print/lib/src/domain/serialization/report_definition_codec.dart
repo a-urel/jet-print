@@ -9,6 +9,7 @@
 library;
 
 import '../band.dart';
+import '../column_layout.dart';
 import '../detail_scope.dart';
 import '../group_level.dart';
 import '../page_format.dart';
@@ -134,6 +135,7 @@ Map<String, Object?> _encodeBand(Band band, ElementCodecRegistry registry) {
         for (final ReportElement element in band.elements)
           registry.encode(element),
       ],
+    if (band.columnLayout != null) 'columnLayout': band.columnLayout!.toJson(),
   };
 }
 
@@ -315,6 +317,10 @@ Band _decodeBand(Map<String, Object?> json, ElementCodecRegistry registry) {
             for (final Object? element in elements as List)
               registry.decode((element! as Map).cast<String, Object?>()),
           ],
+    columnLayout: json['columnLayout'] == null
+        ? null
+        : ColumnLayout.fromJson(
+            (json['columnLayout']! as Map).cast<String, Object?>()),
   );
 }
 
