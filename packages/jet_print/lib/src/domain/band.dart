@@ -10,6 +10,7 @@ library;
 
 import 'package:flutter/foundation.dart' show listEquals;
 
+import 'column_layout.dart';
 import 'report_band.dart' show BandType;
 import 'report_element.dart';
 
@@ -24,6 +25,7 @@ class Band {
     required this.type,
     required this.height,
     this.elements = const <ReportElement>[],
+    this.columnLayout,
   });
 
   /// Stable identity (selection + lifecycle are no longer index-based).
@@ -39,18 +41,24 @@ class Band {
   /// Elements placed within the band, at absolute bounds.
   final List<ReportElement> elements;
 
+  /// When non-null on the lone detail band of a pure single-detail body, lays
+  /// the band out as a multi-column label grid (spec 034). Null elsewhere.
+  final ColumnLayout? columnLayout;
+
   /// Returns a copy with the given fields replaced.
   Band copyWith({
     String? id,
     BandType? type,
     double? height,
     List<ReportElement>? elements,
+    ColumnLayout? columnLayout,
   }) =>
       Band(
         id: id ?? this.id,
         type: type ?? this.type,
         height: height ?? this.height,
         elements: elements ?? this.elements,
+        columnLayout: columnLayout ?? this.columnLayout,
       );
 
   @override
@@ -59,10 +67,12 @@ class Band {
       other.id == id &&
       other.type == type &&
       other.height == height &&
-      listEquals(other.elements, elements);
+      listEquals(other.elements, elements) &&
+      other.columnLayout == columnLayout;
 
   @override
-  int get hashCode => Object.hash(id, type, height, Object.hashAll(elements));
+  int get hashCode =>
+      Object.hash(id, type, height, Object.hashAll(elements), columnLayout);
 
   @override
   String toString() => 'Band($id, ${type.name}, ${height}pt, '
