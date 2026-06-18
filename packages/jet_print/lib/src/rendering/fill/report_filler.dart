@@ -5,6 +5,7 @@
 /// JetReportEngine.
 library;
 
+import '../../data/aggregate_path.dart';
 import '../../data/data_row.dart';
 import '../../data/data_set.dart';
 import '../../data/field_def.dart';
@@ -18,6 +19,7 @@ import '../../domain/report_group.dart';
 import '../../domain/report_variable.dart';
 import '../../domain/scope_total.dart';
 import '../../expression/aggregate/aggregate_synthesizer.dart';
+import '../../expression/aggregate/descendant_aggregate.dart';
 import '../../expression/aggregate/nested_footer.dart';
 import '../../expression/aggregate/scope_totals.dart';
 import '../../expression/aggregate/variable_accumulator.dart';
@@ -339,8 +341,21 @@ class ReportFiller {
           }
           final PreparedFooter? footer =
               s.footer == null ? null : prepareNestedFooter(s.footer!);
-          // Fresh accumulators each invocation → the footer total resets per
-          // parent.
+          // Classify each footer aggregate operand once: same-scope folds over the
+          // immediate child rows (spec 029); a descendant leaf folds over the whole
+          // subtree (spec 033); an ambiguous operand renders the fallback (FR-010).
+          final List<FieldDef> childFields = childRows.first.fields;
+          final List<List<String>?> descPaths = <List<String>?>[]; // null → same-scope
+          final List<bool> ambiguousAgg = <bool>[];
+          if (footer != null) {
+            for (final NestedAgg a in footer.aggs) {
+              final Set<String> refs = a.argument.references.fields;
+              AggregatePath? resolved =
+                  refs.length == 1 ? resolveAggregatePath(childFields, refs.single) : null;
+              descPaths.add(resolved is DescendPath ? resolved.path : null);
+              ambiguousAgg.add(resolved is Ambiguous);
+            }
+          }
           final List<VariableAccumulator>? accs = footer == null
               ? null
               : <VariableAccumulator>[
@@ -353,20 +368,44 @@ class ReportFiller {
             }
             if (footer != null) {
               for (int k = 0; k < footer.aggs.length; k++) {
-                accs![k].fold(footer.aggs[k].argument.evaluate(contextFactory(
-                  row: childRow,
-                  params: params,
-                  variables: calc.values,
-                  functions: _functions,
-                )));
+                // Same-scope: fold over the immediate child rows, as spec 029.
+                if (descPaths[k] == null && !ambiguousAgg[k]) {
+                  accs![k].fold(footer.aggs[k].argument.evaluate(contextFactory(
+                    row: childRow,
+                    params: params,
+                    variables: calc.values,
+                    functions: _functions,
+                  )));
+                }
               }
             }
           }
           if (footer != null) {
+            // Descendant folds run once over the whole subtree of this scope instance.
+            for (int k = 0; k < footer.aggs.length; k++) {
+              final List<String>? path = descPaths[k];
+              if (path != null) {
+                foldDescendantLeaves(
+                  rows: childRows,
+                  path: path,
+                  acc: accs![k],
+                  eval: (DataRow leaf) =>
+                      footer.aggs[k].argument.evaluate(contextFactory(
+                    row: leaf,
+                    params: params,
+                    variables: calc.values,
+                    functions: _functions,
+                  )),
+                  childRowsOf: childRowsOf,
+                );
+              }
+            }
             final Map<String, JetValue> vars = <String, JetValue>{
               ...calc.values,
               for (int k = 0; k < footer.aggs.length; k++)
-                footer.aggs[k].name: accs![k].value,
+                footer.aggs[k].name: ambiguousAgg[k]
+                    ? JetValue.from(unresolvedFieldToken)
+                    : accs![k].value,
             };
             addBand(footer.band, scopeRow, vars);
           }
@@ -519,9 +558,14 @@ class ReportFiller {
   /// child fields (e.g. the schema was inferred): the union of all entry keys
   /// in first-seen order, each typed via [FieldDef.inferType] over that
   /// column's values — mirroring `JetInMemoryDataSource`'s inference so the
-  /// three public sources stay output-identical (SC-006). A nested list value
-  /// infers [JetFieldType.unknown], but its raw value is preserved on the
-  /// child row, so deeper collection bands still iterate it.
+  /// three public sources stay output-identical (SC-006).
+  ///
+  /// A column whose values are themselves lists of row maps is recognised as a
+  /// nested [JetFieldType.collection] and carries its own recursively-inferred
+  /// child schema (spec 033) — so a descendant-leaf aggregate at this scope's
+  /// footer can resolve its operand by descending the typed collection chain
+  /// (`resolveAggregatePath`). The raw list value is still preserved on the
+  /// child row, so deeper collection bands continue to iterate it.
   static List<FieldDef> _inferChildFields(List<Map<String, Object?>> rows) {
     final List<String> names = <String>[];
     final Set<String> seen = <String>{};
@@ -532,12 +576,34 @@ class ReportFiller {
     }
     return <FieldDef>[
       for (final String name in names)
-        FieldDef(
-          name,
-          type: FieldDef.inferType(
-            rows.map((Map<String, Object?> r) => r[name]),
-          ),
-        ),
+        _inferColumn(name, rows.map((Map<String, Object?> r) => r[name])),
     ];
+  }
+
+  /// Infers one column [name]'s [FieldDef] over its [values]. A column whose
+  /// non-null values are all lists of row maps is a nested
+  /// [JetFieldType.collection], typed with the recursively-inferred schema of
+  /// every entry across all of those lists; any other column delegates to the
+  /// scalar [FieldDef.inferType].
+  static FieldDef _inferColumn(String name, Iterable<Object?> values) {
+    final List<Object?> nonNull =
+        values.where((Object? v) => v != null).toList();
+    final bool isCollection = nonNull.isNotEmpty &&
+        nonNull.every((Object? v) =>
+            v is List && v.every((Object? e) => e is Map));
+    if (!isCollection) {
+      return FieldDef(name, type: FieldDef.inferType(values));
+    }
+    final List<Map<String, Object?>> entries = <Map<String, Object?>>[
+      for (final Object? v in nonNull)
+        for (final Object? e in v as List)
+          (e as Map).map((Object? k, Object? ev) =>
+              MapEntry<String, Object?>(k.toString(), ev)),
+    ];
+    return FieldDef(
+      name,
+      type: JetFieldType.collection,
+      fields: _inferChildFields(entries),
+    );
   }
 }
