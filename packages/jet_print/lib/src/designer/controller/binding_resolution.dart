@@ -7,6 +7,7 @@
 /// depends on the designer.
 library;
 
+import '../../data/aggregate_path.dart';
 import '../../data/binding_scope.dart';
 import '../../data/data_schema.dart';
 import '../../data/field_def.dart';
@@ -86,4 +87,48 @@ _Roles _rolesForBand(ReportDefinition def, String bandId) {
     return _Roles(chain, chain.sublist(0, chain.length - 1));
   }
   return _Roles(chain, null);
+}
+
+/// The descendant leaf names valid as inline-aggregate operands in band
+/// [bandId]: every non-collection leaf uniquely reachable (a [DescendPath]) by
+/// descending the collection subtree of the band's OWN scope. Excludes
+/// same-scope names (already offered as normal fields) and ambiguous names (an
+/// author-time error). The author writes these only inside an aggregate;
+/// referenced bare they remain unresolved (FR-006).
+Set<String> descendantOperandNamesForBand(
+    ReportDefinition def, JetDataSchema schema, String bandId) {
+  final List<DetailScope> chain = scopePathToBand(def, bandId);
+  final List<FieldDef> scopeFields = fieldsInScopeForChain(schema, chain);
+  final Set<String> out = <String>{};
+  void collectLeaves(List<FieldDef> fields) {
+    for (final FieldDef f in fields) {
+      if (f.type == JetFieldType.collection) {
+        collectLeaves(f.fields);
+      } else {
+        if (resolveAggregatePath(scopeFields, f.name) is DescendPath) {
+          out.add(f.name);
+        }
+      }
+    }
+  }
+
+  // Only leaves inside collections can be descendant operands; walk each
+  // collection field's subtree.
+  for (final FieldDef f in scopeFields) {
+    if (f.type == JetFieldType.collection) collectLeaves(f.fields);
+  }
+  return out;
+}
+
+/// The fx field-palette choices for descendant operands in band [bandId]: a
+/// synthetic [FieldDef] per name from [descendantOperandNamesForBand], typed
+/// [JetFieldType.unknown] (the palette inserts the plain `[name]` token). These
+/// are rendered marked as deeper-collection fields, distinct from in-scope
+/// fields (FR-007).
+List<FieldDef> descendantFieldChoicesForBand(
+    ReportDefinition def, JetDataSchema schema, String bandId) {
+  return <FieldDef>[
+    for (final String name in descendantOperandNamesForBand(def, schema, bandId))
+      FieldDef(name),
+  ];
 }
