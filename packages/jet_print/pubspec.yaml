@@ -34,6 +34,9 @@ dependencies:
   pdf: ^3.12.0
   printing: ^5.14.3
   image: ^4.3.0
+  # Barcode/QR encoding (spec 036). Pure Dart, Apache-2.0, by the same author as
+  # `pdf` (already a transitive dep via pdf). Isolated to package_barcode_encoder.dart.
+  barcode: ^2.2.9
 
 dev_dependencies:
   flutter_test:
