@@ -27,8 +27,9 @@ void main() {
     );
   });
 
-  test('every sample invoice is consistent: total equals its line-total sum',
-      () {
+  test(
+      'every sample invoice is consistent: subtotal equals its line-total sum, '
+      'and grandTotal equals subtotal + tax + shipping', () {
     final DataSet ds = invoiceDataSource().open();
     int count = 0;
     while (ds.moveNext()) {
@@ -39,9 +40,23 @@ void main() {
           .cast<Map<String, Object?>>()
           .map((Map<String, Object?> l) => (l['lineTotal']! as num).toDouble())
           .fold(0, (double a, double b) => a + b);
+      // `total` is the subtotal (kept equal to the line sum so the original
+      // invariant still holds even though the layout now also shows tax and
+      // shipping). All amounts are dyadic, so == is exact.
       expect(invoice.field('total'), sum,
-          reason: 'invoice ${invoice.field('invoiceNo')}: total must equal the '
-              'sum of its line totals');
+          reason: 'invoice ${invoice.field('invoiceNo')}: subtotal must equal '
+              'the sum of its line totals');
+      final double subtotal = (invoice.field('total')! as num).toDouble();
+      final double tax = (invoice.field('tax')! as num).toDouble();
+      final double shipping = (invoice.field('shipping')! as num).toDouble();
+      // `discount` is stored negative, so the grand total stays a plain sum.
+      final double discount = (invoice.field('discount')! as num).toDouble();
+      expect(discount, lessThanOrEqualTo(0),
+          reason: 'invoice ${invoice.field('invoiceNo')}: discount is a '
+              'deduction (stored negative)');
+      expect(invoice.field('grandTotal'), subtotal + tax + shipping + discount,
+          reason: 'invoice ${invoice.field('invoiceNo')}: grandTotal must equal '
+              'subtotal + tax + shipping + discount');
       count++;
     }
     expect(count, 3, reason: 'the sample now carries three invoices');

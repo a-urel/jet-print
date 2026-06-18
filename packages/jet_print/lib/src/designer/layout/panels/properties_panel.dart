@@ -430,6 +430,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
+              SectionLabel(l10n.propertiesBarcode),
               // --- Symbology ---------------------------------------------------
               _LabeledRow(
                 label: l10n.propertiesSymbology,

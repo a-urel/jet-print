@@ -10,13 +10,35 @@ import 'package:jet_print/jet_print.dart';
 
 /// The invoice data structure: master fields plus a nested `lines` collection
 /// (master/detail). Attach it to [JetReportDesigner] via `dataSchema:`.
+///
+/// Monetary fields model a real invoice's running tally: `total` is the
+/// **subtotal** (the sum of the line totals — kept so the existing
+/// "total equals its line-total sum" invariant still holds), then a `discount`
+/// is taken off and `tax` and `shipping` add on top, so `grandTotal` is the
+/// amount actually due. Because `discount` is stored **negative** (a deduction)
+/// the identity stays a plain sum: `grandTotal == total + tax + shipping +
+/// discount`. `taxLabel` / `discountLabel` are the human-readable rate captions
+/// (e.g. `VAT 19%`, `Discount 10%`) so the layout never has to format a
+/// percentage itself. `invoiceDescription` is the free-text summary shown below
+/// the totals.
 const JetDataSchema invoiceSchema = JetDataSchema(
   name: 'Invoice',
   fields: <FieldDef>[
     FieldDef('invoiceNo', type: JetFieldType.string),
     FieldDef('customerName', type: JetFieldType.string),
+    FieldDef('billingAddress', type: JetFieldType.string),
     FieldDef('date', type: JetFieldType.dateTime),
     FieldDef('total', type: JetFieldType.double),
+    FieldDef('discountLabel', type: JetFieldType.string),
+    FieldDef('discount', type: JetFieldType.double),
+    FieldDef('taxLabel', type: JetFieldType.string),
+    FieldDef('tax', type: JetFieldType.double),
+    FieldDef('shipping', type: JetFieldType.double),
+    FieldDef('grandTotal', type: JetFieldType.double),
+    FieldDef('paymentTerms', type: JetFieldType.string),
+    FieldDef('shippingMethod', type: JetFieldType.string),
+    FieldDef('notes', type: JetFieldType.string),
+    FieldDef('invoiceDescription', type: JetFieldType.string),
     FieldDef(
       'lines',
       type: JetFieldType.collection,
@@ -36,8 +58,10 @@ const JetDataSchema invoiceSchema = JetDataSchema(
 /// This is what the new architecture looks like end to end: roles are *stated
 /// structurally*, not inferred from `type` + group-name + position.
 ///
-/// * [PageFurniture] holds the record-blind page chrome ([PageFurniture.pageHeader]
-///   running title, [PageFurniture.pageFooter] `Page N of M`).
+/// * [PageFurniture] holds the record-blind page chrome — just the
+///   [PageFurniture.pageFooter] `Page N of M`. There is no page header: each
+///   invoice starts a new page and already carries its own big `INVOICE`
+///   heading, so a running title would only repeat it.
 /// * [ReportBody.root] is the master [DetailScope]. Its one [GroupLevel]
 ///   (`invoice`, keyed on `$F{invoiceNo}`) **owns** its header/footer bands and
 ///   its pagination flags ([GroupLevel.keepTogether] / [GroupLevel.startNewPage])
@@ -52,19 +76,6 @@ ReportDefinition invoiceSampleDefinition() => const ReportDefinition(
       name: 'Invoice',
       page: PageFormat.a4Portrait,
       furniture: PageFurniture(
-        pageHeader: Band(
-          id: 'pageHeader',
-          type: BandType.pageHeader,
-          height: 20,
-          elements: <ReportElement>[
-            TextElement(
-              id: 'runningTitle',
-              bounds: JetRect(x: 0, y: 2, width: 300, height: 14),
-              text: 'Invoices',
-              style: JetTextStyle(fontSize: 9, color: JetColor(0xFF888888)),
-            ),
-          ],
-        ),
         pageFooter: Band(
           id: 'pageFooter',
           type: BandType.pageFooter,
@@ -97,7 +108,7 @@ ReportDefinition invoiceSampleDefinition() => const ReportDefinition(
               header: Band(
                 id: 'invoiceHeader',
                 type: BandType.groupHeader,
-                height: 80,
+                height: 134,
                 elements: <ReportElement>[
                   TextElement(
                     id: 'heading',
@@ -108,47 +119,67 @@ ReportDefinition invoiceSampleDefinition() => const ReportDefinition(
                   ),
                   TextElement(
                     id: 'invoiceNo',
-                    bounds: JetRect(x: 360, y: 4, width: 180, height: 18),
+                    bounds: JetRect(x: 340, y: 4, width: 200, height: 18),
                     text: 'invoiceNo',
-                    style: JetTextStyle(align: JetTextAlign.right),
+                    style: JetTextStyle(
+                        align: JetTextAlign.right, weight: JetFontWeight.bold),
                     expression: r'$F{invoiceNo}',
                   ),
                   TextElement(
+                    id: 'date',
+                    bounds: JetRect(x: 340, y: 26, width: 200, height: 16),
+                    text: 'date',
+                    style: JetTextStyle(
+                        align: JetTextAlign.right, color: JetColor(0xFF555555)),
+                    expression: r'"Date: " + $F{date}',
+                  ),
+                  TextElement(
+                    id: 'billToLabel',
+                    bounds: JetRect(x: 0, y: 40, width: 200, height: 14),
+                    text: 'BILL TO',
+                    style: JetTextStyle(
+                        fontSize: 9,
+                        weight: JetFontWeight.bold,
+                        color: JetColor(0xFF888888)),
+                  ),
+                  TextElement(
                     id: 'customerName',
-                    bounds: JetRect(x: 0, y: 34, width: 300, height: 18),
+                    bounds: JetRect(x: 0, y: 54, width: 320, height: 18),
                     text: 'customerName',
+                    style: JetTextStyle(weight: JetFontWeight.bold),
                     expression: r'$F{customerName}',
                   ),
                   TextElement(
-                    id: 'date',
-                    bounds: JetRect(x: 360, y: 34, width: 180, height: 18),
-                    text: 'date',
-                    style: JetTextStyle(align: JetTextAlign.right),
-                    expression: r'$F{date}',
+                    id: 'billingAddress',
+                    bounds: JetRect(x: 0, y: 72, width: 320, height: 44),
+                    text: 'billingAddress',
+                    style:
+                        JetTextStyle(fontSize: 10, color: JetColor(0xFF555555)),
+                    expression: r'$F{billingAddress}',
                   ),
                   TextElement(
                     id: 'colDescription',
-                    bounds: JetRect(x: 0, y: 60, width: 260, height: 16),
+                    bounds: JetRect(x: 0, y: 116, width: 260, height: 16),
                     text: 'Description',
                     style: JetTextStyle(weight: JetFontWeight.bold),
                   ),
                   TextElement(
                     id: 'colQty',
-                    bounds: JetRect(x: 270, y: 60, width: 50, height: 16),
+                    bounds: JetRect(x: 270, y: 116, width: 50, height: 16),
                     text: 'Qty',
                     style: JetTextStyle(
                         align: JetTextAlign.right, weight: JetFontWeight.bold),
                   ),
                   TextElement(
                     id: 'colUnitPrice',
-                    bounds: JetRect(x: 330, y: 60, width: 90, height: 16),
+                    bounds: JetRect(x: 330, y: 116, width: 90, height: 16),
                     text: 'Unit Price',
                     style: JetTextStyle(
                         align: JetTextAlign.right, weight: JetFontWeight.bold),
                   ),
                   TextElement(
                     id: 'colAmount',
-                    bounds: JetRect(x: 430, y: 60, width: 110, height: 16),
+                    bounds: JetRect(x: 430, y: 116, width: 110, height: 16),
                     text: 'Amount',
                     style: JetTextStyle(
                         align: JetTextAlign.right, weight: JetFontWeight.bold),
@@ -158,23 +189,156 @@ ReportDefinition invoiceSampleDefinition() => const ReportDefinition(
               footer: Band(
                 id: 'invoiceFooter',
                 type: BandType.groupFooter,
-                height: 32,
+                height: 212,
                 elements: <ReportElement>[
+                  // Right column — the running money tally: subtotal less the
+                  // discount, plus tax and shipping, equals the Grand Total
+                  // (the only emphasized line). `discount` is stored negative,
+                  // so it renders with its own minus sign.
                   TextElement(
                     id: 'subtotalLabel',
-                    bounds: JetRect(x: 330, y: 8, width: 90, height: 18),
+                    bounds: JetRect(x: 300, y: 6, width: 120, height: 16),
                     text: 'Subtotal',
-                    style: JetTextStyle(
-                        align: JetTextAlign.right, weight: JetFontWeight.bold),
+                    style: JetTextStyle(align: JetTextAlign.right),
                   ),
                   TextElement(
                     id: 'subtotal',
-                    bounds: JetRect(x: 430, y: 8, width: 110, height: 18),
+                    bounds: JetRect(x: 430, y: 6, width: 110, height: 16),
                     text: 'total',
-                    style: JetTextStyle(
-                        align: JetTextAlign.right, weight: JetFontWeight.bold),
+                    style: JetTextStyle(align: JetTextAlign.right),
                     expression: r'$F{total}',
                     format: '#,##0.00',
+                  ),
+                  TextElement(
+                    id: 'discountLabel',
+                    bounds: JetRect(x: 240, y: 24, width: 180, height: 16),
+                    text: 'discountLabel',
+                    style: JetTextStyle(align: JetTextAlign.right),
+                    expression: r'$F{discountLabel}',
+                  ),
+                  TextElement(
+                    id: 'discount',
+                    bounds: JetRect(x: 430, y: 24, width: 110, height: 16),
+                    text: 'discount',
+                    style: JetTextStyle(align: JetTextAlign.right),
+                    expression: r'$F{discount}',
+                    format: '#,##0.00',
+                  ),
+                  TextElement(
+                    id: 'taxLabel',
+                    bounds: JetRect(x: 240, y: 42, width: 180, height: 16),
+                    text: 'taxLabel',
+                    style: JetTextStyle(align: JetTextAlign.right),
+                    expression: r'$F{taxLabel}',
+                  ),
+                  TextElement(
+                    id: 'tax',
+                    bounds: JetRect(x: 430, y: 42, width: 110, height: 16),
+                    text: 'tax',
+                    style: JetTextStyle(align: JetTextAlign.right),
+                    expression: r'$F{tax}',
+                    format: '#,##0.00',
+                  ),
+                  TextElement(
+                    id: 'shippingLabel',
+                    bounds: JetRect(x: 300, y: 60, width: 120, height: 16),
+                    text: 'Shipping',
+                    style: JetTextStyle(align: JetTextAlign.right),
+                  ),
+                  TextElement(
+                    id: 'shipping',
+                    bounds: JetRect(x: 430, y: 60, width: 110, height: 16),
+                    text: 'shipping',
+                    style: JetTextStyle(align: JetTextAlign.right),
+                    expression: r'$F{shipping}',
+                    format: '#,##0.00',
+                  ),
+                  TextElement(
+                    id: 'grandTotalLabel',
+                    bounds: JetRect(x: 280, y: 84, width: 140, height: 20),
+                    text: 'Grand Total',
+                    style: JetTextStyle(
+                        fontSize: 12,
+                        align: JetTextAlign.right,
+                        weight: JetFontWeight.bold),
+                  ),
+                  TextElement(
+                    id: 'grandTotal',
+                    bounds: JetRect(x: 430, y: 84, width: 110, height: 20),
+                    text: 'grandTotal',
+                    style: JetTextStyle(
+                        fontSize: 12,
+                        align: JetTextAlign.right,
+                        weight: JetFontWeight.bold),
+                    expression: r'$F{grandTotal}',
+                    format: '#,##0.00',
+                  ),
+                  // Left column — payment and shipping terms.
+                  TextElement(
+                    id: 'paymentTermsLabel',
+                    bounds: JetRect(x: 0, y: 6, width: 200, height: 14),
+                    text: 'PAYMENT TERMS',
+                    style: JetTextStyle(
+                        fontSize: 9,
+                        weight: JetFontWeight.bold,
+                        color: JetColor(0xFF888888)),
+                  ),
+                  TextElement(
+                    id: 'paymentTerms',
+                    bounds: JetRect(x: 0, y: 20, width: 230, height: 16),
+                    text: 'paymentTerms',
+                    expression: r'$F{paymentTerms}',
+                  ),
+                  TextElement(
+                    id: 'shippingMethodLabel',
+                    bounds: JetRect(x: 0, y: 42, width: 200, height: 14),
+                    text: 'SHIPPING',
+                    style: JetTextStyle(
+                        fontSize: 9,
+                        weight: JetFontWeight.bold,
+                        color: JetColor(0xFF888888)),
+                  ),
+                  TextElement(
+                    id: 'shippingMethod',
+                    bounds: JetRect(x: 0, y: 56, width: 230, height: 16),
+                    text: 'shippingMethod',
+                    expression: r'$F{shippingMethod}',
+                  ),
+                  // Invoice description — the free-text summary below the totals.
+                  TextElement(
+                    id: 'descriptionLabel',
+                    bounds: JetRect(x: 0, y: 118, width: 200, height: 14),
+                    text: 'DESCRIPTION',
+                    style: JetTextStyle(
+                        fontSize: 9,
+                        weight: JetFontWeight.bold,
+                        color: JetColor(0xFF888888)),
+                  ),
+                  TextElement(
+                    id: 'invoiceDescription',
+                    bounds: JetRect(x: 0, y: 132, width: 540, height: 44),
+                    text: 'invoiceDescription',
+                    style:
+                        JetTextStyle(fontSize: 10, color: JetColor(0xFF555555)),
+                    expression: r'$F{invoiceDescription}',
+                  ),
+                  // Full-width footer note + currency caption.
+                  TextElement(
+                    id: 'notes',
+                    bounds: JetRect(x: 0, y: 186, width: 330, height: 18),
+                    text: 'notes',
+                    style:
+                        JetTextStyle(fontSize: 9, color: JetColor(0xFF888888)),
+                    expression: r'$F{notes}',
+                  ),
+                  TextElement(
+                    id: 'currencyNote',
+                    bounds: JetRect(x: 340, y: 188, width: 200, height: 12),
+                    text: 'All amounts in EUR',
+                    style: JetTextStyle(
+                        fontSize: 9,
+                        align: JetTextAlign.right,
+                        color: JetColor(0xFF888888)),
                   ),
                 ],
               ),
@@ -202,6 +366,7 @@ ReportDefinition invoiceSampleDefinition() => const ReportDefinition(
                       text: 'qty',
                       style: JetTextStyle(align: JetTextAlign.right),
                       expression: r'$F{qty}',
+                      format: '#,##0',
                     ),
                     TextElement(
                       id: 'lineUnitPrice',

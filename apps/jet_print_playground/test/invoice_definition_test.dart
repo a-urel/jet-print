@@ -9,8 +9,10 @@ import 'package:jet_print_playground/rendered_invoice_example.dart';
 void main() {
   test('the demo is authored in the reified band model', () {
     final ReportDefinition def = invoiceSampleDefinition();
-    // Page chrome lives in furniture (record-blind).
-    expect(def.furniture.pageHeader?.type, BandType.pageHeader);
+    // Page chrome lives in furniture (record-blind). There is no page header —
+    // each invoice starts a new page with its own INVOICE heading, so a running
+    // title would be redundant — but the page footer carries `Page N of M`.
+    expect(def.furniture.pageHeader, isNull);
     expect(def.furniture.pageFooter?.type, BandType.pageFooter);
     // One first-class master group owns its key, flags, and header/footer.
     expect(def.body.root.groups, hasLength(1));

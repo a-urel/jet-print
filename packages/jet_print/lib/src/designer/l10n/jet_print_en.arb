@@ -973,6 +973,8 @@
     }
   },
 
+  "propertiesBarcode": "Barcode",
+  "@propertiesBarcode": { "description": "Properties panel section label for the barcode-specific settings (symbology, data, etc.)." },
   "propertiesSymbology": "Symbology",
   "@propertiesSymbology": { "description": "Barcode symbology picker label" },
   "barcodeSymbologyAuto": "Auto",

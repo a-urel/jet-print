@@ -734,6 +734,9 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   }
 
   @override
+  String get propertiesBarcode => 'Barcode';
+
+  @override
   String get propertiesSymbology => 'Symbologie';
 
   @override

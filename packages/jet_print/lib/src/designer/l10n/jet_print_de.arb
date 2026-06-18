@@ -256,6 +256,7 @@
   "propertiesColumnErrLabelTooTall": "Das Etikett ist höher als die Seite — Bandhöhe verringern, damit eine Zeile passt.",
   "propertiesColumnElementsClipped": "{count, plural, =1{1 Element ragt über die Spalte hinaus und wird abgeschnitten.} other{{count} Elemente ragen über die Spalte hinaus und werden abgeschnitten.}}",
 
+  "propertiesBarcode": "Barcode",
   "propertiesSymbology": "Symbologie",
   "barcodeSymbologyAuto": "Automatisch",
   "propertiesBarcodeData": "Daten",

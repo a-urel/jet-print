@@ -256,6 +256,7 @@
   "propertiesColumnErrLabelTooTall": "Etiket sayfadan uzun — bir satır sığması için bant yüksekliğini azaltın.",
   "propertiesColumnElementsClipped": "{count, plural, =1{1 öğe sütunun dışına taşıyor ve kırpılacak.} other{{count} öğe sütunun dışına taşıyor ve kırpılacak.}}",
 
+  "propertiesBarcode": "Barkod",
   "propertiesSymbology": "Semboloji",
   "barcodeSymbologyAuto": "Otomatik",
   "propertiesBarcodeData": "Veri",

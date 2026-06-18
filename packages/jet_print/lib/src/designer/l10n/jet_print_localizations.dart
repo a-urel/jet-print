@@ -1487,6 +1487,12 @@ abstract class JetPrintLocalizations {
   /// **'{count, plural, =1{1 element extends past the column and will be clipped.} other{{count} elements extend past the column and will be clipped.}}'**
   String propertiesColumnElementsClipped(int count);
 
+  /// Properties panel section label for the barcode-specific settings (symbology, data, etc.).
+  ///
+  /// In en, this message translates to:
+  /// **'Barcode'**
+  String get propertiesBarcode;
+
   /// Barcode symbology picker label
   ///
   /// In en, this message translates to:
