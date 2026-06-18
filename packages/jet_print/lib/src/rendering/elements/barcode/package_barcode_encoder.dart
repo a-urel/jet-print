@@ -59,20 +59,15 @@ class PackageBarcodeEncoder implements BarcodeEncoder {
       )) {
         if (e is bc.BarcodeBar) {
           if (e.black) {
-            if (twoD) {
-              // The package yields run-length-encoded horizontal spans for 2D
-              // codes (consecutive black pixels in a row merged into one bar).
-              // Split them back into individual square pixel-modules so that
-              // each module has width == height (the canonical 2D geometry).
-              final double px =
-                  e.height; // pixel size (pixelW == pixelH for square space)
-              final int count = (e.width / px).round();
-              for (var i = 0; i < count; i++) {
-                modules.add(BarcodeModule(e.left + i * px, e.top, px, px));
-              }
-            } else {
-              modules.add(BarcodeModule(e.left, e.top, e.width, e.height));
-            }
+            // Emit each bar as a single rectangle — for both 1D and 2D.
+            // 2D bars are run-length-encoded horizontal spans (consecutive
+            // same-row black modules merged by the package); emitting them raw
+            // is lossless because the renderer fills rectangles. Grid squareness
+            // for 2D comes from the square coordinate space (w == h above), not
+            // from subdividing spans. Splitting spans was wrong for PDF417,
+            // whose modules are non-square (pixelH ≈ 2×pixelW), causing module
+            // widths ~2× too large and an unscannable pattern.
+            modules.add(BarcodeModule(e.left, e.top, e.width, e.height));
           }
         } else if (e is bc.BarcodeText) {
           texts.add(BarcodeHriText(

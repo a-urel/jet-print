@@ -34,14 +34,15 @@ void main() {
         isA<BarcodeInvalid>());
   });
 
-  test('auto infers QR for a URL; 2D has square modules', () {
+  test('auto infers QR for a URL; 2D symbol space is square', () {
     final r = ok(enc.encode(BarcodeSymbology.auto, 'https://x.example',
         width: 120, height: 120));
     expect(r.resolvedSymbology, BarcodeSymbology.qrCode);
     expect(r.symbol.isTwoD, isTrue);
-    // 2D modules are square (within float tolerance).
-    final m = r.symbol.modules.first;
-    expect((m.width - m.height).abs() < 0.001, isTrue);
+    expect(r.symbol.modules, isNotEmpty);
+    // 2D coordinate space is square (squareness comes from the space, not
+    // individual span dimensions).
+    expect((r.symbol.spaceWidth - r.symbol.spaceHeight).abs() < 0.001, isTrue);
     expect(r.symbol.texts, isEmpty); // no HRI for 2D
   });
 
@@ -54,15 +55,25 @@ void main() {
         greaterThanOrEqualTo(low.symbol.modules.length));
   });
 
-  test('DataMatrix / PDF417 / Aztec encode', () {
+  test('DataMatrix / PDF417 / Aztec encode and all modules fit in space', () {
     for (final s in <BarcodeSymbology>[
       BarcodeSymbology.dataMatrix,
       BarcodeSymbology.pdf417,
       BarcodeSymbology.aztec,
     ]) {
-      expect(enc.encode(s, 'HELLO-036', width: 150, height: 150),
-          isA<BarcodeEncoded>(),
-          reason: '$s');
+      final r = ok(enc.encode(s, 'HELLO-036', width: 150, height: 150));
+      expect(r.symbol.modules, isNotEmpty, reason: '$s has no modules');
+      for (final m in r.symbol.modules) {
+        expect(m.left >= -0.001, isTrue,
+            reason: '$s module left=${m.left} < 0');
+        expect(m.left + m.width <= r.symbol.spaceWidth + 0.001, isTrue,
+            reason:
+                '$s module right=${m.left + m.width} > spaceWidth=${r.symbol.spaceWidth}');
+        expect(m.top >= -0.001, isTrue, reason: '$s module top=${m.top} < 0');
+        expect(m.top + m.height <= r.symbol.spaceHeight + 0.001, isTrue,
+            reason:
+                '$s module bottom=${m.top + m.height} > spaceHeight=${r.symbol.spaceHeight}');
+      }
     }
   });
 }
