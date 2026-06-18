@@ -18,15 +18,15 @@ void main() {
           '5901234123457');
     });
     test('EAN-8: 7 digits → append', () {
-      expect(barcodeAutoFix(BarcodeSymbology.ean8, '9638507').length, 8);
+      expect(barcodeAutoFix(BarcodeSymbology.ean8, '9638507'), '96385074');
     });
     test('UPC-A: 11 digits → append', () {
       expect(
           barcodeAutoFix(BarcodeSymbology.upcA, '01234567890'), '012345678905');
     });
     test('ITF-14: 13 digits → append check digit (14 total)', () {
-      expect(
-          barcodeAutoFix(BarcodeSymbology.itf14, '0001234567890').length, 14);
+      expect(barcodeAutoFix(BarcodeSymbology.itf14, '0001234567890'),
+          '00012345678905');
     });
     test('non-numeric EAN-13 returned unchanged (encoder will reject)', () {
       expect(barcodeAutoFix(BarcodeSymbology.ean13, 'ABC'), 'ABC');

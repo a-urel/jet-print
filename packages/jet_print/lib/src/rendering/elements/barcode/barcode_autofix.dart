@@ -38,7 +38,8 @@ String barcodeAutoFix(BarcodeSymbology concrete, String value) {
     case BarcodeSymbology.itf14:
       var v = value;
       if (_isDigits(v) && v.length == 13) v = _appendCheck(v);
-      // ITF requires an even number of digits; left-pad if odd.
+      // ITF requires an even number of digits; single left-pad is intentional —
+      // a still-odd result (e.g. raw odd input) is left to the encoder to reject.
       if (_isDigits(v) && v.length.isOdd) v = '0$v';
       return v;
     case BarcodeSymbology.auto:
