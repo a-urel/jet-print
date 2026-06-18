@@ -18,6 +18,7 @@ import '../expression/ast.dart';
 import '../expression/expression.dart';
 import '../expression/expression_exception.dart';
 import 'band.dart';
+import 'column_layout.dart';
 import 'detail_scope.dart';
 import 'diagnostic.dart';
 import 'elements/image_element.dart';
@@ -327,6 +328,8 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
   }
   walkScope(def.body.root, isRoot: true, chain: const <DetailScope>[]);
 
+  _validateColumns(def, out);
+
   // I1 — duplicate ids (reported once per offending id, in first-seen order).
   for (final MapEntry<String, int> e in idCounts.entries) {
     if (e.value > 1) {
@@ -360,4 +363,112 @@ Set<String> _recordFieldRefs(ReportElement el) {
     if (source is FieldImageSource) return <String>{source.field};
   }
   return const <String>{};
+}
+
+/// Every [Band] in [def], in document order (furniture, body once-bands, then
+/// the scope tree). Used to find stray `columnLayout`s (spec 034).
+List<Band> _allBands(ReportDefinition def) {
+  final List<Band> bands = <Band>[];
+  void add(Band? b) {
+    if (b != null) bands.add(b);
+  }
+
+  add(def.furniture.pageHeader);
+  add(def.furniture.pageFooter);
+  add(def.furniture.columnHeader);
+  add(def.furniture.columnFooter);
+  add(def.furniture.background);
+  add(def.body.title);
+  add(def.body.summary);
+  add(def.body.noData);
+  void walk(DetailScope s) {
+    for (final GroupLevel g in s.groups) {
+      add(g.header);
+      add(g.footer);
+    }
+    add(s.footer);
+    for (final ScopeNode node in s.children) {
+      switch (node) {
+        case BandNode(band: final Band b):
+          add(b);
+        case NestedScope(scope: final DetailScope child):
+          walk(child);
+      }
+    }
+  }
+
+  walk(def.body.root);
+  return bands;
+}
+
+/// Validates the spec-034 label grid: the active band's geometry (FR-007/008)
+/// and a fallback warning for any `columnLayout` carried by a band that is not
+/// the active label band (FR-009).
+void _validateColumns(ReportDefinition def, List<Diagnostic> out) {
+  final Band? active =
+      def.soleDetailBand?.columnLayout != null ? def.soleDetailBand : null;
+
+  for (final Band b in _allBands(def)) {
+    if (b.columnLayout != null && !identical(b, active)) {
+      out.add(Diagnostic(
+        DiagnosticSeverity.warning,
+        'column layout on band "${b.id}" is ignored — it applies only to the '
+        'lone detail band of a pure single-detail body',
+        elementId: b.id,
+      ));
+    }
+  }
+
+  if (active == null) return;
+  final ColumnLayout cl = active.columnLayout!;
+  if (cl.columnCount < 1) {
+    out.add(Diagnostic(DiagnosticSeverity.error,
+        'columnLayout columnCount must be >= 1 (was ${cl.columnCount})',
+        elementId: active.id));
+  }
+  if (cl.columnWidth <= 0 || cl.columnSpacing < 0 || cl.rowSpacing < 0) {
+    out.add(Diagnostic(
+        DiagnosticSeverity.error,
+        'columnLayout dimensions must be non-negative (columnWidth > 0)',
+        elementId: active.id));
+  }
+
+  final double bodyWidth =
+      def.page.width - def.page.margins.left - def.page.margins.right;
+  if (cl.columnCount >= 1 && cl.columnWidth > 0) {
+    final double gridWidth =
+        cl.columnCount * cl.columnWidth + (cl.columnCount - 1) * cl.columnSpacing;
+    if (gridWidth > bodyWidth) {
+      out.add(Diagnostic(
+          DiagnosticSeverity.error,
+          'columnLayout grid ($gridWidth pt) is wider than the page body '
+          '($bodyWidth pt)',
+          elementId: active.id));
+    }
+  }
+
+  final double headerH = def.furniture.pageHeader?.height ?? 0;
+  final double footerH = def.furniture.pageFooter?.height ?? 0;
+  final double bodyCapacity = def.page.height -
+      def.page.margins.top -
+      def.page.margins.bottom -
+      headerH -
+      footerH;
+  if (active.height > bodyCapacity) {
+    out.add(Diagnostic(
+        DiagnosticSeverity.error,
+        'label height (${active.height} pt) is taller than the page body '
+        '($bodyCapacity pt); no rows fit',
+        elementId: active.id));
+  }
+
+  for (final ReportElement el in active.elements) {
+    if (el.bounds.x + el.bounds.width > cl.columnWidth) {
+      out.add(Diagnostic(
+          DiagnosticSeverity.warning,
+          'element "${el.id}" overflows cell width (${cl.columnWidth} pt); '
+          'it will be clipped',
+          elementId: el.id));
+    }
+  }
 }
