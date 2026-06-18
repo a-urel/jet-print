@@ -971,7 +971,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     if (!eligible) {
       out
         ..add(const SizedBox(height: 8))
-        ..add(_InlineWarning(
+        ..add(_InlineNotice(
             text: l10n.propertiesColumnLayoutInactive, theme: theme));
     }
 
@@ -1279,6 +1279,33 @@ class _InlineWarning extends StatelessWidget {
         Expanded(
           child: Text(text,
               style: theme.textTheme.muted.copyWith(color: colors.destructive)),
+        ),
+      ],
+    );
+  }
+}
+
+/// A compact inline informational notice row: a small info glyph plus muted
+/// secondary text, used for non-error status messages such as an inactive layout.
+/// Visually distinct from [_InlineWarning] (neutral/muted rather than destructive).
+class _InlineNotice extends StatelessWidget {
+  const _InlineNotice({required this.text, required this.theme});
+
+  final String text;
+  final ShadThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final ShadColorScheme colors = theme.colorScheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Icon(LucideIcons.info, size: 13, color: colors.mutedForeground),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(text,
+              style:
+                  theme.textTheme.muted.copyWith(color: colors.mutedForeground)),
         ),
       ],
     );
