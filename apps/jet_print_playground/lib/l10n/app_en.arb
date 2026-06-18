@@ -18,17 +18,12 @@
 
   "tabList": "List",
   "@tabList": {
-    "description": "Tab label for the list report demo (placeholder)."
+    "description": "Tab label for the list report designer demo."
   },
 
   "tabReceipt": "Receipt",
   "@tabReceipt": {
     "description": "Tab label for the receipt report demo (placeholder)."
-  },
-
-  "tabNestedLists": "Nested Lists",
-  "@tabNestedLists": {
-    "description": "Tab label for the nested-lists report demo (placeholder)."
   },
 
   "comingSoon": "Coming soon",

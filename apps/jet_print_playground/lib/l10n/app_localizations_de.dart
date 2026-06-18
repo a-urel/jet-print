@@ -24,8 +24,5 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tabReceipt => 'Beleg';
 
   @override
-  String get tabNestedLists => 'Verschachtelte Listen';
-
-  @override
   String get comingSoon => 'Demnächst';
 }
