@@ -41,6 +41,7 @@ import 'field_drag_data.dart';
 import 'frame_custom_painter.dart';
 import 'grid_geometry.dart';
 import 'hit_testing.dart';
+import 'label_grid_geometry.dart';
 import 'ruler_metrics.dart';
 import 'ruler_overlay.dart';
 import 'selection_overlay.dart';
@@ -81,6 +82,9 @@ const Color _badgeBorderColor = Color(0xFFC7D2FE); // indigo-200
 // The empty-canvas hint keeps the neutral slate it always had — it is a paper
 // prompt, not a band annotation.
 const Color _emptyHintColor = Color(0xFF64748B); // slate-500
+// The label-grid cue stroke — a faint slate outline for the editable cell
+// boundary and the read-only ghost columns (design-only chrome).
+const Color _labelGridCueColor = Color(0x553B82F6); // slate/blue @ ~33%
 
 /// The live design surface: it paints element *appearance* through the shared
 /// render pipeline (cached as a `ui.Picture`) and layers direct-manipulation
@@ -1082,6 +1086,20 @@ class _DesignCanvasState extends State<DesignCanvas> {
                       ),
                     ),
                   ),
+                  // Multi-column label cue (spec 035): the editable cell
+                  // boundary + read-only ghost columns. Drawn above band chrome,
+                  // below element appearance; absent unless a grid is active.
+                  if (labelGridCue(controller.definition, displayLayout)
+                      case final LabelGridCue cue)
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: _LabelGridPainter(
+                          cue: cue,
+                          scale: scale,
+                          color: _labelGridCueColor,
+                        ),
+                      ),
+                    ),
                   // Band-type captions, one per band, anchored at each band's
                   // top-left corner. Drawn below element appearance so an element
                   // sharing the corner visually wins; they never capture pointers.
@@ -1407,6 +1425,41 @@ class _BandChromePainter extends CustomPainter {
       oldDelegate.scale != scale ||
       oldDelegate.layout != layout ||
       oldDelegate.separatorColor != separatorColor;
+}
+
+/// Draws the multi-column label cue (spec 035): the editable cell's boundary
+/// plus faint read-only ghost outlines for the remaining columns. Design-only
+/// chrome — non-interactive, never part of the shared render pipeline.
+class _LabelGridPainter extends CustomPainter {
+  const _LabelGridPainter({
+    required this.cue,
+    required this.scale,
+    required this.color,
+  });
+
+  final LabelGridCue cue;
+  final double scale;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint stroke = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    Rect scaled(JetRect r) =>
+        Rect.fromLTWH(r.x * scale, r.y * scale, r.width * scale, r.height * scale);
+    canvas.drawRect(scaled(cue.cell), stroke);
+    for (final JetRect g in cue.ghosts) {
+      canvas.drawRect(scaled(g), stroke);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_LabelGridPainter oldDelegate) =>
+      oldDelegate.cue != cue ||
+      oldDelegate.scale != scale ||
+      oldDelegate.color != color;
 }
 
 /// A small, subtle caption naming a band's role, sat flush in the band's
