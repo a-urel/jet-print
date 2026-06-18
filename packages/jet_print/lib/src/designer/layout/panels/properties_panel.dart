@@ -543,10 +543,18 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
               const SizedBox(height: 12),
               _LabeledRow(
                 label: l10n.propertiesColor,
-                child: _ColorField(
-                  keyBase: '$_p.field.barcodeColor',
-                  value: element.color,
-                  onCommit: (JetColor? c) => controller.setBarcodeColor(id, c!),
+                // A compact swatch-only box, left-aligned so it keeps its
+                // intrinsic size instead of stretching across the row — matching
+                // the text/shape color inputs.
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: _ColorField(
+                    keyBase: '$_p.field.barcodeColor',
+                    value: element.color,
+                    compact: true,
+                    onCommit: (JetColor? c) =>
+                        controller.setBarcodeColor(id, c!),
+                  ),
                 ),
               ),
             ],

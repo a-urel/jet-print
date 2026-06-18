@@ -1543,7 +1543,10 @@ void main() {
       await _openProperties(tester);
       final String id = await addBarcode(tester, c);
 
-      expect(_valueIn('barcodeColor', '#000000'), findsOneWidget,
+      // The compact swatch trigger shows the current color (no inline hex); a
+      // new barcode is black.
+      expect(_field('barcodeColor'), findsOneWidget);
+      expect(barcodeOf(c, id).color, JetColor.black,
           reason: 'a new barcode is black');
 
       await tester.tap(_field('barcodeColor'));
