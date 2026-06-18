@@ -906,5 +906,70 @@
   "outlineListUnbound": "List (unbound)",
   "@outlineListUnbound": {
     "description": "Outline label for a nested list scope with no collection field bound yet."
+  },
+
+  "exprEditorDeeperFieldHint": "Descendant field — valid inside an aggregate like SUM(…)",
+  "@exprEditorDeeperFieldHint": {
+    "description": "Tooltip on a descendant (↳) field chip in the expression editor palette (spec 033). Explains that the field is from a child collection and is only valid inside an aggregate call."
+  },
+
+  "propertiesColumnLayout": "Column Layout",
+  "@propertiesColumnLayout": {
+    "description": "Properties section heading for a detail band's multi-column label grid (spec 035)."
+  },
+  "propertiesColumnLayoutAdd": "Add column layout",
+  "@propertiesColumnLayoutAdd": {
+    "description": "Button: turn the selected detail band into a multi-column label sheet."
+  },
+  "propertiesColumnLayoutAddDisabled": "Requires a single detail band with no title, summary, groups, or footer.",
+  "@propertiesColumnLayoutAddDisabled": {
+    "description": "Tooltip on the disabled Add-column-layout button when the report is not a pure single-detail body."
+  },
+  "propertiesColumnLayoutRemove": "Remove column layout",
+  "@propertiesColumnLayoutRemove": {
+    "description": "Button: clear the column layout, restoring a plain detail band."
+  },
+  "propertiesColumnCount": "Columns",
+  "@propertiesColumnCount": {
+    "description": "Label for the number-of-columns field in the Column Layout section."
+  },
+  "propertiesColumnWidth": "Column width",
+  "@propertiesColumnWidth": {
+    "description": "Label for the per-column (cell) width field, in points."
+  },
+  "propertiesColumnSpacing": "Column spacing",
+  "@propertiesColumnSpacing": {
+    "description": "Label for the horizontal gutter-between-columns field, in points."
+  },
+  "propertiesRowSpacing": "Row spacing",
+  "@propertiesRowSpacing": {
+    "description": "Label for the vertical gap-between-label-rows field, in points."
+  },
+  "propertiesColumnLayoutInactive": "Column layout is inactive: the report isn't a single detail band.",
+  "@propertiesColumnLayoutInactive": {
+    "description": "Notice shown when a band carries a column layout but the report shape no longer satisfies the activation gate (spec 035 / FR-009)."
+  },
+  "propertiesColumnErrTooFew": "Add at least one column.",
+  "@propertiesColumnErrTooFew": {
+    "description": "Friendly column-layout error: the column count is below one."
+  },
+  "propertiesColumnErrDimensions": "Column width must be greater than zero, and spacing can't be negative.",
+  "@propertiesColumnErrDimensions": {
+    "description": "Friendly column-layout error: a non-positive width or negative spacing."
+  },
+  "propertiesColumnErrGridTooWide": "The columns don't fit the page width — reduce the column count or width.",
+  "@propertiesColumnErrGridTooWide": {
+    "description": "Friendly column-layout error: the grid is wider than the page body."
+  },
+  "propertiesColumnErrLabelTooTall": "The label is taller than the page — reduce the band height so a row fits.",
+  "@propertiesColumnErrLabelTooTall": {
+    "description": "Friendly column-layout error: the label height exceeds the page body, so no rows fit."
+  },
+  "propertiesColumnElementsClipped": "{count, plural, =1{1 element extends past the column and will be clipped.} other{{count} elements extend past the column and will be clipped.}}",
+  "@propertiesColumnElementsClipped": {
+    "description": "Friendly column-layout warning: how many elements overflow the column (cell) width and will be clipped.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
   }
 }

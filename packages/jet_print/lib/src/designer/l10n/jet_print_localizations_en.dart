@@ -220,10 +220,6 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get exprEditorFieldsLabel => 'Fields';
 
   @override
-  String get exprEditorDeeperFieldHint =>
-      'From a nested collection — use inside an aggregate (e.g. SUM)';
-
-  @override
   String get exprEditorFunctionsLabel => 'Functions';
 
   @override
@@ -674,4 +670,63 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
 
   @override
   String get outlineListUnbound => 'List (unbound)';
+
+  @override
+  String get exprEditorDeeperFieldHint =>
+      'Descendant field — valid inside an aggregate like SUM(…)';
+
+  @override
+  String get propertiesColumnLayout => 'Column Layout';
+
+  @override
+  String get propertiesColumnLayoutAdd => 'Add column layout';
+
+  @override
+  String get propertiesColumnLayoutAddDisabled =>
+      'Requires a single detail band with no title, summary, groups, or footer.';
+
+  @override
+  String get propertiesColumnLayoutRemove => 'Remove column layout';
+
+  @override
+  String get propertiesColumnCount => 'Columns';
+
+  @override
+  String get propertiesColumnWidth => 'Column width';
+
+  @override
+  String get propertiesColumnSpacing => 'Column spacing';
+
+  @override
+  String get propertiesRowSpacing => 'Row spacing';
+
+  @override
+  String get propertiesColumnLayoutInactive =>
+      'Column layout is inactive: the report isn\'t a single detail band.';
+
+  @override
+  String get propertiesColumnErrTooFew => 'Add at least one column.';
+
+  @override
+  String get propertiesColumnErrDimensions =>
+      'Column width must be greater than zero, and spacing can\'t be negative.';
+
+  @override
+  String get propertiesColumnErrGridTooWide =>
+      'The columns don\'t fit the page width — reduce the column count or width.';
+
+  @override
+  String get propertiesColumnErrLabelTooTall =>
+      'The label is taller than the page — reduce the band height so a row fits.';
+
+  @override
+  String propertiesColumnElementsClipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count elements extend past the column and will be clipped.',
+      one: '1 element extends past the column and will be clipped.',
+    );
+    return '$_temp0';
+  }
 }

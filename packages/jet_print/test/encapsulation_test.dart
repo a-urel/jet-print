@@ -69,6 +69,12 @@ bool _isWhiteBoxSeamTest(File file) {
       // Flutter-free so the adaptive-density math is unit-testable; its unit
       // test is white-box (Principle III).
       path.endsWith('/test/designer/canvas/grid_geometry_test.dart') ||
+      // Label-grid cue (035): `labelGridCue` (`label_grid_geometry.dart`) is an
+      // unexported `src/` pure helper computing the multi-column design-time
+      // cell/ghost rects from a `DesignTimeLayout`; its unit test is white-box
+      // (Principle III). The canvas smoke case in the same file drives the
+      // public designer, but the file imports `src/` for the geometry helper.
+      path.endsWith('/test/designer/canvas/label_grid_geometry_test.dart') ||
       // Paper & margin presets (018): the standard-size / margin recognition
       // helpers are unexported `src/` pure functions (the `format_presets.dart`
       // precedent — preset identity is derived for display, never persisted);

@@ -202,9 +202,9 @@ class _PlaygroundHome extends StatelessWidget {
                   value: 'etiket',
                   leading: const Icon(LucideIcons.tag, size: 16),
                   expandContent: true,
-                  // A live designer over the address-label data — 100 records
-                  // chunked into rows of three, laid out as a 3-column label
-                  // sheet (label_sample.dart).
+                  // A live designer over the address-label data — 100 flat
+                  // records laid out as a 3-column label sheet via the detail
+                  // band's native ColumnLayout (label_sample.dart).
                   content: _FillTabHeight(
                     child: _DesignerTab(
                       fonts: fonts,

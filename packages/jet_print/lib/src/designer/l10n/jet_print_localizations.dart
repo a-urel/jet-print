@@ -521,13 +521,6 @@ abstract class JetPrintLocalizations {
   /// **'Fields'**
   String get exprEditorFieldsLabel;
 
-  /// Tooltip/marker shown on a fx-palette field button that belongs to a deeper
-  /// (descendant) collection — valid only inside an aggregate (spec 033).
-  ///
-  /// In en, this message translates to:
-  /// **'From a nested collection — use inside an aggregate (e.g. SUM)'**
-  String get exprEditorDeeperFieldHint;
-
   /// Label for the functions palette in the expression editor (032).
   ///
   /// In en, this message translates to:
@@ -1403,6 +1396,96 @@ abstract class JetPrintLocalizations {
   /// In en, this message translates to:
   /// **'List (unbound)'**
   String get outlineListUnbound;
+
+  /// Tooltip on a descendant (↳) field chip in the expression editor palette (spec 033). Explains that the field is from a child collection and is only valid inside an aggregate call.
+  ///
+  /// In en, this message translates to:
+  /// **'Descendant field — valid inside an aggregate like SUM(…)'**
+  String get exprEditorDeeperFieldHint;
+
+  /// Properties section heading for a detail band's multi-column label grid (spec 035).
+  ///
+  /// In en, this message translates to:
+  /// **'Column Layout'**
+  String get propertiesColumnLayout;
+
+  /// Button: turn the selected detail band into a multi-column label sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Add column layout'**
+  String get propertiesColumnLayoutAdd;
+
+  /// Tooltip on the disabled Add-column-layout button when the report is not a pure single-detail body.
+  ///
+  /// In en, this message translates to:
+  /// **'Requires a single detail band with no title, summary, groups, or footer.'**
+  String get propertiesColumnLayoutAddDisabled;
+
+  /// Button: clear the column layout, restoring a plain detail band.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove column layout'**
+  String get propertiesColumnLayoutRemove;
+
+  /// Label for the number-of-columns field in the Column Layout section.
+  ///
+  /// In en, this message translates to:
+  /// **'Columns'**
+  String get propertiesColumnCount;
+
+  /// Label for the per-column (cell) width field, in points.
+  ///
+  /// In en, this message translates to:
+  /// **'Column width'**
+  String get propertiesColumnWidth;
+
+  /// Label for the horizontal gutter-between-columns field, in points.
+  ///
+  /// In en, this message translates to:
+  /// **'Column spacing'**
+  String get propertiesColumnSpacing;
+
+  /// Label for the vertical gap-between-label-rows field, in points.
+  ///
+  /// In en, this message translates to:
+  /// **'Row spacing'**
+  String get propertiesRowSpacing;
+
+  /// Notice shown when a band carries a column layout but the report shape no longer satisfies the activation gate (spec 035 / FR-009).
+  ///
+  /// In en, this message translates to:
+  /// **'Column layout is inactive: the report isn\'t a single detail band.'**
+  String get propertiesColumnLayoutInactive;
+
+  /// Friendly column-layout error: the column count is below one.
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least one column.'**
+  String get propertiesColumnErrTooFew;
+
+  /// Friendly column-layout error: a non-positive width or negative spacing.
+  ///
+  /// In en, this message translates to:
+  /// **'Column width must be greater than zero, and spacing can\'t be negative.'**
+  String get propertiesColumnErrDimensions;
+
+  /// Friendly column-layout error: the grid is wider than the page body.
+  ///
+  /// In en, this message translates to:
+  /// **'The columns don\'t fit the page width — reduce the column count or width.'**
+  String get propertiesColumnErrGridTooWide;
+
+  /// Friendly column-layout error: the label height exceeds the page body, so no rows fit.
+  ///
+  /// In en, this message translates to:
+  /// **'The label is taller than the page — reduce the band height so a row fits.'**
+  String get propertiesColumnErrLabelTooTall;
+
+  /// Friendly column-layout warning: how many elements overflow the column (cell) width and will be clipped.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 element extends past the column and will be clipped.} other{{count} elements extend past the column and will be clipped.}}'**
+  String propertiesColumnElementsClipped(int count);
 }
 
 class _JetPrintLocalizationsDelegate

@@ -14,6 +14,7 @@
 library;
 
 import '../../domain/band.dart';
+import '../../domain/column_layout.dart';
 import '../../domain/elements/image_element.dart';
 import '../../domain/elements/image_source.dart';
 import '../../domain/elements/text_element.dart';
@@ -58,9 +59,9 @@ typedef _OpenGroup = ({
 /// (008b §6.1).
 typedef _Span = ({String name, int level, int openIndex});
 
-/// One body-band placement decided by the boundary pass: the measured [band]
-/// at page-absolute [y]. Frame construction replays these on demand.
-typedef _PlacedBand = ({MeasuredBand band, double y});
+/// One body-band placement decided by the boundary pass: the measured [band] at
+/// page-absolute (`[x]`, `[y]`). Frame construction replays these on demand.
+typedef _PlacedBand = ({MeasuredBand band, double x, double y});
 
 /// The result of a layout: the paginated [pages] and collected [diagnostics].
 class LayoutResult {
@@ -143,13 +144,13 @@ class LazyLayout {
   /// Translates band-local boxes to the page and emits each element's
   /// primitives — the unchanged 008a placement path, replayed on demand.
   void _place(List<({ReportElement element, JetRect bounds})> boxes,
-      double topY, FrameBuilder fb) {
+      double leftX, double topY, FrameBuilder fb) {
     for (final ({ReportElement element, JetRect bounds}) e in boxes) {
       _renderers.rendererFor(e.element).emit(
             e.element,
             _ctx,
             JetRect(
-              x: _left + e.bounds.x,
+              x: leftX + e.bounds.x,
               y: topY + e.bounds.y,
               width: e.bounds.width,
               height: e.bounds.height,
@@ -209,7 +210,7 @@ class LazyLayout {
     }
     final FrameBuilder fb = FrameBuilder(_page);
     for (final _PlacedBand placed in _plans[index]) {
-      _place(placed.band.elements, placed.y, fb);
+      _place(placed.band.elements, placed.x, placed.y, fb);
     }
     final int pageNumber = index + 1;
     double y = _top;
@@ -217,7 +218,7 @@ class LazyLayout {
       _place(<({ReportElement element, JetRect bounds})>[
         for (final ReportElement el in h.elements)
           (element: _substitute(el, pageNumber), bounds: el.bounds),
-      ], y, fb);
+      ], _left, y, fb);
       y += h.height;
     }
     y = _bodyBottom;
@@ -225,7 +226,7 @@ class LazyLayout {
       _place(<({ReportElement element, JetRect bounds})>[
         for (final ReportElement el in f.elements)
           (element: _substitute(el, pageNumber), bounds: el.bounds),
-      ], y, fb);
+      ], _left, y, fb);
       y += f.height;
     }
     return fb.build();
@@ -414,163 +415,194 @@ class ReportLayouter {
       for (final FilledBand b in filled.bands) bandMeasurer.measure(b),
     ];
 
-    final List<double> cum = <double>[0];
-    for (final MeasuredBand mb in measured) {
-      cum.add(cum.last + mb.height);
-    }
-    final Map<int, double> keepExtent = <int, double>{};
-    final Set<int> startNewPageAt = <int>{};
-    final Set<String> seenStartNewPageGroup = <String>{};
-    final List<_Span> spanStack = <_Span>[];
-    void finalizeSpan(_Span s, int exitIndex) {
-      if (groupByName[s.name]!.keepTogether) {
-        keepExtent[s.openIndex] = cum[exitIndex] - cum[s.openIndex];
-      }
-    }
+    final ColumnLayout? columns = def.soleDetailBand?.columnLayout;
+    final List<List<_PlacedBand>> plans;
 
-    String? spanPrevHeader;
-    for (int k = 0; k < filled.bands.length; k++) {
-      final FilledBand band = filled.bands[k];
-      final bool isGroupBand = (band.type == BandType.groupHeader ||
-              band.type == BandType.groupFooter) &&
-          band.group != null &&
-          levelOf.containsKey(band.group);
-      final int level = isGroupBand ? levelOf[band.group]! : -1;
-      final bool newHeader = band.type == BandType.groupHeader &&
-          isGroupBand &&
-          spanPrevHeader != band.group;
-      if (newHeader) {
-        if (groupByName[band.group]!.startNewPage &&
-            !seenStartNewPageGroup.add(band.group!)) {
-          startNewPageAt.add(k);
-        }
-        while (spanStack.isNotEmpty && spanStack.last.level >= level) {
-          finalizeSpan(spanStack.removeLast(), k);
-        }
-      } else if (band.type == BandType.groupFooter && isGroupBand) {
-        while (spanStack.isNotEmpty && spanStack.last.level > level) {
-          finalizeSpan(spanStack.removeLast(), k);
-        }
-      } else if (band.type == BandType.summary ||
-          band.type == BandType.noData) {
-        while (spanStack.isNotEmpty) {
-          finalizeSpan(spanStack.removeLast(), k);
+    if (columns != null && measured.isNotEmpty) {
+      // Spec 034 — uniform label grid, horizontal print order. Cells are fixed
+      // (designed) height; the next row advances by the pitch, so over-tall
+      // content clips rather than reflowing.
+      final double labelHeight = def.soleDetailBand!.height;
+      final int cols = columns.columnCount < 1 ? 1 : columns.columnCount;
+      final double pitch = labelHeight + columns.rowSpacing;
+      int rowsPerPage =
+          pitch <= 0 ? 1 : ((bodyCapacity + columns.rowSpacing) / pitch).floor();
+      if (rowsPerPage < 1) rowsPerPage = 1;
+      final int cellsPerPage = rowsPerPage * cols;
+
+      plans = <List<_PlacedBand>>[<_PlacedBand>[]];
+      for (int i = 0; i < measured.length; i++) {
+        final int k = i % cellsPerPage;
+        if (i > 0 && k == 0) plans.add(<_PlacedBand>[]);
+        final int row = k ~/ cols;
+        final int col = k % cols;
+        final double x =
+            left + col * (columns.columnWidth + columns.columnSpacing);
+        final double y = bodyTop + row * pitch;
+        plans.last.add((band: measured[i], x: x, y: y));
+      }
+    } else {
+      final List<double> cum = <double>[0];
+      for (final MeasuredBand mb in measured) {
+        cum.add(cum.last + mb.height);
+      }
+      final Map<int, double> keepExtent = <int, double>{};
+      final Set<int> startNewPageAt = <int>{};
+      final Set<String> seenStartNewPageGroup = <String>{};
+      final List<_Span> spanStack = <_Span>[];
+      void finalizeSpan(_Span s, int exitIndex) {
+        if (groupByName[s.name]!.keepTogether) {
+          keepExtent[s.openIndex] = cum[exitIndex] - cum[s.openIndex];
         }
       }
-      if (newHeader) {
-        spanStack.add((name: band.group!, level: level, openIndex: k));
-      }
-      spanPrevHeader = (band.type == BandType.groupHeader && isGroupBand)
-          ? band.group
-          : null;
-    }
-    while (spanStack.isNotEmpty) {
-      finalizeSpan(spanStack.removeLast(), filled.bands.length);
-    }
 
-    final List<_OpenGroup> openStack = <_OpenGroup>[];
-    final List<List<_PlacedBand>> plans = <List<_PlacedBand>>[<_PlacedBand>[]];
-    double cursorY = bodyTop;
-
-    void reEmitHeaders() {
-      for (final _OpenGroup g in openStack) {
-        if (!g.reprint) continue;
-        for (final MeasuredBand hmb in g.headers) {
-          plans.last.add((band: hmb, y: cursorY));
-          cursorY += hmb.height;
+      String? spanPrevHeader;
+      for (int k = 0; k < filled.bands.length; k++) {
+        final FilledBand band = filled.bands[k];
+        final bool isGroupBand = (band.type == BandType.groupHeader ||
+                band.type == BandType.groupFooter) &&
+            band.group != null &&
+            levelOf.containsKey(band.group);
+        final int level = isGroupBand ? levelOf[band.group]! : -1;
+        final bool newHeader = band.type == BandType.groupHeader &&
+            isGroupBand &&
+            spanPrevHeader != band.group;
+        if (newHeader) {
+          if (groupByName[band.group]!.startNewPage &&
+              !seenStartNewPageGroup.add(band.group!)) {
+            startNewPageAt.add(k);
+          }
+          while (spanStack.isNotEmpty && spanStack.last.level >= level) {
+            finalizeSpan(spanStack.removeLast(), k);
+          }
+        } else if (band.type == BandType.groupFooter && isGroupBand) {
+          while (spanStack.isNotEmpty && spanStack.last.level > level) {
+            finalizeSpan(spanStack.removeLast(), k);
+          }
+        } else if (band.type == BandType.summary ||
+            band.type == BandType.noData) {
+          while (spanStack.isNotEmpty) {
+            finalizeSpan(spanStack.removeLast(), k);
+          }
         }
-      }
-    }
-
-    void breakPage() {
-      plans.add(<_PlacedBand>[]);
-      cursorY = bodyTop;
-      reEmitHeaders();
-    }
-
-    String? prevHeaderGroup;
-    for (int i = 0; i < filled.bands.length; i++) {
-      final FilledBand band = filled.bands[i];
-      final MeasuredBand mb = measured[i];
-      final bool isGroupBand = (band.type == BandType.groupHeader ||
-              band.type == BandType.groupFooter) &&
-          band.group != null &&
-          levelOf.containsKey(band.group);
-      final int level = isGroupBand ? levelOf[band.group]! : -1;
-
-      if (band.type == BandType.groupFooter && isGroupBand) {
-        while (openStack.isNotEmpty && openStack.last.level > level) {
-          openStack.removeLast();
+        if (newHeader) {
+          spanStack.add((name: band.group!, level: level, openIndex: k));
         }
-      } else if (band.type == BandType.summary ||
-          band.type == BandType.noData) {
-        openStack.clear();
+        spanPrevHeader = (band.type == BandType.groupHeader && isGroupBand)
+            ? band.group
+            : null;
+      }
+      while (spanStack.isNotEmpty) {
+        finalizeSpan(spanStack.removeLast(), filled.bands.length);
       }
 
-      if (startNewPageAt.contains(i) && cursorY > bodyTop) {
-        while (openStack.isNotEmpty && openStack.last.level >= level) {
-          openStack.removeLast();
-        }
-        breakPage();
-      }
+      final List<_OpenGroup> openStack = <_OpenGroup>[];
+      final List<List<_PlacedBand>> linearPlans =
+          <List<_PlacedBand>>[<_PlacedBand>[]];
+      double cursorY = bodyTop;
 
-      bool broke = false;
-      if (keepExtent.containsKey(i)) {
-        final double extent = keepExtent[i]!;
-        double repeatedOuter = 0;
+      void reEmitHeaders() {
         for (final _OpenGroup g in openStack) {
           if (!g.reprint) continue;
           for (final MeasuredBand hmb in g.headers) {
-            repeatedOuter += hmb.height;
+            linearPlans.last.add((band: hmb, x: left, y: cursorY));
+            cursorY += hmb.height;
           }
         }
-        final double fresh = bodyCapacity - repeatedOuter;
-        if (extent <= fresh &&
-            cursorY + extent > bodyBottom &&
-            cursorY > bodyTop) {
-          breakPage();
-          broke = true;
-        }
       }
-      if (!broke && cursorY + mb.height > bodyBottom && cursorY > bodyTop) {
-        breakPage();
-      }
-      if (bodyCapacity > 0 && mb.height > bodyCapacity) {
-        diagnostics.warning('band height ${mb.height} exceeds body capacity '
-            '$bodyCapacity; content overflows');
-      }
-      plans.last.add((band: mb, y: cursorY));
-      cursorY += mb.height;
 
-      if (band.type == BandType.groupHeader && isGroupBand) {
-        if (prevHeaderGroup == band.group &&
-            openStack.isNotEmpty &&
-            openStack.last.name == band.group) {
-          openStack.last.headers.add(mb);
-        } else {
-          while (openStack.isNotEmpty && openStack.last.level >= level) {
-            openStack.removeLast();
-          }
-          openStack.add((
-            name: band.group!,
-            level: level,
-            headers: <MeasuredBand>[mb],
-            reprint: groupByName[band.group]!.reprintHeaderOnEachPage,
-          ));
-        }
-      } else if (band.type == BandType.groupFooter && isGroupBand) {
-        final bool runEnd = i + 1 >= filled.bands.length ||
-            filled.bands[i + 1].type != BandType.groupFooter ||
-            filled.bands[i + 1].group != band.group;
-        if (runEnd) {
-          while (openStack.isNotEmpty && openStack.last.level >= level) {
-            openStack.removeLast();
-          }
-        }
+      void breakPage() {
+        linearPlans.add(<_PlacedBand>[]);
+        cursorY = bodyTop;
+        reEmitHeaders();
       }
-      prevHeaderGroup = (band.type == BandType.groupHeader && isGroupBand)
-          ? band.group
-          : null;
+
+      String? prevHeaderGroup;
+      for (int i = 0; i < filled.bands.length; i++) {
+        final FilledBand band = filled.bands[i];
+        final MeasuredBand mb = measured[i];
+        final bool isGroupBand = (band.type == BandType.groupHeader ||
+                band.type == BandType.groupFooter) &&
+            band.group != null &&
+            levelOf.containsKey(band.group);
+        final int level = isGroupBand ? levelOf[band.group]! : -1;
+
+        if (band.type == BandType.groupFooter && isGroupBand) {
+          while (openStack.isNotEmpty && openStack.last.level > level) {
+            openStack.removeLast();
+          }
+        } else if (band.type == BandType.summary ||
+            band.type == BandType.noData) {
+          openStack.clear();
+        }
+
+        if (startNewPageAt.contains(i) && cursorY > bodyTop) {
+          while (openStack.isNotEmpty && openStack.last.level >= level) {
+            openStack.removeLast();
+          }
+          breakPage();
+        }
+
+        bool broke = false;
+        if (keepExtent.containsKey(i)) {
+          final double extent = keepExtent[i]!;
+          double repeatedOuter = 0;
+          for (final _OpenGroup g in openStack) {
+            if (!g.reprint) continue;
+            for (final MeasuredBand hmb in g.headers) {
+              repeatedOuter += hmb.height;
+            }
+          }
+          final double fresh = bodyCapacity - repeatedOuter;
+          if (extent <= fresh &&
+              cursorY + extent > bodyBottom &&
+              cursorY > bodyTop) {
+            breakPage();
+            broke = true;
+          }
+        }
+        if (!broke && cursorY + mb.height > bodyBottom && cursorY > bodyTop) {
+          breakPage();
+        }
+        if (bodyCapacity > 0 && mb.height > bodyCapacity) {
+          diagnostics.warning('band height ${mb.height} exceeds body capacity '
+              '$bodyCapacity; content overflows');
+        }
+        linearPlans.last.add((band: mb, x: left, y: cursorY));
+        cursorY += mb.height;
+
+        if (band.type == BandType.groupHeader && isGroupBand) {
+          if (prevHeaderGroup == band.group &&
+              openStack.isNotEmpty &&
+              openStack.last.name == band.group) {
+            openStack.last.headers.add(mb);
+          } else {
+            while (openStack.isNotEmpty && openStack.last.level >= level) {
+              openStack.removeLast();
+            }
+            openStack.add((
+              name: band.group!,
+              level: level,
+              headers: <MeasuredBand>[mb],
+              reprint: groupByName[band.group]!.reprintHeaderOnEachPage,
+            ));
+          }
+        } else if (band.type == BandType.groupFooter && isGroupBand) {
+          final bool runEnd = i + 1 >= filled.bands.length ||
+              filled.bands[i + 1].type != BandType.groupFooter ||
+              filled.bands[i + 1].group != band.group;
+          if (runEnd) {
+            while (openStack.isNotEmpty && openStack.last.level >= level) {
+              openStack.removeLast();
+            }
+          }
+        }
+        prevHeaderGroup = (band.type == BandType.groupHeader && isGroupBand)
+            ? band.group
+            : null;
+      }
+
+      plans = linearPlans;
     }
 
     return LazyLayout._(

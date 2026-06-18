@@ -220,10 +220,6 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get exprEditorFieldsLabel => 'Alanlar';
 
   @override
-  String get exprEditorDeeperFieldHint =>
-      'İç içe bir koleksiyondan — yalnızca bir toplama işlevi içinde (örn. SUM)';
-
-  @override
   String get exprEditorFunctionsLabel => 'Fonksiyonlar';
 
   @override
@@ -675,4 +671,63 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
 
   @override
   String get outlineListUnbound => 'Liste (bağsız)';
+
+  @override
+  String get exprEditorDeeperFieldHint =>
+      'Alt alan – yalnızca SUM(…) gibi bir toplama içinde geçerlidir';
+
+  @override
+  String get propertiesColumnLayout => 'Sütun düzeni';
+
+  @override
+  String get propertiesColumnLayoutAdd => 'Sütun düzeni ekle';
+
+  @override
+  String get propertiesColumnLayoutAddDisabled =>
+      'Başlık, özet, grup veya alt bilgi içermeyen tek bir ayrıntı bandı gerektirir.';
+
+  @override
+  String get propertiesColumnLayoutRemove => 'Sütun düzenini kaldır';
+
+  @override
+  String get propertiesColumnCount => 'Sütunlar';
+
+  @override
+  String get propertiesColumnWidth => 'Sütun genişliği';
+
+  @override
+  String get propertiesColumnSpacing => 'Sütun aralığı';
+
+  @override
+  String get propertiesRowSpacing => 'Satır aralığı';
+
+  @override
+  String get propertiesColumnLayoutInactive =>
+      'Sütun düzeni etkin değil: rapor tek bir ayrıntı bandı değil.';
+
+  @override
+  String get propertiesColumnErrTooFew => 'En az bir sütun ekleyin.';
+
+  @override
+  String get propertiesColumnErrDimensions =>
+      'Sütun genişliği sıfırdan büyük olmalı ve boşluklar negatif olamaz.';
+
+  @override
+  String get propertiesColumnErrGridTooWide =>
+      'Sütunlar sayfa genişliğine sığmıyor — sütun sayısını veya genişliğini azaltın.';
+
+  @override
+  String get propertiesColumnErrLabelTooTall =>
+      'Etiket sayfadan uzun — bir satır sığması için bant yüksekliğini azaltın.';
+
+  @override
+  String propertiesColumnElementsClipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count öğe sütunun dışına taşıyor ve kırpılacak.',
+      one: '1 öğe sütunun dışına taşıyor ve kırpılacak.',
+    );
+    return '$_temp0';
+  }
 }

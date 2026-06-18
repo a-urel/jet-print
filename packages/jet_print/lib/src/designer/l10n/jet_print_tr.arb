@@ -237,5 +237,22 @@
   "dataSourceAddGroup": "Grup olarak ekle",
 
   "outlineListLabel": "Liste: {field}",
-  "outlineListUnbound": "Liste (bağsız)"
+  "outlineListUnbound": "Liste (bağsız)",
+
+  "exprEditorDeeperFieldHint": "Alt alan – yalnızca SUM(…) gibi bir toplama içinde geçerlidir",
+
+  "propertiesColumnLayout": "Sütun düzeni",
+  "propertiesColumnLayoutAdd": "Sütun düzeni ekle",
+  "propertiesColumnLayoutAddDisabled": "Başlık, özet, grup veya alt bilgi içermeyen tek bir ayrıntı bandı gerektirir.",
+  "propertiesColumnLayoutRemove": "Sütun düzenini kaldır",
+  "propertiesColumnCount": "Sütunlar",
+  "propertiesColumnWidth": "Sütun genişliği",
+  "propertiesColumnSpacing": "Sütun aralığı",
+  "propertiesRowSpacing": "Satır aralığı",
+  "propertiesColumnLayoutInactive": "Sütun düzeni etkin değil: rapor tek bir ayrıntı bandı değil.",
+  "propertiesColumnErrTooFew": "En az bir sütun ekleyin.",
+  "propertiesColumnErrDimensions": "Sütun genişliği sıfırdan büyük olmalı ve boşluklar negatif olamaz.",
+  "propertiesColumnErrGridTooWide": "Sütunlar sayfa genişliğine sığmıyor — sütun sayısını veya genişliğini azaltın.",
+  "propertiesColumnErrLabelTooTall": "Etiket sayfadan uzun — bir satır sığması için bant yüksekliğini azaltın.",
+  "propertiesColumnElementsClipped": "{count, plural, =1{1 öğe sütunun dışına taşıyor ve kırpılacak.} other{{count} öğe sütunun dışına taşıyor ve kırpılacak.}}"
 }

@@ -4,6 +4,7 @@ library;
 import 'package:flutter/foundation.dart';
 
 import '../../domain/band.dart';
+import '../../domain/column_layout.dart';
 import '../../domain/detail_scope.dart';
 import '../../domain/diagnostic.dart';
 import '../../domain/elements/shape_element.dart';
@@ -30,12 +31,14 @@ import 'commands/definition_edit_command.dart';
 import 'commands/delete_command.dart';
 import 'commands/group_commands.dart';
 import 'commands/move_command.dart';
+import 'commands/remove_column_layout_command.dart';
 import 'commands/reorder_command.dart';
 import 'commands/resize_command.dart';
 import 'commands/scope_commands.dart';
 import 'commands/set_band_height_command.dart';
 import 'commands/set_barcode_color_command.dart';
 import 'commands/set_binding_command.dart';
+import 'commands/set_column_layout_command.dart';
 import 'commands/set_definition_name_command.dart';
 import 'commands/set_format_command.dart';
 import 'commands/set_page_format_command.dart';
@@ -636,6 +639,22 @@ class JetReportDesignerController extends ChangeNotifier {
     final double clamped = height < kMinBandHeight ? kMinBandHeight : height;
     if (clamped == band.height) return false;
     return _commit(SetBandHeightCommand(bandId: bandId, height: clamped));
+  }
+
+  /// Sets band [bandId]'s multi-column label [layout] as one undoable step
+  /// (spec 035). An unknown id is ignored; a value-equal layout records no
+  /// history (routed through `_commit`).
+  void setColumnLayout(String bandId, ColumnLayout layout) {
+    if (findBand(_document.definition, bandId) == null) return;
+    _commit(SetColumnLayoutCommand(bandId: bandId, layout: layout));
+  }
+
+  /// Clears band [bandId]'s column layout as one undoable step (spec 035). An
+  /// unknown id — or a band that already has no layout — is ignored.
+  void removeColumnLayout(String bandId) {
+    final Band? band = findBand(_document.definition, bandId);
+    if (band == null || band.columnLayout == null) return;
+    _commit(RemoveColumnLayoutCommand(bandId: bandId));
   }
 
   /// Sets the report's page [format] — size and/or margins — as one undoable,

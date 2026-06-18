@@ -220,10 +220,6 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   String get exprEditorFieldsLabel => 'Felder';
 
   @override
-  String get exprEditorDeeperFieldHint =>
-      'Aus einer verschachtelten Sammlung — nur innerhalb einer Aggregatfunktion (z. B. SUM)';
-
-  @override
   String get exprEditorFunctionsLabel => 'Funktionen';
 
   @override
@@ -676,4 +672,64 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
 
   @override
   String get outlineListUnbound => 'Liste (ungebunden)';
+
+  @override
+  String get exprEditorDeeperFieldHint =>
+      'Nachgeordnetes Feld – nur innerhalb eines Aggregats wie SUM(…) gültig';
+
+  @override
+  String get propertiesColumnLayout => 'Spaltenlayout';
+
+  @override
+  String get propertiesColumnLayoutAdd => 'Spaltenlayout hinzufügen';
+
+  @override
+  String get propertiesColumnLayoutAddDisabled =>
+      'Erfordert ein einzelnes Detailband ohne Titel, Zusammenfassung, Gruppen oder Fußzeile.';
+
+  @override
+  String get propertiesColumnLayoutRemove => 'Spaltenlayout entfernen';
+
+  @override
+  String get propertiesColumnCount => 'Spalten';
+
+  @override
+  String get propertiesColumnWidth => 'Spaltenbreite';
+
+  @override
+  String get propertiesColumnSpacing => 'Spaltenabstand';
+
+  @override
+  String get propertiesRowSpacing => 'Zeilenabstand';
+
+  @override
+  String get propertiesColumnLayoutInactive =>
+      'Spaltenlayout ist inaktiv: Der Bericht ist kein einzelnes Detailband.';
+
+  @override
+  String get propertiesColumnErrTooFew => 'Mindestens eine Spalte hinzufügen.';
+
+  @override
+  String get propertiesColumnErrDimensions =>
+      'Die Spaltenbreite muss größer als null sein, und Abstände dürfen nicht negativ sein.';
+
+  @override
+  String get propertiesColumnErrGridTooWide =>
+      'Die Spalten passen nicht auf die Seitenbreite — Spaltenanzahl oder -breite verringern.';
+
+  @override
+  String get propertiesColumnErrLabelTooTall =>
+      'Das Etikett ist höher als die Seite — Bandhöhe verringern, damit eine Zeile passt.';
+
+  @override
+  String propertiesColumnElementsClipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count Elemente ragen über die Spalte hinaus und werden abgeschnitten.',
+      one: '1 Element ragt über die Spalte hinaus und wird abgeschnitten.',
+    );
+    return '$_temp0';
+  }
 }

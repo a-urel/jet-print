@@ -180,6 +180,27 @@ class ReportDefinition {
   /// The data-driven content.
   final ReportBody body;
 
+  /// Whether [body] is a pure single-detail flow — the gate for the multi-column
+  /// label grid (spec 034): no once-bands, and a root scope with no groups, no
+  /// footer, and exactly one [BandNode] child (the label template).
+  bool get isPureSingleDetailBody {
+    if (body.title != null || body.summary != null || body.noData != null) {
+      return false;
+    }
+    final DetailScope root = body.root;
+    if (root.groups.isNotEmpty || root.footer != null) return false;
+    if (root.children.length != 1) return false;
+    return root.children.single is BandNode;
+  }
+
+  /// The lone detail band when [isPureSingleDetailBody] holds, else null. The
+  /// label grid activates when this band carries a non-null `columnLayout`.
+  Band? get soleDetailBand {
+    if (!isPureSingleDetailBody) return null;
+    final ScopeNode only = body.root.children.single;
+    return only is BandNode ? only.band : null;
+  }
+
   /// Returns a copy with the given fields replaced.
   ReportDefinition copyWith({
     String? name,

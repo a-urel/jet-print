@@ -61,6 +61,7 @@ export 'src/designer/preview/jet_report_preview.dart' show JetReportPreview;
 // the same [Diagnostic] type the render chain uses. BandType names a band's
 // role. ---
 export 'src/domain/band.dart' show Band;
+export 'src/domain/column_layout.dart' show ColumnLayout;
 export 'src/domain/detail_scope.dart'
     show BandNode, DetailScope, NestedScope, ScopeNode;
 export 'src/domain/elements/barcode_element.dart'
