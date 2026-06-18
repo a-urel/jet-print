@@ -181,10 +181,9 @@ void main() {
 
     expect(footers, hasLength(1), reason: 'footer emitted for the order row');
 
-    final String text =
-        (footers.first.elements.firstWhere((e) => e.id == 'orderTotal')
-                as TextElement)
-            .text;
+    final String text = (footers.first.elements
+            .firstWhere((e) => e.id == 'orderTotal') as TextElement)
+        .text;
     // An empty fold of SUM is 0.0 (VariableAccumulator initial value).
     expect(text, '0.0', reason: 'no lines → sum is 0');
   });

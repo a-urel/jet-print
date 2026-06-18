@@ -22,8 +22,7 @@ DataRow _customer(List<List<double>> ordersOfLineTotals) => DataRow(
           for (final List<double> lines in ordersOfLineTotals)
             <String, Object?>{
               'lines': <Map<String, Object?>>[
-                for (final double t in lines)
-                  <String, Object?>{'lineTotal': t},
+                for (final double t in lines) <String, Object?>{'lineTotal': t},
               ],
             },
         ],
@@ -70,7 +69,8 @@ void main() {
     expect((acc.value as JetNumber).value, 35.0);
   });
 
-  test('flat AVG is sum over all leaves ÷ leaf count (not avg-of-averages)', () {
+  test('flat AVG is sum over all leaves ÷ leaf count (not avg-of-averages)',
+      () {
     final VariableAccumulator acc = VariableAccumulator(JetCalculation.average);
     foldDescendantLeaves(
       rows: <DataRow>[
@@ -91,12 +91,16 @@ void main() {
     final VariableAccumulator acc = VariableAccumulator(JetCalculation.sum);
     foldDescendantLeaves(
       rows: <DataRow>[
-        DataRow(
-            fields: const <FieldDef>[FieldDef('lineTotal', type: JetFieldType.double)],
-            values: <String, Object?>{'lineTotal': 7.0}),
-        DataRow(
-            fields: const <FieldDef>[FieldDef('lineTotal', type: JetFieldType.double)],
-            values: <String, Object?>{'lineTotal': 3.0}),
+        DataRow(fields: const <FieldDef>[
+          FieldDef('lineTotal', type: JetFieldType.double)
+        ], values: <String, Object?>{
+          'lineTotal': 7.0
+        }),
+        DataRow(fields: const <FieldDef>[
+          FieldDef('lineTotal', type: JetFieldType.double)
+        ], values: <String, Object?>{
+          'lineTotal': 3.0
+        }),
       ],
       path: const <String>[],
       acc: acc,

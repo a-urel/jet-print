@@ -30,7 +30,8 @@ TextElement _el(String id, String expr) => TextElement(
       expression: expr,
     );
 
-ReportDefinition _def({Band? summary, Band? customerFooter}) => ReportDefinition(
+ReportDefinition _def({Band? summary, Band? customerFooter}) =>
+    ReportDefinition(
       name: 'r',
       page: PageFormat.a4Portrait,
       body: ReportBody(
@@ -65,8 +66,8 @@ void main() {
     expect(a.resetGroup, isNull);
     expect(a.ambiguous, isFalse);
     expect(a.argument.references.fields, <String>{'lineTotal'});
-    final TextElement g = lift.definition.body.summary!.elements.single
-        as TextElement;
+    final TextElement g =
+        lift.definition.body.summary!.elements.single as TextElement;
     expect(g.expression, '\$V{${a.name}}');
   });
 
@@ -74,8 +75,8 @@ void main() {
       () {
     final ReportDefinition def = _def(
       customerFooter:
-          const Band(id: 'cf', type: BandType.groupFooter, height: 20)
-              .copyWith(elements: <ReportElement>[_el('t', r'SUM($F{lineTotal})')]),
+          const Band(id: 'cf', type: BandType.groupFooter, height: 20).copyWith(
+              elements: <ReportElement>[_el('t', r'SUM($F{lineTotal})')]),
     );
     final DescendantLift lift = liftDescendantAggregates(def, _root);
     expect(lift.aggregates.single.resetScope, VariableResetScope.group);
@@ -86,13 +87,15 @@ void main() {
   test('leaves a same-scope aggregate untouched for expandAggregates', () {
     final ReportDefinition def = _def(
       summary: const Band(id: 'summary', type: BandType.summary, height: 20)
-          .copyWith(elements: <ReportElement>[_el('g', r'SUM($F{customerCode})')]),
+          .copyWith(
+              elements: <ReportElement>[_el('g', r'SUM($F{customerCode})')]),
     );
     final DescendantLift lift = liftDescendantAggregates(def, _root);
     expect(lift.aggregates, isEmpty);
-    expect(lift.definition.body.summary!.elements.single,
-        isA<TextElement>().having((TextElement e) => e.expression, 'expr',
-            r'SUM($F{customerCode})'));
+    expect(
+        lift.definition.body.summary!.elements.single,
+        isA<TextElement>().having(
+            (TextElement e) => e.expression, 'expr', r'SUM($F{customerCode})'));
   });
 
   test('marks an ambiguous operand and clears its path', () {

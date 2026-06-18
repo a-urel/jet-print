@@ -128,7 +128,8 @@ Set<String> descendantOperandNamesForBand(
 List<FieldDef> descendantFieldChoicesForBand(
     ReportDefinition def, JetDataSchema schema, String bandId) {
   return <FieldDef>[
-    for (final String name in descendantOperandNamesForBand(def, schema, bandId))
+    for (final String name
+        in descendantOperandNamesForBand(def, schema, bandId))
       FieldDef(name),
   ];
 }

@@ -110,8 +110,7 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
       final Expr arg = agg.argument;
       if (arg is! FieldRefExpr) continue;
       final String operand = arg.name;
-      final AggregatePath path =
-          resolveAggregatePath(scopeFields, operand);
+      final AggregatePath path = resolveAggregatePath(scopeFields, operand);
       switch (path) {
         case SameScope():
         case DescendPath():
@@ -427,8 +426,7 @@ void _validateColumns(ReportDefinition def, List<Diagnostic> out) {
         elementId: active.id));
   }
   if (cl.columnWidth <= 0 || cl.columnSpacing < 0 || cl.rowSpacing < 0) {
-    out.add(Diagnostic(
-        DiagnosticSeverity.error,
+    out.add(Diagnostic(DiagnosticSeverity.error,
         'columnLayout dimensions must be non-negative (columnWidth > 0)',
         elementId: active.id));
   }
@@ -436,8 +434,8 @@ void _validateColumns(ReportDefinition def, List<Diagnostic> out) {
   final double bodyWidth =
       def.page.width - def.page.margins.left - def.page.margins.right;
   if (cl.columnCount >= 1 && cl.columnWidth > 0) {
-    final double gridWidth =
-        cl.columnCount * cl.columnWidth + (cl.columnCount - 1) * cl.columnSpacing;
+    final double gridWidth = cl.columnCount * cl.columnWidth +
+        (cl.columnCount - 1) * cl.columnSpacing;
     if (gridWidth > bodyWidth) {
       out.add(Diagnostic(
           DiagnosticSeverity.error,

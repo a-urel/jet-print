@@ -219,8 +219,7 @@ class ElementResolver {
       final Set<String>? known = knownFields;
       if (known != null && !known.contains(field)) {
         if (warnedFields.add(field)) {
-          diagnostics.warning(
-              'Field "$field" is not in the data source',
+          diagnostics.warning('Field "$field" is not in the data source',
               elementId: el.id);
         }
         value = '';

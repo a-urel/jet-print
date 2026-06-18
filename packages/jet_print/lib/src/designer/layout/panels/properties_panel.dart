@@ -88,8 +88,10 @@ List<_ColumnDiagnostic> _columnDiagnostics(ReportDefinition def, Band band,
       .where((ReportElement e) => e.bounds.x + e.bounds.width > cl.columnWidth)
       .length;
   if (clipped > 0) {
-    out.add(
-        (isError: false, message: l10n.propertiesColumnElementsClipped(clipped)));
+    out.add((
+      isError: false,
+      message: l10n.propertiesColumnElementsClipped(clipped)
+    ));
   }
   return out;
 }
@@ -430,11 +432,11 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
               _LabeledRow(
                 label: l10n.propertiesSymbology,
                 child: ShadSelect<BarcodeSymbology>(
-                  selectedOptionBuilder: (BuildContext context,
-                          BarcodeSymbology value) =>
-                      Text(value == BarcodeSymbology.auto
-                          ? l10n.barcodeSymbologyAuto
-                          : value.name),
+                  selectedOptionBuilder:
+                      (BuildContext context, BarcodeSymbology value) => Text(
+                          value == BarcodeSymbology.auto
+                              ? l10n.barcodeSymbologyAuto
+                              : value.name),
                   initialValue: element.symbology,
                   options: <Widget>[
                     for (final BarcodeSymbology s in BarcodeSymbology.values)
@@ -462,12 +464,10 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                         clearTooltip: l10n.bindingClearTooltip,
                         onSet: (String v) =>
                             controller.setBarcodeDataField(id, v),
-                        onClear: () =>
-                            controller.setBarcodeDataField(id, null),
+                        onClear: () => controller.setBarcodeDataField(id, null),
                       )
                     : _BindingField(
-                        fieldKey:
-                            ValueKey<String>('$_p.field.barcodeData.$id'),
+                        fieldKey: ValueKey<String>('$_p.field.barcodeData.$id'),
                         value: element.data,
                         placeholder: l10n.valueFieldHint,
                         clearTooltip: l10n.bindingClearTooltip,
@@ -482,8 +482,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                   value: element.dataField != null,
                   onChanged: (bool bound) => bound
                       ? controller.setBarcodeDataField(id, element.data)
-                      : controller.setBarcodeData(
-                          id, element.dataField ?? ''),
+                      : controller.setBarcodeData(id, element.dataField ?? ''),
                 ),
               ),
               // Inline hints.
@@ -497,20 +496,18 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                   element.dataField == null)
                 _InlineNotice(
                   text: l10n.barcodeAutoInferred(
-                      resolveConcreteSymbology(
-                              element.symbology, element.data)
+                      resolveConcreteSymbology(element.symbology, element.data)
                           .name),
                   theme: ShadTheme.of(context),
                 ),
               // --- Show text (1D only) -----------------------------------------
-              if (!isTwoDSymbology(resolveConcreteSymbology(
-                  element.symbology, element.data)))
+              if (!isTwoDSymbology(
+                  resolveConcreteSymbology(element.symbology, element.data)))
                 _LabeledRow(
                   label: l10n.barcodeShowText,
                   child: ShadSwitch(
                     value: element.showText,
-                    onChanged: (bool v) =>
-                        controller.setBarcodeShowText(id, v),
+                    onChanged: (bool v) => controller.setBarcodeShowText(id, v),
                   ),
                 ),
               // --- Quiet zone --------------------------------------------------
@@ -518,8 +515,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                 label: l10n.barcodeQuietZone,
                 child: ShadSwitch(
                   value: element.quietZone,
-                  onChanged: (bool v) =>
-                      controller.setBarcodeQuietZone(id, v),
+                  onChanged: (bool v) => controller.setBarcodeQuietZone(id, v),
                 ),
               ),
               // --- ECC level (QR only) -----------------------------------------
@@ -528,9 +524,9 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                 _LabeledRow(
                   label: l10n.barcodeEccLevel,
                   child: ShadSelect<QrErrorCorrectionLevel>(
-                    selectedOptionBuilder: (BuildContext context,
-                            QrErrorCorrectionLevel value) =>
-                        Text(value.name.toUpperCase()),
+                    selectedOptionBuilder:
+                        (BuildContext context, QrErrorCorrectionLevel value) =>
+                            Text(value.name.toUpperCase()),
                     initialValue: element.eccLevel,
                     options: <Widget>[
                       for (final QrErrorCorrectionLevel e
@@ -552,8 +548,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                 child: _ColorField(
                   keyBase: '$_p.field.barcodeColor',
                   value: element.color,
-                  onCommit: (JetColor? c) =>
-                      controller.setBarcodeColor(id, c!),
+                  onCommit: (JetColor? c) => controller.setBarcodeColor(id, c!),
                 ),
               ),
             ],
@@ -789,7 +784,8 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     if (schema == null) return const <String>{};
     final Band? band = findBandOfElement(controller.definition, elementId);
     if (band == null) return const <String>{};
-    return descendantOperandNamesForBand(controller.definition, schema, band.id);
+    return descendantOperandNamesForBand(
+        controller.definition, schema, band.id);
   }
 
   /// The fx-palette choices for [elementId]'s descendant operands — one
@@ -803,7 +799,8 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     if (schema == null) return const <FieldDef>[];
     final Band? band = findBandOfElement(controller.definition, elementId);
     if (band == null) return const <FieldDef>[];
-    return descendantFieldChoicesForBand(controller.definition, schema, band.id);
+    return descendantFieldChoicesForBand(
+        controller.definition, schema, band.id);
   }
 
   // --- Band ------------------------------------------------------------------
@@ -1113,8 +1110,8 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
           fieldKey: const ValueKey<String>('$_p.field.columnWidth'),
           prefix: LucideIcons.moveHorizontal,
           value: layout.columnWidth,
-          onCommit: (double v) =>
-              controller.setColumnLayout(bandId, layout.copyWith(columnWidth: v)),
+          onCommit: (double v) => controller.setColumnLayout(
+              bandId, layout.copyWith(columnWidth: v)),
         ),
       ))
       ..add(_LabeledRow(
@@ -1133,8 +1130,8 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
           fieldKey: const ValueKey<String>('$_p.field.rowSpacing'),
           prefix: LucideIcons.moveVertical,
           value: layout.rowSpacing,
-          onCommit: (double v) =>
-              controller.setColumnLayout(bandId, layout.copyWith(rowSpacing: v)),
+          onCommit: (double v) => controller.setColumnLayout(
+              bandId, layout.copyWith(rowSpacing: v)),
         ),
       ))
       ..add(const SizedBox(height: 8))
@@ -1475,8 +1472,8 @@ class _InlineNotice extends StatelessWidget {
         const SizedBox(width: 6),
         Expanded(
           child: Text(text,
-              style:
-                  theme.textTheme.muted.copyWith(color: colors.mutedForeground)),
+              style: theme.textTheme.muted
+                  .copyWith(color: colors.mutedForeground)),
         ),
       ],
     );
@@ -1513,8 +1510,9 @@ class _ColumnLayoutAddButton extends StatelessWidget {
         child: Text(label, overflow: TextOverflow.ellipsis, maxLines: 1),
       ),
     );
-    final Widget content =
-        enabled ? button : ShadTooltip(builder: (_) => Text(disabledTooltip), child: button);
+    final Widget content = enabled
+        ? button
+        : ShadTooltip(builder: (_) => Text(disabledTooltip), child: button);
     // Align to intrinsic width: the parent Column uses CrossAxisAlignment.stretch,
     // so without this wrapper both buttons expand to full panel width.
     return Align(alignment: Alignment.centerLeft, child: content);
@@ -1523,7 +1521,8 @@ class _ColumnLayoutAddButton extends StatelessWidget {
 
 /// The "Remove column layout" affordance — restores a plain detail band.
 class _ColumnLayoutRemoveButton extends StatelessWidget {
-  const _ColumnLayoutRemoveButton({required this.label, required this.onRemove});
+  const _ColumnLayoutRemoveButton(
+      {required this.label, required this.onRemove});
 
   final String label;
   final VoidCallback onRemove;

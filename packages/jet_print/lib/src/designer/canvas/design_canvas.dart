@@ -1447,8 +1447,8 @@ class _LabelGridPainter extends CustomPainter {
       ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
-    Rect scaled(JetRect r) =>
-        Rect.fromLTWH(r.x * scale, r.y * scale, r.width * scale, r.height * scale);
+    Rect scaled(JetRect r) => Rect.fromLTWH(
+        r.x * scale, r.y * scale, r.width * scale, r.height * scale);
     canvas.drawRect(scaled(cue.cell), stroke);
     for (final JetRect g in cue.ghosts) {
       canvas.drawRect(scaled(g), stroke);

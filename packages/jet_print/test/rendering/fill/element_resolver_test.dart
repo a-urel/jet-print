@@ -207,8 +207,7 @@ void main() {
       row: row(<String, Object?>{'sku': 'x'}),
     ) as BarcodeElement;
     expect(resolved.data, '');
-    expect(
-        d.entries.where((Diagnostic m) => m.elementId == 'b1'), isNotEmpty);
+    expect(d.entries.where((Diagnostic m) => m.elementId == 'b1'), isNotEmpty);
   });
 
   test('invalid value for a pinned symbology emits a diagnostic', () {
@@ -219,8 +218,7 @@ void main() {
         symbology: BarcodeSymbology.ean13,
         data: 'ABC');
     resolver(d).resolve(el);
-    expect(
-        d.entries.where((Diagnostic m) => m.elementId == 'b1'), isNotEmpty);
+    expect(d.entries.where((Diagnostic m) => m.elementId == 'b1'), isNotEmpty);
   });
 
   test('literal data passes through (no dataField)', () {
@@ -230,7 +228,6 @@ void main() {
         bounds: JetRect(x: 0, y: 0, width: 80, height: 40),
         symbology: BarcodeSymbology.code128,
         data: 'HELLO');
-    expect(
-        (resolver(d).resolve(el) as BarcodeElement).data, 'HELLO');
+    expect((resolver(d).resolve(el) as BarcodeElement).data, 'HELLO');
   });
 }

@@ -78,9 +78,7 @@ ReportDefinition _def() => const ReportDefinition(
                   collectionField: 'lines',
                   children: <ScopeNode>[
                     BandNode(Band(
-                        id: 'lineDetail',
-                        type: BandType.detail,
-                        height: 20)),
+                        id: 'lineDetail', type: BandType.detail, height: 20)),
                   ],
                 )),
               ],
@@ -103,8 +101,7 @@ Future<JetReportDesignerController> _pump(WidgetTester tester) async {
 
 void main() {
   // (a) The Unresolved hint is NOT shown for {SUM([lineTotal])} on summary.
-  testWidgets(
-      'summary {SUM([lineTotal])} does not show the unresolved hint',
+  testWidgets('summary {SUM([lineTotal])} does not show the unresolved hint',
       (WidgetTester tester) async {
     final JetReportDesignerController c = await _pump(tester);
 
@@ -119,10 +116,8 @@ void main() {
 
     // Select the newly created element (it is the only text element on summary).
     // We need its id — query from the definition tree.
-    final String elemId = c.definition.body.summary!.elements
-        .whereType<TextElement>()
-        .first
-        .id;
+    final String elemId =
+        c.definition.body.summary!.elements.whereType<TextElement>().first.id;
     c.select(elemId);
     await tester.pumpAndSettle();
 
@@ -133,8 +128,7 @@ void main() {
   });
 
   // (b) Bare [lineTotal] (not inside an aggregate) DOES show the hint (FR-006).
-  testWidgets(
-      'bare [lineTotal] on summary IS flagged as unresolved',
+  testWidgets('bare [lineTotal] on summary IS flagged as unresolved',
       (WidgetTester tester) async {
     final JetReportDesignerController c = await _pump(tester);
 
@@ -146,10 +140,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final String elemId = c.definition.body.summary!.elements
-        .whereType<TextElement>()
-        .first
-        .id;
+    final String elemId =
+        c.definition.body.summary!.elements.whereType<TextElement>().first.id;
     c.select(elemId);
     await tester.pumpAndSettle();
 
@@ -172,10 +164,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final String elemId = c.definition.body.summary!.elements
-        .whereType<TextElement>()
-        .first
-        .id;
+    final String elemId =
+        c.definition.body.summary!.elements.whereType<TextElement>().first.id;
     c.select(elemId);
     await tester.pumpAndSettle();
 
@@ -187,12 +177,12 @@ void main() {
 
     // Descendant field button must be present.
     expect(find.byKey(_deepLineTotalKey), findsOneWidget,
-        reason: 'lineTotal is a descendant leaf — palette must offer it marked');
+        reason:
+            'lineTotal is a descendant leaf — palette must offer it marked');
 
     // Status must be Valid for the current text ({SUM([lineTotal])} round-trips
     // to the display text the editor seeds from).
-    final Text statusText =
-        tester.widget<Text>(find.byKey(_editorStatus));
+    final Text statusText = tester.widget<Text>(find.byKey(_editorStatus));
     // The English Valid string from the l10n catalog.
     expect(statusText.data, contains('Valid'),
         reason: 'SUM([lineTotal]) must resolve as Valid in the fx editor');

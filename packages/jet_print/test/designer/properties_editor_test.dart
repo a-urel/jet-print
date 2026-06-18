@@ -1595,7 +1595,8 @@ void main() {
                   elements: <ReportElement>[
                     BarcodeElement(
                       id: id,
-                      bounds: const JetRect(x: 10, y: 10, width: 80, height: 80),
+                      bounds:
+                          const JetRect(x: 10, y: 10, width: 80, height: 80),
                       symbology: symbology,
                       data: data,
                     ),
@@ -1647,8 +1648,8 @@ void main() {
     testWidgets('auto mode with 1D literal still shows show-text + no ECC',
         (WidgetTester tester) async {
       // '1234567890' → code128 (10 digits, not 8/12/13/14) → 1D
-      await pumpBarcode(
-          tester, id: 'b1', symbology: BarcodeSymbology.auto, data: '1234567890');
+      await pumpBarcode(tester,
+          id: 'b1', symbology: BarcodeSymbology.auto, data: '1234567890');
       expect(find.text('Show text'), findsOneWidget);
       expect(find.text('Error correction'), findsNothing);
     });

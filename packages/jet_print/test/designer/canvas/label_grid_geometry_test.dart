@@ -20,7 +20,10 @@ ReportDefinition _withLayout(ColumnLayout cl) => ReportDefinition(
           id: 'root',
           children: <ScopeNode>[
             BandNode(Band(
-                id: 'detail', type: BandType.detail, height: 80, columnLayout: cl)),
+                id: 'detail',
+                type: BandType.detail,
+                height: 80,
+                columnLayout: cl)),
           ],
         ),
       ),
@@ -70,7 +73,10 @@ void main() {
                 type: BandType.detail,
                 height: 80,
                 columnLayout: ColumnLayout(
-                    columnCount: 2, columnWidth: 250, columnSpacing: 0, rowSpacing: 0))),
+                    columnCount: 2,
+                    columnWidth: 250,
+                    columnSpacing: 0,
+                    rowSpacing: 0))),
           ],
         ),
       ),
@@ -101,8 +107,8 @@ void main() {
       (WidgetTester tester) async {
     final ReportDefinition def = _withLayout(const ColumnLayout(
         columnCount: 2, columnWidth: 250, columnSpacing: 0, rowSpacing: 0));
-    final JetReportDesignerController c =
-        await pumpDesignerWith(tester, controller: JetReportDesignerController(definition: def));
+    final JetReportDesignerController c = await pumpDesignerWith(tester,
+        controller: JetReportDesignerController(definition: def));
     c.selectBand('detail');
     await tester.pumpAndSettle();
 
