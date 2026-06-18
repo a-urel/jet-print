@@ -118,7 +118,7 @@ abstract class AppLocalizations {
   /// **'Label'**
   String get tabLabel;
 
-  /// Tab label for the list report demo (placeholder).
+  /// Tab label for the list report designer demo.
   ///
   /// In en, this message translates to:
   /// **'List'**
@@ -129,12 +129,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Receipt'**
   String get tabReceipt;
-
-  /// Tab label for the nested-lists report demo (placeholder).
-  ///
-  /// In en, this message translates to:
-  /// **'Nested Lists'**
-  String get tabNestedLists;
 
   /// Placeholder note shown on a report demo tab that isn't built yet.
   ///

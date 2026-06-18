@@ -216,7 +216,6 @@ class _PlaygroundHome extends StatelessWidget {
                   ),
                   child: Text(l10n.tabLabel),
                 ),
-                _comingSoon('liste', l10n.tabList, LucideIcons.list),
                 _comingSoon('makbuz', l10n.tabReceipt, LucideIcons.receipt),
                 ShadTab<String>(
                   value: 'nested-lists',
@@ -234,7 +233,7 @@ class _PlaygroundHome extends StatelessWidget {
                               definition: def, fonts: fonts),
                     ),
                   ),
-                  child: Text(l10n.tabNestedLists),
+                  child: Text(l10n.tabList),
                 ),
               ],
             ),
