@@ -72,8 +72,10 @@ is **designer-only**: an editor, validation surfacing, and a canvas cue.
 - **Validation feedback** in the section: surface `controller.diagnostics`
   filtered to the active band (band-level + per-element cell-overflow), plus an
   **inactive notice** when a layout exists on an ineligible body.
-- **Localization** of the column diagnostic and section strings via new keys in
-  the three `.arb` files (`en`/`de`/`tr`) and generated `JetPrintLocalizations`.
+- **Localization** of the designer-authored chrome strings (section/field
+  labels, Add tooltip, inactive notice) via new keys in the three `.arb` files
+  (`en`/`de`/`tr`) and generated `JetPrintLocalizations`. Diagnostic rows show
+  `validate()`'s strings verbatim (see FR-010).
 - A **canvas cue**: when a layout is active (`columnLayout != null &&
   isPureSingleDetailBody`), draw the editable band frame at `columnWidth` and
   `columnCount − 1` faint read-only ghost cells at the real pitch.
@@ -115,8 +117,8 @@ summary, groups, or footer."* No column layout can be created in this shape.
 
 With a layout active, the author sets Column width so the grid
 (`columnCount · columnWidth + (columnCount − 1) · columnSpacing`) exceeds the
-page body width. The section shows an inline **error** row (the localized
-"grid wider than page body" diagnostic). The value remains as typed (author
+page body width. The section shows an inline **error** row (the verbatim
+"grid wider than page body" `validate()` diagnostic). The value remains as typed (author
 fixes it); the engine still renders via its clamp/fallback, but the author sees
 the problem at author time.
 
@@ -138,7 +140,7 @@ band with no layout) would be disabled in this shape.
 ### User Story 6 - Cell overflow warning (P2)
 
 An element positioned so `bounds.x + bounds.width > columnWidth` produces the
-localized per-element **warning** ("overflows cell width; it will be clipped")
+verbatim per-element **warning** ("overflows cell width; it will be clipped")
 in the section, and visually crosses the editable cell boundary on the canvas.
 
 ## Requirements *(mandatory)*
@@ -185,11 +187,17 @@ in the section, and visually crosses the editable cell boundary on the canvas.
 - **FR-009**: When a `columnLayout` exists but the body is **not** a pure
   single-detail body, the section MUST show an **inactive notice** distinct from
   the field-validation rows, explaining the layout will not render as a grid.
-- **FR-010**: All new section labels, the Add tooltip, the inactive notice, and
-  the surfaced column diagnostics MUST be localized via new keys in the `en`,
-  `de`, and `tr` `.arb` files and generated `JetPrintLocalizations`. The raw
-  developer-English `validate()` message strings MUST remain unchanged
-  (the section maps diagnostics to localized strings by a stable key).
+- **FR-010**: All new **designer-authored** chrome — section label, field
+  labels, the Add tooltip, and the inactive notice — MUST be localized via new
+  keys in the `en`, `de`, and `tr` `.arb` files and generated
+  `JetPrintLocalizations`. The surfaced **diagnostic rows** render
+  `validate()`'s message strings **verbatim** (developer-English), since the
+  domain `Diagnostic` carries no stable code and localizing the interpolated
+  engine strings would require either a domain change (defeating
+  "designer-only") or re-deriving the grid arithmetic (defeating FR-008's
+  "reuse `validate()`"). The raw `validate()` strings MUST remain unchanged.
+  (Decision 2026-06-18; revisable later via a domain `Diagnostic` code without
+  touching this UI.)
 - **FR-011**: When a detail band has an active layout (`columnLayout != null &&
   isPureSingleDetailBody`), the canvas MUST draw the editable band frame at
   `columnWidth` and MUST draw `columnCount − 1` faint, **read-only,
@@ -223,8 +231,8 @@ in the section, and visually crosses the editable cell boundary on the canvas.
 - **SC-002**: The **Add column layout** action is enabled iff
   `def.isPureSingleDetailBody` and the band has no layout; the disabled state
   carries the explanatory tooltip.
-- **SC-003**: A grid-too-wide fixture shows the localized error row in the
-  section; a cell-overflow element shows the localized warning row.
+- **SC-003**: A grid-too-wide fixture shows an error row in the section (the
+  verbatim `validate()` message); a cell-overflow element shows a warning row.
 - **SC-004**: **Remove** clears `columnLayout` while a widget test asserts the
   band's `elements` and `height` survive (spec-031 regression guard).
 - **SC-005**: An orphaned-layout fixture (layout present, body ineligible) shows
@@ -232,8 +240,8 @@ in the section, and visually crosses the editable cell boundary on the canvas.
 - **SC-006**: The canvas renders a band with an active layout at `columnWidth`
   with `columnCount − 1` ghost cells; a no-layout/ineligible band renders
   full-width with none.
-- **SC-007**: New `.arb` keys resolve in `en`/`de`/`tr` with no missing-key
-  fallback.
+- **SC-007**: New designer-chrome `.arb` keys resolve in `en`/`de`/`tr` with no
+  missing-key fallback.
 - **SC-008**: The full suite (`jet_print`) is green, `flutter analyze` is clean,
   and existing goldens are **byte-identical** (designer-only change; no engine
   output or `schemaVersion` change).
