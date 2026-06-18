@@ -1,6 +1,7 @@
 /// A compiled, reusable expression (spec 005a).
 library;
 
+import 'aggregate/aggregate_functions.dart';
 import 'ast.dart';
 import 'eval_context.dart';
 import 'evaluator.dart' as evaluator;
@@ -74,5 +75,78 @@ class Expression {
 
     walk(_root);
     return (fields: fields, params: params, variables: variables);
+  }
+
+  /// The `$F{}` field names that appear as the operand of an aggregate call
+  /// (`SUM`/`AVG`/`COUNT`/`MIN`/`MAX`) anywhere in this expression — including
+  /// aggregate sub-terms of a compound expression (`SUM($F{x}) + 1`). A field
+  /// referenced only outside an aggregate is NOT reported. Used by the designer
+  /// to accept a descendant leaf as a valid aggregate operand while still
+  /// flagging the same leaf when referenced bare (spec 033, FR-006/FR-007).
+  Set<String> get aggregateOperandFields {
+    final Set<String> operands = <String>{};
+    void collectFields(Expr node) {
+      switch (node) {
+        case FieldRefExpr(name: final String n):
+          operands.add(n);
+        case UnaryExpr(operand: final Expr o):
+          collectFields(o);
+        case BinaryExpr(left: final Expr l, right: final Expr r):
+          collectFields(l);
+          collectFields(r);
+        case ConditionalExpr(
+            condition: final Expr c,
+            thenBranch: final Expr t,
+            elseBranch: final Expr e
+          ):
+          collectFields(c);
+          collectFields(t);
+          collectFields(e);
+        case CallExpr(arguments: final List<Expr> args):
+          for (final Expr a in args) {
+            collectFields(a);
+          }
+        case LiteralExpr():
+        case ParamRefExpr():
+        case VariableRefExpr():
+          break;
+      }
+    }
+
+    void walk(Expr node) {
+      if (node is CallExpr && aggregateCalculationFor(node.name) != null) {
+        for (final Expr a in node.arguments) {
+          collectFields(a);
+        }
+        return; // operands of this aggregate collected; don't double-walk them
+      }
+      switch (node) {
+        case UnaryExpr(operand: final Expr o):
+          walk(o);
+        case BinaryExpr(left: final Expr l, right: final Expr r):
+          walk(l);
+          walk(r);
+        case ConditionalExpr(
+            condition: final Expr c,
+            thenBranch: final Expr t,
+            elseBranch: final Expr e
+          ):
+          walk(c);
+          walk(t);
+          walk(e);
+        case CallExpr(arguments: final List<Expr> args):
+          for (final Expr a in args) {
+            walk(a);
+          }
+        case LiteralExpr():
+        case FieldRefExpr():
+        case ParamRefExpr():
+        case VariableRefExpr():
+          break;
+      }
+    }
+
+    walk(_root);
+    return operands;
   }
 }
