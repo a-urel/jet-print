@@ -14,10 +14,12 @@ import 'invoice_sample.dart';
 import 'l10n/app_localizations.dart';
 import 'label_sample.dart';
 import 'nested_list_sample.dart';
+import 'packing_slip_sample.dart';
 import 'rendered_barcode_example.dart';
 import 'rendered_invoice_example.dart';
 import 'rendered_label_example.dart';
 import 'rendered_nested_list_example.dart';
+import 'rendered_packing_slip_example.dart';
 
 Future<void> main() async {
   // Loading the bundled font assets needs the binding up before runApp.
@@ -141,16 +143,6 @@ class _PlaygroundHome extends StatelessWidget {
   final VoidCallback onToggleTheme;
   final VoidCallback onCycleLanguage;
 
-  /// A placeholder report demo tab — the body is a centered "Yakında" card.
-  ShadTab<String> _comingSoon(String value, String label, IconData icon) =>
-      ShadTab<String>(
-        value: value,
-        leading: Icon(icon, size: 16),
-        expandContent: true,
-        content: _ComingSoonReport(title: label, icon: icon),
-        child: Text(label),
-      );
-
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
@@ -238,7 +230,25 @@ class _PlaygroundHome extends StatelessWidget {
                   ),
                   child: Text(l10n.tabBarcode),
                 ),
-                _comingSoon('makbuz', l10n.tabReceipt, LucideIcons.receipt),
+                ShadTab<String>(
+                  value: 'makbuz',
+                  leading: const Icon(LucideIcons.package, size: 16),
+                  expandContent: true,
+                  // A live designer over a single shipment — Shipment ▸ Box ▸
+                  // Item with a two-column address header, a QR tracking code,
+                  // per-box subtotals and grand totals (packing_slip_sample.dart).
+                  content: _FillTabHeight(
+                    child: _DesignerTab(
+                      fonts: fonts,
+                      seed: packingSlipDefinition(),
+                      dataSchema: shipmentSchema,
+                      renderReport: (ReportDefinition def) =>
+                          renderPackingSlipDefinition(
+                              definition: def, fonts: fonts),
+                    ),
+                  ),
+                  child: Text(l10n.tabPackingSlip),
+                ),
                 ShadTab<String>(
                   value: 'nested-lists',
                   leading: const Icon(LucideIcons.listTree, size: 16),
@@ -435,39 +445,6 @@ class _DesignerTabState extends State<_DesignerTab> {
       onExportPdf: _exportPdf,
       onPrint: (RenderedReport report) =>
           const JetReportPrinter().printReport(report),
-    );
-  }
-}
-
-/// A placeholder body for a report demo that isn't built yet — a centered card
-/// with the demo's icon, name, and a "Yakında" (coming soon) note.
-class _ComingSoonReport extends StatelessWidget {
-  const _ComingSoonReport({required this.title, required this.icon});
-
-  /// The demo's display name (also its tab label).
-  final String title;
-
-  /// The demo's tab/lead icon, echoed large inside the card.
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final ShadThemeData theme = ShadTheme.of(context);
-    return Center(
-      child: ShadCard(
-        width: 360,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(icon, size: 40, color: theme.colorScheme.mutedForeground),
-            const SizedBox(height: 16),
-            Text(title, style: theme.textTheme.h4),
-            const SizedBox(height: 4),
-            Text(AppLocalizations.of(context).comingSoon,
-                style: theme.textTheme.muted),
-          ],
-        ),
-      ),
     );
   }
 }
