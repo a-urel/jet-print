@@ -220,6 +220,10 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   String get exprEditorFieldsLabel => 'Felder';
 
   @override
+  String get exprEditorDeeperFieldHint =>
+      'Aus einer verschachtelten Sammlung — nur innerhalb einer Aggregatfunktion (z. B. SUM)';
+
+  @override
   String get exprEditorFunctionsLabel => 'Funktionen';
 
   @override

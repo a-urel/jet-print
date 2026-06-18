@@ -521,6 +521,13 @@ abstract class JetPrintLocalizations {
   /// **'Fields'**
   String get exprEditorFieldsLabel;
 
+  /// Tooltip/marker shown on a fx-palette field button that belongs to a deeper
+  /// (descendant) collection — valid only inside an aggregate (spec 033).
+  ///
+  /// In en, this message translates to:
+  /// **'From a nested collection — use inside an aggregate (e.g. SUM)'**
+  String get exprEditorDeeperFieldHint;
+
   /// Label for the functions palette in the expression editor (032).
   ///
   /// In en, this message translates to:

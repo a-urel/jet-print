@@ -220,6 +220,10 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get exprEditorFieldsLabel => 'Fields';
 
   @override
+  String get exprEditorDeeperFieldHint =>
+      'From a nested collection — use inside an aggregate (e.g. SUM)';
+
+  @override
   String get exprEditorFunctionsLabel => 'Functions';
 
   @override
