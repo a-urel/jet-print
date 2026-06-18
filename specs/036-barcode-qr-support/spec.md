@@ -84,7 +84,7 @@ A new barcode branch, modeled on the image-field path:
 
 1. `dataField != null` → read the field from the row, stringify, return a resolved `BarcodeElement` with `data = <value>`, `dataField = null` (a flattened snapshot, like text `expression` → resolved `text`).
 2. Schema-aware unresolved check (reusing `knownFields`): an undeclared `dataField` emits the existing "field not in the data source" warning (deduped via `warnedFields`) and resolves to empty → placeholder.
-3. After the value is known, resolve `auto` → concrete and run the encoder's validate/auto-fix; `BarcodeInvalid` → emit a warning (`'Value "…" is not valid for <symbology>'`). The element still renders a placeholder.
+3. The element still renders a placeholder for invalid data (render-don't-crash). **The invalid-value diagnostic is raised in the designer, not the fill layer** — `rendering/fill/` is forbidden by the layer-boundary invariant from importing the encoder (`rendering/elements/`), so the validity check (which needs the encoder) lives where the import is legal: the designer Properties panel surfaces an inline "not valid for this symbology" hint for a literal value. A purely headless fill/export renders the placeholder without a separate validity diagnostic. (Resolution decision, 2026-06-18.)
 
 Resolution turns *domain → domain* (flatten binding, emit diagnostics); the renderer turns *domain → primitives*. Each encodes once; the resolved model stays serializable and Flutter-free.
 
@@ -112,7 +112,7 @@ Purely **additive**, backward-compatible:
 - **FR-002** `BarcodeElement` MUST carry `symbology` (incl. `auto`), `data`, `dataField`, `color`, `showText`, `quietZone`, and `eccLevel`, with the defaults in the table above.
 - **FR-003** When `dataField` is non-null, the encoded value MUST come from that data-source field at fill time; otherwise the literal `data` is used.
 - **FR-004** `Auto` symbology MUST be inferred from the resolved value by this documented priority: URL/multiline/non-ASCII/over-length → QR; all-digits of length 13 → EAN-13, 12 → UPC-A, 8 → EAN-8, 14 → ITF-14; any other all-digits → Code 128; any remaining (alphanumeric) → Code 128. Ties are broken in this order. An explicit (non-`auto`) symbology MUST override inference. When there is no value to infer from (a bound field at design time), the canvas MUST preview as QR.
-- **FR-005** Invalid data MUST be auto-fixed where the symbology spec allows (e.g. compute a missing EAN-13 check digit, pad ITF to even length); when it cannot be made valid the element MUST render the existing placeholder and a diagnostic MUST be emitted.
+- **FR-005** Invalid data MUST be auto-fixed where the symbology spec allows (e.g. compute a missing EAN-13 check digit, pad ITF to even length); when it cannot be made valid the element MUST render the existing placeholder, and the designer MUST surface a validity diagnostic for an invalid literal (see FR-016 for why this is author-time rather than fill-time).
 - **FR-006** 1D symbols MUST render HRI text beneath the bars when `showText` is true; 2D symbols MUST ignore `showText`.
 - **FR-007** Symbols MUST reserve a quiet zone within `bounds` when `quietZone` is true, never overlapping bars/modules.
 - **FR-008** QR symbols MUST honor `eccLevel` (L/M/Q/H, default M); non-QR symbologies MUST ignore it.
@@ -123,7 +123,7 @@ Purely **additive**, backward-compatible:
 - **FR-013** The codec change MUST be additive and backward-compatible: existing documents load and round-trip byte-identically; new fields are written only when non-default; no new migration is introduced.
 - **FR-014** The designer MUST let an author choose symbology (incl. `Auto`), switch the value between a bound field and a literal, toggle `showText`/`quietZone`, set QR `eccLevel` (QR only), and set `color`, each as an undoable command.
 - **FR-015** The designer MUST show an inline validation hint when a bound field is unresolved or a literal value is invalid for a pinned symbology, localized in en/de/tr.
-- **FR-016** Diagnostics about validity/binding MUST originate at the fill layer and the designer, NOT the renderer (which only renders bars or a placeholder).
+- **FR-016** Diagnostics MUST NOT originate in the renderer (which only renders bars or a placeholder). The **binding** diagnostic (a `dataField` not in the data-source schema) originates in the **fill layer** (it needs only `knownFields`, no encoder). The **validity** diagnostic (a value invalid for its symbology) originates in the **designer**, because the encoder lives under `rendering/elements/` and the layer-boundary invariant forbids `rendering/fill/` from importing it. (Resolution decision, 2026-06-18 — the plan originally placed validity in fill; that violated the layer test.)
 
 ## Key Entities
 
