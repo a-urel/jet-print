@@ -64,6 +64,7 @@ void main() {
     expect(a.resetScope, VariableResetScope.report);
     expect(a.resetGroup, isNull);
     expect(a.ambiguous, isFalse);
+    expect(a.argument.references.fields, <String>{'lineTotal'});
     final TextElement g = lift.definition.body.summary!.elements.single
         as TextElement;
     expect(g.expression, '\$V{${a.name}}');

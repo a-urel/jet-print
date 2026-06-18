@@ -326,12 +326,13 @@ DescendantLift liftDescendantAggregates(
       VariableResetScope scope, String? group) {
     return (JetCalculation calc, String inner) {
       // Operand = the single $F{} reference, when there is exactly one.
-      final Set<String> refs;
+      final Expression parsed;
       try {
-        refs = Expression.parse(inner).references.fields;
+        parsed = Expression.parse(inner);
       } on ExpressionException {
         return null;
       }
+      final Set<String> refs = parsed.references.fields;
       if (refs.length != 1) return null;
       final AggregatePath resolved =
           resolveAggregatePath(rootFields, refs.single);
@@ -340,7 +341,7 @@ DescendantLift liftDescendantAggregates(
         specs.add(DescendantAggregate(
           name: name,
           calculation: calc,
-          argument: Expression.parse(inner),
+          argument: parsed,
           path: resolved.path,
           resetScope: scope,
           resetGroup: group,
@@ -353,7 +354,7 @@ DescendantLift liftDescendantAggregates(
         specs.add(DescendantAggregate(
           name: name,
           calculation: calc,
-          argument: Expression.parse(inner),
+          argument: parsed,
           path: const <String>[],
           resetScope: scope,
           resetGroup: group,
@@ -372,16 +373,16 @@ DescendantLift liftDescendantAggregates(
     final List<ReportElement> els = <ReportElement>[];
     for (final ReportElement e in band.elements) {
       if (e is TextElement && e.expression != null) {
-        String parseable = e.expression!;
+        final String expr = e.expression!;
         try {
-          Expression.parse(parseable);
+          Expression.parse(expr);
         } on ExpressionException {
           els.add(e);
           continue;
         }
         final String next =
-            _expandInlineAggregates(parseable, registrar(scope, group));
-        if (next != parseable) {
+            _expandInlineAggregates(expr, registrar(scope, group));
+        if (next != expr) {
           changed = true;
           els.add(TextElement(
             id: e.id,
