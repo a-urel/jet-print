@@ -3,9 +3,9 @@ library;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/data_row.dart';
 import 'package:jet_print/src/data/field_def.dart';
+import 'package:jet_print/src/domain/report_variable.dart';
 import 'package:jet_print/src/expression/aggregate/descendant_aggregate.dart';
 import 'package:jet_print/src/expression/aggregate/variable_accumulator.dart';
-import 'package:jet_print/src/domain/report_variable.dart';
 import 'package:jet_print/src/expression/value.dart';
 
 // Build a customer row carrying orders → lines, lines holding `lineTotal`.
