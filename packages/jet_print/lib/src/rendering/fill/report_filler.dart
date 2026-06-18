@@ -301,7 +301,7 @@ class ReportFiller {
         eval: (DataRow leaf) => a.argument.evaluate(contextFactory(
           row: leaf,
           params: params,
-          variables: const <String, JetValue>{},
+          variables: calc.values,
           functions: _functions,
         )),
         childRowsOf: childRowsOf,

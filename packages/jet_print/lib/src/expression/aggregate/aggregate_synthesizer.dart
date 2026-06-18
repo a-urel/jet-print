@@ -257,6 +257,16 @@ GroupLevel _rewriteGroup(
   return identical(footer, g.footer) ? g : g.copyWith(footer: footer);
 }
 
+/// Lifts descendant aggregates out of a group's footer, preserving the group's
+/// identity when nothing changed (mirrors [_rewriteGroup]'s identity pattern).
+GroupLevel _liftGroup(
+  GroupLevel g,
+  Band? Function(Band?, VariableResetScope, String?) rewriteBand,
+) {
+  final Band? footer = rewriteBand(g.footer, VariableResetScope.group, g.name);
+  return identical(footer, g.footer) ? g : g.copyWith(footer: footer);
+}
+
 /// One descendant inline aggregate lifted out of a summary band or root group
 /// footer: its synth variable [name] (`__dagg<n>`) the element now references,
 /// the [calculation], the parsed operand [argument] evaluated per descendant
@@ -404,9 +414,7 @@ DescendantLift liftDescendantAggregates(
       rewriteBand(def.body.summary, VariableResetScope.report, null);
   final List<GroupLevel> groups = <GroupLevel>[
     for (final GroupLevel g in def.body.root.groups)
-      g.copyWith(
-        footer: rewriteBand(g.footer, VariableResetScope.group, g.name),
-      ),
+      _liftGroup(g, rewriteBand),
   ];
 
   if (specs.isEmpty) return DescendantLift(def, const <DescendantAggregate>[]);
