@@ -189,6 +189,52 @@ void main() {
     });
   });
 
+  // --- 036 barcode/QR new fields (dataField/showText/quietZone/ecc) ----------
+  group('BarcodeElementCodec — new fields (036)', () {
+    test('round-trips new fields', () {
+      const el = BarcodeElement(
+        id: 'b1',
+        bounds: JetRect(x: 1, y: 2, width: 80, height: 40),
+        symbology: BarcodeSymbology.ean13,
+        data: '590123412345',
+        dataField: 'sku',
+        showText: false,
+        quietZone: false,
+        eccLevel: QrErrorCorrectionLevel.h,
+      );
+      const codec = BarcodeElementCodec();
+      expect(codec.fromJson(codec.toJson(el)), el);
+    });
+
+    test('omits default fields (stable JSON)', () {
+      const el = BarcodeElement(
+        id: 'b1',
+        bounds: JetRect(x: 0, y: 0, width: 1, height: 1),
+        symbology: BarcodeSymbology.auto,
+        data: 'X',
+      );
+      final json = const BarcodeElementCodec().toJson(el);
+      expect(json.containsKey('dataField'), isFalse);
+      expect(json.containsKey('showText'), isFalse);
+      expect(json.containsKey('quietZone'), isFalse);
+      expect(json.containsKey('ecc'), isFalse);
+      expect(json.containsKey('color'), isFalse);
+    });
+
+    test('back-compat: legacy JSON (no new keys) loads with defaults', () {
+      final el = const BarcodeElementCodec().fromJson(<String, Object?>{
+        'id': 'b1',
+        'bounds': <String, Object?>{'x': 0, 'y': 0, 'w': 10, 'h': 10},
+        'symbology': 'qrCode',
+        'data': 'hello',
+      });
+      expect(el.dataField, isNull);
+      expect(el.showText, isTrue);
+      expect(el.quietZone, isTrue);
+      expect(el.eccLevel, QrErrorCorrectionLevel.m);
+    });
+  });
+
   // --- 021 format properties: barcode color wire rules (US3 / C8, C10) ------
   group('BarcodeElementCodec — color (021 / US3)', () {
     const BarcodeElementCodec codec = BarcodeElementCodec();
