@@ -237,5 +237,16 @@
   "dataSourceAddGroup": "Grup olarak ekle",
 
   "outlineListLabel": "Liste: {field}",
-  "outlineListUnbound": "Liste (bağsız)"
+  "outlineListUnbound": "Liste (bağsız)",
+
+  "exprEditorDeeperFieldHint": "Alt alan – yalnızca SUM(…) gibi bir toplama içinde geçerlidir",
+
+  "propertiesColumnLayout": "Sütun düzeni",
+  "propertiesColumnLayoutAdd": "Sütun düzeni ekle",
+  "propertiesColumnLayoutAddDisabled": "Başlık, özet, grup veya alt bilgi içermeyen tek bir ayrıntı bandı gerektirir.",
+  "propertiesColumnLayoutRemove": "Sütun düzenini kaldır",
+  "propertiesColumnCount": "Sütunlar",
+  "propertiesColumnWidth": "Sütun genişliği",
+  "propertiesColumnSpacing": "Sütun aralığı",
+  "propertiesRowSpacing": "Satır aralığı"
 }

@@ -220,10 +220,6 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get exprEditorFieldsLabel => 'Fields';
 
   @override
-  String get exprEditorDeeperFieldHint =>
-      'From a nested collection — use inside an aggregate (e.g. SUM)';
-
-  @override
   String get exprEditorFunctionsLabel => 'Functions';
 
   @override
@@ -674,4 +670,33 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
 
   @override
   String get outlineListUnbound => 'List (unbound)';
+
+  @override
+  String get exprEditorDeeperFieldHint =>
+      'Descendant field — valid inside an aggregate like SUM(…)';
+
+  @override
+  String get propertiesColumnLayout => 'Column Layout';
+
+  @override
+  String get propertiesColumnLayoutAdd => 'Add column layout';
+
+  @override
+  String get propertiesColumnLayoutAddDisabled =>
+      'Requires a single detail band with no title, summary, groups, or footer.';
+
+  @override
+  String get propertiesColumnLayoutRemove => 'Remove column layout';
+
+  @override
+  String get propertiesColumnCount => 'Columns';
+
+  @override
+  String get propertiesColumnWidth => 'Column width';
+
+  @override
+  String get propertiesColumnSpacing => 'Column spacing';
+
+  @override
+  String get propertiesRowSpacing => 'Row spacing';
 }

@@ -906,5 +906,43 @@
   "outlineListUnbound": "List (unbound)",
   "@outlineListUnbound": {
     "description": "Outline label for a nested list scope with no collection field bound yet."
+  },
+
+  "exprEditorDeeperFieldHint": "Descendant field — valid inside an aggregate like SUM(…)",
+  "@exprEditorDeeperFieldHint": {
+    "description": "Tooltip on a descendant (↳) field chip in the expression editor palette (spec 033). Explains that the field is from a child collection and is only valid inside an aggregate call."
+  },
+
+  "propertiesColumnLayout": "Column Layout",
+  "@propertiesColumnLayout": {
+    "description": "Properties section heading for a detail band's multi-column label grid (spec 035)."
+  },
+  "propertiesColumnLayoutAdd": "Add column layout",
+  "@propertiesColumnLayoutAdd": {
+    "description": "Button: turn the selected detail band into a multi-column label sheet."
+  },
+  "propertiesColumnLayoutAddDisabled": "Requires a single detail band with no title, summary, groups, or footer.",
+  "@propertiesColumnLayoutAddDisabled": {
+    "description": "Tooltip on the disabled Add-column-layout button when the report is not a pure single-detail body."
+  },
+  "propertiesColumnLayoutRemove": "Remove column layout",
+  "@propertiesColumnLayoutRemove": {
+    "description": "Button: clear the column layout, restoring a plain detail band."
+  },
+  "propertiesColumnCount": "Columns",
+  "@propertiesColumnCount": {
+    "description": "Label for the number-of-columns field in the Column Layout section."
+  },
+  "propertiesColumnWidth": "Column width",
+  "@propertiesColumnWidth": {
+    "description": "Label for the per-column (cell) width field, in points."
+  },
+  "propertiesColumnSpacing": "Column spacing",
+  "@propertiesColumnSpacing": {
+    "description": "Label for the horizontal gutter-between-columns field, in points."
+  },
+  "propertiesRowSpacing": "Row spacing",
+  "@propertiesRowSpacing": {
+    "description": "Label for the vertical gap-between-label-rows field, in points."
   }
 }

@@ -7,6 +7,7 @@ import '../../../data/binding_scope.dart';
 import '../../../data/data_schema.dart';
 import '../../../data/field_def.dart';
 import '../../../domain/band.dart';
+import '../../../domain/column_layout.dart';
 import '../../../domain/detail_scope.dart';
 import '../../../domain/elements/barcode_element.dart';
 import '../../../domain/elements/image_element.dart';
@@ -17,6 +18,7 @@ import '../../../domain/geometry.dart';
 import '../../../domain/group_level.dart';
 import '../../../domain/page_format.dart';
 import '../../../domain/report_band.dart' show BandType;
+import '../../../domain/report_definition.dart';
 import '../../../domain/report_element.dart';
 import '../../../domain/styles/color.dart';
 import '../../../domain/styles/text_style.dart';
@@ -653,7 +655,8 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     if (band.type == BandType.detail) {
       children
         ..add(const SizedBox(height: 18))
-        ..addAll(_bandListSection(controller, bandId, theme, l10n, schema));
+        ..addAll(_bandListSection(controller, bandId, theme, l10n, schema))
+        ..addAll(_columnLayoutSection(controller, bandId, theme, l10n));
     }
     // A group's key + pagination flags are edited from the band the author
     // sees: its group HEADER band — or its FOOTER when the group has no header,
@@ -850,6 +853,106 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
         _InlineWarning(text: l10n.bindingCollectionMissing, theme: theme),
       ],
     ];
+  }
+
+  /// The label-grid (multi-column) editor for a detail band (spec 035). Shown
+  /// only for detail bands. Three states: no layout + eligible body → an
+  /// enabled "Add column layout"; no layout + ineligible → the Add disabled with
+  /// a tooltip; layout present → the four geometry fields + Remove (editable
+  /// even when ineligible, so an orphaned layout stays fixable). Validation rows
+  /// and the inactive notice are appended by Task 3.
+  List<Widget> _columnLayoutSection(
+    JetReportDesignerController controller,
+    String bandId,
+    ShadThemeData theme,
+    JetPrintLocalizations l10n,
+  ) {
+    final ReportDefinition def = controller.definition;
+    final Band? band = findBand(def, bandId);
+    if (band == null || band.type != BandType.detail) return const <Widget>[];
+    final ColumnLayout? layout = band.columnLayout;
+    final bool eligible =
+        def.isPureSingleDetailBody && def.soleDetailBand?.id == bandId;
+
+    final List<Widget> out = <Widget>[
+      const SizedBox(height: 18),
+      _Header(
+        icon: LucideIcons.columns3,
+        title: l10n.propertiesColumnLayout,
+        theme: theme,
+      ),
+      const SizedBox(height: 14),
+    ];
+
+    if (layout == null) {
+      out.add(_ColumnLayoutAddButton(
+        enabled: eligible,
+        label: l10n.propertiesColumnLayoutAdd,
+        disabledTooltip: l10n.propertiesColumnLayoutAddDisabled,
+        onAdd: () {
+          final double bodyWidth =
+              def.page.width - def.page.margins.left - def.page.margins.right;
+          controller.setColumnLayout(
+            bandId,
+            ColumnLayout(
+              columnCount: 2,
+              columnWidth: bodyWidth / 2,
+              columnSpacing: 0,
+              rowSpacing: 0,
+            ),
+          );
+        },
+      ));
+      return out;
+    }
+
+    out
+      ..add(_LabeledRow(
+        label: l10n.propertiesColumnCount,
+        child: _NumberField(
+          fieldKey: const ValueKey<String>('$_p.field.columnCount'),
+          prefix: LucideIcons.columns3,
+          value: layout.columnCount.toDouble(),
+          onCommit: (double v) => controller.setColumnLayout(
+              bandId, layout.copyWith(columnCount: v.round())),
+        ),
+      ))
+      ..add(_LabeledRow(
+        label: l10n.propertiesColumnWidth,
+        child: _NumberField(
+          fieldKey: const ValueKey<String>('$_p.field.columnWidth'),
+          prefix: LucideIcons.moveHorizontal,
+          value: layout.columnWidth,
+          onCommit: (double v) =>
+              controller.setColumnLayout(bandId, layout.copyWith(columnWidth: v)),
+        ),
+      ))
+      ..add(_LabeledRow(
+        label: l10n.propertiesColumnSpacing,
+        child: _NumberField(
+          fieldKey: const ValueKey<String>('$_p.field.columnSpacing'),
+          prefix: LucideIcons.moveHorizontal,
+          value: layout.columnSpacing,
+          onCommit: (double v) => controller.setColumnLayout(
+              bandId, layout.copyWith(columnSpacing: v)),
+        ),
+      ))
+      ..add(_LabeledRow(
+        label: l10n.propertiesRowSpacing,
+        child: _NumberField(
+          fieldKey: const ValueKey<String>('$_p.field.rowSpacing'),
+          prefix: LucideIcons.moveVertical,
+          value: layout.rowSpacing,
+          onCommit: (double v) =>
+              controller.setColumnLayout(bandId, layout.copyWith(rowSpacing: v)),
+        ),
+      ))
+      ..add(const SizedBox(height: 8))
+      ..add(_ColumnLayoutRemoveButton(
+        label: l10n.propertiesColumnLayoutRemove,
+        onRemove: () => controller.removeColumnLayout(bandId),
+      ));
+    return out;
   }
 
   // --- Report ----------------------------------------------------------------
@@ -1141,6 +1244,62 @@ class _InlineWarning extends StatelessWidget {
       ],
     );
   }
+}
+
+/// The "Add column layout" affordance. Disabled (greyed, non-tappable) when the
+/// report shape can't host a label grid, wrapped in a tooltip that explains the
+/// requirement (spec 035 / FR-003). Enabled, it commits a default layout.
+class _ColumnLayoutAddButton extends StatelessWidget {
+  const _ColumnLayoutAddButton({
+    required this.enabled,
+    required this.label,
+    required this.disabledTooltip,
+    required this.onAdd,
+  });
+
+  final bool enabled;
+  final String label;
+  final String disabledTooltip;
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    final Widget button = ShadButton.outline(
+      key: const ValueKey<String>('$_p.field.columnLayoutAdd'),
+      size: ShadButtonSize.sm,
+      enabled: enabled,
+      onPressed: enabled ? onAdd : null,
+      leading: const Icon(LucideIcons.columns3, size: 14),
+      // Flex child prevents the inner Row from overflowing the panel at narrow
+      // panel widths (the panel minimum is ~280 px; the label may be longer).
+      child: Flexible(
+        child: Text(label, overflow: TextOverflow.ellipsis, maxLines: 1),
+      ),
+    );
+    if (enabled) return button;
+    // The disabled button still hosts a hover tooltip explaining why.
+    return ShadTooltip(builder: (_) => Text(disabledTooltip), child: button);
+  }
+}
+
+/// The "Remove column layout" affordance — restores a plain detail band.
+class _ColumnLayoutRemoveButton extends StatelessWidget {
+  const _ColumnLayoutRemoveButton({required this.label, required this.onRemove});
+
+  final String label;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) => ShadButton.ghost(
+        key: const ValueKey<String>('$_p.field.columnLayoutRemove'),
+        size: ShadButtonSize.sm,
+        onPressed: onRemove,
+        leading: const Icon(LucideIcons.trash2, size: 14),
+        // Flex child prevents the inner Row from overflowing at narrow widths.
+        child: Flexible(
+          child: Text(label, overflow: TextOverflow.ellipsis, maxLines: 1),
+        ),
+      );
 }
 
 /// A labelled inspector row: a muted [label] on the leading edge and its editor

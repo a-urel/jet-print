@@ -237,5 +237,16 @@
   "dataSourceAddGroup": "Als Gruppe hinzufügen",
 
   "outlineListLabel": "Liste: {field}",
-  "outlineListUnbound": "Liste (ungebunden)"
+  "outlineListUnbound": "Liste (ungebunden)",
+
+  "exprEditorDeeperFieldHint": "Nachgeordnetes Feld – nur innerhalb eines Aggregats wie SUM(…) gültig",
+
+  "propertiesColumnLayout": "Spaltenlayout",
+  "propertiesColumnLayoutAdd": "Spaltenlayout hinzufügen",
+  "propertiesColumnLayoutAddDisabled": "Erfordert ein einzelnes Detailband ohne Titel, Zusammenfassung, Gruppen oder Fußzeile.",
+  "propertiesColumnLayoutRemove": "Spaltenlayout entfernen",
+  "propertiesColumnCount": "Spalten",
+  "propertiesColumnWidth": "Spaltenbreite",
+  "propertiesColumnSpacing": "Spaltenabstand",
+  "propertiesRowSpacing": "Zeilenabstand"
 }

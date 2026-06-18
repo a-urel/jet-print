@@ -220,10 +220,6 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   String get exprEditorFieldsLabel => 'Felder';
 
   @override
-  String get exprEditorDeeperFieldHint =>
-      'Aus einer verschachtelten Sammlung — nur innerhalb einer Aggregatfunktion (z. B. SUM)';
-
-  @override
   String get exprEditorFunctionsLabel => 'Funktionen';
 
   @override
@@ -676,4 +672,33 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
 
   @override
   String get outlineListUnbound => 'Liste (ungebunden)';
+
+  @override
+  String get exprEditorDeeperFieldHint =>
+      'Nachgeordnetes Feld – nur innerhalb eines Aggregats wie SUM(…) gültig';
+
+  @override
+  String get propertiesColumnLayout => 'Spaltenlayout';
+
+  @override
+  String get propertiesColumnLayoutAdd => 'Spaltenlayout hinzufügen';
+
+  @override
+  String get propertiesColumnLayoutAddDisabled =>
+      'Erfordert ein einzelnes Detailband ohne Titel, Zusammenfassung, Gruppen oder Fußzeile.';
+
+  @override
+  String get propertiesColumnLayoutRemove => 'Spaltenlayout entfernen';
+
+  @override
+  String get propertiesColumnCount => 'Spalten';
+
+  @override
+  String get propertiesColumnWidth => 'Spaltenbreite';
+
+  @override
+  String get propertiesColumnSpacing => 'Spaltenabstand';
+
+  @override
+  String get propertiesRowSpacing => 'Zeilenabstand';
 }

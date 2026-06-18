@@ -220,10 +220,6 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get exprEditorFieldsLabel => 'Alanlar';
 
   @override
-  String get exprEditorDeeperFieldHint =>
-      'İç içe bir koleksiyondan — yalnızca bir toplama işlevi içinde (örn. SUM)';
-
-  @override
   String get exprEditorFunctionsLabel => 'Fonksiyonlar';
 
   @override
@@ -675,4 +671,33 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
 
   @override
   String get outlineListUnbound => 'Liste (bağsız)';
+
+  @override
+  String get exprEditorDeeperFieldHint =>
+      'Alt alan – yalnızca SUM(…) gibi bir toplama içinde geçerlidir';
+
+  @override
+  String get propertiesColumnLayout => 'Sütun düzeni';
+
+  @override
+  String get propertiesColumnLayoutAdd => 'Sütun düzeni ekle';
+
+  @override
+  String get propertiesColumnLayoutAddDisabled =>
+      'Başlık, özet, grup veya alt bilgi içermeyen tek bir ayrıntı bandı gerektirir.';
+
+  @override
+  String get propertiesColumnLayoutRemove => 'Sütun düzenini kaldır';
+
+  @override
+  String get propertiesColumnCount => 'Sütunlar';
+
+  @override
+  String get propertiesColumnWidth => 'Sütun genişliği';
+
+  @override
+  String get propertiesColumnSpacing => 'Sütun aralığı';
+
+  @override
+  String get propertiesRowSpacing => 'Satır aralığı';
 }
