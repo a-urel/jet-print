@@ -74,6 +74,54 @@ void main() {
     expect(controller.selection.isEmpty, isTrue);
   });
 
+  testWidgets('tapping the left-margin gutter beside a band selects that band',
+      (WidgetTester tester) async {
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
+    final PageFormat page = controller.definition.page;
+    final double h0 = controller.definition.furniture.pageHeader!.height;
+    final double h1 = controller.definition.body.root.children
+        .whereType<BandNode>()
+        .first
+        .band
+        .height;
+    // Empty paper in the left-margin gutter (x just inside the sheet, left of
+    // the content rect) at the detail band's vertical middle: the band strip
+    // between its top and bottom separators, where no element sits. The whole
+    // strip — full page width — must select the band, not the report.
+    final double cy = page.margins.top + h0 + h1 / 2;
+
+    controller.selectReport(); // move selection off the detail band first
+    await tester.pumpAndSettle();
+    expect(controller.selection.bandId, isNull);
+
+    final Offset Function(double, double) at = pageMapper(tester, controller);
+    await tester.tapAt(at(2, cy));
+    await tester.pumpAndSettle();
+
+    expect(controller.selection.bandId, 'detail');
+  });
+
+  testWidgets("tapping a band's tag selects that band",
+      (WidgetTester tester) async {
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
+    controller.selectReport(); // move selection off the detail band first
+    await tester.pumpAndSettle();
+    expect(controller.selection.bandId, isNull);
+
+    // The tag sits in the gutter at the band's top — within the band's strip.
+    // It is IgnorePointer'd (the canvas owns selection), so the tap deliberately
+    // falls through to the strip beneath it; warnIfMissed would flag that.
+    await tester.tap(
+      find.byKey(const ValueKey<String>('jet_print.designer.bandBadge.detail')),
+      warnIfMissed: false,
+    );
+    await tester.pumpAndSettle();
+
+    expect(controller.selection.bandId, 'detail');
+  });
+
   testWidgets('clicking an element still selects the element',
       (WidgetTester tester) async {
     final JetReportDesignerController controller =

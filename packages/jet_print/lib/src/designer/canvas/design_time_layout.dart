@@ -210,9 +210,15 @@ class DesignTimeLayout {
     return nearest;
   }
 
-  /// The stable id of the band whose rect exactly contains [point], or null when
-  /// the point lands in no band (the margins, the empty flow gap, or off the
-  /// sheet).
+  /// The stable id of the band whose full-width horizontal strip contains
+  /// [point], or null when the point's Y lands in no band (the top/bottom
+  /// margins or the empty flow gap between flow and bottom-anchored bands).
+  ///
+  /// A band's strip is the whole slab between its top and bottom separators,
+  /// spanning the entire page width — so the left/right margin gutters (where
+  /// the band tag sits) select the band just like its content area does. Only
+  /// the vertical span matters; callers gate the horizontal extent on the sheet
+  /// (a point off the paper resolves to a clear, not a band).
   ///
   /// Unlike [bandIdNear] there is no nearest-band fallback: this drives *click
   /// selection*, where an empty spot must resolve to the report/page — not to a
@@ -220,10 +226,7 @@ class DesignTimeLayout {
   String? bandIdAt(JetOffset point) {
     for (final PlacedBand b in bands) {
       final JetRect r = b.rect;
-      if (point.dx >= r.x &&
-          point.dx <= r.x + r.width &&
-          point.dy >= r.y &&
-          point.dy <= r.y + r.height) {
+      if (point.dy >= r.y && point.dy <= r.y + r.height) {
         return b.id;
       }
     }
