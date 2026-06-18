@@ -1,9 +1,9 @@
-// Designer regression on the REAL spec-030 nested-list sample (spec 031): the
-// playground's `nestedListsDefinition()` references three PUBLISHED scope totals
-// — they are injected at fill time onto parent rows, NOT schema fields — so the
-// Properties panel must resolve a binding to each WITHOUT the "Field not found"
-// flag, while a genuine typo must still flag. This is the exact shape the user
-// saw mis-flagged before Tasks 1-3.
+// Designer regression on the REAL spec-033 nested-list sample: the playground's
+// `nestedListsDefinition()` references `SUM($F{lineTotal})` at every footer
+// level (inline multi-level aggregates, spec 033). The Properties panel must
+// resolve the descendant field `lineTotal` WITHOUT the "Field not found" flag,
+// while a genuine typo must still flag. This is the exact shape the shipped
+// sample uses after the spec-033 migration.
 //
 // Unlike `packages/jet_print/test/designer/published_total_resolution_test.dart`
 // (a synthetic minimal analogue), this test drives the ACTUAL sample the
@@ -74,11 +74,11 @@ Future<void> _selectAndInspect(WidgetTester tester,
 }
 
 void main() {
-  // SC-001: the three real published-total references no longer false-flag.
+  // SC-001: the three inline aggregate references no longer false-flag.
 
   testWidgets(
-      'summary grandTotal SUM(\$F{customerTotal}) shows no unresolved hint '
-      '(customerTotal is a published total on the customer rows)',
+      'summary grandTotal SUM(\$F{lineTotal}) shows no unresolved hint '
+      '(lineTotal is a descendant schema field)',
       (WidgetTester tester) async {
     final JetReportDesignerController c = await _pump(tester);
     await _selectAndInspect(tester, c, 'grandTotal');
@@ -86,7 +86,7 @@ void main() {
   });
 
   testWidgets(
-      'customer footer customerTotal \$F{customerTotal} shows no unresolved hint',
+      'customer footer customerTotal SUM(\$F{lineTotal}) shows no unresolved hint',
       (WidgetTester tester) async {
     final JetReportDesignerController c = await _pump(tester);
     await _selectAndInspect(tester, c, 'customerTotal');
@@ -94,8 +94,8 @@ void main() {
   });
 
   testWidgets(
-      'lines footer orderTotalFooter \$F{orderTotal} shows no unresolved hint '
-      '(the nested-scope footer is reachable + resolves its published total)',
+      'lines footer orderTotalFooter SUM(\$F{lineTotal}) shows no unresolved hint '
+      '(same-scope fold in a nested-scope footer)',
       (WidgetTester tester) async {
     final JetReportDesignerController c = await _pump(tester);
     await _selectAndInspect(tester, c, 'orderTotalFooter');
@@ -111,14 +111,17 @@ void main() {
     expect(find.text(_unresolvedMsg), findsOneWidget);
   });
 
-  // SC-005 (P2): the summary value picker lists the published total.
-  testWidgets('the summary value picker offers customerTotal',
+  // SC-005 (P2): the summary value picker lists in-scope schema fields (the
+  // published-total `customerTotal` no longer exists; descendant fields like
+  // `lineTotal` are surfaced via the fx palette, not the value picker).
+  testWidgets('the summary value picker offers in-scope schema fields',
       (WidgetTester tester) async {
     final JetReportDesignerController c = await _pump(tester);
     await _selectAndInspect(tester, c, 'grandTotal');
 
     await tester.tap(find.byKey(_valuePickKey));
     await tester.pumpAndSettle();
-    expect(_valuePickItem('customerTotal'), findsOneWidget);
+    // customerName is a top-level scalar in customersSchema — always offered.
+    expect(_valuePickItem('customerName'), findsOneWidget);
   });
 }

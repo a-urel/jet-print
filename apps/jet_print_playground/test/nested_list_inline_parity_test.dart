@@ -1,11 +1,16 @@
-// SC-001 parity proof (spec 033): an inline-authored multi-level variant of the
-// nested-lists sample — `{SUM([lineTotal])}` at every footer level — renders
-// byte-identical totals to the current published-total sample when both are
-// filled over the same declared-schema source.
+// SC-001 parity proof (spec 033): the now-inline-authored shipped sample
+// (`nestedListsDefinition()`) renders byte-identical totals to the
+// published-total design (`_publishedTotalDefinition()`) when both are filled
+// over the same declared-schema source.
+//
+// After the spec-033 migration, `nestedListsDefinition()` IS the inline
+// variant.  This test is repurposed to keep proving SC-001 equivalence by
+// comparing it against a hand-kept published-total reference built in-test —
+// the same role the original parity test served, with the sides swapped.
 //
 // WHY declared schema: source-level inference does NOT type nested List<Map> as
-// collections (a known deferred gap), so root-scope descend paths ([orders,
-// lines]) for the inline variant need `ds.fields` to carry the typed schema.
+// collections (a known deferred gap), so the inline sample's root-scope descend
+// paths ([orders, lines]) need `ds.fields` to carry the typed schema.
 // The published-total version works either way; rendering both over a
 // declared-schema source is a fair, working comparison.
 library;
@@ -19,32 +24,32 @@ import 'package:jet_print_playground/nested_list_sample.dart';
 import 'package:jet_print_playground/rendered_nested_list_example.dart';
 
 void main() {
-  group('SC-001 parity: inline multi-level vs published-total', () {
-    test('validate(_inlineMultiLevelDefinition()) is empty (SC-003)', () {
-      expect(validate(_inlineMultiLevelDefinition()), isEmpty);
+  group('SC-001 parity: inline (shipped sample) vs published-total', () {
+    test('validate(nestedListsDefinition()) is empty (SC-003)', () {
+      expect(validate(nestedListsDefinition()), isEmpty);
     });
 
     test(
-        'inline render has no errors in diagnostics',
+        'inline sample render has no errors in diagnostics',
         () {
           final RenderedReport report = const JetReportEngine()
-              .renderDefinition(_inlineMultiLevelDefinition(), _declaredSource());
+              .renderDefinition(nestedListsDefinition(), _declaredSource());
           expect(
             report.diagnostics.entries
                 .where((Diagnostic d) => d.severity == DiagnosticSeverity.error),
             isEmpty,
-            reason: 'inline multi-level definition + declared-schema source '
+            reason: 'inline multi-level sample + declared-schema source '
                 'renders cleanly (no #ERROR / unresolved)',
           );
         });
 
     test(
-        'inline multi-level renders byte-identical to published-total (SC-001)',
+        'inline sample renders byte-identical to published-total (SC-001)',
         () {
-          final RenderedReport publishedReport = const JetReportEngine()
-              .renderDefinition(nestedListsDefinition(), _declaredSource());
           final RenderedReport inlineReport = const JetReportEngine()
-              .renderDefinition(_inlineMultiLevelDefinition(), _declaredSource());
+              .renderDefinition(nestedListsDefinition(), _declaredSource());
+          final RenderedReport publishedReport = const JetReportEngine()
+              .renderDefinition(_publishedTotalDefinition(), _declaredSource());
 
           expect(
             _textRuns(inlineReport),
@@ -67,24 +72,19 @@ JetDataSource _declaredSource() =>
     JetInMemoryDataSource(kSampleCustomers, fields: customersSchema.fields);
 
 // ---------------------------------------------------------------------------
-// Inline multi-level variant
+// Published-total reference variant (the legacy design, kept for SC-001)
 // ---------------------------------------------------------------------------
 
-/// The inline-authored variant of [nestedListsDefinition]: identical structure,
-/// but the three total expressions are replaced by `SUM(\$F{lineTotal})`
-/// (descend to the leaf at every level) and the `ScopeTotal` declarations are
-/// removed — the inline folds replace them.
+/// The published-total design that predates the spec-033 migration — kept
+/// in-test as the SC-001 reference.  Identical structure to
+/// [nestedListsDefinition], but total expressions use the published-field
+/// pattern (`$F{orderTotal}` / `$F{customerTotal}`) and both scopes carry
+/// their [ScopeTotal] declarations.
 ///
-/// Changes vs [nestedListsDefinition]:
-/// - `linesFooter` element `orderTotalFooter`: `SUM(\$F{lineTotal})` (same-scope
-///   fold over the order's lines — spec 029 path).
-/// - `customerFooter` element `customerTotal`: `SUM(\$F{lineTotal})` (descends
-///   [orders, lines], customer-group reset — spec 033).
-/// - `summary` element `grandTotal`: `SUM(\$F{lineTotal})` (descends
-///   [orders, lines], report reset — spec 033).
-/// - `lines` scope: `totals` removed (no `ScopeTotal('orderTotal', ...)`).
-/// - `orders` scope: `totals` removed (no `ScopeTotal('customerTotal', ...)`).
-ReportDefinition _inlineMultiLevelDefinition() => const ReportDefinition(
+/// This is the counterpart to what [nestedListsDefinition] used to look like
+/// before the migration; keeping it here lets the parity test prove that the
+/// now-inline shipped sample renders byte-identical output (SC-001).
+ReportDefinition _publishedTotalDefinition() => const ReportDefinition(
       name: 'Nested Lists',
       page: PageFormat.a4Portrait,
       furniture: PageFurniture(
@@ -139,8 +139,8 @@ ReportDefinition _inlineMultiLevelDefinition() => const ReportDefinition(
               text: 'grandTotal',
               style: JetTextStyle(
                   align: JetTextAlign.right, weight: JetFontWeight.bold),
-              // Descends [orders, lines] — report reset (spec 033).
-              expression: r'SUM($F{lineTotal})',
+              // Sums the injected customerTotal field published by the orders scope.
+              expression: r'SUM($F{customerTotal})',
               format: '#,##0.00',
             ),
           ],
@@ -194,8 +194,8 @@ ReportDefinition _inlineMultiLevelDefinition() => const ReportDefinition(
                     text: 'customerTotal',
                     style: JetTextStyle(
                         align: JetTextAlign.right, weight: JetFontWeight.bold),
-                    // Descends [orders, lines] — customer-group reset (spec 033).
-                    expression: r'SUM($F{lineTotal})',
+                    // Displays the published field injected by the orders scope.
+                    expression: r'$F{customerTotal}',
                     format: '#,##0.00',
                   ),
                 ],
@@ -206,8 +206,11 @@ ReportDefinition _inlineMultiLevelDefinition() => const ReportDefinition(
             NestedScope(DetailScope(
               id: 'orders',
               collectionField: 'orders',
-              // No ScopeTotal: the inline folds at customer footer + summary
-              // replace the published-total roll-up chain.
+              // Publishes customerTotal = SUM($F{orderTotal}) onto each customer
+              // row so the customer group footer can display it.
+              totals: <ScopeTotal>[
+                ScopeTotal('customerTotal', r'SUM($F{orderTotal})'),
+              ],
               children: <ScopeNode>[
                 BandNode(Band(
                   id: 'orderRow',
@@ -304,8 +307,12 @@ ReportDefinition _inlineMultiLevelDefinition() => const ReportDefinition(
                       ],
                     )),
                   ],
-                  // No ScopeTotal: the inline SUM($F{lineTotal}) on the lines
-                  // footer folds over the same-scope child rows (spec 029 path).
+                  // Publishes orderTotal = SUM($F{lineTotal}) onto each order row
+                  // so the footer and the enclosing orders scope can reference it.
+                  totals: <ScopeTotal>[
+                    ScopeTotal('orderTotal', r'SUM($F{lineTotal})'),
+                  ],
+                  // Displays the published field — one computation reused.
                   footer: Band(
                     id: 'linesFooter',
                     type: BandType.groupFooter,
@@ -326,8 +333,8 @@ ReportDefinition _inlineMultiLevelDefinition() => const ReportDefinition(
                         style: JetTextStyle(
                             align: JetTextAlign.right,
                             weight: JetFontWeight.bold),
-                        // Same-scope fold over the order's lines (spec 029).
-                        expression: r'SUM($F{lineTotal})',
+                        // Displays the published field (not an inline aggregate).
+                        expression: r'$F{orderTotal}',
                         format: '#,##0.00',
                       ),
                     ],
