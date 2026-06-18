@@ -93,7 +93,12 @@ bool _isWhiteBoxSeamTest(File file) {
       // `binding_resolution.dart` module exercise `resolveAggregatePath`
       // (`aggregate_path.dart`), also unexported `src/`; white-box (Principle III).
       path.endsWith(
-          '/test/designer/controller/binding_resolution_descendant_test.dart');
+          '/test/designer/controller/binding_resolution_descendant_test.dart') ||
+      // fx expression editor status (033): the descendant-scope status test
+      // exercises the editor dialog directly (same seam as
+      // expression_editor_dialog_test.dart); white-box (Principle III).
+      path.endsWith(
+          '/test/designer/expression_editor_status_descendant_test.dart');
 }
 
 void main() {
