@@ -1581,11 +1581,14 @@ class _LabeledRow extends StatelessWidget {
       child: Row(
         children: <Widget>[
           SizedBox(
-            width: 64,
+            width: 70,
             child: Text(
               label,
-              style:
-                  theme.textTheme.muted.copyWith(color: colors.mutedForeground),
+              // Smaller than the body muted style so the common property labels
+              // (Symbology, Show text, Quiet zone, Column spacing…) fit on one
+              // line in the narrow label column instead of wrapping.
+              style: theme.textTheme.muted
+                  .copyWith(color: colors.mutedForeground, fontSize: 12),
             ),
           ),
           const SizedBox(width: 8),
