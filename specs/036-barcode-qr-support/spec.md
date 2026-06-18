@@ -8,7 +8,7 @@
 
 Replace the placeholder barcode renderer with **real, scannable symbology rendering** for a retail/logistics symbology set, add **field-or-literal data binding**, **auto-detect symbology** (with explicit override), and the industry-grade rendering details that make a symbol actually scan: **human-readable text (HRI)**, **quiet zones**, **QR error-correction level**, and **crisp bar/module fidelity**. Invalid data **auto-fixes where the spec allows, else renders the existing placeholder + a diagnostic**.
 
-Encoding is provided by the pure-Dart [`barcode`](https://pub.dev/packages/barcode) package (MIT-licensed, by the same author as the already-depended-on `pdf` package), wrapped behind an **internal `BarcodeEncoder` seam** so the rest of the system depends only on first-party geometry types — never the third-party package.
+Encoding is provided by the pure-Dart [`barcode`](https://pub.dev/packages/barcode) package (Apache-2.0, by the same author as the already-depended-on `pdf` package — and already present transitively via `pdf`), wrapped behind an **internal `BarcodeEncoder` seam** so the rest of the system depends only on first-party geometry types — never the third-party package.
 
 This is a **WYSIWYG** feature: bars/modules are emitted as the existing pure-Dart display-list primitives (`RectPrimitive`, `TextRunPrimitive`), which both the on-screen canvas painter and the PDF exporter already consume, so canvas / preview / export render identically.
 
@@ -166,4 +166,4 @@ Purely **additive**, backward-compatible:
 
 ## Dependencies
 
-- Add `barcode` (pure Dart, MIT) to `packages/jet_print/pubspec.yaml`. Same author as the existing `pdf` dependency; permissively licensed (Constitution-compatible).
+- Promote `barcode` (pure Dart, Apache-2.0) from a transitive dependency (it already arrives via `pdf`) to a **direct** dependency in `packages/jet_print/pubspec.yaml`, since the adapter imports it directly (`depend_on_referenced_packages`). Same author as the existing `pdf` dependency; permissively licensed (Constitution-compatible). Pin the resolved version (2.2.9 at time of writing).
