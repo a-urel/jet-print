@@ -971,5 +971,29 @@
     "placeholders": {
       "count": { "type": "int" }
     }
+  },
+
+  "propertiesSymbology": "Symbology",
+  "@propertiesSymbology": { "description": "Barcode symbology picker label" },
+  "barcodeSymbologyAuto": "Auto",
+  "@barcodeSymbologyAuto": { "description": "Auto-detect symbology option" },
+  "propertiesBarcodeData": "Data",
+  "@propertiesBarcodeData": { "description": "Barcode literal/field data label" },
+  "barcodeDataLiteral": "Literal",
+  "@barcodeDataLiteral": { "description": "Use a literal barcode value" },
+  "barcodeDataField": "Field",
+  "@barcodeDataField": { "description": "Bind the barcode value to a field" },
+  "barcodeShowText": "Show text",
+  "@barcodeShowText": { "description": "Toggle human-readable text under 1D barcodes" },
+  "barcodeQuietZone": "Quiet zone",
+  "@barcodeQuietZone": { "description": "Toggle the barcode quiet-zone margin" },
+  "barcodeEccLevel": "Error correction",
+  "@barcodeEccLevel": { "description": "QR error-correction level label" },
+  "barcodeInvalidValue": "Value is not valid for this symbology",
+  "@barcodeInvalidValue": { "description": "Inline hint: data invalid for the chosen symbology" },
+  "barcodeAutoInferred": "Auto → {symbology}",
+  "@barcodeAutoInferred": {
+    "description": "Inline hint showing the inferred symbology",
+    "placeholders": { "symbology": { "type": "String" } }
   }
 }

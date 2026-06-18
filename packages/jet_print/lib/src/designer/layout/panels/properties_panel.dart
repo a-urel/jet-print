@@ -23,6 +23,7 @@ import '../../../domain/report_element.dart';
 import '../../../domain/styles/color.dart';
 import '../../../domain/styles/text_style.dart';
 import '../../../expression/expression.dart';
+import '../../../rendering/elements/barcode/symbology_inference.dart';
 import '../../../rendering/elements/shape_path.dart';
 import '../../../rendering/frame/primitive.dart';
 import '../../../rendering/text/font_registry.dart';
@@ -415,21 +416,147 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                 _unresolved(schema, controller, id, imageField: s.field))
           _UnresolvedHint(message: l10n.bindingUnresolved),
       ],
-      // Barcode color (021 / US3): the shared color editor — no None, bars
-      // always have a color — bound to BarcodeElement.color through one
-      // setBarcodeColor commit per pick (C8). The placeholder rendering (and
-      // later the real bars) reflects it on canvas/preview/export.
+      // Barcode inspector (036): symbology picker, data editor (field or
+      // literal), toggles (showText / quietZone), ECC level, and color.
+      // Each control writes through one controller method → one undo step.
       if (element is BarcodeElement) ...<Widget>[
         const SizedBox(height: 12),
         KeyedSubtree(
           key: ValueKey<String>('$_p.barcode.$id'),
-          child: _LabeledRow(
-            label: l10n.propertiesColor,
-            child: _ColorField(
-              keyBase: '$_p.field.barcodeColor',
-              value: element.color,
-              onCommit: (JetColor? c) => controller.setBarcodeColor(id, c!),
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              // --- Symbology ---------------------------------------------------
+              _LabeledRow(
+                label: l10n.propertiesSymbology,
+                child: ShadSelect<BarcodeSymbology>(
+                  selectedOptionBuilder: (BuildContext context,
+                          BarcodeSymbology value) =>
+                      Text(value == BarcodeSymbology.auto
+                          ? l10n.barcodeSymbologyAuto
+                          : value.name),
+                  initialValue: element.symbology,
+                  options: <Widget>[
+                    for (final BarcodeSymbology s in BarcodeSymbology.values)
+                      ShadOption<BarcodeSymbology>(
+                        value: s,
+                        child: Text(s == BarcodeSymbology.auto
+                            ? l10n.barcodeSymbologyAuto
+                            : s.name),
+                      ),
+                  ],
+                  onChanged: (BarcodeSymbology? v) {
+                    if (v != null) controller.setBarcodeSymbology(id, v);
+                  },
+                ),
+              ),
+              // --- Data --------------------------------------------------------
+              _LabeledRow(
+                label: l10n.propertiesBarcodeData,
+                child: element.dataField != null
+                    ? _BindingField(
+                        fieldKey:
+                            ValueKey<String>('$_p.field.barcodeField.$id'),
+                        value: element.dataField!,
+                        placeholder: l10n.bindingImageFieldHint,
+                        clearTooltip: l10n.bindingClearTooltip,
+                        onSet: (String v) =>
+                            controller.setBarcodeDataField(id, v),
+                        onClear: () =>
+                            controller.setBarcodeDataField(id, null),
+                      )
+                    : _BindingField(
+                        fieldKey:
+                            ValueKey<String>('$_p.field.barcodeData.$id'),
+                        value: element.data,
+                        placeholder: l10n.valueFieldHint,
+                        clearTooltip: l10n.bindingClearTooltip,
+                        onSet: (String v) => controller.setBarcodeData(id, v),
+                        onClear: () => controller.setBarcodeData(id, ''),
+                      ),
+              ),
+              // Mode toggle: literal ↔ bound field.
+              _LabeledRow(
+                label: l10n.barcodeDataField,
+                child: ShadSwitch(
+                  value: element.dataField != null,
+                  onChanged: (bool bound) => bound
+                      ? controller.setBarcodeDataField(id, element.data)
+                      : controller.setBarcodeData(
+                          id, element.dataField ?? ''),
+                ),
+              ),
+              // Inline hints.
+              if (element.dataField != null &&
+                  element.dataField!.isNotEmpty &&
+                  _unresolved(schema, controller, id,
+                      barcodeField: element.dataField))
+                _UnresolvedHint(message: l10n.bindingUnresolved),
+              if (element.symbology == BarcodeSymbology.auto &&
+                  element.data.isNotEmpty &&
+                  element.dataField == null)
+                _InlineNotice(
+                  text: l10n.barcodeAutoInferred(
+                      resolveConcreteSymbology(
+                              element.symbology, element.data)
+                          .name),
+                  theme: ShadTheme.of(context),
+                ),
+              // --- Show text (1D only) -----------------------------------------
+              if (!isTwoDSymbology(resolveConcreteSymbology(
+                  element.symbology, element.data)))
+                _LabeledRow(
+                  label: l10n.barcodeShowText,
+                  child: ShadSwitch(
+                    value: element.showText,
+                    onChanged: (bool v) =>
+                        controller.setBarcodeShowText(id, v),
+                  ),
+                ),
+              // --- Quiet zone --------------------------------------------------
+              _LabeledRow(
+                label: l10n.barcodeQuietZone,
+                child: ShadSwitch(
+                  value: element.quietZone,
+                  onChanged: (bool v) =>
+                      controller.setBarcodeQuietZone(id, v),
+                ),
+              ),
+              // --- ECC level (QR only) -----------------------------------------
+              if (resolveConcreteSymbology(element.symbology, element.data) ==
+                  BarcodeSymbology.qrCode)
+                _LabeledRow(
+                  label: l10n.barcodeEccLevel,
+                  child: ShadSelect<QrErrorCorrectionLevel>(
+                    selectedOptionBuilder: (BuildContext context,
+                            QrErrorCorrectionLevel value) =>
+                        Text(value.name.toUpperCase()),
+                    initialValue: element.eccLevel,
+                    options: <Widget>[
+                      for (final QrErrorCorrectionLevel e
+                          in QrErrorCorrectionLevel.values)
+                        ShadOption<QrErrorCorrectionLevel>(
+                          value: e,
+                          child: Text(e.name.toUpperCase()),
+                        ),
+                    ],
+                    onChanged: (QrErrorCorrectionLevel? v) {
+                      if (v != null) controller.setBarcodeEccLevel(id, v);
+                    },
+                  ),
+                ),
+              // --- Color -------------------------------------------------------
+              const SizedBox(height: 12),
+              _LabeledRow(
+                label: l10n.propertiesColor,
+                child: _ColorField(
+                  keyBase: '$_p.field.barcodeColor',
+                  value: element.color,
+                  onCommit: (JetColor? c) =>
+                      controller.setBarcodeColor(id, c!),
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -601,6 +728,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     String elementId, {
     String? expression,
     String? imageField,
+    String? barcodeField,
   }) {
     if (schema == null) return false;
     final Band? band = findBandOfElement(controller.definition, elementId);
@@ -613,6 +741,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
       return !_resolvesAggregateAware(names, deep, expression);
     }
     if (imageField != null) return !names.contains(imageField);
+    if (barcodeField != null) return !names.contains(barcodeField);
     return false;
   }
 

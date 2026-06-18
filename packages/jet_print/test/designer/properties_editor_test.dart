@@ -1570,6 +1570,90 @@ void main() {
     });
   });
 
+  // --- Barcode inspector (036) -------------------------------------------
+  group('properties — barcode inspector (036)', () {
+    /// Pumps the designer with a controller pre-loaded with a barcode element
+    /// with the given [id] and [symbology], selects it, and opens Properties.
+    Future<JetReportDesignerController> pumpBarcode(
+      WidgetTester tester, {
+      required String id,
+      BarcodeSymbology symbology = BarcodeSymbology.auto,
+      String data = '1234567890',
+    }) async {
+      final JetReportDesignerController c = JetReportDesignerController(
+        definition: ReportDefinition(
+          name: 'Barcode',
+          page: PageFormat.a4Portrait,
+          body: ReportBody(
+            root: DetailScope(
+              id: 'root',
+              children: <ScopeNode>[
+                BandNode(Band(
+                  id: 'detail',
+                  type: BandType.detail,
+                  height: 120,
+                  elements: <ReportElement>[
+                    BarcodeElement(
+                      id: id,
+                      bounds: const JetRect(x: 10, y: 10, width: 80, height: 80),
+                      symbology: symbology,
+                      data: data,
+                    ),
+                  ],
+                )),
+              ],
+            ),
+          ),
+        ),
+      );
+      // Note: pumpDesignerWith already registers addTearDown(c.dispose); do not
+      // add a second teardown here or the controller will be disposed twice.
+      await pumpDesignerWith(tester, controller: c);
+      await _openProperties(tester);
+      c.select(id);
+      await tester.pumpAndSettle();
+      return c;
+    }
+
+    testWidgets('barcode inspector shows symbology + data + options',
+        (WidgetTester tester) async {
+      await pumpBarcode(tester, id: 'b1');
+      expect(find.text('Symbology'), findsOneWidget);
+      expect(find.text('Data'), findsOneWidget);
+      expect(find.text('Show text'), findsOneWidget);
+      expect(find.text('Quiet zone'), findsOneWidget);
+    });
+
+    testWidgets('ECC row only appears for QR', (WidgetTester tester) async {
+      await pumpBarcode(tester, id: 'b1', symbology: BarcodeSymbology.qrCode);
+      expect(find.text('Error correction'), findsOneWidget);
+
+      await pumpBarcode(tester, id: 'b2', symbology: BarcodeSymbology.code128);
+      expect(find.text('Error correction'), findsNothing);
+    });
+
+    testWidgets('show-text row absent for 2D symbology (QR)',
+        (WidgetTester tester) async {
+      await pumpBarcode(tester, id: 'b1', symbology: BarcodeSymbology.qrCode);
+      expect(find.text('Show text'), findsNothing);
+    });
+
+    testWidgets('show-text row present for 1D symbology (Code 128)',
+        (WidgetTester tester) async {
+      await pumpBarcode(tester, id: 'b1', symbology: BarcodeSymbology.code128);
+      expect(find.text('Show text'), findsOneWidget);
+    });
+
+    testWidgets('auto mode with 1D literal still shows show-text + no ECC',
+        (WidgetTester tester) async {
+      // '1234567890' → code128 (10 digits, not 8/12/13/14) → 1D
+      await pumpBarcode(
+          tester, id: 'b1', symbology: BarcodeSymbology.auto, data: '1234567890');
+      expect(find.text('Show text'), findsOneWidget);
+      expect(find.text('Error correction'), findsNothing);
+    });
+  });
+
   // --- Shape gallery (020 / US1) -------------------------------------------
   group('properties — shape gallery', () {
     testWidgets('shows the Shape section with the seven closed forms (C1.1)',

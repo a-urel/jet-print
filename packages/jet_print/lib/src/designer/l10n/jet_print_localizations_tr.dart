@@ -730,4 +730,36 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get propertiesSymbology => 'Semboloji';
+
+  @override
+  String get barcodeSymbologyAuto => 'Otomatik';
+
+  @override
+  String get propertiesBarcodeData => 'Veri';
+
+  @override
+  String get barcodeDataLiteral => 'Değişmez';
+
+  @override
+  String get barcodeDataField => 'Alan';
+
+  @override
+  String get barcodeShowText => 'Metni göster';
+
+  @override
+  String get barcodeQuietZone => 'Sessiz bölge';
+
+  @override
+  String get barcodeEccLevel => 'Hata düzeltme';
+
+  @override
+  String get barcodeInvalidValue => 'Değer bu semboloji için geçersiz';
+
+  @override
+  String barcodeAutoInferred(String symbology) {
+    return 'Otomatik → $symbology';
+  }
 }

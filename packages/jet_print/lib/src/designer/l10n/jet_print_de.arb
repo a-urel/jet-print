@@ -254,5 +254,16 @@
   "propertiesColumnErrDimensions": "Die Spaltenbreite muss größer als null sein, und Abstände dürfen nicht negativ sein.",
   "propertiesColumnErrGridTooWide": "Die Spalten passen nicht auf die Seitenbreite — Spaltenanzahl oder -breite verringern.",
   "propertiesColumnErrLabelTooTall": "Das Etikett ist höher als die Seite — Bandhöhe verringern, damit eine Zeile passt.",
-  "propertiesColumnElementsClipped": "{count, plural, =1{1 Element ragt über die Spalte hinaus und wird abgeschnitten.} other{{count} Elemente ragen über die Spalte hinaus und werden abgeschnitten.}}"
+  "propertiesColumnElementsClipped": "{count, plural, =1{1 Element ragt über die Spalte hinaus und wird abgeschnitten.} other{{count} Elemente ragen über die Spalte hinaus und werden abgeschnitten.}}",
+
+  "propertiesSymbology": "Symbologie",
+  "barcodeSymbologyAuto": "Automatisch",
+  "propertiesBarcodeData": "Daten",
+  "barcodeDataLiteral": "Literal",
+  "barcodeDataField": "Feld",
+  "barcodeShowText": "Text anzeigen",
+  "barcodeQuietZone": "Ruhezone",
+  "barcodeEccLevel": "Fehlerkorrektur",
+  "barcodeInvalidValue": "Wert ist für diese Symbologie ungültig",
+  "barcodeAutoInferred": "Auto → {symbology}"
 }
