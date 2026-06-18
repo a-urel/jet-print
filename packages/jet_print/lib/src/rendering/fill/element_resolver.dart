@@ -9,6 +9,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import '../../data/data_row.dart';
+import '../../domain/elements/barcode_element.dart';
 import '../../domain/elements/image_element.dart';
 import '../../domain/elements/image_source.dart';
 import '../../domain/elements/text_element.dart';
@@ -18,6 +19,8 @@ import '../../expression/expression_exception.dart';
 import '../../expression/format/apply_jet_format.dart';
 import '../../expression/function_registry.dart';
 import '../../expression/value.dart';
+import '../elements/barcode/barcode_encoder.dart';
+import '../elements/barcode/package_barcode_encoder.dart';
 import 'fill_eval_context.dart';
 import 'report_diagnostics.dart';
 
@@ -61,6 +64,12 @@ class ElementResolver {
   /// repeats per row warns once per element, not once per instance.
   final Set<String> _warnedUrlImages = <String>{};
 
+  /// Barcode elements already diagnosed for an invalid/unresolvable value.
+  final Set<String> _warnedBarcodes = <String>{};
+
+  /// The encoder used to validate barcode data for diagnostics.
+  static const BarcodeEncoder _barcodeEncoder = PackageBarcodeEncoder();
+
   /// Returns the resolved copy of [element].
   ReportElement resolve(
     ReportElement element, {
@@ -68,6 +77,9 @@ class ElementResolver {
     Map<String, Object?> params = const <String, Object?>{},
     Map<String, JetValue> variables = const <String, JetValue>{},
   }) {
+    if (element is BarcodeElement) {
+      return _resolveBarcode(element, row);
+    }
     if (element is TextElement && element.expression != null) {
       return _resolveText(element,
           row: row, params: params, variables: variables);
@@ -199,4 +211,44 @@ class ElementResolver {
       bounds: el.bounds,
       source: BytesImageSource(bytes),
       fit: el.fit);
+
+  BarcodeElement _resolveBarcode(BarcodeElement el, DataRow? row) {
+    String value = el.data;
+    final String? field = el.dataField;
+    if (field != null) {
+      final Set<String>? known = knownFields;
+      if (known != null && !known.contains(field)) {
+        if (warnedFields.add(field)) {
+          diagnostics.warning(
+              'Field "$field" is not in the data source',
+              elementId: el.id);
+        }
+        value = '';
+      } else if (row != null && row.hasField(field)) {
+        final Object? v = row.field(field);
+        value = v?.toString() ?? '';
+      } else {
+        value = '';
+      }
+    }
+
+    // Validity diagnostic (FR-005/FR-016): warn once per element when a
+    // non-empty value cannot be encoded for its (resolved) symbology.
+    if (value.isNotEmpty) {
+      final BarcodeEncodeResult r = _barcodeEncoder.encode(
+        el.symbology,
+        value,
+        width: el.bounds.width,
+        height: el.bounds.height,
+        showText: el.showText,
+        eccLevel: el.eccLevel,
+      );
+      if (r is BarcodeInvalid && _warnedBarcodes.add(el.id)) {
+        diagnostics.warning(r.reason, elementId: el.id);
+      }
+    }
+
+    // Flatten the binding so the renderer sees a literal.
+    return field == null ? el : el.copyWith(data: value, dataField: () => null);
+  }
 }
