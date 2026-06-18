@@ -21,6 +21,22 @@
 
 ---
 
+## UX Quality Bar (industry-grade — binding on Tasks 2 & 4)
+
+Every UI-facing change is held to this bar; the task reviewer treats a miss as an Important finding, not a nicety. The bar is "indistinguishable from the rest of the designer," not "novel."
+
+- **Visual consistency:** the Column Layout section is byte-for-byte consistent with the sibling sections (Size, List, Group). Reuse `SectionLabel` (uppercased caption), `_Header` (28×28 muted icon tile + 600-weight title), `_LabeledRow` (64-px label column), and the established spacing rhythm verbatim — 18 px between sections, 14 px after a `_Header`, 8 px around fields. No bespoke paddings, font sizes, or colors.
+- **Affordance clarity:** Add reads as a calm secondary action (`ShadButton.outline`, sm, leading columns glyph), left-aligned like other section actions. Remove is visually subordinate (`ShadButton.ghost`, sm, trash glyph) — present but never shouting. Neither button stretches full width unless siblings do.
+- **Disabled state is explained, not dead:** the disabled Add must (a) look disabled (Shad's muted disabled styling, not a custom grey) and (b) reveal *why* on hover via the tooltip. A disabled control with no explanation is a fail.
+- **Input ergonomics:** all four fields use `_NumberField` (stepper + commit-on-blur + unparseable-revert) so they behave identically to the height field the user already knows. Column count steps by whole numbers. Fields never hard-clamp silently — out-of-range values commit and surface as validation (the user sees *why*, the field doesn't fight them).
+- **Feedback hierarchy:** at most one row per distinct problem; never show the inactive notice *and* the redundant engine stray-warning for the same condition. Errors use the destructive inline style, warnings the warning style, the inactive notice is visually distinct from both. Rows sit directly beneath the controls they concern.
+- **No layout jank:** adding or removing a layout, or selecting a band, must not make the panel jump or reflow jarringly — sections appear/disappear cleanly in document order.
+- **Canvas cue is a cue, not clutter (Task 4):** ghost columns are faint (low-alpha stroke), clearly subordinate to the editable cell, and legible on both the light and dark paper fills. They never capture pointers, never alter selection/drag, and vanish the instant the layout is removed or the body becomes ineligible.
+- **Accessibility:** buttons and fields carry the same semantics/keying as their siblings; tap targets match the existing controls; keyboard focus order follows visual order.
+- **Localization integrity:** every visible chrome string is localized (no hard-coded English in widgets); `de`/`tr` render without overflow or clipping at the panel's width.
+
+---
+
 ## File Structure
 
 **Create:**
