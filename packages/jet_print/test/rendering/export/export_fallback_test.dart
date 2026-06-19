@@ -60,6 +60,17 @@ void main() {
       final PdfInspector pdf = PdfInspector(await exporter.toPdf(report));
       expect(pdf.imageDrawsOn(0), isEmpty,
           reason: 'nothing was resolvable — no image XObject is drawn');
+      // Parity assertion: the glyph's PathPrimitives must reach the PDF.
+      // PdfPainter.drawPath() replays MoveTo→`m`, LineTo→`l`, ClosePath→`h`,
+      // then fillPath()→`f` for each filled sub-path (pdf_painter.dart §drawPath).
+      // A content stream with no `h f ` sequence means all PathPrimitives were
+      // silently dropped — exactly the bug this test's name promises to catch.
+      // The glyph paths close with `h` before fill, so `h f ` is the reliable
+      // marker that at least one closed filled path reached the artifact.
+      expect(pdf.contentOf(0), contains('h f '),
+          reason: 'image-glyph placeholder PathPrimitives must be painted in '
+              'the PDF: at least one closed+filled path operator sequence '
+              '(h f) must appear');
       expect(report.diagnostics.entries.length, diagnosticsBefore,
           reason: 'export is read-only over the rendered IR: it must not '
               'add, drop, or mutate diagnostics');
