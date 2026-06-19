@@ -53,6 +53,27 @@ const JetDataSchema customersSchema = JetDataSchema(
   ],
 );
 
+/// Muted secondary text — codes and captions.
+const JetColor _grey = JetColor(0xFF888888);
+
+/// Soft fill behind each customer header — the strongest group cue.
+const JetColor _headerFill = JetColor(0xFFEDF1F6);
+
+/// Accent rule along the bottom of the customer header.
+const JetColor _accent = JetColor(0xFF2F5C8A);
+
+/// Light tint behind each order's number/date line.
+const JetColor _orderFill = JetColor(0xFFF4F6F9);
+
+/// Hairline under the per-order column titles.
+const JetColor _hair = JetColor(0xFFD3D8DF);
+
+/// Dark rule that closes a total (customer total and grand total).
+const JetColor _rule = JetColor(0xFF333333);
+
+/// The content width all bands span, in points (matches the element columns).
+const double _contentWidth = 540;
+
 /// The nested-list report authored in the reified band model (spec 024).
 ///
 /// Shape, top to bottom:
@@ -90,7 +111,7 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
               id: 'runningTitle',
               bounds: JetRect(x: 0, y: 2, width: 300, height: 14),
               text: 'Customers',
-              style: JetTextStyle(fontSize: 9, color: JetColor(0xFF888888)),
+              style: JetTextStyle(fontSize: 9, color: _grey),
             ),
           ],
         ),
@@ -105,7 +126,7 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
               text: 'Page',
               style: JetTextStyle(
                   fontSize: 9,
-                  color: JetColor(0xFF888888),
+                  color: _grey,
                   align: JetTextAlign.right),
               expression:
                   r'"Page " + $V{PAGE_NUMBER} + " of " + $V{PAGE_COUNT}',
@@ -119,6 +140,13 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
           type: BandType.summary,
           height: 30,
           elements: <ReportElement>[
+            // Mirrors the customer-total rule to close the whole report.
+            ShapeElement(
+              id: 'grandTotalRule',
+              bounds: JetRect(x: 300, y: 4, width: 240, height: 1),
+              kind: ShapeKind.rectangle,
+              style: JetBoxStyle(fill: _rule),
+            ),
             TextElement(
               id: 'grandTotalLabel',
               bounds: JetRect(x: 300, y: 8, width: 120, height: 18),
@@ -150,6 +178,22 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
                 type: BandType.groupHeader,
                 height: 30,
                 elements: <ReportElement>[
+                  // Shaded section band + accent rule, drawn first so the
+                  // name/code text paints over them — the strongest group cue.
+                  ShapeElement(
+                    id: 'customerHeaderBg',
+                    bounds: JetRect(
+                        x: 0, y: 0, width: _contentWidth, height: 30),
+                    kind: ShapeKind.rectangle,
+                    style: JetBoxStyle(fill: _headerFill),
+                  ),
+                  ShapeElement(
+                    id: 'customerHeaderRule',
+                    bounds: JetRect(
+                        x: 0, y: 28, width: _contentWidth, height: 2),
+                    kind: ShapeKind.rectangle,
+                    style: JetBoxStyle(fill: _accent),
+                  ),
                   TextElement(
                     id: 'customerName',
                     bounds: JetRect(x: 0, y: 4, width: 320, height: 20),
@@ -163,7 +207,7 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
                     bounds: JetRect(x: 360, y: 6, width: 180, height: 16),
                     text: 'customerCode',
                     style: JetTextStyle(
-                        align: JetTextAlign.right, color: JetColor(0xFF888888)),
+                        align: JetTextAlign.right, color: _grey),
                     expression: r'$F{customerCode}',
                   ),
                 ],
@@ -173,6 +217,13 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
                 type: BandType.groupFooter,
                 height: 26,
                 elements: <ReportElement>[
+                  // A rule above the total closes the customer section.
+                  ShapeElement(
+                    id: 'customerTotalRule',
+                    bounds: JetRect(x: 300, y: 1, width: 240, height: 1),
+                    kind: ShapeKind.rectangle,
+                    style: JetBoxStyle(fill: _rule),
+                  ),
                   TextElement(
                     id: 'customerTotalLabel',
                     bounds: JetRect(x: 300, y: 4, width: 120, height: 18),
@@ -206,6 +257,15 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
                   type: BandType.detail,
                   height: 40,
                   elements: <ReportElement>[
+                    // Light tint behind the order number/date line marks the
+                    // start of a nested order group (drawn first, behind text).
+                    ShapeElement(
+                      id: 'orderRowBg',
+                      bounds: JetRect(
+                          x: 0, y: 0, width: _contentWidth, height: 20),
+                      kind: ShapeKind.rectangle,
+                      style: JetBoxStyle(fill: _orderFill),
+                    ),
                     TextElement(
                       id: 'orderNo',
                       bounds: JetRect(x: 12, y: 2, width: 180, height: 16),
@@ -256,6 +316,14 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
                           fontSize: 9,
                           align: JetTextAlign.right,
                           weight: JetFontWeight.bold),
+                    ),
+                    // Hairline under the column titles separates them from the
+                    // line items below.
+                    ShapeElement(
+                      id: 'colRule',
+                      bounds: JetRect(x: 24, y: 37, width: 516, height: 1),
+                      kind: ShapeKind.rectangle,
+                      style: JetBoxStyle(fill: _hair),
                     ),
                   ],
                 )),
@@ -313,7 +381,7 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
                         text: 'Order total',
                         style: JetTextStyle(
                             align: JetTextAlign.right,
-                            color: JetColor(0xFF888888)),
+                            color: _grey),
                       ),
                       TextElement(
                         id: 'orderTotalFooter',
