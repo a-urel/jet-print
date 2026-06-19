@@ -59,8 +59,9 @@ class SectionLabel extends StatelessWidget {
     final ShadThemeData theme = ShadTheme.of(context);
     return Padding(
       // Flush with the panel's content edge (no left indent) so the heading
-      // lines up with the property-row labels beneath it.
-      padding: const EdgeInsets.fromLTRB(0, 4, 4, 8),
+      // lines up with the property-row labels beneath it. A tight bottom gap
+      // keeps the caption visually attached to its input (dense inspector).
+      padding: const EdgeInsets.fromLTRB(0, 4, 4, 4),
       child: Text(
         text.toUpperCase(),
         style: theme.textTheme.muted.copyWith(fontSize: 11, letterSpacing: 0.6),
