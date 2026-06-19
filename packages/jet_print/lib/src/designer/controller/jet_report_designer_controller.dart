@@ -61,6 +61,7 @@ import 'element_clone.dart';
 import 'element_id_factory.dart';
 import 'page_format_clamp.dart';
 import 'selection.dart';
+import 'view_fit_mode.dart';
 import 'snapping.dart';
 
 /// Owns the editable design and all editing operations for [JetReportDesigner].
@@ -1271,6 +1272,7 @@ class JetReportDesignerController extends ChangeNotifier {
   double _viewScale = 1.0;
   JetOffset _viewPan = const JetOffset(0, 0);
   int _fitRequest = 0;
+  JetViewFitMode _viewFitMode = JetViewFitMode.width;
 
   /// The current zoom factor (1.0 == 100%), clamped to [kMinZoom]..[kMaxZoom].
   double get viewScale => _viewScale;
@@ -1278,11 +1280,18 @@ class JetReportDesignerController extends ChangeNotifier {
   /// The current pan offset, in screen pixels.
   JetOffset get viewPan => _viewPan;
 
-  /// Increments whenever a fit is requested; the canvas recomputes fit-to-width
-  /// (it owns the viewport) and calls [setView].
+  /// Increments whenever a fit is requested; the canvas recomputes the fit (it
+  /// owns the viewport) and calls [setViewScale].
   int get fitRequest => _fitRequest;
 
-  /// Sets the zoom [scale] (clamped) and [pan] together.
+  /// The active sticky fit mode. While [JetViewFitMode.width]/[JetViewFitMode.page]
+  /// the canvas re-fits on viewport resize; manual zoom clears it to
+  /// [JetViewFitMode.none].
+  JetViewFitMode get viewFitMode => _viewFitMode;
+
+  /// Sets the zoom [scale] (clamped) and [pan] together. Mode-agnostic on
+  /// purpose: the canvas applies a computed fit through here without clearing
+  /// the active fit mode.
   void setView(double scale, JetOffset pan) {
     final double clamped =
         scale < kMinZoom ? kMinZoom : (scale > kMaxZoom ? kMaxZoom : scale);
@@ -1292,23 +1301,48 @@ class JetReportDesignerController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Sets just the zoom factor (keeping the current pan).
+  /// Sets just the zoom factor (keeping the current pan). Mode-agnostic.
   void setViewScale(double scale) => setView(scale, _viewPan);
 
   /// Sets just the pan offset (keeping the current zoom).
   void setViewPan(JetOffset pan) => setView(_viewScale, pan);
 
-  /// Zooms in one step (×1.25).
-  void zoomIn() => setViewScale(_viewScale * 1.25);
+  /// Runs a manual-zoom [apply], clearing the fit mode. If [apply] does not
+  /// change the scale (e.g. already at the clamp, or the same value re-entered),
+  /// still notifies so a cleared fit mode reaches listeners.
+  void _manualZoom(void Function() apply) {
+    final bool modeChanged = _viewFitMode != JetViewFitMode.none;
+    _viewFitMode = JetViewFitMode.none;
+    final double before = _viewScale;
+    apply();
+    if (modeChanged && _viewScale == before) notifyListeners();
+  }
 
-  /// Zooms out one step (÷1.25).
-  void zoomOut() => setViewScale(_viewScale / 1.25);
+  /// Zooms in one step (×1.25); manual zoom, so the fit mode is cleared.
+  void zoomIn() => _manualZoom(() => setViewScale(_viewScale * 1.25));
 
-  /// Requests fit-to-width recentering (fulfilled by the canvas).
-  void fitToView() {
+  /// Zooms out one step (÷1.25); manual zoom, so the fit mode is cleared.
+  void zoomOut() => _manualZoom(() => setViewScale(_viewScale / 1.25));
+
+  /// Sets the zoom to [percent] % (e.g. 130 → 1.30), clamped; clears the fit
+  /// mode. Used by the editable zoom field and the preset menu rows.
+  void setZoomPercent(double percent) =>
+      _manualZoom(() => setViewScale(percent / 100));
+
+  /// Multiplies the zoom by [factor] (mouse-wheel zoom); clears the fit mode.
+  void zoomBy(double factor) =>
+      _manualZoom(() => setViewScale(_viewScale * factor));
+
+  /// Selects a sticky fit [mode] and requests a re-fit (fulfilled by the
+  /// canvas, which owns the viewport).
+  void setViewFitMode(JetViewFitMode mode) {
+    _viewFitMode = mode;
     _fitRequest++;
     notifyListeners();
   }
+
+  /// Back-compat alias: fit the page to the viewport width.
+  void fitToView() => setViewFitMode(JetViewFitMode.width);
 
   // --- History ---------------------------------------------------------------
 
