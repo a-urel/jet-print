@@ -30,5 +30,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabPayroll => 'Payroll';
 
   @override
+  String get tabMenu => 'Menu';
+
+  @override
   String get comingSoon => 'Coming soon';
 }

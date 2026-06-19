@@ -36,6 +36,11 @@
     "description": "Tab label for the payroll pay-stub designer demo."
   },
 
+  "tabMenu": "Menu",
+  "@tabMenu": {
+    "description": "Tab label for the restaurant-menu picture demo."
+  },
+
   "comingSoon": "Coming soon",
   "@comingSoon": {
     "description": "Placeholder note shown on a report demo tab that isn't built yet."

@@ -13,12 +13,14 @@ import 'barcode_sample.dart';
 import 'invoice_sample.dart';
 import 'l10n/app_localizations.dart';
 import 'label_sample.dart';
+import 'menu_sample.dart';
 import 'nested_list_sample.dart';
 import 'packing_slip_sample.dart';
 import 'payroll_sample.dart';
 import 'rendered_barcode_example.dart';
 import 'rendered_invoice_example.dart';
 import 'rendered_label_example.dart';
+import 'rendered_menu_example.dart';
 import 'rendered_nested_list_example.dart';
 import 'rendered_packing_slip_example.dart';
 import 'rendered_payroll_example.dart';
@@ -289,6 +291,25 @@ class _PlaygroundHome extends StatelessWidget {
                     ),
                   ),
                   child: Text(l10n.tabList),
+                ),
+                ShadTab<String>(
+                  value: 'menu',
+                  leading: const Icon(LucideIcons.image, size: 16),
+                  expandContent: true,
+                  // A live designer over a restaurant menu — dishes grouped by
+                  // category, each row a data-bound food picture, with an
+                  // embedded header logo (menu_sample.dart). The first sample to
+                  // use ImageElement.
+                  content: _FillTabHeight(
+                    child: _DesignerTab(
+                      fonts: fonts,
+                      seed: menuSampleDefinition(),
+                      dataSchema: menuSchema,
+                      renderReport: (ReportDefinition def) =>
+                          renderMenuDefinition(definition: def, fonts: fonts),
+                    ),
+                  ),
+                  child: Text(l10n.tabMenu),
                 ),
               ],
             ),
