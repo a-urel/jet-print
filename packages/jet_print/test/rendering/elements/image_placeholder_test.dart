@@ -45,10 +45,13 @@ void main() {
     expect(frame.bounds.x + frame.bounds.width / 2, closeTo(25, 0.001));
     expect(frame.bounds.y + frame.bounds.height / 2, closeTo(20, 0.001));
     expect(frame.stroke, grey);
+    expect(frame.fill, isNull); // frame is stroke-only
 
-    // Sun + mountain are filled grey.
+    // Sun + mountain are filled grey, closed sub-paths (the PDF parity check
+    // relies on each ending in a ClosePath).
     for (final PathPrimitive p in paths) {
       expect(p.fill, grey);
+      expect(p.commands.last, isA<ClosePath>());
     }
   });
 
