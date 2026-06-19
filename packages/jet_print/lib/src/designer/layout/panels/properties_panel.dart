@@ -333,7 +333,6 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               SectionLabel(l10n.propertiesFont),
-              const SizedBox(height: 4),
               // Family, size and color share one compact row — no left labels.
               // The family picker takes the slack; size is a fixed-width field
               // (its leading glyph stands in for the dropped "Size" label); the
@@ -581,7 +580,6 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               SectionLabel(l10n.propertiesAppearance),
-              const SizedBox(height: 4),
               // Fill, outline and width share one label-less row. The two color
               // boxes are compact swatches distinguished by a leading glyph
               // (bucket = fill, square = outline); a line has no interior, so it
@@ -924,7 +922,6 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     if (group == null) return const <Widget>[];
     return <Widget>[
       SectionLabel(l10n.propertiesGroupName),
-      const SizedBox(height: 8),
       _TextInput(
         fieldKey: const ValueKey<String>('$_p.field.groupName'),
         value: group.name,
@@ -933,7 +930,6 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
       ),
       const SizedBox(height: 12),
       SectionLabel(l10n.propertiesGroupKey),
-      const SizedBox(height: 8),
       _TextInput(
         fieldKey: const ValueKey<String>('$_p.field.groupKey'),
         value: _groupKeyDisplay(group.key),
@@ -1036,13 +1032,11 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     if (isRoot) {
       return <Widget>[
         SectionLabel(l10n.propertiesList),
-        const SizedBox(height: 8),
         Text(l10n.propertiesListRootSource, style: theme.textTheme.muted),
       ];
     }
     return <Widget>[
       SectionLabel(l10n.propertiesList),
-      const SizedBox(height: 8),
       _BindingField(
         fieldKey: const ValueKey<String>('$_p.field.bandCollection'),
         value: scope.collectionField ?? '',
@@ -1205,7 +1199,6 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
       // The report's primary identity: its name, committed through `rename` as
       // one undoable step. A blank entry reverts so the report stays named.
       SectionLabel(l10n.propertiesName),
-      const SizedBox(height: 8),
       _TextInput(
         fieldKey: const ValueKey<String>('$_p.field.reportName'),
         value: controller.definition.name,
@@ -1214,7 +1207,6 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
       ),
       const SizedBox(height: 14),
       SectionLabel(l10n.propertiesPage),
-      const SizedBox(height: 8),
       // Paper type: named by the matching preset (with its size) or Custom,
       // resizing the page through setPageFormat while preserving the current
       // margins (US1). Label-less — the picker's value and tooltip name it.
@@ -1293,7 +1285,6 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
       // fields. Editing any side yields an uneven set that reads Custom (US2).
       const SizedBox(height: 14),
       SectionLabel(l10n.propertiesMargins),
-      const SizedBox(height: 4),
       _PresetDropdown(
         fieldKey: const ValueKey<String>('$_p.field.marginPreset'),
         label: margin.isCustom
