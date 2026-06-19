@@ -179,11 +179,23 @@ abstract class JetPrintLocalizations {
   /// **'Zoom out'**
   String get actionZoomOutTooltip;
 
-  /// Tooltip for the zoom-level label, which fits the page to the viewport width when tapped.
+  /// Tooltip for the editable zoom-level field and its dropdown caret in the top-bar zoom group.
   ///
   /// In en, this message translates to:
-  /// **'Fit to width'**
-  String get actionZoomFitTooltip;
+  /// **'Zoom level — type a percentage, or pick a preset or fit mode'**
+  String get actionZoomFieldTooltip;
+
+  /// Zoom dropdown row: scale so the page width fills the viewport (sticky).
+  ///
+  /// In en, this message translates to:
+  /// **'Fit width'**
+  String get menuZoomFitWidth;
+
+  /// Zoom dropdown row: scale so the whole page fits the viewport (sticky).
+  ///
+  /// In en, this message translates to:
+  /// **'Fit page'**
+  String get menuZoomFitPage;
 
   /// Tooltip for the grid view-toggle in the top bar.
   ///

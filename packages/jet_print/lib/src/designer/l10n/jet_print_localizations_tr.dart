@@ -48,7 +48,14 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get actionZoomOutTooltip => 'Uzaklaştır';
 
   @override
-  String get actionZoomFitTooltip => 'Genişliğe sığdır';
+  String get actionZoomFieldTooltip =>
+      'Yakınlaştırma düzeyi — yüzde girin ya da hazır değer veya sığdırma seçin';
+
+  @override
+  String get menuZoomFitWidth => 'Genişliğe sığdır';
+
+  @override
+  String get menuZoomFitPage => 'Sayfaya sığdır';
 
   @override
   String get toggleGridTooltip => 'Izgarayı göster';

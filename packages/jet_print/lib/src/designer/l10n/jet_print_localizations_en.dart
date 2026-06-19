@@ -48,7 +48,14 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get actionZoomOutTooltip => 'Zoom out';
 
   @override
-  String get actionZoomFitTooltip => 'Fit to width';
+  String get actionZoomFieldTooltip =>
+      'Zoom level — type a percentage, or pick a preset or fit mode';
+
+  @override
+  String get menuZoomFitWidth => 'Fit width';
+
+  @override
+  String get menuZoomFitPage => 'Fit page';
 
   @override
   String get toggleGridTooltip => 'Show grid';

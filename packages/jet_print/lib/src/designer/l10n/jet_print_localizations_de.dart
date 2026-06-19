@@ -48,7 +48,14 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   String get actionZoomOutTooltip => 'Verkleinern';
 
   @override
-  String get actionZoomFitTooltip => 'An Breite anpassen';
+  String get actionZoomFieldTooltip =>
+      'Zoomstufe – Prozentwert eingeben oder Voreinstellung bzw. Anpassung wählen';
+
+  @override
+  String get menuZoomFitWidth => 'An Breite anpassen';
+
+  @override
+  String get menuZoomFitPage => 'An Seite anpassen';
 
   @override
   String get toggleGridTooltip => 'Raster anzeigen';

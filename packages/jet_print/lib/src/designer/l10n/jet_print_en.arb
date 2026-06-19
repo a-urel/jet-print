@@ -58,9 +58,17 @@
   "@actionZoomOutTooltip": {
     "description": "Tooltip for the Zoom out top-bar icon button (zoom group)."
   },
-  "actionZoomFitTooltip": "Fit to width",
-  "@actionZoomFitTooltip": {
-    "description": "Tooltip for the zoom-level label, which fits the page to the viewport width when tapped."
+  "actionZoomFieldTooltip": "Zoom level — type a percentage, or pick a preset or fit mode",
+  "@actionZoomFieldTooltip": {
+    "description": "Tooltip for the editable zoom-level field and its dropdown caret in the top-bar zoom group."
+  },
+  "menuZoomFitWidth": "Fit width",
+  "@menuZoomFitWidth": {
+    "description": "Zoom dropdown row: scale so the page width fills the viewport (sticky)."
+  },
+  "menuZoomFitPage": "Fit page",
+  "@menuZoomFitPage": {
+    "description": "Zoom dropdown row: scale so the whole page fits the viewport (sticky)."
   },
   "toggleGridTooltip": "Show grid",
   "@toggleGridTooltip": {
