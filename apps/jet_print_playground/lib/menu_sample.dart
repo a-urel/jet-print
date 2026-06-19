@@ -2,20 +2,18 @@
 /// each with a data-bound food picture — authored entirely through the library's
 /// public API (`package:jet_print/jet_print.dart`).
 ///
-/// It is the first sample to use the engine's `ImageElement`, demonstrating both
-/// no-I/O image paths: per-row photos via `FieldImageSource('photo')` (the data
-/// carries base64 bytes the fill resolver decodes), and a fixed page-header logo
-/// via an embedded `BytesImageSource`. Photos are synthesized in-code as BMP
-/// swatches (see `menu_photo.dart`) — abstract gradients, but proof that
-/// distinct per-row images bind and paint.
+/// It is the first sample to use the engine's `ImageElement`: per-row photos via
+/// `FieldImageSource('photo')` (the data carries base64 bytes the fill resolver
+/// decodes). Photos are synthesized in-code as BMP swatches (see
+/// `menu_photo.dart`) — abstract gradients, but proof that distinct per-row
+/// images bind and paint. The page-header brand mark is a vector
+/// `ShapeElement(kind: ShapeKind.star)`.
 ///
 /// Field/label names are illustrative sample data and intentionally not
 /// localized; only the designer's own chrome is.
 library;
 
 import 'package:jet_print/jet_print.dart';
-
-import 'menu_photo.dart';
 
 /// The menu data structure: a flat dish row. `photo` holds base64 image bytes
 /// (declared `string`, since there is no image/bytes field type); the fill
@@ -37,16 +35,12 @@ const JetColor _grey = JetColor(0xFF888888);
 /// A warm rule color under category headings.
 const JetColor _rule = JetColor(0xFFBFA15A);
 
+/// The copper brand color of the page-header star mark.
+const JetColor _brand = JetColor(0xFFC9762B);
+
 const String _money = '#,##0.00';
 
-/// The brand-mark bytes embedded in the page header (a small generated swatch
-/// standing in for a real logo). Computed once at first use.
-final BytesImageSource _logo = BytesImageSource(
-  gradientBmp(width: 44, height: 44, topRgb: 0xC9762B, bottomRgb: 0x7A3B12),
-);
-
 /// The restaurant-menu report authored in the reified band model (spec 024).
-/// Non-const because it embeds generated logo bytes.
 ReportDefinition menuSampleDefinition() => ReportDefinition(
       name: 'Menu',
       page: PageFormat.a4Portrait,
@@ -56,11 +50,11 @@ ReportDefinition menuSampleDefinition() => ReportDefinition(
           type: BandType.pageHeader,
           height: 56,
           elements: <ReportElement>[
-            ImageElement(
+            const ShapeElement(
               id: 'brandLogo',
-              bounds: const JetRect(x: 0, y: 4, width: 44, height: 44),
-              source: _logo,
-              fit: JetBoxFit.contain,
+              bounds: JetRect(x: 0, y: 4, width: 44, height: 44),
+              kind: ShapeKind.star,
+              style: JetBoxStyle(fill: _brand),
             ),
             const TextElement(
               id: 'brandName',
@@ -115,8 +109,8 @@ ReportDefinition menuSampleDefinition() => ReportDefinition(
                     id: 'catName',
                     bounds: JetRect(x: 0, y: 4, width: 538, height: 18),
                     text: 'category',
-                    style: JetTextStyle(
-                        fontSize: 13, weight: JetFontWeight.bold),
+                    style:
+                        JetTextStyle(fontSize: 13, weight: JetFontWeight.bold),
                     expression: r'$F{category}',
                   ),
                   ShapeElement(
@@ -146,8 +140,7 @@ ReportDefinition menuSampleDefinition() => ReportDefinition(
                   id: 'itemName',
                   bounds: JetRect(x: 64, y: 6, width: 380, height: 18),
                   text: 'name',
-                  style: JetTextStyle(
-                      fontSize: 12, weight: JetFontWeight.bold),
+                  style: JetTextStyle(fontSize: 12, weight: JetFontWeight.bold),
                   expression: r'$F{name}',
                 ),
                 TextElement(

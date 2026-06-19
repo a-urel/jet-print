@@ -51,4 +51,55 @@ void main() {
       expect(base64Decode(b64), raw);
     });
   });
+
+  group('foodBmp', () {
+    test('every FoodIcon paints a glyph over the plain gradient', () {
+      // Same dimensions/colors as the gradient background; a food BMP must
+      // differ from it because the plate + glyph are drawn on top.
+      final Uint8List plain =
+          gradientBmp(width: 64, height: 64, topRgb: 0xE8C07A, bottomRgb: 0xB6772E);
+      for (final FoodIcon icon in FoodIcon.values) {
+        final Uint8List withIcon = foodBmp(
+          width: 64,
+          height: 64,
+          topRgb: 0xE8C07A,
+          bottomRgb: 0xB6772E,
+          icon: icon,
+        );
+        expect(withIcon.length, plain.length,
+            reason: 'same dimensions => same byte length for $icon');
+        expect(withIcon, isNot(equals(plain)),
+            reason: '$icon should paint a plate + glyph over the gradient');
+      }
+    });
+
+    test('distinct icons produce distinct images', () {
+      final Uint8List pizza = foodBmp(
+          width: 64, height: 64, topRgb: 0xE7553B, bottomRgb: 0x7E1F12, icon: FoodIcon.pizza);
+      final Uint8List salmon = foodBmp(
+          width: 64, height: 64, topRgb: 0xE7553B, bottomRgb: 0x7E1F12, icon: FoodIcon.salmon);
+      expect(pizza, isNot(equals(salmon)));
+    });
+
+    testWidgets('decodes through the Flutter codec to the requested size',
+        (WidgetTester tester) async {
+      final Uint8List b = foodBmp(
+          width: 64, height: 64, topRgb: 0xE8C07A, bottomRgb: 0xB6772E, icon: FoodIcon.gelato);
+      final ui.Image image = (await tester.runAsync(() async {
+        final ui.Codec codec = await ui.instantiateImageCodec(b);
+        return (await codec.getNextFrame()).image;
+      }))!;
+      addTearDown(image.dispose);
+      expect(image.width, 64);
+      expect(image.height, 64);
+    });
+
+    test('base64 variant round-trips to the same bytes', () {
+      final Uint8List raw = foodBmp(
+          width: 32, height: 32, topRgb: 0x112233, bottomRgb: 0x445566, icon: FoodIcon.pizza);
+      final String b64 = foodBmpBase64(
+          width: 32, height: 32, topRgb: 0x112233, bottomRgb: 0x445566, icon: FoodIcon.pizza);
+      expect(base64Decode(b64), raw);
+    });
+  });
 }

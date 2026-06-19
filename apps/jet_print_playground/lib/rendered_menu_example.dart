@@ -15,10 +15,16 @@ import 'package:jet_print/jet_print.dart';
 import 'menu_photo.dart';
 import 'menu_sample.dart';
 
-/// A 64×64 generated food swatch (vertical gradient) as base64 — stands in for
-/// a real photo while keeping the sample asset-free.
-String _photo(int topRgb, int bottomRgb) =>
-    gradientBmpBase64(width: 64, height: 64, topRgb: topRgb, bottomRgb: bottomRgb);
+/// A 64×64 generated food card as base64 — a warm gradient background with the
+/// dish's [icon] glyph on a cream plate. Stands in for a real photo while
+/// keeping the sample asset-free.
+String _photo(int topRgb, int bottomRgb, FoodIcon icon) => foodBmpBase64(
+      width: 64,
+      height: 64,
+      topRgb: topRgb,
+      bottomRgb: bottomRgb,
+      icon: icon,
+    );
 
 /// The sample menu — the source of truth the data source and the tests both
 /// read, so the rendered prices and the expected values can never drift.
@@ -29,14 +35,14 @@ final List<Map<String, Object?>> kSampleMenu = <Map<String, Object?>>[
     'name': 'Bruschetta',
     'description': 'Grilled sourdough, vine tomato, basil, olive oil.',
     'price': 8.00,
-    'photo': _photo(0xE8C07A, 0xB6772E),
+    'photo': _photo(0xE8C07A, 0xB6772E, FoodIcon.bruschetta),
   },
   <String, Object?>{
     'category': 'Appetizers',
     'name': 'Crispy Calamari',
     'description': 'Lightly fried, lemon aioli, sea salt.',
     'price': 11.00,
-    'photo': _photo(0xF0D9A8, 0xC79A4B),
+    'photo': _photo(0xF0D9A8, 0xC79A4B, FoodIcon.calamari),
   },
   // --- Mains ---
   <String, Object?>{
@@ -44,21 +50,21 @@ final List<Map<String, Object?>> kSampleMenu = <Map<String, Object?>>[
     'name': 'Margherita Pizza',
     'description': 'San Marzano tomato, fior di latte, basil.',
     'price': 14.00,
-    'photo': _photo(0xE7553B, 0x7E1F12),
+    'photo': _photo(0xE7553B, 0x7E1F12, FoodIcon.pizza),
   },
   <String, Object?>{
     'category': 'Mains',
     'name': 'Spaghetti Carbonara',
     'description': 'Guanciale, pecorino, egg yolk, black pepper.',
     'price': 13.00,
-    'photo': _photo(0xF2E2B0, 0xC9A24A),
+    'photo': _photo(0xF2E2B0, 0xC9A24A, FoodIcon.carbonara),
   },
   <String, Object?>{
     'category': 'Mains',
     'name': 'Grilled Salmon',
     'description': 'Seasonal greens, lemon-dill butter.',
     'price': 19.00,
-    'photo': _photo(0xF1A07A, 0xB24A36),
+    'photo': _photo(0xF1A07A, 0xB24A36, FoodIcon.salmon),
   },
   // --- Desserts ---
   <String, Object?>{
@@ -66,14 +72,14 @@ final List<Map<String, Object?>> kSampleMenu = <Map<String, Object?>>[
     'name': 'Tiramisu',
     'description': 'Espresso-soaked savoiardi, mascarpone, cocoa.',
     'price': 7.00,
-    'photo': _photo(0xC9A07A, 0x5E3B22),
+    'photo': _photo(0xC9A07A, 0x5E3B22, FoodIcon.tiramisu),
   },
   <String, Object?>{
     'category': 'Desserts',
     'name': 'Pistachio Gelato',
     'description': 'House-churned, Sicilian pistachio.',
     'price': 6.00,
-    'photo': _photo(0xCFE0A0, 0x6F8E3C),
+    'photo': _photo(0xCFE0A0, 0x6F8E3C, FoodIcon.gelato),
   },
 ];
 

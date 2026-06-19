@@ -51,12 +51,12 @@ void main() {
       expect((photo.source as FieldImageSource).field, 'photo');
     });
 
-    test('the page header logo is an embedded bytes image', () {
+    test('the page header logo is a star shape', () {
       final Band header = menuSampleDefinition().furniture.pageHeader!;
-      final ImageElement logo = header.elements
-          .firstWhere((ReportElement e) => e.id == 'brandLogo') as ImageElement;
-      expect(logo.source, isA<BytesImageSource>());
-      expect((logo.source as BytesImageSource).bytes, isNotEmpty);
+      final ShapeElement logo = header.elements
+          .firstWhere((ReportElement e) => e.id == 'brandLogo') as ShapeElement;
+      expect(logo.kind, ShapeKind.star);
+      expect(logo.style.fill, isNotNull);
     });
 
     test('is pristine under the library validator (no diagnostics)', () {

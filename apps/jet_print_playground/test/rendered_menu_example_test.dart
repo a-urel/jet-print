@@ -1,6 +1,6 @@
 // Rendered menu example: data source + render through
 // `package:jet_print/jet_print.dart` only. Confirms the run fills cleanly, that
-// every item's data-bound photo resolves to real image bytes, that the embedded
+// every item's data-bound photo resolves to real image bytes, that the star
 // header logo paints, and that the prices match the SAME sample data.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
@@ -8,7 +8,7 @@ import 'package:jet_print/jet_print.dart';
 // Implementation import for the rendered-run proof — the same reach-in the
 // engine's own tests use (cf. rendered_payroll_example_test.dart).
 import 'package:jet_print/src/rendering/frame/primitive.dart'
-    show ImagePrimitive, TextRunPrimitive;
+    show ImagePrimitive, PathPrimitive, TextRunPrimitive;
 import 'package:jet_print/src/rendering/text/text_measurer.dart' show TextLine;
 import 'package:jet_print_playground/rendered_menu_example.dart';
 
@@ -56,12 +56,13 @@ void main() {
       }
     });
 
-    test('the embedded header logo paints at least once', () {
+    test('the star header logo paints as a filled path', () {
       final RenderedReport report = renderMenuDefinition();
-      final List<ImagePrimitive> logos =
-          _imagesForId(report, 'brandLogo').toList();
+      final List<PathPrimitive> logos =
+          _pathsForId(report, 'brandLogo').toList();
       expect(logos, isNotEmpty);
-      expect(logos.first.bytes, isNotEmpty);
+      expect(logos.first.fill, isNotNull);
+      expect(logos.first.commands, isNotEmpty);
     });
 
     test('prices render the formatted sample values in order', () {
@@ -81,6 +82,15 @@ Iterable<ImagePrimitive> _imagesForId(RenderedReport report, String elementId) =
       for (int i = 0; i < report.pageCount; i++)
         for (final ImagePrimitive p
             in report.pageAt(i).frame.primitives.whereType<ImagePrimitive>())
+          if (p.elementId == elementId) p,
+    ];
+
+/// The painted path primitives for [elementId], in paint order across pages.
+Iterable<PathPrimitive> _pathsForId(RenderedReport report, String elementId) =>
+    <PathPrimitive>[
+      for (int i = 0; i < report.pageCount; i++)
+        for (final PathPrimitive p
+            in report.pageAt(i).frame.primitives.whereType<PathPrimitive>())
           if (p.elementId == elementId) p,
     ];
 
