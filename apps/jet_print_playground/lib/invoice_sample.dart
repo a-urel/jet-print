@@ -52,6 +52,19 @@ const JetDataSchema invoiceSchema = JetDataSchema(
   ],
 );
 
+/// Muted caption grey (section labels, page number, currency note).
+const JetColor _grey = JetColor(0xFF888888);
+
+/// Secondary body grey (date, address, description).
+const JetColor _muted = JetColor(0xFF555555);
+
+/// The playground accent blue — shared with the List demo — used for the
+/// invoice's accent stripes (title bar, table rule, total rule, section ticks).
+const JetColor _accent = JetColor(0xFF2F5C8A);
+
+/// The content width the bands span, in points (matches the element columns).
+const double _contentWidth = 540;
+
 /// The **same invoice, authored in the reified band model** (spec 024) instead
 /// of the flat [ReportTemplate] above — built entirely through the public API.
 ///
@@ -87,7 +100,7 @@ ReportDefinition invoiceSampleDefinition() => const ReportDefinition(
               text: 'Page',
               style: JetTextStyle(
                   fontSize: 9,
-                  color: JetColor(0xFF888888),
+                  color: _grey,
                   align: JetTextAlign.right),
               expression:
                   r'"Page " + $V{PAGE_NUMBER} + " of " + $V{PAGE_COUNT}',
@@ -117,6 +130,22 @@ ReportDefinition invoiceSampleDefinition() => const ReportDefinition(
                     style:
                         JetTextStyle(fontSize: 22, weight: JetFontWeight.bold),
                   ),
+                  // A short accent bar underlines the INVOICE heading.
+                  ShapeElement(
+                    id: 'titleAccent',
+                    bounds: JetRect(x: 0, y: 32, width: 150, height: 3),
+                    kind: ShapeKind.rectangle,
+                    style: JetBoxStyle(fill: _accent),
+                  ),
+                  // A full-width accent rule sets the column headers off from
+                  // the line items below.
+                  ShapeElement(
+                    id: 'tableHeaderRule',
+                    bounds: JetRect(
+                        x: 0, y: 132, width: _contentWidth, height: 1.5),
+                    kind: ShapeKind.rectangle,
+                    style: JetBoxStyle(fill: _accent),
+                  ),
                   TextElement(
                     id: 'invoiceNo',
                     bounds: JetRect(x: 340, y: 4, width: 200, height: 18),
@@ -130,7 +159,7 @@ ReportDefinition invoiceSampleDefinition() => const ReportDefinition(
                     bounds: JetRect(x: 340, y: 26, width: 200, height: 16),
                     text: 'date',
                     style: JetTextStyle(
-                        align: JetTextAlign.right, color: JetColor(0xFF555555)),
+                        align: JetTextAlign.right, color: _muted),
                     expression: r'"Date: " + $F{date}',
                   ),
                   TextElement(
@@ -140,7 +169,7 @@ ReportDefinition invoiceSampleDefinition() => const ReportDefinition(
                     style: JetTextStyle(
                         fontSize: 9,
                         weight: JetFontWeight.bold,
-                        color: JetColor(0xFF888888)),
+                        color: _grey),
                   ),
                   TextElement(
                     id: 'customerName',
@@ -154,7 +183,7 @@ ReportDefinition invoiceSampleDefinition() => const ReportDefinition(
                     bounds: JetRect(x: 0, y: 72, width: 320, height: 44),
                     text: 'billingAddress',
                     style:
-                        JetTextStyle(fontSize: 10, color: JetColor(0xFF555555)),
+                        JetTextStyle(fontSize: 10, color: _muted),
                     expression: r'$F{billingAddress}',
                   ),
                   TextElement(
@@ -253,6 +282,13 @@ ReportDefinition invoiceSampleDefinition() => const ReportDefinition(
                     expression: r'$F{shipping}',
                     format: '#,##0.00',
                   ),
+                  // An accent rule sets the Grand Total off from the tally above.
+                  ShapeElement(
+                    id: 'grandTotalRule',
+                    bounds: JetRect(x: 280, y: 80, width: 260, height: 1.5),
+                    kind: ShapeKind.rectangle,
+                    style: JetBoxStyle(fill: _accent),
+                  ),
                   TextElement(
                     id: 'grandTotalLabel',
                     bounds: JetRect(x: 280, y: 84, width: 140, height: 20),
@@ -273,53 +309,71 @@ ReportDefinition invoiceSampleDefinition() => const ReportDefinition(
                     expression: r'$F{grandTotal}',
                     format: '#,##0.00',
                   ),
-                  // Left column — payment and shipping terms.
+                  // Left column — payment and shipping terms, each section
+                  // marked by a thin accent tick in the left margin.
+                  ShapeElement(
+                    id: 'paymentTermsTick',
+                    bounds: JetRect(x: 0, y: 6, width: 3, height: 12),
+                    kind: ShapeKind.rectangle,
+                    style: JetBoxStyle(fill: _accent),
+                  ),
                   TextElement(
                     id: 'paymentTermsLabel',
-                    bounds: JetRect(x: 0, y: 6, width: 200, height: 14),
+                    bounds: JetRect(x: 10, y: 6, width: 190, height: 14),
                     text: 'PAYMENT TERMS',
                     style: JetTextStyle(
                         fontSize: 9,
                         weight: JetFontWeight.bold,
-                        color: JetColor(0xFF888888)),
+                        color: _grey),
                   ),
                   TextElement(
                     id: 'paymentTerms',
-                    bounds: JetRect(x: 0, y: 20, width: 230, height: 16),
+                    bounds: JetRect(x: 10, y: 20, width: 220, height: 16),
                     text: 'paymentTerms',
                     expression: r'$F{paymentTerms}',
                   ),
+                  ShapeElement(
+                    id: 'shippingTick',
+                    bounds: JetRect(x: 0, y: 42, width: 3, height: 12),
+                    kind: ShapeKind.rectangle,
+                    style: JetBoxStyle(fill: _accent),
+                  ),
                   TextElement(
                     id: 'shippingMethodLabel',
-                    bounds: JetRect(x: 0, y: 42, width: 200, height: 14),
+                    bounds: JetRect(x: 10, y: 42, width: 190, height: 14),
                     text: 'SHIPPING',
                     style: JetTextStyle(
                         fontSize: 9,
                         weight: JetFontWeight.bold,
-                        color: JetColor(0xFF888888)),
+                        color: _grey),
                   ),
                   TextElement(
                     id: 'shippingMethod',
-                    bounds: JetRect(x: 0, y: 56, width: 230, height: 16),
+                    bounds: JetRect(x: 10, y: 56, width: 220, height: 16),
                     text: 'shippingMethod',
                     expression: r'$F{shippingMethod}',
                   ),
                   // Invoice description — the free-text summary below the totals.
+                  ShapeElement(
+                    id: 'descriptionTick',
+                    bounds: JetRect(x: 0, y: 118, width: 3, height: 12),
+                    kind: ShapeKind.rectangle,
+                    style: JetBoxStyle(fill: _accent),
+                  ),
                   TextElement(
                     id: 'descriptionLabel',
-                    bounds: JetRect(x: 0, y: 118, width: 200, height: 14),
+                    bounds: JetRect(x: 10, y: 118, width: 190, height: 14),
                     text: 'DESCRIPTION',
                     style: JetTextStyle(
                         fontSize: 9,
                         weight: JetFontWeight.bold,
-                        color: JetColor(0xFF888888)),
+                        color: _grey),
                   ),
                   TextElement(
                     id: 'invoiceDescription',
-                    bounds: JetRect(x: 0, y: 132, width: 540, height: 44),
+                    bounds: JetRect(x: 10, y: 132, width: 530, height: 44),
                     text: 'invoiceDescription',
-                    style:
-                        JetTextStyle(fontSize: 10, color: JetColor(0xFF555555)),
+                    style: JetTextStyle(fontSize: 10, color: _muted),
                     expression: r'$F{invoiceDescription}',
                   ),
                   // Full-width footer note + currency caption.
@@ -328,7 +382,7 @@ ReportDefinition invoiceSampleDefinition() => const ReportDefinition(
                     bounds: JetRect(x: 0, y: 186, width: 330, height: 18),
                     text: 'notes',
                     style:
-                        JetTextStyle(fontSize: 9, color: JetColor(0xFF888888)),
+                        JetTextStyle(fontSize: 9, color: _grey),
                     expression: r'$F{notes}',
                   ),
                   TextElement(
@@ -338,7 +392,7 @@ ReportDefinition invoiceSampleDefinition() => const ReportDefinition(
                     style: JetTextStyle(
                         fontSize: 9,
                         align: JetTextAlign.right,
-                        color: JetColor(0xFF888888)),
+                        color: _grey),
                   ),
                 ],
               ),
