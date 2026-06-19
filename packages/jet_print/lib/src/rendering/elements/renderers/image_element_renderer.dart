@@ -34,7 +34,7 @@ class ImageElementRenderer extends ElementRenderer<ImageElement> {
         elementId: el.id,
       ));
     } else {
-      emitPlaceholder(out, bounds, 'image', ctx, elementId: el.id);
+      emitImagePlaceholder(out, bounds, elementId: el.id);
     }
   }
 }

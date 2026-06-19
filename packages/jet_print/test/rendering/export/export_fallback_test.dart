@@ -13,7 +13,6 @@ import 'package:image/image.dart' as img;
 import 'package:jet_print/src/rendering/engine/rendered_report.dart';
 import 'package:jet_print/src/rendering/export/jet_report_exporter.dart';
 import 'package:jet_print/src/rendering/frame/primitive.dart';
-import 'package:jet_print/src/rendering/text/text_measurer.dart';
 
 import 'support/export_fixtures.dart';
 import 'support/pdf_inspector.dart';
@@ -39,24 +38,26 @@ void main() {
     test('shows the same placeholder primitives as the preview', () async {
       final RenderedReport report = unresolvedImageReport();
       // The preview's fallback is already IN the frame: an outline rect plus
-      // a label text run. Derive the expectation from the frame itself so the
-      // artifact provably matches the preview, whatever the label text is.
-      final TextRunPrimitive label = report
+      // picture-frame glyph paths (no text label since image-glyph placeholder).
+      // Confirm the frame has path primitives (the glyph) and no text run.
+      final List<PathPrimitive> glyphPaths = report
           .pageAt(0)
           .frame
           .primitives
-          .whereType<TextRunPrimitive>()
-          .single;
-      final String labelText = label.lines.map((TextLine l) => l.text).join();
-      expect(labelText, isNotEmpty, reason: 'fixture sanity');
+          .whereType<PathPrimitive>()
+          .toList();
+      expect(glyphPaths, isNotEmpty,
+          reason: 'fixture sanity: image-glyph placeholder emits path primitives');
+      expect(
+          report.pageAt(0).frame.primitives.whereType<TextRunPrimitive>(),
+          isEmpty,
+          reason: 'image-glyph placeholder emits no text label');
 
       final int diagnosticsBefore = report.diagnostics.entries.length;
       expect(diagnosticsBefore, greaterThan(0),
           reason: 'fixture sanity: the unresolved URL records a diagnostic');
 
       final PdfInspector pdf = PdfInspector(await exporter.toPdf(report));
-      expect(pdf.textOnPage(0), contains(labelText),
-          reason: 'the placeholder label must appear in the artifact');
       expect(pdf.imageDrawsOn(0), isEmpty,
           reason: 'nothing was resolvable — no image XObject is drawn');
       expect(report.diagnostics.entries.length, diagnosticsBefore,

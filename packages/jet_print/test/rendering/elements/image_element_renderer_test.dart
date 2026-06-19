@@ -42,17 +42,19 @@ void main() {
     expect(p.elementId, 'i');
   });
 
-  test('a url source (unresolved in 007a) emits a placeholder', () {
+  test('a url source (unresolved) emits an image-glyph placeholder', () {
     const ImageElement el = ImageElement(
         id: 'i', bounds: bounds, source: UrlImageSource('https://x/y.png'));
     final FrameBuilder out = FrameBuilder(PageFormat.a4Portrait);
     renderer.emit(el, ctx, bounds, out);
     final List<FramePrimitive> prims = out.build().primitives;
-    expect(prims[0], isA<RectPrimitive>());
-    expect((prims[1] as TextRunPrimitive).lines.single.text, 'image');
+    // Outline rect first, glyph paths present, and no text label.
+    expect(prims.first, isA<RectPrimitive>());
+    expect(prims.whereType<PathPrimitive>(), isNotEmpty);
+    expect(prims.whereType<TextRunPrimitive>(), isEmpty);
   });
 
-  test('a field source (unresolved in 007a) also emits a placeholder', () {
+  test('a field source (unresolved) also emits an image-glyph placeholder', () {
     // FieldImageSource is a distinct source kind; the placeholder branch must
     // cover it too, not just UrlImageSource.
     const ImageElement el = ImageElement(
@@ -60,7 +62,8 @@ void main() {
     final FrameBuilder out = FrameBuilder(PageFormat.a4Portrait);
     renderer.emit(el, ctx, bounds, out);
     final List<FramePrimitive> prims = out.build().primitives;
-    expect(prims[0], isA<RectPrimitive>());
-    expect((prims[1] as TextRunPrimitive).lines.single.text, 'image');
+    expect(prims.first, isA<RectPrimitive>());
+    expect(prims.whereType<PathPrimitive>(), isNotEmpty);
+    expect(prims.whereType<TextRunPrimitive>(), isEmpty);
   });
 }
