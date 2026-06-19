@@ -26,6 +26,7 @@ import '../../domain/geometry.dart';
 import '../../domain/report_definition.dart';
 import '../controller/band_walker.dart';
 import '../controller/jet_report_designer_controller.dart';
+import '../controller/view_fit_mode.dart';
 import '../designer_font_scope.dart';
 import '../designer_scope.dart';
 import '../interaction/canvas_shortcuts.dart';
@@ -45,6 +46,7 @@ import 'label_grid_geometry.dart';
 import 'ruler_metrics.dart';
 import 'ruler_overlay.dart';
 import 'selection_overlay.dart';
+import 'zoom_math.dart';
 
 /// Stable widget key for the interactive canvas (test seam).
 const Key kDesignCanvasKey = ValueKey<String>('jet_print.designer.canvas');
@@ -117,6 +119,10 @@ class _DesignCanvasState extends State<DesignCanvas> {
   /// generation last honored (the controller bumps it on `fitToView`).
   bool _viewInitialized = false;
   int _appliedFitRequest = 0;
+
+  /// The viewport size at the last applied fit; lets a steady viewport avoid
+  /// re-fitting every frame while a sticky fit mode is active.
+  Size? _lastFitViewport;
 
   /// Live body-drag move state: the page point where the drag began, and
   /// whether a selection move is in progress.
@@ -276,15 +282,6 @@ class _DesignCanvasState extends State<DesignCanvas> {
       });
       _maybeRebuild(controller); // coalesce any change that arrived meanwhile
     });
-  }
-
-  /// The zoom that fits the page width into [viewport] (with padding), clamped to
-  /// the allowed zoom range. Centering + vertical reach are handled by the scroll
-  /// viewport, so this only needs the scale.
-  double _fitScale(JetSize content, Size viewport) {
-    final double usable = viewport.width - 2 * _viewportPadding;
-    final double raw = usable <= 0 ? 1.0 : usable / content.width;
-    return raw.clamp(kMinZoom, kMaxZoom);
   }
 
   void _handleTapDown(
@@ -447,8 +444,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
     GestureBinding.instance.pointerSignalResolver.register(event,
         (PointerSignalEvent _) {
       if (zoom) {
-        controller.setViewScale(
-            controller.viewScale * (event.scrollDelta.dy > 0 ? 0.9 : 1.1));
+        controller.zoomBy(event.scrollDelta.dy > 0 ? 0.9 : 1.1);
       } else {
         _scrollBy(event.scrollDelta);
       }
@@ -719,17 +715,42 @@ class _DesignCanvasState extends State<DesignCanvas> {
               math.max(0, constraints.biggest.width - rulerInset),
               math.max(0, constraints.biggest.height - rulerInset),
             );
-            // Apply the initial fit-to-width once, and again whenever a fit is
-            // requested — off the build path (it mutates the controller + scroll).
-            if (!_viewInitialized ||
-                controller.fitRequest != _appliedFitRequest) {
+            // Apply a fit (1) on first load, (2) whenever a fit is explicitly
+            // requested, or (3) when the viewport changes while a sticky fit
+            // mode is active — all off the build path (it mutates the controller
+            // + scroll). The chosen formula follows the controller's fit mode.
+            final bool fitModeActive =
+                controller.viewFitMode != JetViewFitMode.none;
+            final bool viewportChanged = _lastFitViewport != viewport;
+            // Trigger a fit when:
+            //   (1) first load AND a fit mode is active (skip if the user
+            //       already has a manual zoom — i.e. mode == none),
+            //   (2) an explicit fit was requested (fitToView button / shortcut),
+            //   (3) the viewport changed while a sticky fit mode is active.
+            if ((!_viewInitialized && fitModeActive) ||
+                controller.fitRequest != _appliedFitRequest ||
+                (fitModeActive && viewportChanged)) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (!mounted) return;
                 _viewInitialized = true;
                 _appliedFitRequest = controller.fitRequest;
-                controller.setViewScale(_fitScale(layout.size, viewport));
+                _lastFitViewport = viewport;
+                final double fitted =
+                    controller.viewFitMode == JetViewFitMode.page
+                        ? fitPageScale(layout.size, viewport, _viewportPadding)
+                        : fitWidthScale(layout.size, viewport, _viewportPadding);
+                controller.setViewScale(fitted);
                 if (_vScroll.hasClients) _vScroll.jumpTo(0);
                 if (_hScroll.hasClients) _hScroll.jumpTo(0);
+              });
+            } else if (!_viewInitialized) {
+              // Mode is none on first mount (e.g. after a remount following a
+              // resize): mark initialized without touching the scale — the
+              // controller already holds the user's manual zoom.
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+                _viewInitialized = true;
+                _lastFitViewport = viewport;
               });
             }
 
