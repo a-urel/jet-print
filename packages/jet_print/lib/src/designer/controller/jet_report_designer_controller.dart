@@ -1174,8 +1174,24 @@ class JetReportDesignerController extends ChangeNotifier {
   /// Pastes the clipboard's contents as fresh-id, offset copies, selecting them.
   void paste() {
     if (_clipboard.isEmpty) return;
-    final List<ClipboardEntry> copies = _buildCopies(_clipboard.entries);
+    final List<ClipboardEntry> copies =
+        _buildCopies(_clipboard.entries, targetBandId: _pasteTargetBand());
     if (copies.isNotEmpty) _commit(ClipboardCommand(copies));
+  }
+
+  /// The band to paste into, or `null` to keep per-source-band paste.
+  ///
+  /// Returns the explicitly selected band's id only when a band is selected,
+  /// that band still exists, and every clipboard entry shares one source band.
+  String? _pasteTargetBand() {
+    final String? selected = _document.selection.bandId;
+    if (selected == null) return null;
+    if (findBand(_document.definition, selected) == null) return null;
+    final Iterable<String> sources =
+        _clipboard.entries.map((ClipboardEntry e) => e.bandId);
+    final String first = sources.first;
+    if (sources.every((String b) => b == first)) return selected;
+    return null;
   }
 
   /// Duplicates the current selection in place (fresh ids + offset), selecting
@@ -1217,26 +1233,32 @@ class JetReportDesignerController extends ChangeNotifier {
             (id: id, bounds: l.element.bounds),
       ];
 
-  List<ClipboardEntry> _buildCopies(List<ClipboardEntry> source) {
+  List<ClipboardEntry> _buildCopies(List<ClipboardEntry> source,
+      {String? targetBandId}) {
     final PageFormat page = _document.definition.page;
     final List<ClipboardEntry> copies = <ClipboardEntry>[];
     for (final ClipboardEntry entry in source) {
-      final Band? band = findBand(_document.definition, entry.bandId);
+      final String destBandId = targetBandId ?? entry.bandId;
+      final Band? band = findBand(_document.definition, destBandId);
       if (band == null) continue;
       final String id = _ids.next(entry.element.typeKey);
       final JetRect b = entry.element.bounds;
-      final JetRect offset = clampToBand(
+      // Nudge by +8/+8 only when the copy stays in its own band; across bands
+      // keep the original X/Y so it lands where the user expects.
+      final JetOffset nudge =
+          destBandId == entry.bandId ? kPasteOffset : const JetOffset(0, 0);
+      final JetRect placed = clampToBand(
         JetRect(
-            x: b.x + kPasteOffset.dx,
-            y: b.y + kPasteOffset.dy,
+            x: b.x + nudge.dx,
+            y: b.y + nudge.dy,
             width: b.width,
             height: b.height),
         band,
         page,
       );
       copies.add((
-        bandId: entry.bandId,
-        element: cloneElement(entry.element, id: id, bounds: offset),
+        bandId: destBandId,
+        element: cloneElement(entry.element, id: id, bounds: placed),
       ));
     }
     return copies;
