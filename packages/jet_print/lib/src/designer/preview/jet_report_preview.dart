@@ -262,7 +262,7 @@ class _JetReportPreviewState extends State<JetReportPreview> {
         onPressed: _zoom > _minZoom ? _zoomOut : null,
       ),
       ShadTooltip(
-        builder: (BuildContext context) => Text(l10n.actionZoomFitTooltip),
+        builder: (BuildContext context) => Text(l10n.actionZoomFieldTooltip),
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: _resetZoom,

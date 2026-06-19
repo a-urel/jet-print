@@ -166,7 +166,7 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
         onPressed: controller.zoomOut,
       ),
       ShadTooltip(
-        builder: (BuildContext context) => Text(l10n.actionZoomFitTooltip),
+        builder: (BuildContext context) => Text(l10n.actionZoomFieldTooltip),
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: controller.fitToView,
