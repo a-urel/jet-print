@@ -1125,6 +1125,10 @@ Replaces the static percentage label with `ZoomControl` and updates the existing
 **Files:**
 - Modify: `packages/jet_print/lib/src/designer/layout/designer_top_bar.dart` (imports; zoom group at lines ~168–184)
 - Modify: `packages/jet_print/test/designer/top_bar_test.dart` (lines ~128–131: the `pct()` helper)
+- Modify: `packages/jet_print/lib/src/designer/l10n/jet_print_en.arb` / `_de.arb` / `_tr.arb` + regenerate (RESTORE `actionZoomFitTooltip` — see reconciliation below)
+- Modify: `packages/jet_print/lib/src/designer/preview/jet_report_preview.dart` (revert the bridge repoint — see reconciliation below)
+
+**Reconciliation of a plan flaw (added 2026-06-19):** Task 4 removed `actionZoomFitTooltip` on the assumption only the designer top bar used it, but `jet_report_preview.dart` (a separate preview screen) also uses it for its genuine fit-to-width tooltip. To keep the package compiling, Task 5's implementer bridged both files to `actionZoomFieldTooltip`. The top-bar bridge is moot (this task replaces that whole block with `ZoomControl`), but the preview repoint is semantically wrong ("type a percentage…" on a non-editable fit-to-width label). This task MUST therefore also: (a) re-add `actionZoomFitTooltip` to the three `.arb` files (en with its `@` description block; de/tr flat) with the original translations — en `"Fit to width"`, de `"An Breite anpassen"`, tr `"Genişliğe sığdır"` — and run `flutter gen-l10n`; (b) revert `jet_report_preview.dart`'s tooltip back to `l10n.actionZoomFitTooltip`.
 
 **Interfaces:**
 - Consumes: `ZoomControl` (Task 5), `JetViewFitMode` (Task 1), `controller.viewScale`/`viewFitMode`/`setZoomPercent`/`setViewFitMode` (Task 1).

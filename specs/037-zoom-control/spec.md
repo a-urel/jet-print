@@ -200,9 +200,13 @@ zoom until they pick a fit mode again.
   as today.
 - **FR-014**: New chrome strings — `actionZoomFieldTooltip` (field/caret
   tooltip), `menuZoomFitWidth`, `menuZoomFitPage` — MUST be added to the `en`,
-  `de`, and `tr` `.arb` files and generated `JetPrintLocalizations`. The now-
-  unused `actionZoomFitTooltip` key MUST be removed. Preset rows render numeric
-  percentages and require no new strings.
+  `de`, and `tr` `.arb` files and generated `JetPrintLocalizations`. The
+  existing `actionZoomFitTooltip` key MUST be **retained** — it is still used by
+  the separate preview screen (`jet_report_preview.dart`) for its fit-to-width
+  tooltip. (Corrected 2026-06-19 during implementation: the key was initially
+  assumed unused once the designer top bar moved to the new tooltip, but the
+  preview screen also references it.) Preset rows render numeric percentages and
+  require no new strings.
 
 ### Key Entities
 
@@ -239,7 +243,8 @@ zoom until they pick a fit mode again.
   and never return `0`, `NaN`, or `Infinity` for zero/negative usable
   dimensions (unit-tested).
 - **SC-007**: New `.arb` keys resolve in `en` / `de` / `tr` with no missing-key
-  fallback; `actionZoomFitTooltip` is gone with no remaining references.
+  fallback; `actionZoomFitTooltip` is retained and referenced only by the
+  preview's fit-to-width tooltip (the designer top bar no longer references it).
 - **SC-008**: The full `jet_print` suite is green, `flutter analyze` is clean,
   and existing goldens are **byte-identical** (designer/transient-state-only
   change; no engine output or `schemaVersion` change).
