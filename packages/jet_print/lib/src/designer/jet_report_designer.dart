@@ -12,6 +12,7 @@ import 'designer_font_scope.dart';
 import 'designer_schema_scope.dart';
 import 'designer_scope.dart';
 import 'font_preload.dart';
+import 'interaction/designer_shortcuts.dart';
 import 'l10n/jet_print_localizations.dart';
 import 'layout/designer_right_panel.dart';
 import 'layout/designer_surface.dart';
@@ -263,46 +264,49 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
   Widget _buildShell(BuildContext context) {
     final ShadColorScheme colors = ShadTheme.of(context).colorScheme;
 
-    return ColoredBox(
-      color: colors.background,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          DesignerTopBar(
-            key: _topBarKey,
-            // Bridge the host callbacks to the top bar: Save hands over the
-            // live template; Open just signals intent (the host reads + calls
-            // controller.open). Null host callbacks ⇒ the actions render
-            // disabled (the library performs no file I/O itself — FR-022).
-            onSave: widget.onSaveRequested == null
-                ? null
-                : () => widget.onSaveRequested!(_controller.definition),
-            onOpen: widget.onOpenRequested,
-            onPreview: widget.onPreviewRequested == null
-                ? null
-                : () => widget.onPreviewRequested!(_controller.definition),
-          ),
-          const ShadSeparator.horizontal(margin: EdgeInsets.zero),
-          Expanded(
-            child: LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-                final bool wide = constraints.maxWidth >= _breakpoint;
-                _lastLayoutWide = wide;
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    // The toolbox is a fixed icon strip in every layout.
-                    const DesignerToolbox(key: _toolboxKey),
-                    const ShadSeparator.vertical(margin: EdgeInsets.zero),
-                    Expanded(
-                      child: wide ? _buildWideMain() : _buildNarrowMain(),
-                    ),
-                  ],
-                );
-              },
+    return DesignerShortcuts(
+      controller: _controller,
+      child: ColoredBox(
+        color: colors.background,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            DesignerTopBar(
+              key: _topBarKey,
+              // Bridge the host callbacks to the top bar: Save hands over the
+              // live template; Open just signals intent (the host reads + calls
+              // controller.open). Null host callbacks ⇒ the actions render
+              // disabled (the library performs no file I/O itself — FR-022).
+              onSave: widget.onSaveRequested == null
+                  ? null
+                  : () => widget.onSaveRequested!(_controller.definition),
+              onOpen: widget.onOpenRequested,
+              onPreview: widget.onPreviewRequested == null
+                  ? null
+                  : () => widget.onPreviewRequested!(_controller.definition),
             ),
-          ),
-        ],
+            const ShadSeparator.horizontal(margin: EdgeInsets.zero),
+            Expanded(
+              child: LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints constraints) {
+                  final bool wide = constraints.maxWidth >= _breakpoint;
+                  _lastLayoutWide = wide;
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      // The toolbox is a fixed icon strip in every layout.
+                      const DesignerToolbox(key: _toolboxKey),
+                      const ShadSeparator.vertical(margin: EdgeInsets.zero),
+                      Expanded(
+                        child: wide ? _buildWideMain() : _buildNarrowMain(),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

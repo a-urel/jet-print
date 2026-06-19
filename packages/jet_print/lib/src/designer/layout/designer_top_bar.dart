@@ -119,14 +119,14 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
       _IconButton(
         buttonKey: const ValueKey<String>('jet_print.designer.action.undo'),
         icon: LucideIcons.undo2,
-        tooltip: l10n.actionUndoTooltip,
+        tooltip: labelWithShortcut(l10n.actionUndoTooltip, 'Z'),
         enabled: controller.canUndo,
         onPressed: controller.undo,
       ),
       _IconButton(
         buttonKey: const ValueKey<String>('jet_print.designer.action.redo'),
         icon: LucideIcons.redo2,
-        tooltip: l10n.actionRedoTooltip,
+        tooltip: labelWithShortcut(l10n.actionRedoTooltip, 'Z', shift: true),
         enabled: controller.canRedo,
         onPressed: controller.redo,
       ),
