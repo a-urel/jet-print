@@ -27,5 +27,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get tabPackingSlip => 'İrsaliye';
 
   @override
+  String get tabPayroll => 'Bordro';
+
+  @override
   String get comingSoon => 'Yakında';
 }

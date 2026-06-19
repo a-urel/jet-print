@@ -136,6 +136,12 @@ abstract class AppLocalizations {
   /// **'Packing slip'**
   String get tabPackingSlip;
 
+  /// Tab label for the payroll pay-stub designer demo.
+  ///
+  /// In en, this message translates to:
+  /// **'Payroll'**
+  String get tabPayroll;
+
   /// Placeholder note shown on a report demo tab that isn't built yet.
   ///
   /// In en, this message translates to:

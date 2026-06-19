@@ -15,11 +15,13 @@ import 'l10n/app_localizations.dart';
 import 'label_sample.dart';
 import 'nested_list_sample.dart';
 import 'packing_slip_sample.dart';
+import 'payroll_sample.dart';
 import 'rendered_barcode_example.dart';
 import 'rendered_invoice_example.dart';
 import 'rendered_label_example.dart';
 import 'rendered_nested_list_example.dart';
 import 'rendered_packing_slip_example.dart';
+import 'rendered_payroll_example.dart';
 
 Future<void> main() async {
   // Loading the bundled font assets needs the binding up before runApp.
@@ -248,6 +250,27 @@ class _PlaygroundHome extends StatelessWidget {
                     ),
                   ),
                   child: Text(l10n.tabPackingSlip),
+                ),
+                ShadTab<String>(
+                  value: 'bordro',
+                  leading: const Icon(LucideIcons.banknote, size: 16),
+                  expandContent: true,
+                  // A live designer over a payroll run — Employee ▸ Earnings /
+                  // Deductions, employees grouped by department, each a full pay
+                  // stub with YTD columns, a verification QR, a highlighted Net
+                  // Pay box, department subtotals and a company grand total
+                  // (payroll_sample.dart).
+                  content: _FillTabHeight(
+                    child: _DesignerTab(
+                      fonts: fonts,
+                      seed: payrollDefinition(),
+                      dataSchema: payrollSchema,
+                      renderReport: (ReportDefinition def) =>
+                          renderPayrollDefinition(
+                              definition: def, fonts: fonts),
+                    ),
+                  ),
+                  child: Text(l10n.tabPayroll),
                 ),
                 ShadTab<String>(
                   value: 'nested-lists',

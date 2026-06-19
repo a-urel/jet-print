@@ -31,6 +31,11 @@
     "description": "Tab label for the packing-slip / delivery-note designer demo."
   },
 
+  "tabPayroll": "Payroll",
+  "@tabPayroll": {
+    "description": "Tab label for the payroll pay-stub designer demo."
+  },
+
   "comingSoon": "Coming soon",
   "@comingSoon": {
     "description": "Placeholder note shown on a report demo tab that isn't built yet."

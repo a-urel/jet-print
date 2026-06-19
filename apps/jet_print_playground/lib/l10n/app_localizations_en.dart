@@ -27,5 +27,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabPackingSlip => 'Packing slip';
 
   @override
+  String get tabPayroll => 'Payroll';
+
+  @override
   String get comingSoon => 'Coming soon';
 }

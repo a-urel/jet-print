@@ -27,5 +27,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tabPackingSlip => 'Lieferschein';
 
   @override
+  String get tabPayroll => 'Gehaltsabrechnung';
+
+  @override
   String get comingSoon => 'Demnächst';
 }
