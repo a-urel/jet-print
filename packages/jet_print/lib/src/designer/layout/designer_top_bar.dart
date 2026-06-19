@@ -8,6 +8,7 @@ import '../l10n/jet_print_localizations.dart';
 import '../platform_shortcut.dart';
 import 'unified_top_bar.dart';
 import 'workspace_mode_switch.dart';
+import 'zoom_control.dart';
 
 /// The designer's top strip: a command bar modelled on desktop report designers
 /// such as DevExpress, Telerik and Stimulsoft. A document title sits on the
@@ -91,8 +92,6 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
     JetReportDesignerController controller,
     bool compact,
   ) {
-    final ShadThemeData theme = ShadTheme.of(context);
-    final ShadColorScheme colors = theme.colorScheme;
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
 
     return <Widget>[
@@ -165,22 +164,11 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
         tooltip: l10n.actionZoomOutTooltip,
         onPressed: controller.zoomOut,
       ),
-      ShadTooltip(
-        builder: (BuildContext context) => Text(l10n.actionZoomFieldTooltip),
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: controller.fitToView,
-          child: SizedBox(
-            width: 46,
-            child: Text(
-              '${(controller.viewScale * 100).round()}%',
-              key:
-                  const ValueKey<String>('jet_print.designer.action.zoomLevel'),
-              textAlign: TextAlign.center,
-              style: theme.textTheme.small.copyWith(color: colors.foreground),
-            ),
-          ),
-        ),
+      ZoomControl(
+        viewScale: controller.viewScale,
+        fitMode: controller.viewFitMode,
+        onPercent: controller.setZoomPercent,
+        onFit: controller.setViewFitMode,
       ),
       _IconButton(
         icon: LucideIcons.zoomIn,

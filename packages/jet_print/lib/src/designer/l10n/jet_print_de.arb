@@ -17,6 +17,7 @@
   "actionZoomInTooltip": "Vergrößern",
   "actionZoomOutTooltip": "Verkleinern",
   "actionZoomFieldTooltip": "Zoomstufe – Prozentwert eingeben oder Voreinstellung bzw. Anpassung wählen",
+  "actionZoomFitTooltip": "An Breite anpassen",
   "menuZoomFitWidth": "An Breite anpassen",
   "menuZoomFitPage": "An Seite anpassen",
   "toggleGridTooltip": "Raster anzeigen",

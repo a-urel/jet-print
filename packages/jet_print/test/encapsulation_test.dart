@@ -104,7 +104,16 @@ bool _isWhiteBoxSeamTest(File file) {
       // exercises the editor dialog directly (same seam as
       // expression_editor_dialog_test.dart); white-box (Principle III).
       path.endsWith(
-          '/test/designer/expression_editor_status_descendant_test.dart');
+          '/test/designer/expression_editor_status_descendant_test.dart') ||
+      // ZoomControl widget (037): the control is an unexported `src/` designer
+      // widget (it is not part of the library's public surface); its widget
+      // test is white-box (Principle III / the binding_token precedent).
+      path.endsWith('/test/designer/layout/zoom_control_test.dart') ||
+      // Zoom math (037): `fitWidthScale`/`fitPageScale` and the clamp/step
+      // helpers in `zoom_math.dart` are unexported `src/` pure functions; their
+      // unit test is white-box so the adaptive-scale math can be tested without
+      // the full designer (Principle III / the grid_geometry precedent).
+      path.endsWith('/test/designer/canvas/zoom_math_test.dart');
 }
 
 void main() {

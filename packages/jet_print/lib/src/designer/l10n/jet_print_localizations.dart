@@ -185,6 +185,12 @@ abstract class JetPrintLocalizations {
   /// **'Zoom level — type a percentage, or pick a preset or fit mode'**
   String get actionZoomFieldTooltip;
 
+  /// Tooltip for the preview screen's zoom label, which fits the page to the viewport width when tapped.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit to width'**
+  String get actionZoomFitTooltip;
+
   /// Zoom dropdown row: scale so the page width fills the viewport (sticky).
   ///
   /// In en, this message translates to:

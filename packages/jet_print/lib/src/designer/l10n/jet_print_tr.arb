@@ -17,6 +17,7 @@
   "actionZoomInTooltip": "Yakınlaştır",
   "actionZoomOutTooltip": "Uzaklaştır",
   "actionZoomFieldTooltip": "Yakınlaştırma düzeyi — yüzde girin ya da hazır değer veya sığdırma seçin",
+  "actionZoomFitTooltip": "Genişliğe sığdır",
   "menuZoomFitWidth": "Genişliğe sığdır",
   "menuZoomFitPage": "Sayfaya sığdır",
   "toggleGridTooltip": "Izgarayı göster",

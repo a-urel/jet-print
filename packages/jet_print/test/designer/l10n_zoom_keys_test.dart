@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:jet_print/src/designer/l10n/jet_print_localizations.dart';
+import 'package:jet_print/jet_print.dart' show JetPrintLocalizations;
 
 void main() {
   for (final Locale locale in <Locale>[

@@ -52,6 +52,9 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
       'Zoom level — type a percentage, or pick a preset or fit mode';
 
   @override
+  String get actionZoomFitTooltip => 'Fit to width';
+
+  @override
   String get menuZoomFitWidth => 'Fit width';
 
   @override

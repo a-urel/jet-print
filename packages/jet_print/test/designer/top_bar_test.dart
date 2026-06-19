@@ -127,8 +127,11 @@ void main() {
       // The canvas drives the zoom % (it fits the page to width on load).
       final Finder zoomLevel = find
           .byKey(const ValueKey<String>('jet_print.designer.action.zoomLevel'));
-      int pct() =>
-          int.parse(tester.widget<Text>(zoomLevel).data!.replaceAll('%', ''));
+      int pct() => int.parse(tester
+          .widget<ShadInput>(zoomLevel)
+          .controller!
+          .text
+          .replaceAll('%', ''));
 
       final int initial = pct();
       await tester.tap(find.byIcon(LucideIcons.zoomIn));

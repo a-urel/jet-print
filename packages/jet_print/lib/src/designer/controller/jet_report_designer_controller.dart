@@ -61,8 +61,8 @@ import 'element_clone.dart';
 import 'element_id_factory.dart';
 import 'page_format_clamp.dart';
 import 'selection.dart';
-import 'view_fit_mode.dart';
 import 'snapping.dart';
+import 'view_fit_mode.dart';
 
 /// Owns the editable design and all editing operations for [JetReportDesigner].
 ///

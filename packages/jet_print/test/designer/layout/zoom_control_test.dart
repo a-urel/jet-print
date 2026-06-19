@@ -1,7 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
-import 'package:jet_print/src/designer/l10n/jet_print_localizations.dart';
 import 'package:jet_print/src/designer/layout/zoom_control.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 

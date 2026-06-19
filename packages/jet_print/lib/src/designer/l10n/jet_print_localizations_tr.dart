@@ -52,6 +52,9 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
       'Yakınlaştırma düzeyi — yüzde girin ya da hazır değer veya sığdırma seçin';
 
   @override
+  String get actionZoomFitTooltip => 'Genişliğe sığdır';
+
+  @override
   String get menuZoomFitWidth => 'Genişliğe sığdır';
 
   @override

@@ -62,6 +62,10 @@
   "@actionZoomFieldTooltip": {
     "description": "Tooltip for the editable zoom-level field and its dropdown caret in the top-bar zoom group."
   },
+  "actionZoomFitTooltip": "Fit to width",
+  "@actionZoomFitTooltip": {
+    "description": "Tooltip for the preview screen's zoom label, which fits the page to the viewport width when tapped."
+  },
   "menuZoomFitWidth": "Fit width",
   "@menuZoomFitWidth": {
     "description": "Zoom dropdown row: scale so the page width fills the viewport (sticky)."

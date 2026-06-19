@@ -52,6 +52,9 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
       'Zoomstufe – Prozentwert eingeben oder Voreinstellung bzw. Anpassung wählen';
 
   @override
+  String get actionZoomFitTooltip => 'An Breite anpassen';
+
+  @override
   String get menuZoomFitWidth => 'An Breite anpassen';
 
   @override
