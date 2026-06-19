@@ -27,11 +27,11 @@ void main() {
   );
 
   testWidgets(
-    'the shell shows six live designer tabs and no placeholder',
+    'the shell shows seven live designer tabs and no placeholder',
     (WidgetTester tester) async {
       await tester.pumpWidget(const JetPrintPlaygroundApp());
 
-      // All six tab labels are present in the strip. The app launches in its
+      // All seven tab labels are present in the strip. The app launches in its
       // first supported locale (English), so the labels resolve through
       // AppLocalizations to their English values. Scope the match to the tab
       // strip (ShadTab) so e.g. "Invoice" matches the tab — not the identical
@@ -42,7 +42,9 @@ void main() {
         'Label',
         'Barcode',
         'Packing slip',
+        'Payroll',
         'List',
+        'Menu',
       ]) {
         expect(find.widgetWithText(ShadTab<String>, label), findsOneWidget,
             reason: '"$label" tab label');

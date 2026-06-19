@@ -142,6 +142,12 @@ abstract class AppLocalizations {
   /// **'Payroll'**
   String get tabPayroll;
 
+  /// Tab label for the restaurant-menu picture demo.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu'**
+  String get tabMenu;
+
   /// Placeholder note shown on a report demo tab that isn't built yet.
   ///
   /// In en, this message translates to:

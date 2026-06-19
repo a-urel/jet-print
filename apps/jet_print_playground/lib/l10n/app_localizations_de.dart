@@ -30,5 +30,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tabPayroll => 'Gehaltsabrechnung';
 
   @override
+  String get tabMenu => 'Speisekarte';
+
+  @override
   String get comingSoon => 'Demnächst';
 }
