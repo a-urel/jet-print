@@ -31,10 +31,16 @@ void main() {
         (WidgetTester tester) async {
       final Uint8List b =
           gradientBmp(width: 12, height: 9, topRgb: 0xE8B04B, bottomRgb: 0x7A3B12);
-      final ui.Codec codec = await ui.instantiateImageCodec(b);
-      final ui.FrameInfo frame = await codec.getNextFrame();
-      expect(frame.image.width, 12);
-      expect(frame.image.height, 9);
+      // Image decoding is real async I/O — it must run in the real async zone
+      // (runAsync), not the widget tester's fake-async clock, or the codec
+      // future never completes and the test hangs.
+      final ui.Image image = (await tester.runAsync(() async {
+        final ui.Codec codec = await ui.instantiateImageCodec(b);
+        return (await codec.getNextFrame()).image;
+      }))!;
+      addTearDown(image.dispose);
+      expect(image.width, 12);
+      expect(image.height, 9);
     });
 
     test('base64 variant round-trips to the same bytes', () {

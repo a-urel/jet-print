@@ -52,7 +52,7 @@ void main() {
     });
 
     test('the page header logo is an embedded bytes image', () {
-      final Band header = menuSampleDefinition().furniture!.pageHeader!;
+      final Band header = menuSampleDefinition().furniture.pageHeader!;
       final ImageElement logo = header.elements
           .firstWhere((ReportElement e) => e.id == 'brandLogo') as ImageElement;
       expect(logo.source, isA<BytesImageSource>());
