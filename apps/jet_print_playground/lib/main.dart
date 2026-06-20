@@ -31,9 +31,9 @@ Future<void> main() async {
   // Fail fast on unsupported platforms so a wrong target surfaces a clear
   // message instead of rendering incorrectly (spec Edge Cases). The library is
   // platform-agnostic; only this playground app pins macOS desktop this iteration.
-  if (!Platform.isMacOS) {
+  if (!(Platform.isMacOS || Platform.isWindows || Platform.isLinux)) {
     throw UnsupportedError(
-      'jet_print_playground targets macOS desktop this iteration.',
+      'jet_print_playground targets desktop (macOS, Windows, Linux).',
     );
   }
   // 022 + Google-Fonts catalog: a curated, offline set of real OFL families,
