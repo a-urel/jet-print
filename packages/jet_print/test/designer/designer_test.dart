@@ -1,21 +1,32 @@
 // Designer seam test (SC-004).
 //
-// Unlike the domain/rendering seams, the designer seam's output (the placeholder
-// widget) is part of the public surface, so this test consumes it through the
-// public entry point — proving the designer seam is exercisable independently of
-// the playground app.
+// Proves the designer seam is exercisable independently of the playground app:
+// it consumes the public report-designer shell through the single public entry
+// point and builds it standalone inside a ShadApp shell.
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 void main() {
   testWidgets(
-    'JetPrintPlaceholder builds standalone inside a ShadApp shell',
+    'JetReportDesigner builds standalone inside a ShadApp shell',
     (WidgetTester tester) async {
-      await tester.pumpWidget(const ShadApp(home: JetPrintPlaceholder()));
+      await tester.binding.setSurfaceSize(const Size(1440, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      expect(find.byType(JetPrintPlaceholder), findsOneWidget);
-      expect(find.text('jet_print'), findsOneWidget);
+      await tester.pumpWidget(
+        ShadApp(
+          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+            JetPrintLocalizations.delegate,
+          ],
+          supportedLocales: JetPrintLocalizations.supportedLocales,
+          home: const JetReportDesigner(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(JetReportDesigner), findsOneWidget);
     },
   );
 }

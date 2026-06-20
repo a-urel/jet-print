@@ -49,11 +49,6 @@ void main() {
     expect(jetPrintVersion, isNotEmpty);
   });
 
-  test('JetPrintPlaceholder is const-constructible and is a Widget', () {
-    const placeholder = JetPrintPlaceholder();
-    expect(placeholder, isA<Widget>());
-  });
-
   test('JetReportDesigner is const-constructible and is a Widget', () {
     // The shell must require no host state / no required params (contract).
     const designer = JetReportDesigner();

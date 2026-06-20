@@ -11,10 +11,11 @@
 /// importable through a `package:jet_print/src/...` path. The intentional,
 /// documented public surface is re-exported from here.
 ///
-/// The public surface for this iteration: the version constant, a theme-aware
-/// placeholder widget, the report-designer shell ([JetReportDesigner]), and the
-/// library's own localization delegate ([JetPrintLocalizations]). See
-/// `contracts/designer-layout-api.md` for the authoritative contract.
+/// The public surface centers on the report-designer shell
+/// ([JetReportDesigner]) and workspace ([JetReportWorkspace]), the reified
+/// report model ([ReportDefinition] and its tree), the render engine
+/// ([JetReportEngine]), export/print ([JetReportExporter] / [JetReportPrinter]),
+/// and the library's own localization delegate ([JetPrintLocalizations]).
 library;
 
 // --- Data-source API (009 structure + 011 data): the host describes its data
@@ -41,7 +42,6 @@ export 'src/designer/controller/jet_report_designer_controller.dart'
     show JetReportDesignerController;
 export 'src/designer/controller/selection.dart' show Selection;
 export 'src/designer/controller/view_fit_mode.dart' show JetViewFitMode;
-export 'src/designer/jet_print_placeholder.dart' show JetPrintPlaceholder;
 export 'src/designer/jet_report_designer.dart'
     show
         JetReportDesigner,
