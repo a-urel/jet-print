@@ -481,6 +481,7 @@ class ReportFiller {
                     ? JetValue.from(unresolvedFieldToken)
                     : accs![k].value,
             };
+            // Name the nested scope (not the aggregate): footer.aggs[k].name is the synthesized $V{__naggN} name, not a user-facing id — naming the scope is robust and parse-free (spec E2).
             for (int k = 0; k < footer.aggs.length; k++) {
               final int skips = accs![k].skippedNonNumeric;
               if (skips > 0) {
@@ -536,8 +537,8 @@ class ReportFiller {
         final int calcSkipDelta = calc.aggregateSkips - calcSkipsBefore;
         if (calcSkipDelta > 0) {
           budget.recordRowIssue('agg:calc',
-              '$calcSkipDelta non-numeric value(s) were skipped from a '
-              'numeric aggregate');
+              '$calcSkipDelta non-numeric value(s) were skipped from an '
+              'aggregate');
         }
         final Set<String> broken = calc.brokenGroups;
         if (!hadRows) {

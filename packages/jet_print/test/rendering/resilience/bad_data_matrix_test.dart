@@ -132,7 +132,7 @@ void main() {
         <String, Object?>{'amount': 5.0},
       ],
     );
-    final Diagnostic d = _match(r, 'skipped from a numeric aggregate');
+    final Diagnostic d = _match(r, 'skipped from an aggregate');
     expect(d.severity, DiagnosticSeverity.warning);
     expect(d.message, contains('Row '));
   });
