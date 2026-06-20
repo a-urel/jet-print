@@ -23,12 +23,18 @@ class ZoomControl extends StatefulWidget {
     required this.fitMode,
     required this.onPercent,
     required this.onFit,
+    this.keyPrefix = 'jet_print.designer',
   });
 
   final double viewScale;
   final JetViewFitMode fitMode;
   final ValueChanged<double> onPercent;
   final ValueChanged<JetViewFitMode> onFit;
+
+  /// Namespace for the control's stable `ValueKey`s, so the same widget can be
+  /// dropped into the designer (`jet_print.designer.*`, the default) and the
+  /// preview (`jet_print.preview.*`) without key collisions.
+  final String keyPrefix;
 
   @override
   State<ZoomControl> createState() => _ZoomControlState();
@@ -120,13 +126,13 @@ class _ZoomControlState extends State<ZoomControl> {
         controller: _menu,
         items: <Widget>[
           ShadContextMenuItem(
-            key: const ValueKey<String>('jet_print.designer.zoom.fitWidth'),
+            key: ValueKey<String>('${widget.keyPrefix}.zoom.fitWidth'),
             leading: check(widget.fitMode == JetViewFitMode.width),
             onPressed: () => _pickFit(JetViewFitMode.width),
             child: Text(l10n.menuZoomFitWidth),
           ),
           ShadContextMenuItem(
-            key: const ValueKey<String>('jet_print.designer.zoom.fitPage'),
+            key: ValueKey<String>('${widget.keyPrefix}.zoom.fitPage'),
             leading: check(widget.fitMode == JetViewFitMode.page),
             onPressed: () => _pickFit(JetViewFitMode.page),
             child: Text(l10n.menuZoomFitPage),
@@ -138,7 +144,7 @@ class _ZoomControlState extends State<ZoomControl> {
           ),
           for (final int p in _kZoomPresets)
             ShadContextMenuItem(
-              key: ValueKey<String>('jet_print.designer.zoom.preset.$p'),
+              key: ValueKey<String>('${widget.keyPrefix}.zoom.preset.$p'),
               leading:
                   check(widget.fitMode == JetViewFitMode.none && current == p),
               onPressed: () => _pickPreset(p),
@@ -148,12 +154,12 @@ class _ZoomControlState extends State<ZoomControl> {
         child: SizedBox(
           width: 92,
           child: ShadInput(
-            key: const ValueKey<String>('jet_print.designer.action.zoomLevel'),
+            key: ValueKey<String>('${widget.keyPrefix}.action.zoomLevel'),
             controller: _text,
             focusNode: _focus,
             onSubmitted: (_) => _commit(),
             trailing: GestureDetector(
-              key: const ValueKey<String>('jet_print.designer.zoom.menuToggle'),
+              key: ValueKey<String>('${widget.keyPrefix}.zoom.menuToggle'),
               behavior: HitTestBehavior.opaque,
               onTap: _menu.toggle,
               child: const Icon(LucideIcons.chevronDown, size: 14),

@@ -16,6 +16,7 @@ Future<void> _pump(
   required JetViewFitMode fitMode,
   required ValueChanged<double> onPercent,
   required ValueChanged<JetViewFitMode> onFit,
+  String keyPrefix = 'jet_print.designer',
 }) {
   return tester.pumpWidget(
     ShadApp(
@@ -27,6 +28,7 @@ Future<void> _pump(
           fitMode: fitMode,
           onPercent: onPercent,
           onFit: onFit,
+          keyPrefix: keyPrefix,
         ),
       ),
     ),
@@ -217,5 +219,36 @@ void main() {
     await tester.pump();
 
     expect(_fieldText(tester), '200%');
+  });
+
+  testWidgets('keyPrefix namespaces every key (default stays designer)',
+      (WidgetTester tester) async {
+    // Default prefix: the designer keys resolve.
+    await _pump(tester,
+        viewScale: 1.0,
+        fitMode: JetViewFitMode.none,
+        onPercent: (_) {},
+        onFit: (_) {});
+    expect(find.byKey(_field), findsOneWidget); // jet_print.designer.action.zoomLevel
+    expect(find.byKey(_caret), findsOneWidget); // jet_print.designer.zoom.menuToggle
+
+    // Override prefix: the preview-namespaced keys resolve, the designer ones do not.
+    await _pump(tester,
+        viewScale: 1.0,
+        fitMode: JetViewFitMode.none,
+        onPercent: (_) {},
+        onFit: (_) {},
+        keyPrefix: 'jet_print.preview');
+    expect(find.byKey(_field), findsNothing);
+    expect(
+        find.byKey(const ValueKey<String>('jet_print.preview.action.zoomLevel')),
+        findsOneWidget);
+    await tester.tap(
+        find.byKey(const ValueKey<String>('jet_print.preview.zoom.menuToggle')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey<String>('jet_print.preview.zoom.fitWidth')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey<String>('jet_print.preview.zoom.preset.200')),
+        findsOneWidget);
   });
 }
