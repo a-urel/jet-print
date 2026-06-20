@@ -32,15 +32,47 @@ const List<Map<String, Object?>> kSamplePayroll = <Map<String, Object?>>[
     'totalDeductions': 1223.70,
     'netPay': 2576.30,
     'earnings': <Map<String, Object?>>[
-      <String, Object?>{'type': 'Regular', 'hours': 80.0, 'rate': 43.75, 'earnAmount': 3500.00, 'earnYtd': 42000.00},
-      <String, Object?>{'type': 'Overtime', 'hours': 6.0, 'rate': 50.00, 'earnAmount': 300.00, 'earnYtd': 1800.00},
+      <String, Object?>{
+        'type': 'Regular',
+        'hours': 80.0,
+        'rate': 43.75,
+        'earnAmount': 3500.00,
+        'earnYtd': 42000.00
+      },
+      <String, Object?>{
+        'type': 'Overtime',
+        'hours': 6.0,
+        'rate': 50.00,
+        'earnAmount': 300.00,
+        'earnYtd': 1800.00
+      },
     ],
     'deductions': <Map<String, Object?>>[
-      <String, Object?>{'type': 'Federal Income Tax', 'dedAmount': 560.00, 'dedYtd': 6720.00},
-      <String, Object?>{'type': 'Social Security', 'dedAmount': 235.60, 'dedYtd': 2827.20},
-      <String, Object?>{'type': 'Medicare', 'dedAmount': 55.10, 'dedYtd': 661.20},
-      <String, Object?>{'type': '401(k)', 'dedAmount': 228.00, 'dedYtd': 2736.00},
-      <String, Object?>{'type': 'Health Insurance', 'dedAmount': 145.00, 'dedYtd': 1740.00},
+      <String, Object?>{
+        'type': 'Federal Income Tax',
+        'dedAmount': 560.00,
+        'dedYtd': 6720.00
+      },
+      <String, Object?>{
+        'type': 'Social Security',
+        'dedAmount': 235.60,
+        'dedYtd': 2827.20
+      },
+      <String, Object?>{
+        'type': 'Medicare',
+        'dedAmount': 55.10,
+        'dedYtd': 661.20
+      },
+      <String, Object?>{
+        'type': '401(k)',
+        'dedAmount': 228.00,
+        'dedYtd': 2736.00
+      },
+      <String, Object?>{
+        'type': 'Health Insurance',
+        'dedAmount': 145.00,
+        'dedYtd': 1740.00
+      },
     ],
   },
   <String, Object?>{
@@ -56,15 +88,47 @@ const List<Map<String, Object?>> kSamplePayroll = <Map<String, Object?>>[
     'totalDeductions': 1408.41,
     'netPay': 2931.59,
     'earnings': <Map<String, Object?>>[
-      <String, Object?>{'type': 'Regular', 'hours': 80.0, 'rate': 48.00, 'earnAmount': 3840.00, 'earnYtd': 46080.00},
-      <String, Object?>{'type': 'Bonus', 'hours': 0.0, 'rate': 0.00, 'earnAmount': 500.00, 'earnYtd': 1500.00},
+      <String, Object?>{
+        'type': 'Regular',
+        'hours': 80.0,
+        'rate': 48.00,
+        'earnAmount': 3840.00,
+        'earnYtd': 46080.00
+      },
+      <String, Object?>{
+        'type': 'Bonus',
+        'hours': 0.0,
+        'rate': 0.00,
+        'earnAmount': 500.00,
+        'earnYtd': 1500.00
+      },
     ],
     'deductions': <Map<String, Object?>>[
-      <String, Object?>{'type': 'Federal Income Tax', 'dedAmount': 651.00, 'dedYtd': 7812.00},
-      <String, Object?>{'type': 'Social Security', 'dedAmount': 269.08, 'dedYtd': 3228.96},
-      <String, Object?>{'type': 'Medicare', 'dedAmount': 62.93, 'dedYtd': 755.16},
-      <String, Object?>{'type': '401(k)', 'dedAmount': 260.40, 'dedYtd': 3124.80},
-      <String, Object?>{'type': 'Health Insurance', 'dedAmount': 165.00, 'dedYtd': 1980.00},
+      <String, Object?>{
+        'type': 'Federal Income Tax',
+        'dedAmount': 651.00,
+        'dedYtd': 7812.00
+      },
+      <String, Object?>{
+        'type': 'Social Security',
+        'dedAmount': 269.08,
+        'dedYtd': 3228.96
+      },
+      <String, Object?>{
+        'type': 'Medicare',
+        'dedAmount': 62.93,
+        'dedYtd': 755.16
+      },
+      <String, Object?>{
+        'type': '401(k)',
+        'dedAmount': 260.40,
+        'dedYtd': 3124.80
+      },
+      <String, Object?>{
+        'type': 'Health Insurance',
+        'dedAmount': 165.00,
+        'dedYtd': 1980.00
+      },
     ],
   },
   // --- Sales ---
@@ -81,15 +145,47 @@ const List<Map<String, Object?>> kSamplePayroll = <Map<String, Object?>>[
     'totalDeductions': 1375.43,
     'netPay': 3074.57,
     'earnings': <Map<String, Object?>>[
-      <String, Object?>{'type': 'Regular', 'hours': 80.0, 'rate': 40.00, 'earnAmount': 3200.00, 'earnYtd': 38400.00},
-      <String, Object?>{'type': 'Commission', 'hours': 0.0, 'rate': 0.00, 'earnAmount': 1250.00, 'earnYtd': 9800.00},
+      <String, Object?>{
+        'type': 'Regular',
+        'hours': 80.0,
+        'rate': 40.00,
+        'earnAmount': 3200.00,
+        'earnYtd': 38400.00
+      },
+      <String, Object?>{
+        'type': 'Commission',
+        'hours': 0.0,
+        'rate': 0.00,
+        'earnAmount': 1250.00,
+        'earnYtd': 9800.00
+      },
     ],
     'deductions': <Map<String, Object?>>[
-      <String, Object?>{'type': 'Federal Income Tax', 'dedAmount': 667.50, 'dedYtd': 8010.00},
-      <String, Object?>{'type': 'Social Security', 'dedAmount': 275.90, 'dedYtd': 3310.80},
-      <String, Object?>{'type': 'Medicare', 'dedAmount': 64.53, 'dedYtd': 774.36},
-      <String, Object?>{'type': '401(k)', 'dedAmount': 222.50, 'dedYtd': 2670.00},
-      <String, Object?>{'type': 'Health Insurance', 'dedAmount': 145.00, 'dedYtd': 1740.00},
+      <String, Object?>{
+        'type': 'Federal Income Tax',
+        'dedAmount': 667.50,
+        'dedYtd': 8010.00
+      },
+      <String, Object?>{
+        'type': 'Social Security',
+        'dedAmount': 275.90,
+        'dedYtd': 3310.80
+      },
+      <String, Object?>{
+        'type': 'Medicare',
+        'dedAmount': 64.53,
+        'dedYtd': 774.36
+      },
+      <String, Object?>{
+        'type': '401(k)',
+        'dedAmount': 222.50,
+        'dedYtd': 2670.00
+      },
+      <String, Object?>{
+        'type': 'Health Insurance',
+        'dedAmount': 145.00,
+        'dedYtd': 1740.00
+      },
     ],
   },
   <String, Object?>{
@@ -105,15 +201,47 @@ const List<Map<String, Object?>> kSamplePayroll = <Map<String, Object?>>[
     'totalDeductions': 995.98,
     'netPay': 2154.02,
     'earnings': <Map<String, Object?>>[
-      <String, Object?>{'type': 'Regular', 'hours': 80.0, 'rate': 31.25, 'earnAmount': 2500.00, 'earnYtd': 30000.00},
-      <String, Object?>{'type': 'Commission', 'hours': 0.0, 'rate': 0.00, 'earnAmount': 650.00, 'earnYtd': 5200.00},
+      <String, Object?>{
+        'type': 'Regular',
+        'hours': 80.0,
+        'rate': 31.25,
+        'earnAmount': 2500.00,
+        'earnYtd': 30000.00
+      },
+      <String, Object?>{
+        'type': 'Commission',
+        'hours': 0.0,
+        'rate': 0.00,
+        'earnAmount': 650.00,
+        'earnYtd': 5200.00
+      },
     ],
     'deductions': <Map<String, Object?>>[
-      <String, Object?>{'type': 'Federal Income Tax', 'dedAmount': 472.50, 'dedYtd': 5670.00},
-      <String, Object?>{'type': 'Social Security', 'dedAmount': 195.30, 'dedYtd': 2343.60},
-      <String, Object?>{'type': 'Medicare', 'dedAmount': 45.68, 'dedYtd': 548.16},
-      <String, Object?>{'type': '401(k)', 'dedAmount': 157.50, 'dedYtd': 1890.00},
-      <String, Object?>{'type': 'Health Insurance', 'dedAmount': 125.00, 'dedYtd': 1500.00},
+      <String, Object?>{
+        'type': 'Federal Income Tax',
+        'dedAmount': 472.50,
+        'dedYtd': 5670.00
+      },
+      <String, Object?>{
+        'type': 'Social Security',
+        'dedAmount': 195.30,
+        'dedYtd': 2343.60
+      },
+      <String, Object?>{
+        'type': 'Medicare',
+        'dedAmount': 45.68,
+        'dedYtd': 548.16
+      },
+      <String, Object?>{
+        'type': '401(k)',
+        'dedAmount': 157.50,
+        'dedYtd': 1890.00
+      },
+      <String, Object?>{
+        'type': 'Health Insurance',
+        'dedAmount': 125.00,
+        'dedYtd': 1500.00
+      },
     ],
   },
 ];

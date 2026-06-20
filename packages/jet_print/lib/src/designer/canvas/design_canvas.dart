@@ -735,10 +735,10 @@ class _DesignCanvasState extends State<DesignCanvas> {
                 _viewInitialized = true;
                 _appliedFitRequest = controller.fitRequest;
                 _lastFitViewport = viewport;
-                final double fitted =
-                    controller.viewFitMode == JetViewFitMode.page
-                        ? fitPageScale(layout.size, viewport, _viewportPadding)
-                        : fitWidthScale(layout.size, viewport, _viewportPadding);
+                final double fitted = controller.viewFitMode ==
+                        JetViewFitMode.page
+                    ? fitPageScale(layout.size, viewport, _viewportPadding)
+                    : fitWidthScale(layout.size, viewport, _viewportPadding);
                 controller.setViewScale(fitted);
                 if (_vScroll.hasClients) _vScroll.jumpTo(0);
                 if (_hScroll.hasClients) _hScroll.jumpTo(0);

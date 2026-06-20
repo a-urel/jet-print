@@ -25,7 +25,8 @@ const List<Map<String, Object?>> kSampleShipment = <Map<String, Object?>>[
     'carrier': 'UPS Standard',
     'trackingNo': '1Z999AA10123456784',
     'shipToName': 'Globex SARL',
-    'shipToAddress': 'Attn: Receiving Dock\n12 Rue de l’Industrie\n69007 Lyon\nFrance',
+    'shipToAddress':
+        'Attn: Receiving Dock\n12 Rue de l’Industrie\n69007 Lyon\nFrance',
     'billToName': 'Globex SARL — Accounts Payable',
     'billToAddress': 'BP 4471\n69356 Lyon CEDEX 07\nFrance',
     'boxes': <Map<String, Object?>>[

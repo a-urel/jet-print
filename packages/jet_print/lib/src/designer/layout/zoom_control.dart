@@ -139,8 +139,8 @@ class _ZoomControlState extends State<ZoomControl> {
           for (final int p in _kZoomPresets)
             ShadContextMenuItem(
               key: ValueKey<String>('jet_print.designer.zoom.preset.$p'),
-              leading: check(
-                  widget.fitMode == JetViewFitMode.none && current == p),
+              leading:
+                  check(widget.fitMode == JetViewFitMode.none && current == p),
               onPressed: () => _pickPreset(p),
               child: Text('$p%'),
             ),

@@ -125,9 +125,7 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
               bounds: JetRect(x: 0, y: 2, width: 540, height: 14),
               text: 'Page',
               style: JetTextStyle(
-                  fontSize: 9,
-                  color: _grey,
-                  align: JetTextAlign.right),
+                  fontSize: 9, color: _grey, align: JetTextAlign.right),
               expression:
                   r'"Page " + $V{PAGE_NUMBER} + " of " + $V{PAGE_COUNT}',
             ),
@@ -182,15 +180,15 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
                   // name/code text paints over them — the strongest group cue.
                   ShapeElement(
                     id: 'customerHeaderBg',
-                    bounds: JetRect(
-                        x: 0, y: 0, width: _contentWidth, height: 30),
+                    bounds:
+                        JetRect(x: 0, y: 0, width: _contentWidth, height: 30),
                     kind: ShapeKind.rectangle,
                     style: JetBoxStyle(fill: _headerFill),
                   ),
                   ShapeElement(
                     id: 'customerHeaderRule',
-                    bounds: JetRect(
-                        x: 0, y: 28, width: _contentWidth, height: 2),
+                    bounds:
+                        JetRect(x: 0, y: 28, width: _contentWidth, height: 2),
                     kind: ShapeKind.rectangle,
                     style: JetBoxStyle(fill: _accent),
                   ),
@@ -206,8 +204,8 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
                     id: 'customerCode',
                     bounds: JetRect(x: 360, y: 6, width: 180, height: 16),
                     text: 'customerCode',
-                    style: JetTextStyle(
-                        align: JetTextAlign.right, color: _grey),
+                    style:
+                        JetTextStyle(align: JetTextAlign.right, color: _grey),
                     expression: r'$F{customerCode}',
                   ),
                 ],
@@ -261,8 +259,8 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
                     // start of a nested order group (drawn first, behind text).
                     ShapeElement(
                       id: 'orderRowBg',
-                      bounds: JetRect(
-                          x: 0, y: 0, width: _contentWidth, height: 20),
+                      bounds:
+                          JetRect(x: 0, y: 0, width: _contentWidth, height: 20),
                       kind: ShapeKind.rectangle,
                       style: JetBoxStyle(fill: _orderFill),
                     ),
@@ -380,8 +378,7 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
                         bounds: JetRect(x: 320, y: 1, width: 105, height: 16),
                         text: 'Order total',
                         style: JetTextStyle(
-                            align: JetTextAlign.right,
-                            color: _grey),
+                            align: JetTextAlign.right, color: _grey),
                       ),
                       TextElement(
                         id: 'orderTotalFooter',

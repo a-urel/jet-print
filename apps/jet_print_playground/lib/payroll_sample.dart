@@ -196,8 +196,8 @@ ReportDefinition payrollDefinition() => const ReportDefinition(
                     id: 'deptName',
                     bounds: JetRect(x: 0, y: 2, width: 538, height: 16),
                     text: 'department',
-                    style: JetTextStyle(
-                        fontSize: 12, weight: JetFontWeight.bold),
+                    style:
+                        JetTextStyle(fontSize: 12, weight: JetFontWeight.bold),
                     expression: r'"DEPARTMENT — " + $F{department}',
                   ),
                   ShapeElement(
@@ -291,8 +291,8 @@ ReportDefinition payrollDefinition() => const ReportDefinition(
                     id: 'empName',
                     bounds: JetRect(x: 0, y: 0, width: 300, height: 20),
                     text: 'empName',
-                    style: JetTextStyle(
-                        fontSize: 14, weight: JetFontWeight.bold),
+                    style:
+                        JetTextStyle(fontSize: 14, weight: JetFontWeight.bold),
                     expression: r'$F{empName}',
                   ),
                   TextElement(
@@ -358,7 +358,8 @@ ReportDefinition payrollDefinition() => const ReportDefinition(
                     id: 'colEarnType',
                     bounds: JetRect(x: 24, y: 100, width: 180, height: 12),
                     text: 'Earnings',
-                    style: JetTextStyle(fontSize: 9, weight: JetFontWeight.bold),
+                    style:
+                        JetTextStyle(fontSize: 9, weight: JetFontWeight.bold),
                   ),
                   TextElement(
                     id: 'colEarnHours',
@@ -415,8 +416,8 @@ ReportDefinition payrollDefinition() => const ReportDefinition(
                     id: 'netLabel',
                     bounds: JetRect(x: 312, y: 16, width: 120, height: 18),
                     text: 'NET PAY',
-                    style: JetTextStyle(
-                        fontSize: 11, weight: JetFontWeight.bold),
+                    style:
+                        JetTextStyle(fontSize: 11, weight: JetFontWeight.bold),
                   ),
                   TextElement(
                     id: 'netValue',
@@ -485,8 +486,8 @@ ReportDefinition payrollDefinition() => const ReportDefinition(
                       id: 'earnYtd',
                       bounds: JetRect(x: 472, y: 1, width: 66, height: 14),
                       text: 'earnYtd',
-                      style: JetTextStyle(
-                          align: JetTextAlign.right, color: _grey),
+                      style:
+                          JetTextStyle(align: JetTextAlign.right, color: _grey),
                       expression: r'$F{earnYtd}',
                       format: _money,
                     ),
@@ -534,7 +535,8 @@ ReportDefinition payrollDefinition() => const ReportDefinition(
                     id: 'colDedType',
                     bounds: JetRect(x: 24, y: 48, width: 200, height: 12),
                     text: 'Deductions',
-                    style: JetTextStyle(fontSize: 9, weight: JetFontWeight.bold),
+                    style:
+                        JetTextStyle(fontSize: 9, weight: JetFontWeight.bold),
                   ),
                   TextElement(
                     id: 'colDedCurrent',
@@ -585,8 +587,8 @@ ReportDefinition payrollDefinition() => const ReportDefinition(
                       id: 'dedYtd',
                       bounds: JetRect(x: 472, y: 1, width: 66, height: 14),
                       text: 'dedYtd',
-                      style: JetTextStyle(
-                          align: JetTextAlign.right, color: _grey),
+                      style:
+                          JetTextStyle(align: JetTextAlign.right, color: _grey),
                       expression: r'$F{dedYtd}',
                       format: _money,
                     ),

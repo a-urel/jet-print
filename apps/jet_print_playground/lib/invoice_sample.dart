@@ -99,9 +99,7 @@ ReportDefinition invoiceSampleDefinition() => const ReportDefinition(
               bounds: JetRect(x: 0, y: 2, width: 540, height: 14),
               text: 'Page',
               style: JetTextStyle(
-                  fontSize: 9,
-                  color: _grey,
-                  align: JetTextAlign.right),
+                  fontSize: 9, color: _grey, align: JetTextAlign.right),
               expression:
                   r'"Page " + $V{PAGE_NUMBER} + " of " + $V{PAGE_COUNT}',
             ),
@@ -158,8 +156,8 @@ ReportDefinition invoiceSampleDefinition() => const ReportDefinition(
                     id: 'date',
                     bounds: JetRect(x: 340, y: 26, width: 200, height: 16),
                     text: 'date',
-                    style: JetTextStyle(
-                        align: JetTextAlign.right, color: _muted),
+                    style:
+                        JetTextStyle(align: JetTextAlign.right, color: _muted),
                     expression: r'"Date: " + $F{date}',
                   ),
                   TextElement(
@@ -167,9 +165,7 @@ ReportDefinition invoiceSampleDefinition() => const ReportDefinition(
                     bounds: JetRect(x: 0, y: 40, width: 200, height: 14),
                     text: 'BILL TO',
                     style: JetTextStyle(
-                        fontSize: 9,
-                        weight: JetFontWeight.bold,
-                        color: _grey),
+                        fontSize: 9, weight: JetFontWeight.bold, color: _grey),
                   ),
                   TextElement(
                     id: 'customerName',
@@ -182,8 +178,7 @@ ReportDefinition invoiceSampleDefinition() => const ReportDefinition(
                     id: 'billingAddress',
                     bounds: JetRect(x: 0, y: 72, width: 320, height: 44),
                     text: 'billingAddress',
-                    style:
-                        JetTextStyle(fontSize: 10, color: _muted),
+                    style: JetTextStyle(fontSize: 10, color: _muted),
                     expression: r'$F{billingAddress}',
                   ),
                   TextElement(
@@ -322,9 +317,7 @@ ReportDefinition invoiceSampleDefinition() => const ReportDefinition(
                     bounds: JetRect(x: 10, y: 6, width: 190, height: 14),
                     text: 'PAYMENT TERMS',
                     style: JetTextStyle(
-                        fontSize: 9,
-                        weight: JetFontWeight.bold,
-                        color: _grey),
+                        fontSize: 9, weight: JetFontWeight.bold, color: _grey),
                   ),
                   TextElement(
                     id: 'paymentTerms',
@@ -343,9 +336,7 @@ ReportDefinition invoiceSampleDefinition() => const ReportDefinition(
                     bounds: JetRect(x: 10, y: 42, width: 190, height: 14),
                     text: 'SHIPPING',
                     style: JetTextStyle(
-                        fontSize: 9,
-                        weight: JetFontWeight.bold,
-                        color: _grey),
+                        fontSize: 9, weight: JetFontWeight.bold, color: _grey),
                   ),
                   TextElement(
                     id: 'shippingMethod',
@@ -365,9 +356,7 @@ ReportDefinition invoiceSampleDefinition() => const ReportDefinition(
                     bounds: JetRect(x: 10, y: 118, width: 190, height: 14),
                     text: 'DESCRIPTION',
                     style: JetTextStyle(
-                        fontSize: 9,
-                        weight: JetFontWeight.bold,
-                        color: _grey),
+                        fontSize: 9, weight: JetFontWeight.bold, color: _grey),
                   ),
                   TextElement(
                     id: 'invoiceDescription',
@@ -381,8 +370,7 @@ ReportDefinition invoiceSampleDefinition() => const ReportDefinition(
                     id: 'notes',
                     bounds: JetRect(x: 0, y: 186, width: 330, height: 18),
                     text: 'notes',
-                    style:
-                        JetTextStyle(fontSize: 9, color: _grey),
+                    style: JetTextStyle(fontSize: 9, color: _grey),
                     expression: r'$F{notes}',
                   ),
                   TextElement(
@@ -390,9 +378,7 @@ ReportDefinition invoiceSampleDefinition() => const ReportDefinition(
                     bounds: JetRect(x: 340, y: 188, width: 200, height: 12),
                     text: 'All amounts in EUR',
                     style: JetTextStyle(
-                        fontSize: 9,
-                        align: JetTextAlign.right,
-                        color: _grey),
+                        fontSize: 9, align: JetTextAlign.right, color: _grey),
                   ),
                 ],
               ),
