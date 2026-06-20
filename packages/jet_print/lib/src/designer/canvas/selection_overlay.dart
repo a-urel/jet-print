@@ -331,6 +331,13 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
           button: true,
           child: MouseRegion(
             cursor: resizeCursorForHandle(position),
+            // On macOS the diagonal system cursor renders as a plain arrow, so
+            // overpaint the native diagonal NSCursor for corners (a no-op for
+            // edges / non-macOS). onEnter covers a static enter; onHover re-asserts
+            // it after Flutter activates the system cursor on entry. The tracked
+            // cursor stays a real SystemMouseCursor, so edges never desync.
+            onEnter: (_) => applyNativeCornerCursor(position),
+            onHover: (_) => applyNativeCornerCursor(position),
             child: GestureDetector(
               key: handleKey(position),
               behavior: HitTestBehavior.opaque,
