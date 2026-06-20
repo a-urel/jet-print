@@ -118,12 +118,15 @@ void main() {
     }
   });
 
-  testWidgets('on macOS, corners use a native diagonal resize cursor',
+  testWidgets('on macOS, every handle uses the standard system resize cursor',
       (WidgetTester tester) async {
-    // macOS has no public diagonal system cursor, so the library substitutes its
-    // own cursor (driving the macOS window-resize NSCursor). Edges keep the
-    // ordinary system cursors. We can't assert the rendered NSCursor, but we can
-    // assert the corners no longer resolve to a (wrong) plain system cursor.
+    // Flutter supports the diagonal resize cursors on macOS natively (this
+    // project runs Flutter 3.44), so corners use the same SystemMouseCursors as
+    // every other platform — there is NO custom NSCursor workaround. The old
+    // workaround set the cursor imperatively (`[NSCursor set]`) outside Flutter's
+    // pipeline, which desynced macOS cursor management and broke ALL handle
+    // cursors (edges included). This pins the corners to the standard cursors so
+    // the workaround can never silently return.
     debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
     try {
       final JetReportDesignerController controller =
@@ -133,36 +136,20 @@ void main() {
       await tester.pumpAndSettle();
 
       final TestGesture gesture = await _mouse(tester);
-
-      // Edges still use the ordinary (macOS-supported) system cursors.
+      final Map<ResizeHandle, SystemMouseCursor> expected =
+          <ResizeHandle, SystemMouseCursor>{
+        ..._edgeCursor,
+        ..._cornerSystemCursor,
+      };
       for (final MapEntry<ResizeHandle, SystemMouseCursor> entry
-          in _edgeCursor.entries) {
+          in expected.entries) {
+        await gesture.moveTo(Offset.zero); // leave any prior region first
+        await tester.pump();
         await gesture.moveTo(tester.getCenter(_handle(entry.key)));
         await tester.pump();
         expect(_activeCursor(), entry.value,
-            reason:
-                'the ${entry.key.name} edge keeps its system cursor on macOS');
-      }
-
-      // Corners resolve to the library's diagonal cursor (not a system cursor),
-      // tagged NWSE (↖↘) for TL/BR and NESW (↗↙) for TR/BL.
-      const Map<ResizeHandle, String> diagonalTag = <ResizeHandle, String>{
-        ResizeHandle.topLeft: 'NWSE',
-        ResizeHandle.bottomRight: 'NWSE',
-        ResizeHandle.topRight: 'NESW',
-        ResizeHandle.bottomLeft: 'NESW',
-      };
-      for (final MapEntry<ResizeHandle, String> entry in diagonalTag.entries) {
-        await gesture.moveTo(Offset.zero);
-        await tester.pump();
-        await gesture.moveTo(tester.getCenter(_handle(entry.key)));
-        await tester.pump();
-        final MouseCursor cursor = _activeCursor();
-        expect(cursor, isNot(isA<SystemMouseCursor>()),
-            reason: 'macOS corner must not fall back to a plain system cursor');
-        expect(cursor.toString(), contains(entry.value),
-            reason: 'the ${entry.key.name} corner must use the ${entry.value} '
-                'diagonal cursor');
+            reason: 'the ${entry.key.name} handle uses ${entry.value} on macOS '
+                '(no custom NSCursor workaround)');
       }
     } finally {
       debugDefaultTargetPlatformOverride = null;
