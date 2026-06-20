@@ -198,6 +198,15 @@ git commit -m "fix(designer): selection chrome tracks the clamped element during
 
 ## Task 2: Clamp resize-handle boxes to the band
 
+> **REVERTED (2026-06-20, post-manual-GUI).** This task's inward handle-box clamp
+> shipped, but at a band edge it tucked the edge handles ≈8 px off the outline
+> corners, so the selection looked detached/lopsided. Decision reversed: handles
+> now **hug the outline** (centered on the element edge/corner, overflowing a flush
+> band edge by half a handle — Figma/PowerPoint convention). The clamp + `_clampAxis`
+> were removed (commit `d78bae7`); see the spec's 2026-06-20 clarification and the
+> rewritten FR-004..006 / SC-002..004. Task 1 (the move-drift fix) stands. The
+> description below is retained as the historical record of the original approach.
+
 Fixes the static protrusion (spec issue 2 / FR-004, FR-005, FR-006): handles are centered on the element's edges, so when an element sits flush against a band edge the handle box pokes ~4–8 px past the band border. Clamp each handle box to its element's band rect.
 
 **Files:**

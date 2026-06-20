@@ -66,7 +66,20 @@ enforces — without duplicating clamp logic or touching the commit path.
 - Q: How to keep handles inside the band when an element is flush against an edge
   — clip, or clamp the handle box? → A: **Clamp the handle box** to the band
   screen rect (preserves full hit area; only edge-touching handles nudge inward;
-  handles away from an edge are unaffected).
+  handles away from an edge are unaffected). **[SUPERSEDED — see below.]**
+- Q (2026-06-20, after manual GUI test): the handle-box clamp was implemented,
+  but at a band edge it tucked the edge handles ≈8 px **off** the selection
+  outline's corners, so the selection looked detached and lopsided near borders.
+  A corner handle cannot be both centered on a flush element's corner **and**
+  fully inside the band — which behavior wins? → A: **Handles HUG the outline.**
+  Resize handles stay centered on the element's edge/corner everywhere (riding the
+  clamped display layout), so they always look attached to the selection box. They
+  are screen-space grab affordances: at a band edge the small square may **overlap
+  the band line by half a handle**. The selection **box** (outline) still never
+  leaves the band because the element is clamped — only the grab square overflows,
+  matching the convention in mainstream design tools (Figma / PowerPoint /
+  Sketch). This **reverses** the handle-box clamp decision above: there is no
+  static inward clamp. The live-move drift fix (display-layout wiring) stands.
 
 ## Scope
 
@@ -81,17 +94,16 @@ enforces — without duplicating clamp logic or touching the commit path.
   conversion from the overlay. (The controller's `moveDelta` / `previewBoundsFor`
   / `activeBandId` getters remain; the overlay's outline/handle geometry simply no
   longer depends on the raw delta.)
-- **Clamp each handle box to its band's screen rect.** In `_handle`, after
-  computing the handle's positioned box, constrain its `left` / `top` (and the
-  resulting right/bottom) so neither the visual chip nor the hit area crosses the
-  band border. The element's band rect is resolved from the layout
-  (`findBandOfElement` → `bandRect`) and scaled by the view scale.
-- **Defensive outline clamp (if needed).** The outline already follows the
-  clamped element, so it stays inside the band once change 1 lands; an explicit
-  clamp of the outline rect to the band may be added only if a residual sub-pixel
-  overflow is observed.
-- **Tests** covering live-move tracking, multi-select, the four flush edges, and
-  resize-past-edge (regression guard for the existing clamp).
+- **Handles hug the outline (no static clamp).** In `_handle`, each handle is
+  positioned centered on its element edge/corner (`center.x*scale - hit/2`, etc.),
+  riding the same clamped display geometry as the outline, so it always looks
+  attached to the selection box. At a band edge the small grab square may overlap
+  the band line by half a handle; the selection box itself stays in-band because
+  the element is clamped. (An inward handle-box clamp was implemented and then
+  reverted after manual GUI test — see the 2026-06-20 clarification.)
+- **Tests** covering live-move drift tracking, and that handles hug the outline
+  corner even when the element is flush against a band edge (top-left and
+  bottom-right) and during a clamped resize.
 
 **Out of scope**
 
@@ -104,8 +116,8 @@ enforces — without duplicating clamp logic or touching the commit path.
   history, and stays that way. Goldens are unaffected.
 - Changing handle size constants (`kHandleHitSize`, `kHandleVisualSize`),
   min-element-size (`kMinElementSize`), snapping, or cursors.
-- Re-centering handles globally (handles stay centered on the element edge except
-  where the band-rect clamp nudges an edge-touching handle inward).
+- Clipping the overlay or insetting handles to hide the half-handle overflow at a
+  band edge — the overflow is intended (handles are a screen-space overlay).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -113,24 +125,26 @@ enforces — without duplicating clamp logic or touching the commit path.
 
 An author drags an element toward — and past — a band's bottom edge. The element
 body stops at the band boundary (today's clamp). The blue selection outline and
-all eight handles **stop at the same boundary**, glued to the element. They never
-slide below the band into the next band's territory. (Today the outline + handles
-keep following the cursor while the element stays put.)
+all eight handles stay **glued to the clamped element** instead of following the
+cursor past the band. (Today the outline + handles keep sliding with the cursor
+while the element stays put — the chrome decouples.) The bottom handles rest on
+the band boundary (overlapping it by half a handle, as designed in US2).
 
-### User Story 2 - Handles stay inside the band when an element is flush (P1)
+### User Story 2 - Handles hug the outline when an element is flush (P1)
 
 An author places an element flush against the top of its band (`y == 0`). The top
-edge and top-corner handles render **inside** the band, just below the border —
-not poking ≈4–8 px above it into the band separator. The same holds for the
-bottom, left, and right band edges. Handles that are not near any band edge stay
-centered on the element's edge as before.
+edge and top-corner handles render **centered on the element's top edge**, looking
+attached to the selection box — exactly as they do anywhere else. The small grab
+squares overlap the band line by half their size (a screen-space overlay), rather
+than tucking inward and detaching from the outline corners. The selection box
+itself stays within the band.
 
-### User Story 3 - Resize past a band edge keeps handles inside (P1)
+### User Story 3 - Resize past a band edge keeps handles on the clamped corner (P1)
 
 An author drags the bottom-right handle far past the band's bottom-right corner.
-The resize preview clamps to the band (today's behavior). The handles ride the
-clamped preview and stay **inside** the band — the bottom/right handles sit on the
-clamped edge, fully within the band rather than protruding past it.
+The resize preview clamps to the band. The handles ride the clamped preview — the
+bottom-right handle stays centered on the **clamped** corner (not the raw pointer),
+hugging the outline.
 
 ### User Story 4 - Multi-select move stays bounded (P2)
 
@@ -158,23 +172,20 @@ the others do not.
   outline MUST coincide with the painted element body (no decoupling): the outline
   stops at the same boundary as the element, for single- and multi-element
   selections.
-- **FR-004**: Each resize handle's screen box — both the `kHandleHitSize` hit area
-  and the `kHandleVisualSize` chip — MUST be clamped so it lies fully within its
-  element's **band** screen rect. No part of any handle may render or hit-test
-  outside the band, including when the element is flush against a band edge.
-- **FR-005**: The overlay MUST obtain an element's band rect from the layout
-  (resolve the owning band via `layout.bandOfElement(id)`, then
-  `layout.bandRect(bandId)`) and scale it by the view scale to perform the FR-004
-  clamp — reusing the layout as the single source of band geometry rather than
-  recomputing band offsets.
-- **FR-006**: The FR-004 clamp MUST preserve each handle's full hit area (it MUST
-  shift the box inward, NOT clip it). A handle whose box already lies within the
-  band MUST be left unchanged (handles away from a band edge stay centered on the
-  element edge). In the degenerate case of a band shorter than two handle boxes
-  (e.g. a near-minimum-height band fully occupied by an element), opposite-edge
-  handles MAY clamp to overlapping positions; this is an accepted inherent space
-  constraint — the handles stay inside the band and remain individually hit-
-  testable.
+- **FR-004**: Each resize handle MUST be positioned centered on its element
+  edge/corner (`center.{x,y} * scale - kHandleHitSize/2`), riding the same clamped
+  display geometry as the outline, so the handle always renders attached to the
+  selection box — including when the element is flush against a band edge. There
+  MUST be no static inward clamp of the handle box. (Superseded the earlier
+  band-rect clamp; see the 2026-06-20 clarification.)
+- **FR-005**: At a band edge, a handle centered on the flush element's edge MAY
+  overlap the band line by up to half the handle box; this overflow is intended
+  (the handle is a screen-space grab affordance). The selection **box** (outline)
+  MUST still stay within the band, which holds because the element it traces is
+  clamped (FR-002).
+- **FR-006**: Handle positioning MUST be uniform regardless of proximity to a band
+  edge — a flush-edge handle is positioned by the same expression as an interior
+  one (no special-case branch, no band lookup in `_handle`).
 - **FR-007**: This slice MUST NOT modify `clampToBand`, the controller's
   move / resize / band-resize state machine, the commit commands, the domain
   model, serialization, or `validate()`. It is confined to the live selection
@@ -184,12 +195,11 @@ the others do not.
 
 - **`DesignerSelectionOverlay`** *(existing widget, designer canvas)* — now
   consumes `displayLayout`; its `rectFor` derives outline/handle geometry from the
-  live clamped layout, and `_handle` clamps each handle box to the band rect.
+  live clamped layout, and `_handle` positions each handle centered on the element
+  edge/corner (no band clamp).
 - **`displayLayout`** *(existing, `design_canvas.dart`)* — the `DesignTimeLayout`
   built from `controller.displayDefinition`; already feeds the element picture,
   hit regions, grid, and badges, and now also the selection overlay.
-- **Band screen rect** *(existing, reused)* — `layout.bandRect(bandId)` scaled by
-  the view scale; the clamp target for handle boxes.
 - **Selection chrome** *(transient designer state)* — outline + eight resize
   handles; not part of the model or undo/redo history.
 
@@ -199,14 +209,15 @@ the others do not.
   rectangle equals the painted (clamped) element rectangle and lies entirely
   within the band content box — verified for both the in-edge axis and the free
   axis. (Today the overlay rect would exceed the band.)
-- **SC-002**: During the same clamped move, every one of the element's eight
-  handle boxes lies within the band screen rect.
-- **SC-003**: With an element placed flush against each of the four band-content
-  edges in turn, no handle box exceeds the band screen rect; a handle not adjacent
-  to any band edge remains centered on the element's edge.
-- **SC-004**: Dragging a resize handle past a band edge keeps the handles on the
-  clamped preview and within the band rect (the existing resize clamp is not
-  regressed).
+- **SC-002**: During the same clamped move, each handle stays centered on the
+  clamped element's corresponding edge/corner (the chrome rides the clamped
+  geometry, not the raw drag delta).
+- **SC-003**: With an element placed flush against a band edge (top-left and
+  bottom-right corners verified), the corresponding handle is centered exactly on
+  the element's corner (it hugs the outline rather than tucking inward).
+- **SC-004**: While dragging a resize handle past a band edge, the handle stays
+  centered on the **clamped** element corner (it rides the clamped preview, not the
+  raw pointer).
 - **SC-005**: The full `jet_print` suite is green, `flutter analyze` is clean, and
   existing goldens are **byte-identical** (overlay/transient-state-only change; no
   engine output or `schemaVersion` change).
