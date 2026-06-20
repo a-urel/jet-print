@@ -162,24 +162,6 @@ class _PlaygroundHome extends StatelessWidget {
               scrollable: true,
               tabs: <ShadTab<String>>[
                 ShadTab<String>(
-                  value: 'bos',
-                  leading: const Icon(LucideIcons.squareDashed, size: 16),
-                  // A blank canvas over the SAME invoice data — for exercising
-                  // the designer by hand from nothing.
-                  expandContent: true,
-                  content: _FillTabHeight(
-                    child: _DesignerTab(
-                      fonts: fonts,
-                      seed: emptyDesignDefinition(),
-                      dataSchema: invoiceSchema,
-                      renderReport: (ReportDefinition def) =>
-                          renderInvoiceDefinition(
-                              definition: def, fonts: fonts),
-                    ),
-                  ),
-                  child: Text(l10n.tabEmpty),
-                ),
-                ShadTab<String>(
                   value: 'fatura',
                   leading: const Icon(LucideIcons.fileText, size: 16),
                   // The designer is the hero: fill the space below the strip.
@@ -310,6 +292,24 @@ class _PlaygroundHome extends StatelessWidget {
                     ),
                   ),
                   child: Text(l10n.tabMenu),
+                ),
+                ShadTab<String>(
+                  value: 'bos',
+                  leading: const Icon(LucideIcons.squareDashed, size: 16),
+                  // A blank canvas over the SAME invoice data — for exercising
+                  // the designer by hand from nothing.
+                  expandContent: true,
+                  content: _FillTabHeight(
+                    child: _DesignerTab(
+                      fonts: fonts,
+                      seed: emptyDesignDefinition(),
+                      dataSchema: invoiceSchema,
+                      renderReport: (ReportDefinition def) =>
+                          renderInvoiceDefinition(
+                              definition: def, fonts: fonts),
+                    ),
+                  ),
+                  child: Text(l10n.tabEmpty),
                 ),
               ],
             ),
