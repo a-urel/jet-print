@@ -312,9 +312,22 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
   ) {
     final ({double x, double y}) center = _handleCenter(position, pageRect);
     const double hit = kHandleHitSize;
+    final double s = widget.scale;
+    // Keep the whole handle box (hit area + chip) inside the element's band, so a
+    // handle centered on a flush element's edge never pokes past the band border
+    // (spec 038, FR-004). A handle clear of every edge is left untouched.
+    final String? bandId = widget.layout.bandOfElement(id);
+    final JetRect? band =
+        bandId == null ? null : widget.layout.bandRect(bandId);
+    double left = center.x * s - hit / 2;
+    double top = center.y * s - hit / 2;
+    if (band != null) {
+      left = _clampAxis(left, band.x * s, (band.x + band.width) * s - hit);
+      top = _clampAxis(top, band.y * s, (band.y + band.height) * s - hit);
+    }
     return Positioned(
-      left: center.x * widget.scale - hit / 2,
-      top: center.y * widget.scale - hit / 2,
+      left: left,
+      top: top,
       width: hit,
       height: hit,
       // One merged semantics node: a directional, button-role handle (FR-024).
@@ -391,4 +404,16 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
       ResizeHandle.left => (x: left, y: cy),
     };
   }
+}
+
+/// Clamps [v] into `[min, max]`, pinning to [min] when the range is empty — i.e.
+/// when the band is shorter/narrower than a handle box (a degenerate near-minimum
+/// band). The far edge may then still overflow because a fixed-size handle box
+/// physically cannot fit; the near edge stays anchored to the band (spec 038,
+/// FR-006).
+double _clampAxis(double v, double min, double max) {
+  if (max <= min) return min;
+  if (v < min) return min;
+  if (v > max) return max;
+  return v;
 }

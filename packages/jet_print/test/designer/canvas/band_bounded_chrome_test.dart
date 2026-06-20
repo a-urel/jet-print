@@ -11,6 +11,8 @@ Finder _elementFinder(String id) =>
     find.byKey(ValueKey<String>('jet_print.designer.element.$id'));
 final Finder _topLeftHandle =
     find.byKey(const ValueKey<String>('jet_print.designer.handle.topLeft'));
+final Finder _bottomRightHandle =
+    find.byKey(const ValueKey<String>('jet_print.designer.handle.bottomRight'));
 
 void main() {
   testWidgets(
@@ -43,5 +45,42 @@ void main() {
 
     c.commitMove();
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('a flush element top-left handle stays inside the band',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c = await pumpDesignerWith(tester);
+    final String bandId = firstDetailBandId(c);
+    // Flush at the band's top-left: the element's own rect top/left ARE the
+    // band's top/left edge, so they are a faithful band-boundary probe.
+    c.createElement(DesignerToolType.text,
+        bandId: bandId, at: const JetOffset(0, 0));
+    await tester.pumpAndSettle();
+
+    final String id = c.selection.singleOrNull!;
+    final Rect elem = tester.getRect(_elementFinder(id));
+    final Rect tl = tester.getRect(_topLeftHandle);
+    expect(tl.top, greaterThanOrEqualTo(elem.top - 0.5),
+        reason: 'top handle box stays below the band top');
+    expect(tl.left, greaterThanOrEqualTo(elem.left - 0.5),
+        reason: 'left handle box stays right of the band left');
+  });
+
+  testWidgets('a flush element bottom-right handle stays inside the band',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c = await pumpDesignerWith(tester);
+    final String bandId = firstDetailBandId(c);
+    // A huge offset clamps the element flush into the band's bottom-right corner.
+    c.createElement(DesignerToolType.text,
+        bandId: bandId, at: const JetOffset(1000000, 1000000));
+    await tester.pumpAndSettle();
+
+    final String id = c.selection.singleOrNull!;
+    final Rect elem = tester.getRect(_elementFinder(id));
+    final Rect br = tester.getRect(_bottomRightHandle);
+    expect(br.bottom, lessThanOrEqualTo(elem.bottom + 0.5),
+        reason: 'bottom handle box stays above the band bottom');
+    expect(br.right, lessThanOrEqualTo(elem.right + 0.5),
+        reason: 'right handle box stays left of the band right');
   });
 }
