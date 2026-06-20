@@ -80,4 +80,49 @@ void main() {
     a.reset();
     expect(a.value, const JetNumber(0));
   });
+
+  test('skippedNonNumeric counts wrong-type SUM inputs, not null/error', () {
+    final VariableAccumulator a = _acc(JetCalculation.sum);
+    a.fold(const JetNumber(2));
+    a.fold(const JetNull()); // legit blank — NOT a skip
+    a.fold(const JetError('x')); // error — NOT a skip
+    a.fold(const JetString('y')); // wrong type — a skip
+    a.fold(const JetNumber(3));
+    expect(a.value, const JetNumber(5));
+    expect(a.skippedNonNumeric, 1);
+  });
+
+  test('skippedNonNumeric counts wrong-type AVG inputs', () {
+    final VariableAccumulator a = _acc(JetCalculation.average);
+    a.fold(const JetNumber(4));
+    a.fold(const JetString('nope')); // skip
+    a.fold(const JetNumber(6));
+    expect(a.value, const JetNumber(5)); // (4+6)/2
+    expect(a.skippedNonNumeric, 1);
+  });
+
+  test('skippedNonNumeric counts incomparable MIN/MAX inputs (after first)', () {
+    final VariableAccumulator a = _acc(JetCalculation.min);
+    a.fold(const JetNumber(5)); // first value taken unconditionally
+    a.fold(const JetString('x')); // incomparable to a number -> skip
+    a.fold(const JetNumber(2));
+    expect(a.value, const JetNumber(2));
+    expect(a.skippedNonNumeric, 1);
+  });
+
+  test('count never skips; it accepts any non-null/non-error type', () {
+    final VariableAccumulator a = _acc(JetCalculation.count);
+    a.fold(const JetString('a'));
+    a.fold(const JetNumber(1));
+    expect(a.skippedNonNumeric, 0);
+  });
+
+  test('reset() does NOT clear skippedNonNumeric (lifetime-monotonic)', () {
+    final VariableAccumulator a = _acc(JetCalculation.sum);
+    a.fold(const JetString('y')); // skip
+    expect(a.skippedNonNumeric, 1);
+    a.reset();
+    expect(a.value, const JetNumber(0), reason: 'value state resets');
+    expect(a.skippedNonNumeric, 1, reason: 'skip count is lifetime-monotonic');
+  });
 }
