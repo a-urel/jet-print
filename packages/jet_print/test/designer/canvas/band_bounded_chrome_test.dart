@@ -83,4 +83,34 @@ void main() {
     expect(br.right, lessThanOrEqualTo(elem.right + 0.5),
         reason: 'right handle box stays left of the band right');
   });
+
+  testWidgets('live resize past a band edge keeps handles on the clamped '
+      'preview, inside the band', (WidgetTester tester) async {
+    final JetReportDesignerController c = await pumpDesignerWith(tester);
+    final String bandId = firstDetailBandId(c);
+    c.createElement(DesignerToolType.text,
+        bandId: bandId, at: const JetOffset(60, 40));
+    await tester.pumpAndSettle();
+    final String id = c.selection.singleOrNull!;
+
+    // Drag the bottom-right handle far past the band's bottom-right corner and
+    // HOLD (no release). The element's size clamps to the band, and the handles
+    // must ride that clamped preview — not the raw pointer — staying in-band.
+    final TestGesture gesture =
+        await tester.startGesture(tester.getCenter(_bottomRightHandle));
+    for (int i = 0; i < 6; i++) {
+      await gesture.moveBy(const Offset(200, 200));
+      await tester.pump();
+    }
+
+    final Rect elem = tester.getRect(_elementFinder(id));
+    final Rect br = tester.getRect(_bottomRightHandle);
+    expect(br.bottom, lessThanOrEqualTo(elem.bottom + 0.5),
+        reason: 'bottom handle stays above the band bottom during resize');
+    expect(br.right, lessThanOrEqualTo(elem.right + 0.5),
+        reason: 'right handle stays left of the band right during resize');
+
+    await gesture.up();
+    await tester.pumpAndSettle();
+  });
 }
