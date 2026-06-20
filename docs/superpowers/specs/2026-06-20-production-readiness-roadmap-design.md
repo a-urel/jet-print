@@ -114,12 +114,21 @@ green. **Must come after E4 and E5** (see sequencing).
 File open/save UX, a data-source connection UI, and per-platform packaging /
 signing / distribution. A separate product surface layered on the library.
 
+### E8 — Spec 033: multi-level inline aggregates — pre-1.0 feature — M — Medium risk
+Promoted from "postponed" into the pre-1.0 scope by decision (2026-06-20).
+`{SUM([leaf])}` folds at every footer level (flat fold). **Already has
+`spec.md` + `plan-designer.md` + `plan-engine.md`** at
+`specs/033-multilevel-inline-aggregates/` — so it skips brainstorming and goes
+straight to plan-execution. Runs as a sibling to E1; must land before the E6
+1.0 freeze (it touches authoring + resolution, i.e. the public surface).
+
 ## Sequencing & gating constraints
 
 ```
 E1 ─▶ E2 ─▶ E3 ─┐
                 ├─▶ E4 ─┐
-                └─▶ E5 ─┴─▶ E6 (1.0 freeze) ─▶ E7
+                └─▶ E5 ─┤
+E8 (spec 033) ──────────┴─▶ E6 (1.0 freeze) ─▶ E7
 ```
 
 - **E1 first** — cheap, no risk, removes false signals everything else assumes.
@@ -146,6 +155,8 @@ E1 ─▶ E2 ─▶ E3 ─┐
 
 ## Next step
 
-Brainstorm **E1 — Release hygiene & truth** into a concrete spec via the normal
-design flow, then write its implementation plan. The remaining epics are
-brainstormed in later sessions, in roughly the sequence above.
+**E1 — Release hygiene & truth** is brainstormed and specced:
+[e1-release-hygiene-design.md](./2026-06-20-e1-release-hygiene-design.md) — ready
+for `writing-plans`. **E8 (spec 033)** follows immediately as a sibling (it already
+has spec + plans → plan-execution). The remaining epics are brainstormed in later
+sessions, in roughly the sequence above.
