@@ -1,7 +1,9 @@
-import 'dart:io' show File, Platform;
+import 'dart:convert' show utf8;
 import 'dart:typed_data';
 
 import 'package:file_selector/file_selector.dart';
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -31,9 +33,13 @@ Future<void> main() async {
   // Fail fast on unsupported platforms so a wrong target surfaces a clear
   // message instead of rendering incorrectly (spec Edge Cases). The library is
   // platform-agnostic; this playground app targets desktop (macOS, Windows, Linux).
-  if (!(Platform.isMacOS || Platform.isWindows || Platform.isLinux)) {
+  final bool supported = kIsWeb ||
+      defaultTargetPlatform == TargetPlatform.macOS ||
+      defaultTargetPlatform == TargetPlatform.windows ||
+      defaultTargetPlatform == TargetPlatform.linux;
+  if (!supported) {
     throw UnsupportedError(
-      'jet_print_playground targets desktop (macOS, Windows, Linux).',
+      'jet_print_playground targets desktop (macOS, Windows, Linux) and web.',
     );
   }
   // 022 + Google-Fonts catalog: a curated, offline set of real OFL families,
@@ -432,15 +438,38 @@ class _DesignerTabState extends State<_DesignerTab> {
     super.dispose();
   }
 
-  /// Save: encode the current definition and write it to a picked location.
-  Future<void> _save(ReportDefinition definition) async {
+  /// Cross-platform save: on web, download via the browser (file picking is
+  /// unsupported there) — on desktop, pick a location then write. Both go
+  /// through `cross_file`'s `XFile.saveTo`, which downloads on web and writes
+  /// a file on desktop, so no `dart:io` is needed.
+  Future<void> _saveBytes(
+    Uint8List bytes, {
+    required String suggestedName,
+    required List<XTypeGroup> acceptedTypeGroups,
+    String? mimeType,
+  }) async {
+    if (kIsWeb) {
+      await XFile.fromData(bytes, name: suggestedName, mimeType: mimeType)
+          .saveTo(suggestedName);
+      return;
+    }
     final FileSaveLocation? location = await getSaveLocation(
-      acceptedTypeGroups: const <XTypeGroup>[_reportType],
-      suggestedName: 'report.jetreport',
+      acceptedTypeGroups: acceptedTypeGroups,
+      suggestedName: suggestedName,
     );
     if (location == null) return; // user cancelled
-    await File(location.path)
-        .writeAsString(JetReportFormat.encodeDefinitionJson(definition));
+    await XFile.fromData(bytes, mimeType: mimeType).saveTo(location.path);
+  }
+
+  /// Save: encode the current definition and write it to a picked location.
+  Future<void> _save(ReportDefinition definition) async {
+    final Uint8List bytes = Uint8List.fromList(
+        utf8.encode(JetReportFormat.encodeDefinitionJson(definition)));
+    await _saveBytes(
+      bytes,
+      suggestedName: 'report.jetreport',
+      acceptedTypeGroups: const <XTypeGroup>[_reportType],
+    );
   }
 
   /// Open: read a picked file and decode it back into the controller. The v2
@@ -457,15 +486,14 @@ class _DesignerTabState extends State<_DesignerTab> {
   /// Export the rendered report as a PDF to a picked location (host-owned I/O).
   Future<void> _exportPdf(RenderedReport report) async {
     final Uint8List pdf = await const JetReportExporter().toPdf(report);
-    final FileSaveLocation? location = await getSaveLocation(
+    await _saveBytes(
+      pdf,
+      suggestedName: 'invoice.pdf',
       acceptedTypeGroups: const <XTypeGroup>[
         XTypeGroup(label: 'PDF document', extensions: <String>['pdf']),
       ],
-      suggestedName: 'invoice.pdf',
+      mimeType: 'application/pdf',
     );
-    if (location == null) return; // user cancelled
-    await XFile.fromData(pdf, mimeType: 'application/pdf')
-        .saveTo(location.path);
   }
 
   @override
