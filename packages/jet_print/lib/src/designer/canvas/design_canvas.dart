@@ -1141,10 +1141,12 @@ class _DesignCanvasState extends State<DesignCanvas> {
                   // layout so the hit regions ride along with the live picture.
                   ..._elementRegions(controller, displayLayout, scale,
                       JetPrintLocalizations.of(context)),
-                  // Selection chrome (outline + handles), on top.
+                  // Selection chrome (outline + handles), on top. Fed the DISPLAY
+                  // layout so the outline + handles ride the same clamped geometry
+                  // as the element picture during a live move/resize (spec 038).
                   Positioned.fill(
-                    child:
-                        DesignerSelectionOverlay(layout: layout, scale: scale),
+                    child: DesignerSelectionOverlay(
+                        layout: displayLayout, scale: scale),
                   ),
                   // Marquee rubber-band, while dragging on empty canvas.
                   if (_marqueeRect case final JetRect m)

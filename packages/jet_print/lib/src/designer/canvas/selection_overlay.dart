@@ -101,7 +101,6 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
       return _bandChrome(controller, selectedBand, colors, l10n);
     }
 
-    final JetOffset move = controller.moveDelta ?? const JetOffset(0, 0);
     final List<Widget> children = <Widget>[];
 
     // Snap guides live in a single ALWAYS-PRESENT layer (its contents vary, not
@@ -116,29 +115,10 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
       ),
     ));
 
-    JetRect? rectFor(String id) {
-      final JetRect? preview = controller.previewBoundsFor(id);
-      if (preview != null) {
-        // Resize preview is band-relative; convert to page coords.
-        final String? band = controller.activeBandId;
-        final JetRect? bandRect =
-            band == null ? null : widget.layout.bandRect(band);
-        if (bandRect != null) {
-          return JetRect(
-              x: bandRect.x + preview.x,
-              y: bandRect.y + preview.y,
-              width: preview.width,
-              height: preview.height);
-        }
-      }
-      final JetRect? rect = widget.layout.elementRect(id);
-      if (rect == null) return null;
-      return JetRect(
-          x: rect.x + move.dx,
-          y: rect.y + move.dy,
-          width: rect.width,
-          height: rect.height);
-    }
+    // Geometry comes straight from the (display) layout, which already bakes any
+    // in-progress move / resize / band-resize through the single `clampToBand`
+    // authority — so the chrome can never exceed the band (spec 038, FR-002).
+    JetRect? rectFor(String id) => widget.layout.elementRect(id);
 
     for (final String id in selection.ids) {
       final JetRect? r = rectFor(id);
