@@ -190,6 +190,7 @@ void main() {
     expect(r.pageCount, greaterThan(0));
     expect(_diags(r).where((Diagnostic d) => d.severity == DiagnosticSeverity.error),
         isEmpty);
+    expect(_texts(r)['v'], isNull, reason: 'a null collection emits no nested rows');
   });
 
   test('R6: a non-list collection field warns and emits no rows', () {
@@ -255,6 +256,7 @@ void main() {
     );
     final Diagnostic d = _match(r, 'non-row entry');
     expect(d.message, contains('Row '));
+    expect(_texts(r)['v'], '1.0', reason: 'the valid entry still renders; only the bad one is skipped');
   });
 
   test('R8: a malformed expression -> error diagnostic + !ERR', () {
