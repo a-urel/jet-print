@@ -5,6 +5,9 @@
 // showing master header tokens and a `lines`-bound detail band of line tokens —
 // in light and dark. Tokens render through the shared pipeline (no values).
 // Public API only; regenerate with `--update-goldens`.
+@Tags(['golden'])
+library;
+
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';

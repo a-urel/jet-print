@@ -4,6 +4,9 @@
 // the formatted value through the SAME engine -> paintFrame -> CanvasPainter
 // pipeline the preview uses — proving the format property is WYSIWYG, not a
 // parallel path. Public API only; regenerate with `--update-goldens`.
+@Tags(['golden'])
+library;
+
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';

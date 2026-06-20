@@ -5,6 +5,9 @@
 // with the grid ON at 100% zoom. This is a NEW golden — the grid-off surface
 // goldens are unchanged. Regenerate intentional changes with
 // `flutter test --update-goldens`.
+@Tags(['golden'])
+library;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 

@@ -5,6 +5,9 @@
 // both theme variants so a regression that drops theming on any region — or
 // hard-codes a color — is caught visually. Regenerate intentional changes with
 // `flutter test --update-goldens`.
+@Tags(['golden'])
+library;
+
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';

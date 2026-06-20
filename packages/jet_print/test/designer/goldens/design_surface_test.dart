@@ -9,6 +9,9 @@
 // Scoped to the canvas (kDesignCanvasKey) to isolate the design surface from
 // the surrounding shell (covered by jet_report_designer_light_dark_test.dart).
 // Regenerate intentional changes with `flutter test --update-goldens`.
+@Tags(['golden'])
+library;
+
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';

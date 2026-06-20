@@ -7,6 +7,9 @@
 // and a slight gray (slate-200) in dark mode so it does not glare; the dark
 // print content stays legible on it (the exported artifact is always white).
 // Public API only; regenerate with `--update-goldens`.
+@Tags(['golden'])
+library;
+
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';

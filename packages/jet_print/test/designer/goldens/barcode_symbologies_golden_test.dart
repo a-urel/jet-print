@@ -9,6 +9,9 @@
 // All four share one detail band row, each within a 120 × 90 pt cell.
 // The golden exercises the shared render pipeline in a stable, data-free way.
 // Regenerate intentional changes with `flutter test --update-goldens`.
+@Tags(['golden'])
+library;
+
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';

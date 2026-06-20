@@ -7,6 +7,9 @@
 // the export golden covers it too. The pre-existing line/rectangle report
 // goldens are untouched, so they stay byte-identical (C7.3). Black-box: public
 // API only.
+@Tags(['golden'])
+library;
+
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 

@@ -4,6 +4,9 @@
 // element shows its field TOKEN (e.g. `[customerName]`) — not a resolved value —
 // emitted through the SHARED render pipeline, and a field-bound image shows the
 // image placeholder. Public API only; regenerate with `--update-goldens`.
+@Tags(['golden'])
+library;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
