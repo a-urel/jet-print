@@ -63,8 +63,9 @@ class FillEvalContext implements EvalContext {
     if (!row.hasField(name)) {
       final DiagnosticBudget? budget = _budget;
       if (budget != null) {
-        budget.recordRowIssue('field:$name',
-            'Field "$name" is not in the data schema', elementId: _elementId);
+        budget.recordRowIssue(
+            'field:$name', 'Field "$name" is not in the data schema',
+            elementId: _elementId);
       } else if (_warnedFields.add(name)) {
         _diagnostics.warning('Field "$name" is not in the data schema',
             elementId: _elementId);

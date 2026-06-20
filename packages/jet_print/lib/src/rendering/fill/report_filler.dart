@@ -277,9 +277,10 @@ class ReportFiller {
           maps.add(entry.map((Object? k, Object? v) =>
               MapEntry<String, Object?>(k.toString(), v)));
         } else {
-          budget.recordRowIssue('coll-entry:$name',
+          budget.recordRowIssue(
+              'coll-entry:$name',
               'Collection field "$name" contains a non-row entry; it is '
-              'skipped');
+                  'skipped');
         }
       }
       final FieldDef declared = scopeRow.fields.firstWhere(
@@ -375,9 +376,10 @@ class ReportFiller {
             )));
           }
           if (acc.skippedNonNumeric > 0) {
-            budget.recordRowIssue('agg:scope:${cs.id}:${a.name}',
+            budget.recordRowIssue(
+                'agg:scope:${cs.id}:${a.name}',
                 '${acc.skippedNonNumeric} non-numeric value(s) were skipped '
-                'from published total "${a.name}"');
+                    'from published total "${a.name}"');
           }
           // A published total can collide either with a real data field on the
           // parent row (FR-010 shadow) or with a sibling scope's total already
@@ -485,9 +487,10 @@ class ReportFiller {
             for (int k = 0; k < footer.aggs.length; k++) {
               final int skips = accs![k].skippedNonNumeric;
               if (skips > 0) {
-                budget.recordRowIssue('agg:footer:${s.id}:$k',
+                budget.recordRowIssue(
+                    'agg:footer:${s.id}:$k',
                     '$skips non-numeric value(s) were skipped from a footer '
-                    'aggregate in scope "${s.id}"');
+                        'aggregate in scope "${s.id}"');
               }
             }
             addBand(footer.band, scopeRow, vars);
@@ -536,9 +539,10 @@ class ReportFiller {
         calc.advance(row, params: params);
         final int calcSkipDelta = calc.aggregateSkips - calcSkipsBefore;
         if (calcSkipDelta > 0) {
-          budget.recordRowIssue('agg:calc',
+          budget.recordRowIssue(
+              'agg:calc',
               '$calcSkipDelta non-numeric value(s) were skipped from an '
-              'aggregate');
+                  'aggregate');
         }
         final Set<String> broken = calc.brokenGroups;
         if (!hadRows) {
@@ -566,11 +570,13 @@ class ReportFiller {
         for (final DescendantAggregate a in descAggs) {
           foldDescInto(a, row);
         }
-        final int descSkipDelta = _sumAccSkips(descAcc.values) - descSkipsBefore;
+        final int descSkipDelta =
+            _sumAccSkips(descAcc.values) - descSkipsBefore;
         if (descSkipDelta > 0) {
-          budget.recordRowIssue('agg:desc',
+          budget.recordRowIssue(
+              'agg:desc',
               '$descSkipDelta non-numeric value(s) were skipped from a '
-              'roll-up aggregate');
+                  'roll-up aggregate');
         }
         descGroupSnapshot = descValues(groupDescAggs);
       }

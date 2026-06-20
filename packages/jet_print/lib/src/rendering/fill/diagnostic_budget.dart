@@ -57,8 +57,8 @@ class DiagnosticBudget {
       return;
     }
     _emitted++;
-    _sink.add(
-        Diagnostic(severity, 'Row $_row: $message', elementId: elementId));
+    _sink
+        .add(Diagnostic(severity, 'Row $_row: $message', elementId: elementId));
   }
 
   /// Emits a single summary [DiagnosticSeverity.info] when any per-row data
