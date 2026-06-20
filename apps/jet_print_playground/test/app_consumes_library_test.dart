@@ -62,7 +62,11 @@ void main() {
   testWidgets(
     'the Empty tab activates a blank designer over the same invoice data',
     (WidgetTester tester) async {
-      await tester.binding.setSurfaceSize(const Size(900, 700));
+      // Wide enough that the full sample tab strip fits without horizontal
+      // overflow: the rightmost 'Empty' tab would otherwise scroll under the
+      // pinned theme/locale toggle cluster (the strip and the cluster share a
+      // Stack), leaving it obscured and untappable.
+      await tester.binding.setSurfaceSize(const Size(1400, 700));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(const JetPrintPlaygroundApp());
       await tester.pumpAndSettle();
