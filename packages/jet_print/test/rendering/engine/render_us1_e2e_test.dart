@@ -124,8 +124,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Page 1 of 2'), findsOneWidget);
-    await tester
-        .tap(find.byKey(const ValueKey<String>('jet_print.preview.next')));
+    // The preview toolbar scrolls horizontally below its fit width; on this
+    // narrow (800px) surface the rightmost page-nav group can start off-screen,
+    // so scroll the Next button into view before tapping it.
+    final Finder next =
+        find.byKey(const ValueKey<String>('jet_print.preview.next'));
+    await tester.ensureVisible(next);
+    await tester.pumpAndSettle();
+    await tester.tap(next);
     await tester.pumpAndSettle();
     expect(find.text('Page 2 of 2'), findsOneWidget);
   });
