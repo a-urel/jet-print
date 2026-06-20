@@ -514,7 +514,15 @@ class JetReportDesignerController extends ChangeNotifier {
     } else {
       _guides = const <SnapGuide>[];
     }
-    _resizePreview = clampToBand(resized, loc.band, _document.definition.page);
+    // Edge-aware band clamp: a handle stopped at a border pins only its dragged
+    // edge and leaves the anchored edge fixed (the move-style `clampToBand` would
+    // instead keep the size and shove the far edge out — resizing the wrong side).
+    _resizePreview = clampResizeToBand(
+      resized,
+      handle,
+      bandContentWidth(_document.definition.page),
+      loc.band.height,
+    );
     _frameSerial++;
     notifyListeners();
   }

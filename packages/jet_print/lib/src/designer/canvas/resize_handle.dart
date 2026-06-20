@@ -100,3 +100,31 @@ JetRect resizeRect(
 
   return JetRect(x: left, y: top, width: right - left, height: bottom - top);
 }
+
+/// Clamps a [resized] rect (from [resizeRect]) to the band content box
+/// `[0, maxWidth] × [0, maxHeight]`, moving ONLY the edges the [handle] drags.
+///
+/// Unlike the move-style `clampToBand` (which preserves the size and slides the
+/// whole rect back in-bounds), this pins each *dragged* edge at the band border
+/// and leaves the *anchored* (opposite) edges untouched. So a handle stopped at a
+/// border simply stops — it never grows the far side as if the opposite handle
+/// had moved. The anchored edges are assumed already in-band (a resize starts from
+/// in-band bounds), so only the dragged edges can overflow.
+JetRect clampResizeToBand(
+  JetRect resized,
+  ResizeHandle handle,
+  double maxWidth,
+  double maxHeight,
+) {
+  double left = resized.x;
+  double right = resized.x + resized.width;
+  double top = resized.y;
+  double bottom = resized.y + resized.height;
+
+  if (handle.movesLeft && left < 0) left = 0;
+  if (handle.movesRight && right > maxWidth) right = maxWidth;
+  if (handle.movesTop && top < 0) top = 0;
+  if (handle.movesBottom && bottom > maxHeight) bottom = maxHeight;
+
+  return JetRect(x: left, y: top, width: right - left, height: bottom - top);
+}
