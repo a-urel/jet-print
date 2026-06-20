@@ -28,6 +28,8 @@ import 'package:jet_print/jet_print.dart';
 ## Quickstart — render and export a report
 
 ```dart
+import 'dart:typed_data';
+
 import 'package:flutter/widgets.dart';
 import 'package:jet_print/jet_print.dart';
 
@@ -47,7 +49,7 @@ const ReportDefinition definition = ReportDefinition(
             TextElement(
               id: 't1',
               bounds: JetRect(x: 0, y: 0, width: 200, height: 24),
-              text: r'Hello, $F{name}!',
+              expression: r'"Hello, " + $F{name} + "!"',
             ),
           ],
         )),
