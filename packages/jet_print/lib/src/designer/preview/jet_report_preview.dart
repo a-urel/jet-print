@@ -16,15 +16,20 @@ import 'package:flutter/services.dart'
 import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../domain/geometry.dart';
 import '../../rendering/engine/rendered_report.dart';
 import '../../rendering/frame/page_frame.dart';
 import '../../rendering/paint/canvas_painter.dart';
 import '../../rendering/paint/report_painter.dart';
 import '../../rendering/text/font_registry.dart';
+import '../canvas/design_tunables.dart';
 import '../canvas/frame_custom_painter.dart';
+import '../canvas/zoom_math.dart';
+import '../controller/view_fit_mode.dart';
 import '../l10n/jet_print_localizations.dart';
 import '../layout/unified_top_bar.dart';
 import '../layout/workspace_mode_switch.dart';
+import '../layout/zoom_control.dart';
 
 /// A read-only paginated viewer for a [RenderedReport] (FR-008), with a top
 /// toolbar styled to match the designer.
@@ -46,8 +51,11 @@ import '../layout/workspace_mode_switch.dart';
 /// * **Navigation** — previous/next buttons and the left/right arrow keys move
 ///   one page at a time, bounded at the first/last page; a localized
 ///   "page X of N" indicator sits between them.
-/// * **Zoom** — fit-to-width by default (100%); zoom out/in steps the page,
-///   tapping the "%" resets to fit, and the page scrolls when zoomed past fit.
+/// * **Zoom** — the *same* zoom section as the designer: zoom out/in buttons
+///   flank an editable percentage field whose dropdown offers Fit Width, Fit
+///   Page and presets (the shared `ZoomControl`). Opens fit-to-width; "100%"
+///   is actual size. The page re-fits on viewport resize while a sticky fit
+///   mode is active, and scrolls when zoomed past the viewport.
 /// * **Lazy** — pages are requested from the [RenderedReport] on demand, so
 ///   showing the first page never builds the rest (FR-021).
 /// * **WYSIWYG** — the current page paints through the same pipeline as the
@@ -106,13 +114,28 @@ class JetReportPreview extends StatefulWidget {
 }
 
 class _JetReportPreviewState extends State<JetReportPreview> {
-  /// Zoom is a multiplier on the fit-to-width scale: `1.0` fits the page to the
-  /// viewport width (the default), values above 1 enlarge it (and the page
-  /// scrolls horizontally), values below shrink it. Bounded and stepped like a
-  /// document viewer.
-  static const double _minZoom = 0.25;
-  static const double _maxZoom = 4.0;
+  /// Absolute zoom: `1.0` == 100% == actual size, bounded by the shared
+  /// [kMinZoom]/[kMaxZoom] so the preview and designer agree. Manual zoom is a
+  /// straight multiplier on this; fit modes compute it from the viewport.
+  double _viewScale = 1.0;
+
+  /// The active sticky fit mode. Defaults to fit-to-width (matching the designer
+  /// and preserving the preview's prior "opens fit-to-width" behaviour). While
+  /// [JetViewFitMode.width]/[JetViewFitMode.page] the page re-fits on viewport
+  /// resize; any manual zoom clears it to [JetViewFitMode.none].
+  JetViewFitMode _fitMode = JetViewFitMode.width;
+
+  /// The manual zoom step (×/÷ per zoom-in/out press), matching the designer.
   static const double _zoomStep = 1.25;
+
+  /// Fit bookkeeping (mirrors the canvas): [_fitRequest] is bumped on every
+  /// explicit fit pick so re-picking the active mode still re-fits;
+  /// [_appliedFitRequest]/[_lastFitViewport] guard against redundant fits, and
+  /// [_viewInitialized] gates the first-load fit.
+  int _fitRequest = 0;
+  int _appliedFitRequest = -1;
+  Size? _lastFitViewport;
+  bool _viewInitialized = false;
 
   /// Fonts shared between frame recording (the painter resolves glyph bytes
   /// here) and the measurement already baked into the frame, so a glyph is
@@ -127,9 +150,6 @@ class _JetReportPreviewState extends State<JetReportPreview> {
   /// [RenderedReport.title]; re-seeded whenever the host hands in a fresh report
   /// (e.g. after a rename + re-render).
   late String _displayedName;
-
-  /// The fit-to-width zoom multiplier (see [_minZoom]/[_maxZoom]); `1.0` fits.
-  double _zoom = 1.0;
 
   /// The current page's recorded picture, or null while recording is
   /// in-flight (the page box keeps its size; content appears when ready).
@@ -194,20 +214,32 @@ class _JetReportPreviewState extends State<JetReportPreview> {
     _record();
   }
 
-  void _setZoom(double zoom) {
-    final double next = zoom.clamp(_minZoom, _maxZoom);
-    if (next == _zoom) return;
-    // Zoom only rescales the already-recorded picture (FrameCustomPainter keys
-    // its repaint on the scale), so no page re-record is needed.
-    setState(() => _zoom = next);
+  /// Manual zoom: set the absolute [scale] (clamped) and drop the sticky fit
+  /// mode, so the page no longer re-fits on resize. Mirrors the controller's
+  /// `_manualZoom`. Zoom only rescales the already-recorded picture
+  /// ([FrameCustomPainter] keys its repaint on the scale), so no re-record.
+  void _manualZoom(double scale) {
+    setState(() {
+      _fitMode = JetViewFitMode.none;
+      _viewScale = scale.clamp(kMinZoom, kMaxZoom);
+    });
   }
 
-  void _zoomIn() => _setZoom(_zoom * _zoomStep);
+  void _zoomIn() => _manualZoom(_viewScale * _zoomStep);
 
-  void _zoomOut() => _setZoom(_zoom / _zoomStep);
+  void _zoomOut() => _manualZoom(_viewScale / _zoomStep);
 
-  /// Resets to fit-to-width (100%).
-  void _resetZoom() => _setZoom(1.0);
+  /// Sets the zoom to [percent] % (e.g. 130 → 1.30); manual, so the fit clears.
+  void _setZoomPercent(double percent) => _manualZoom(percent / 100);
+
+  /// Selects a sticky fit [mode] and requests a re-fit (computed in the
+  /// `LayoutBuilder`, which owns the viewport).
+  void _setFitMode(JetViewFitMode mode) {
+    setState(() {
+      _fitMode = mode;
+      _fitRequest++;
+    });
+  }
 
   KeyEventResult _onKeyEvent(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
@@ -254,34 +286,27 @@ class _JetReportPreviewState extends State<JetReportPreview> {
           ),
         const _Divider(),
       ],
-      // Zoom group — out / "%" (tap to fit) / in.
+      // Zoom group — the SAME section as the designer: out / editable % field +
+      // Fit Width / Fit Page / preset menu / in. The buttons clamp silently
+      // (no disable), matching the designer.
       _ToolbarButton(
         buttonKey: const ValueKey<String>('jet_print.preview.zoomOut'),
         icon: LucideIcons.zoomOut,
         label: l10n.actionZoomOutTooltip,
-        onPressed: _zoom > _minZoom ? _zoomOut : null,
+        onPressed: _zoomOut,
       ),
-      ShadTooltip(
-        builder: (BuildContext context) => Text(l10n.actionZoomFitTooltip),
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: _resetZoom,
-          child: SizedBox(
-            width: 46,
-            child: Text(
-              '${(_zoom * 100).round()}%',
-              key: const ValueKey<String>('jet_print.preview.zoomLevel'),
-              textAlign: TextAlign.center,
-              style: theme.textTheme.small.copyWith(color: colors.foreground),
-            ),
-          ),
-        ),
+      ZoomControl(
+        viewScale: _viewScale,
+        fitMode: _fitMode,
+        onPercent: _setZoomPercent,
+        onFit: _setFitMode,
+        keyPrefix: 'jet_print.preview',
       ),
       _ToolbarButton(
         buttonKey: const ValueKey<String>('jet_print.preview.zoomIn'),
         icon: LucideIcons.zoomIn,
         label: l10n.actionZoomInTooltip,
-        onPressed: _zoom < _maxZoom ? _zoomIn : null,
+        onPressed: _zoomIn,
       ),
       // Page-navigation group — prev / "page X of N" / next.
       const _Divider(),
@@ -357,18 +382,43 @@ class _JetReportPreviewState extends State<JetReportPreview> {
                 child: LayoutBuilder(
                   builder: (BuildContext context, BoxConstraints constraints) {
                     const double pad = 16;
-                    final double viewportWidth = constraints.maxWidth;
-                    final double fitWidth =
-                        math.max(0, viewportWidth - 2 * pad);
                     final PageFrame frame = _frame;
-                    final double pageWidth = fitWidth * _zoom;
-                    final double scale = pageWidth / frame.page.width;
+                    final Size viewport =
+                        Size(constraints.maxWidth, constraints.maxHeight);
+                    final JetSize content =
+                        JetSize(frame.page.width, frame.page.height);
+
+                    // Re-fit OFF the build path (it mutates state) on first
+                    // load, on an explicit fit pick, or when the viewport
+                    // changes while a sticky fit mode is active — the designer
+                    // canvas's handshake (design_canvas.dart). Manual zoom
+                    // clears the mode, so this leaves a user's scale alone.
+                    final bool fitActive = _fitMode != JetViewFitMode.none;
+                    final bool viewportChanged = _lastFitViewport != viewport;
+                    if ((!_viewInitialized && fitActive) ||
+                        _fitRequest != _appliedFitRequest ||
+                        (fitActive && viewportChanged)) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (!mounted) return;
+                        setState(() {
+                          _viewInitialized = true;
+                          _appliedFitRequest = _fitRequest;
+                          _lastFitViewport = viewport;
+                          _viewScale = _fitMode == JetViewFitMode.page
+                              ? fitPageScale(content, viewport, pad)
+                              : fitWidthScale(content, viewport, pad);
+                        });
+                      });
+                    }
+
+                    final double scale = _viewScale;
+                    final double pageWidth = frame.page.width * scale;
                     final double pageHeight = frame.page.height * scale;
                     // The horizontal scroll content is at least as wide as the
                     // viewport, so the page centers when it fits and scrolls
                     // once zoomed past fit.
                     final double contentWidth =
-                        math.max(pageWidth + 2 * pad, viewportWidth);
+                        math.max(pageWidth + 2 * pad, viewport.width);
                     return SingleChildScrollView(
                       child: SingleChildScrollView(
                         scrollDirection: Axis.horizontal,

@@ -68,7 +68,11 @@ bool _segmentDisabled(WidgetTester tester, Key key) =>
 
 const Key _zoomInKey = ValueKey<String>('jet_print.preview.zoomIn');
 const Key _zoomOutKey = ValueKey<String>('jet_print.preview.zoomOut');
-const Key _zoomLevelKey = ValueKey<String>('jet_print.preview.zoomLevel');
+const Key _zoomLevelKey =
+    ValueKey<String>('jet_print.preview.action.zoomLevel');
+const Key _zoomCaretKey = ValueKey<String>('jet_print.preview.zoom.menuToggle');
+const Key _fitWidthKey = ValueKey<String>('jet_print.preview.zoom.fitWidth');
+const Key _fitPageKey = ValueKey<String>('jet_print.preview.zoom.fitPage');
 
 const Key _exportKey = ValueKey<String>('jet_print.preview.export');
 const Key _printKey = ValueKey<String>('jet_print.preview.print');
@@ -288,59 +292,108 @@ void main() {
     });
   });
 
-  group('zoom (fit-to-width multiplier)', () {
+  group('zoom (shared ZoomControl, absolute scale)', () {
+    // The zoom field is now the designer's ShadInput, read via its controller.
     String level(WidgetTester tester) =>
-        tester.widget<Text>(find.byKey(_zoomLevelKey)).data!;
+        tester.widget<ShadInput>(find.byKey(_zoomLevelKey)).controller!.text;
 
-    testWidgets('opens at 100% (fit to width)', (WidgetTester tester) async {
-      await _pumpPreview(tester);
-      expect(level(tester), '100%');
+    testWidgets('opens fit-to-width; the field shows the computed scale (not a '
+        'literal 100%)', (WidgetTester tester) async {
+      await _pumpPreview(tester, size: const Size(800, 600));
+      final double pageW = tester.getSize(find.byKey(_pageKey)).width;
+      // Fit-to-width: the page fills the viewport minus the 16px padding/side.
+      expect(pageW, moreOrLessEquals(768, epsilon: 1));
+      // The shared field shows that fit as an absolute percentage; with a 200pt
+      // page in a 768px-usable viewport that is ~384%, NOT a literal "100%".
+      expect(level(tester), '${(pageW / _page.width * 100).round()}%');
     });
 
-    testWidgets('zoom in enlarges the page and updates the indicator',
+    testWidgets('zoom in enlarges the page (manual ×1.25)',
         (WidgetTester tester) async {
-      await _pumpPreview(tester, size: const Size(800, 600));
-      final double fitWidth = tester.getSize(find.byKey(_pageKey)).width;
+      // A mid-range fit (2.34×) leaves head-room below the 4.0 clamp.
+      // The ZoomControl widens the toolbar past 500px so the buttons live in
+      // the toolbar's SingleChildScrollView; ensureVisible scrolls them into
+      // the hit-test region before tapping.
+      await _pumpPreview(tester, size: const Size(500, 600));
+      final double before = tester.getSize(find.byKey(_pageKey)).width;
+      await tester.ensureVisible(find.byKey(_zoomInKey));
       await tester.tap(find.byKey(_zoomInKey));
       await tester.pumpAndSettle();
-      expect(level(tester), '125%');
-      expect(tester.getSize(find.byKey(_pageKey)).width, greaterThan(fitWidth));
+      expect(tester.getSize(find.byKey(_pageKey)).width, greaterThan(before));
     });
 
-    testWidgets('zoom out shrinks the page below fit',
+    testWidgets('zoom out shrinks the page below fit (manual ÷1.25)',
         (WidgetTester tester) async {
-      await _pumpPreview(tester, size: const Size(800, 600));
-      final double fitWidth = tester.getSize(find.byKey(_pageKey)).width;
+      await _pumpPreview(tester, size: const Size(500, 600));
+      final double fit = tester.getSize(find.byKey(_pageKey)).width;
+      await tester.ensureVisible(find.byKey(_zoomOutKey));
       await tester.tap(find.byKey(_zoomOutKey));
       await tester.pumpAndSettle();
-      expect(tester.getSize(find.byKey(_pageKey)).width, lessThan(fitWidth));
+      expect(tester.getSize(find.byKey(_pageKey)).width, lessThan(fit));
     });
 
-    testWidgets('tapping the indicator resets to fit (100%)',
+    testWidgets('picking Fit Width from the dropdown re-fits the page',
         (WidgetTester tester) async {
-      await _pumpPreview(tester);
-      await tester.tap(find.byKey(_zoomInKey));
-      await tester.tap(find.byKey(_zoomInKey));
+      await _pumpPreview(tester, size: const Size(500, 600));
+      final double fit = tester.getSize(find.byKey(_pageKey)).width;
+      await tester.ensureVisible(find.byKey(_zoomOutKey));
+      await tester.tap(find.byKey(_zoomOutKey)); // manual zoom clears the fit
       await tester.pumpAndSettle();
-      expect(level(tester), isNot('100%'));
-      await tester.tap(find.byKey(_zoomLevelKey));
+      expect(tester.getSize(find.byKey(_pageKey)).width, lessThan(fit));
+      await tester.ensureVisible(find.byKey(_zoomCaretKey));
+      await tester.tap(find.byKey(_zoomCaretKey));
       await tester.pumpAndSettle();
-      expect(level(tester), '100%');
+      await tester.tap(find.byKey(_fitWidthKey));
+      await tester.pumpAndSettle();
+      expect(tester.getSize(find.byKey(_pageKey)).width,
+          moreOrLessEquals(fit, epsilon: 1));
     });
 
-    testWidgets('zoom is bounded: zoom-out disables at the minimum',
+    testWidgets('picking Fit Page fits the whole page (height-limited)',
         (WidgetTester tester) async {
-      await _pumpPreview(tester);
-      // 1.0 / 1.25^n reaches the 0.25 floor after enough steps.
-      for (int i = 0; i < 12; i++) {
-        final ShadIconButton out =
-            tester.widget<ShadIconButton>(find.byKey(_zoomOutKey));
-        if (out.onPressed == null) break;
+      // A short, wide viewport: fit-width would overflow the height, so fit-page
+      // (height-limited) yields a smaller page than fit-width.
+      await _pumpPreview(tester, size: const Size(800, 300));
+      final double fitWidthW = tester.getSize(find.byKey(_pageKey)).width;
+      await tester.ensureVisible(find.byKey(_zoomCaretKey));
+      await tester.tap(find.byKey(_zoomCaretKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(_fitPageKey));
+      await tester.pumpAndSettle();
+      expect(tester.getSize(find.byKey(_pageKey)).width, lessThan(fitWidthW));
+    });
+
+    testWidgets('typing a percentage sets the absolute scale',
+        (WidgetTester tester) async {
+      await _pumpPreview(tester, size: const Size(800, 600));
+      await tester.enterText(find.byKey(_zoomLevelKey), '150');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(level(tester), '150%');
+      // 150% of a 200pt page = 300px.
+      expect(tester.getSize(find.byKey(_pageKey)).width,
+          moreOrLessEquals(300, epsilon: 1));
+    });
+
+    testWidgets('zoom clamps at the floor; the button stays enabled (designer '
+        'parity)', (WidgetTester tester) async {
+      await _pumpPreview(tester, size: const Size(500, 600));
+      await tester.ensureVisible(find.byKey(_zoomOutKey));
+      for (int i = 0; i < 20; i++) {
         await tester.tap(find.byKey(_zoomOutKey));
         await tester.pumpAndSettle();
       }
+      // Never disables (unlike the old preview): it clamps silently.
       expect(tester.widget<ShadIconButton>(find.byKey(_zoomOutKey)).onPressed,
-          isNull);
+          isNotNull);
+      // kMinZoom (0.25) × 200pt = 50px; another tap does not shrink further.
+      final double floorW = tester.getSize(find.byKey(_pageKey)).width;
+      expect(floorW, moreOrLessEquals(50, epsilon: 0.5));
+      await tester.ensureVisible(find.byKey(_zoomOutKey));
+      await tester.tap(find.byKey(_zoomOutKey));
+      await tester.pumpAndSettle();
+      expect(tester.getSize(find.byKey(_pageKey)).width,
+          moreOrLessEquals(floorW, epsilon: 0.5));
     });
   });
 
