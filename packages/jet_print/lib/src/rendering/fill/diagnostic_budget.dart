@@ -14,7 +14,6 @@
 /// deduped-once on their existing paths.
 library;
 
-import '../../domain/diagnostic.dart';
 import 'report_diagnostics.dart';
 
 /// Row-aware, bounded sink wrapper for per-row data diagnostics.

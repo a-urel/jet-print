@@ -1,6 +1,5 @@
 // DiagnosticBudget: row-tagging, within-row dedup, cap + suppression (spec E2).
 import 'package:flutter_test/flutter_test.dart';
-import 'package:jet_print/src/domain/diagnostic.dart';
 import 'package:jet_print/src/rendering/fill/diagnostic_budget.dart';
 import 'package:jet_print/src/rendering/fill/report_diagnostics.dart';
 
