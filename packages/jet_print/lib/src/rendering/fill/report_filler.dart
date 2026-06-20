@@ -12,6 +12,7 @@ import '../../data/field_def.dart';
 import '../../data/jet_data_source.dart';
 import '../../domain/band.dart';
 import '../../domain/detail_scope.dart';
+import '../../domain/elements/text_element.dart';
 import '../../domain/group_level.dart';
 import '../../domain/report_definition.dart';
 import '../../domain/report_element.dart';
@@ -374,6 +375,11 @@ class ReportFiller {
               functions: _functions,
             )));
           }
+          if (acc.skippedNonNumeric > 0) {
+            budget.recordRowIssue('agg:scope:${cs.id}:${a.name}',
+                '${acc.skippedNonNumeric} non-numeric value(s) were skipped '
+                'from published total "${a.name}"');
+          }
           // A published total can collide either with a real data field on the
           // parent row (FR-010 shadow) or with a sibling scope's total already
           // published into `extras` this invocation — validation enforces
@@ -476,6 +482,24 @@ class ReportFiller {
                     ? JetValue.from(unresolvedFieldToken)
                     : accs![k].value,
             };
+            // Build a synth-name → element-id map once for user-facing diagnostics.
+            final Map<String, String> synthToId = <String, String>{
+              for (final ReportElement e in footer.band.elements)
+                if (e is TextElement &&
+                    e.expression != null &&
+                    e.expression!.startsWith(r'$V{__nagg'))
+                  e.expression!.substring(3, e.expression!.length - 1): e.id,
+            };
+            for (int k = 0; k < footer.aggs.length; k++) {
+              final int skips = accs![k].skippedNonNumeric;
+              if (skips > 0) {
+                final String aggName = synthToId[footer.aggs[k].name] ??
+                    footer.aggs[k].name;
+                budget.recordRowIssue('agg:footer:${s.id}:$aggName',
+                    '$skips non-numeric value(s) were skipped from footer '
+                    'aggregate "$aggName"');
+              }
+            }
             addBand(footer.band, scopeRow, vars);
           }
       }
