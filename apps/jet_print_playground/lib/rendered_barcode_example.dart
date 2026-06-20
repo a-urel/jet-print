@@ -37,6 +37,26 @@ const List<String> _productNames = <String>[
   'Phone Dock',
 ];
 
+/// Retail price for each product in [_productNames] (same index): each product
+/// has its own constant price, charm-priced (`.99`) the way a real catalogue
+/// reads, so a given product always prints the same price wherever it appears.
+const List<double> _productPrices = <double>[
+  24.99, // Wireless Mouse
+  12.99, // USB-C Cable 2m
+  89.99, // Mechanical Keyboard
+  39.99, // Laptop Stand
+  149.99, // Noise-Cancel Headset
+  59.99, // Webcam 1080p
+  34.99, // Desk Lamp LED
+  45.99, // Power Bank 20000mAh
+  9.99, // HDMI Adapter
+  79.99, // Bluetooth Speaker
+  119.99, // Monitor Arm
+  29.99, // Ergonomic Chair Pad
+  7.99, // Cable Organizer
+  19.99, // Phone Dock
+];
+
 /// Computes the EAN-13 check digit for a 12-digit [base] and returns the full
 /// 13-digit code. The check digit weights digits 3-1 alternating **from the
 /// right** of the 12-digit base, so it survives the standard scanner check —
@@ -53,13 +73,16 @@ String _ean13(String base) {
   return '$base$check';
 }
 
-/// [barcodeRecordCount] flat product maps (`product`/`sku`), generated
+/// [barcodeRecordCount] flat product maps (`product`/`price`/`sku`), generated
 /// deterministically so the sample is reproducible: the name cycles the fixed
-/// list and the SKU is a unique, valid EAN-13 derived from the row index.
-List<Map<String, String>> _products() => <Map<String, String>>[
+/// list, the price is a stable function of the row index, and the SKU is a
+/// unique, valid EAN-13 derived from the row index.
+List<Map<String, Object?>> _products() => <Map<String, Object?>>[
       for (int i = 0; i < barcodeRecordCount; i++)
-        <String, String>{
+        <String, Object?>{
           'product': _productNames[i % _productNames.length],
+          // Each product's own constant price (parallel list, same index).
+          'price': _productPrices[i % _productPrices.length],
           // 12-digit base (well within int range), then + check digit.
           'sku': _ean13((400000000000 + i * 137).toString().padLeft(12, '0')),
         },

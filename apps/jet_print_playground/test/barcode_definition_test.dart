@@ -50,8 +50,9 @@ void main() {
       expect(grid, lessThanOrEqualTo(538.0));
     });
 
-    test('the band authors one cell: a border, a product name, and a barcode',
-        () {
+    test(
+        'the band authors one cell: a border, a product name, a price, and a '
+        'barcode', () {
       final Band band =
           (barcodeSampleDefinition().body.root.children.single as BandNode)
               .band;
@@ -59,11 +60,15 @@ void main() {
       // One cell only (the grid repeats it): a border tile…
       expect(band.elements.whereType<ShapeElement>(), hasLength(1));
 
-      // …a product-name line bound to the flat `product` field…
+      // …a product-name line bound to the flat `product` field and a price line
+      // bound to the flat `price` field…
       final List<TextElement> texts =
           band.elements.whereType<TextElement>().toList();
-      expect(texts, hasLength(1));
-      expect(texts.single.expression, '\$F{product}');
+      expect(texts, hasLength(2));
+      expect(
+        texts.map((TextElement t) => t.expression),
+        containsAll(<String>['\$F{product}', '\$F{price}']),
+      );
 
       // …and exactly one EAN-13 barcode, bound to the `sku` product number, that
       // sits within the cell width (columnWidth 260) so nothing is clipped.
@@ -79,10 +84,10 @@ void main() {
     });
 
     test('the schema declares the flat product fields', () {
-      expect(barcodeSchema.fields, hasLength(2));
+      expect(barcodeSchema.fields, hasLength(3));
       expect(
         barcodeSchema.fields.map((FieldDef f) => f.name),
-        containsAll(<String>['product', 'sku']),
+        containsAll(<String>['product', 'price', 'sku']),
       );
     });
 

@@ -42,21 +42,31 @@ const double _rowSpacing = 0;
 /// Inner padding from the tile's border to its content.
 const double _pad = 12;
 
-/// The flat data schema one product record satisfies: the display [product] name
-/// and its [sku] (a valid 13-digit EAN-13 number), one record per label cell.
-/// Attach via `dataSchema:`.
+/// The flat data schema one product record satisfies: the display [product] name,
+/// its retail [price] (a number, formatted on the label), and its [sku] (a valid
+/// 13-digit EAN-13 number), one record per label cell. Attach via `dataSchema:`.
 final JetDataSchema barcodeSchema = JetDataSchema(
   name: 'Products',
   fields: <FieldDef>[
     FieldDef('product', type: JetFieldType.string),
+    FieldDef('price', type: JetFieldType.double),
     FieldDef('sku', type: JetFieldType.string),
   ],
 );
 
+/// Number format mask for the printed retail price (leading `$`, grouped, two
+/// decimals). `$` is not a pattern metacharacter in [NumberFormat], so it prints
+/// verbatim as the currency prefix.
+const String _money = '\$#,##0.00';
+
+/// Width reserved at the cell's right edge for the right-aligned price.
+const double _priceWidth = 72;
+
 /// Builds the elements for **one** product label cell, in cell-local coordinates
 /// (the grid repeats this cell across the columns): a light border tile, the
-/// product name bound to `product`, and an [BarcodeElement] encoding the row's
-/// `sku` as a scannable EAN-13 with the number printed underneath.
+/// product name bound to `product`, its right-aligned `price`, and an
+/// [BarcodeElement] encoding the row's `sku` as a scannable EAN-13 with the
+/// number printed underneath.
 List<ReportElement> _cellElements() => <ReportElement>[
       // The cut-tile border (data-blind; drawn for every cell slot).
       ShapeElement(
@@ -68,11 +78,34 @@ List<ReportElement> _cellElements() => <ReportElement>[
       ),
       TextElement(
         id: 'product',
-        bounds:
-            JetRect(x: _pad, y: 12, width: _cellWidth - _pad * 2, height: 18),
+        // Leaves room at the right for the price on the same header row.
+        bounds: JetRect(
+          x: _pad,
+          y: 12,
+          width: _cellWidth - _pad * 2 - _priceWidth,
+          height: 18,
+        ),
         text: 'Product',
         style: const JetTextStyle(fontSize: 12, weight: JetFontWeight.bold),
         expression: '\$F{product}',
+      ),
+      // The retail price, right-aligned in the header row's reserved gutter.
+      TextElement(
+        id: 'price',
+        bounds: JetRect(
+          x: _cellWidth - _pad - _priceWidth,
+          y: 12,
+          width: _priceWidth,
+          height: 18,
+        ),
+        text: 'price',
+        style: const JetTextStyle(
+          fontSize: 12,
+          weight: JetFontWeight.bold,
+          align: JetTextAlign.right,
+        ),
+        expression: '\$F{price}',
+        format: _money,
       ),
       // A real EAN-13 retail barcode bound to the row's product number; its
       // human-readable text prints the digits under the bars (showText).
