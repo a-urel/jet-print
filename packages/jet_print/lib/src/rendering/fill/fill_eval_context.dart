@@ -9,6 +9,7 @@ import '../../data/data_row.dart';
 import '../../expression/eval_context.dart';
 import '../../expression/function_registry.dart';
 import '../../expression/value.dart';
+import 'diagnostic_budget.dart';
 import 'page_variables.dart';
 import 'report_diagnostics.dart';
 
@@ -31,6 +32,7 @@ class FillEvalContext implements EvalContext {
     required Set<String> warnedFields,
     required Set<String> pageRefs,
     String? elementId,
+    DiagnosticBudget? budget,
   })  : _row = row,
         _params = params,
         _variables = variables,
@@ -38,7 +40,8 @@ class FillEvalContext implements EvalContext {
         _diagnostics = diagnostics,
         _warnedFields = warnedFields,
         _pageRefs = pageRefs,
-        _elementId = elementId;
+        _elementId = elementId,
+        _budget = budget;
 
   final DataRow? _row;
   final Map<String, Object?> _params;
@@ -48,6 +51,7 @@ class FillEvalContext implements EvalContext {
   final Set<String> _warnedFields;
   final Set<String> _pageRefs;
   final String? _elementId;
+  final DiagnosticBudget? _budget;
 
   @override
   JetFunctionRegistry get functions => _functions;
@@ -57,7 +61,11 @@ class FillEvalContext implements EvalContext {
     final DataRow? row = _row;
     if (row == null) return const JetNull();
     if (!row.hasField(name)) {
-      if (_warnedFields.add(name)) {
+      final DiagnosticBudget? budget = _budget;
+      if (budget != null) {
+        budget.recordRowIssue('field:$name',
+            'Field "$name" is not in the data schema', elementId: _elementId);
+      } else if (_warnedFields.add(name)) {
         _diagnostics.warning('Field "$name" is not in the data schema',
             elementId: _elementId);
       }

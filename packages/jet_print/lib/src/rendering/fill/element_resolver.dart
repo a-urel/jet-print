@@ -19,6 +19,7 @@ import '../../expression/expression_exception.dart';
 import '../../expression/format/apply_jet_format.dart';
 import '../../expression/function_registry.dart';
 import '../../expression/value.dart';
+import 'diagnostic_budget.dart';
 import 'fill_eval_context.dart';
 import 'report_diagnostics.dart';
 
@@ -38,6 +39,7 @@ class ElementResolver {
     Set<String>? warnedFields,
     this.knownFields,
     this.unresolvedFieldToken = '#ERROR',
+    this.budget,
   }) : warnedFields = warnedFields ?? <String>{};
 
   /// The function registry for expression evaluation.
@@ -57,6 +59,10 @@ class ElementResolver {
   /// Defaults to the literal `#ERROR`; the designer/preview pass a localized
   /// value so the render layer never imports l10n (Constitution II).
   final String unresolvedFieldToken;
+
+  /// The per-row diagnostic budget (spec E2), or null when the caller does not
+  /// supply one (warnings then fall back to global dedup).
+  final DiagnosticBudget? budget;
 
   /// Image elements already diagnosed for a URL-only source, so a band that
   /// repeats per row warns once per element, not once per instance.
@@ -111,6 +117,7 @@ class ElementResolver {
       warnedFields: warnedFields,
       pageRefs: pageRefs,
       elementId: el.id,
+      budget: budget,
     );
     final Expression parsed;
     try {

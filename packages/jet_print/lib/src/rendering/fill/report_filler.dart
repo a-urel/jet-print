@@ -29,6 +29,7 @@ import '../../expression/expression.dart';
 import '../../expression/function_registry.dart';
 import '../../expression/functions/built_in_functions.dart';
 import '../../expression/value.dart';
+import 'diagnostic_budget.dart';
 import 'element_resolver.dart';
 import 'fill_eval_context.dart';
 import 'filled_report.dart';
@@ -93,6 +94,7 @@ class ReportFiller {
     final ReportDefinition definition = expandAggregates(lift.definition);
     final List<DescendantAggregate> descAggs = lift.aggregates;
     final ReportDiagnostics diagnostics = ReportDiagnostics();
+    final DiagnosticBudget budget = DiagnosticBudget(diagnostics);
     final Set<String> warnedFields = <String>{};
     final Set<String> ignoredPageRefs = <String>{};
 
@@ -115,6 +117,7 @@ class ReportFiller {
       warnedFields: warnedFields,
       knownFields: effectiveKnownFields,
       unresolvedFieldToken: unresolvedFieldToken,
+      budget: budget,
     );
 
     EvalContext contextFactory({
@@ -131,6 +134,7 @@ class ReportFiller {
           diagnostics: diagnostics,
           warnedFields: warnedFields,
           pageRefs: ignoredPageRefs,
+          budget: budget,
         );
 
     // Groups are first-class here; the calculator stays name-keyed, so build its
@@ -272,8 +276,8 @@ class ReportFiller {
         if (entry is Map) {
           maps.add(entry.map((Object? k, Object? v) =>
               MapEntry<String, Object?>(k.toString(), v)));
-        } else if (warnedCollections.add('$name#entry')) {
-          diagnostics.warning(
+        } else {
+          budget.recordRowIssue('coll-entry:$name',
               'Collection field "$name" contains a non-row entry; it is '
               'skipped');
         }
@@ -503,10 +507,12 @@ class ReportFiller {
     // `ds` was opened early (above) to read its schema for the descendant-lift
     // pre-pass. The cursor is still positioned before the first row.
     bool hadRows = false;
+    int rowNumber = 0;
     Map<String, JetValue> prevValues = const <String, JetValue>{};
     DataRow? prevRow;
     try {
       while (ds.moveNext()) {
+        budget.row = ++rowNumber;
         // Inject this master row's published totals (and augment its nested
         // collection tree) BEFORE the calculator advances, so the Phase A
         // grand total over a published total (e.g. SUM($F{customerTotal}))
@@ -560,6 +566,7 @@ class ReportFiller {
       }
     }
 
+    budget.finish();
     return FillResult(
       report: FilledReport(
         page: definition.page,
