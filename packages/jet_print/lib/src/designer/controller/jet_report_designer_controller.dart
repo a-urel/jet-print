@@ -1079,22 +1079,51 @@ class JetReportDesignerController extends ChangeNotifier {
         height: band.height,
       );
 
+  /// The move targets for the current selection, moved by [delta] but clamped so
+  /// the whole selection stays in-band as a RIGID group.
+  ///
+  /// The requested [delta] is shrunk to the intersection of every selected
+  /// element's in-band range — the most-constrained element limits the group —
+  /// then the SAME clamped delta is applied to all. This preserves relative
+  /// offsets: a multi-selection pushed against a border stops as one unit instead
+  /// of each element piling onto the border (which collapsed the layout). For a
+  /// single element the intersection is just that element's range, so the result
+  /// is identical to a per-element clamp.
   Map<String, JetRect> _clampedMoveTargets(JetOffset delta) {
-    final PageFormat page = _document.definition.page;
-    final Map<String, JetRect> targets = <String, JetRect>{};
+    final double maxWidth = bandContentWidth(_document.definition.page);
+    final List<({String id, JetRect bounds})> items =
+        <({String id, JetRect bounds})>[];
+    double loX = double.negativeInfinity, hiX = double.infinity;
+    double loY = double.negativeInfinity, hiY = double.infinity;
     for (final String id in _document.selection.ids) {
       final ({Band band, ReportElement element})? located = _locate(id);
       if (located == null) continue;
       final JetRect b = located.element.bounds;
-      targets[id] = clampToBand(
-        JetRect(
-          x: b.x + delta.dx,
-          y: b.y + delta.dy,
-          width: b.width,
-          height: b.height,
-        ),
-        located.band,
-        page,
+      items.add((id: id, bounds: b));
+      // dx keeps x in [0, maxWidth - w]  →  dx in [-x, maxWidth - w - x].
+      if (-b.x > loX) loX = -b.x;
+      if (maxWidth - b.width - b.x < hiX) hiX = maxWidth - b.width - b.x;
+      // dy keeps y in [0, band.height - h], using THIS element's band height.
+      if (-b.y > loY) loY = -b.y;
+      if (located.band.height - b.height - b.y < hiY) {
+        hiY = located.band.height - b.height - b.y;
+      }
+    }
+    // Every in-band element's range contains 0, so the intersection is non-empty
+    // (lo <= 0 <= hi). Clamp lower then upper to stay safe if a degenerate
+    // oversized element ever inverts the range.
+    double dx = delta.dx, dy = delta.dy;
+    if (dx < loX) dx = loX;
+    if (dx > hiX) dx = hiX;
+    if (dy < loY) dy = loY;
+    if (dy > hiY) dy = hiY;
+    final Map<String, JetRect> targets = <String, JetRect>{};
+    for (final ({String id, JetRect bounds}) item in items) {
+      targets[item.id] = JetRect(
+        x: item.bounds.x + dx,
+        y: item.bounds.y + dy,
+        width: item.bounds.width,
+        height: item.bounds.height,
       );
     }
     return targets;
