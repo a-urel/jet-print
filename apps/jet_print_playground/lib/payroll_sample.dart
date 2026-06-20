@@ -70,8 +70,8 @@ const JetDataSchema payrollSchema = JetDataSchema(
 /// A muted grey used for captions and secondary text.
 const JetColor _grey = JetColor(0xFF888888);
 
-/// A pale accent fill behind the Net Pay figure.
-const JetColor _netFill = JetColor(0xFFEAF3EC);
+/// A pale accent fill — behind the department section band and the Net Pay box.
+const JetColor _accentFill = JetColor(0xFFEAF3EC);
 
 const String _money = '#,##0.00';
 
@@ -187,24 +187,28 @@ ReportDefinition payrollDefinition() => const ReportDefinition(
               id: 'department',
               name: 'department',
               key: r'$F{department}',
+              // Each department prints on a fresh page.
+              startNewPage: true,
               header: Band(
                 id: 'deptHeader',
                 type: BandType.groupHeader,
                 height: 26,
                 elements: <ReportElement>[
+                  // Full-width tinted band behind the heading (painted first so
+                  // it sits behind the text), giving the section a clear shade.
+                  ShapeElement(
+                    id: 'deptBg',
+                    bounds: JetRect(x: 0, y: 0, width: 538, height: 24),
+                    kind: ShapeKind.rectangle,
+                    style: JetBoxStyle(fill: _accentFill),
+                  ),
                   TextElement(
                     id: 'deptName',
-                    bounds: JetRect(x: 0, y: 2, width: 538, height: 16),
+                    bounds: JetRect(x: 8, y: 4, width: 530, height: 16),
                     text: 'department',
                     style:
                         JetTextStyle(fontSize: 12, weight: JetFontWeight.bold),
                     expression: r'"DEPARTMENT — " + $F{department}',
-                  ),
-                  ShapeElement(
-                    id: 'deptRule',
-                    bounds: JetRect(x: 0, y: 22, width: 538, height: 1),
-                    kind: ShapeKind.rectangle,
-                    style: JetBoxStyle(fill: _grey),
                   ),
                 ],
               ),
@@ -410,7 +414,7 @@ ReportDefinition payrollDefinition() => const ReportDefinition(
                     bounds: JetRect(x: 300, y: 6, width: 238, height: 40),
                     kind: ShapeKind.rectangle,
                     style: JetBoxStyle(
-                        fill: _netFill, stroke: _grey, strokeWidth: 0.75),
+                        fill: _accentFill, stroke: _grey, strokeWidth: 0.75),
                   ),
                   TextElement(
                     id: 'netLabel',
