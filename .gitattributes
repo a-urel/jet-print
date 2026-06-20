@@ -1,0 +1,6 @@
+# Cross-platform hygiene (E3). LF-normalize Dart so the `dart format` gate
+# cannot fail on a Windows CRLF checkout; mark golden artifacts binary so EOL
+# conversion can never corrupt a baseline.
+*.dart text eol=lf
+*.png  binary
+*.pdf  binary

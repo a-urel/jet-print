@@ -1,0 +1,10 @@
+# Declares the `golden` tag used to gate visual/byte-pinned goldens to the
+# canonical (macOS) CI host. Off-canonical jobs run `flutter test
+# --exclude-tags golden`; macOS runs the full suite. See
+# docs/superpowers/specs/2026-06-20-e3-desktop-matrix-design.md §5.
+tags:
+  golden:
+    description: >-
+      Visual PNG goldens and the byte-pinned invoice.pdf comparison. Host
+      font rasterization / PDF font-subsetting differs across OSes, so these
+      run only on the macOS canonical host.
