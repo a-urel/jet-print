@@ -12,7 +12,6 @@ import '../../data/field_def.dart';
 import '../../data/jet_data_source.dart';
 import '../../domain/band.dart';
 import '../../domain/detail_scope.dart';
-import '../../domain/elements/text_element.dart';
 import '../../domain/group_level.dart';
 import '../../domain/report_definition.dart';
 import '../../domain/report_element.dart';
@@ -482,22 +481,12 @@ class ReportFiller {
                     ? JetValue.from(unresolvedFieldToken)
                     : accs![k].value,
             };
-            // Build a synth-name → element-id map once for user-facing diagnostics.
-            final Map<String, String> synthToId = <String, String>{
-              for (final ReportElement e in footer.band.elements)
-                if (e is TextElement &&
-                    e.expression != null &&
-                    e.expression!.startsWith(r'$V{__nagg'))
-                  e.expression!.substring(3, e.expression!.length - 1): e.id,
-            };
             for (int k = 0; k < footer.aggs.length; k++) {
               final int skips = accs![k].skippedNonNumeric;
               if (skips > 0) {
-                final String aggName = synthToId[footer.aggs[k].name] ??
-                    footer.aggs[k].name;
-                budget.recordRowIssue('agg:footer:${s.id}:$aggName',
-                    '$skips non-numeric value(s) were skipped from footer '
-                    'aggregate "$aggName"');
+                budget.recordRowIssue('agg:footer:${s.id}:$k',
+                    '$skips non-numeric value(s) were skipped from a footer '
+                    'aggregate in scope "${s.id}"');
               }
             }
             addBand(footer.band, scopeRow, vars);

@@ -128,8 +128,8 @@ void main() {
         },
       ]),
     );
-    final Diagnostic d = _match(res, 'footer aggregate "orderTotal"');
+    final Diagnostic d = _match(res, 'footer aggregate in scope "orders"');
     expect(d.message, startsWith('Row 1: '));
-    expect(d.message, contains('skipped'));
+    expect(d.message, contains('1 non-numeric'));
   });
 }
