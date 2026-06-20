@@ -518,7 +518,14 @@ class ReportFiller {
         // grand total over a published total (e.g. SUM($F{customerTotal}))
         // sums it live through the unchanged calculator.
         final DataRow row = augmentForScope(definition.body.root, ds.current);
+        final int calcSkipsBefore = calc.aggregateSkips;
         calc.advance(row, params: params);
+        final int calcSkipDelta = calc.aggregateSkips - calcSkipsBefore;
+        if (calcSkipDelta > 0) {
+          budget.recordRowIssue('agg:calc',
+              '$calcSkipDelta non-numeric value(s) were skipped from a '
+              'numeric aggregate');
+        }
         final Set<String> broken = calc.brokenGroups;
         if (!hadRows) {
           emitGroupHeaders(groupOrder, row);
@@ -541,8 +548,15 @@ class ReportFiller {
         // Fold this master row's descendant leaves into all accumulators, then
         // snapshot the group-scoped values (so the next break reads a completed
         // group, just as prevValues captures the completed master row).
+        final int descSkipsBefore = _sumAccSkips(descAcc.values);
         for (final DescendantAggregate a in descAggs) {
           foldDescInto(a, row);
+        }
+        final int descSkipDelta = _sumAccSkips(descAcc.values) - descSkipsBefore;
+        if (descSkipDelta > 0) {
+          budget.recordRowIssue('agg:desc',
+              '$descSkipDelta non-numeric value(s) were skipped from a '
+              'roll-up aggregate');
         }
         descGroupSnapshot = descValues(groupDescAggs);
       }
@@ -578,6 +592,16 @@ class ReportFiller {
       ),
       diagnostics: diagnostics,
     );
+  }
+
+  /// The total wrong-type skips across [accs] (spec E2). Monotonic per
+  /// accumulator, so a difference of two reads is a non-negative per-row delta.
+  static int _sumAccSkips(Iterable<VariableAccumulator> accs) {
+    int n = 0;
+    for (final VariableAccumulator a in accs) {
+      n += a.skippedNonNumeric;
+    }
+    return n;
   }
 
   /// A copy of [v] whose group-reset reference, if it is a [GroupLevel] id, is
