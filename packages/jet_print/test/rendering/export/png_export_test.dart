@@ -104,6 +104,6 @@ void main() {
       final ui.Image image = await _decodeUi(png);
       await expectLater(
           image, matchesGoldenFile('../../goldens/invoice_page1_2x.png'));
-    });
+    }, tags: 'golden');
   });
 }

@@ -98,7 +98,7 @@ void main() {
       find.byType(JetReportDesigner),
       matchesGoldenFile('page_letter_landscape_canvas_light.png'),
     );
-  });
+  }, tags: 'golden');
 
   testWidgets('the exported page matches its golden',
       (WidgetTester tester) async {
@@ -113,5 +113,5 @@ void main() {
       image,
       matchesGoldenFile('page_letter_landscape_export.png'),
     );
-  });
+  }, tags: 'golden');
 }

@@ -64,5 +64,5 @@ void main() {
         reason: 'the exported invoice changed. If deliberate (SDK/dart_pdf '
             'upgrade or a real visual change), regenerate with '
             '--update-goldens and review; otherwise determinism broke');
-  });
+  }, tags: 'golden');
 }
