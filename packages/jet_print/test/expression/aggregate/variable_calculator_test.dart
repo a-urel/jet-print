@@ -16,6 +16,14 @@ DataRow _row(String cat, double amount) => DataRow(
       values: <String, Object?>{'category': cat, 'amount': amount},
     );
 
+DataRow _rowAny(String cat, Object? amount) => DataRow(
+      fields: const <FieldDef>[
+        FieldDef('category', type: JetFieldType.string),
+        FieldDef('amount', type: JetFieldType.double),
+      ],
+      values: <String, Object?>{'category': cat, 'amount': amount},
+    );
+
 VariableCalculator _calc() => VariableCalculator(
       variables: const <ReportVariable>[
         ReportVariable(
@@ -145,5 +153,20 @@ void main() {
     expect(c.valueOf('grand'), const JetNull());
     expect(c.valueOf('catTotal'), const JetNull());
     expect(c.brokenGroups, isEmpty);
+  });
+
+  test('aggregateSkips counts wrong-type folds and is monotonic across a '
+      'group break (reset does not lower it)', () {
+    final VariableCalculator c = _calc()..start();
+    c.advance(_rowAny('A', 10.0));
+    expect(c.aggregateSkips, 0);
+    // 'oops' folds into BOTH catTotal (group sum) and grand (report sum) -> +2.
+    c.advance(_rowAny('A', 'oops'));
+    expect(c.aggregateSkips, 2);
+    // Group break resets catTotal's accumulator; the monotonic skip total must
+    // NOT drop.
+    c.advance(_rowAny('B', 3.0));
+    expect(c.brokenGroups, <String>{'category'});
+    expect(c.aggregateSkips, greaterThanOrEqualTo(2));
   });
 }

@@ -145,4 +145,15 @@ class VariableCalculator {
   /// Returned as an unmodifiable view (the internal set is replaced each
   /// [advance]), mirroring [values]' defensive copy.
   Set<String> get brokenGroups => Set<String>.unmodifiable(_brokenGroups);
+
+  /// The lifetime total of wrong-type inputs dropped across all of this
+  /// calculator's aggregates (spec E2). Monotonic — group-break resets do not
+  /// lower it — so the fill stage can read it as a per-row delta.
+  int get aggregateSkips {
+    int n = 0;
+    for (final VariableAccumulator a in _accumulators) {
+      n += a.skippedNonNumeric;
+    }
+    return n;
+  }
 }
