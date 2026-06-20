@@ -13,8 +13,7 @@ JetRect _bounds(JetReportDesignerController c, String id) =>
         .bounds;
 
 String _createAt(JetReportDesignerController c, double x, double y) {
-  c.createElement(DesignerToolType.text,
-      bandId: 'detail', at: JetOffset(x, y));
+  c.createElement(DesignerToolType.text, bandId: 'detail', at: JetOffset(x, y));
   return c.selection.singleOrNull!;
 }
 

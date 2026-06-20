@@ -29,35 +29,32 @@ void main() {
       expect(validate(nestedListsDefinition()), isEmpty);
     });
 
-    test(
-        'inline sample render has no errors in diagnostics',
-        () {
-          final RenderedReport report = const JetReportEngine()
-              .renderDefinition(nestedListsDefinition(), _declaredSource());
-          expect(
-            report.diagnostics.entries
-                .where((Diagnostic d) => d.severity == DiagnosticSeverity.error),
-            isEmpty,
-            reason: 'inline multi-level sample + declared-schema source '
-                'renders cleanly (no #ERROR / unresolved)',
-          );
-        });
+    test('inline sample render has no errors in diagnostics', () {
+      final RenderedReport report = const JetReportEngine()
+          .renderDefinition(nestedListsDefinition(), _declaredSource());
+      expect(
+        report.diagnostics.entries
+            .where((Diagnostic d) => d.severity == DiagnosticSeverity.error),
+        isEmpty,
+        reason: 'inline multi-level sample + declared-schema source '
+            'renders cleanly (no #ERROR / unresolved)',
+      );
+    });
 
-    test(
-        'inline sample renders byte-identical to published-total (SC-001)',
+    test('inline sample renders byte-identical to published-total (SC-001)',
         () {
-          final RenderedReport inlineReport = const JetReportEngine()
-              .renderDefinition(nestedListsDefinition(), _declaredSource());
-          final RenderedReport publishedReport = const JetReportEngine()
-              .renderDefinition(_publishedTotalDefinition(), _declaredSource());
+      final RenderedReport inlineReport = const JetReportEngine()
+          .renderDefinition(nestedListsDefinition(), _declaredSource());
+      final RenderedReport publishedReport = const JetReportEngine()
+          .renderDefinition(_publishedTotalDefinition(), _declaredSource());
 
-          expect(
-            _textRuns(inlineReport),
-            _textRuns(publishedReport),
-            reason: 'inline SUM(\$F{lineTotal}) at every footer level renders '
-                'byte-identical totals to the published-total chain (SC-001)',
-          );
-        });
+      expect(
+        _textRuns(inlineReport),
+        _textRuns(publishedReport),
+        reason: 'inline SUM(\$F{lineTotal}) at every footer level renders '
+            'byte-identical totals to the published-total chain (SC-001)',
+      );
+    });
   });
 }
 

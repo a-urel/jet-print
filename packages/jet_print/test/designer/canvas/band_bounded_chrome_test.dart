@@ -41,8 +41,10 @@ void main() {
     // top-left corner, not on the raw (un-clamped) drag position.
     final Rect elem = tester.getRect(_elementFinder(id));
     final Rect tl = tester.getRect(_topLeftHandle);
-    expect(tl.center.dx, closeTo(elem.left, 1.0), reason: 'chrome tracks element x');
-    expect(tl.center.dy, closeTo(elem.top, 1.0), reason: 'chrome tracks element y');
+    expect(tl.center.dx, closeTo(elem.left, 1.0),
+        reason: 'chrome tracks element x');
+    expect(tl.center.dy, closeTo(elem.top, 1.0),
+        reason: 'chrome tracks element y');
 
     c.commitMove();
     await tester.pumpAndSettle();

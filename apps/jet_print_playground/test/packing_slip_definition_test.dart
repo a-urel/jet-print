@@ -10,8 +10,8 @@ import 'package:jet_print_playground/packing_slip_sample.dart';
 void main() {
   group('packing-slip sample', () {
     test('schema is Shipment ▸ boxes ▸ items with the two stored measures', () {
-      final FieldDef boxes = shipmentSchema.fields
-          .firstWhere((FieldDef f) => f.name == 'boxes');
+      final FieldDef boxes =
+          shipmentSchema.fields.firstWhere((FieldDef f) => f.name == 'boxes');
       expect(boxes.type, JetFieldType.collection);
       final FieldDef items =
           boxes.fields.firstWhere((FieldDef f) => f.name == 'items');
@@ -82,7 +82,8 @@ void main() {
       final TextElement totalUnits = shipment.footer!.elements
           .firstWhere((ReportElement e) => e.id == 'totalUnits') as TextElement;
       final TextElement totalWeight = shipment.footer!.elements
-          .firstWhere((ReportElement e) => e.id == 'totalWeight') as TextElement;
+              .firstWhere((ReportElement e) => e.id == 'totalWeight')
+          as TextElement;
       expect(totalBoxes.expression, r'COUNT($F{boxNo})');
       expect(totalUnits.expression, r'SUM($F{qtyShipped})');
       expect(totalWeight.expression, r'SUM($F{lineWeight})');
@@ -92,7 +93,7 @@ void main() {
       final ReportDefinition def = packingSlipDefinition();
       final GroupLevel shipment = def.body.root.groups.single;
       final BarcodeElement qr = shipment.header!.elements
-          .firstWhere((ReportElement e) => e.id == 'trackingQr')
+              .firstWhere((ReportElement e) => e.id == 'trackingQr')
           as BarcodeElement;
       expect(qr.symbology, BarcodeSymbology.qrCode);
       expect(qr.dataField, 'trackingNo');

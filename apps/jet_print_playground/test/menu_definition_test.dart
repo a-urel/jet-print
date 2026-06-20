@@ -17,7 +17,9 @@ void main() {
       // No image/bytes field type exists; the photo is base64 in a string.
       expect(f('photo').type, JetFieldType.string);
       // Flat: no nested collections.
-      expect(menuSchema.fields.any((FieldDef e) => e.type == JetFieldType.collection),
+      expect(
+          menuSchema.fields
+              .any((FieldDef e) => e.type == JetFieldType.collection),
           isFalse);
     });
 

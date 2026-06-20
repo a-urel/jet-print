@@ -23,7 +23,8 @@ double _sum(List<Map<String, Object?>> rows, String field) => rows.fold<double>(
 
 void main() {
   group('rendered payroll example', () {
-    test('has four employees across two departments, ordered by department', () {
+    test('has four employees across two departments, ordered by department',
+        () {
       expect(kSamplePayroll, hasLength(4));
       final List<String> depts = <String>[
         for (final Map<String, Object?> e in kSamplePayroll)
@@ -31,7 +32,8 @@ void main() {
       ];
       // Sorted-by-department invariant: equal departments are contiguous.
       final List<String> sorted = (depts.toSet().toList()
-            ..sort((String a, String b) => depts.indexOf(a).compareTo(depts.indexOf(b))))
+            ..sort((String a, String b) =>
+                depts.indexOf(a).compareTo(depts.indexOf(b))))
           .expand((String d) => depts.where((String x) => x == d))
           .toList();
       expect(depts, sorted);
@@ -73,26 +75,31 @@ void main() {
       ];
       final List<String> expectedNet = <String>[
         for (final Map<String, Object?> e in kSamplePayroll)
-          _money.format((e['grossPay']! as num) - (e['totalDeductions']! as num)),
+          _money
+              .format((e['grossPay']! as num) - (e['totalDeductions']! as num)),
       ];
       expect(_runsForId(report, 'grossValue'), expectedGross);
       expect(_runsForId(report, 'totalDedValue'), expectedDed);
       expect(_runsForId(report, 'netValue'), expectedNet);
     });
 
-    test('department subtotals and company grand total equal the live sums', () {
+    test('department subtotals and company grand total equal the live sums',
+        () {
       final RenderedReport report = renderPayrollDefinition();
 
       // Group employees by department in document order.
       final Map<String, List<Map<String, Object?>>> byDept =
           <String, List<Map<String, Object?>>>{};
       for (final Map<String, Object?> e in kSamplePayroll) {
-        byDept.putIfAbsent(e['department']! as String, () => <Map<String, Object?>>[]).add(e);
+        byDept
+            .putIfAbsent(
+                e['department']! as String, () => <Map<String, Object?>>[])
+            .add(e);
       }
       final List<String> expectedDeptNet = <String>[
         for (final List<Map<String, Object?>> emps in byDept.values)
-          _money.format(emps.fold<double>(
-              0, (double s, Map<String, Object?> e) => s + (e['netPay']! as num))),
+          _money.format(emps.fold<double>(0,
+              (double s, Map<String, Object?> e) => s + (e['netPay']! as num))),
       ];
       expect(_runsForId(report, 'deptNet'), expectedDeptNet);
 
@@ -100,7 +107,8 @@ void main() {
           0, (double s, Map<String, Object?> e) => s + (e['grossPay']! as num));
       final double grandNet = kSamplePayroll.fold<double>(
           0, (double s, Map<String, Object?> e) => s + (e['netPay']! as num));
-      expect(_runsForId(report, 'grandGross'), <String>[_money.format(grandGross)]);
+      expect(_runsForId(report, 'grandGross'),
+          <String>[_money.format(grandGross)]);
       expect(_runsForId(report, 'grandNet'), <String>[_money.format(grandNet)]);
     });
   });

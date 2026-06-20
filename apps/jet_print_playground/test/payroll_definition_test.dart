@@ -21,17 +21,27 @@ void main() {
         JetFieldType.double,
       );
       expect(
-        deductions.fields.firstWhere((FieldDef f) => f.name == 'dedAmount').type,
+        deductions.fields
+            .firstWhere((FieldDef f) => f.name == 'dedAmount')
+            .type,
         JetFieldType.double,
       );
       // Authoritative employee-level totals are stored, too.
-      for (final String name in <String>['grossPay', 'totalDeductions', 'netPay']) {
-        expect(payrollSchema.fields.firstWhere((FieldDef f) => f.name == name).type,
+      for (final String name in <String>[
+        'grossPay',
+        'totalDeductions',
+        'netPay'
+      ]) {
+        expect(
+            payrollSchema.fields
+                .firstWhere((FieldDef f) => f.name == name)
+                .type,
             JetFieldType.double);
       }
     });
 
-    test('is grouped department ▸ employee with two parallel nested scopes', () {
+    test('is grouped department ▸ employee with two parallel nested scopes',
+        () {
       final ReportDefinition def = payrollDefinition();
       final DetailScope root = def.body.root;
 
@@ -74,14 +84,16 @@ void main() {
           .scope;
       final DetailScope deductions = root.children
           .whereType<NestedScope>()
-          .firstWhere((NestedScope n) => n.scope.collectionField == 'deductions')
+          .firstWhere(
+              (NestedScope n) => n.scope.collectionField == 'deductions')
           .scope;
 
       TextElement el(Band b, String id) =>
           b.elements.firstWhere((ReportElement e) => e.id == id) as TextElement;
 
       // Section folds (same-scope, spec 029).
-      expect(el(earnings.footer!, 'grossValue').expression, r'SUM($F{earnAmount})');
+      expect(el(earnings.footer!, 'grossValue').expression,
+          r'SUM($F{earnAmount})');
       expect(el(deductions.footer!, 'totalDedValue').expression,
           r'SUM($F{dedAmount})');
 
@@ -90,15 +102,18 @@ void main() {
           r'$F{grossPay} - $F{totalDeductions}');
 
       // Department subtotals (master-scope, spec 028) and grand totals (summary).
-      expect(el(root.groups[0].footer!, 'deptNet').expression, r'SUM($F{netPay})');
-      expect(el(def.body.summary!, 'grandGross').expression, r'SUM($F{grossPay})');
+      expect(
+          el(root.groups[0].footer!, 'deptNet').expression, r'SUM($F{netPay})');
+      expect(
+          el(def.body.summary!, 'grandGross').expression, r'SUM($F{grossPay})');
       expect(el(def.body.summary!, 'grandNet').expression, r'SUM($F{netPay})');
     });
 
     test('the verification code is a QR bound to verifyToken', () {
       final ReportDefinition def = payrollDefinition();
       final BarcodeElement qr = def.body.root.groups[1].header!.elements
-          .firstWhere((ReportElement e) => e.id == 'verifyQr') as BarcodeElement;
+              .firstWhere((ReportElement e) => e.id == 'verifyQr')
+          as BarcodeElement;
       expect(qr.symbology, BarcodeSymbology.qrCode);
       expect(qr.dataField, 'verifyToken');
       expect(qr.data, isNotEmpty);

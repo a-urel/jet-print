@@ -84,10 +84,10 @@ void main() {
         },
       ]),
     );
-    final Diagnostic d = _warnings(res).firstWhere(
-        (Diagnostic d) => d.message.contains('non-row entry'),
-        orElse: () => fail('no non-row-entry diagnostic: '
-            '${res.diagnostics.entries}'));
+    final Diagnostic d = _warnings(res)
+        .firstWhere((Diagnostic d) => d.message.contains('non-row entry'),
+            orElse: () => fail('no non-row-entry diagnostic: '
+                '${res.diagnostics.entries}'));
     expect(d.message, startsWith('Row 1: '));
   });
 }

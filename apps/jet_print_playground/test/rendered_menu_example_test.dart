@@ -18,7 +18,8 @@ void main() {
   group('rendered menu example', () {
     test('items are ordered so equal categories are contiguous', () {
       final List<String> cats = <String>[
-        for (final Map<String, Object?> m in kSampleMenu) m['category']! as String,
+        for (final Map<String, Object?> m in kSampleMenu)
+          m['category']! as String,
       ];
       final List<String> contiguous = cats
           .toSet()
@@ -77,7 +78,8 @@ void main() {
 }
 
 /// The painted image primitives for [elementId], in paint order across pages.
-Iterable<ImagePrimitive> _imagesForId(RenderedReport report, String elementId) =>
+Iterable<ImagePrimitive> _imagesForId(
+        RenderedReport report, String elementId) =>
     <ImagePrimitive>[
       for (int i = 0; i < report.pageCount; i++)
         for (final ImagePrimitive p

@@ -65,7 +65,8 @@ void main() {
 
   test('clearing the mode notifies even when the scale does not change', () {
     c.setZoomPercent(100); // scale 1.0, mode none
-    c.setViewFitMode(JetViewFitMode.width); // mode width (scale unchanged at 1.0)
+    c.setViewFitMode(
+        JetViewFitMode.width); // mode width (scale unchanged at 1.0)
     int notifications = 0;
     c.addListener(() => notifications++);
 

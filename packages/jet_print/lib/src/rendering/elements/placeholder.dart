@@ -85,8 +85,7 @@ void emitImagePlaceholder(
   final double top = cy - side / 2;
   final double right = cx + side / 2;
   final double bottom = cy + side / 2;
-  final JetRect square =
-      JetRect(x: left, y: top, width: side, height: side);
+  final JetRect square = JetRect(x: left, y: top, width: side, height: side);
 
   // Picture frame.
   out.add(RectPrimitive(

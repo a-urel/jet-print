@@ -61,7 +61,12 @@ void main() {
 
       // Each line binds its flat field name (no per-cell prefix), and all sit
       // within the cell width (columnWidth 170) so nothing is clipped.
-      for (final String field in <String>['name', 'street', 'city', 'country']) {
+      for (final String field in <String>[
+        'name',
+        'street',
+        'city',
+        'country'
+      ]) {
         final TextElement t =
             texts.firstWhere((TextElement e) => e.id == field);
         expect(t.expression, '\$F{$field}');

@@ -155,7 +155,8 @@ void main() {
     expect(c.brokenGroups, isEmpty);
   });
 
-  test('aggregateSkips counts wrong-type folds and is monotonic across a '
+  test(
+      'aggregateSkips counts wrong-type folds and is monotonic across a '
       'group break (reset does not lower it)', () {
     final VariableCalculator c = _calc()..start();
     c.advance(_rowAny('A', 10.0));

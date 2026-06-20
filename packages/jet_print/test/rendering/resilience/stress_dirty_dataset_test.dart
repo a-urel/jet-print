@@ -91,7 +91,8 @@ String _summaryText(RenderedReport r) {
 }
 
 void main() {
-  test('50k rows with scattered wrong-type data: no crash, bounded '
+  test(
+      '50k rows with scattered wrong-type data: no crash, bounded '
       'diagnostics, clean rows still sum (per-row isolation at scale)', () {
     final int rssBefore = ProcessInfo.currentRss;
     final Stopwatch watch = Stopwatch()..start();

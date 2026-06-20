@@ -45,20 +45,22 @@ ReportDefinition _flat(
         noData: noData,
         root: DetailScope(id: 'root', children: <ScopeNode>[
           BandNode(Band(
-              id: 'root/c0', type: BandType.detail, height: 40, elements: detail)),
+              id: 'root/c0',
+              type: BandType.detail,
+              height: 40,
+              elements: detail)),
         ]),
       ),
     );
 
 RenderedReport _render(ReportDefinition def, List<Map<String, Object?>> rows) =>
-    const JetReportEngine()
-        .renderDefinition(def, JetInMemoryDataSource(rows));
+    const JetReportEngine().renderDefinition(def, JetInMemoryDataSource(rows));
 
 List<Diagnostic> _diags(RenderedReport r) => r.diagnostics.entries;
 
-Diagnostic _match(RenderedReport r, Pattern p) => _diags(r).firstWhere(
-    (Diagnostic d) => d.message.contains(p),
-    orElse: () => fail('no diagnostic matching "$p": ${_diags(r)}'));
+Diagnostic _match(RenderedReport r, Pattern p) =>
+    _diags(r).firstWhere((Diagnostic d) => d.message.contains(p),
+        orElse: () => fail('no diagnostic matching "$p": ${_diags(r)}'));
 
 Map<String, String> _texts(RenderedReport r) => <String, String>{
       for (final TextRunPrimitive p
@@ -80,8 +82,13 @@ void main() {
     // With knownFields supplied, the resolver returns the unresolved token and
     // warns ONCE for the whole report (structural — not per row).
     final RenderedReport r = const JetReportEngine().renderDefinition(
-      _flat(<ReportElement>[_t('good', expr: r'$F{name}'), _t('bad', expr: r'$F{nope}')]),
-      JetInMemoryDataSource(<Map<String, Object?>>[<String, Object?>{'name': 'alpha'}]),
+      _flat(<ReportElement>[
+        _t('good', expr: r'$F{name}'),
+        _t('bad', expr: r'$F{nope}')
+      ]),
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'name': 'alpha'}
+      ]),
       options: const RenderOptions(knownFields: <String>{'name'}),
     );
     final List<Diagnostic> nope =
@@ -104,7 +111,8 @@ void main() {
     );
     final List<Diagnostic> nope = _diags(r)
         .where((Diagnostic d) =>
-            d.severity == DiagnosticSeverity.warning && d.message.contains('nope'))
+            d.severity == DiagnosticSeverity.warning &&
+            d.message.contains('nope'))
         .toList();
     expect(nope, hasLength(2), reason: 'one per row, not globally deduped');
     expect(nope[0].message, contains('Row 1'));
@@ -188,9 +196,12 @@ void main() {
       ]),
     );
     expect(r.pageCount, greaterThan(0));
-    expect(_diags(r).where((Diagnostic d) => d.severity == DiagnosticSeverity.error),
+    expect(
+        _diags(r)
+            .where((Diagnostic d) => d.severity == DiagnosticSeverity.error),
         isEmpty);
-    expect(_texts(r)['v'], isNull, reason: 'a null collection emits no nested rows');
+    expect(_texts(r)['v'], isNull,
+        reason: 'a null collection emits no nested rows');
   });
 
   test('R6: a non-list collection field warns and emits no rows', () {
@@ -256,17 +267,20 @@ void main() {
     );
     final Diagnostic d = _match(r, 'non-row entry');
     expect(d.message, contains('Row '));
-    expect(_texts(r)['v'], '1.0', reason: 'the valid entry still renders; only the bad one is skipped');
+    expect(_texts(r)['v'], '1.0',
+        reason: 'the valid entry still renders; only the bad one is skipped');
   });
 
   test('R8: a malformed expression -> error diagnostic + !ERR', () {
     final RenderedReport r = _render(
       _flat(<ReportElement>[_t('boom', expr: r'$F{a} +')]),
-      <Map<String, Object?>>[<String, Object?>{'a': 1}],
+      <Map<String, Object?>>[
+        <String, Object?>{'a': 1}
+      ],
     );
-    final Diagnostic d = _diags(r)
-        .firstWhere((Diagnostic d) => d.severity == DiagnosticSeverity.error,
-            orElse: () => fail('expected a parse error: ${_diags(r)}'));
+    final Diagnostic d = _diags(r).firstWhere(
+        (Diagnostic d) => d.severity == DiagnosticSeverity.error,
+        orElse: () => fail('expected a parse error: ${_diags(r)}'));
     expect(d.elementId, 'boom');
     expect(_texts(r)['boom'], '!ERR');
   });
@@ -274,7 +288,9 @@ void main() {
   test('R9: divide-by-zero -> error diagnostic + !ERR', () {
     final RenderedReport r = _render(
       _flat(<ReportElement>[_t('boom', expr: r'$F{a} / 0')]),
-      <Map<String, Object?>>[<String, Object?>{'a': 5}],
+      <Map<String, Object?>>[
+        <String, Object?>{'a': 5}
+      ],
     );
     final Diagnostic diag = _match(r, 'zero');
     expect(diag.severity, DiagnosticSeverity.error);
@@ -284,7 +300,9 @@ void main() {
   test('R10: unknown function -> error diagnostic + !ERR', () {
     final RenderedReport r = _render(
       _flat(<ReportElement>[_t('boom', expr: r'NOPE($F{a})')]),
-      <Map<String, Object?>>[<String, Object?>{'a': 5}],
+      <Map<String, Object?>>[
+        <String, Object?>{'a': 5}
+      ],
     );
     _diags(r).firstWhere(
       (Diagnostic d) => d.severity == DiagnosticSeverity.error,

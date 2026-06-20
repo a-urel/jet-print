@@ -68,7 +68,7 @@ void main() {
           reason: 'no ScopeTotal on lines scope: inline fold replaces it');
       expect(lines.footer, isNotNull);
       final TextElement orderTotalFooter = lines.footer!.elements
-          .firstWhere((ReportElement e) => e.id == 'orderTotalFooter')
+              .firstWhere((ReportElement e) => e.id == 'orderTotalFooter')
           as TextElement;
       expect(orderTotalFooter.expression, r'SUM($F{lineTotal})',
           reason: 'lines footer folds the same-scope lines inline (spec 029)');
@@ -82,11 +82,10 @@ void main() {
       // The customer group footer element is authored inline as SUM($F{lineTotal}).
       final GroupLevel customer = root.groups.single;
       final TextElement customerTotal = customer.footer!.elements
-          .firstWhere((ReportElement e) => e.id == 'customerTotal')
+              .firstWhere((ReportElement e) => e.id == 'customerTotal')
           as TextElement;
       expect(customerTotal.expression, r'SUM($F{lineTotal})',
-          reason:
-              'customer footer descends [orders, lines] inline (spec 033)');
+          reason: 'customer footer descends [orders, lines] inline (spec 033)');
 
       // The summary grand total is also inline — descends [orders, lines].
       final TextElement grand = def.body.summary!.elements
@@ -161,15 +160,13 @@ void main() {
 
     test(
         'migrated inline sample renders identically to the legacy '
-        'published-total design',
-        () {
+        'published-total design', () {
       final RenderedReport inlineReport = const JetReportEngine()
           .renderDefinition(nestedListsDefinition(), _sampleSource());
       final RenderedReport legacyReport = const JetReportEngine()
           .renderDefinition(_legacyGrandTotalDefinition(), _sampleSource());
       expect(_textRuns(inlineReport), _textRuns(legacyReport),
-          reason:
-              'inline SUM(\$F{lineTotal}) at every footer level renders '
+          reason: 'inline SUM(\$F{lineTotal}) at every footer level renders '
               'byte-identical output to the legacy published-total chain '
               '(SC-001 equivalence — migration correctness proof)');
     });

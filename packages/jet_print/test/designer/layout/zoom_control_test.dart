@@ -167,8 +167,7 @@ void main() {
     final Finder fitPageRow = find.byKey(_fitPage);
 
     Icon iconIn(Finder row) => tester
-        .widgetList<Icon>(
-            find.descendant(of: row, matching: find.byType(Icon)))
+        .widgetList<Icon>(find.descendant(of: row, matching: find.byType(Icon)))
         .firstWhere((Icon i) => i.icon == LucideIcons.check);
 
     final Icon widthIcon = iconIn(fitWidthRow);
@@ -183,8 +182,7 @@ void main() {
     expect(widthIcon.color, isNot(equals(pageIcon.color)));
   });
 
-  testWidgets('Fit width row calls onFit(width)',
-      (WidgetTester tester) async {
+  testWidgets('Fit width row calls onFit(width)', (WidgetTester tester) async {
     JetViewFitMode? got;
     await _pump(tester,
         viewScale: 1.0,
@@ -229,8 +227,10 @@ void main() {
         fitMode: JetViewFitMode.none,
         onPercent: (_) {},
         onFit: (_) {});
-    expect(find.byKey(_field), findsOneWidget); // jet_print.designer.action.zoomLevel
-    expect(find.byKey(_caret), findsOneWidget); // jet_print.designer.zoom.menuToggle
+    expect(find.byKey(_field),
+        findsOneWidget); // jet_print.designer.action.zoomLevel
+    expect(find.byKey(_caret),
+        findsOneWidget); // jet_print.designer.zoom.menuToggle
 
     // Override prefix: the preview-namespaced keys resolve, the designer ones do not.
     await _pump(tester,
@@ -241,14 +241,17 @@ void main() {
         keyPrefix: 'jet_print.preview');
     expect(find.byKey(_field), findsNothing);
     expect(
-        find.byKey(const ValueKey<String>('jet_print.preview.action.zoomLevel')),
+        find.byKey(
+            const ValueKey<String>('jet_print.preview.action.zoomLevel')),
         findsOneWidget);
-    await tester.tap(
-        find.byKey(const ValueKey<String>('jet_print.preview.zoom.menuToggle')));
+    await tester.tap(find
+        .byKey(const ValueKey<String>('jet_print.preview.zoom.menuToggle')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey<String>('jet_print.preview.zoom.fitWidth')),
+    expect(
+        find.byKey(const ValueKey<String>('jet_print.preview.zoom.fitWidth')),
         findsOneWidget);
-    expect(find.byKey(const ValueKey<String>('jet_print.preview.zoom.preset.200')),
+    expect(
+        find.byKey(const ValueKey<String>('jet_print.preview.zoom.preset.200')),
         findsOneWidget);
   });
 }

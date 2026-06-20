@@ -40,16 +40,12 @@ void main() {
       // The preview's fallback is already IN the frame: an outline rect plus
       // picture-frame glyph paths (no text label since image-glyph placeholder).
       // Confirm the frame has path primitives (the glyph) and no text run.
-      final List<PathPrimitive> glyphPaths = report
-          .pageAt(0)
-          .frame
-          .primitives
-          .whereType<PathPrimitive>()
-          .toList();
+      final List<PathPrimitive> glyphPaths =
+          report.pageAt(0).frame.primitives.whereType<PathPrimitive>().toList();
       expect(glyphPaths, isNotEmpty,
-          reason: 'fixture sanity: image-glyph placeholder emits path primitives');
-      expect(
-          report.pageAt(0).frame.primitives.whereType<TextRunPrimitive>(),
+          reason:
+              'fixture sanity: image-glyph placeholder emits path primitives');
+      expect(report.pageAt(0).frame.primitives.whereType<TextRunPrimitive>(),
           isEmpty,
           reason: 'image-glyph placeholder emits no text label');
 

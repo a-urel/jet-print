@@ -101,7 +101,8 @@ void main() {
     expect(a.skippedNonNumeric, 1);
   });
 
-  test('skippedNonNumeric counts incomparable MIN/MAX inputs (after first)', () {
+  test('skippedNonNumeric counts incomparable MIN/MAX inputs (after first)',
+      () {
     final VariableAccumulator a = _acc(JetCalculation.min);
     a.fold(const JetNumber(5)); // first value taken unconditionally
     a.fold(const JetString('x')); // incomparable to a number -> skip

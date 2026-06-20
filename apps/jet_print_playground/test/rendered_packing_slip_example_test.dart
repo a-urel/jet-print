@@ -66,8 +66,8 @@ void main() {
       final List<Map<String, Object?>> boxes =
           (kSampleShipment.single['boxes']! as List<Object?>).cast();
 
-      final int totalUnits =
-          boxes.fold<int>(0, (int s, Map<String, Object?> b) => s + _boxUnits(b));
+      final int totalUnits = boxes.fold<int>(
+          0, (int s, Map<String, Object?> b) => s + _boxUnits(b));
       final double totalWeight = boxes.fold<double>(
           0, (double s, Map<String, Object?> b) => s + _boxWeight(b));
 
@@ -81,13 +81,12 @@ void main() {
   });
 }
 
-int _boxUnits(Map<String, Object?> box) => (box['items']! as List<Object?>)
-    .cast<Map<String, Object?>>()
-    .fold<int>(0, (int s, Map<String, Object?> i) => s + (i['qtyShipped']! as int));
+int _boxUnits(Map<String, Object?> box) =>
+    (box['items']! as List<Object?>).cast<Map<String, Object?>>().fold<int>(
+        0, (int s, Map<String, Object?> i) => s + (i['qtyShipped']! as int));
 
-double _boxWeight(Map<String, Object?> box) => (box['items']! as List<Object?>)
-    .cast<Map<String, Object?>>()
-    .fold<double>(
+double _boxWeight(Map<String, Object?> box) =>
+    (box['items']! as List<Object?>).cast<Map<String, Object?>>().fold<double>(
         0, (double s, Map<String, Object?> i) => s + (i['lineWeight']! as num));
 
 /// The rendered text runs of [elementId], in paint order across all pages.

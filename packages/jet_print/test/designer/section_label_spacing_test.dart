@@ -51,8 +51,8 @@ void main() {
     final JetPrintLocalizations l10n = _l10n(tester);
 
     Finder caption(String text) => find.text(text.toUpperCase());
-    Finder field(String key) =>
-        find.byKey(ValueKey<String>('jet_print.designer.properties.field.$key'));
+    Finder field(String key) => find
+        .byKey(ValueKey<String>('jet_print.designer.properties.field.$key'));
 
     expect(_gap(tester, caption(l10n.propertiesName), field('reportName')),
         moreOrLessEquals(kCaptionGap, epsilon: 0.5),
@@ -60,8 +60,7 @@ void main() {
     expect(_gap(tester, caption(l10n.propertiesPage), field('paper')),
         moreOrLessEquals(kCaptionGap, epsilon: 0.5),
         reason: 'PAGE caption hugs its picker');
-    expect(
-        _gap(tester, caption(l10n.propertiesMargins), field('marginPreset')),
+    expect(_gap(tester, caption(l10n.propertiesMargins), field('marginPreset')),
         moreOrLessEquals(kCaptionGap, epsilon: 0.5),
         reason: 'MARGINS caption hugs its picker');
   });

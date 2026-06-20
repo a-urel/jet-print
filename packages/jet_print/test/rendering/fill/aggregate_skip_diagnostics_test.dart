@@ -20,8 +20,8 @@ const JetRect _r = JetRect(x: 0, y: 0, width: 100, height: 12);
 TextElement _el(String id, {String? text, String? expr}) =>
     TextElement(id: id, bounds: _r, text: text ?? '', expression: expr);
 
-Diagnostic _match(FillResult res, Pattern p) => res.diagnostics.entries
-    .firstWhere((Diagnostic d) => d.message.contains(p),
+Diagnostic _match(FillResult res, Pattern p) =>
+    res.diagnostics.entries.firstWhere((Diagnostic d) => d.message.contains(p),
         orElse: () => fail('no diagnostic matching "$p": '
             '${res.diagnostics.entries}'));
 
@@ -111,7 +111,8 @@ ReportDefinition _descendantSummaryDef() => ReportDefinition(
     );
 
 void main() {
-  test('R3: master-calculator SUM surfaces a row-tagged skip and still sums '
+  test(
+      'R3: master-calculator SUM surfaces a row-tagged skip and still sums '
       'the clean rows', () {
     final FillResult res = ReportFiller().fillDefinition(
       _masterSumDef(),

@@ -78,8 +78,7 @@ void main() {
 
   testWidgets(
       'summary grandTotal SUM(\$F{lineTotal}) shows no unresolved hint '
-      '(lineTotal is a descendant schema field)',
-      (WidgetTester tester) async {
+      '(lineTotal is a descendant schema field)', (WidgetTester tester) async {
     final JetReportDesignerController c = await _pump(tester);
     await _selectAndInspect(tester, c, 'grandTotal');
     expect(find.text(_unresolvedMsg), findsNothing);

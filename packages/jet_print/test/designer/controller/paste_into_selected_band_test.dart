@@ -41,17 +41,18 @@ ReportDefinition _fixture() => const ReportDefinition(
       ),
     );
 
-Band _band(JetReportDesignerController c, String id) => c.definition.body.root
-    .children
-    .whereType<BandNode>()
-    .firstWhere((BandNode n) => n.band.id == id)
-    .band;
+Band _band(JetReportDesignerController c, String id) =>
+    c.definition.body.root.children
+        .whereType<BandNode>()
+        .firstWhere((BandNode n) => n.band.id == id)
+        .band;
 
 JetReportDesignerController _open() =>
     JetReportDesignerController()..open(_fixture());
 
 void main() {
-  test('single-source clipboard + foreign band selected pastes into that band '
+  test(
+      'single-source clipboard + foreign band selected pastes into that band '
       'at original X/Y', () {
     final JetReportDesignerController c = _open()..select('d1');
     c.copy();

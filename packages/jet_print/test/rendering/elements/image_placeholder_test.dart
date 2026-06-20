@@ -14,8 +14,7 @@ void main() {
   test('normal box: outline + frame rects and sun + mountain paths, no text',
       () {
     final FrameBuilder out = FrameBuilder(PageFormat.a4Portrait);
-    emitImagePlaceholder(
-        out, const JetRect(x: 0, y: 0, width: 50, height: 40),
+    emitImagePlaceholder(out, const JetRect(x: 0, y: 0, width: 50, height: 40),
         elementId: 'img1');
     final List<FramePrimitive> prims = out.build().primitives;
 
@@ -57,8 +56,7 @@ void main() {
 
   test('tiny box (side < 8): only the full-bounds outline is emitted', () {
     final FrameBuilder out = FrameBuilder(PageFormat.a4Portrait);
-    emitImagePlaceholder(
-        out, const JetRect(x: 1, y: 1, width: 6, height: 6),
+    emitImagePlaceholder(out, const JetRect(x: 1, y: 1, width: 6, height: 6),
         elementId: 'i');
     final List<FramePrimitive> prims = out.build().primitives;
     expect(prims, hasLength(1));

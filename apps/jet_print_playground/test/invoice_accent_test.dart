@@ -11,10 +11,8 @@ const JetColor _accent = JetColor(0xFF2F5C8A);
 
 void main() {
   group('invoice accent stripes', () {
-    Band header() =>
-        invoiceSampleDefinition().body.root.groups.single.header!;
-    Band footer() =>
-        invoiceSampleDefinition().body.root.groups.single.footer!;
+    Band header() => invoiceSampleDefinition().body.root.groups.single.header!;
+    Band footer() => invoiceSampleDefinition().body.root.groups.single.footer!;
     ShapeElement shapeIn(Band b, String id) =>
         b.elements.firstWhere((ReportElement e) => e.id == id) as ShapeElement;
 

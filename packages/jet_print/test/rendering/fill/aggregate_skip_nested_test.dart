@@ -19,8 +19,8 @@ const JetRect _r = JetRect(x: 0, y: 0, width: 100, height: 12);
 TextElement _el(String id, {String? text, String? expr}) =>
     TextElement(id: id, bounds: _r, text: text ?? '', expression: expr);
 
-Diagnostic _match(FillResult res, Pattern p) => res.diagnostics.entries
-    .firstWhere((Diagnostic d) => d.message.contains(p),
+Diagnostic _match(FillResult res, Pattern p) =>
+    res.diagnostics.entries.firstWhere((Diagnostic d) => d.message.contains(p),
         orElse: () => fail('no diagnostic matching "$p": '
             '${res.diagnostics.entries}'));
 
@@ -34,7 +34,9 @@ ReportDefinition _scopeTotalDef() => ReportDefinition(
           NestedScope(DetailScope(
             id: 'lines',
             collectionField: 'lines',
-            totals: const <ScopeTotal>[ScopeTotal('lineSum', r'SUM($F{amount})')],
+            totals: const <ScopeTotal>[
+              ScopeTotal('lineSum', r'SUM($F{amount})')
+            ],
             children: <ScopeNode>[
               BandNode(Band(
                   id: 'line',
@@ -71,7 +73,9 @@ ReportDefinition _nestedFooterDef() => ReportDefinition(
                   id: 'order-detail',
                   type: BandType.detail,
                   height: 12,
-                  elements: <ReportElement>[_el('orderId', expr: r'$F{orderId}')])),
+                  elements: <ReportElement>[
+                    _el('orderId', expr: r'$F{orderId}')
+                  ])),
               NestedScope(DetailScope(
                 id: 'lines',
                 collectionField: 'lines',

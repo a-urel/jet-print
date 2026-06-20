@@ -50,8 +50,7 @@ void main() {
         report.diagnostics.entries
             .where((Diagnostic d) => d.severity == DiagnosticSeverity.error),
         isEmpty,
-        reason:
-            'a fully-bound, valid-EAN-13 label definition + matching data '
+        reason: 'a fully-bound, valid-EAN-13 label definition + matching data '
             'renders cleanly',
       );
     });

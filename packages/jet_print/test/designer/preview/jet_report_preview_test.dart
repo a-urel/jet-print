@@ -297,7 +297,8 @@ void main() {
     String level(WidgetTester tester) =>
         tester.widget<ShadInput>(find.byKey(_zoomLevelKey)).controller!.text;
 
-    testWidgets('opens fit-to-width; the field shows the computed scale (not a '
+    testWidgets(
+        'opens fit-to-width; the field shows the computed scale (not a '
         'literal 100%)', (WidgetTester tester) async {
       await _pumpPreview(tester, size: const Size(800, 600));
       final double pageW = tester.getSize(find.byKey(_pageKey)).width;
@@ -375,7 +376,8 @@ void main() {
           moreOrLessEquals(300, epsilon: 1));
     });
 
-    testWidgets('zoom clamps at the floor; the button stays enabled (designer '
+    testWidgets(
+        'zoom clamps at the floor; the button stays enabled (designer '
         'parity)', (WidgetTester tester) async {
       await _pumpPreview(tester, size: const Size(500, 600));
       await tester.ensureVisible(find.byKey(_zoomOutKey));

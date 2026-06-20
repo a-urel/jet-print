@@ -55,7 +55,8 @@ void main() {
           reason: 'invoice ${invoice.field('invoiceNo')}: discount is a '
               'deduction (stored negative)');
       expect(invoice.field('grandTotal'), subtotal + tax + shipping + discount,
-          reason: 'invoice ${invoice.field('invoiceNo')}: grandTotal must equal '
+          reason:
+              'invoice ${invoice.field('invoiceNo')}: grandTotal must equal '
               'subtotal + tax + shipping + discount');
       count++;
     }

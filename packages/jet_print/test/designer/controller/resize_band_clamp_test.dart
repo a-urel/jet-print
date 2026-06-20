@@ -13,12 +13,8 @@ JetRect _bounds(JetReportDesignerController c, String id) =>
         .firstWhere((ReportElement e) => e.id == id)
         .bounds;
 
-double _detailBandHeight(JetReportDesignerController c) => c
-    .definition.body.root.children
-    .whereType<BandNode>()
-    .first
-    .band
-    .height;
+double _detailBandHeight(JetReportDesignerController c) =>
+    c.definition.body.root.children.whereType<BandNode>().first.band.height;
 
 void main() {
   test('left handle clamped at the band border leaves the right edge fixed',
@@ -37,7 +33,8 @@ void main() {
     final JetRect p = c.previewBoundsFor(id)!;
     expect(p.x, 0, reason: 'left edge pins at the band border');
     expect(p.x + p.width, closeTo(right0, 0.001),
-        reason: 'the right (anchored) edge must NOT move — no resize past border');
+        reason:
+            'the right (anchored) edge must NOT move — no resize past border');
   });
 
   test('right handle clamped at the band border leaves the left edge fixed',
@@ -50,14 +47,16 @@ void main() {
     final double left0 = _bounds(c, id).x;
 
     c.beginResize(id, ResizeHandle.right);
-    c.updateResize(const JetOffset(2000, 0)); // drag the right edge far past max
+    c.updateResize(
+        const JetOffset(2000, 0)); // drag the right edge far past max
 
     final JetRect p = c.previewBoundsFor(id)!;
     expect(p.x, closeTo(left0, 0.001),
         reason: 'the left (anchored) edge must NOT move');
   });
 
-  test('bottom handle clamped at the band border leaves the top edge fixed', () {
+  test('bottom handle clamped at the band border leaves the top edge fixed',
+      () {
     final JetReportDesignerController c = JetReportDesignerController();
     addTearDown(c.dispose);
     c.createElement(DesignerToolType.text,
