@@ -163,9 +163,10 @@ the others do not.
   element's **band** screen rect. No part of any handle may render or hit-test
   outside the band, including when the element is flush against a band edge.
 - **FR-005**: The overlay MUST obtain an element's band rect from the layout
-  (resolve the owning band via `findBandOfElement`, then `bandRect(bandId)`) and
-  scale it by the view scale to perform the FR-004 clamp — reusing the layout as
-  the single source of band geometry rather than recomputing band offsets.
+  (resolve the owning band via `layout.bandOfElement(id)`, then
+  `layout.bandRect(bandId)`) and scale it by the view scale to perform the FR-004
+  clamp — reusing the layout as the single source of band geometry rather than
+  recomputing band offsets.
 - **FR-006**: The FR-004 clamp MUST preserve each handle's full hit area (it MUST
   shift the box inward, NOT clip it). A handle whose box already lies within the
   band MUST be left unchanged (handles away from a band edge stay centered on the
