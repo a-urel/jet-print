@@ -95,6 +95,13 @@ class JetReportPrinter {
 /// reported, so the `true`/`false` ("handed to the OS" / "cancelled") result
 /// is best-effort on web. `Printing.info().canPrint` still gates genuinely
 /// unsupported environments (which throw [PrintUnavailableException]).
+///
+/// On **iOS/Android**, `Printing.layoutPdf` presents the native print/share
+/// sheet for the deterministic [JetReportExporter.toPdf] bytes; there is no
+/// desktop print dialog, and a user dismissal may report as success (the
+/// `true`/`false` "handed off / cancelled" contract is best-effort on
+/// mobile, as on web). `PrintUnavailableException` still covers genuinely
+/// unsupported environments.
 Future<bool> _systemPrintDialog(
   Uint8List pdfBytes, {
   required String jobName,
