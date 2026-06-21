@@ -5,9 +5,9 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jet_print/src/domain/elements/image_source.dart'; // JetBoxFit
 import 'package:jet_print/src/domain/geometry.dart';
 import 'package:jet_print/src/domain/page_format.dart';
-import 'package:jet_print/src/domain/elements/image_source.dart'; // JetBoxFit
 import 'package:jet_print/src/rendering/frame/frame_builder.dart';
 import 'package:jet_print/src/rendering/frame/primitive.dart';
 import 'package:jet_print/src/rendering/paint/canvas_painter.dart';
