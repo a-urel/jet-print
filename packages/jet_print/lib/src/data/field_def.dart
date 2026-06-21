@@ -120,8 +120,7 @@ List<FieldDef> inferFields(List<Map<String, Object?>> rows) {
 /// every entry across all of those lists; any other column delegates to the
 /// scalar [FieldDef.inferType].
 FieldDef inferColumn(String name, Iterable<Object?> values) {
-  final List<Object?> nonNull =
-      values.where((Object? v) => v != null).toList();
+  final List<Object?> nonNull = values.where((Object? v) => v != null).toList();
   final bool isCollection = nonNull.isNotEmpty &&
       nonNull
           .every((Object? v) => v is List && v.every((Object? e) => e is Map));

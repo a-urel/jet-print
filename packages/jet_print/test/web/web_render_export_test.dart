@@ -46,8 +46,7 @@ void main() {
     expect(String.fromCharCodes(pdf.take(5)), '%PDF-');
   });
 
-  test('PNG export (toByteData on CanvasKit) produces a valid image',
-      () async {
+  test('PNG export (toByteData on CanvasKit) produces a valid image', () async {
     final Uint8List png =
         await const JetReportExporter().pageToPng(_render(), 0);
     expect(png.length, greaterThan(100));

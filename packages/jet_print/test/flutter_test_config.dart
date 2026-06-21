@@ -21,7 +21,6 @@ import 'dart:async';
 // flutter_test is imported via the conditional golden_config files below,
 // but we still need FutureOr from dart:async here.
 
-
 import 'support/golden_config_io.dart'
     if (dart.library.js_interop) 'support/golden_config_web.dart';
 

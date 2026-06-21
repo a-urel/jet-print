@@ -218,8 +218,11 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
       (
         value: 'makbuz',
         icon: LucideIcons.package,
-        body: tab(packingSlipDefinition(), shipmentSchema,
-            (d) => renderPackingSlipDefinition(definition: d, fonts: widget.fonts)),
+        body: tab(
+            packingSlipDefinition(),
+            shipmentSchema,
+            (d) => renderPackingSlipDefinition(
+                definition: d, fonts: widget.fonts)),
       ),
       (
         value: 'bordro',
@@ -230,8 +233,11 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
       (
         value: 'nested-lists',
         icon: LucideIcons.listTree,
-        body: tab(nestedListsDefinition(), customersSchema,
-            (d) => renderNestedListsDefinition(definition: d, fonts: widget.fonts)),
+        body: tab(
+            nestedListsDefinition(),
+            customersSchema,
+            (d) => renderNestedListsDefinition(
+                definition: d, fonts: widget.fonts)),
       ),
       (
         value: 'defter',

@@ -95,7 +95,8 @@ class DesignTimeFrameBuilder {
     final CanvasPainter painter = CanvasPainter(ui.Canvas(recorder), fonts);
     await paintFrame(frame, painter);
     final ui.Picture picture = recorder.endRecording();
-    painter.dispose(); // free decoded image textures; the picture keeps its refs
+    painter
+        .dispose(); // free decoded image textures; the picture keeps its refs
     return picture;
   }
 }

@@ -20,11 +20,13 @@ void main() {
   // A tiny real PNG so instantiateImageCodec has something to decode.
   Future<Uint8List> pngBytes() async {
     final ui.PictureRecorder rec = ui.PictureRecorder();
-    ui.Canvas(rec).drawRect(
-        const ui.Rect.fromLTWH(0, 0, 2, 2), ui.Paint()..color = const ui.Color(0xFF112233));
+    ui.Canvas(rec).drawRect(const ui.Rect.fromLTWH(0, 0, 2, 2),
+        ui.Paint()..color = const ui.Color(0xFF112233));
     final ui.Image img = await rec.endRecording().toImage(2, 2);
     final Uint8List bytes =
-        (await img.toByteData(format: ui.ImageByteFormat.png))!.buffer.asUint8List();
+        (await img.toByteData(format: ui.ImageByteFormat.png))!
+            .buffer
+            .asUint8List();
     img.dispose();
     return bytes;
   }

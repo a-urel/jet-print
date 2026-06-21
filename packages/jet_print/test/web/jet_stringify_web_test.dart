@@ -32,7 +32,8 @@ void main() {
       expect(jetStringify(const JetNumber(3.14)), '3.14');
     });
 
-    test('very large integer-valued double (1e21) uses scientific notation', () {
+    test('very large integer-valued double (1e21) uses scientific notation',
+        () {
       // 1e21 is the scientific-notation threshold; both platforms agree here.
       expect(jetStringify(const JetNumber(1e21)), '1e+21');
     });

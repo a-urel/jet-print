@@ -22,8 +22,8 @@ void main() {
 
   // Builds a one-text-run frame for the default family.
   PageFrame textFrame(FontRegistry reg) {
-    final MeasuredText m =
-        MetricsTextMeasurer(reg).measure('Hi', const JetTextStyle(fontSize: 10));
+    final MeasuredText m = MetricsTextMeasurer(reg)
+        .measure('Hi', const JetTextStyle(fontSize: 10));
     return (FrameBuilder(const PageFormat(
             width: 100, height: 20, margins: JetEdgeInsets.all(0)))
           ..add(TextRunPrimitive(
@@ -38,7 +38,8 @@ void main() {
       () async {
     final FontRegistry reg = FontRegistry()..registerDefault();
     int loads = 0;
-    Future<void> counting(Uint8List bytes, {String? fontFamily}) async => loads++;
+    Future<void> counting(Uint8List bytes, {String? fontFamily}) async =>
+        loads++;
 
     // Two painters sharing the default (process-global) registry — like two
     // successive recordFrame() calls.
@@ -50,14 +51,17 @@ void main() {
       rec.endRecording();
     }
 
-    expect(loads, 1, reason: 'second painter must reuse the engine registration');
+    expect(loads, 1,
+        reason: 'second painter must reuse the engine registration');
   });
 
-  test('an injected fresh registry registers again (proves the guard is the set)',
+  test(
+      'an injected fresh registry registers again (proves the guard is the set)',
       () async {
     final FontRegistry reg = FontRegistry()..registerDefault();
     int loads = 0;
-    Future<void> counting(Uint8List bytes, {String? fontFamily}) async => loads++;
+    Future<void> counting(Uint8List bytes, {String? fontFamily}) async =>
+        loads++;
 
     for (var i = 0; i < 2; i++) {
       final ui.PictureRecorder rec = ui.PictureRecorder();

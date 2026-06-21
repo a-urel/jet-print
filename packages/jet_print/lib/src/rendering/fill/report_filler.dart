@@ -287,9 +287,8 @@ class ReportFiller {
         (FieldDef f) => f.name == name,
         orElse: () => const FieldDef(''),
       );
-      final List<FieldDef> fields = declared.fields.isNotEmpty
-          ? declared.fields
-          : inferFields(maps);
+      final List<FieldDef> fields =
+          declared.fields.isNotEmpty ? declared.fields : inferFields(maps);
       return <DataRow>[
         for (final Map<String, Object?> m in maps)
           DataRow(fields: fields, values: <String, Object?>{
