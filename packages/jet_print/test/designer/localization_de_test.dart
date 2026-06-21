@@ -3,6 +3,7 @@
 // In its own file (isolate) by design — see the note in localization_test.dart:
 // switching between two non-English CLDR locales in one isolate leaves the later
 // tree unbuilt, so each non-English locale is verified in isolation.
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
@@ -73,9 +74,11 @@ void main() {
     expect(find.text('Bring to front'), findsNothing);
   });
 
-  testWidgets('the Properties inspector is localized under the de locale', (
-    WidgetTester tester,
-  ) async {
+  testWidgets(
+    'the Properties inspector is localized under the de locale',
+    // Headless Chrome does not support the accessibility tree (SemanticsHandle).
+    skip: kIsWeb,
+    (WidgetTester tester) async {
     final SemanticsHandle sem = tester.ensureSemantics();
     final JetReportDesignerController c =
         await pumpDesignerWith(tester, locale: const Locale('de'));
@@ -159,9 +162,11 @@ void main() {
   });
 
   // 021 / C12 — the Font-section strings are German.
-  testWidgets('the Font section strings are localized in German (021)', (
-    WidgetTester tester,
-  ) async {
+  testWidgets(
+    'the Font section strings are localized in German (021)',
+    // Headless Chrome does not support the accessibility tree (SemanticsHandle).
+    skip: kIsWeb,
+    (WidgetTester tester) async {
     final JetReportDesignerController c = JetReportDesignerController(
       definition: const ReportDefinition(
         name: 'Styled',

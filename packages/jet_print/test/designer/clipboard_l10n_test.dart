@@ -12,6 +12,13 @@
 // support/designer_harness.dart), so `tr` must never run immediately after `de`.
 // The platform-glyph tests are registered first so they run before any `de`
 // pump.
+//
+// VM-only: all three tests either exercise right-click (kSecondaryButton)
+// gesture simulation (unsupported in headless Chrome at the test-harness level)
+// or rely on debugDefaultTargetPlatformOverride to detect the platform glyph.
+@TestOn('vm')
+library;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart' show kSecondaryButton;
 import 'package:flutter/widgets.dart';

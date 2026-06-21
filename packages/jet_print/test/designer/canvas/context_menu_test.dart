@@ -6,6 +6,12 @@
 // Drives the public designer through a supplied controller; finds elements and
 // menu items by their stable widget keys (the canvas gesture detector owns
 // hit-testing, so the per-element regions are non-capturing test hooks).
+//
+// VM-only: every test drives right-click (kSecondaryButton) gesture simulation,
+// which headless Chrome does not support at the test-harness level.
+@TestOn('vm')
+library;
+
 import 'package:flutter/gestures.dart' show kSecondaryButton;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
