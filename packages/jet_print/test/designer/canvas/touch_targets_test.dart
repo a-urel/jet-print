@@ -13,7 +13,8 @@ import 'package:jet_print/src/designer/designer_scope.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 void main() {
-  test('kHandleHitSizeTouch is a finger-friendly target larger than the mouse hit',
+  test(
+      'kHandleHitSizeTouch is a finger-friendly target larger than the mouse hit',
       () {
     expect(kHandleHitSizeTouch, greaterThanOrEqualTo(44));
     expect(kHandleHitSizeTouch, greaterThan(kHandleHitSize));
@@ -50,8 +51,7 @@ class _HostOverlay extends StatefulWidget {
 }
 
 class _HostOverlayState extends State<_HostOverlay> {
-  final JetReportDesignerController _controller =
-      JetReportDesignerController();
+  final JetReportDesignerController _controller = JetReportDesignerController();
 
   @override
   void initState() {
@@ -74,8 +74,7 @@ class _HostOverlayState extends State<_HostOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    final DesignTimeLayout layout =
-        DesignTimeLayout.of(_controller.definition);
+    final DesignTimeLayout layout = DesignTimeLayout.of(_controller.definition);
 
     return ShadApp(
       themeMode: ThemeMode.light,
