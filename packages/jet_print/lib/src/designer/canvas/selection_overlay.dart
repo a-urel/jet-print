@@ -36,13 +36,20 @@ const Color _accent = Color(0xFF2563EB);
 class DesignerSelectionOverlay extends StatefulWidget {
   /// Creates the overlay for [layout] at [scale].
   const DesignerSelectionOverlay(
-      {required this.layout, required this.scale, super.key});
+      {required this.layout,
+      required this.scale,
+      this.touchTargets = false,
+      super.key});
 
   /// The current design-time layout (element → page rect).
   final DesignTimeLayout layout;
 
   /// The active zoom factor.
   final double scale;
+
+  /// When true, resize handles + the band divider present a finger-sized hit
+  /// area ([kHandleHitSizeTouch]); the drawn handle is unchanged.
+  final bool touchTargets;
 
   @override
   State<DesignerSelectionOverlay> createState() =>
@@ -196,7 +203,8 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
     ShadColorScheme colors,
     JetPrintLocalizations l10n,
   ) {
-    const double hit = kHandleHitSize;
+    final double hit =
+        widget.touchTargets ? kHandleHitSizeTouch : kHandleHitSize;
     const double barWidth = 28;
     return Positioned(
       left: centerX * widget.scale - barWidth / 2,
@@ -311,7 +319,8 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
     JetPrintLocalizations l10n,
   ) {
     final ({double x, double y}) center = _handleCenter(position, pageRect);
-    const double hit = kHandleHitSize;
+    final double hit =
+        widget.touchTargets ? kHandleHitSizeTouch : kHandleHitSize;
     // The handle is centered on its element edge/corner and rides the same
     // (clamped) display geometry as the outline, so it stays visually attached to
     // the selection box everywhere. It is a screen-space grab affordance: at a

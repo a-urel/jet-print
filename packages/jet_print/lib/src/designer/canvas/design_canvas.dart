@@ -191,7 +191,6 @@ class _DesignCanvasState extends State<DesignCanvas> {
   /// precision, a finger on the same device gets fat targets.
   PointerDeviceKind _pointerKind = PointerDeviceKind.mouse;
 
-  // ignore: unused_element
   bool get _isTouch => _pointerKind == PointerDeviceKind.touch;
 
   void _updatePointerKind(PointerDeviceKind kind) {
@@ -881,6 +880,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
             // away with the content). Both are driven by the same controllers.
             // The scroll viewport + its scrollbar overlays, as one unit so the
             // rulers can inset it without disturbing the scrollbar geometry.
+            final double barThickness = _isTouch ? 20 : 8;
             final Widget viewportStack = Stack(
               children: <Widget>[
                 ScrollConfiguration(
@@ -898,8 +898,8 @@ class _DesignCanvasState extends State<DesignCanvas> {
                   Positioned(
                     top: 0,
                     right: 0,
-                    bottom: hScrollable ? 8 : 0,
-                    width: 8,
+                    bottom: hScrollable ? barThickness : 0,
+                    width: barThickness,
                     child: _CanvasScrollbar(
                       key: const ValueKey<String>(
                           'jet_print.designer.scrollbar.vertical'),
@@ -911,9 +911,9 @@ class _DesignCanvasState extends State<DesignCanvas> {
                 if (hScrollable)
                   Positioned(
                     left: 0,
-                    right: vScrollable ? 8 : 0,
+                    right: vScrollable ? barThickness : 0,
                     bottom: 0,
-                    height: 8,
+                    height: barThickness,
                     child: _CanvasScrollbar(
                       key: const ValueKey<String>(
                           'jet_print.designer.scrollbar.horizontal'),
@@ -1161,7 +1161,9 @@ class _DesignCanvasState extends State<DesignCanvas> {
                   // as the element picture during a live move/resize (spec 038).
                   Positioned.fill(
                     child: DesignerSelectionOverlay(
-                        layout: displayLayout, scale: scale),
+                        layout: displayLayout,
+                        scale: scale,
+                        touchTargets: _isTouch),
                   ),
                   // Marquee rubber-band, while dragging on empty canvas.
                   if (_marqueeRect case final JetRect m)

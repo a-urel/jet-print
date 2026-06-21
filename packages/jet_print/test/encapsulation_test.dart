@@ -120,7 +120,12 @@ bool _isWhiteBoxSeamTest(File file) {
       // helpers in `zoom_math.dart` are unexported `src/` pure functions; their
       // unit test is white-box so the adaptive-scale math can be tested without
       // the full designer (Principle III / the grid_geometry precedent).
-      path.endsWith('/test/designer/canvas/zoom_math_test.dart');
+      path.endsWith('/test/designer/canvas/zoom_math_test.dart') ||
+      // Touch targets (E5 task 6): `DesignerSelectionOverlay` and the touch
+      // tunables (`kHandleHitSizeTouch`) are unexported `src/` canvas internals;
+      // the widget test exercises them directly as a white-box seam test
+      // (Principle III / the zoom_math_test precedent).
+      path.endsWith('/test/designer/canvas/touch_targets_test.dart');
 }
 
 void main() {

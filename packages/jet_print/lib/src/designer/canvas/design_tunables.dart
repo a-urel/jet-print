@@ -88,6 +88,13 @@ const double kHandleVisualSize = 8;
 /// than [kHandleVisualSize] so tiny elements stay grabbable (FR-009 edge case).
 const double kHandleHitSize = 16;
 
+/// Side length, in screen pixels, of a resize handle's *hit* area under TOUCH
+/// input — a finger-friendly target (~Apple HIG / Material 44pt). Selected by
+/// the selection overlay when the active pointer is touch; the drawn handle
+/// stays [kHandleVisualSize], so goldens (which never simulate touch) are
+/// unchanged.
+const double kHandleHitSizeTouch = 44;
+
 /// Default size, in points, for a newly created element of each tool type
 /// (FR-002). Chosen to be immediately visible and editable at 100% zoom.
 const Map<DesignerToolType, JetSize> kDefaultElementSize =
