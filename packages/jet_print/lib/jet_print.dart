@@ -32,6 +32,7 @@ export 'src/data/in_memory_data_source.dart' show JetInMemoryDataSource;
 export 'src/data/jet_data_source.dart' show JetDataSource;
 export 'src/data/json_data_source.dart' show JetJsonDataSource;
 export 'src/data/object_data_source.dart' show JetObjectDataSource;
+export 'src/data/paged_data_source.dart' show JetPagedDataSource;
 // --- Interactive editing seam (003): the controller + its public vocabulary. ---
 export 'src/designer/canvas/design_tunables.dart' show DesignerToolType;
 export 'src/designer/canvas/resize_handle.dart' show ResizeHandle;
