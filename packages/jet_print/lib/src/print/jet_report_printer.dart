@@ -89,6 +89,12 @@ class JetReportPrinter {
 /// `canPrint: false`, which becomes a clean [PrintUnavailableException]
 /// (research §3). `onLayout` returns the same deterministic bytes whatever
 /// paper the user picks: reflowing to the dialog's paper would break WYSIWYG.
+///
+/// On web, `printing` renders the PDF with pdf.js and opens the browser's
+/// print dialog; there is no OS print dialog and user-cancel is not reliably
+/// reported, so the `true`/`false` ("handed to the OS" / "cancelled") result
+/// is best-effort on web. `Printing.info().canPrint` still gates genuinely
+/// unsupported environments (which throw [PrintUnavailableException]).
 Future<bool> _systemPrintDialog(
   Uint8List pdfBytes, {
   required String jobName,
