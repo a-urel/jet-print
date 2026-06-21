@@ -137,15 +137,27 @@ final class JetError extends JetValue {
   String toString() => 'JetError($message)';
 }
 
+/// VM-consistent stringification: Dart's `double.toString()` diverges on web
+/// (JS) for integer-valued doubles (`5.0` → `'5'` instead of `'5.0'`).
+/// Reproduce the VM representation so rendered numbers match across platforms
+/// (and the macOS goldens). Only integer-valued finite doubles below the
+/// scientific-notation threshold differ; everything else already agrees.
+String _doubleToString(double v) {
+  if (v.isFinite && v == v.truncateToDouble() && v.abs() < 1e21) {
+    return '${v.toStringAsFixed(0)}.0';
+  }
+  return v.toString();
+}
+
 /// Renders a [JetValue] to display text (used by `CONCAT` and direct display).
 ///
 /// [JetNull]→`''`; [JetBool]→`'true'`/`'false'`; [JetNumber]→`double.toString()`
-/// (so `5.0` prints `5.0` — use `FORMAT` for presentation); [JetString]→its
-/// text; [JetDate]→ISO 8601; [JetError]→`'!ERR'`.
+/// (so `5.0` prints `5.0` on both VM and web — use `FORMAT` for presentation);
+/// [JetString]→its text; [JetDate]→ISO 8601; [JetError]→`'!ERR'`.
 String jetStringify(JetValue value) => switch (value) {
       JetNull() => '',
       JetBool(value: final bool v) => v.toString(),
-      JetNumber(value: final double v) => v.toString(),
+      JetNumber(value: final double v) => _doubleToString(v),
       JetString(value: final String v) => v,
       JetDate(value: final DateTime v) => v.toIso8601String(),
       JetError() => '!ERR',

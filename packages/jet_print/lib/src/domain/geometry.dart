@@ -6,6 +6,18 @@
 /// types are immutable, use value equality, and round-trip through JSON.
 library;
 
+/// VM-consistent double stringification.
+///
+/// On web (JS), `double.toString()` omits the trailing `.0` for integer-valued
+/// doubles (`5.0` → `'5'`). This helper reproduces the VM output on both
+/// platforms so that toString() results are consistent across environments.
+String _d(double v) {
+  if (v.isFinite && v == v.truncateToDouble() && v.abs() < 1e21) {
+    return '${v.toStringAsFixed(0)}.0';
+  }
+  return v.toString();
+}
+
 /// An immutable width/height pair, in logical points.
 class JetSize {
   /// Creates a size of [width] x [height] points.
@@ -32,7 +44,7 @@ class JetSize {
   int get hashCode => Object.hash(width, height);
 
   @override
-  String toString() => 'JetSize($width, $height)';
+  String toString() => 'JetSize(${_d(width)}, ${_d(height)})';
 }
 
 /// An immutable (dx, dy) displacement, in logical points.
@@ -61,7 +73,7 @@ class JetOffset {
   int get hashCode => Object.hash(dx, dy);
 
   @override
-  String toString() => 'JetOffset($dx, $dy)';
+  String toString() => 'JetOffset(${_d(dx)}, ${_d(dy)})';
 }
 
 /// Immutable inset distances for the four sides of a box, in logical points.
@@ -133,7 +145,8 @@ class JetEdgeInsets {
   int get hashCode => Object.hash(left, top, right, bottom);
 
   @override
-  String toString() => 'JetEdgeInsets($left, $top, $right, $bottom)';
+  String toString() =>
+      'JetEdgeInsets(${_d(left)}, ${_d(top)}, ${_d(right)}, ${_d(bottom)})';
 }
 
 /// An immutable axis-aligned rectangle: top-left at ([x], [y]) with [width] x
@@ -186,7 +199,8 @@ class JetRect {
   int get hashCode => Object.hash(x, y, width, height);
 
   @override
-  String toString() => 'JetRect($x, $y, $width, $height)';
+  String toString() =>
+      'JetRect(${_d(x)}, ${_d(y)}, ${_d(width)}, ${_d(height)})';
 }
 
 /// Immutable sizing bounds for `ElementRenderer.measure`: a maximum [maxWidth]
@@ -223,5 +237,5 @@ class JetConstraints {
 
   @override
   String toString() =>
-      'JetConstraints(maxWidth: $maxWidth, maxHeight: $maxHeight)';
+      'JetConstraints(maxWidth: ${_d(maxWidth)}, maxHeight: ${_d(maxHeight)})';
 }

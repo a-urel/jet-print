@@ -6,6 +6,17 @@ library;
 import '../../domain/geometry.dart';
 import '../../domain/styles/text_style.dart';
 
+/// VM-consistent double stringification for toString() methods.
+///
+/// On web (JS), `double.toString()` omits the trailing `.0` for integer-valued
+/// doubles. This reproduces the VM output on both platforms.
+String _d(double v) {
+  if (v.isFinite && v == v.truncateToDouble() && v.abs() < 1e21) {
+    return '${v.toStringAsFixed(0)}.0';
+  }
+  return v.toString();
+}
+
 /// Measures text into laid-out lines. Pure Dart — no `dart:ui`.
 abstract class TextMeasurer {
   /// Lays out [text] in [style], wrapping at [maxWidth] when non-null.
@@ -81,5 +92,5 @@ class TextLine {
 
   @override
   String toString() =>
-      'TextLine("$text", w: $width, top: $top, base: $baseline)';
+      'TextLine("$text", w: ${_d(width)}, top: ${_d(top)}, base: ${_d(baseline)})';
 }

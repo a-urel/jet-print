@@ -51,6 +51,10 @@ bool _isWhiteBoxSeamTest(File file) {
       path.contains('/test/expression/') ||
       path.contains('/test/rendering/') ||
       path.contains('/test/print/') ||
+      // Web-platform fidelity tests (e4): exercise unexported `src/` types
+      // (e.g. `jetStringify` in the expression engine) to verify web/VM parity;
+      // they are white-box seam tests, not external consumers.
+      path.contains('/test/web/') ||
       // Designer-internal seams (013): the value-field template compiler and the
       // design-time binding token are unexported `src/` modules; their unit
       // tests are white-box. The wider designer widget tests still use the
