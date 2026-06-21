@@ -88,6 +88,59 @@ class FieldDef {
       : 'FieldDef($name, $type, fields: $fields)';
 }
 
+/// Best-effort inference of a [FieldDef] schema from [rows]: the union of all
+/// row keys in first-seen order, each typed by [inferColumn] over its column's
+/// values. A column whose values are themselves lists of row maps is typed as a
+/// nested [JetFieldType.collection] carrying its own recursively-inferred child
+/// schema (spec 033 / SC-006), so a root-scope descendant-leaf aggregate can
+/// resolve its operand by descending the typed collection chain even when the
+/// caller did not declare an explicit schema.
+///
+/// Package-internal (the public barrel exports only [FieldDef]); single-sourced
+/// here so every inference path — [JetInMemoryDataSource] construction and the
+/// filler's fill-time child-schema inference — types nested collections
+/// identically.
+List<FieldDef> inferFields(List<Map<String, Object?>> rows) {
+  final List<String> names = <String>[];
+  final Set<String> seen = <String>{};
+  for (final Map<String, Object?> row in rows) {
+    for (final String key in row.keys) {
+      if (seen.add(key)) names.add(key);
+    }
+  }
+  return <FieldDef>[
+    for (final String name in names)
+      inferColumn(name, rows.map((Map<String, Object?> r) => r[name])),
+  ];
+}
+
+/// Infers one column [name]'s [FieldDef] over its [values]. A column whose
+/// non-null values are all lists of row maps is a nested
+/// [JetFieldType.collection], typed with the recursively-inferred schema of
+/// every entry across all of those lists; any other column delegates to the
+/// scalar [FieldDef.inferType].
+FieldDef inferColumn(String name, Iterable<Object?> values) {
+  final List<Object?> nonNull =
+      values.where((Object? v) => v != null).toList();
+  final bool isCollection = nonNull.isNotEmpty &&
+      nonNull
+          .every((Object? v) => v is List && v.every((Object? e) => e is Map));
+  if (!isCollection) {
+    return FieldDef(name, type: FieldDef.inferType(values));
+  }
+  final List<Map<String, Object?>> entries = <Map<String, Object?>>[
+    for (final Object? v in nonNull)
+      for (final Object? e in v as List)
+        (e as Map).map((Object? k, Object? ev) =>
+            MapEntry<String, Object?>(k.toString(), ev)),
+  ];
+  return FieldDef(
+    name,
+    type: JetFieldType.collection,
+    fields: inferFields(entries),
+  );
+}
+
 /// Deep, order-sensitive equality over two [FieldDef] lists. Pure Dart (no
 /// Flutter `listEquals`) so the data seam stays headless; the per-element `==`
 /// recurses into nested collection schemas.

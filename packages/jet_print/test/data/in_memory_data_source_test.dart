@@ -25,6 +25,37 @@ void main() {
       ]);
     });
 
+    test('infers a top-level List<Map> column as a nested collection schema',
+        () {
+      // SC-006 / spec 033: a column whose values are lists of row maps is a
+      // nested collection, typed with its recursively-inferred child schema —
+      // so a root-scope descendant aggregate can descend it without an
+      // explicit `fields:` declaration.
+      final JetInMemoryDataSource source =
+          JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{
+          'customer': 'Acme',
+          'orders': <Map<String, Object?>>[
+            <String, Object?>{
+              'orderId': '1',
+              'lines': <Map<String, Object?>>[
+                <String, Object?>{'lineTotal': 10.0},
+              ],
+            },
+          ],
+        },
+      ]);
+      expect(source.fields, const <FieldDef>[
+        FieldDef('customer', type: JetFieldType.string),
+        FieldDef('orders', type: JetFieldType.collection, fields: <FieldDef>[
+          FieldDef('orderId', type: JetFieldType.string),
+          FieldDef('lines', type: JetFieldType.collection, fields: <FieldDef>[
+            FieldDef('lineTotal', type: JetFieldType.double),
+          ]),
+        ]),
+      ]);
+    });
+
     test('iterates rows, projecting missing keys to null', () {
       final JetDataSource source = JetInMemoryDataSource(<Map<String, Object?>>[
         <String, Object?>{'qty': 2, 'price': 9.5},

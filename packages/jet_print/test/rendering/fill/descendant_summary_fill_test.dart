@@ -28,9 +28,10 @@ TextElement _el(String id, {String? text, String? expr}) => TextElement(
       expression: expr,
     );
 
-// Explicit schema: inference does NOT type nested List<Map> columns as
-// collections, so we must declare the nested shape explicitly so that
-// resolveAggregatePath can descend [orders, lines] to find lineTotal.
+// An explicit schema declaring the nested shape, so resolveAggregatePath can
+// descend [orders, lines] to find lineTotal. Inference now types nested
+// List<Map> columns as collections too (SC-006), so a declared schema is no
+// longer required — the final test in this file proves the inferred path.
 const List<FieldDef> _rootSchema = <FieldDef>[
   FieldDef('customerCode', type: JetFieldType.string),
   FieldDef('orders', type: JetFieldType.collection, fields: <FieldDef>[
@@ -229,6 +230,43 @@ void main() {
       expect(summaryText, '67.0',
           reason: 'flat AVG over all 5 lines = 335 / 5 = 67');
 
+      expect(res.diagnostics.hasErrors, isFalse);
+    });
+
+    test(
+        'descendant SUM works over an INFERRED schema too (no explicit '
+        'fields:) — SC-006', () {
+      // Same report, but the source carries NO explicit schema: the nested
+      // orders/lines collections are inferred. The root-scope descend must
+      // still resolve [orders, lines] and fold identically to the declared
+      // case above (35 / 300 / 0; grand total 335).
+      final FillResult res = ReportFiller().fillDefinition(
+        _makeDefinition(
+          footerExpr: r'SUM($F{lineTotal})',
+          summaryExpr: r'SUM($F{lineTotal})',
+        ),
+        JetInMemoryDataSource(_rows()), // inferred, not declared
+      );
+
+      String footerText(FilledBand b) =>
+          (b.elements.firstWhere((ReportElement e) => e.id == 'customerTotal')
+                  as TextElement)
+              .text;
+      final List<String> footers = <String>[
+        for (final FilledBand b in res.report.bands)
+          if (b.type == BandType.groupFooter) footerText(b),
+      ];
+      expect(footers, <String>['35.0', '300.0', '0.0'],
+          reason: 'inferred schema descends [orders, lines] like a declared '
+              'one');
+
+      final FilledBand summary = res.report.bands.last;
+      final String summaryText = (summary.elements
+                  .firstWhere((ReportElement e) => e.id == 'summaryTotal')
+              as TextElement)
+          .text;
+      expect(summaryText, '335.0',
+          reason: 'grand total over an inferred schema = 335');
       expect(res.diagnostics.hasErrors, isFalse);
     });
   });

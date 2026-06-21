@@ -23,12 +23,12 @@ import 'row_cursor_data_set.dart';
 /// ])
 /// ```
 ///
-/// When [fields] is omitted the schema is inferred: the union of all row keys
-/// in first-seen order, each typed best-effort via [FieldDef.inferType] over
-/// that column's values (a nested collection's child schema is then inferred
-/// from its entries at fill time). The rows and schema are copied defensively,
-/// so later mutation of the caller's list does not affect the source. [open]
-/// ignores its `params`.
+/// When [fields] is omitted the schema is inferred (via [inferFields]): the
+/// union of all row keys in first-seen order, each typed best-effort over that
+/// column's values — including nested `List<Map>` columns, which infer as
+/// [JetFieldType.collection] with their own recursively-inferred child schema.
+/// The rows and schema are copied defensively, so later mutation of the
+/// caller's list does not affect the source. [open] ignores its `params`.
 class JetInMemoryDataSource implements JetDataSource {
   /// Creates a source over [rows], with an optional explicit [fields] schema.
   JetInMemoryDataSource(
@@ -38,7 +38,7 @@ class JetInMemoryDataSource implements JetDataSource {
           for (final Map<String, Object?> row in rows)
             Map<String, Object?>.unmodifiable(row),
         ],
-        _fields = List<FieldDef>.unmodifiable(fields ?? _inferFields(rows));
+        _fields = List<FieldDef>.unmodifiable(fields ?? inferFields(rows));
 
   final List<Map<String, Object?>> _rows;
   final List<FieldDef> _fields;
@@ -53,23 +53,4 @@ class JetInMemoryDataSource implements JetDataSource {
         rowCount: _rows.length,
         rowAt: (int i) => _rows[i],
       );
-
-  static List<FieldDef> _inferFields(List<Map<String, Object?>> rows) {
-    final List<String> names = <String>[];
-    final Set<String> seen = <String>{};
-    for (final Map<String, Object?> row in rows) {
-      for (final String key in row.keys) {
-        if (seen.add(key)) names.add(key);
-      }
-    }
-    return <FieldDef>[
-      for (final String name in names)
-        FieldDef(
-          name,
-          type: FieldDef.inferType(
-            rows.map((Map<String, Object?> r) => r[name]),
-          ),
-        ),
-    ];
-  }
 }

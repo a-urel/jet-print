@@ -289,7 +289,7 @@ class ReportFiller {
       );
       final List<FieldDef> fields = declared.fields.isNotEmpty
           ? declared.fields
-          : _inferChildFields(maps);
+          : inferFields(maps);
       return <DataRow>[
         for (final Map<String, Object?> m in maps)
           DataRow(fields: fields, values: <String, Object?>{
@@ -689,58 +689,5 @@ class ReportFiller {
       for (final MapEntry<String, JetValue> e in extras.entries) e.key: e.value,
     };
     return DataRow(fields: fields, values: values);
-  }
-
-  /// Best-effort child schema for a collection whose [FieldDef] declares no
-  /// child fields (e.g. the schema was inferred): the union of all entry keys
-  /// in first-seen order, each typed via [FieldDef.inferType] over that
-  /// column's values — mirroring `JetInMemoryDataSource`'s inference so the
-  /// three public sources stay output-identical (SC-006).
-  ///
-  /// A column whose values are themselves lists of row maps is recognised as a
-  /// nested [JetFieldType.collection] and carries its own recursively-inferred
-  /// child schema (spec 033) — so a descendant-leaf aggregate at this scope's
-  /// footer can resolve its operand by descending the typed collection chain
-  /// (`resolveAggregatePath`). The raw list value is still preserved on the
-  /// child row, so deeper collection bands continue to iterate it.
-  static List<FieldDef> _inferChildFields(List<Map<String, Object?>> rows) {
-    final List<String> names = <String>[];
-    final Set<String> seen = <String>{};
-    for (final Map<String, Object?> row in rows) {
-      for (final String key in row.keys) {
-        if (seen.add(key)) names.add(key);
-      }
-    }
-    return <FieldDef>[
-      for (final String name in names)
-        _inferColumn(name, rows.map((Map<String, Object?> r) => r[name])),
-    ];
-  }
-
-  /// Infers one column [name]'s [FieldDef] over its [values]. A column whose
-  /// non-null values are all lists of row maps is a nested
-  /// [JetFieldType.collection], typed with the recursively-inferred schema of
-  /// every entry across all of those lists; any other column delegates to the
-  /// scalar [FieldDef.inferType].
-  static FieldDef _inferColumn(String name, Iterable<Object?> values) {
-    final List<Object?> nonNull =
-        values.where((Object? v) => v != null).toList();
-    final bool isCollection = nonNull.isNotEmpty &&
-        nonNull.every(
-            (Object? v) => v is List && v.every((Object? e) => e is Map));
-    if (!isCollection) {
-      return FieldDef(name, type: FieldDef.inferType(values));
-    }
-    final List<Map<String, Object?>> entries = <Map<String, Object?>>[
-      for (final Object? v in nonNull)
-        for (final Object? e in v as List)
-          (e as Map).map((Object? k, Object? ev) =>
-              MapEntry<String, Object?>(k.toString(), ev)),
-    ];
-    return FieldDef(
-      name,
-      type: JetFieldType.collection,
-      fields: _inferChildFields(entries),
-    );
   }
 }
