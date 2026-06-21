@@ -132,18 +132,19 @@ class _JetPrintPlaygroundAppState extends State<JetPrintPlaygroundApp> {
   }
 }
 
-/// The playground shell: a [ShadTabs] strip whose first two tabs are live
-/// designers ([_DesignerTab]) — a blank canvas and the invoice sample, both
-/// over the same data — and whose remaining tabs are placeholders for future
-/// report demos ([_ComingSoonReport]).
-///
-/// The strip is `scrollable` so the tabs size to their labels and sit
-/// left-aligned, leaving the right end free for the app-global theme/language
-/// cluster — which is overlaid there because it switches the WHOLE app, not any
-/// single report. Each tab uses `expandContent` so the selected body fills the
-/// space below the strip, and the default `maintainState` keeps every tab alive
+/// The playground shell: a `scrollable` [ShadTabs] strip of live-designer demo
+/// tabs ([_DesignerTab]) — one per sample, plus a blank canvas — each over its
+/// own data. Each tab uses `expandContent` so the selected body fills the space
+/// below the strip, and the default `maintainState` keeps every tab alive
 /// (Offstage) so the designer's edits survive a tab switch.
-class _PlaygroundHome extends StatelessWidget {
+///
+/// The app-global theme/language cluster switches the WHOLE app, not any single
+/// report, so it rides beside the strip. The two are laid out by width: at
+/// desktop/tablet widths the strip fills and the cluster is overlaid at its
+/// (roomy) right end; on a phone the cluster moves to a compact row ABOVE the
+/// full-width strip, so it never overlays — and hides — the strip's right-hand
+/// demo tabs (an iOS-Simulator smoke caught that occlusion).
+class _PlaygroundHome extends StatefulWidget {
   const _PlaygroundHome({
     required this.isDark,
     required this.localeCode,
@@ -159,202 +160,242 @@ class _PlaygroundHome extends StatelessWidget {
   final VoidCallback onCycleLanguage;
 
   @override
+  State<_PlaygroundHome> createState() => _PlaygroundHomeState();
+}
+
+class _PlaygroundHomeState extends State<_PlaygroundHome> {
+  /// Below this width the demo strip cannot share a row with the theme/locale
+  /// toggle cluster without the cluster overlaying — and hiding — the strip's
+  /// right-hand tabs (the iOS-Simulator smoke bug: only the first demo was
+  /// reachable). At or above it the roomy desktop overlay layout is kept.
+  static const double _narrowWidth = 600;
+
+  /// A stable identity for the demo [ShadTabs] so the selected demo and the
+  /// kept-alive per-tab designer edits survive the narrow⇄wide layout swap
+  /// (e.g. a phone rotation crossing [_narrowWidth]) and the parent's
+  /// theme/locale rebuilds.
+  final GlobalKey _demoTabsKey = GlobalKey();
+
+  @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
+
+    // The demo selector: one scrollable strip of live-designer tabs. Built once
+    // and placed by the width-gated layout below, under a stable key so its
+    // selection and per-tab edits survive the swap.
+    final Widget demoTabs = ShadTabs<String>(
+      key: _demoTabsKey,
+      value: 'fatura',
+      // Intrinsic-width, left-aligned tabs (vs. the default full-width
+      // stretch) so the strip sizes to its labels.
+      scrollable: true,
+      tabs: <ShadTab<String>>[
+        ShadTab<String>(
+          value: 'fatura',
+          leading: const Icon(LucideIcons.fileText, size: 16),
+          // The designer is the hero: fill the space below the strip.
+          expandContent: true,
+          content: _FillTabHeight(
+            child: _DesignerTab(
+              fonts: widget.fonts,
+              seed: invoiceSampleDefinition(),
+              dataSchema: invoiceSchema,
+              renderReport: (ReportDefinition def) =>
+                  renderInvoiceDefinition(definition: def, fonts: widget.fonts),
+            ),
+          ),
+          child: Text(l10n.tabInvoice),
+        ),
+        ShadTab<String>(
+          value: 'etiket',
+          leading: const Icon(LucideIcons.tag, size: 16),
+          expandContent: true,
+          // A live designer over the address-label data — 100 flat
+          // records laid out as a 3-column label sheet via the detail
+          // band's native ColumnLayout (label_sample.dart).
+          content: _FillTabHeight(
+            child: _DesignerTab(
+              fonts: widget.fonts,
+              seed: labelSampleDefinition(),
+              dataSchema: labelSchema,
+              renderReport: (ReportDefinition def) =>
+                  renderLabelDefinition(definition: def, fonts: widget.fonts),
+            ),
+          ),
+          child: Text(l10n.tabLabel),
+        ),
+        ShadTab<String>(
+          value: 'barkod',
+          leading: const Icon(LucideIcons.barcode, size: 16),
+          expandContent: true,
+          // A live designer over the product data — 28 flat records laid
+          // out as a 2-column product-label sheet via the detail band's
+          // native ColumnLayout, each cell carrying a real EAN-13 barcode
+          // bound to the product number (barcode_sample.dart).
+          content: _FillTabHeight(
+            child: _DesignerTab(
+              fonts: widget.fonts,
+              seed: barcodeSampleDefinition(),
+              dataSchema: barcodeSchema,
+              renderReport: (ReportDefinition def) =>
+                  renderBarcodeDefinition(definition: def, fonts: widget.fonts),
+            ),
+          ),
+          child: Text(l10n.tabBarcode),
+        ),
+        ShadTab<String>(
+          value: 'makbuz',
+          leading: const Icon(LucideIcons.package, size: 16),
+          expandContent: true,
+          // A live designer over a single shipment — Shipment ▸ Box ▸
+          // Item with a two-column address header, a QR tracking code,
+          // per-box subtotals and grand totals (packing_slip_sample.dart).
+          content: _FillTabHeight(
+            child: _DesignerTab(
+              fonts: widget.fonts,
+              seed: packingSlipDefinition(),
+              dataSchema: shipmentSchema,
+              renderReport: (ReportDefinition def) =>
+                  renderPackingSlipDefinition(
+                      definition: def, fonts: widget.fonts),
+            ),
+          ),
+          child: Text(l10n.tabPackingSlip),
+        ),
+        ShadTab<String>(
+          value: 'bordro',
+          leading: const Icon(LucideIcons.banknote, size: 16),
+          expandContent: true,
+          // A live designer over a payroll run — Employee ▸ Earnings /
+          // Deductions, employees grouped by department, each a full pay
+          // stub with YTD columns, a verification QR, a highlighted Net
+          // Pay box, department subtotals and a company grand total
+          // (payroll_sample.dart).
+          content: _FillTabHeight(
+            child: _DesignerTab(
+              fonts: widget.fonts,
+              seed: payrollDefinition(),
+              dataSchema: payrollSchema,
+              renderReport: (ReportDefinition def) =>
+                  renderPayrollDefinition(definition: def, fonts: widget.fonts),
+            ),
+          ),
+          child: Text(l10n.tabPayroll),
+        ),
+        ShadTab<String>(
+          value: 'nested-lists',
+          leading: const Icon(LucideIcons.listTree, size: 16),
+          expandContent: true,
+          // A live designer over the customers data — Customer ▸ Order ▸
+          // Line, two nested scopes deep (nested_list_sample.dart).
+          content: _FillTabHeight(
+            child: _DesignerTab(
+              fonts: widget.fonts,
+              seed: nestedListsDefinition(),
+              dataSchema: customersSchema,
+              renderReport: (ReportDefinition def) =>
+                  renderNestedListsDefinition(
+                      definition: def, fonts: widget.fonts),
+            ),
+          ),
+          child: Text(l10n.tabList),
+        ),
+        ShadTab<String>(
+          value: 'menu',
+          leading: const Icon(LucideIcons.image, size: 16),
+          expandContent: true,
+          // A live designer over a restaurant menu — dishes grouped by
+          // category, each row a data-bound food picture, with an
+          // embedded header logo (menu_sample.dart). The first sample to
+          // use ImageElement.
+          content: _FillTabHeight(
+            child: _DesignerTab(
+              fonts: widget.fonts,
+              seed: menuSampleDefinition(),
+              dataSchema: menuSchema,
+              renderReport: (ReportDefinition def) =>
+                  renderMenuDefinition(definition: def, fonts: widget.fonts),
+            ),
+          ),
+          child: Text(l10n.tabMenu),
+        ),
+        ShadTab<String>(
+          value: 'bos',
+          leading: const Icon(LucideIcons.squareDashed, size: 16),
+          // A blank canvas over the SAME invoice data — for exercising
+          // the designer by hand from nothing.
+          expandContent: true,
+          content: _FillTabHeight(
+            child: _DesignerTab(
+              fonts: widget.fonts,
+              seed: emptyDesignDefinition(),
+              dataSchema: invoiceSchema,
+              renderReport: (ReportDefinition def) =>
+                  renderInvoiceDefinition(definition: def, fonts: widget.fonts),
+            ),
+          ),
+          child: Text(l10n.tabEmpty),
+        ),
+      ],
+    );
+
+    // App-global theme + language toggles: they switch the WHOLE app, not any
+    // single report, so they ride beside the demo strip rather than inside it.
+    final Widget toggleCluster = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        ShadButton.ghost(
+          size: ShadButtonSize.sm,
+          onPressed: widget.onToggleTheme,
+          child: Text(widget.isDark ? 'Light' : 'Dark'),
+        ),
+        const SizedBox(width: 4),
+        ShadButton.outline(
+          size: ShadButtonSize.sm,
+          onPressed: widget.onCycleLanguage,
+          child: Text(widget.localeCode.toUpperCase()),
+        ),
+      ],
+    );
+
     // Keep the shell clear of the status bar / notch / home indicator on mobile
     // (a no-op inset on desktop/web). The host app owns safe-area framing; the
     // library's JetReportDesigner fills whatever space it is given.
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.only(top: 4),
-        child: Stack(
-          children: <Widget>[
-            Positioned.fill(
-              child: ShadTabs<String>(
-                value: 'fatura',
-                // Intrinsic-width, left-aligned tabs (vs. the default full-width
-                // stretch) so the strip leaves room for the toggle cluster.
-                scrollable: true,
-                tabs: <ShadTab<String>>[
-                  ShadTab<String>(
-                    value: 'fatura',
-                    leading: const Icon(LucideIcons.fileText, size: 16),
-                    // The designer is the hero: fill the space below the strip.
-                    expandContent: true,
-                    content: _FillTabHeight(
-                      child: _DesignerTab(
-                        fonts: fonts,
-                        seed: invoiceSampleDefinition(),
-                        dataSchema: invoiceSchema,
-                        renderReport: (ReportDefinition def) =>
-                            renderInvoiceDefinition(
-                                definition: def, fonts: fonts),
-                      ),
-                    ),
-                    child: Text(l10n.tabInvoice),
-                  ),
-                  ShadTab<String>(
-                    value: 'etiket',
-                    leading: const Icon(LucideIcons.tag, size: 16),
-                    expandContent: true,
-                    // A live designer over the address-label data — 100 flat
-                    // records laid out as a 3-column label sheet via the detail
-                    // band's native ColumnLayout (label_sample.dart).
-                    content: _FillTabHeight(
-                      child: _DesignerTab(
-                        fonts: fonts,
-                        seed: labelSampleDefinition(),
-                        dataSchema: labelSchema,
-                        renderReport: (ReportDefinition def) =>
-                            renderLabelDefinition(
-                                definition: def, fonts: fonts),
-                      ),
-                    ),
-                    child: Text(l10n.tabLabel),
-                  ),
-                  ShadTab<String>(
-                    value: 'barkod',
-                    leading: const Icon(LucideIcons.barcode, size: 16),
-                    expandContent: true,
-                    // A live designer over the product data — 28 flat records laid
-                    // out as a 2-column product-label sheet via the detail band's
-                    // native ColumnLayout, each cell carrying a real EAN-13 barcode
-                    // bound to the product number (barcode_sample.dart).
-                    content: _FillTabHeight(
-                      child: _DesignerTab(
-                        fonts: fonts,
-                        seed: barcodeSampleDefinition(),
-                        dataSchema: barcodeSchema,
-                        renderReport: (ReportDefinition def) =>
-                            renderBarcodeDefinition(
-                                definition: def, fonts: fonts),
-                      ),
-                    ),
-                    child: Text(l10n.tabBarcode),
-                  ),
-                  ShadTab<String>(
-                    value: 'makbuz',
-                    leading: const Icon(LucideIcons.package, size: 16),
-                    expandContent: true,
-                    // A live designer over a single shipment — Shipment ▸ Box ▸
-                    // Item with a two-column address header, a QR tracking code,
-                    // per-box subtotals and grand totals (packing_slip_sample.dart).
-                    content: _FillTabHeight(
-                      child: _DesignerTab(
-                        fonts: fonts,
-                        seed: packingSlipDefinition(),
-                        dataSchema: shipmentSchema,
-                        renderReport: (ReportDefinition def) =>
-                            renderPackingSlipDefinition(
-                                definition: def, fonts: fonts),
-                      ),
-                    ),
-                    child: Text(l10n.tabPackingSlip),
-                  ),
-                  ShadTab<String>(
-                    value: 'bordro',
-                    leading: const Icon(LucideIcons.banknote, size: 16),
-                    expandContent: true,
-                    // A live designer over a payroll run — Employee ▸ Earnings /
-                    // Deductions, employees grouped by department, each a full pay
-                    // stub with YTD columns, a verification QR, a highlighted Net
-                    // Pay box, department subtotals and a company grand total
-                    // (payroll_sample.dart).
-                    content: _FillTabHeight(
-                      child: _DesignerTab(
-                        fonts: fonts,
-                        seed: payrollDefinition(),
-                        dataSchema: payrollSchema,
-                        renderReport: (ReportDefinition def) =>
-                            renderPayrollDefinition(
-                                definition: def, fonts: fonts),
-                      ),
-                    ),
-                    child: Text(l10n.tabPayroll),
-                  ),
-                  ShadTab<String>(
-                    value: 'nested-lists',
-                    leading: const Icon(LucideIcons.listTree, size: 16),
-                    expandContent: true,
-                    // A live designer over the customers data — Customer ▸ Order ▸
-                    // Line, two nested scopes deep (nested_list_sample.dart).
-                    content: _FillTabHeight(
-                      child: _DesignerTab(
-                        fonts: fonts,
-                        seed: nestedListsDefinition(),
-                        dataSchema: customersSchema,
-                        renderReport: (ReportDefinition def) =>
-                            renderNestedListsDefinition(
-                                definition: def, fonts: fonts),
-                      ),
-                    ),
-                    child: Text(l10n.tabList),
-                  ),
-                  ShadTab<String>(
-                    value: 'menu',
-                    leading: const Icon(LucideIcons.image, size: 16),
-                    expandContent: true,
-                    // A live designer over a restaurant menu — dishes grouped by
-                    // category, each row a data-bound food picture, with an
-                    // embedded header logo (menu_sample.dart). The first sample to
-                    // use ImageElement.
-                    content: _FillTabHeight(
-                      child: _DesignerTab(
-                        fonts: fonts,
-                        seed: menuSampleDefinition(),
-                        dataSchema: menuSchema,
-                        renderReport: (ReportDefinition def) =>
-                            renderMenuDefinition(definition: def, fonts: fonts),
-                      ),
-                    ),
-                    child: Text(l10n.tabMenu),
-                  ),
-                  ShadTab<String>(
-                    value: 'bos',
-                    leading: const Icon(LucideIcons.squareDashed, size: 16),
-                    // A blank canvas over the SAME invoice data — for exercising
-                    // the designer by hand from nothing.
-                    expandContent: true,
-                    content: _FillTabHeight(
-                      child: _DesignerTab(
-                        fonts: fonts,
-                        seed: emptyDesignDefinition(),
-                        dataSchema: invoiceSchema,
-                        renderReport: (ReportDefinition def) =>
-                            renderInvoiceDefinition(
-                                definition: def, fonts: fonts),
-                      ),
-                    ),
-                    child: Text(l10n.tabEmpty),
-                  ),
-                ],
-              ),
-            ),
-            // App-global theme + language toggles, overlaid at the right end of the
-            // tab strip. Left unconstrained vertically so the 36px small buttons
-            // keep their natural height inside the 32px strip + 8px gap band — no
-            // tight constraint to overflow, no negative offset to clip.
-            Positioned(
-              top: 0,
-              right: 8,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            if (constraints.maxWidth < _narrowWidth) {
+              // Phone: a compact toggle row ABOVE the full-width demo strip, so
+              // every demo is reachable by swiping the strip — nothing overlays
+              // (and hides) its right-hand tabs.
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  ShadButton.ghost(
-                    size: ShadButtonSize.sm,
-                    onPressed: onToggleTheme,
-                    child: Text(isDark ? 'Light' : 'Dark'),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8, bottom: 4),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: toggleCluster,
+                    ),
                   ),
-                  const SizedBox(width: 4),
-                  ShadButton.outline(
-                    size: ShadButtonSize.sm,
-                    onPressed: onCycleLanguage,
-                    child: Text(localeCode.toUpperCase()),
-                  ),
+                  Expanded(child: demoTabs),
                 ],
-              ),
-            ),
-          ],
+              );
+            }
+            // Desktop/tablet: the strip fills and the toggles overlay its right
+            // end — there is room to spare, so the strip stays a single row and
+            // the cluster sits clear of the (left-aligned) tabs. Left
+            // unconstrained vertically so the 36px small buttons keep their
+            // natural height inside the 32px strip + 8px gap band.
+            return Stack(
+              children: <Widget>[
+                Positioned.fill(child: demoTabs),
+                Positioned(top: 0, right: 8, child: toggleCluster),
+              ],
+            );
+          },
         ),
       ),
     );

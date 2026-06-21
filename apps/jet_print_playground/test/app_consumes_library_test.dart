@@ -93,6 +93,48 @@ void main() {
   );
 
   testWidgets(
+    'at phone width every demo tab is reachable, not hidden by the toggles',
+    (WidgetTester tester) async {
+      // A phone-portrait surface (below the 600px shell breakpoint).
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(const JetPrintPlaygroundApp());
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull,
+          reason: 'the shell lays out cleanly at phone width');
+
+      // Every demo tab still exists in the strip (kept alive Offstage where
+      // unselected; scrolled-but-present where the strip overflows).
+      for (final String label in const <String>[
+        'Invoice',
+        'Label',
+        'Barcode',
+        'Packing slip',
+        'Payroll',
+        'List',
+        'Menu',
+        'Empty',
+      ]) {
+        expect(find.widgetWithText(ShadTab<String>, label), findsOneWidget,
+            reason: '"$label" tab');
+      }
+
+      // The theme/locale toggles sit ABOVE the demo strip on a phone — not
+      // overlaid on its right end where they hid the rightmost demos (the
+      // iOS-Simulator smoke bug). Prove it geometrically: the toggle row's
+      // bottom is at or above the (always-visible, leftmost) Invoice tab's top,
+      // so the cluster cannot occlude any tab.
+      final Rect toggle =
+          tester.getRect(find.widgetWithText(ShadButton, 'Dark'));
+      final Rect invoiceTab =
+          tester.getRect(find.widgetWithText(ShadTab<String>, 'Invoice'));
+      expect(toggle.bottom, lessThanOrEqualTo(invoiceTab.top + 1.0),
+          reason:
+              'the toggles are stacked above the strip, not overlaid on it');
+    },
+  );
+
+  testWidgets(
     'the app owns a controller and wires the Save/Open callbacks (FR-022)',
     (WidgetTester tester) async {
       await tester.pumpWidget(const JetPrintPlaygroundApp());
