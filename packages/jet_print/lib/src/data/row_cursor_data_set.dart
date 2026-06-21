@@ -4,6 +4,7 @@ library;
 import 'data_row.dart';
 import 'data_set.dart';
 import 'field_def.dart';
+import 'row_projection.dart';
 
 /// A [DataSet] that walks `0..rowCount-1`, pulling each raw row via [rowAt] and
 /// projecting it onto a fixed [fields] schema.
@@ -46,7 +47,7 @@ class RowCursorDataSet implements DataSet {
       return false;
     }
     _index++;
-    _current = _project(_rowAt(_index));
+    _current = projectRowOntoFields(_fields, _rowAt(_index));
     return true;
   }
 
@@ -66,11 +67,4 @@ class RowCursorDataSet implements DataSet {
     _closed = true;
     _current = null;
   }
-
-  DataRow _project(Map<String, Object?> raw) => DataRow(
-        fields: _fields,
-        values: <String, Object?>{
-          for (final FieldDef f in _fields) f.name: raw[f.name],
-        },
-      );
 }
