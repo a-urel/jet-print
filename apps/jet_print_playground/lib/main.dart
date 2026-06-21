@@ -36,10 +36,13 @@ Future<void> main() async {
   final bool supported = kIsWeb ||
       defaultTargetPlatform == TargetPlatform.macOS ||
       defaultTargetPlatform == TargetPlatform.windows ||
-      defaultTargetPlatform == TargetPlatform.linux;
+      defaultTargetPlatform == TargetPlatform.linux ||
+      defaultTargetPlatform == TargetPlatform.iOS ||
+      defaultTargetPlatform == TargetPlatform.android;
   if (!supported) {
     throw UnsupportedError(
-      'jet_print_playground targets desktop (macOS, Windows, Linux) and web.',
+      'jet_print_playground targets desktop (macOS, Windows, Linux), web, '
+      'and mobile (iOS, Android).',
     );
   }
   // 022 + Google-Fonts catalog: a curated, offline set of real OFL families,
