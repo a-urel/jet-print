@@ -1,12 +1,10 @@
 import 'dart:convert' show utf8;
 import 'dart:typed_data';
-import 'dart:ui' show FrameTiming;
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/foundation.dart'
-    show kIsWeb, debugPrint, defaultTargetPlatform, TargetPlatform;
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart' show ThemeMode;
-import 'package:flutter/scheduler.dart' show SchedulerBinding;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:jet_print/jet_print.dart';
@@ -33,20 +31,6 @@ import 'rendered_payroll_example.dart';
 Future<void> main() async {
   // Loading the bundled font assets needs the binding up before runApp.
   WidgetsFlutterBinding.ensureInitialized();
-  // TEMP PROFILING PROBE — remove after diagnosing demo-switch jank.
-  // Prints the UI-thread vs GPU-thread split of any slow (>100ms) frame so a
-  // demo switch reveals whether the cost is build/layout (UI) or raster/shaders
-  // (GPU). Watch the browser console; run with `--profile` for real numbers.
-  SchedulerBinding.instance.addTimingsCallback((List<FrameTiming> timings) {
-    for (final FrameTiming t in timings) {
-      final int total = t.totalSpan.inMilliseconds;
-      if (total > 100) {
-        debugPrint('JANK frame: total=${total}ms '
-            'build(UI)=${t.buildDuration.inMilliseconds}ms '
-            'raster(GPU)=${t.rasterDuration.inMilliseconds}ms');
-      }
-    }
-  });
   // Fail fast on unsupported platforms so a wrong target surfaces a clear
   // message instead of rendering incorrectly (spec Edge Cases). The library is
   // platform-agnostic; this playground app targets desktop (macOS, Windows,

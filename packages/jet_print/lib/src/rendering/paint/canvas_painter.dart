@@ -7,7 +7,7 @@ library;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart' show debugPrint, visibleForTesting; // TEMP PROBE import
+import 'package:flutter/foundation.dart' show visibleForTesting;
 
 import '../../domain/page_format.dart';
 import '../../domain/styles/color.dart';
@@ -69,11 +69,6 @@ class CanvasPainter implements ReportPainter {
     }
   }
 
-  /// TEMP PROBE — remove after diagnosing switch leak. Cumulative engine font
-  /// registrations; if this climbs unboundedly while bouncing tabs, every record
-  /// re-registers fonts and bloats CanvasKit's font collection.
-  static int debugFontLoadCount = 0;
-
   Future<void> _ensureFont(
       String family, JetFontWeight weight, bool italic) async {
     final String uiFamily = uiFontFamily(family, weight, italic);
@@ -82,7 +77,6 @@ class CanvasPainter implements ReportPainter {
         _registry.bytesFor(family, weight: weight, italic: italic);
     await _loadFont(bytes, fontFamily: uiFamily);
     _registered.add(uiFamily);
-    debugPrint('loadFontFromList total=${++debugFontLoadCount} ($uiFamily)');
   }
 
   @override
