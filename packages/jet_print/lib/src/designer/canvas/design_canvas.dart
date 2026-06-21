@@ -834,6 +834,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
                 key: const ValueKey<String>(
                     'jet_print.designer.canvas.contextMenu'),
                 controller: _contextMenu,
+                longPressEnabled: true,
                 items: _contextMenuItems(controller, l10n),
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
