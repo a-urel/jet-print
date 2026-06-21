@@ -4,8 +4,8 @@ import 'package:jet_print/jet_print.dart';
 import 'package:jet_print/src/designer/layout/zoom_control.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+const Key _toggle = ValueKey<String>('jet_print.designer.zoom.menuToggle');
 const Key _field = ValueKey<String>('jet_print.designer.action.zoomLevel');
-const Key _caret = ValueKey<String>('jet_print.designer.zoom.menuToggle');
 const Key _fitPage = ValueKey<String>('jet_print.designer.zoom.fitPage');
 const Key _fitWidth = ValueKey<String>('jet_print.designer.zoom.fitWidth');
 const Key _preset200 = ValueKey<String>('jet_print.designer.zoom.preset.200');
@@ -35,21 +35,60 @@ Future<void> _pump(
   );
 }
 
+/// The percentage shown on the bar trigger (the always-visible label).
+String _triggerText(WidgetTester tester) => tester
+    .widget<Text>(
+        find.descendant(of: find.byKey(_toggle), matching: find.byType(Text)))
+    .data!;
+
+/// The text inside the in-popup editable field (menu must be open).
 String _fieldText(WidgetTester tester) =>
     tester.widget<ShadInput>(find.byKey(_field)).controller!.text;
 
+Future<void> _open(WidgetTester tester) async {
+  await tester.tap(find.byKey(_toggle));
+  await tester.pumpAndSettle();
+}
+
 void main() {
-  testWidgets('shows the current scale as a rounded percentage',
+  testWidgets('the bar shows the current scale as a label, not an input',
       (WidgetTester tester) async {
     await _pump(tester,
         viewScale: 0.87,
         fitMode: JetViewFitMode.width,
         onPercent: (_) {},
         onFit: (_) {});
+    expect(_triggerText(tester), '87%');
+    // The editable field lives in the popup; it is absent until the menu opens.
+    expect(find.byKey(_field), findsNothing);
+  });
+
+  testWidgets('opening the menu reveals the field, fit modes, and presets',
+      (WidgetTester tester) async {
+    await _pump(tester,
+        viewScale: 1.0,
+        fitMode: JetViewFitMode.none,
+        onPercent: (_) {},
+        onFit: (_) {});
+    await _open(tester);
+    expect(find.byKey(_field), findsOneWidget);
+    expect(find.byKey(_fitWidth), findsOneWidget);
+    expect(find.byKey(_fitPage), findsOneWidget);
+    expect(find.byKey(_preset200), findsOneWidget);
+  });
+
+  testWidgets('the in-popup field opens showing the current scale',
+      (WidgetTester tester) async {
+    await _pump(tester,
+        viewScale: 0.87,
+        fitMode: JetViewFitMode.none,
+        onPercent: (_) {},
+        onFit: (_) {});
+    await _open(tester);
     expect(_fieldText(tester), '87%');
   });
 
-  testWidgets('typing a value and submitting reports the percent',
+  testWidgets('typing a value in the popup field and submitting reports it',
       (WidgetTester tester) async {
     double? got;
     await _pump(tester,
@@ -57,11 +96,10 @@ void main() {
         fitMode: JetViewFitMode.none,
         onPercent: (double p) => got = p,
         onFit: (_) {});
-
+    await _open(tester);
     await tester.enterText(find.byKey(_field), '130');
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pump();
-
     expect(got, 130);
   });
 
@@ -73,65 +111,12 @@ void main() {
         fitMode: JetViewFitMode.none,
         onPercent: (double p) => got = p,
         onFit: (_) {});
-
+    await _open(tester);
     await tester.enterText(find.byKey(_field), 'abc');
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pump();
-
     expect(got, isNull);
     expect(_fieldText(tester), '100%'); // reverted to the current value
-  });
-
-  testWidgets('opening the menu and picking Fit page reports the fit mode',
-      (WidgetTester tester) async {
-    JetViewFitMode? got;
-    await _pump(tester,
-        viewScale: 1.0,
-        fitMode: JetViewFitMode.none,
-        onPercent: (_) {},
-        onFit: (JetViewFitMode m) => got = m);
-
-    await tester.tap(find.byKey(_caret));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(_fitPage));
-    await tester.pumpAndSettle();
-
-    expect(got, JetViewFitMode.page);
-  });
-
-  testWidgets('picking a preset reports the percent',
-      (WidgetTester tester) async {
-    double? got;
-    await _pump(tester,
-        viewScale: 1.0,
-        fitMode: JetViewFitMode.none,
-        onPercent: (double p) => got = p,
-        onFit: (_) {});
-
-    await tester.tap(find.byKey(_caret));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(_preset200));
-    await tester.pumpAndSettle();
-
-    expect(got, 200);
-  });
-
-  testWidgets('blur after invalid entry does NOT fire onPercent',
-      (WidgetTester tester) async {
-    double? got;
-    await _pump(tester,
-        viewScale: 1.0,
-        fitMode: JetViewFitMode.none,
-        onPercent: (double p) => got = p,
-        onFit: (_) {});
-
-    await tester.enterText(find.byKey(_field), 'abc');
-    // Blur the field without submitting — triggers the focus-change commit path.
-    FocusManager.instance.primaryFocus?.unfocus();
-    await tester.pump();
-
-    expect(got, isNull);
-    expect(_fieldText(tester), '100%');
   });
 
   testWidgets('a trailing % in the typed value is tolerated',
@@ -142,44 +127,25 @@ void main() {
         fitMode: JetViewFitMode.none,
         onPercent: (double p) => got = p,
         onFit: (_) {});
-
+    await _open(tester);
     await tester.enterText(find.byKey(_field), '150%');
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pump();
-
     expect(got, 150);
   });
 
-  testWidgets('active fit mode shows a checkmark; inactive rows do not',
+  testWidgets('opening the menu and picking Fit page reports the fit mode',
       (WidgetTester tester) async {
+    JetViewFitMode? got;
     await _pump(tester,
         viewScale: 1.0,
-        fitMode: JetViewFitMode.width,
+        fitMode: JetViewFitMode.none,
         onPercent: (_) {},
-        onFit: (_) {});
-
-    await tester.tap(find.byKey(_caret));
+        onFit: (JetViewFitMode m) => got = m);
+    await _open(tester);
+    await tester.tap(find.byKey(_fitPage));
     await tester.pumpAndSettle();
-
-    // Both rows must render an Icon with LucideIcons.check (always present,
-    // just coloured differently).
-    final Finder fitWidthRow = find.byKey(_fitWidth);
-    final Finder fitPageRow = find.byKey(_fitPage);
-
-    Icon iconIn(Finder row) => tester
-        .widgetList<Icon>(find.descendant(of: row, matching: find.byType(Icon)))
-        .firstWhere((Icon i) => i.icon == LucideIcons.check);
-
-    final Icon widthIcon = iconIn(fitWidthRow);
-    final Icon pageIcon = iconIn(fitPageRow);
-
-    // Both must carry a check glyph.
-    expect(widthIcon.icon, LucideIcons.check);
-    expect(pageIcon.icon, LucideIcons.check);
-
-    // The selected row's check must be a different (visible) colour from the
-    // unselected row's check (which is coloured as the background to hide it).
-    expect(widthIcon.color, isNot(equals(pageIcon.color)));
+    expect(got, JetViewFitMode.page);
   });
 
   testWidgets('Fit width row calls onFit(width)', (WidgetTester tester) async {
@@ -189,64 +155,89 @@ void main() {
         fitMode: JetViewFitMode.none,
         onPercent: (_) {},
         onFit: (JetViewFitMode m) => got = m);
-
-    await tester.tap(find.byKey(_caret));
-    await tester.pumpAndSettle();
+    await _open(tester);
     await tester.tap(find.byKey(_fitWidth));
     await tester.pumpAndSettle();
-
     expect(got, JetViewFitMode.width);
   });
 
-  testWidgets('didUpdateWidget syncs the field when not focused',
+  testWidgets('picking a preset reports the percent',
+      (WidgetTester tester) async {
+    double? got;
+    await _pump(tester,
+        viewScale: 1.0,
+        fitMode: JetViewFitMode.none,
+        onPercent: (double p) => got = p,
+        onFit: (_) {});
+    await _open(tester);
+    await tester.tap(find.byKey(_preset200));
+    await tester.pumpAndSettle();
+    expect(got, 200);
+  });
+
+  testWidgets('active fit mode shows a checkmark; inactive rows do not',
+      (WidgetTester tester) async {
+    await _pump(tester,
+        viewScale: 1.0,
+        fitMode: JetViewFitMode.width,
+        onPercent: (_) {},
+        onFit: (_) {});
+    await _open(tester);
+
+    Icon iconIn(Finder row) => tester
+        .widgetList<Icon>(find.descendant(of: row, matching: find.byType(Icon)))
+        .firstWhere((Icon i) => i.icon == LucideIcons.check);
+
+    final Icon widthIcon = iconIn(find.byKey(_fitWidth));
+    final Icon pageIcon = iconIn(find.byKey(_fitPage));
+    expect(widthIcon.icon, LucideIcons.check);
+    expect(pageIcon.icon, LucideIcons.check);
+    // The selected row's check is a visible colour; the unselected one is hidden
+    // (coloured as the background), so the two must differ.
+    expect(widthIcon.color, isNot(equals(pageIcon.color)));
+  });
+
+  testWidgets('the bar label syncs when the scale changes (didUpdateWidget)',
       (WidgetTester tester) async {
     await _pump(tester,
         viewScale: 1.0,
         fitMode: JetViewFitMode.none,
         onPercent: (_) {},
         onFit: (_) {});
+    expect(_triggerText(tester), '100%');
 
-    expect(_fieldText(tester), '100%');
-
-    // Re-pump with a new viewScale while the field is not focused.
     await _pump(tester,
         viewScale: 2.0,
         fitMode: JetViewFitMode.none,
         onPercent: (_) {},
         onFit: (_) {});
     await tester.pump();
-
-    expect(_fieldText(tester), '200%');
+    expect(_triggerText(tester), '200%');
   });
 
   testWidgets('keyPrefix namespaces every key (default stays designer)',
       (WidgetTester tester) async {
-    // Default prefix: the designer keys resolve.
     await _pump(tester,
         viewScale: 1.0,
         fitMode: JetViewFitMode.none,
         onPercent: (_) {},
         onFit: (_) {});
-    expect(find.byKey(_field),
-        findsOneWidget); // jet_print.designer.action.zoomLevel
-    expect(find.byKey(_caret),
-        findsOneWidget); // jet_print.designer.zoom.menuToggle
+    expect(find.byKey(_toggle), findsOneWidget); // jet_print.designer.*
 
-    // Override prefix: the preview-namespaced keys resolve, the designer ones do not.
     await _pump(tester,
         viewScale: 1.0,
         fitMode: JetViewFitMode.none,
         onPercent: (_) {},
         onFit: (_) {},
         keyPrefix: 'jet_print.preview');
-    expect(find.byKey(_field), findsNothing);
+    expect(find.byKey(_toggle), findsNothing);
+    await tester.tap(find
+        .byKey(const ValueKey<String>('jet_print.preview.zoom.menuToggle')));
+    await tester.pumpAndSettle();
     expect(
         find.byKey(
             const ValueKey<String>('jet_print.preview.action.zoomLevel')),
         findsOneWidget);
-    await tester.tap(find
-        .byKey(const ValueKey<String>('jet_print.preview.zoom.menuToggle')));
-    await tester.pumpAndSettle();
     expect(
         find.byKey(const ValueKey<String>('jet_print.preview.zoom.fitWidth')),
         findsOneWidget);

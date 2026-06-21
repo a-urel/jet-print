@@ -120,6 +120,12 @@ class _DesignCanvasState extends State<DesignCanvas> {
   bool _viewInitialized = false;
   int _appliedFitRequest = 0;
 
+  /// Guards the one-shot viewport-width-based default-zoom decision (desktop
+  /// opens at 100%, phones keep the fit-to-width default), and carries the
+  /// "apply 100% on the next post-frame" intent from the build to the callback.
+  bool _defaultZoomResolved = false;
+  bool _desktopDefaultPending = false;
+
   /// The viewport size at the last applied fit; lets a steady viewport avoid
   /// re-fitting every frame while a sticky fit mode is active.
   Size? _lastFitViewport;
@@ -760,14 +766,43 @@ class _DesignCanvasState extends State<DesignCanvas> {
             final bool fitModeActive =
                 controller.viewFitMode != JetViewFitMode.none;
             final bool viewportChanged = _lastFitViewport != viewport;
-            // Trigger a fit when:
-            //   (1) first load AND a fit mode is active (skip if the user
-            //       already has a manual zoom — i.e. mode == none),
+            // Default zoom by the page-area width, decided once: a desktop-class
+            // viewport opens at 100% (actual size); a phone-class one keeps the
+            // fit-to-width default. Only overrides the framework default (mode
+            // width) — an explicit host fit choice is left alone. Read from the
+            // live viewport (not MediaQuery, which a test's setSurfaceSize does
+            // not move). The controller mutation is deferred to the post-frame
+            // callback (it notifies DesignerScope, which cannot rebuild mid-build).
+            if (!_defaultZoomResolved) {
+              _defaultZoomResolved = true;
+              _desktopDefaultPending = fitModeActive &&
+                  controller.viewFitMode == JetViewFitMode.width &&
+                  defaultFitForScreenWidth(viewport.width) ==
+                      JetViewFitMode.none;
+            }
+            // Trigger a fit — but ONLY while a fit mode is active, so a manual
+            // zoom (mode == none) is never overwritten — when:
+            //   (1) first load,
             //   (2) an explicit fit was requested (fitToView button / shortcut),
-            //   (3) the viewport changed while a sticky fit mode is active.
-            if ((!_viewInitialized && fitModeActive) ||
-                controller.fitRequest != _appliedFitRequest ||
-                (fitModeActive && viewportChanged)) {
+            //   (3) the viewport changed.
+            // Gating clause (2) on fitModeActive too matters on a remount (e.g.
+            // a resize crossing the panel-collapse breakpoint): `_appliedFitRequest`
+            // resets while the controller's `fitRequest` persists, so without the
+            // guard a stale mismatch would re-fit a manually-zoomed canvas.
+            if (_desktopDefaultPending) {
+              _desktopDefaultPending = false;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+                _viewInitialized = true;
+                _lastFitViewport = viewport;
+                if (controller.viewFitMode == JetViewFitMode.width) {
+                  controller.setZoomPercent(100); // mode → none, scale → 1.0
+                }
+              });
+            } else if (fitModeActive &&
+                (!_viewInitialized ||
+                    controller.fitRequest != _appliedFitRequest ||
+                    viewportChanged)) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (!mounted) return;
                 _viewInitialized = true;

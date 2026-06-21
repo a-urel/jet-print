@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../l10n/jet_print_localizations.dart';
+import 'popover_group.dart';
 
 /// The report preview's page-position indicator, made interactive: the
 /// "Page X of Y" label is a dropdown trigger offering quick page jumps — First
@@ -18,6 +19,7 @@ class PageNavControl extends StatefulWidget {
     required this.pageCount,
     required this.onGoTo,
     this.keyPrefix = 'jet_print.preview',
+    this.popoverGroup,
   });
 
   /// The current page, zero-based.
@@ -35,6 +37,10 @@ class PageNavControl extends StatefulWidget {
   /// preview (`jet_print.preview.*`, the default) without key collisions.
   final String keyPrefix;
 
+  /// Optional shared group that closes this popup when a sibling popup (e.g. the
+  /// zoom dropdown) opens, so at most one toolbar popover is open at a time.
+  final PopoverGroup? popoverGroup;
+
   @override
   State<PageNavControl> createState() => _PageNavControlState();
 }
@@ -45,7 +51,23 @@ class _PageNavControlState extends State<PageNavControl> {
   final FocusNode _gotoFocus = FocusNode();
 
   @override
+  void initState() {
+    super.initState();
+    widget.popoverGroup?.add(_menu);
+  }
+
+  @override
+  void didUpdateWidget(PageNavControl oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.popoverGroup, widget.popoverGroup)) {
+      oldWidget.popoverGroup?.remove(_menu);
+      widget.popoverGroup?.add(_menu);
+    }
+  }
+
+  @override
   void dispose() {
+    widget.popoverGroup?.remove(_menu);
     _menu.dispose();
     _goto.dispose();
     _gotoFocus.dispose();

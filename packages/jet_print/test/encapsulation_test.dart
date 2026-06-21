@@ -120,6 +120,9 @@ bool _isWhiteBoxSeamTest(File file) {
       // designer widget (not part of the public surface); its widget test is
       // white-box (Principle III / the zoom_control_test precedent).
       path.endsWith('/test/designer/layout/page_nav_control_test.dart') ||
+      // PopoverGroup (toolbar popover mutual-exclusion coordinator): an
+      // unexported `src/` helper; its unit test is white-box (Principle III).
+      path.endsWith('/test/designer/layout/popover_group_test.dart') ||
       // Zoom math (037): `fitWidthScale`/`fitPageScale` and the clamp/step
       // helpers in `zoom_math.dart` are unexported `src/` pure functions; their
       // unit test is white-box so the adaptive-scale math can be tested without

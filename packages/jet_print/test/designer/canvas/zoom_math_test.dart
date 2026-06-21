@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/designer/canvas/zoom_math.dart';
+import 'package:jet_print/src/designer/controller/view_fit_mode.dart';
 import 'package:jet_print/src/domain/geometry.dart';
 
 void main() {
@@ -66,6 +67,22 @@ void main() {
           fitPageScale(
               const JetSize(100000, 100000), const Size(500, 500), padding),
           0.25);
+    });
+  });
+
+  group('defaultFitForScreenWidth', () {
+    test('a phone-class width fits to width', () {
+      expect(defaultFitForScreenWidth(320), JetViewFitMode.width);
+      expect(defaultFitForScreenWidth(599), JetViewFitMode.width);
+    });
+
+    test('a desktop-class width opens at 100% (no fit)', () {
+      expect(defaultFitForScreenWidth(600), JetViewFitMode.none);
+      expect(defaultFitForScreenWidth(1440), JetViewFitMode.none);
+    });
+
+    test('the breakpoint is the shared 600px threshold', () {
+      expect(kDefaultZoomDesktopMinWidth, 600);
     });
   });
 }

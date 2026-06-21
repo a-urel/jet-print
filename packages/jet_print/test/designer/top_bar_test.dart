@@ -124,14 +124,16 @@ void main() {
     ) async {
       await pumpDesigner(tester);
 
-      // The canvas drives the zoom % (it fits the page to width on load).
-      final Finder zoomLevel = find
-          .byKey(const ValueKey<String>('jet_print.designer.action.zoomLevel'));
-      int pct() => int.parse(tester
-          .widget<ShadInput>(zoomLevel)
-          .controller!
-          .text
-          .replaceAll('%', ''));
+      // The canvas drives the zoom % (it fits the page to width on load); the
+      // bar shows it as a compact "X%" label (the editable field now lives in
+      // the popup).
+      final Finder zoomLabel = find.descendant(
+        of: find.byKey(
+            const ValueKey<String>('jet_print.designer.zoom.menuToggle')),
+        matching: find.byType(Text),
+      );
+      int pct() =>
+          int.parse(tester.widget<Text>(zoomLabel).data!.replaceAll('%', ''));
 
       final int initial = pct();
       await tester.tap(find.byIcon(LucideIcons.zoomIn));
@@ -236,14 +238,14 @@ void main() {
       expect(find.byKey(_modePreviewKey), findsOneWidget);
     });
 
-    // E5 smoke round 2: on a phone / very narrow bar (< 600px) two space-hungry
-    // controls collapse to glyph-only essentials — the mode switch drops its
-    // segment labels and the editable zoom % field is hidden (the +/− buttons
-    // stay). The segments and zoom buttons remain present and reachable.
-    const Key zoomLevelKey =
+    // E5 smoke round 2: on a phone / very narrow bar (< 600px) the mode switch
+    // drops its segment labels. The zoom control is a compact label + popup (the
+    // editable field is no longer on the bar), so it stays at every width.
+    const Key zoomToggleKey =
+        ValueKey<String>('jet_print.designer.zoom.menuToggle');
+    const Key zoomFieldKey =
         ValueKey<String>('jet_print.designer.action.zoomLevel');
-    testWidgets(
-        'phone width: mode switch is icon-only and the zoom % field is hidden',
+    testWidgets('phone width: mode switch is icon-only; zoom % label stays',
         (WidgetTester tester) async {
       await pumpDesigner(tester, size: const Size(390, 760));
 
@@ -259,24 +261,27 @@ void main() {
       expect(find.text('Preview'), findsNothing,
           reason: 'the Preview segment is icon-only on a phone');
 
-      // Zoom: the editable % field is gone, but the +/− buttons remain.
-      expect(find.byKey(zoomLevelKey), findsNothing,
-          reason: 'the editable zoom % field is hidden on a phone');
+      // Zoom: the compact % label trigger stays on the bar; the editable field
+      // is in the (closed) popup, and the +/− buttons remain.
+      expect(find.byKey(zoomToggleKey), findsOneWidget,
+          reason: 'the compact zoom % label stays on a phone bar');
+      expect(find.byKey(zoomFieldKey), findsNothing,
+          reason: 'the editable field is in the popup, not on the bar');
       expect(find.byIcon(LucideIcons.zoomOut), findsOneWidget);
       expect(find.byIcon(LucideIcons.zoomIn), findsOneWidget);
     });
 
-    // The width-gated companion: at a desktop width both the segment labels and
-    // the editable zoom field are present, so desktop rendering is unchanged.
+    // The width-gated companion: at a desktop width the segment labels and the
+    // zoom % label are present, so desktop rendering is unchanged.
     testWidgets(
-        'desktop width: mode switch keeps its labels and the zoom field shows',
+        'desktop width: mode switch keeps its labels and the zoom % label shows',
         (WidgetTester tester) async {
       await pumpDesigner(tester); // kDesktopSize (1440)
 
       expect(find.text('Designer'), findsOneWidget);
       expect(find.text('Preview'), findsOneWidget);
-      expect(find.byKey(zoomLevelKey), findsOneWidget,
-          reason: 'the editable zoom % field is shown at desktop width');
+      expect(find.byKey(zoomToggleKey), findsOneWidget,
+          reason: 'the compact zoom % label is shown at desktop width');
     });
 
     // US2 (C3.4): the ruler toggle is wired to the controller exactly like the

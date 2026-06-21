@@ -116,6 +116,21 @@ Future<void> _activateWithKeyboard(
   await tester.pumpAndSettle();
 }
 
+/// Opens the zoom dropdown (scrolling its trigger into view on a narrow bar).
+Future<void> _openZoomMenu(WidgetTester tester) async {
+  await tester.ensureVisible(find.byKey(_zoomCaretKey));
+  await tester.tap(find.byKey(_zoomCaretKey));
+  await tester.pumpAndSettle();
+}
+
+/// Picks a fit mode from the zoom dropdown — explicit, since the on-load default
+/// is now screen-width-dependent (desktop opens at 100%, phones fit to width).
+Future<void> _pickFit(WidgetTester tester, Key fitKey) async {
+  await _openZoomMenu(tester);
+  await tester.tap(find.byKey(fitKey));
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets('shows the first page with a correct "page X of N" indicator',
       (WidgetTester tester) async {
@@ -204,10 +219,33 @@ void main() {
     expect(find.text('Page 1 of 3'), findsOneWidget);
   });
 
+  testWidgets('opening the zoom popup closes the open page-jump popup',
+      (WidgetTester tester) async {
+    await _pumpPreview(tester, size: const Size(1000, 600));
+
+    // Open the page-jump dropdown — its items are visible.
+    await tester.tap(find
+        .byKey(const ValueKey<String>('jet_print.preview.page.menuToggle')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey<String>('jet_print.preview.page.first')),
+        findsOneWidget);
+
+    // Open the zoom dropdown — the page-jump popup must close (shared group).
+    await tester.tap(find.byKey(_zoomCaretKey));
+    await tester.pumpAndSettle();
+    expect(find.byKey(_fitWidthKey), findsOneWidget,
+        reason: 'the zoom popup is now open');
+    expect(find.byKey(const ValueKey<String>('jet_print.preview.page.first')),
+        findsNothing,
+        reason: 'opening the zoom popup evicts the page-jump popup');
+  });
+
   testWidgets(
       'fit-to-width: the page fills the available width at the page '
       'aspect ratio', (WidgetTester tester) async {
     await _pumpPreview(tester, size: const Size(700, 500));
+    // Desktop opens at 100% now; pick Fit Width to exercise the fit.
+    await _pickFit(tester, _fitWidthKey);
     final Size pageSize = tester.getSize(find.byKey(_pageKey));
     expect(pageSize.height / pageSize.width,
         moreOrLessEquals(_page.height / _page.width, epsilon: 0.01));
@@ -326,20 +364,33 @@ void main() {
   });
 
   group('zoom (shared ZoomControl, absolute scale)', () {
-    // The zoom field is now the designer's ShadInput, read via its controller.
-    String level(WidgetTester tester) =>
-        tester.widget<ShadInput>(find.byKey(_zoomLevelKey)).controller!.text;
+    // The bar shows the scale as a compact "X%" label (the editable field now
+    // lives in the popup); read the label off the trigger.
+    String level(WidgetTester tester) => tester
+        .widget<Text>(find.descendant(
+            of: find.byKey(_zoomCaretKey), matching: find.byType(Text)))
+        .data!;
 
     testWidgets(
         'opens fit-to-width; the field shows the computed scale (not a '
         'literal 100%)', (WidgetTester tester) async {
-      await _pumpPreview(tester, size: const Size(800, 600));
+      // A phone-class width (< 600) keeps the fit-to-width default.
+      await _pumpPreview(tester, size: const Size(500, 600));
       final double pageW = tester.getSize(find.byKey(_pageKey)).width;
       // Fit-to-width: the page fills the viewport minus the 16px padding/side.
-      expect(pageW, moreOrLessEquals(768, epsilon: 1));
-      // The shared field shows that fit as an absolute percentage; with a 200pt
-      // page in a 768px-usable viewport that is ~384%, NOT a literal "100%".
+      expect(pageW, moreOrLessEquals(468, epsilon: 1));
+      // The label shows that fit as an absolute percentage (200pt page in a
+      // 468px-usable viewport ≈ 234%), NOT a literal "100%".
       expect(level(tester), '${(pageW / _page.width * 100).round()}%');
+    });
+
+    testWidgets('a desktop-class width opens at 100% by default',
+        (WidgetTester tester) async {
+      await _pumpPreview(tester, size: const Size(800, 600));
+      expect(level(tester), '100%');
+      // 100% of the 200pt page = 200px, NOT the fit-to-width ~768px.
+      expect(tester.getSize(find.byKey(_pageKey)).width,
+          moreOrLessEquals(200, epsilon: 1));
     });
 
     testWidgets('zoom in enlarges the page (manual ×1.25)',
@@ -368,19 +419,15 @@ void main() {
 
     testWidgets('picking Fit Width from the dropdown re-fits the page',
         (WidgetTester tester) async {
-      // A ≥ 600px bar so the editable zoom field and its Fit Width / Fit Page
-      // menu are present (below that the field collapses to the +/- buttons).
       await _pumpPreview(tester, size: const Size(700, 600));
+      // Establish the fit-width baseline explicitly (desktop opens at 100%).
+      await _pickFit(tester, _fitWidthKey);
       final double fit = tester.getSize(find.byKey(_pageKey)).width;
       await tester.ensureVisible(find.byKey(_zoomOutKey));
       await tester.tap(find.byKey(_zoomOutKey)); // manual zoom clears the fit
       await tester.pumpAndSettle();
       expect(tester.getSize(find.byKey(_pageKey)).width, lessThan(fit));
-      await tester.ensureVisible(find.byKey(_zoomCaretKey));
-      await tester.tap(find.byKey(_zoomCaretKey));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(_fitWidthKey));
-      await tester.pumpAndSettle();
+      await _pickFit(tester, _fitWidthKey);
       expect(tester.getSize(find.byKey(_pageKey)).width,
           moreOrLessEquals(fit, epsilon: 1));
     });
@@ -390,18 +437,21 @@ void main() {
       // A short, wide viewport: fit-width would overflow the height, so fit-page
       // (height-limited) yields a smaller page than fit-width.
       await _pumpPreview(tester, size: const Size(800, 300));
+      // Capture the fit-width width explicitly (desktop opens at 100%).
+      await _pickFit(tester, _fitWidthKey);
       final double fitWidthW = tester.getSize(find.byKey(_pageKey)).width;
-      await tester.ensureVisible(find.byKey(_zoomCaretKey));
-      await tester.tap(find.byKey(_zoomCaretKey));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(_fitPageKey));
-      await tester.pumpAndSettle();
+      await _pickFit(tester, _fitPageKey);
       expect(tester.getSize(find.byKey(_pageKey)).width, lessThan(fitWidthW));
     });
 
-    testWidgets('typing a percentage sets the absolute scale',
+    testWidgets(
+        'typing a percentage in the popup field sets the absolute scale',
         (WidgetTester tester) async {
       await _pumpPreview(tester, size: const Size(800, 600));
+      // The editable field is in the popup now — open it first.
+      await tester.ensureVisible(find.byKey(_zoomCaretKey));
+      await tester.tap(find.byKey(_zoomCaretKey));
+      await tester.pumpAndSettle();
       await tester.enterText(find.byKey(_zoomLevelKey), '150');
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
@@ -434,10 +484,9 @@ void main() {
     });
 
     // E5 round 3 (user-requested parity): on a phone / very narrow bar the
-    // preview matches the designer — the Designer|Preview switch goes icon-only
-    // and the editable zoom % field is hidden, leaving just the +/- buttons.
-    testWidgets(
-        'phone width: mode switch is icon-only and the zoom % field is hidden',
+    // preview matches the designer — the Designer|Preview switch goes icon-only.
+    // The zoom control is a compact label + popup, so its % label stays.
+    testWidgets('phone width: mode switch is icon-only; zoom % label stays',
         (WidgetTester tester) async {
       await _pumpPreview(tester, size: const Size(390, 760), onBack: () {});
 
@@ -451,9 +500,12 @@ void main() {
       expect(find.text('Preview'), findsNothing,
           reason: 'the Preview segment is icon-only on a phone');
 
-      // Zoom: the editable % field is gone, but the +/- buttons remain.
+      // Zoom: the compact % label trigger stays on the bar; the editable field
+      // is in the (closed) popup, and the +/- buttons remain.
+      expect(find.byKey(_zoomCaretKey), findsOneWidget,
+          reason: 'the compact zoom % label stays on a phone bar');
       expect(find.byKey(_zoomLevelKey), findsNothing,
-          reason: 'the editable zoom % field is hidden on a phone');
+          reason: 'the editable field is in the popup, not on the bar');
       expect(find.byKey(_zoomOutKey), findsOneWidget);
       expect(find.byKey(_zoomInKey), findsOneWidget);
     });

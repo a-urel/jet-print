@@ -3,7 +3,22 @@ import 'dart:math' as math;
 import 'package:flutter/widgets.dart';
 
 import '../../domain/geometry.dart';
+import '../controller/view_fit_mode.dart';
 import 'design_tunables.dart';
+
+/// Screen width (in logical pixels) at or above which a freshly opened report
+/// defaults to 100% (actual size) instead of fitting to width. Matches the
+/// toolbar's phone breakpoint (`kBarVeryNarrowWidth`).
+const double kDefaultZoomDesktopMinWidth = 600;
+
+/// The built-in default fit for a freshly opened report, by overall screen
+/// width: phone-class screens (`< kDefaultZoomDesktopMinWidth`) fit to width so
+/// the page is legible; larger screens open at 100% ([JetViewFitMode.none] =
+/// actual size). Shared by the designer canvas and the preview.
+JetViewFitMode defaultFitForScreenWidth(double screenWidth) =>
+    screenWidth < kDefaultZoomDesktopMinWidth
+        ? JetViewFitMode.width
+        : JetViewFitMode.none;
 
 /// The zoom that fits the page width into [viewport] (less [padding] on each
 /// side), clamped to [kMinZoom]..[kMaxZoom]. Centering and vertical reach are

@@ -4,15 +4,20 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../canvas/design_tunables.dart';
 import '../controller/view_fit_mode.dart';
 import '../l10n/jet_print_localizations.dart';
+import 'popover_group.dart';
 
 /// The preset zoom percentages offered in the dropdown. 100% doubles as the
 /// "actual size" anchor.
 const List<int> _kZoomPresets = <int>[50, 75, 100, 150, 200];
 
-/// The editable zoom field + dropdown menu in the designer top bar.
+/// The zoom control in the designer / preview top bar.
 ///
-/// The field always shows the live computed percentage and stays editable; the
-/// active sticky fit mode (if any) is shown only by a checkmark in the menu.
+/// The bar element is a compact "X%" label + chevron (matching [PageNavControl]
+/// — see `page_nav_control.dart`); tapping it opens a popup with Fit Width / Fit
+/// Page / preset percentages and, at the bottom, the editable % field for direct
+/// entry. The bar never carries a text input, so the chrome stays narrow on every
+/// screen.
+///
 /// Pure and callback-driven so it can be tested in isolation: the parent passes
 /// the current [viewScale]/[fitMode] and receives intent via [onPercent] (a
 /// percent value, e.g. 130) and [onFit].
@@ -24,6 +29,7 @@ class ZoomControl extends StatefulWidget {
     required this.onPercent,
     required this.onFit,
     this.keyPrefix = 'jet_print.designer',
+    this.popoverGroup,
   });
 
   final double viewScale;
@@ -35,6 +41,10 @@ class ZoomControl extends StatefulWidget {
   /// dropped into the designer (`jet_print.designer.*`, the default) and the
   /// preview (`jet_print.preview.*`) without key collisions.
   final String keyPrefix;
+
+  /// Optional shared group that closes this popup when a sibling popup (e.g. the
+  /// page-jump dropdown) opens, so at most one toolbar popover is open at a time.
+  final PopoverGroup? popoverGroup;
 
   @override
   State<ZoomControl> createState() => _ZoomControlState();
@@ -52,6 +62,7 @@ class _ZoomControlState extends State<ZoomControl> {
   void initState() {
     super.initState();
     _focus.addListener(_onFocusChange);
+    widget.popoverGroup?.add(_menu);
   }
 
   @override
@@ -61,10 +72,15 @@ class _ZoomControlState extends State<ZoomControl> {
     if (!_focus.hasFocus && widget.viewScale != oldWidget.viewScale) {
       _text.text = _format(widget.viewScale);
     }
+    if (!identical(oldWidget.popoverGroup, widget.popoverGroup)) {
+      oldWidget.popoverGroup?.remove(_menu);
+      widget.popoverGroup?.add(_menu);
+    }
   }
 
   @override
   void dispose() {
+    widget.popoverGroup?.remove(_menu);
     _focus.removeListener(_onFocusChange);
     _focus.dispose();
     _text.dispose();
@@ -93,6 +109,11 @@ class _ZoomControlState extends State<ZoomControl> {
     // scale, so parsing it again would produce the existing value).
     if (_format(clamped) == _format(widget.viewScale)) return;
     widget.onPercent(parsed);
+  }
+
+  void _submitField() {
+    _commit();
+    _menu.hide();
   }
 
   void _pickFit(JetViewFitMode mode) {
@@ -137,11 +158,7 @@ class _ZoomControlState extends State<ZoomControl> {
             onPressed: () => _pickFit(JetViewFitMode.page),
             child: Text(l10n.menuZoomFitPage),
           ),
-          Container(
-            height: 1,
-            margin: const EdgeInsets.symmetric(vertical: 4),
-            color: colors.border,
-          ),
+          _divider(colors),
           for (final int p in _kZoomPresets)
             ShadContextMenuItem(
               key: ValueKey<String>('${widget.keyPrefix}.zoom.preset.$p'),
@@ -150,23 +167,50 @@ class _ZoomControlState extends State<ZoomControl> {
               onPressed: () => _pickPreset(p),
               child: Text('$p%'),
             ),
+          _divider(colors),
+          // Direct entry lives in the popup (consistent with PageNavControl's
+          // "Go to page" field).
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: SizedBox(
+              width: 120,
+              child: ShadInput(
+                key: ValueKey<String>('${widget.keyPrefix}.action.zoomLevel'),
+                controller: _text,
+                focusNode: _focus,
+                onSubmitted: (_) => _submitField(),
+              ),
+            ),
+          ),
         ],
-        child: SizedBox(
-          width: 92,
-          child: ShadInput(
-            key: ValueKey<String>('${widget.keyPrefix}.action.zoomLevel'),
-            controller: _text,
-            focusNode: _focus,
-            onSubmitted: (_) => _commit(),
-            trailing: GestureDetector(
-              key: ValueKey<String>('${widget.keyPrefix}.zoom.menuToggle'),
-              behavior: HitTestBehavior.opaque,
-              onTap: _menu.toggle,
-              child: const Icon(LucideIcons.chevronDown, size: 14),
+        child: GestureDetector(
+          key: ValueKey<String>('${widget.keyPrefix}.zoom.menuToggle'),
+          behavior: HitTestBehavior.opaque,
+          onTap: _menu.toggle,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(
+                  _format(widget.viewScale),
+                  style:
+                      theme.textTheme.small.copyWith(color: colors.foreground),
+                ),
+                const SizedBox(width: 4),
+                Icon(LucideIcons.chevronDown,
+                    size: 14, color: colors.mutedForeground),
+              ],
             ),
           ),
         ),
       ),
     );
   }
+
+  Widget _divider(ShadColorScheme colors) => Container(
+        height: 1,
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        color: colors.border,
+      );
 }

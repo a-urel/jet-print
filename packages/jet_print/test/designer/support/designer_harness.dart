@@ -142,6 +142,7 @@ Future<JetReportDesignerController> pumpDesignerWith(
   JetDataSchema? dataSchema,
   bool rulers = true,
   bool grid = true,
+  bool pinFitWidth = true,
 }) async {
   final JetReportDesignerController c =
       controller ?? JetReportDesignerController();
@@ -161,5 +162,13 @@ Future<JetReportDesignerController> pumpDesignerWith(
     themeMode: themeMode,
     designer: JetReportDesigner(controller: c, dataSchema: dataSchema),
   );
+  // The screen-width default-zoom decision opens desktop-width canvases at 100%
+  // (actual size). The coordinate/golden tests here were written against the
+  // fit-to-width scale, so pin it back unless a test opts out to observe the
+  // raw default (the default-zoom tests pass `pinFitWidth: false`).
+  if (pinFitWidth) {
+    c.fitToView();
+    await tester.pumpAndSettle();
+  }
   return c;
 }

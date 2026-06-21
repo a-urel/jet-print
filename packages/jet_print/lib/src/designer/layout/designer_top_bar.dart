@@ -167,15 +167,14 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
         tooltip: l10n.actionZoomOutTooltip,
         onPressed: controller.zoomOut,
       ),
-      // The editable zoom % field is hidden on a phone / very narrow bar; the
-      // +/− buttons remain, so zoom is still reachable without the wide field.
-      if (!veryNarrow)
-        ZoomControl(
-          viewScale: controller.viewScale,
-          fitMode: controller.viewFitMode,
-          onPercent: controller.setZoomPercent,
-          onFit: controller.setViewFitMode,
-        ),
+      // The zoom control is a compact "X%" label + popup (no inline field), so
+      // it stays on the bar at every width — the +/− buttons flank it.
+      ZoomControl(
+        viewScale: controller.viewScale,
+        fitMode: controller.viewFitMode,
+        onPercent: controller.setZoomPercent,
+        onFit: controller.setViewFitMode,
+      ),
       _IconButton(
         icon: LucideIcons.zoomIn,
         tooltip: l10n.actionZoomInTooltip,

@@ -28,6 +28,7 @@ import '../canvas/zoom_math.dart';
 import '../controller/view_fit_mode.dart';
 import '../l10n/jet_print_localizations.dart';
 import '../layout/page_nav_control.dart';
+import '../layout/popover_group.dart';
 import '../layout/unified_top_bar.dart';
 import '../layout/workspace_mode_switch.dart';
 import '../layout/zoom_control.dart';
@@ -138,6 +139,11 @@ class _JetReportPreviewState extends State<JetReportPreview> {
   Size? _lastFitViewport;
   bool _viewInitialized = false;
 
+  /// Guards the one-shot screen-width-based default-zoom decision (desktop opens
+  /// at 100%, phones fit to width). Resolved on the first [didChangeDependencies]
+  /// where MediaQuery is available.
+  bool _defaultZoomResolved = false;
+
   /// Fonts shared between frame recording (the painter resolves glyph bytes
   /// here) and the measurement already baked into the frame, so a glyph is
   /// drawn with the same variant it was measured with. Read off the carried
@@ -163,6 +169,10 @@ class _JetReportPreviewState extends State<JetReportPreview> {
 
   PageFrame get _frame => widget.report.pageAt(_index).frame;
 
+  /// Shared across the toolbar popovers (page-jump + zoom) so opening one closes
+  /// the other — at most one toolbar dropdown is open at a time.
+  final PopoverGroup _popovers = PopoverGroup();
+
   @override
   void initState() {
     super.initState();
@@ -185,6 +195,7 @@ class _JetReportPreviewState extends State<JetReportPreview> {
 
   @override
   void dispose() {
+    _popovers.dispose();
     _picture?.dispose();
     super.dispose();
   }
@@ -261,9 +272,9 @@ class _JetReportPreviewState extends State<JetReportPreview> {
 
   /// The preview's right-slot actions (017 / FR-011): the page-navigation group
   /// first, then export / print (each only when its callback is wired), then the
-  /// zoom group. The preview's buttons are already icon-only, so [compact] is unused;
-  /// [veryNarrow] hides the editable zoom % field (the +/- buttons stay), to
-  /// match the designer on a phone bar.
+  /// zoom group. The buttons are already icon-only and the zoom control is a
+  /// compact label + popup, so [compact] and [veryNarrow] are unused here (the
+  /// whole group stays on the bar at every width).
   List<Widget> _toolbarActions(
       BuildContext context, bool compact, bool veryNarrow) {
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
@@ -283,6 +294,7 @@ class _JetReportPreviewState extends State<JetReportPreview> {
         pageIndex: _index,
         pageCount: _pageCount,
         onGoTo: _goTo,
+        popoverGroup: _popovers,
       ),
       _ToolbarButton(
         buttonKey: const ValueKey<String>('jet_print.preview.next'),
@@ -310,25 +322,25 @@ class _JetReportPreviewState extends State<JetReportPreview> {
           ),
         const _Divider(),
       ],
-      // Zoom group — the SAME section as the designer: out / editable % field +
-      // Fit Width / Fit Page / preset menu / in. The buttons clamp silently
-      // (no disable), matching the designer.
+      // Zoom group — the SAME section as the designer: out / "X%" label+popup
+      // (Fit Width / Fit Page / presets / direct-entry field) / in. The buttons
+      // clamp silently (no disable), matching the designer.
       _ToolbarButton(
         buttonKey: const ValueKey<String>('jet_print.preview.zoomOut'),
         icon: LucideIcons.zoomOut,
         label: l10n.actionZoomOutTooltip,
         onPressed: _zoomOut,
       ),
-      // The editable zoom % field is hidden on a phone / very narrow bar (the
-      // +/- buttons remain), matching the designer.
-      if (!veryNarrow)
-        ZoomControl(
-          viewScale: _viewScale,
-          fitMode: _fitMode,
-          onPercent: _setZoomPercent,
-          onFit: _setFitMode,
-          keyPrefix: 'jet_print.preview',
-        ),
+      // The zoom control is a compact label + popup, so it stays on the bar at
+      // every width (matching the designer and PageNavControl).
+      ZoomControl(
+        viewScale: _viewScale,
+        fitMode: _fitMode,
+        onPercent: _setZoomPercent,
+        onFit: _setFitMode,
+        keyPrefix: 'jet_print.preview',
+        popoverGroup: _popovers,
+      ),
       _ToolbarButton(
         buttonKey: const ValueKey<String>('jet_print.preview.zoomIn'),
         icon: LucideIcons.zoomIn,
@@ -398,16 +410,33 @@ class _JetReportPreviewState extends State<JetReportPreview> {
                     final JetSize content =
                         JetSize(frame.page.width, frame.page.height);
 
+                    // Default zoom by the page-area width, decided once: a
+                    // desktop-class viewport opens at 100% (actual size); a
+                    // phone-class one keeps the fit-to-width default. The width
+                    // is read from the live viewport (not MediaQuery) so it
+                    // tracks the real render area. Plain field writes (no
+                    // setState) — consumed by the fit handshake just below.
+                    if (!_defaultZoomResolved) {
+                      _defaultZoomResolved = true;
+                      if (defaultFitForScreenWidth(viewport.width) ==
+                          JetViewFitMode.none) {
+                        _fitMode = JetViewFitMode.none;
+                        _viewScale = 1.0;
+                        _viewInitialized = true;
+                      }
+                    }
+
                     // Re-fit OFF the build path (it mutates state) on first
                     // load, on an explicit fit pick, or when the viewport
-                    // changes while a sticky fit mode is active — the designer
-                    // canvas's handshake (design_canvas.dart). Manual zoom
-                    // clears the mode, so this leaves a user's scale alone.
+                    // changes — but ONLY while a fit mode is active, so a manual
+                    // zoom (or the desktop 100% default, mode == none) is left
+                    // alone. The designer canvas's handshake (design_canvas.dart).
                     final bool fitActive = _fitMode != JetViewFitMode.none;
                     final bool viewportChanged = _lastFitViewport != viewport;
-                    if ((!_viewInitialized && fitActive) ||
-                        _fitRequest != _appliedFitRequest ||
-                        (fitActive && viewportChanged)) {
+                    if (fitActive &&
+                        (!_viewInitialized ||
+                            _fitRequest != _appliedFitRequest ||
+                            viewportChanged)) {
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         if (!mounted) return;
                         setState(() {
