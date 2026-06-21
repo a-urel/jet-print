@@ -67,3 +67,32 @@ jobs:
         # member packages are listed explicitly. Off-canonical jobs exclude the
         # golden surface (host rasterization / PDF subsetting differs per OS).
         run: flutter test ${{ matrix.test_filter }} packages/jet_print apps/jet_print_playground
+
+  web:
+    name: web (chrome)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.0
+          channel: stable
+          cache: true
+
+      - name: Resolve workspace dependencies
+        run: flutter pub get
+
+      - name: Build the playground for web
+        working-directory: apps/jet_print_playground
+        run: flutter build web
+
+      - name: Run the Chrome test leg (goldens + VM-only tests excluded)
+        # Per-package: the repo-root multi-package `--platform chrome` command
+        # fails on DDC workspace path resolution (Task 2 finding). Run each
+        # member from its own dir.
+        run: |
+          (cd packages/jet_print && flutter test --platform chrome --exclude-tags golden)
+          (cd apps/jet_print_playground && flutter test --platform chrome --exclude-tags golden)
