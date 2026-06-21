@@ -49,8 +49,8 @@ void main() {
     }
 
     final ui.PictureRecorder recorder = ui.PictureRecorder();
-    final CanvasPainter painter =
-        CanvasPainter(ui.Canvas(recorder), reg, fontLoader: recordingLoader);
+    final CanvasPainter painter = CanvasPainter(ui.Canvas(recorder), reg,
+        fontLoader: recordingLoader, registeredFamilies: <String>{});
 
     const PageFormat page =
         PageFormat(width: 100, height: 40, margins: JetEdgeInsets.all(0));

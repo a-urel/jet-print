@@ -7,6 +7,8 @@ library;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart' show debugPrint, visibleForTesting; // TEMP PROBE import
+
 import '../../domain/page_format.dart';
 import '../../domain/styles/color.dart';
 import '../../domain/styles/text_style.dart';
@@ -26,15 +28,34 @@ typedef FontLoader = Future<void> Function(Uint8List bytes,
 /// Paints a [PageFrame] onto a `dart:ui` [ui.Canvas].
 class CanvasPainter implements ReportPainter {
   /// Creates a painter drawing to [_canvas], resolving fonts via [_registry].
-  /// [fontLoader] overrides the engine font loader (tests).
-  CanvasPainter(this._canvas, this._registry, {FontLoader? fontLoader})
-      : _loadFont = fontLoader ?? ui.loadFontFromList;
+  /// [fontLoader] overrides the engine font loader (tests). [registeredFamilies]
+  /// overrides the process-global registry of already-registered engine font
+  /// families (tests pass a fresh set for isolation).
+  CanvasPainter(
+    this._canvas,
+    this._registry, {
+    FontLoader? fontLoader,
+    Set<String>? registeredFamilies,
+  })  : _loadFont = fontLoader ?? ui.loadFontFromList,
+        _registered = registeredFamilies ?? _engineRegisteredFamilies;
 
   final ui.Canvas _canvas;
   final FontRegistry _registry;
   final FontLoader _loadFont;
   final Map<ImagePrimitive, ui.Image> _decoded = <ImagePrimitive, ui.Image>{};
-  final Set<String> _loadedFamilies = <String>{};
+
+  /// Engine font registration is process-global: a typeface loaded under a
+  /// `uiFamily` name stays registered for the isolate's lifetime. Re-registering
+  /// it (CanvasKit appends without dedupe) bloats the font collection and slows
+  /// every later text raster, so the "already registered" guard is shared across
+  /// all painters, not per-instance.
+  static final Set<String> _engineRegisteredFamilies = <String>{};
+
+  /// Test seam: clears the shared registry so the next painter re-registers.
+  @visibleForTesting
+  static void debugResetEngineFonts() => _engineRegisteredFamilies.clear();
+
+  final Set<String> _registered;
 
   @override
   Future<void> prepare(PageFrame frame) async {
@@ -48,14 +69,20 @@ class CanvasPainter implements ReportPainter {
     }
   }
 
+  /// TEMP PROBE — remove after diagnosing switch leak. Cumulative engine font
+  /// registrations; if this climbs unboundedly while bouncing tabs, every record
+  /// re-registers fonts and bloats CanvasKit's font collection.
+  static int debugFontLoadCount = 0;
+
   Future<void> _ensureFont(
       String family, JetFontWeight weight, bool italic) async {
     final String uiFamily = uiFontFamily(family, weight, italic);
-    if (_loadedFamilies.contains(uiFamily)) return;
+    if (_registered.contains(uiFamily)) return;
     final Uint8List bytes =
         _registry.bytesFor(family, weight: weight, italic: italic);
     await _loadFont(bytes, fontFamily: uiFamily);
-    _loadedFamilies.add(uiFamily);
+    _registered.add(uiFamily);
+    debugPrint('loadFontFromList total=${++debugFontLoadCount} ($uiFamily)');
   }
 
   @override
