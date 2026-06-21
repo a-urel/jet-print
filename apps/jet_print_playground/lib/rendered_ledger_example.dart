@@ -33,14 +33,29 @@ const List<String> _items = <String>[
   'Cheesecake',
 ];
 
-/// Transaction statuses, mostly PAID.
-const List<String> _statuses = <String>['PAID', 'PAID', 'PAID', 'REFUND'];
+/// A deterministic, non-periodic "spin" of row [index] with a per-column [salt]:
+/// `(index * 131 + salt * 101) mod 1009`. 1009 is prime (so coprime to the
+/// rows-per-page), which keeps every column from marching in lockstep with the
+/// page size — each page looks freshly varied instead of repeating the same
+/// sequence. Each value stays a pure function of the index (no `Random`, fully
+/// reproducible; identical on web and the VM, since no intermediate exceeds 2^53
+/// and no bitwise ops are used).
+int _spin(int index, int salt) => (index * 131 + salt * 101) % 1009;
 
-/// The quantity for row [index] (1..5).
-int _qtyAt(int index) => (index % 5) + 1;
+/// The quantity for row [index] (1..5), spun so it does not cycle with the page.
+int _qtyAt(int index) => _spin(index, 2) % 5 + 1;
 
 /// The unit price for row [index] — a multiple of 0.25 in [0.25, 10.00].
-double _unitPriceAt(int index) => (((index * 3 + 1) % 40) + 1) * 0.25;
+double _unitPriceAt(int index) => (_spin(index, 3) % 40 + 1) * 0.25;
+
+/// The status for row [index]: mostly PAID, with the occasional REFUND/VOID,
+/// spread non-periodically.
+String _statusAt(int index) {
+  final int s = _spin(index, 4) % 20;
+  if (s == 0) return 'VOID';
+  if (s <= 2) return 'REFUND';
+  return 'PAID';
+}
 
 /// The line amount for row [index] = qty × unitPrice — a multiple of 0.25, so
 /// the report's `SUM($F{amount})` is exact in IEEE-754.
@@ -58,11 +73,11 @@ String _timeAt(int index) => DateTime.utc(2026, 1, 1)
 Map<String, Object?> ledgerRowAt(int index) => <String, Object?>{
       'time': _timeAt(index),
       'receiptNo': 'R-${100000 + index}',
-      'item': _items[index % _items.length],
+      'item': _items[_spin(index, 1) % _items.length],
       'qty': _qtyAt(index),
       'unitPrice': _unitPriceAt(index),
       'amount': ledgerAmountAt(index),
-      'status': _statuses[index % _statuses.length],
+      'status': _statusAt(index),
     };
 
 /// Page [pageIndex] of the feed: up to [kLedgerPageSize] rows, fewer (or empty)
