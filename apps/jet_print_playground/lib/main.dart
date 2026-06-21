@@ -32,7 +32,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Fail fast on unsupported platforms so a wrong target surfaces a clear
   // message instead of rendering incorrectly (spec Edge Cases). The library is
-  // platform-agnostic; this playground app targets desktop (macOS, Windows, Linux).
+  // platform-agnostic; this playground app targets desktop (macOS, Windows,
+  // Linux), web, and mobile (iOS, Android).
   final bool supported = kIsWeb ||
       defaultTargetPlatform == TargetPlatform.macOS ||
       defaultTargetPlatform == TargetPlatform.windows ||
