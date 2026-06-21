@@ -497,7 +497,12 @@ Append this job under `jobs:` in `.github/workflows/ci.yml` (a standalone job, n
         run: flutter build web
 
       - name: Run the Chrome test leg (goldens + VM-only tests excluded)
-        run: flutter test --platform chrome --exclude-tags golden packages/jet_print apps/jet_print_playground
+        # Per-package: the repo-root multi-package `--platform chrome` command
+        # fails on DDC workspace path resolution (Task 2 finding). Run each
+        # member from its own dir.
+        run: |
+          (cd packages/jet_print && flutter test --platform chrome --exclude-tags golden)
+          (cd apps/jet_print_playground && flutter test --platform chrome --exclude-tags golden)
 ```
 
 - [ ] **Step 2: Validate the workflow against GitHub's schema**
@@ -513,10 +518,11 @@ Expected: `actionlint CLEAN`; `valid YAML`.
 
 ```bash
 cd /Users/ahmeturel/Projects/oss/jet-print/apps/jet_print_playground && flutter build web
-cd /Users/ahmeturel/Projects/oss/jet-print
-flutter test --platform chrome --exclude-tags golden packages/jet_print apps/jet_print_playground 2>&1 | tail -4
+# Per-package (the repo-root multi-package chrome command fails — Task 2 finding):
+cd /Users/ahmeturel/Projects/oss/jet-print/packages/jet_print && flutter test --platform chrome --exclude-tags golden 2>&1 | tail -4
+cd /Users/ahmeturel/Projects/oss/jet-print/apps/jet_print_playground && flutter test --platform chrome --exclude-tags golden 2>&1 | tail -4
 ```
-Expected: `✓ Built build/web`; `All tests passed!`.
+Expected: `✓ Built build/web`; `All tests passed!` for each leg.
 
 - [ ] **Step 4: Commit**
 
