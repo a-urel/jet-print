@@ -30,6 +30,7 @@ class WorkspaceModeSwitch extends StatelessWidget {
     super.key,
     required this.mode,
     required this.onSwitchRequested,
+    this.compact = false,
   });
 
   /// The currently-active workspace mode (the highlighted segment).
@@ -38,6 +39,13 @@ class WorkspaceModeSwitch extends StatelessWidget {
   /// Invoked when the inactive segment is selected — the host performs the
   /// actual swap. Null ⇒ the inactive segment renders disabled.
   final VoidCallback? onSwitchRequested;
+
+  /// When true (a phone / very narrow bar) the segments drop their text labels
+  /// and render icon-only — the glyph is the sole content and the localized
+  /// name moves to the segment's hover tooltip + accessible label. Defaults to
+  /// false (labelled), so an embedding that does not thread the bar's width
+  /// keeps the full control and its rendering (and goldens) unchanged.
+  final bool compact;
 
   /// Stable key on the whole control, so region-parity tests can measure it.
   static const Key switchKey = ValueKey<String>('jet_print.toolbar.modeSwitch');
@@ -72,6 +80,7 @@ class WorkspaceModeSwitch extends StatelessWidget {
               icon: LucideIcons.pencilRuler,
               label: l10n.modeDesigner,
               active: designerActive,
+              compact: compact,
             ),
             const SizedBox(width: 2),
             _segment(
@@ -81,6 +90,7 @@ class WorkspaceModeSwitch extends StatelessWidget {
               icon: LucideIcons.fileSearch,
               label: l10n.modePreview,
               active: !designerActive,
+              compact: compact,
             ),
           ],
         ),
@@ -100,17 +110,27 @@ class WorkspaceModeSwitch extends StatelessWidget {
     required IconData icon,
     required String label,
     required bool active,
+    required bool compact,
   }) {
     // A tight padding keeps the two-segment control compact so it leaves the
     // report name and the mode-specific actions their room on the shared bar.
+    // When [compact] the label is dropped and the segment shrinks to a square
+    // around its glyph, so the two icons stay a tidy pair on a phone bar.
     const EdgeInsets pad = EdgeInsets.symmetric(horizontal: 10, vertical: 4);
+    const EdgeInsets compactPad =
+        EdgeInsets.symmetric(horizontal: 6, vertical: 4);
     final Widget glyph = Icon(icon, size: 14);
+    // Icon-only when compact: the glyph is the sole content (no leading+label
+    // pair), so it centres in the square segment.
+    final Widget? leading = compact ? null : glyph;
+    final Widget content = compact ? glyph : Text(label);
+    final EdgeInsets segmentPad = compact ? compactPad : pad;
     final Widget button = active
         ? ShadButton.secondary(
             key: segmentKey,
             size: ShadButtonSize.sm,
-            padding: pad,
-            leading: glyph,
+            padding: segmentPad,
+            leading: leading,
             // A raised tile in the page color, lifted off the muted tray so the
             // active mode is unmistakably emphasized in either theme.
             backgroundColor: colors.background,
@@ -124,18 +144,28 @@ class WorkspaceModeSwitch extends StatelessWidget {
               ),
             ],
             onPressed: () {}, // selecting the active mode does nothing
-            child: Text(label),
+            child: content,
           )
         : ShadButton.ghost(
             key: segmentKey,
             size: ShadButtonSize.sm,
-            padding: pad,
-            leading: glyph,
+            padding: segmentPad,
+            leading: leading,
             foregroundColor: colors.mutedForeground,
             onPressed: onSwitchRequested,
-            child: Text(label),
+            child: content,
           );
     // The text is the accessible name; `selected` announces the active segment.
+    // When compact there is no visible label, so name the segment explicitly and
+    // surface the name on hover via a tooltip.
+    if (compact) {
+      return ShadTooltip(
+        builder: (BuildContext context) => Text(label),
+        child: MergeSemantics(
+          child: Semantics(label: label, selected: active, child: button),
+        ),
+      );
+    }
     return Semantics(selected: active, child: button);
   }
 }

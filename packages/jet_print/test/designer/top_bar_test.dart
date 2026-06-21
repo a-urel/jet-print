@@ -236,6 +236,49 @@ void main() {
       expect(find.byKey(_modePreviewKey), findsOneWidget);
     });
 
+    // E5 smoke round 2: on a phone / very narrow bar (< 600px) two space-hungry
+    // controls collapse to glyph-only essentials — the mode switch drops its
+    // segment labels and the editable zoom % field is hidden (the +/− buttons
+    // stay). The segments and zoom buttons remain present and reachable.
+    const Key zoomLevelKey =
+        ValueKey<String>('jet_print.designer.action.zoomLevel');
+    testWidgets(
+        'phone width: mode switch is icon-only and the zoom % field is hidden',
+        (WidgetTester tester) async {
+      await pumpDesigner(tester, size: const Size(390, 760));
+
+      // Mode switch: both segments stay (by key + glyph) but show no text label.
+      expect(find.byKey(_modeDesignerKey), findsOneWidget);
+      expect(find.byKey(_modePreviewKey), findsOneWidget);
+      expect(find.byIcon(LucideIcons.pencilRuler), findsOneWidget,
+          reason: 'the Designer segment keeps its glyph');
+      expect(find.byIcon(LucideIcons.fileSearch), findsOneWidget,
+          reason: 'the Preview segment keeps its glyph');
+      expect(find.text('Designer'), findsNothing,
+          reason: 'the Designer segment is icon-only on a phone');
+      expect(find.text('Preview'), findsNothing,
+          reason: 'the Preview segment is icon-only on a phone');
+
+      // Zoom: the editable % field is gone, but the +/− buttons remain.
+      expect(find.byKey(zoomLevelKey), findsNothing,
+          reason: 'the editable zoom % field is hidden on a phone');
+      expect(find.byIcon(LucideIcons.zoomOut), findsOneWidget);
+      expect(find.byIcon(LucideIcons.zoomIn), findsOneWidget);
+    });
+
+    // The width-gated companion: at a desktop width both the segment labels and
+    // the editable zoom field are present, so desktop rendering is unchanged.
+    testWidgets(
+        'desktop width: mode switch keeps its labels and the zoom field shows',
+        (WidgetTester tester) async {
+      await pumpDesigner(tester); // kDesktopSize (1440)
+
+      expect(find.text('Designer'), findsOneWidget);
+      expect(find.text('Preview'), findsOneWidget);
+      expect(find.byKey(zoomLevelKey), findsOneWidget,
+          reason: 'the editable zoom % field is shown at desktop width');
+    });
+
     // US2 (C3.4): the ruler toggle is wired to the controller exactly like the
     // grid/snap toggles — it flips `rulersEnabled` and its active styling
     // (secondary vs ghost) tracks that flag at every step.

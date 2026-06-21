@@ -15,11 +15,28 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../l10n/jet_print_localizations.dart';
 
+/// Below this screen width — a phone or a very narrow window — the shared
+/// toolbar collapses its space-hungry, non-essential controls to their
+/// glyph-only essentials: the mode switch drops its segment labels and the
+/// designer hides its editable zoom field (the +/− buttons stay). The top bar
+/// spans the workspace width, so a screen-width read matches the bar's width.
+/// Desktop/tablet keep the full controls, so their rendering — and the
+/// goldens — is unchanged.
+const double kBarVeryNarrowWidth = 600;
+
 /// Builds the mode-specific right-slot actions. [compact] is true at narrow
 /// widths, signalling labelled actions to collapse to icon-only (the designer
-/// uses it; the preview, already icon-only, ignores it).
+/// uses it; the preview, already icon-only, ignores it). [veryNarrow] is true
+/// only on a phone / very narrow bar ([kBarVeryNarrowWidth]); the designer uses
+/// it to drop the editable zoom field entirely.
 typedef UnifiedActionsBuilder = List<Widget> Function(
-    BuildContext context, bool compact);
+    BuildContext context, bool compact, bool veryNarrow);
+
+/// Builds the bar's center region (the Designer|Preview mode switch).
+/// [veryNarrow] is true on a phone / very narrow bar ([kBarVeryNarrowWidth]),
+/// signalling the switch to drop its segment labels and go icon-only.
+typedef UnifiedCenterBuilder = Widget Function(
+    BuildContext context, bool veryNarrow);
 
 /// The shared three-region command-bar shell composed by [DesignerTopBar] and
 /// [JetReportPreview].
@@ -40,7 +57,7 @@ class UnifiedTopBar extends StatelessWidget {
     super.key,
     required this.leadingIcon,
     required this.name,
-    required this.center,
+    required this.centerBuilder,
     required this.actions,
     this.compactWidth = 920,
     this.scrollWidth = 700,
@@ -54,8 +71,9 @@ class UnifiedTopBar extends StatelessWidget {
   /// modes (FR-006, FR-010).
   final String name;
 
-  /// The center region — the Designer|Preview mode switch.
-  final Widget center;
+  /// Builds the center region — the Designer|Preview mode switch — given the
+  /// bar's [veryNarrow] state so the switch can go icon-only on a phone.
+  final UnifiedCenterBuilder centerBuilder;
 
   /// Builds the mode-specific right-slot actions (FR-011).
   final UnifiedActionsBuilder actions;
@@ -88,6 +106,9 @@ class UnifiedTopBar extends StatelessWidget {
               final double width = constraints.maxWidth;
               final bool compact = width < compactWidth;
               final bool scrollable = width < scrollWidth;
+              // A phone / very narrow bar: the mode switch goes icon-only and
+              // the designer hides its editable zoom field (shared bar line).
+              final bool veryNarrow = width < kBarVeryNarrowWidth;
               final ShadColorScheme colors = ShadTheme.of(context).colorScheme;
               final List<Widget> leadPrefix = <Widget>[
                 const SizedBox(width: 4),
@@ -111,9 +132,9 @@ class UnifiedTopBar extends StatelessWidget {
                         ...leadPrefix,
                         nameRegion,
                         const SizedBox(width: 8),
-                        center,
+                        centerBuilder(context, veryNarrow),
                         const SizedBox(width: 8),
-                        ...actions(context, compact),
+                        ...actions(context, compact, veryNarrow),
                       ],
                     ),
                   ),
@@ -129,9 +150,9 @@ class UnifiedTopBar extends StatelessWidget {
                   ...leadPrefix,
                   Flexible(child: nameRegion),
                   const SizedBox(width: 8),
-                  center,
+                  centerBuilder(context, veryNarrow),
                   const SizedBox(width: 8),
-                  ...actions(context, compact),
+                  ...actions(context, compact, veryNarrow),
                 ],
               );
             },

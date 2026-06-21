@@ -74,12 +74,14 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
       scrollWidth: _scrollWidth,
       // The Preview segment of the switch IS the old Preview action: selecting
       // it emits the host's `onPreview` switch request (FR-002, research D2).
-      center: WorkspaceModeSwitch(
+      centerBuilder: (BuildContext context, bool veryNarrow) =>
+          WorkspaceModeSwitch(
         mode: WorkspaceMode.designer,
         onSwitchRequested: widget.onPreview,
+        compact: veryNarrow,
       ),
-      actions: (BuildContext context, bool compact) =>
-          _actions(context, controller, compact),
+      actions: (BuildContext context, bool compact, bool veryNarrow) =>
+          _actions(context, controller, compact, veryNarrow),
     );
   }
 
@@ -91,6 +93,7 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
     BuildContext context,
     JetReportDesignerController controller,
     bool compact,
+    bool veryNarrow,
   ) {
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
 
@@ -164,12 +167,15 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
         tooltip: l10n.actionZoomOutTooltip,
         onPressed: controller.zoomOut,
       ),
-      ZoomControl(
-        viewScale: controller.viewScale,
-        fitMode: controller.viewFitMode,
-        onPercent: controller.setZoomPercent,
-        onFit: controller.setViewFitMode,
-      ),
+      // The editable zoom % field is hidden on a phone / very narrow bar; the
+      // +/− buttons remain, so zoom is still reachable without the wide field.
+      if (!veryNarrow)
+        ZoomControl(
+          viewScale: controller.viewScale,
+          fitMode: controller.viewFitMode,
+          onPercent: controller.setZoomPercent,
+          onFit: controller.setViewFitMode,
+        ),
       _IconButton(
         icon: LucideIcons.zoomIn,
         tooltip: l10n.actionZoomInTooltip,

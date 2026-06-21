@@ -255,11 +255,16 @@ class _LoadingScaffold extends StatelessWidget {
             name: name,
             compactWidth: 880,
             scrollWidth: 880,
-            center: WorkspaceModeSwitch(
+            // Preview chrome stays labelled on a narrow bar (the icon-only
+            // collapse is designer-only), keeping the report-preview goldens
+            // byte-identical; `veryNarrow` is intentionally not applied.
+            centerBuilder: (BuildContext context, bool veryNarrow) =>
+                WorkspaceModeSwitch(
               mode: WorkspaceMode.preview,
               onSwitchRequested: onSwitchToDesigner,
             ),
-            actions: (BuildContext context, bool compact) => const <Widget>[],
+            actions: (BuildContext context, bool compact, bool veryNarrow) =>
+                const <Widget>[],
           ),
           const ShadSeparator.horizontal(margin: EdgeInsets.zero),
           if (showIndicator)

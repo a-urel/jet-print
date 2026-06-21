@@ -260,8 +260,10 @@ class _JetReportPreviewState extends State<JetReportPreview> {
 
   /// The preview's right-slot actions (017 / FR-011): export / print (each only
   /// when its callback is wired), the zoom group, then the page-navigation
-  /// group. The preview's buttons are already icon-only, so [compact] is unused.
-  List<Widget> _toolbarActions(BuildContext context, bool compact) {
+  /// group. The preview's buttons are already icon-only and it keeps its zoom
+  /// field, so both [compact] and [veryNarrow] are unused here.
+  List<Widget> _toolbarActions(
+      BuildContext context, bool compact, bool veryNarrow) {
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
     final ShadThemeData theme = ShadTheme.of(context);
     final ShadColorScheme colors = theme.colorScheme;
@@ -365,7 +367,13 @@ class _JetReportPreviewState extends State<JetReportPreview> {
               // overflowing (the `compact` flag is unused by the preview).
               compactWidth: 880,
               scrollWidth: 880,
-              center: WorkspaceModeSwitch(
+              // The preview's mode switch stays labelled even on a narrow bar:
+              // the icon-only collapse is a designer affordance (where the user
+              // authors on a phone), and the report-preview goldens capture this
+              // widget — collapsing it here would churn them. `veryNarrow` is
+              // therefore intentionally not applied.
+              centerBuilder: (BuildContext context, bool veryNarrow) =>
+                  WorkspaceModeSwitch(
                 mode: WorkspaceMode.preview,
                 onSwitchRequested: widget.onBack,
               ),
