@@ -151,28 +151,37 @@ void main() {
   );
 
   testWidgets(
-    'every demo designer stays mounted across a switch (no remount keep-alive)',
+    'a designer survives a tab switch as the SAME State (no remount, edits kept)',
     (WidgetTester tester) async {
+      // Wide enough for the full tab strip to be on-screen so both 'Invoice'
+      // and 'Empty' taps actually hit their targets (same reason as the
+      // 'Empty tab activates a blank designer' test above).
+      await tester.binding.setSurfaceSize(const Size(1400, 700));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
       await tester.pumpWidget(const JetPrintPlaygroundApp());
       await tester.pumpAndSettle();
 
-      // All demo designers are mounted at once (IndexedStack keep-alive).
-      // IndexedStack hides non-selected children via Offstage (through
-      // Visibility.maintain), so we must pass skipOffstage:false to count them.
-      final int mounted =
-          tester.widgetList(find.byType(JetReportDesigner, skipOffstage: false)).length;
-      expect(mounted, greaterThan(1),
-          reason: 'IndexedStack keeps all demo designers mounted');
+      // All demo designers stay mounted at once (IndexedStack keep-alive).
+      expect(find.byType(JetReportDesigner, skipOffstage: false), findsWidgets);
 
-      // Switching the selector keeps them all mounted (the count is stable).
+      // The onstage (selected) designer's State on the initial Invoice tab.
+      final State<StatefulWidget> before =
+          tester.state(find.byType(JetReportDesigner));
+
+      // Switch away and back.
       await tester.tap(find.widgetWithText(ShadTab<String>, 'Empty'));
       await tester.pumpAndSettle();
-      expect(
-          tester
-              .widgetList(find.byType(JetReportDesigner, skipOffstage: false))
-              .length,
-          mounted,
-          reason: 'a switch must not add or drop a designer (no remount)');
+      await tester.tap(find.widgetWithText(ShadTab<String>, 'Invoice'));
+      await tester.pumpAndSettle();
+
+      // Same State instance ⇒ the subtree was never torn down, so its
+      // controller and any in-progress edits survive. A remount (the bug this
+      // guards) yields a different State and fails here.
+      final State<StatefulWidget> after =
+          tester.state(find.byType(JetReportDesigner));
+      expect(identical(before, after), isTrue,
+          reason: 'designer must not remount on a tab switch');
     },
   );
 
