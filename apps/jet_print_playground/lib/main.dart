@@ -1,10 +1,12 @@
 import 'dart:convert' show utf8;
 import 'dart:typed_data';
+import 'dart:ui' show FrameTiming;
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/foundation.dart'
-    show kIsWeb, defaultTargetPlatform, TargetPlatform;
+    show kIsWeb, debugPrint, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart' show ThemeMode;
+import 'package:flutter/scheduler.dart' show SchedulerBinding;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:jet_print/jet_print.dart';
@@ -31,6 +33,20 @@ import 'rendered_payroll_example.dart';
 Future<void> main() async {
   // Loading the bundled font assets needs the binding up before runApp.
   WidgetsFlutterBinding.ensureInitialized();
+  // TEMP PROFILING PROBE — remove after diagnosing demo-switch jank.
+  // Prints the UI-thread vs GPU-thread split of any slow (>100ms) frame so a
+  // demo switch reveals whether the cost is build/layout (UI) or raster/shaders
+  // (GPU). Watch the browser console; run with `--profile` for real numbers.
+  SchedulerBinding.instance.addTimingsCallback((List<FrameTiming> timings) {
+    for (final FrameTiming t in timings) {
+      final int total = t.totalSpan.inMilliseconds;
+      if (total > 100) {
+        debugPrint('JANK frame: total=${total}ms '
+            'build(UI)=${t.buildDuration.inMilliseconds}ms '
+            'raster(GPU)=${t.rasterDuration.inMilliseconds}ms');
+      }
+    }
+  });
   // Fail fast on unsupported platforms so a wrong target surfaces a clear
   // message instead of rendering incorrectly (spec Edge Cases). The library is
   // platform-agnostic; this playground app targets desktop (macOS, Windows,
@@ -132,11 +148,10 @@ class _JetPrintPlaygroundAppState extends State<JetPrintPlaygroundApp> {
   }
 }
 
-/// The playground shell: a `scrollable` [ShadTabs] strip of live-designer demo
-/// tabs ([_DesignerTab]) — one per sample, plus a blank canvas — each over its
-/// own data. Each tab uses `expandContent` so the selected body fills the space
-/// below the strip, and the default `maintainState` keeps every tab alive
-/// (Offstage) so the designer's edits survive a tab switch.
+/// The playground shell: a `scrollable` [ShadTabs] strip used as a pure
+/// selector, driving a structurally-stable [IndexedStack] that hosts all 8
+/// live-designer demo bodies at once. Only the shown index changes on a switch,
+/// so no designer is ever remounted — edits survive.
 ///
 /// The app-global theme/language cluster switches the WHOLE app, not any single
 /// report, so it rides beside the strip. The two are laid out by width: at
@@ -170,173 +185,128 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
   /// reachable). At or above it the roomy desktop overlay layout is kept.
   static const double _narrowWidth = 600;
 
-  /// A stable identity for the demo [ShadTabs] so the selected demo and the
-  /// kept-alive per-tab designer edits survive the narrow⇄wide layout swap
-  /// (e.g. a phone rotation crossing [_narrowWidth]) and the parent's
-  /// theme/locale rebuilds.
+  /// A stable identity for the demo [ShadTabs] so the selector strip survives
+  /// the narrow⇄wide layout swap (e.g. a phone rotation crossing [_narrowWidth])
+  /// and the parent's theme/locale rebuilds.
   final GlobalKey _demoTabsKey = GlobalKey();
+
+  /// The selected demo's value; drives the body IndexedStack and the strip.
+  String _selectedDemo = 'fatura';
+
+  /// The demo bodies, created once in [initState] so the same widget instances
+  /// are handed to the [IndexedStack] on every rebuild. Only the index changes
+  /// on a switch — the element subtrees are never remounted.
+  late final List<({String value, IconData icon, Widget body})> _demoBodies;
+
+  @override
+  void initState() {
+    super.initState();
+    // Build the body widgets once. Labels come from l10n in build(); the bodies
+    // (designer tabs) must be structurally stable across rebuilds.
+    _DesignerTab tab(ReportDefinition seed, JetDataSchema schema,
+            RenderedReport Function(ReportDefinition) render) =>
+        _DesignerTab(
+            fonts: widget.fonts,
+            seed: seed,
+            dataSchema: schema,
+            renderReport: render);
+    _demoBodies = <({String value, IconData icon, Widget body})>[
+      (
+        value: 'fatura',
+        icon: LucideIcons.fileText,
+        body: tab(invoiceSampleDefinition(), invoiceSchema,
+            (d) => renderInvoiceDefinition(definition: d, fonts: widget.fonts)),
+      ),
+      (
+        value: 'etiket',
+        icon: LucideIcons.tag,
+        body: tab(labelSampleDefinition(), labelSchema,
+            (d) => renderLabelDefinition(definition: d, fonts: widget.fonts)),
+      ),
+      (
+        value: 'barkod',
+        icon: LucideIcons.barcode,
+        body: tab(barcodeSampleDefinition(), barcodeSchema,
+            (d) => renderBarcodeDefinition(definition: d, fonts: widget.fonts)),
+      ),
+      (
+        value: 'makbuz',
+        icon: LucideIcons.package,
+        body: tab(packingSlipDefinition(), shipmentSchema,
+            (d) => renderPackingSlipDefinition(definition: d, fonts: widget.fonts)),
+      ),
+      (
+        value: 'bordro',
+        icon: LucideIcons.banknote,
+        body: tab(payrollDefinition(), payrollSchema,
+            (d) => renderPayrollDefinition(definition: d, fonts: widget.fonts)),
+      ),
+      (
+        value: 'nested-lists',
+        icon: LucideIcons.listTree,
+        body: tab(nestedListsDefinition(), customersSchema,
+            (d) => renderNestedListsDefinition(definition: d, fonts: widget.fonts)),
+      ),
+      (
+        value: 'menu',
+        icon: LucideIcons.image,
+        body: tab(menuSampleDefinition(), menuSchema,
+            (d) => renderMenuDefinition(definition: d, fonts: widget.fonts)),
+      ),
+      (
+        value: 'bos',
+        icon: LucideIcons.squareDashed,
+        body: tab(emptyDesignDefinition(), invoiceSchema,
+            (d) => renderInvoiceDefinition(definition: d, fonts: widget.fonts)),
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
 
-    // The demo selector: one scrollable strip of live-designer tabs. Built once
-    // and placed by the width-gated layout below, under a stable key so its
-    // selection and per-tab edits survive the swap.
-    final Widget demoTabs = ShadTabs<String>(
+    // Labels are l10n-dependent so they're resolved per build; the bodies are
+    // stable instances from initState.
+    final List<String> labels = <String>[
+      l10n.tabInvoice,
+      l10n.tabLabel,
+      l10n.tabBarcode,
+      l10n.tabPackingSlip,
+      l10n.tabPayroll,
+      l10n.tabList,
+      l10n.tabMenu,
+      l10n.tabEmpty,
+    ];
+
+    final int index = _demoBodies
+        .indexWhere((d) => d.value == _selectedDemo)
+        .clamp(0, _demoBodies.length - 1);
+
+    // Selector only: tapping a tab changes _selectedDemo; the heavy bodies live
+    // in the IndexedStack below, so the strip never hosts (or remounts) them.
+    final Widget demoStrip = ShadTabs<String>(
       key: _demoTabsKey,
-      value: 'fatura',
-      // Intrinsic-width, left-aligned tabs (vs. the default full-width
-      // stretch) so the strip sizes to its labels.
+      value: _selectedDemo,
+      onChanged: (String v) => setState(() => _selectedDemo = v),
       scrollable: true,
       tabs: <ShadTab<String>>[
-        ShadTab<String>(
-          value: 'fatura',
-          leading: const Icon(LucideIcons.fileText, size: 16),
-          // The designer is the hero: fill the space below the strip.
-          expandContent: true,
-          content: _FillTabHeight(
-            child: _DesignerTab(
-              fonts: widget.fonts,
-              seed: invoiceSampleDefinition(),
-              dataSchema: invoiceSchema,
-              renderReport: (ReportDefinition def) =>
-                  renderInvoiceDefinition(definition: def, fonts: widget.fonts),
-            ),
+        for (int i = 0; i < _demoBodies.length; i++)
+          ShadTab<String>(
+            value: _demoBodies[i].value,
+            leading: Icon(_demoBodies[i].icon, size: 16),
+            child: Text(labels[i]),
           ),
-          child: Text(l10n.tabInvoice),
-        ),
-        ShadTab<String>(
-          value: 'etiket',
-          leading: const Icon(LucideIcons.tag, size: 16),
-          expandContent: true,
-          // A live designer over the address-label data — 100 flat
-          // records laid out as a 3-column label sheet via the detail
-          // band's native ColumnLayout (label_sample.dart).
-          content: _FillTabHeight(
-            child: _DesignerTab(
-              fonts: widget.fonts,
-              seed: labelSampleDefinition(),
-              dataSchema: labelSchema,
-              renderReport: (ReportDefinition def) =>
-                  renderLabelDefinition(definition: def, fonts: widget.fonts),
-            ),
-          ),
-          child: Text(l10n.tabLabel),
-        ),
-        ShadTab<String>(
-          value: 'barkod',
-          leading: const Icon(LucideIcons.barcode, size: 16),
-          expandContent: true,
-          // A live designer over the product data — 28 flat records laid
-          // out as a 2-column product-label sheet via the detail band's
-          // native ColumnLayout, each cell carrying a real EAN-13 barcode
-          // bound to the product number (barcode_sample.dart).
-          content: _FillTabHeight(
-            child: _DesignerTab(
-              fonts: widget.fonts,
-              seed: barcodeSampleDefinition(),
-              dataSchema: barcodeSchema,
-              renderReport: (ReportDefinition def) =>
-                  renderBarcodeDefinition(definition: def, fonts: widget.fonts),
-            ),
-          ),
-          child: Text(l10n.tabBarcode),
-        ),
-        ShadTab<String>(
-          value: 'makbuz',
-          leading: const Icon(LucideIcons.package, size: 16),
-          expandContent: true,
-          // A live designer over a single shipment — Shipment ▸ Box ▸
-          // Item with a two-column address header, a QR tracking code,
-          // per-box subtotals and grand totals (packing_slip_sample.dart).
-          content: _FillTabHeight(
-            child: _DesignerTab(
-              fonts: widget.fonts,
-              seed: packingSlipDefinition(),
-              dataSchema: shipmentSchema,
-              renderReport: (ReportDefinition def) =>
-                  renderPackingSlipDefinition(
-                      definition: def, fonts: widget.fonts),
-            ),
-          ),
-          child: Text(l10n.tabPackingSlip),
-        ),
-        ShadTab<String>(
-          value: 'bordro',
-          leading: const Icon(LucideIcons.banknote, size: 16),
-          expandContent: true,
-          // A live designer over a payroll run — Employee ▸ Earnings /
-          // Deductions, employees grouped by department, each a full pay
-          // stub with YTD columns, a verification QR, a highlighted Net
-          // Pay box, department subtotals and a company grand total
-          // (payroll_sample.dart).
-          content: _FillTabHeight(
-            child: _DesignerTab(
-              fonts: widget.fonts,
-              seed: payrollDefinition(),
-              dataSchema: payrollSchema,
-              renderReport: (ReportDefinition def) =>
-                  renderPayrollDefinition(definition: def, fonts: widget.fonts),
-            ),
-          ),
-          child: Text(l10n.tabPayroll),
-        ),
-        ShadTab<String>(
-          value: 'nested-lists',
-          leading: const Icon(LucideIcons.listTree, size: 16),
-          expandContent: true,
-          // A live designer over the customers data — Customer ▸ Order ▸
-          // Line, two nested scopes deep (nested_list_sample.dart).
-          content: _FillTabHeight(
-            child: _DesignerTab(
-              fonts: widget.fonts,
-              seed: nestedListsDefinition(),
-              dataSchema: customersSchema,
-              renderReport: (ReportDefinition def) =>
-                  renderNestedListsDefinition(
-                      definition: def, fonts: widget.fonts),
-            ),
-          ),
-          child: Text(l10n.tabList),
-        ),
-        ShadTab<String>(
-          value: 'menu',
-          leading: const Icon(LucideIcons.image, size: 16),
-          expandContent: true,
-          // A live designer over a restaurant menu — dishes grouped by
-          // category, each row a data-bound food picture, with an
-          // embedded header logo (menu_sample.dart). The first sample to
-          // use ImageElement.
-          content: _FillTabHeight(
-            child: _DesignerTab(
-              fonts: widget.fonts,
-              seed: menuSampleDefinition(),
-              dataSchema: menuSchema,
-              renderReport: (ReportDefinition def) =>
-                  renderMenuDefinition(definition: def, fonts: widget.fonts),
-            ),
-          ),
-          child: Text(l10n.tabMenu),
-        ),
-        ShadTab<String>(
-          value: 'bos',
-          leading: const Icon(LucideIcons.squareDashed, size: 16),
-          // A blank canvas over the SAME invoice data — for exercising
-          // the designer by hand from nothing.
-          expandContent: true,
-          content: _FillTabHeight(
-            child: _DesignerTab(
-              fonts: widget.fonts,
-              seed: emptyDesignDefinition(),
-              dataSchema: invoiceSchema,
-              renderReport: (ReportDefinition def) =>
-                  renderInvoiceDefinition(definition: def, fonts: widget.fonts),
-            ),
-          ),
-          child: Text(l10n.tabEmpty),
-        ),
       ],
+    );
+
+    // The hero: one structurally-stable IndexedStack keeps every designer
+    // mounted (edits survive) and swaps which is shown by index alone — no
+    // Expanded-flip, so no remount on switch.
+    final Widget bodies = IndexedStack(
+      index: index,
+      sizing: StackFit.expand,
+      children: <Widget>[for (final d in _demoBodies) d.body],
     );
 
     // App-global theme + language toggles: they switch the WHOLE app, not any
@@ -364,71 +334,42 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.only(top: 4),
-        child: LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints constraints) {
-            if (constraints.maxWidth < _narrowWidth) {
-              // Phone: a compact toggle row ABOVE the full-width demo strip, so
-              // every demo is reachable by swiping the strip — nothing overlays
-              // (and hides) its right-hand tabs.
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8, bottom: 4),
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: toggleCluster,
-                    ),
-                  ),
-                  Expanded(child: demoTabs),
-                ],
-              );
-            }
-            // Desktop/tablet: the strip fills and the toggles overlay its right
-            // end — there is room to spare, so the strip stays a single row and
-            // the cluster sits clear of the (left-aligned) tabs. Left
-            // unconstrained vertically so the 36px small buttons keep their
-            // natural height inside the 32px strip + 8px gap band.
-            return Stack(
-              children: <Widget>[
-                Positioned.fill(child: demoTabs),
-                Positioned(top: 0, right: 8, child: toggleCluster),
-              ],
-            );
-          },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            // The selector header: width-gated like before — a compact row above
+            // on a phone, an overlaid cluster on the right at desktop width.
+            LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                if (constraints.maxWidth < _narrowWidth) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8, bottom: 4),
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: toggleCluster,
+                        ),
+                      ),
+                      demoStrip,
+                    ],
+                  );
+                }
+                return Stack(
+                  children: <Widget>[
+                    demoStrip,
+                    Positioned(top: 0, right: 8, child: toggleCluster),
+                  ],
+                );
+              },
+            ),
+            Expanded(child: bodies),
+          ],
         ),
       ),
     );
   }
-}
-
-/// Bounds a designer tab body's height so it survives sitting **offstage** in
-/// [ShadTabs].
-///
-/// `ShadTabs` wraps only the *selected* tab's body in an [Expanded]; a
-/// maintained-but-unselected tab (the default `maintainState` keep-alive that
-/// lets edits survive a tab switch) is laid out as a bare [Column] child — i.e.
-/// with **unbounded height**. The workspace's `StackFit.expand` [IndexedStack]
-/// can't accept that and asserts, even while invisible. Since the offstage copy
-/// is never painted, any finite height is fine — fall back to the screen height
-/// — while the selected copy (already bounded by the `Expanded`) passes straight
-/// through. Only the designer tabs need this; the placeholder cards size to
-/// their content under unbounded height already.
-class _FillTabHeight extends StatelessWidget {
-  const _FillTabHeight({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) => LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints constraints) =>
-            constraints.hasBoundedHeight
-                ? child
-                : SizedBox(
-                    height: MediaQuery.sizeOf(context).height,
-                    child: child,
-                  ),
-      );
 }
 
 /// A live designer tab over the invoice data ([invoiceSchema]), seeded with

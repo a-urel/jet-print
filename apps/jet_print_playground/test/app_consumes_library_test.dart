@@ -20,18 +20,19 @@ void main() {
       await tester.pumpWidget(const JetPrintPlaygroundApp());
 
       expect(find.byType(ShadApp), findsOneWidget);
-      expect(find.byType(JetReportWorkspace), findsOneWidget);
-      // The workspace opens in designer mode, so its designer is on-screen.
-      expect(find.byType(JetReportDesigner), findsOneWidget);
+      expect(find.byType(JetReportWorkspace, skipOffstage: false), findsWidgets);
+      // All demo designers are mounted in the IndexedStack; non-selected ones are
+      // Offstage (via IndexedStack/Visibility.maintain) so we skip that filter.
+      expect(find.byType(JetReportDesigner, skipOffstage: false), findsWidgets);
     },
   );
 
   testWidgets(
-    'the shell shows seven live designer tabs and no placeholder',
+    'the shell shows eight live designer tabs and no placeholder',
     (WidgetTester tester) async {
       await tester.pumpWidget(const JetPrintPlaygroundApp());
 
-      // All seven tab labels are present in the strip. The app launches in its
+      // All eight tab labels are present in the strip. The app launches in its
       // first supported locale (English), so the labels resolve through
       // AppLocalizations to their English values. Scope the match to the tab
       // strip (ShadTab) so e.g. "Invoice" matches the tab — not the identical
@@ -49,10 +50,9 @@ void main() {
         expect(find.widgetWithText(ShadTab<String>, label), findsOneWidget,
             reason: '"$label" tab label');
       }
-      // The Invoice tab is selected on launch, so its designer is on-screen; the
-      // other designers are kept alive Offstage and skipped by the default
-      // finder.
-      expect(find.byType(JetReportDesigner), findsOneWidget);
+      // All demo designers are mounted in the IndexedStack; non-selected are
+      // Offstage (Visibility.maintain), so pass skipOffstage:false.
+      expect(find.byType(JetReportDesigner, skipOffstage: false), findsWidgets);
       // Every demo tab is now a live designer — the old "coming soon"
       // placeholder card is gone entirely.
       expect(find.text('Coming soon', skipOffstage: false), findsNothing);
@@ -71,14 +71,13 @@ void main() {
       await tester.pumpWidget(const JetPrintPlaygroundApp());
       await tester.pumpAndSettle();
 
-      // Switching to the Empty tab puts the invoice designer offstage — the
-      // reverse of the launch state — which must not crash on layout (both
-      // designer tabs are kept alive with unbounded height when unselected).
+      // Switching to the Empty tab changes the IndexedStack index — all designers
+      // stay mounted; only the shown one changes.
       await tester.tap(find.widgetWithText(ShadTab<String>, 'Empty'));
       await tester.pumpAndSettle();
 
-      // The now-selected designer is the blank seed (no elements), wired to the
-      // SAME invoice schema as the Fatura tab.
+      // The now-shown designer (the blank seed) is the only onstage one — the
+      // others are hidden via IndexedStack/Visibility.maintain/Offstage.
       final JetReportDesigner designer =
           tester.widget<JetReportDesigner>(find.byType(JetReportDesigner));
       expect(designer.dataSchema, same(invoiceSchema),
@@ -139,6 +138,7 @@ void main() {
     (WidgetTester tester) async {
       await tester.pumpWidget(const JetPrintPlaygroundApp());
 
+      // The selected (onstage) workspace — others are Offstage in the IndexedStack.
       final JetReportWorkspace workspace =
           tester.widget<JetReportWorkspace>(find.byType(JetReportWorkspace));
       expect(workspace.controller, isNotNull,
@@ -147,6 +147,32 @@ void main() {
           reason: 'Save is wired to a host persistence callback');
       expect(workspace.onOpenRequested, isNotNull,
           reason: 'Open is wired to a host persistence callback');
+    },
+  );
+
+  testWidgets(
+    'every demo designer stays mounted across a switch (no remount keep-alive)',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(const JetPrintPlaygroundApp());
+      await tester.pumpAndSettle();
+
+      // All demo designers are mounted at once (IndexedStack keep-alive).
+      // IndexedStack hides non-selected children via Offstage (through
+      // Visibility.maintain), so we must pass skipOffstage:false to count them.
+      final int mounted =
+          tester.widgetList(find.byType(JetReportDesigner, skipOffstage: false)).length;
+      expect(mounted, greaterThan(1),
+          reason: 'IndexedStack keeps all demo designers mounted');
+
+      // Switching the selector keeps them all mounted (the count is stable).
+      await tester.tap(find.widgetWithText(ShadTab<String>, 'Empty'));
+      await tester.pumpAndSettle();
+      expect(
+          tester
+              .widgetList(find.byType(JetReportDesigner, skipOffstage: false))
+              .length,
+          mounted,
+          reason: 'a switch must not add or drop a designer (no remount)');
     },
   );
 
