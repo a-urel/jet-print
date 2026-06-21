@@ -96,3 +96,44 @@ jobs:
         run: |
           (cd packages/jet_print && flutter test --platform chrome --exclude-tags golden)
           (cd apps/jet_print_playground && flutter test --platform chrome --exclude-tags golden)
+
+  android:
+    name: android (apk)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.0
+          channel: stable
+          cache: true
+      - name: Resolve workspace dependencies
+        run: flutter pub get
+      - name: Build the playground APK
+        working-directory: apps/jet_print_playground
+        run: flutter build apk --debug
+
+  ios:
+    name: ios (no codesign)
+    runs-on: macos-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.0
+          channel: stable
+          cache: true
+      - name: Resolve workspace dependencies
+        run: flutter pub get
+      - name: Build the playground for iOS
+        working-directory: apps/jet_print_playground
+        run: flutter build ios --debug --no-codesign
