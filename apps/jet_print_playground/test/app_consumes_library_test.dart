@@ -20,7 +20,8 @@ void main() {
       await tester.pumpWidget(const JetPrintPlaygroundApp());
 
       expect(find.byType(ShadApp), findsOneWidget);
-      expect(find.byType(JetReportWorkspace, skipOffstage: false), findsWidgets);
+      expect(
+          find.byType(JetReportWorkspace, skipOffstage: false), findsWidgets);
       // All demo designers are mounted in the IndexedStack; non-selected ones are
       // Offstage (via IndexedStack/Visibility.maintain) so we skip that filter.
       expect(find.byType(JetReportDesigner, skipOffstage: false), findsWidgets);
@@ -28,11 +29,11 @@ void main() {
   );
 
   testWidgets(
-    'the shell shows eight live designer tabs and no placeholder',
+    'the shell shows nine live designer tabs and no placeholder',
     (WidgetTester tester) async {
       await tester.pumpWidget(const JetPrintPlaygroundApp());
 
-      // All eight tab labels are present in the strip. The app launches in its
+      // All nine tab labels are present in the strip. The app launches in its
       // first supported locale (English), so the labels resolve through
       // AppLocalizations to their English values. Scope the match to the tab
       // strip (ShadTab) so e.g. "Invoice" matches the tab — not the identical
@@ -45,6 +46,7 @@ void main() {
         'Packing slip',
         'Payroll',
         'List',
+        'Ledger',
         'Menu',
       ]) {
         expect(find.widgetWithText(ShadTab<String>, label), findsOneWidget,
@@ -111,6 +113,7 @@ void main() {
         'Packing slip',
         'Payroll',
         'List',
+        'Ledger',
         'Menu',
         'Empty',
       ]) {
