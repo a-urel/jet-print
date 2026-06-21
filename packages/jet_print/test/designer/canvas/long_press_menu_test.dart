@@ -97,4 +97,43 @@ void main() {
       debugDefaultTargetPlatformOverride = null;
     }
   });
+
+  testWidgets(
+      'long-press on a resize handle resizes the element (not the menu)',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c = await _pump(tester);
+    c.select('e1');
+    await tester.pumpAndSettle();
+
+    JetRect boundsOfE1() {
+      final Band detail =
+          (c.definition.body.root.children.first as BandNode).band;
+      return detail.elements
+          .firstWhere((ReportElement e) => e.id == 'e1')
+          .bounds;
+    }
+
+    final JetRect before = boundsOfE1();
+    const Key bottomRight =
+        ValueKey<String>('jet_print.designer.handle.bottomRight');
+    expect(find.byKey(bottomRight), findsOneWidget,
+        reason: 'the selected element shows resize handles');
+
+    // Press-hold past the long-press timeout, then drag the corner outward. The
+    // handle owns the long-press (it is the deepest detector), so the canvas
+    // context-menu never opens — the press resizes instead. (Default gesture
+    // kind is touch, which is the case the user hit.)
+    final Offset handleCenter = tester.getCenter(find.byKey(bottomRight));
+    final TestGesture g = await tester.startGesture(handleCenter);
+    await tester.pump(const Duration(milliseconds: 600)); // → onLongPressStart
+    await g.moveTo(handleCenter + const Offset(40, 30)); // → resize
+    await tester.pump();
+    await g.up();
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(_cutKey), findsNothing,
+        reason: 'pressing a handle resizes — it must NOT open the menu');
+    expect(boundsOfE1().width, greaterThan(before.width),
+        reason: 'dragging the bottom-right handle enlarges the element');
+  });
 }

@@ -134,6 +134,12 @@ class _DesignCanvasState extends State<DesignCanvas> {
   JetRect? _marqueeRect;
   bool _marqueeing = false;
 
+  /// Whether a one-finger drag is panning (scrolling) the viewport. On touch
+  /// there is no wheel/trackpad and dragging the thin scrollbar is impractical,
+  /// so an empty-canvas drag scrolls the page instead of marquee-selecting
+  /// (the natural mobile gesture). Mouse input keeps marquee select.
+  bool _panningViewport = false;
+
   /// The page point of a press that landed on no element, pending tap-up. On a
   /// real tap it classifies into a band/report/clear selection; if the press
   /// instead becomes a drag (marquee, or a band-handle resize) the tap is
@@ -492,11 +498,19 @@ class _DesignCanvasState extends State<DesignCanvas> {
         transform.screenToPage(JetOffset(localPosition.dx, localPosition.dy));
     final String? hit = hitTestElement(layout, page,
         slop: kHandleHitSize / 2 / transform.scale);
+    _panningViewport = false;
     if (hit == null) {
-      // Empty-area drag → marquee (rubber-band) selection. Cancel any pending
-      // empty-tap classification (this press is a drag, not a tap).
+      // Empty-area drag. On touch, pan the viewport (scroll) — there is no
+      // wheel/trackpad and the scrollbar is too thin to grab with a finger.
+      // On mouse, start a marquee (rubber-band) selection. Either way cancel
+      // any pending empty-tap classification (this press is a drag, not a tap).
       _cancelEmptyTap();
       _movingSelection = false;
+      _marqueeing = false;
+      if (_isTouch) {
+        _panningViewport = true;
+        return;
+      }
       _marqueeing = true;
       _marqueeStartPage = page;
       setState(() =>
@@ -511,9 +525,16 @@ class _DesignCanvasState extends State<DesignCanvas> {
 
   void _handlePanUpdate(
     Offset localPosition,
+    Offset delta,
     JetReportDesignerController controller,
     CanvasViewTransform transform,
   ) {
+    if (_panningViewport) {
+      // Drag-to-pan: scroll the page with the finger (negated so the content
+      // follows the drag, matching the trackpad pan-zoom convention).
+      _scrollBy(-delta);
+      return;
+    }
     final JetOffset page =
         transform.screenToPage(JetOffset(localPosition.dx, localPosition.dy));
     if (_marqueeing && _marqueeStartPage != null) {
@@ -550,6 +571,10 @@ class _DesignCanvasState extends State<DesignCanvas> {
 
   void _handlePanEnd(
       JetReportDesignerController controller, DesignTimeLayout layout) {
+    if (_panningViewport) {
+      _panningViewport = false;
+      return;
+    }
     if (_marqueeing) {
       final JetRect? rect = _marqueeRect;
       _marqueeing = false;
@@ -835,6 +860,13 @@ class _DesignCanvasState extends State<DesignCanvas> {
                     'jet_print.designer.canvas.contextMenu'),
                 controller: _contextMenu,
                 longPressEnabled: true,
+                // The menu opens on long-press / right-click ONLY. The region
+                // defaults tapEnabled to true on iOS/Android, which opens the
+                // menu on a plain touch-down — that hijacked taps/drags on the
+                // resize handles (a finger-down on a handle showed the menu
+                // instead of resizing). Disable it so touch matches desktop:
+                // tap selects, long-press shows the menu, handles resize.
+                tapEnabled: false,
                 items: _contextMenuItems(controller, l10n),
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
@@ -845,8 +877,8 @@ class _DesignCanvasState extends State<DesignCanvas> {
                   onTapCancel: _cancelEmptyTap,
                   onPanStart: (DragStartDetails d) => _handlePanStart(
                       d.localPosition, controller, transform, layout),
-                  onPanUpdate: (DragUpdateDetails d) =>
-                      _handlePanUpdate(d.localPosition, controller, transform),
+                  onPanUpdate: (DragUpdateDetails d) => _handlePanUpdate(
+                      d.localPosition, d.delta, controller, transform),
                   onPanEnd: (DragEndDetails d) =>
                       _handlePanEnd(controller, layout),
                   child: SizedBox(

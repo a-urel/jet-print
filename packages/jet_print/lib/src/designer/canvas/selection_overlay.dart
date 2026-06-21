@@ -84,6 +84,24 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
     );
   }
 
+  /// Long-press-drag resize: the same effect as the pan-drag, driven by the
+  /// cumulative long-press offset. On touch a press-hold-then-drag on the small
+  /// handle is the natural grab; routing it through the SAME resize also makes
+  /// the handle win the gesture arena over the canvas context-menu's long-press
+  /// (so pressing a handle resizes instead of opening the menu — the desktop
+  /// pan-drag path is unchanged).
+  void _onHandleLongPressMove(
+    JetReportDesignerController controller,
+    LongPressMoveUpdateDetails details,
+  ) {
+    _resizeDelta = details.localOffsetFromOrigin / widget.scale;
+    controller.updateResize(
+      JetOffset(_resizeDelta.dx, _resizeDelta.dy),
+      threshold: kSnapThresholdPx / widget.scale,
+      bypassSnap: _altPressed,
+    );
+  }
+
   bool get _altPressed =>
       HardwareKeyboard.instance.logicalKeysPressed
           .contains(LogicalKeyboardKey.altLeft) ||
@@ -232,6 +250,19 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
               },
               onPanEnd: (_) => controller.commitBandResize(),
               onPanCancel: controller.cancelBandResize,
+              // Long-press-drag resizes the band too, so a touch hold on the
+              // divider wins over the canvas menu's long-press (desktop unchanged).
+              onLongPressStart: (_) {
+                _bandResizeDelta = Offset.zero;
+                controller.beginBandResize(bandId);
+              },
+              onLongPressMoveUpdate: (LongPressMoveUpdateDetails d) {
+                _bandResizeDelta = d.localOffsetFromOrigin / widget.scale;
+                controller.updateBandResize(
+                    footer ? -_bandResizeDelta.dy : _bandResizeDelta.dy);
+              },
+              onLongPressEnd: (_) => controller.commitBandResize(),
+              onLongPressCancel: controller.cancelBandResize,
               child: Center(
                 child: SizedBox(
                   width: barWidth,
@@ -355,6 +386,13 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
                   _onHandleUpdate(controller, d),
               onPanEnd: (_) => controller.commitResize(),
               onPanCancel: controller.cancelResize,
+              // Long-press-drag resizes too (touch: a hold on the small handle
+              // would otherwise lose the arena to the canvas menu's long-press).
+              onLongPressStart: (_) => _onHandleStart(controller, id, position),
+              onLongPressMoveUpdate: (LongPressMoveUpdateDetails d) =>
+                  _onHandleLongPressMove(controller, d),
+              onLongPressEnd: (_) => controller.commitResize(),
+              onLongPressCancel: controller.cancelResize,
               child: Center(
                 child: SizedBox(
                   width: kHandleVisualSize,
