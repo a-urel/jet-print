@@ -6,6 +6,9 @@
 // in the export path. The golden invoice.pdf is a deliberate-update pin:
 // bytes may legitimately shift across Dart SDK / dart_pdf upgrades (zlib) —
 // regenerate with `--update-goldens` and review the diff (research.md §2).
+@TestOn('vm')
+library;
+
 import 'dart:io';
 import 'dart:typed_data';
 

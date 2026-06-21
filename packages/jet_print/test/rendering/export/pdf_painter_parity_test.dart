@@ -10,6 +10,9 @@
 //   * rect/path emit fill FIRST, then stroke (CanvasPainter order);
 //   * the top-left -> bottom-left y-mapping happens per draw call — there is
 //     no global y-flip CTM (which would mirror glyphs).
+@TestOn('vm')
+library;
+
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';

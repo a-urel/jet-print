@@ -4,6 +4,9 @@
 // 10 seconds without memory exhaustion. Unlike the first-page render budget
 // (advisory), SC-005 is a stated success criterion with a hard bound, so the
 // wall-clock gate is binding here; completeness is verified structurally.
+@TestOn('vm')
+library;
+
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';

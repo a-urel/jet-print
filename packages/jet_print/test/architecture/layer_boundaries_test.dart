@@ -4,6 +4,9 @@
 // domain seam is the innermost layer, so no file under lib/src/domain may import
 // the rendering or designer seams, nor any Flutter UI/rendering library. A
 // violation fails the suite (and CI) deterministically.
+@TestOn('vm')
+library;
+
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';

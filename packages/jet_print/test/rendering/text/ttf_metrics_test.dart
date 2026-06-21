@@ -1,4 +1,7 @@
 // test/rendering/text/ttf_metrics_test.dart
+@TestOn('vm')
+library;
+
 import 'dart:io';
 import 'dart:typed_data';
 

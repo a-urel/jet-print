@@ -13,54 +13,22 @@
 // threshold, so host AA noise no longer fails the suite while a real visual
 // regression — which is orders of magnitude larger than the threshold — still
 // does. `flutter test` auto-discovers this file by walking up from each test.
+//
+// On Chrome the golden tests are excluded via --exclude-tags golden, so the
+// comparator is a no-op (golden_config_web.dart stub).
 import 'dart:async';
-import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart' show FlutterError;
-import 'package:flutter_test/flutter_test.dart';
+// flutter_test is imported via the conditional golden_config files below,
+// but we still need FutureOr from dart:async here.
 
-/// Maximum fraction of differing pixels treated as a pass (0.005 == 0.5%).
-///
-/// The observed cross-host delta is ≈0.0002% (a literal handful of edge
-/// pixels); 0.5% leaves a large safety margin for runner-image drift while
-/// staying far below any meaningful visual regression.
-const double _goldenTolerance = 0.005;
+
+import 'support/golden_config_io.dart'
+    if (dart.library.js_interop) 'support/golden_config_web.dart';
 
 Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   // The framework has already set a per-test-file `LocalFileComparator` whose
   // `basedir` points at the running test's directory (so relative golden paths
   // resolve correctly). Wrap it, preserving that basedir.
-  final GoldenFileComparator previous = goldenFileComparator;
-  if (previous is LocalFileComparator) {
-    goldenFileComparator =
-        _TolerantGoldenComparator(previous.basedir, _goldenTolerance);
-  }
+  await setupGoldenComparator();
   await testMain();
-}
-
-/// A [LocalFileComparator] that accepts a sub-threshold pixel difference.
-class _TolerantGoldenComparator extends LocalFileComparator {
-  // `LocalFileComparator` derives its `basedir` from the *file* part of the
-  // given URI; [basedir] already ends in '/', so resolving any filename against
-  // it yields the same directory back.
-  _TolerantGoldenComparator(Uri basedir, this.tolerance)
-      : super(basedir.resolve('flutter_test_config.dart'));
-
-  /// Maximum differing-pixel fraction (0..1) treated as a pass.
-  final double tolerance;
-
-  @override
-  Future<bool> compare(Uint8List imageBytes, Uri golden) async {
-    final ComparisonResult result = await GoldenFileComparator.compareLists(
-      imageBytes,
-      await getGoldenBytes(golden),
-    );
-    if (result.passed || result.diffPercent <= tolerance) {
-      return true;
-    }
-    // Over tolerance: write the diff artifacts and fail loudly, exactly as the
-    // default comparator would, so a genuine regression is just as visible.
-    final String error = await generateFailureOutput(result, golden, basedir);
-    throw FlutterError(error);
-  }
 }

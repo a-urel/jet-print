@@ -2,6 +2,9 @@
 // scattered wrong-type data must not crash, must keep diagnostics bounded, and
 // must still isolate the bad rows (clean rows sum correctly). Time/RSS are
 // logged ADVISORY only — there is no perf gate (resilience-only).
+@TestOn('vm')
+library;
+
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';

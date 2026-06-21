@@ -1,4 +1,7 @@
 // test/rendering/text/metrics_text_measurer_test.dart
+@TestOn('vm')
+library;
+
 import 'dart:io';
 import 'dart:typed_data';
 

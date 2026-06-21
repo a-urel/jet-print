@@ -5,6 +5,9 @@
 // text objects with embedded TTF font programs (selectable/searchable — never
 // images of text), and images placed at the same computeImageFit geometry the
 // preview paints.
+@TestOn('vm')
+library;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/domain/elements/image_source.dart';
 import 'package:jet_print/src/domain/page_format.dart';

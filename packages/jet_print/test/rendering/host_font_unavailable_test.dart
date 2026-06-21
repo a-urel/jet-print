@@ -6,6 +6,9 @@
 // via the fallback font, and exports without blocking on the missing font.
 // This is the existing 021 unavailable-family path, now exercised for a
 // host-contributed name (data-model §8 — no new code). White-box.
+@TestOn('vm')
+library;
+
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';

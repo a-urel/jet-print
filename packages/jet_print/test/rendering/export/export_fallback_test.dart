@@ -6,6 +6,9 @@
 // placeholder/fallback primitives — so the artifact shows the SAME fallback,
 // the render diagnostics ride along unchanged, and export never throws for
 // content problems.
+@TestOn('vm')
+library;
+
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';

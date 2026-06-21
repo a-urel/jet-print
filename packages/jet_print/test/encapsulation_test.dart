@@ -8,6 +8,9 @@
 //       `package:jet_print/src/...`. The public entry point is the only door.
 //   (b) No library file under `lib/` depends on the playground or any host app
 //       (FR-011): the product must stand alone.
+@TestOn('vm')
+library;
+
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';

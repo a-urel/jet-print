@@ -9,6 +9,9 @@
 //   * the host font actually flows into measurement+paint — a host-font page
 //     differs from the default-only render of the same design, while the
 //     default-only render stays deterministic/unchanged (SC-005).
+@TestOn('vm')
+library;
+
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';

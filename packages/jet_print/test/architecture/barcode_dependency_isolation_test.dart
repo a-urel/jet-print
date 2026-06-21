@@ -3,6 +3,9 @@
 // Asserts that `package:barcode/` is used ONLY through the single adapter seam
 // (`package_barcode_encoder.dart`) and never leaks into other rendering files
 // or the domain layer.  A violation fails the suite (and CI) deterministically.
+@TestOn('vm')
+library;
+
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
