@@ -26,6 +26,11 @@
     "description": "Tab label for the list report designer demo."
   },
 
+  "tabLedger": "Ledger",
+  "@tabLedger": {
+    "description": "Big-list sales-ledger demo tab label"
+  },
+
   "tabPackingSlip": "Packing slip",
   "@tabPackingSlip": {
     "description": "Tab label for the packing-slip / delivery-note designer demo."

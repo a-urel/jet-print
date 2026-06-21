@@ -16,6 +16,7 @@ import 'barcode_sample.dart';
 import 'invoice_sample.dart';
 import 'l10n/app_localizations.dart';
 import 'label_sample.dart';
+import 'ledger_sample.dart';
 import 'menu_sample.dart';
 import 'nested_list_sample.dart';
 import 'packing_slip_sample.dart';
@@ -23,6 +24,7 @@ import 'payroll_sample.dart';
 import 'rendered_barcode_example.dart';
 import 'rendered_invoice_example.dart';
 import 'rendered_label_example.dart';
+import 'rendered_ledger_example.dart';
 import 'rendered_menu_example.dart';
 import 'rendered_nested_list_example.dart';
 import 'rendered_packing_slip_example.dart';
@@ -232,6 +234,12 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
             (d) => renderNestedListsDefinition(definition: d, fonts: widget.fonts)),
       ),
       (
+        value: 'defter',
+        icon: LucideIcons.scrollText,
+        body: tab(ledgerSampleDefinition(), ledgerSchema,
+            (d) => renderLedgerDefinition(definition: d, fonts: widget.fonts)),
+      ),
+      (
         value: 'menu',
         icon: LucideIcons.image,
         body: tab(menuSampleDefinition(), menuSchema,
@@ -259,6 +267,7 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
       l10n.tabPackingSlip,
       l10n.tabPayroll,
       l10n.tabList,
+      l10n.tabLedger,
       l10n.tabMenu,
       l10n.tabEmpty,
     ];

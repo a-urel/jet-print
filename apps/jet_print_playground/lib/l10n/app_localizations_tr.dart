@@ -24,6 +24,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get tabList => 'Liste';
 
   @override
+  String get tabLedger => 'Defter';
+
+  @override
   String get tabPackingSlip => 'İrsaliye';
 
   @override

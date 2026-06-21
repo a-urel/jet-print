@@ -130,6 +130,12 @@ abstract class AppLocalizations {
   /// **'List'**
   String get tabList;
 
+  /// Big-list sales-ledger demo tab label
+  ///
+  /// In en, this message translates to:
+  /// **'Ledger'**
+  String get tabLedger;
+
   /// Tab label for the packing-slip / delivery-note designer demo.
   ///
   /// In en, this message translates to:

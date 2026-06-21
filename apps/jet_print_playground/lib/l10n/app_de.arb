@@ -6,6 +6,7 @@
   "tabLabel": "Etikett",
   "tabBarcode": "Barcode",
   "tabList": "Liste",
+  "tabLedger": "Journal",
   "tabPackingSlip": "Lieferschein",
   "tabPayroll": "Gehaltsabrechnung",
   "tabMenu": "Speisekarte",

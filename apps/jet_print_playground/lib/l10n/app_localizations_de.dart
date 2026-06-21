@@ -24,6 +24,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tabList => 'Liste';
 
   @override
+  String get tabLedger => 'Journal';
+
+  @override
   String get tabPackingSlip => 'Lieferschein';
 
   @override
