@@ -255,13 +255,13 @@ class _LoadingScaffold extends StatelessWidget {
             name: name,
             compactWidth: 880,
             scrollWidth: 880,
-            // Preview chrome stays labelled on a narrow bar (the icon-only
-            // collapse is designer-only), keeping the report-preview goldens
-            // byte-identical; `veryNarrow` is intentionally not applied.
+            // Preview chrome matches the designer: the mode switch goes
+            // icon-only on a phone / very narrow bar.
             centerBuilder: (BuildContext context, bool veryNarrow) =>
                 WorkspaceModeSwitch(
               mode: WorkspaceMode.preview,
               onSwitchRequested: onSwitchToDesigner,
+              compact: veryNarrow,
             ),
             actions: (BuildContext context, bool compact, bool veryNarrow) =>
                 const <Widget>[],

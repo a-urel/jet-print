@@ -260,8 +260,9 @@ class _JetReportPreviewState extends State<JetReportPreview> {
 
   /// The preview's right-slot actions (017 / FR-011): export / print (each only
   /// when its callback is wired), the zoom group, then the page-navigation
-  /// group. The preview's buttons are already icon-only and it keeps its zoom
-  /// field, so both [compact] and [veryNarrow] are unused here.
+  /// group. The preview's buttons are already icon-only, so [compact] is unused;
+  /// [veryNarrow] hides the editable zoom % field (the +/- buttons stay), to
+  /// match the designer on a phone bar.
   List<Widget> _toolbarActions(
       BuildContext context, bool compact, bool veryNarrow) {
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
@@ -297,13 +298,16 @@ class _JetReportPreviewState extends State<JetReportPreview> {
         label: l10n.actionZoomOutTooltip,
         onPressed: _zoomOut,
       ),
-      ZoomControl(
-        viewScale: _viewScale,
-        fitMode: _fitMode,
-        onPercent: _setZoomPercent,
-        onFit: _setFitMode,
-        keyPrefix: 'jet_print.preview',
-      ),
+      // The editable zoom % field is hidden on a phone / very narrow bar (the
+      // +/- buttons remain), matching the designer.
+      if (!veryNarrow)
+        ZoomControl(
+          viewScale: _viewScale,
+          fitMode: _fitMode,
+          onPercent: _setZoomPercent,
+          onFit: _setFitMode,
+          keyPrefix: 'jet_print.preview',
+        ),
       _ToolbarButton(
         buttonKey: const ValueKey<String>('jet_print.preview.zoomIn'),
         icon: LucideIcons.zoomIn,
@@ -367,15 +371,13 @@ class _JetReportPreviewState extends State<JetReportPreview> {
               // overflowing (the `compact` flag is unused by the preview).
               compactWidth: 880,
               scrollWidth: 880,
-              // The preview's mode switch stays labelled even on a narrow bar:
-              // the icon-only collapse is a designer affordance (where the user
-              // authors on a phone), and the report-preview goldens capture this
-              // widget — collapsing it here would churn them. `veryNarrow` is
-              // therefore intentionally not applied.
+              // The preview's mode switch matches the designer: icon-only on a
+              // phone / very narrow bar, labelled otherwise.
               centerBuilder: (BuildContext context, bool veryNarrow) =>
                   WorkspaceModeSwitch(
                 mode: WorkspaceMode.preview,
                 onSwitchRequested: widget.onBack,
+                compact: veryNarrow,
               ),
               actions: _toolbarActions,
             ),

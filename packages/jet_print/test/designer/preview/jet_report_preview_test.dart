@@ -335,7 +335,9 @@ void main() {
 
     testWidgets('picking Fit Width from the dropdown re-fits the page',
         (WidgetTester tester) async {
-      await _pumpPreview(tester, size: const Size(500, 600));
+      // A ≥ 600px bar so the editable zoom field and its Fit Width / Fit Page
+      // menu are present (below that the field collapses to the +/- buttons).
+      await _pumpPreview(tester, size: const Size(700, 600));
       final double fit = tester.getSize(find.byKey(_pageKey)).width;
       await tester.ensureVisible(find.byKey(_zoomOutKey));
       await tester.tap(find.byKey(_zoomOutKey)); // manual zoom clears the fit
@@ -396,6 +398,31 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.getSize(find.byKey(_pageKey)).width,
           moreOrLessEquals(floorW, epsilon: 0.5));
+    });
+
+    // E5 round 3 (user-requested parity): on a phone / very narrow bar the
+    // preview matches the designer — the Designer|Preview switch goes icon-only
+    // and the editable zoom % field is hidden, leaving just the +/- buttons.
+    testWidgets(
+        'phone width: mode switch is icon-only and the zoom % field is hidden',
+        (WidgetTester tester) async {
+      await _pumpPreview(tester, size: const Size(390, 760), onBack: () {});
+
+      // Mode switch present (by key + glyph) but with no visible text label.
+      expect(find.byKey(_modeDesignerKey), findsOneWidget);
+      expect(find.byKey(_modePreviewKey), findsOneWidget);
+      expect(find.byIcon(LucideIcons.pencilRuler), findsOneWidget);
+      expect(find.byIcon(LucideIcons.fileSearch), findsOneWidget);
+      expect(find.text('Designer'), findsNothing,
+          reason: 'the Designer segment is icon-only on a phone');
+      expect(find.text('Preview'), findsNothing,
+          reason: 'the Preview segment is icon-only on a phone');
+
+      // Zoom: the editable % field is gone, but the +/- buttons remain.
+      expect(find.byKey(_zoomLevelKey), findsNothing,
+          reason: 'the editable zoom % field is hidden on a phone');
+      expect(find.byKey(_zoomOutKey), findsOneWidget);
+      expect(find.byKey(_zoomInKey), findsOneWidget);
     });
   });
 
