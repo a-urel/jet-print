@@ -248,8 +248,7 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
               // Too narrow: lay the shell out at its minimum width and let the user
               // reach the off-screen edge by scrolling, rather than overflowing.
               return SingleChildScrollView(
-                key: const ValueKey<String>(
-                    'jet_print.designer.shellHScroll'),
+                key: const ValueKey<String>('jet_print.designer.shellHScroll'),
                 scrollDirection: Axis.horizontal,
                 child: SizedBox(
                   width: _minShellWidth,
