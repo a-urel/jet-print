@@ -205,4 +205,18 @@ class CanvasPainter implements ReportPainter {
             ..style = ui.PaintingStyle.stroke);
     }
   }
+
+  /// The images decoded in [prepare]; exposed for tests to assert disposal.
+  @visibleForTesting
+  Iterable<ui.Image> get debugDecodedImages => _decoded.values;
+
+  /// Releases every decoded image's GPU texture. Call **after** the frame is
+  /// recorded — the recorded `Picture` keeps its own reference, so the handles
+  /// are then redundant. On CanvasKit, skipping this leaks a texture per record.
+  void dispose() {
+    for (final ui.Image image in _decoded.values) {
+      image.dispose();
+    }
+    _decoded.clear();
+  }
 }

@@ -92,8 +92,10 @@ class DesignTimeFrameBuilder {
   /// Async because [CanvasPainter.prepare] loads fonts and decodes images.
   Future<ui.Picture> recordFrame(PageFrame frame) async {
     final ui.PictureRecorder recorder = ui.PictureRecorder();
-    final ReportPainter painter = CanvasPainter(ui.Canvas(recorder), fonts);
+    final CanvasPainter painter = CanvasPainter(ui.Canvas(recorder), fonts);
     await paintFrame(frame, painter);
-    return recorder.endRecording();
+    final ui.Picture picture = recorder.endRecording();
+    painter.dispose(); // free decoded image textures; the picture keeps its refs
+    return picture;
   }
 }
