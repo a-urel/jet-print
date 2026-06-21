@@ -185,6 +185,20 @@ class _DesignCanvasState extends State<DesignCanvas> {
   /// thin overlays — never the cached page picture (research D5).
   final ValueNotifier<JetOffset?> _hoverPage = ValueNotifier<JetOffset?>(null);
 
+  /// The device kind of the most recent pointer-down over the canvas. Drives
+  /// touch-sized grab affordances (larger resize handles + scrollbars) without
+  /// a `Platform` check — a mouse on a touchscreen laptop keeps pixel
+  /// precision, a finger on the same device gets fat targets.
+  PointerDeviceKind _pointerKind = PointerDeviceKind.mouse;
+
+  // ignore: unused_element
+  bool get _isTouch => _pointerKind == PointerDeviceKind.touch;
+
+  void _updatePointerKind(PointerDeviceKind kind) {
+    if (kind == _pointerKind) return;
+    setState(() => _pointerKind = kind);
+  }
+
   /// A stable per-element key on each element's hit region, so a selection from
   /// another surface (the Outline/Properties panels) can scroll it into view.
   final Map<String, GlobalKey> _elementKeys = <String, GlobalKey>{};
@@ -799,6 +813,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
               // the down event ahead of the gesture arena, so the selection (and
               // its notify) is in place by the time the menu paints its items.
               onPointerDown: (PointerDownEvent e) {
+                _updatePointerKind(e.kind);
                 if (e.buttons == kSecondaryButton) {
                   _handleSecondaryTapDown(
                       e.localPosition, controller, transform, layout);
