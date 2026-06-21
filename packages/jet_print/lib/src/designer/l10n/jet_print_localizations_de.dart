@@ -502,6 +502,15 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   }
 
   @override
+  String get previewFirstPage => 'Erste Seite';
+
+  @override
+  String get previewLastPage => 'Letzte Seite';
+
+  @override
+  String get previewGoToPage => 'Gehe zu Seite';
+
+  @override
   String get previewFitToWidth => 'An Breite anpassen';
 
   @override

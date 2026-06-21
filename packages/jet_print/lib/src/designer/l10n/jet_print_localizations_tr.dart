@@ -501,6 +501,15 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   }
 
   @override
+  String get previewFirstPage => 'İlk sayfa';
+
+  @override
+  String get previewLastPage => 'Son sayfa';
+
+  @override
+  String get previewGoToPage => 'Sayfaya git';
+
+  @override
   String get previewFitToWidth => 'Genişliğe sığdır';
 
   @override

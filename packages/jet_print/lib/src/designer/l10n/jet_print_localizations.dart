@@ -1061,6 +1061,24 @@ abstract class JetPrintLocalizations {
   /// **'Page {current} of {total}'**
   String previewPageIndicator(int current, int total);
 
+  /// Menu item in the report preview's page-indicator dropdown: jump to the first page.
+  ///
+  /// In en, this message translates to:
+  /// **'First page'**
+  String get previewFirstPage;
+
+  /// Menu item in the report preview's page-indicator dropdown: jump to the last page.
+  ///
+  /// In en, this message translates to:
+  /// **'Last page'**
+  String get previewLastPage;
+
+  /// Label + placeholder for the report preview page-indicator dropdown's jump-to-page number field.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to page'**
+  String get previewGoToPage;
+
   /// Accessible name of the preview's page surface, describing its fit-to-width sizing.
   ///
   /// In en, this message translates to:

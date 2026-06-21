@@ -172,6 +172,39 @@ void main() {
   });
 
   testWidgets(
+      'the page-indicator dropdown jumps to first / last / a typed page',
+      (WidgetTester tester) async {
+    const Key toggle = ValueKey<String>('jet_print.preview.page.menuToggle');
+    await _pumpPreview(tester, size: const Size(1000, 600));
+
+    // Last page via the dropdown.
+    await tester.tap(find.byKey(toggle));
+    await tester.pumpAndSettle();
+    await tester
+        .tap(find.byKey(const ValueKey<String>('jet_print.preview.page.last')));
+    await tester.pumpAndSettle();
+    expect(find.text('Page 3 of 3'), findsOneWidget);
+
+    // A typed page number jumps directly (1-based input -> 0-based page).
+    await tester.tap(find.byKey(toggle));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+        find.byKey(const ValueKey<String>('jet_print.preview.page.gotoField')),
+        '2');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    expect(find.text('Page 2 of 3'), findsOneWidget);
+
+    // First page via the dropdown.
+    await tester.tap(find.byKey(toggle));
+    await tester.pumpAndSettle();
+    await tester.tap(
+        find.byKey(const ValueKey<String>('jet_print.preview.page.first')));
+    await tester.pumpAndSettle();
+    expect(find.text('Page 1 of 3'), findsOneWidget);
+  });
+
+  testWidgets(
       'fit-to-width: the page fills the available width at the page '
       'aspect ratio', (WidgetTester tester) async {
     await _pumpPreview(tester, size: const Size(700, 500));
@@ -448,6 +481,9 @@ void main() {
           reason: 'each action appears only with its own callback');
       expect(find.bySemanticsLabel('Export as PDF'), findsOneWidget,
           reason: 'localized accessible name (FR-014)');
+      // Page-nav leads the toolbar, so on this narrow surface the bar scrolls
+      // horizontally — surface the action before tapping.
+      await tester.ensureVisible(find.byKey(_exportKey));
       await tester.tap(find.byKey(_exportKey));
       await tester.pumpAndSettle();
       expect(exports, 1,
@@ -461,6 +497,7 @@ void main() {
       expect(find.byKey(_printKey), findsOneWidget);
       expect(find.byKey(_exportKey), findsNothing);
       expect(find.bySemanticsLabel('Print'), findsOneWidget);
+      await tester.ensureVisible(find.byKey(_printKey));
       await tester.tap(find.byKey(_printKey));
       await tester.pumpAndSettle();
       expect(prints, 1);
@@ -472,7 +509,9 @@ void main() {
       int prints = 0;
       await _pumpPreview(tester,
           onExportPdf: () => exports++, onPrint: () => prints++);
+      await tester.ensureVisible(find.byKey(_exportKey));
       await tester.tap(find.byKey(_exportKey));
+      await tester.ensureVisible(find.byKey(_printKey));
       await tester.tap(find.byKey(_printKey));
       await tester.pumpAndSettle();
       expect(exports, 1);

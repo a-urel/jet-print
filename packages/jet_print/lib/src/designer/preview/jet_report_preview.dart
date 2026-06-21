@@ -27,6 +27,7 @@ import '../canvas/frame_custom_painter.dart';
 import '../canvas/zoom_math.dart';
 import '../controller/view_fit_mode.dart';
 import '../l10n/jet_print_localizations.dart';
+import '../layout/page_nav_control.dart';
 import '../layout/unified_top_bar.dart';
 import '../layout/workspace_mode_switch.dart';
 import '../layout/zoom_control.dart';
@@ -258,18 +259,38 @@ class _JetReportPreviewState extends State<JetReportPreview> {
     return KeyEventResult.ignored;
   }
 
-  /// The preview's right-slot actions (017 / FR-011): export / print (each only
-  /// when its callback is wired), the zoom group, then the page-navigation
-  /// group. The preview's buttons are already icon-only, so [compact] is unused;
+  /// The preview's right-slot actions (017 / FR-011): the page-navigation group
+  /// first, then export / print (each only when its callback is wired), then the
+  /// zoom group. The preview's buttons are already icon-only, so [compact] is unused;
   /// [veryNarrow] hides the editable zoom % field (the +/- buttons stay), to
   /// match the designer on a phone bar.
   List<Widget> _toolbarActions(
       BuildContext context, bool compact, bool veryNarrow) {
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
-    final ShadThemeData theme = ShadTheme.of(context);
-    final ShadColorScheme colors = theme.colorScheme;
 
     return <Widget>[
+      // Page-navigation group — prev / "page X of N" / next. Placed FIRST in the
+      // toolbar so page selection is the leading control on both the wide and the
+      // narrow (scrolling) bar.
+      _ToolbarButton(
+        buttonKey: const ValueKey<String>('jet_print.preview.prev'),
+        icon: LucideIcons.chevronLeft,
+        label: l10n.previewPreviousPage,
+        onPressed: _index > 0 ? () => _goTo(_index - 1) : null,
+      ),
+      // The indicator doubles as a dropdown: First / Last page + "Go to page".
+      PageNavControl(
+        pageIndex: _index,
+        pageCount: _pageCount,
+        onGoTo: _goTo,
+      ),
+      _ToolbarButton(
+        buttonKey: const ValueKey<String>('jet_print.preview.next'),
+        icon: LucideIcons.chevronRight,
+        label: l10n.previewNextPage,
+        onPressed: _index < _pageCount - 1 ? () => _goTo(_index + 1) : null,
+      ),
+      const _Divider(),
       // Artifact actions — export / print (012, FR-015): each appears only when
       // its callback is wired; with both null the group is absent (011 parity).
       if (widget.onExportPdf != null || widget.onPrint != null) ...<Widget>[
@@ -313,27 +334,6 @@ class _JetReportPreviewState extends State<JetReportPreview> {
         icon: LucideIcons.zoomIn,
         label: l10n.actionZoomInTooltip,
         onPressed: _zoomIn,
-      ),
-      // Page-navigation group — prev / "page X of N" / next.
-      const _Divider(),
-      _ToolbarButton(
-        buttonKey: const ValueKey<String>('jet_print.preview.prev'),
-        icon: LucideIcons.chevronLeft,
-        label: l10n.previewPreviousPage,
-        onPressed: _index > 0 ? () => _goTo(_index - 1) : null,
-      ),
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Text(
-          l10n.previewPageIndicator(_index + 1, _pageCount),
-          style: theme.textTheme.small.copyWith(color: colors.foreground),
-        ),
-      ),
-      _ToolbarButton(
-        buttonKey: const ValueKey<String>('jet_print.preview.next'),
-        icon: LucideIcons.chevronRight,
-        label: l10n.previewNextPage,
-        onPressed: _index < _pageCount - 1 ? () => _goTo(_index + 1) : null,
       ),
     ];
   }

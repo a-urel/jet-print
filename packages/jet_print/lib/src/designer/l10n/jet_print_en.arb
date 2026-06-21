@@ -670,6 +670,18 @@
       "total": { "type": "int" }
     }
   },
+  "previewFirstPage": "First page",
+  "@previewFirstPage": {
+    "description": "Menu item in the report preview's page-indicator dropdown: jump to the first page."
+  },
+  "previewLastPage": "Last page",
+  "@previewLastPage": {
+    "description": "Menu item in the report preview's page-indicator dropdown: jump to the last page."
+  },
+  "previewGoToPage": "Go to page",
+  "@previewGoToPage": {
+    "description": "Label + placeholder for the report preview page-indicator dropdown's jump-to-page number field."
+  },
   "previewFitToWidth": "Fit to width",
   "@previewFitToWidth": {
     "description": "Accessible name of the preview's page surface, describing its fit-to-width sizing."
