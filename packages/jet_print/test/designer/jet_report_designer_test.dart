@@ -71,8 +71,9 @@ void main() {
   });
 
   group('JetReportDesigner minimum width', () {
-    // Mirrors _JetReportDesignerState._minShellWidth.
-    const double minShellWidth = 600;
+    // Mirrors _JetReportDesignerState._minShellWidth (lowered to 360 in E5
+    // Phase 3 so phones author in the real narrow layout without h-scrolling).
+    const double minShellWidth = 360;
 
     testWidgets('clamps to a minimum width and scrolls when very narrow', (
       WidgetTester tester,

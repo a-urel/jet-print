@@ -193,9 +193,10 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
   static const double _breakpoint = 1024;
 
   /// The shell's minimum usable width. Below it the whole shell is laid out at
-  /// this width and scrolls horizontally instead of squeezing its fixed chrome
-  /// (toolbox + rail + the dense top bar) past the point where it overflows.
-  static const double _minShellWidth = 600;
+  /// this width and scrolls horizontally instead of squeezing its fixed chrome.
+  /// Set to a phone-class width so a ~390pt phone authors in the real narrow
+  /// (rail) layout rather than a horizontally-scrolling shell (E5 Phase 3).
+  static const double _minShellWidth = 360;
 
   // Right-panel sizing in logical pixels; converted to the panel group's
   // fractional sizes against the live width so the minimum holds as the window
@@ -247,6 +248,8 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
               // Too narrow: lay the shell out at its minimum width and let the user
               // reach the off-screen edge by scrolling, rather than overflowing.
               return SingleChildScrollView(
+                key: const ValueKey<String>(
+                    'jet_print.designer.shellHScroll'),
                 scrollDirection: Axis.horizontal,
                 child: SizedBox(
                   width: _minShellWidth,
