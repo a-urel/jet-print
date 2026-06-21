@@ -9,6 +9,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:jet_print/jet_print.dart';
 import 'package:jet_print_google_fonts/jet_print_google_fonts.dart';
+import 'package:printing/printing.dart' show Printing;
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'barcode_sample.dart';
@@ -455,6 +456,14 @@ class _DesignerTabState extends State<_DesignerTab> {
     if (kIsWeb) {
       await XFile.fromData(bytes, name: suggestedName, mimeType: mimeType)
           .saveTo(suggestedName);
+      return;
+    }
+    // Mobile: file_selector's getSaveLocation is desktop/web-only, so present
+    // the OS share sheet for the bytes instead (minimal save — full mobile
+    // file UX is deferred to E7).
+    if (defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.android) {
+      await Printing.sharePdf(bytes: bytes, filename: suggestedName);
       return;
     }
     final FileSaveLocation? location = await getSaveLocation(
