@@ -43,6 +43,7 @@ import 'frame_custom_painter.dart';
 import 'grid_geometry.dart';
 import 'hit_testing.dart';
 import 'label_grid_geometry.dart';
+import 'paper_palette.dart';
 import 'ruler_metrics.dart';
 import 'ruler_overlay.dart';
 import 'selection_overlay.dart';
@@ -60,15 +61,9 @@ const Key kDesignGridKey = ValueKey<String>('jet_print.designer.grid');
 // --- Paper palette -----------------------------------------------------------
 // The design surface represents a sheet of printed paper, so the design-time
 // chrome drawn on it (border, shadow, grid, badges) uses a constant,
-// theme-independent palette in every theme. The page fill itself is the one
-// exception: pure white in light mode, but a *slight* gray (slate-200) in dark
-// mode so the sheet does not glare against the dark canvas. It stays light
-// enough that the dark print content emitted onto it (e.g. dark text) still
-// reads correctly — a genuinely dark page would hide that content. The actual
-// exported/printed artifact is always white (that is the render pipeline, not
-// this chrome). Only the surrounding canvas and app chrome follow the theme.
-const Color _paperColor = Color(0xFFFFFFFF);
-const Color _paperColorDark = Color(0xFFE2E8F0); // slate-200 (dark-mode sheet)
+// theme-independent palette in every theme. The page fill itself comes from the
+// shared `paper_palette` (white in light, slate-200 in dark) so the Properties
+// page thumbnail renders the identical paper; see that file for the rationale.
 const Color _paperBorderColor = Color(0xFFE2E8F0); // slate-200
 const Color _paperShadowColor = Color(0x1A000000); // black 10%
 const Color _bandSeparatorColor = Color(0x14000000); // black 8%
@@ -1150,7 +1145,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
             child: DecoratedBox(
               key: kDesignPageKey,
               decoration: BoxDecoration(
-                color: dark ? _paperColorDark : _paperColor,
+                color: paperFill(dark: dark),
                 border: const Border.fromBorderSide(
                     BorderSide(color: _paperBorderColor)),
                 boxShadow: const <BoxShadow>[

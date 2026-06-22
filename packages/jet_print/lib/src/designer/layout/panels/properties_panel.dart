@@ -30,6 +30,7 @@ import '../../../rendering/elements/shape_path.dart';
 import '../../../rendering/frame/primitive.dart';
 import '../../../rendering/text/font_registry.dart';
 import '../../../rendering/text/ui_font_family.dart';
+import '../../canvas/paper_palette.dart';
 import '../../controller/band_walker.dart';
 import '../../controller/binding_resolution.dart';
 import '../../controller/jet_report_designer_controller.dart';
@@ -1602,10 +1603,10 @@ class _PagePreview extends StatelessWidget {
 
   final PageFormat page;
 
-  // The preview depicts physical paper, so it uses a fixed light palette in
-  // both themes (a page reads as paper, not as the dark inspector surface) —
-  // like a print-preview thumbnail.
-  static const Color _paper = Color(0xFFFFFFFF);
+  // The sheet fill tracks the canvas paper via the shared `paper_palette`
+  // (white in light, slate-200 in dark) so the thumbnail reads as the *same*
+  // paper as the design canvas in every theme. The border stays a fixed
+  // slate-300 so the sheet keeps a visible edge on either inspector surface.
   static const Color _paperBorder = Color(0xFFCBD5E1); // slate-300
   static const Color _guideColor = Color(0xFF64748B); // slate-500
 
@@ -1618,6 +1619,7 @@ class _PagePreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool dark = ShadTheme.of(context).brightness == Brightness.dark;
     // Guard against a degenerate page (the controller clamps to a positive
     // page, but a raw model could be malformed) so the sizing stays finite.
     final double pw = page.width <= 0 ? 1.0 : page.width;
@@ -1658,7 +1660,7 @@ class _PagePreview extends StatelessWidget {
                     child: Container(
                       key: const ValueKey<String>('$_p.pagePreview.sheet'),
                       decoration: BoxDecoration(
-                        color: _paper,
+                        color: paperFill(dark: dark),
                         border: Border.all(color: _paperBorder),
                         borderRadius: BorderRadius.circular(2),
                         boxShadow: const <BoxShadow>[
@@ -1722,15 +1724,9 @@ class _PagePreviewPainter extends CustomPainter {
     final Rect content = Rect.fromLTRB(l, t, size.width - r, size.height - b);
     if (content.width <= 0 || content.height <= 0) return;
 
-    // Wash the margin band (the sheet minus the content area) so the printable
-    // area stands out even when the margins are small.
-    final Path band = Path.combine(
-      PathOperation.difference,
-      Path()..addRect(Offset.zero & size),
-      Path()..addRect(content),
-    );
-    canvas.drawPath(band, Paint()..color = const Color(0x14000000));
-
+    // The sheet stays a single clean paper color (matching the canvas); the
+    // printable area is shown by the dashed frame alone — no margin-band wash,
+    // which read as a gray tint distinct from the white/​slate paper.
     // Dashed frame around the content area — the margin guide.
     final Paint guide = Paint()
       ..color = guideColor
