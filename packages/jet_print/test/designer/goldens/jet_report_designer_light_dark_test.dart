@@ -17,6 +17,8 @@ import '../support/designer_harness.dart';
 void main() {
   // Rulers are pinned by widget tests, not goldens (decision V1); pump them off
   // so the shell golden stays byte-identical to its pre-rulers baseline.
+  // pumpDesignerWith wires no-op Open/Save callbacks so the File buttons render,
+  // keeping the shell image byte-identical to its pre-Task-2 baseline.
   testWidgets('JetReportDesigner matches its light golden', (
     WidgetTester tester,
   ) async {

@@ -133,6 +133,15 @@ Future<void> openPropertiesTab(WidgetTester tester) async {
 /// returns it, so interaction tests can both drive and assert the model. The
 /// controller is disposed automatically by the designer only when it created
 /// the controller; here the test owns it, so we dispose on tear-down.
+///
+/// Open/Save callbacks are wired to no-ops by default so the File buttons
+/// always render in the top bar. Golden tests depend on this: the canvas
+/// goldens were recorded with the buttons present, and the Skia glyph-cache
+/// state at canvas render time is sensitive to how many text widgets were
+/// laid out beforehand.
+void _harnesNoOpOpen() {}
+void _harnessNoOpSave(ReportDefinition _) {}
+
 Future<JetReportDesignerController> pumpDesignerWith(
   WidgetTester tester, {
   JetReportDesignerController? controller,
@@ -160,7 +169,12 @@ Future<JetReportDesignerController> pumpDesignerWith(
     size: size,
     locale: locale,
     themeMode: themeMode,
-    designer: JetReportDesigner(controller: c, dataSchema: dataSchema),
+    designer: JetReportDesigner(
+      controller: c,
+      dataSchema: dataSchema,
+      onOpenRequested: _harnesNoOpOpen,
+      onSaveRequested: _harnessNoOpSave,
+    ),
   );
   // The screen-width default-zoom decision opens desktop-width canvases at 100%
   // (actual size). The coordinate/golden tests here were written against the

@@ -88,12 +88,21 @@ int _elementCount(JetReportDesignerController c) =>
 bool _disabled(WidgetTester tester, Key key) =>
     tester.widget<ShadIconButton>(find.byKey(key)).onPressed == null;
 
+void _noOpOpen() {}
+void _noOpSave(ReportDefinition _) {}
+
 void main() {
   group('designer top bar', () {
     testWidgets('keeps the report title and primary actions', (
       WidgetTester tester,
     ) async {
-      await pumpDesigner(tester);
+      await pumpDesigner(
+        tester,
+        designer: JetReportDesigner(
+          onOpenRequested: _noOpOpen,
+          onSaveRequested: _noOpSave,
+        ),
+      );
 
       expect(find.text('Untitled report'), findsOneWidget);
       expect(find.text('Preview'), findsOneWidget);
@@ -225,7 +234,14 @@ void main() {
     // visible and reachable.
     testWidgets('collapses action labels to icons but keeps name + switch',
         (WidgetTester tester) async {
-      await pumpDesigner(tester, size: const Size(700, 760));
+      await pumpDesigner(
+        tester,
+        size: const Size(700, 760),
+        designer: JetReportDesigner(
+          onOpenRequested: _noOpOpen,
+          onSaveRequested: _noOpSave,
+        ),
+      );
 
       // File-action labels disappear, but their glyphs remain.
       expect(find.text('Open'), findsNothing);
@@ -583,7 +599,13 @@ void main() {
     testWidgets('the right slot shows the editing actions (C5.1)', (
       WidgetTester tester,
     ) async {
-      await pumpDesignerWith(tester);
+      await pumpDesigner(
+        tester,
+        designer: JetReportDesigner(
+          onOpenRequested: _noOpOpen,
+          onSaveRequested: _noOpSave,
+        ),
+      );
       // Open/save file actions, history, clipboard, zoom, view toggles, arrange.
       expect(find.byIcon(LucideIcons.undo2), findsOneWidget);
       expect(find.byIcon(LucideIcons.redo2), findsOneWidget);

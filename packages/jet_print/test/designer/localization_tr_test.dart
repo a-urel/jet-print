@@ -9,6 +9,9 @@ import 'package:jet_print/jet_print.dart';
 
 import 'support/designer_harness.dart';
 
+void _noOpOpen() {}
+void _noOpSave(ReportDefinition _) {}
+
 void main() {
   // C6 (spec 014): Turkish groups thousands with a dot (1.000) and the ruler
   // toggle tooltip is localized.
@@ -30,7 +33,14 @@ void main() {
   testWidgets('Turkish captions render under the tr locale', (
     WidgetTester tester,
   ) async {
-    await pumpDesigner(tester, locale: const Locale('tr'));
+    await pumpDesigner(
+      tester,
+      locale: const Locale('tr'),
+      designer: JetReportDesigner(
+        onOpenRequested: _noOpOpen,
+        onSaveRequested: _noOpSave,
+      ),
+    );
 
     // Assert on ASCII-only Turkish tokens to keep the match free of any
     // Unicode-normalization fragility in test sources (the accented captions

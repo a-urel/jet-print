@@ -98,26 +98,32 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
 
     return <Widget>[
-      // File group — Open / Save are wired to the host's callbacks (FR-022) and
-      // lead the bar, ahead of the editing commands. Export is not offered in
-      // the designer; it lives in the preview where the artifact exists (017).
-      _ActionButton(
-        icon: LucideIcons.folderOpen,
-        label: l10n.actionOpen,
-        tooltip: l10n.actionOpenTooltip,
-        compact: compact,
-        onPressed: widget.onOpen,
-      ),
-      _ActionButton(
-        icon: LucideIcons.save,
-        label: l10n.actionSave,
-        tooltip: l10n.actionSaveTooltip,
-        compact: compact,
-        onPressed: widget.onSave,
-      ),
+      // File group — Open / Save lead the bar, ahead of the editing commands, and
+      // each appears only when the host wired its callback ("available only when
+      // assigned"). Export is not offered in the designer; it lives in the preview
+      // where the artifact exists (017).
+      if (widget.onOpen != null)
+        _ActionButton(
+          icon: LucideIcons.folderOpen,
+          label: l10n.actionOpen,
+          tooltip: l10n.actionOpenTooltip,
+          compact: compact,
+          onPressed: widget.onOpen,
+        ),
+      if (widget.onSave != null)
+        _ActionButton(
+          icon: LucideIcons.save,
+          label: l10n.actionSave,
+          tooltip: l10n.actionSaveTooltip,
+          compact: compact,
+          onPressed: widget.onSave,
+        ),
+      // Divide the File group off only when it is present, so the bar never opens
+      // with a leading rule.
+      if (widget.onOpen != null || widget.onSave != null) const _Divider(),
 
       // History group — wired to the controller, disabled at the ends (US3.4).
-      const _Divider(),
+
       _IconButton(
         buttonKey: const ValueKey<String>('jet_print.designer.action.undo'),
         icon: LucideIcons.undo2,

@@ -4,6 +4,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'support/designer_harness.dart';
 
@@ -88,6 +89,42 @@ void main() {
 
       expect(tester.takeException(), isA<StateError>(),
           reason: 'no sink wired ⇒ error surfaces, never silently dropped');
+    });
+  });
+
+  group('Open/Save button visibility', () {
+    testWidgets('both absent when no file callbacks are wired',
+        (WidgetTester tester) async {
+      await pumpDesigner(tester); // const JetReportDesigner(), no callbacks
+      expect(find.text('Open'), findsNothing);
+      expect(find.text('Save'), findsNothing);
+      expect(find.byIcon(LucideIcons.folderOpen), findsNothing);
+      expect(find.byIcon(LucideIcons.save), findsNothing);
+    });
+
+    testWidgets('both present when both callbacks are wired',
+        (WidgetTester tester) async {
+      await pumpDesigner(
+        tester,
+        designer: JetReportDesigner(
+          onOpenRequested: () {},
+          onSaveRequested: (ReportDefinition _) {},
+        ),
+      );
+      expect(find.text('Open'), findsOneWidget);
+      expect(find.text('Save'), findsOneWidget);
+    });
+
+    testWidgets('only Save shows when only onSaveRequested is wired',
+        (WidgetTester tester) async {
+      await pumpDesigner(
+        tester,
+        designer: JetReportDesigner(
+          onSaveRequested: (ReportDefinition _) {},
+        ),
+      );
+      expect(find.text('Save'), findsOneWidget);
+      expect(find.text('Open'), findsNothing);
     });
   });
 }
