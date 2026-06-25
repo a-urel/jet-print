@@ -139,7 +139,7 @@ Future<void> openPropertiesTab(WidgetTester tester) async {
 /// goldens were recorded with the buttons present, and the Skia glyph-cache
 /// state at canvas render time is sensitive to how many text widgets were
 /// laid out beforehand.
-void _harnesNoOpOpen() {}
+void _harnessNoOpOpen() {}
 void _harnessNoOpSave(ReportDefinition _) {}
 
 Future<JetReportDesignerController> pumpDesignerWith(
@@ -172,7 +172,7 @@ Future<JetReportDesignerController> pumpDesignerWith(
     designer: JetReportDesigner(
       controller: c,
       dataSchema: dataSchema,
-      onOpenRequested: _harnesNoOpOpen,
+      onOpenRequested: _harnessNoOpOpen,
       onSaveRequested: _harnessNoOpSave,
     ),
   );
