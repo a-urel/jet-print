@@ -325,4 +325,33 @@ void main() {
     gate.complete(_render(controller.definition));
     await tester.pumpAndSettle();
   });
+
+  testWidgets('forwards onError to the embedded designer',
+      (WidgetTester tester) async {
+    Object? captured;
+    final JetReportDesignerController controller =
+        JetReportDesignerController(definition: _definition());
+    addTearDown(controller.dispose);
+    await tester.binding.setSurfaceSize(const Size(1400, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(ShadApp(
+      localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+        JetPrintLocalizations.delegate,
+      ],
+      supportedLocales: JetPrintLocalizations.supportedLocales,
+      home: JetReportWorkspace(
+        controller: controller,
+        renderReport: _render,
+        onSaveRequested: (ReportDefinition _) => throw StateError('boom'),
+        onError: (Object e, StackTrace _) => captured = e,
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Save'));
+    await tester.pump();
+
+    expect(captured, isA<StateError>());
+    expect(tester.takeException(), isNull);
+  });
 }
