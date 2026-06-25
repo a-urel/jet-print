@@ -48,7 +48,8 @@ export 'src/designer/jet_report_designer.dart'
         JetReportDesigner,
         ReportSaveRequestedCallback,
         ReportOpenRequestedCallback,
-        ReportPreviewRequestedCallback;
+        ReportPreviewRequestedCallback,
+        ReportErrorCallback;
 export 'src/designer/jet_report_workspace.dart'
     show JetReportWorkspace, ReportRenderCallback;
 // The generated localizations class carries its own `delegate` and
