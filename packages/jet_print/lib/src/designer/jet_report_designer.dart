@@ -21,18 +21,30 @@ import 'layout/designer_top_bar.dart';
 
 /// Invoked when the user triggers Save; receives the current [ReportDefinition]
 /// to persist. The library performs no file I/O itself (FR-022) — a host encodes
-/// it (e.g. via `JetReportFormat.encodeDefinitionJson`) and writes it.
-typedef ReportSaveRequestedCallback = void Function(ReportDefinition current);
+/// it (e.g. via `JetReportFormat.encodeDefinitionJson`) and writes it. May be
+/// async; a thrown error or rejected Future is routed to [JetReportDesigner.onError].
+typedef ReportSaveRequestedCallback = FutureOr<void> Function(
+    ReportDefinition current);
 
 /// Invoked when the user triggers Open; a host reads a definition (e.g. via
-/// `JetReportFormat.decodeDefinitionJson`) and calls `controller.open(...)`.
-typedef ReportOpenRequestedCallback = void Function();
+/// `JetReportFormat.decodeDefinitionJson`) and calls `controller.open(...)`. May
+/// be async; failures route to [JetReportDesigner.onError].
+typedef ReportOpenRequestedCallback = FutureOr<void> Function();
 
 /// Invoked when the user triggers Preview; receives the current
 /// [ReportDefinition] so a host can render it (e.g. via `JetReportEngine`) and
-/// show a `JetReportPreview`.
-typedef ReportPreviewRequestedCallback = void Function(
+/// show a `JetReportPreview`. May be async; failures route to
+/// [JetReportDesigner.onError].
+typedef ReportPreviewRequestedCallback = FutureOr<void> Function(
     ReportDefinition current);
+
+/// Invoked when a host Save/Open/Preview callback throws — synchronously or via
+/// a rejected Future. Receives the [error] and its [stackTrace]. The library
+/// performs no file I/O itself (FR-022), so this surfaces failures the host
+/// raised inside the `*Requested` callbacks. Null ⇒ errors propagate as before
+/// (never silently swallowed).
+typedef ReportErrorCallback = void Function(
+    Object error, StackTrace stackTrace);
 
 /// The report designer **shell**: the visual workspace that arranges the
 /// regions of the designer — a top command bar, a left element toolbox, an
@@ -76,6 +88,7 @@ class JetReportDesigner extends StatefulWidget {
     this.onSaveRequested,
     this.onOpenRequested,
     this.onPreviewRequested,
+    this.onError,
     this.dataSchema,
     this.fonts = const <JetFontFamily>[],
     this.showBuiltInFonts = true,
@@ -105,6 +118,10 @@ class JetReportDesigner extends StatefulWidget {
   /// Invoked when the user triggers Preview (wired to the top bar); receives
   /// the live template to render. Null ⇒ the Preview action renders disabled.
   final ReportPreviewRequestedCallback? onPreviewRequested;
+
+  /// Invoked when a host Save/Open/Preview callback fails — sync throw or rejected
+  /// Future (wired through the top bar). Null ⇒ such errors propagate unchanged.
+  final ReportErrorCallback? onError;
 
   /// Host-contributed font families the designer makes selectable (022 / FR-002).
   ///
@@ -220,6 +237,35 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
   /// ignores [_rightOpen]), while the reverse would silently lose the request.
   bool _lastLayoutWide = false;
 
+  /// Runs a host Save/Open/Preview callback, funnelling any failure (a synchronous
+  /// throw or a rejected Future) to [JetReportDesigner.onError]. With no sink wired
+  /// the error is rethrown, preserving today's propagate-don't-swallow behavior.
+  void _guard(FutureOr<void> Function() run) {
+    final ReportErrorCallback? onError = widget.onError;
+    FutureOr<void> result;
+    try {
+      result = run();
+    } catch (error, stackTrace) {
+      if (onError != null) {
+        onError(error, stackTrace);
+        return;
+      }
+      rethrow;
+    }
+    if (result is Future<void>) {
+      result.catchError((Object error, StackTrace stackTrace) {
+        if (onError != null) {
+          onError(error, stackTrace);
+        } else {
+          // No sink: surface through the zone so Flutter's error handler picks
+          // it up (matches the behaviour of an un-awaited rejected Future in a
+          // VoidCallback before this guard existed).
+          Zone.current.handleUncaughtError(error, stackTrace);
+        }
+      });
+    }
+  }
+
   /// Opens the collapsed narrow-layout overlay when a Properties-focus request
   /// arrives, so the panel that must consume it can mount. Peeks only — the
   /// Properties panel consumes the request.
@@ -275,17 +321,20 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
           children: <Widget>[
             DesignerTopBar(
               key: _topBarKey,
-              // Bridge the host callbacks to the top bar: Save hands over the
-              // live template; Open just signals intent (the host reads + calls
-              // controller.open). Null host callbacks ⇒ the actions render
-              // disabled (the library performs no file I/O itself — FR-022).
+              // Bridge the host callbacks to the top bar, each funnelled through
+              // _guard so a thrown error or rejected Future reaches onError instead
+              // of escaping (FR-022 — the library does no file I/O itself).
               onSave: widget.onSaveRequested == null
                   ? null
-                  : () => widget.onSaveRequested!(_controller.definition),
-              onOpen: widget.onOpenRequested,
+                  : () => _guard(
+                      () => widget.onSaveRequested!(_controller.definition)),
+              onOpen: widget.onOpenRequested == null
+                  ? null
+                  : () => _guard(() => widget.onOpenRequested!()),
               onPreview: widget.onPreviewRequested == null
                   ? null
-                  : () => widget.onPreviewRequested!(_controller.definition),
+                  : () => _guard(
+                      () => widget.onPreviewRequested!(_controller.definition)),
             ),
             const ShadSeparator.horizontal(margin: EdgeInsets.zero),
             Expanded(
