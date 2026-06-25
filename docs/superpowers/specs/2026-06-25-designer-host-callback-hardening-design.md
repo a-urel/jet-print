@@ -26,6 +26,11 @@
   absent.
 - Stay non-breaking: existing hosts (`onSaveRequested` / `onOpenRequested` /
   `onPreviewRequested` names) keep working unchanged.
+- Forward `onError` through the `JetReportWorkspace` wrapper (the playground's
+  actual consumption path).
+- Playground demonstration: wire Open/Save **only** on the Empty manual-testing
+  demo; the read-only sample demos pass `null` so their buttons hide — the
+  consumer-side proof that hide-when-null works. Export/Print stay on all tabs.
 
 ## Non-Goals
 
