@@ -190,12 +190,14 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
     // Build the body widgets once. Labels come from l10n in build(); the bodies
     // (designer tabs) must be structurally stable across rebuilds.
     _DesignerTab tab(ReportDefinition seed, JetDataSchema schema,
-            RenderedReport Function(ReportDefinition) render) =>
+            RenderedReport Function(ReportDefinition) render,
+            {bool fileIo = false}) =>
         _DesignerTab(
             fonts: widget.fonts,
             seed: seed,
             dataSchema: schema,
-            renderReport: render);
+            renderReport: render,
+            enableFileIo: fileIo);
     _demoBodies = <({String value, IconData icon, Widget body})>[
       (
         value: 'fatura',
@@ -255,7 +257,8 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
         value: 'bos',
         icon: LucideIcons.squareDashed,
         body: tab(emptyDesignDefinition(), invoiceSchema,
-            (d) => renderInvoiceDefinition(definition: d, fonts: widget.fonts)),
+            (d) => renderInvoiceDefinition(definition: d, fonts: widget.fonts),
+            fileIo: true),
       ),
     ];
   }
@@ -386,6 +389,7 @@ class _DesignerTab extends StatefulWidget {
     required this.seed,
     required this.dataSchema,
     required this.renderReport,
+    this.enableFileIo = false,
   });
 
   /// The host-contributed fonts, shared by the designer (picker + canvas) and
@@ -406,6 +410,11 @@ class _DesignerTab extends StatefulWidget {
   /// render entry point ([renderInvoiceDefinition] / [renderNestedListsDefinition]),
   /// closed over [fonts].
   final ReportRenderCallback renderReport;
+
+  /// Whether this tab offers the host Open/Save file actions. Only the Empty
+  /// manual-testing tab does; the read-only sample demos leave them unwired so
+  /// the designer hides those buttons.
+  final bool enableFileIo;
 
   @override
   State<_DesignerTab> createState() => _DesignerTabState();
@@ -512,8 +521,8 @@ class _DesignerTabState extends State<_DesignerTab> {
       // native `renderDefinition` path (spec 024) — so every edit on the reified
       // canvas shows up in the preview.
       renderReport: widget.renderReport,
-      onSaveRequested: _save,
-      onOpenRequested: _open,
+      onSaveRequested: widget.enableFileIo ? _save : null,
+      onOpenRequested: widget.enableFileIo ? _open : null,
       onExportPdf: _exportPdf,
       onPrint: (RenderedReport report) =>
           const JetReportPrinter().printReport(report),

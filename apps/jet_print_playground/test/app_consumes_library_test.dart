@@ -137,19 +137,49 @@ void main() {
   );
 
   testWidgets(
-    'the app owns a controller and wires the Save/Open callbacks (FR-022)',
+    'only the Empty demo wires the Save/Open callbacks (FR-022)',
     (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(1400, 700));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(const JetPrintPlaygroundApp());
+      await tester.pumpAndSettle();
 
-      // The selected (onstage) workspace — others are Offstage in the IndexedStack.
-      final JetReportWorkspace workspace =
+      // The launch (Invoice) tab is a read-only sample: Save/Open are NOT wired.
+      JetReportWorkspace onstage() =>
           tester.widget<JetReportWorkspace>(find.byType(JetReportWorkspace));
-      expect(workspace.controller, isNotNull,
-          reason: 'the app owns the controller');
-      expect(workspace.onSaveRequested, isNotNull,
-          reason: 'Save is wired to a host persistence callback');
-      expect(workspace.onOpenRequested, isNotNull,
-          reason: 'Open is wired to a host persistence callback');
+      expect(onstage().controller, isNotNull,
+          reason: 'the app owns the controller on every tab');
+      expect(onstage().onSaveRequested, isNull);
+      expect(onstage().onOpenRequested, isNull);
+
+      // The Empty tab wires the host persistence seam.
+      await tester.tap(find.widgetWithText(ShadTab<String>, 'Empty'));
+      await tester.pumpAndSettle();
+      expect(onstage().onSaveRequested, isNotNull,
+          reason: 'Save is wired on the Empty tab');
+      expect(onstage().onOpenRequested, isNotNull,
+          reason: 'Open is wired on the Empty tab');
+    },
+  );
+
+  testWidgets(
+    'Open/Save show only on the Empty demo (gated host file I/O)',
+    (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(1400, 700));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(const JetPrintPlaygroundApp());
+      await tester.pumpAndSettle();
+
+      // Launch tab is Invoice — a sample demo: Open/Save are not offered.
+      // (find skips Offstage by default, so only the onstage tab counts.)
+      expect(find.text('Open'), findsNothing);
+      expect(find.text('Save'), findsNothing);
+
+      // The Empty tab wires the host persistence seam, so both appear.
+      await tester.tap(find.widgetWithText(ShadTab<String>, 'Empty'));
+      await tester.pumpAndSettle();
+      expect(find.text('Open'), findsOneWidget);
+      expect(find.text('Save'), findsOneWidget);
     },
   );
 
