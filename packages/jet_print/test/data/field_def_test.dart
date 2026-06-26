@@ -130,5 +130,42 @@ void main() {
       expect(invoice.fields.single.type, JetFieldType.collection);
       expect(invoice.fields.single.fields.single.name, 'sku');
     });
+
+    test('defaults description to null', () {
+      expect(const FieldDef('qty', type: JetFieldType.integer).description,
+          isNull);
+    });
+
+    test('carries an optional description without affecting name/type', () {
+      const f = FieldDef('customerTotal',
+          type: JetFieldType.double, description: 'Total spend per customer');
+      expect(f.name, 'customerTotal');
+      expect(f.type, JetFieldType.double);
+      expect(f.description, 'Total spend per customer');
+    });
+
+    test('value equality and hashCode distinguish description', () {
+      const a =
+          FieldDef('amount', type: JetFieldType.double, description: 'Net');
+      const same =
+          FieldDef('amount', type: JetFieldType.double, description: 'Net');
+      const noDesc = FieldDef('amount', type: JetFieldType.double);
+      const otherDesc =
+          FieldDef('amount', type: JetFieldType.double, description: 'Gross');
+      expect(a == same, isTrue);
+      expect(a.hashCode, same.hashCode);
+      expect(a == noDesc, isFalse);
+      expect(a == otherDesc, isFalse);
+    });
+
+    test('toString includes description when set, omits it when null', () {
+      expect(
+          const FieldDef('amount',
+                  type: JetFieldType.double, description: 'Net')
+              .toString(),
+          contains('Net'));
+      expect(const FieldDef('amount', type: JetFieldType.double).toString(),
+          isNot(contains('null')));
+    });
   });
 }

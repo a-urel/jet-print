@@ -23,6 +23,7 @@ class FieldDef {
     this.name, {
     this.type = JetFieldType.unknown,
     this.fields = const <FieldDef>[],
+    this.description,
   });
 
   /// The field's name, as referenced by `DataRow.field(name)`.
@@ -34,6 +35,13 @@ class FieldDef {
   /// The child field schema of a [JetFieldType.collection] field; empty for a
   /// scalar field. Recursive — a child may itself be a collection.
   final List<FieldDef> fields;
+
+  /// An optional human-friendly label for this field, shown beside [name] in the
+  /// designer's Data Source view. Pure display sugar: it never affects binding
+  /// (which always uses [name]), type, expression resolution, or rendering. Null
+  /// when unspecified (e.g. for inferred schemas), in which case the view shows
+  /// [name] alone.
+  final String? description;
 
   /// Best-effort inference of a column's [JetFieldType] from its [values].
   ///
@@ -77,15 +85,20 @@ class FieldDef {
       other is FieldDef &&
       other.name == name &&
       other.type == type &&
+      other.description == description &&
       _fieldListEquals(other.fields, fields);
 
   @override
-  int get hashCode => Object.hash(name, type, Object.hashAll(fields));
+  int get hashCode =>
+      Object.hash(name, type, description, Object.hashAll(fields));
 
   @override
-  String toString() => fields.isEmpty
-      ? 'FieldDef($name, $type)'
-      : 'FieldDef($name, $type, fields: $fields)';
+  String toString() {
+    final String desc = description == null ? '' : ', "$description"';
+    return fields.isEmpty
+        ? 'FieldDef($name, $type$desc)'
+        : 'FieldDef($name, $type$desc, fields: $fields)';
+  }
 }
 
 /// Best-effort inference of a [FieldDef] schema from [rows]: the union of all
