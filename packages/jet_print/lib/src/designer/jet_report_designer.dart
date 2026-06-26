@@ -38,11 +38,11 @@ typedef ReportOpenRequestedCallback = FutureOr<void> Function();
 typedef ReportPreviewRequestedCallback = FutureOr<void> Function(
     ReportDefinition current);
 
-/// Invoked when a host Save/Open/Preview callback throws — synchronously or via
-/// a rejected Future. Receives the [error] and its [stackTrace]. The library
-/// performs no file I/O itself (FR-022), so this surfaces failures the host
-/// raised inside the `*Requested` callbacks. Null ⇒ errors propagate as before
-/// (never silently swallowed).
+/// Invoked when a host Save/Open/Preview/SelectDataSchema callback throws —
+/// synchronously or via a rejected Future. Receives the [error] and its
+/// [stackTrace]. The library performs no file I/O itself (FR-022), so this
+/// surfaces failures the host raised inside the `*Requested` callbacks. Null ⇒
+/// errors propagate as before (never silently swallowed).
 typedef ReportErrorCallback = void Function(
     Object error, StackTrace stackTrace);
 
@@ -130,8 +130,8 @@ class JetReportDesigner extends StatefulWidget {
   /// panel; null ⇒ no button is shown. Routed through the error guard.
   final ReportSelectDataSourceCallback? onSelectDataSchema;
 
-  /// Invoked when a host Save/Open/Preview callback fails — sync throw or rejected
-  /// Future (wired through the top bar). Null ⇒ such errors propagate unchanged.
+  /// Invoked when a host Save/Open/Preview/SelectDataSchema callback fails —
+  /// sync throw or rejected Future. Null ⇒ such errors propagate unchanged.
   final ReportErrorCallback? onError;
 
   /// Host-contributed font families the designer makes selectable (022 / FR-002).

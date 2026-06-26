@@ -47,7 +47,6 @@ export 'src/designer/controller/jet_report_designer_controller.dart'
     show JetReportDesignerController;
 export 'src/designer/controller/selection.dart' show Selection;
 export 'src/designer/controller/view_fit_mode.dart' show JetViewFitMode;
-export 'src/designer/designer_schema_scope.dart' show DesignerSchemaScope;
 export 'src/designer/jet_report_designer.dart'
     show
         JetReportDesigner,

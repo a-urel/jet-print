@@ -5,12 +5,10 @@
 //       and updateShouldNotify fires when the callback identity changes.
 //   (b) Guard path: a JetReportDesigner with onSelectDataSchema that throws
 //       routes the error to onError without propagating.
-//
-// Public API only — never imports src/.
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
+import 'package:jet_print/src/designer/designer_schema_scope.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'support/designer_harness.dart';
@@ -19,17 +17,32 @@ void main() {
   group('DesignerSchemaScope.selectCallbackOf', () {
     testWidgets('returns null when no callback is wired',
         (WidgetTester tester) async {
-      VoidCallback? found;
-      await pumpDesigner(tester, designer: Builder(builder: (BuildContext ctx) {
-        // Wrap in a Builder so we get a descendant context.
-        found = DesignerSchemaScope.selectCallbackOf(ctx);
-        return const JetReportDesigner();
-      }));
-      // The builder runs before the designer subtree is in the tree, so use
-      // a descendant element from within the designer instead.
-      // Strategy: pump the designer with no callback and verify the accessor
-      // returns null from within the built tree.
-      expect(found, isNull);
+      // Pump the designer with no onSelectDataSchema (default).
+      await pumpDesigner(tester, designer: const JetReportDesigner());
+
+      // Walk the element tree from the JetReportDesigner to find the first
+      // descendant context that sits inside the DesignerSchemaScope, then
+      // assert selectCallbackOf returns null from there.
+      final Element el = tester.element(find.byType(JetReportDesigner));
+      VoidCallback? result;
+      bool scopeSeen = false;
+      void walk(Element element) {
+        if (scopeSeen) return;
+        if (element.getInheritedWidgetOfExactType<DesignerSchemaScope>() !=
+            null) {
+          scopeSeen = true;
+          result = DesignerSchemaScope.selectCallbackOf(element);
+          return;
+        }
+        element.visitChildElements(walk);
+      }
+
+      el.visitChildElements(walk);
+      expect(scopeSeen, isTrue,
+          reason:
+              'DesignerSchemaScope must be present in the designer subtree');
+      expect(result, isNull,
+          reason: 'no onSelectDataSchema was wired — callback must be null');
     });
 
     testWidgets('returns the guarded callback when onSelectDataSchema is wired',

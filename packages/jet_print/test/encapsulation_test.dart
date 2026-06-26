@@ -132,7 +132,13 @@ bool _isWhiteBoxSeamTest(File file) {
       // tunables (`kHandleHitSizeTouch`) are unexported `src/` canvas internals;
       // the widget test exercises them directly as a white-box seam test
       // (Principle III / the zoom_math_test precedent).
-      path.endsWith('/test/designer/canvas/touch_targets_test.dart');
+      path.endsWith('/test/designer/canvas/touch_targets_test.dart') ||
+      // SelectDataSource plumbing (task 2 fix): `DesignerSchemaScope` is an
+      // unexported `src/` InheritedWidget; the test walks the element tree via
+      // its internal type to assert the guarded callback is correctly plumbed
+      // through the designer subtree — this is a white-box seam test
+      // (Principle III / the binding_token_test precedent).
+      path.endsWith('/test/designer/select_data_source_test.dart');
 }
 
 void main() {
