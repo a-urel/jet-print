@@ -19,6 +19,7 @@ class ImageElementCodec extends ElementCodec<ImageElement> {
         source: JetImageSource.fromJson(
             (json['source']! as Map).cast<String, Object?>()),
         fit: JetBoxFit.values.byName(json['fit']! as String),
+        name: json['name'] as String?,
       );
 
   @override
@@ -27,5 +28,6 @@ class ImageElementCodec extends ElementCodec<ImageElement> {
         'bounds': element.bounds.toJson(),
         'source': element.source.toJson(),
         'fit': element.fit.name,
+        if (element.name != null) 'name': element.name,
       };
 }

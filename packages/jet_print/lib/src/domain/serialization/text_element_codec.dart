@@ -25,6 +25,7 @@ class TextElementCodec extends ElementCodec<TextElement> {
             : JetTextStyle.fallback,
         expression: json['expression'] as String?,
         format: json['format'] as String?,
+        name: json['name'] as String?,
       );
 
   @override
@@ -36,5 +37,6 @@ class TextElementCodec extends ElementCodec<TextElement> {
           'style': element.style.toJson(),
         if (element.expression != null) 'expression': element.expression,
         if (element.format != null) 'format': element.format,
+        if (element.name != null) 'name': element.name,
       };
 }

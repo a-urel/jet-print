@@ -29,6 +29,7 @@ class BarcodeElementCodec extends ElementCodec<BarcodeElement> {
         eccLevel: json['ecc'] is String
             ? QrErrorCorrectionLevel.values.byName(json['ecc']! as String)
             : QrErrorCorrectionLevel.m,
+        name: json['name'] as String?,
       );
 
   @override
@@ -43,5 +44,6 @@ class BarcodeElementCodec extends ElementCodec<BarcodeElement> {
         if (!element.quietZone) 'quietZone': false,
         if (element.eccLevel != QrErrorCorrectionLevel.m)
           'ecc': element.eccLevel.name,
+        if (element.name != null) 'name': element.name,
       };
 }

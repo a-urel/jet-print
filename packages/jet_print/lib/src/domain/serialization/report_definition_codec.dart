@@ -136,6 +136,7 @@ Map<String, Object?> _encodeBand(Band band, ElementCodecRegistry registry) {
           registry.encode(element),
       ],
     if (band.columnLayout != null) 'columnLayout': band.columnLayout!.toJson(),
+    if (band.name != null) 'name': band.name,
   };
 }
 
@@ -321,6 +322,7 @@ Band _decodeBand(Map<String, Object?> json, ElementCodecRegistry registry) {
         ? null
         : ColumnLayout.fromJson(
             (json['columnLayout']! as Map).cast<String, Object?>()),
+    name: json['name'] as String?,
   );
 }
 

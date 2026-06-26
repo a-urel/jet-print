@@ -30,6 +30,7 @@ class ShapeElementCodec extends ElementCodec<ShapeElement> {
           : JetBoxStyle.none,
       flipDiagonal: (json['flipDiagonal'] as bool?) ?? false,
       unknownForm: known == null ? raw : null,
+      name: json['name'] as String?,
     );
   }
 
@@ -42,5 +43,6 @@ class ShapeElementCodec extends ElementCodec<ShapeElement> {
         'kind': element.unknownForm ?? element.kind.name,
         if (element.style != JetBoxStyle.none) 'style': element.style.toJson(),
         if (element.flipDiagonal) 'flipDiagonal': true,
+        if (element.name != null) 'name': element.name,
       };
 }
