@@ -463,6 +463,27 @@ RenderedReport renderInvoiceDefinition({
       ),
     );
 
+/// Render [definition] against an arbitrarily-attached [source] + [schema] —
+/// used by the Empty tab once the user picks a data source via "Select", so the
+/// preview resolves the **selected** source's fields and rows (not the bundled
+/// invoice data). `knownFields` is derived from the attached schema so
+/// schema-aware resolution validates against what the user actually attached.
+RenderedReport renderDefinitionAgainst({
+  required ReportDefinition definition,
+  required JetDataSource source,
+  required JetDataSchema schema,
+  List<JetFontFamily> fonts = const <JetFontFamily>[],
+}) =>
+    JetReportEngine().renderDefinition(
+      definition,
+      source,
+      options: RenderOptions(
+        locale: const Locale('en'),
+        knownFields: _schemaFieldNames(schema.fields),
+        fonts: fonts,
+      ),
+    );
+
 /// The flat set of every field name the schema declares, top-level and nested
 /// (so collection-scoped bindings like `$F{lineTotal}` are recognized too).
 Set<String> _schemaFieldNames(List<FieldDef> fields) => <String>{

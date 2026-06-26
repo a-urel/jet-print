@@ -442,6 +442,11 @@ class _DesignerTabState extends State<_DesignerTab> {
     _schema = widget.dataSchema;
   }
 
+  /// The data source attached via "Select" (Empty tab only): the picked file's
+  /// sample rows, typed by its schema. Null until a source with sample rows is
+  /// selected — then the preview renders against it instead of the bundled data.
+  JetDataSource? _source;
+
   /// The file type the designer reads/writes: a JSON document produced by
   /// `JetReportFormat.encodeJson`.
   static const XTypeGroup _reportType = XTypeGroup(
@@ -463,7 +468,10 @@ class _DesignerTabState extends State<_DesignerTab> {
   }
 
   /// Select a data source: pick a `*.jetreport.datasource` file, decode it, and
-  /// attach its schema. Decode failures surface through the workspace onError.
+  /// attach its schema **and** its sample rows. The schema drives the designer's
+  /// binding affordances; the sample rows (built into a [JetInMemoryDataSource]
+  /// typed by that same schema) become the preview's data, so what you select is
+  /// what you preview. Decode failures surface through the workspace onError.
   Future<void> _selectDataSource() async {
     final XFile? file = await openFile(
       acceptedTypeGroups: const <XTypeGroup>[_dataSourceType],
@@ -471,7 +479,13 @@ class _DesignerTabState extends State<_DesignerTab> {
     if (file == null) return; // user cancelled
     final JetDataSourceDocument doc =
         JetDataSourceFile.decodeJson(await file.readAsString());
-    setState(() => _schema = doc.schema);
+    final List<Map<String, Object?>>? sample = doc.sample;
+    setState(() {
+      _schema = doc.schema;
+      _source = sample == null
+          ? null
+          : JetInMemoryDataSource(sample, fields: doc.schema.fields);
+    });
   }
 
   /// Cross-platform save: on web, download via the browser (file picking is
@@ -555,8 +569,23 @@ class _DesignerTabState extends State<_DesignerTab> {
       showBuiltInFonts: false,
       // Preview renders the LIVE definition the designer hands over, through the
       // native `renderDefinition` path (spec 024) — so every edit on the reified
-      // canvas shows up in the preview.
-      renderReport: widget.renderReport,
+      // canvas shows up in the preview. When the Empty tab has a data source
+      // attached via "Select", render against ITS sample rows + schema so the
+      // preview resolves the selected source's fields; otherwise the sample's
+      // own bundled render seam.
+      renderReport: (ReportDefinition definition) {
+        final JetDataSource? source = _source;
+        final JetDataSchema? schema = _schema;
+        if (source != null && schema != null) {
+          return renderDefinitionAgainst(
+            definition: definition,
+            source: source,
+            schema: schema,
+            fonts: widget.fonts,
+          );
+        }
+        return widget.renderReport(definition);
+      },
       onSaveRequested: widget.enableFileIo ? _save : null,
       onOpenRequested: widget.enableFileIo ? _open : null,
       onSelectDataSchema:

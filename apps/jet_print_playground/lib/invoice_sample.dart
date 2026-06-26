@@ -434,24 +434,20 @@ ReportDefinition invoiceSampleDefinition() => const ReportDefinition(
     );
 
 /// A deliberately **blank** report over the *same* invoice data (attach
-/// [invoiceSchema] via `dataSchema:`): the minimal valid tree in the reified
-/// band model — one empty `detail` band under the root [DetailScope], no page
-/// furniture, no groups, no elements.
+/// [invoiceSchema] via `dataSchema:`): the emptiest tree in the reified band
+/// model — a bare root [DetailScope] with **no bands**, no page furniture, no
+/// groups, no elements. The user adds the first band themselves via the
+/// designer's "Add band" affordance.
 ///
 /// It exists so the playground has a clean canvas for exercising the designer
-/// by hand — dropping elements, adding groups/lists, binding fields — starting
-/// from nothing rather than from the fully-authored [invoiceSampleDefinition].
-/// Because it shares the invoice schema and data source, any field the invoice
-/// binds is available to bind here too.
+/// by hand — adding bands, dropping elements, adding groups/lists, binding
+/// fields — starting from nothing rather than from the fully-authored
+/// [invoiceSampleDefinition]. Because it shares the invoice schema and data
+/// source, any field the invoice binds is available to bind here too.
 ReportDefinition emptyDesignDefinition() => const ReportDefinition(
       name: 'Empty',
       page: PageFormat.a4Portrait,
       body: ReportBody(
-        root: DetailScope(
-          id: 'root',
-          children: <ScopeNode>[
-            BandNode(Band(id: 'detail', type: BandType.detail, height: 20)),
-          ],
-        ),
+        root: DetailScope(id: 'root'),
       ),
     );
