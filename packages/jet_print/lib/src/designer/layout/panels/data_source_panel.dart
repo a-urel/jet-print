@@ -104,6 +104,7 @@ Widget _fieldNode(FieldDef field, int depth) {
       icon: fieldTypeGlyph(JetFieldType.collection),
       label: field.name,
       depth: depth,
+      description: field.description,
       // Collections start collapsed so deep structures don't flood the panel;
       // the disclosure chevron advertises that children are inside.
       initiallyExpanded: false,
@@ -153,11 +154,10 @@ class _FieldRow extends StatelessWidget {
               size: 14, color: colors.mutedForeground),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              field.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.small,
+            child: LabelWithDescription(
+              label: field.name,
+              description: field.description,
+              theme: theme,
             ),
           ),
           Text(

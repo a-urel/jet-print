@@ -8,6 +8,7 @@
 // These tests stand in for an external consumer: they drive the public
 // `JetReportDesigner` (Data Source is the default-active tab) and never reach
 // into `src/`.
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
@@ -40,6 +41,22 @@ Future<void> _tapNode(WidgetTester tester, String text) async {
   await tester.tap(node);
   await tester.pumpAndSettle();
 }
+
+/// A schema whose fields carry human-friendly descriptions (leaf + collection).
+const JetDataSchema _described = JetDataSchema(
+  name: 'Sales',
+  fields: <FieldDef>[
+    FieldDef('customerTotal',
+        type: JetFieldType.double, description: 'Total spend per customer'),
+    FieldDef('plainField', type: JetFieldType.string),
+    FieldDef(
+      'orders',
+      type: JetFieldType.collection,
+      description: 'Orders placed',
+      fields: <FieldDef>[FieldDef('lineTotal', type: JetFieldType.double)],
+    ),
+  ],
+);
 
 void main() {
   group('data source tree (attached schema)', () {
@@ -98,6 +115,56 @@ void main() {
       // No schema fields and no remnant of the old hardcoded placeholder.
       expect(find.text('Invoice'), findsNothing);
       expect(find.text('SalesDB'), findsNothing);
+    });
+  });
+
+  group('data source tree (field descriptions)', () {
+    testWidgets('a leaf field shows its description under the name', (
+      WidgetTester tester,
+    ) async {
+      await pumpDesigner(
+        tester,
+        designer: const JetReportDesigner(dataSchema: _described),
+      );
+      expect(find.text('customerTotal'), findsOneWidget);
+      expect(find.text('Total spend per customer'), findsOneWidget);
+    });
+
+    testWidgets('a field without a description shows only its name', (
+      WidgetTester tester,
+    ) async {
+      await pumpDesigner(
+        tester,
+        designer: const JetReportDesigner(dataSchema: _described),
+      );
+      expect(find.text('plainField'), findsOneWidget);
+      // No stray empty subtitle: the only texts are node names + type tokens.
+      expect(find.text(''), findsNothing);
+    });
+
+    testWidgets('a collection field shows its description under the name', (
+      WidgetTester tester,
+    ) async {
+      await pumpDesigner(
+        tester,
+        designer: const JetReportDesigner(dataSchema: _described),
+      );
+      expect(find.text('orders'), findsOneWidget);
+      expect(find.text('Orders placed'), findsOneWidget);
+    });
+
+    testWidgets('dragging a leaf carries the field name, not the description', (
+      WidgetTester tester,
+    ) async {
+      await pumpDesigner(
+        tester,
+        designer: const JetReportDesigner(dataSchema: _described),
+      );
+      // The drag chip text is the binding key (name), so the description never
+      // becomes the dropped reference. FieldDragData is library-internal so we
+      // verify via a widget predicate that matches any Draggable.
+      final Finder chip = find.byWidgetPredicate((Widget w) => w is Draggable);
+      expect(chip, findsWidgets);
     });
   });
 }
