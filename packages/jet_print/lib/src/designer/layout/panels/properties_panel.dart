@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart' show Material, MaterialType;
 import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
@@ -40,11 +41,14 @@ import '../../designer_scope.dart';
 import '../../field_type_glyph.dart';
 import '../../format_presets.dart';
 import '../../l10n/band_type_label.dart';
+import '../../l10n/element_type_label.dart';
 import '../../l10n/jet_print_localizations.dart';
+import '../../l10n/object_display_label.dart';
 import '../../margin_presets.dart';
 import '../../paper_presets.dart';
 import '../../template/value_template_compiler.dart';
 import '../region_chrome.dart';
+import '../widgets/editable_label.dart';
 import 'expression_editor_dialog.dart';
 
 part 'style_editors.dart';
@@ -155,6 +159,13 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
   /// The custom fields also appear whenever the live page matches no preset.
   bool _customPaper = false;
 
+  /// Whether the Properties header is in inline-edit mode (rename in progress).
+  bool _editingHeader = false;
+
+  /// The key of the object whose header was last rendered — used to detect a
+  /// selection change and reset [_editingHeader] automatically.
+  String? _lastInspectedKey;
+
   @override
   void dispose() {
     _xFocus.dispose();
@@ -197,6 +208,18 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
 
     _schedulePendingFocus(controller);
+
+    // Compute the key for the currently-inspected object.  When it changes
+    // (different element, band, or a selection clear) reset the header editing
+    // flag so the inline rename field never persists into a new selection.
+    final String? inspectedKey = selection.bandId ??
+        selection.groupId ??
+        selection.scopeId ??
+        selection.singleOrNull;
+    if (inspectedKey != _lastInspectedKey) {
+      _lastInspectedKey = inspectedKey;
+      if (_editingHeader) _editingHeader = false;
+    }
 
     final List<Widget> children;
     if (selection.isReport) {
@@ -241,7 +264,20 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     final String id = element.id;
     final JetRect b = element.bounds;
     return <Widget>[
-      _Header(icon: _elementGlyph(element), title: id, theme: theme),
+      _Header(
+        icon: _elementGlyph(element),
+        title: elementDisplayLabel(element, l10n),
+        rawName: element.name,
+        fallback: elementTypeLabel(element, l10n),
+        editing: _editingHeader,
+        onEditingStart: () => setState(() => _editingHeader = true),
+        onEditingEnd: () => setState(() => _editingHeader = false),
+        onCommit: (String? name) {
+          controller.renameElement(element.id, name);
+          setState(() => _editingHeader = false);
+        },
+        theme: theme,
+      ),
       const SizedBox(height: 14),
       SectionLabel(l10n.propertiesPosition),
       Row(
@@ -842,7 +878,16 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     final List<Widget> children = <Widget>[
       _Header(
         icon: LucideIcons.rows3,
-        title: bandTypeLabel(band.type, l10n),
+        title: bandDisplayLabel(band, l10n),
+        rawName: band.name,
+        fallback: bandTypeLabel(band.type, l10n),
+        editing: _editingHeader,
+        onEditingStart: () => setState(() => _editingHeader = true),
+        onEditingEnd: () => setState(() => _editingHeader = false),
+        onCommit: (String? name) {
+          controller.renameBand(band.id, name);
+          setState(() => _editingHeader = false);
+        },
         theme: theme,
       ),
       const SizedBox(height: 14),
@@ -1406,17 +1451,74 @@ IconData _elementGlyph(ReportElement element) {
 
 /// The inspector header: the selected object's glyph in a tinted tile beside its
 /// name, so the panel always says what it is editing.
+///
+/// When [onEditingStart] is supplied the header is interactive: tapping the
+/// glyph+label row calls [onEditingStart] and the parent flips [editing] to
+/// `true`, swapping the static [Text] for an [EditableLabel] inline field.
+/// Call sites that pass no editing params (e.g. the group sub-header, the
+/// column-layout section header) get the original read-only behaviour.
 class _Header extends StatelessWidget {
-  const _Header({required this.icon, required this.title, required this.theme});
+  const _Header({
+    required this.icon,
+    required this.title,
+    required this.theme,
+    this.rawName,
+    this.fallback,
+    this.editing = false,
+    this.onEditingStart,
+    this.onEditingEnd,
+    this.onCommit,
+  });
 
   final IconData icon;
   final String title;
   final ShadThemeData theme;
 
+  /// The raw stored name used to pre-fill the rename field (null → empty).
+  final String? rawName;
+
+  /// The placeholder shown in the empty rename field (the type-level fallback).
+  final String? fallback;
+
+  /// Whether the inline rename field is currently shown.
+  final bool editing;
+
+  /// Called when the user taps the label area to begin renaming. If null the
+  /// header is read-only (no tap target, no field).
+  final VoidCallback? onEditingStart;
+
+  /// Called when editing ends (after commit or Esc cancel).
+  final VoidCallback? onEditingEnd;
+
+  /// Called with the trimmed new name (or null for empty) on commit.
+  final ValueChanged<String?>? onCommit;
+
   @override
   Widget build(BuildContext context) {
     final ShadColorScheme colors = theme.colorScheme;
-    return Row(
+    final TextStyle labelStyle =
+        theme.textTheme.small.copyWith(fontWeight: FontWeight.w600);
+
+    // EditableLabel's inline TextField requires a Material ancestor.  The
+    // designer is hosted in a ShadApp (not MaterialApp), so we inject a
+    // transparent Material locally — zero visual effect, pure ancestor seam.
+    final Widget labelArea = Expanded(
+      child: Material(
+        type: MaterialType.transparency,
+        child: EditableLabel(
+          key: const ValueKey<String>('$_p.header'),
+          display: title,
+          value: rawName,
+          placeholder: fallback ?? title,
+          editing: editing,
+          onEditingEnd: onEditingEnd,
+          onCommit: onCommit ?? (_) {},
+          textStyle: labelStyle,
+        ),
+      ),
+    );
+
+    final Widget row = Row(
       children: <Widget>[
         Container(
           width: 28,
@@ -1429,16 +1531,14 @@ class _Header extends StatelessWidget {
           child: Icon(icon, size: 16, color: colors.foreground),
         ),
         const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.small.copyWith(fontWeight: FontWeight.w600),
-          ),
-        ),
+        labelArea,
       ],
     );
+
+    if (onEditingStart != null && !editing) {
+      return GestureDetector(onTap: onEditingStart, child: row);
+    }
+    return row;
   }
 }
 
