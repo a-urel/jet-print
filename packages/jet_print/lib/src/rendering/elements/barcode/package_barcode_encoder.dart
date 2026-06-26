@@ -128,6 +128,14 @@ class PackageBarcodeEncoder implements BarcodeEncoder {
         return bc.Barcode.ean5();
       case BarcodeSymbology.postnet:
         return bc.Barcode.postnet();
+      case BarcodeSymbology.itf16:
+        return bc.Barcode.itf16();
+      case BarcodeSymbology.isbn:
+        return bc.Barcode.isbn();
+      case BarcodeSymbology.telepen:
+        return bc.Barcode.telepen();
+      case BarcodeSymbology.rm4scc:
+        return bc.Barcode.rm4scc();
       case BarcodeSymbology.dataMatrix:
         return bc.Barcode.dataMatrix();
       case BarcodeSymbology.pdf417:

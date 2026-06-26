@@ -56,6 +56,18 @@ enum BarcodeSymbology {
   /// 1D POSTNET (USPS postal routing).
   postnet,
 
+  /// 1D ITF-16 (interleaved 2-of-5, 16-digit logistics variant).
+  itf16,
+
+  /// 1D ISBN (bookland EAN-13 with ISBN human-readable text).
+  isbn,
+
+  /// 1D Telepen (full-ASCII, common in UK libraries).
+  telepen,
+
+  /// 1D RM4SCC (Royal Mail 4-state customer code).
+  rm4scc,
+
   /// 2D Data Matrix.
   dataMatrix,
 

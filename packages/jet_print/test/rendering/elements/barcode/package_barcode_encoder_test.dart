@@ -67,6 +67,10 @@ void main() {
     BarcodeSymbology.itf: ('1234', '12345'),
     BarcodeSymbology.postnet: ('55555', 'ABC'),
     BarcodeSymbology.upcE: ('01234565', 'ABCDEFGH'),
+    BarcodeSymbology.itf16: ('123456789012345', '12345'),
+    BarcodeSymbology.isbn: ('9780306406157', 'ABC'),
+    BarcodeSymbology.telepen: ('ABC123', ''),
+    BarcodeSymbology.rm4scc: ('LE28HE', 'abc'),
   };
   for (final entry in newOneD.entries) {
     final s = entry.key;
