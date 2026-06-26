@@ -156,7 +156,13 @@ bool _isWhiteBoxSeamTest(File file) {
       // EditableLabel widget (Task 8 inline-rename widget): an unexported
       // `src/` designer widget; its widget test is white-box (Principle III /
       // the zoom_control_test precedent).
-      path.endsWith('/test/designer/widgets/editable_label_test.dart');
+      path.endsWith('/test/designer/widgets/editable_label_test.dart') ||
+      // Barcode symbology label (barcode hardening): `barcodeSymbologyLabel`
+      // is an unexported `src/` designer presentation helper mapping the
+      // symbology enum to friendly dropdown text; its unit test is white-box
+      // (Principle III / the object_display_label_test precedent).
+      path.endsWith(
+          '/test/designer/layout/panels/barcode_symbology_label_test.dart');
 }
 
 void main() {

@@ -64,7 +64,9 @@ void main() {
     BarcodeSymbology.ean2: ('12', '123'),
     BarcodeSymbology.ean5: ('12345', '12'),
     BarcodeSymbology.gs128: ('(01)00012345678905', 'café'),
-    BarcodeSymbology.itf: ('1234', '12345'),
+    // 'AB' is non-numeric so it survives the odd→even autofix and the encoder
+    // still rejects it (a bare odd '12345' would now be padded to '012345').
+    BarcodeSymbology.itf: ('1234', 'AB'),
     BarcodeSymbology.postnet: ('55555', 'ABC'),
     BarcodeSymbology.upcE: ('01234565', 'ABCDEFGH'),
     BarcodeSymbology.itf16: ('123456789012345', '12345'),

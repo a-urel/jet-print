@@ -9,6 +9,15 @@ const int _maxLinearLength = 40;
 
 /// Infers a concrete symbology from [value] by the documented priority
 /// (FR-004). Never returns [BarcodeSymbology.auto].
+///
+/// `auto` deliberately resolves only to the common retail/QR set —
+/// [BarcodeSymbology.ean13], [BarcodeSymbology.upcA], [BarcodeSymbology.ean8],
+/// [BarcodeSymbology.itf14], [BarcodeSymbology.code128] and
+/// [BarcodeSymbology.qrCode]. The other symbologies (Code 93, Codabar, generic
+/// ITF, GS1-128, UPC-E, EAN-2/5, POSTNET, ITF-16, ISBN, Telepen, RM4SCC,
+/// Data Matrix, PDF417, Aztec) overlap these on length/charset and so are
+/// **explicit-select only** — inference would have to guess between equally
+/// valid candidates, so it never silently picks one.
 BarcodeSymbology inferSymbology(String value) {
   final String v = value.trim();
   // URL / multiline / non-ASCII / over-length → 2D QR.

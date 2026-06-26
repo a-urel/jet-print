@@ -9,6 +9,10 @@ import '../styles/color.dart';
 /// symbology from the encoded value at fill time (see `symbology_inference`).
 enum BarcodeSymbology {
   /// Infer the concrete symbology from the value (default for new elements).
+  ///
+  /// Inference resolves only to the common retail/QR set (EAN-13, UPC-A, EAN-8,
+  /// ITF-14, Code 128, QR); every other symbology below is explicit-select,
+  /// since it overlaps those on length/charset (see `symbology_inference`).
   auto,
 
   /// 2D QR code.

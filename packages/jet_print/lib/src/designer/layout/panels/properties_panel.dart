@@ -49,6 +49,7 @@ import '../../paper_presets.dart';
 import '../../template/value_template_compiler.dart';
 import '../region_chrome.dart';
 import '../widgets/editable_label.dart';
+import 'barcode_symbology_label.dart';
 import 'expression_editor_dialog.dart';
 
 part 'style_editors.dart';
@@ -475,7 +476,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                       (BuildContext context, BarcodeSymbology value) => Text(
                           value == BarcodeSymbology.auto
                               ? l10n.barcodeSymbologyAuto
-                              : value.name),
+                              : barcodeSymbologyLabel(value)),
                   initialValue: element.symbology,
                   options: <Widget>[
                     for (final BarcodeSymbology s in BarcodeSymbology.values)
@@ -483,7 +484,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                         value: s,
                         child: Text(s == BarcodeSymbology.auto
                             ? l10n.barcodeSymbologyAuto
-                            : s.name),
+                            : barcodeSymbologyLabel(s)),
                       ),
                   ],
                   onChanged: (BarcodeSymbology? v) {

@@ -42,13 +42,17 @@ String barcodeAutoFix(BarcodeSymbology concrete, String value) {
       // a still-odd result (e.g. raw odd input) is left to the encoder to reject.
       if (_isDigits(v) && v.length.isOdd) v = '0$v';
       return v;
+    case BarcodeSymbology.itf:
+      // Generic interleaved 2-of-5 has no mandatory check digit, but the
+      // encoder strictly rejects an odd digit count — left-pad one zero so a
+      // bare odd-length numeric value still encodes (matches the ITF-14 rule).
+      return (_isDigits(value) && value.length.isOdd) ? '0$value' : value;
     case BarcodeSymbology.auto:
     case BarcodeSymbology.qrCode:
     case BarcodeSymbology.code128:
     case BarcodeSymbology.code39:
     case BarcodeSymbology.code93:
     case BarcodeSymbology.codabar:
-    case BarcodeSymbology.itf:
     case BarcodeSymbology.gs128:
     case BarcodeSymbology.upcE:
     case BarcodeSymbology.ean2:

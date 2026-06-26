@@ -28,6 +28,23 @@ void main() {
       expect(barcodeAutoFix(BarcodeSymbology.itf14, '0001234567890'),
           '00012345678905');
     });
+    test('ITF (generic): odd digit count → left-pad to even', () {
+      expect(barcodeAutoFix(BarcodeSymbology.itf, '123'), '0123');
+    });
+    test('ITF (generic): even digit count left unchanged', () {
+      expect(barcodeAutoFix(BarcodeSymbology.itf, '1234'), '1234');
+    });
+    test('ITF (generic): non-numeric left unchanged (encoder will reject)', () {
+      expect(barcodeAutoFix(BarcodeSymbology.itf, 'AB1'), 'AB1');
+    });
+    test('UPC-E / ISBN / ITF-16 / GS1-128 are not auto-repaired', () {
+      // The encoder is lenient (ISBN), or repair is non-deterministic (UPC-E
+      // check expansion, GS1 AI structure, ITF-16 fixed contract): pass-through.
+      expect(barcodeAutoFix(BarcodeSymbology.upcE, '0123456'), '0123456');
+      expect(barcodeAutoFix(BarcodeSymbology.isbn, '978030640615'),
+          '978030640615');
+      expect(barcodeAutoFix(BarcodeSymbology.gs128, '(01)123'), '(01)123');
+    });
     test('non-numeric EAN-13 returned unchanged (encoder will reject)', () {
       expect(barcodeAutoFix(BarcodeSymbology.ean13, 'ABC'), 'ABC');
     });
