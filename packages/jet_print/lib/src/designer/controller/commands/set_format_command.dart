@@ -38,6 +38,7 @@ class SetFormatCommand extends EditCommand {
                   style: e.style,
                   expression: e.expression,
                   format: format,
+                  name: e.name,
                 )
               : e,
         ),

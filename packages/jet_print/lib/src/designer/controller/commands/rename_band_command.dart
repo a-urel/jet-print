@@ -31,6 +31,7 @@ class RenameBandCommand extends EditCommand {
         updateBand(
           before.definition,
           bandId,
+          // MAINTAINER: carry ALL Band fields here; add new ones when Band gains them.
           (Band b) => Band(
             id: b.id,
             type: b.type,
