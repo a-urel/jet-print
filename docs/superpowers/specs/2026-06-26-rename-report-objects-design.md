@@ -2,95 +2,128 @@
 
 **Date:** 2026-06-26
 **Status:** Approved (brainstorm)
-**Area:** `packages/jet_print/lib/src/designer/`
+**Area:** `packages/jet_print/lib/src/designer/`, `packages/jet_print/lib/src/domain/`
 
 ## Problem
 
-In the visual designer, every report object (an element such as `TextElement`/
-`ShapeElement`, or a band such as Group Header / Detail / Group Footer) is shown
-by its `id` — e.g. `grandTotalRule`, `invoiceFooter` — in the Properties panel
-header and in the Outline tree. There is no way to change that name from the UI.
-Authors want to rename objects to keep a report's structure legible.
+In the visual designer, report objects are labeled rigidly:
 
-## Decision: rename edits the `id` in place
+- **Elements** (`TextElement`, `ShapeElement`, `ImageElement`, `BarcodeElement`,
+  …) show their raw `id` (`element.id`) — e.g. `grandTotalRule` — in the
+  Properties header (`properties_panel.dart` ~L244) and Outline tree
+  (`outline_panel.dart` L326).
+- **Bands** show a localized type label via `bandTypeLabel(band.type, l10n)`
+  (`outline_panel.dart` L301) — e.g. "Group Footer".
 
-The displayed name **is** the object's `id`. There is no separate human-facing
-label field on `ReportElement` or `Band` (only `GroupLevel` has a distinct
-`name`). We rename the `id` itself rather than introduce a parallel `name` field.
+Authors want to give objects friendly, editable names to keep a report legible,
+and when no custom name is set, fall back to a sensible default rather than a
+raw id.
 
-This is safe and minimal because, per codebase investigation:
+## Decision: add an optional display `name`, keep `id` as the machine key
 
-- Element/band `id` is **never referenced by string** in expressions
-  (`$F{}`/`$V{}`/`$P{}`), data bindings, group/variable references, or published
-  totals. Those use schema field names, `GroupLevel.id`, and `ScopeTotal.name`.
-- `id` is used **only as an identity key**: selection, hit-testing/lookup,
-  copy/paste id generation, undo/redo mutation keys, and serialization.
-- Ids are already authored as readable names (`grandTotalRule`,
-  `subtotalLabel`), so editing the id matches the existing mental model.
+Introduce an optional `name` (`String?`) on `ReportElement` and `Band`. The `id`
+stays as the stable, unique identity key (selection, hit-test, copy/paste,
+undo, serialization, validator I1) and is **no longer the primary label**.
 
-Therefore renaming requires **no domain-model change** — no new field, no codec
-changes, no `copyWith` signature growth across element subtypes.
+Why a separate field, not renaming `id`:
+
+- The requirement "if the display name is empty, show a default (text /
+  type-name)" needs the name to be **optional and possibly blank** — `id` cannot
+  be blank (it is the unique identity key).
+- `id` is never referenced by string in expressions (`$F{}`/`$V{}`/`$P{}`),
+  bindings, group refs, or published totals, so it can stay an invisible key.
+- Display `name` has **no uniqueness constraint** and may be empty — two text
+  boxes may legitimately share a name.
+
+## Display-label resolution
+
+A single helper computes the label shown in Properties header **and** Outline,
+so both surfaces always agree:
+
+```
+displayLabel(element):
+  if element.name is non-blank        -> element.name
+  else if element is TextElement      -> element.text        (e.g. "Subtotal", "[grandTotal]")
+  else                                -> elementTypeLabel(element, l10n)   ("Rectangle", "Image", "Barcode", …)
+
+displayLabel(band):
+  if band.name is non-blank           -> band.name
+  else                                -> bandTypeLabel(band.type, l10n)     (existing, reused)
+```
+
+`elementTypeLabel` is a new localized mapping mirroring the existing
+`bandTypeLabel` (Text, Rectangle/Ellipse/… per `ShapeKind`, Image, Barcode).
+Band fallback reuses the existing `bandTypeLabel`. Trimmed-whitespace-only names
+count as blank.
 
 ## Scope
 
-Renamable: **every `ReportElement` and every `Band`**, including bands with
-structural roles (page footer, etc.). A band's role lives in the separate
-`BandType` enum, not in its `id`, so renaming the id never alters the role and
-no band id is reserved.
+Renamable: **every `ReportElement` and every `Band`** (including structurally
+roled bands — the role lives in `BandType`, untouched by `name`). Two entry
+points, both driving the same command:
 
-Two entry points, both driving the *same* command so behavior is identical:
+1. **Properties panel header** — the label (`_Header`, fed the resolved
+   `displayLabel`) becomes click-to-edit: click (or pencil affordance) → inline
+   text field. Enter commits, Esc cancels. The field is **prefilled with the
+   current `name`** (blank if none), and its placeholder shows the fallback so
+   the user sees what "empty" will display.
+2. **Outline tree row** — double-click a row (element or band) → inline edit,
+   same prefill/placeholder. Enter commits, Esc cancels.
 
-1. **Properties panel header** — the name label (`properties_panel.dart` `_Header`,
-   currently fed `element.id` at ~line 244) becomes click-to-edit: click (or a
-   pencil affordance) swaps it for an inline text field. Enter commits, Esc
-   cancels.
-2. **Outline tree row** — double-click a row (`outline_panel.dart`, label
-   `element.id` at ~line 326, and the band rows) enters inline edit. Enter
-   commits, Esc cancels.
+## Domain changes
+
+- `ReportElement` base: add `final String? name;` (default `null`); thread
+  through every subtype constructor + `copyWith` (so `copyWith(name: …)` works,
+  and existing `copyWith` calls preserve it).
+- `Band`: add `final String? name;` + `copyWith`.
+- **Codecs** (`domain/serialization/*_codec.dart` for each element + band):
+  serialize `name` **only when non-null** (`if (name != null) 'name': name`) and
+  read `json['name'] as String?`. Existing JSON without `"name"` deserializes to
+  `null` → backward compatible, round-trip stable, and goldens/fixtures that
+  omit `name` are unchanged.
+- No change to `report_validation.dart` (I1 still guards `id` uniqueness; `name`
+  is unconstrained).
 
 ## Command
 
-Add a `RenameCommand(targetId, newId)` to the existing undo/redo command stack,
-reusing the `updateElement` / band-walker mutation helpers
-(`controller/band_walker.dart`, pattern as in `set_text_command.dart`).
+Add `RenameCommand(targetId, newName)` to the undo/redo stack, reusing the
+`updateElement` / band-walker mutation helpers (`controller/band_walker.dart`,
+pattern from `set_text_command.dart`).
 
 Execute:
 
-1. **Validate** (see below). Invalid → command is **not** pushed onto the stack;
-   the inline editor stays open showing the error.
-2. Rewrite the target's `id` via `copyWith(id: newId)` (works for both elements
-   and bands — both expose `id` + `copyWith`).
-3. **Re-point controller selection** from `targetId` → `newId` so the renamed
-   object stays selected. Clipboard is left untouched.
+1. Normalize `newName`: trim; empty → `null` (clears the override → fallback).
+2. If normalized equals the current `name`, **no-op** (don't push a command).
+3. Otherwise rewrite the target's `name` via `copyWith(name: …)` (elements and
+   bands both expose `copyWith`).
 
-Undo restores the old `id` and the prior selection; redo re-applies. Snapshot
-(before/after definition) style consistent with existing commands.
+No validation can fail — empty is valid (means "use default"), duplicates are
+allowed. Selection is unaffected (id unchanged), so no selection re-pointing is
+needed. Undo restores the prior `name`; redo re-applies.
 
-## Validation
-
-Reuses the rule behind validator invariant **I1** (id uniqueness). On commit,
-reject when the proposed `id` is:
-
-- empty or whitespace-only, or
-- equal to any **other** existing element *or* band id anywhere in the report
-  (global uniqueness, matching I1).
-
-Behavior on invalid: **block + inline error** — the edit field stays open with a
-red border and a short message (`id already used` / `name required`). Nothing
-commits until valid; Esc cancels and reverts to the old id. A no-change commit
-(same id) is a silent no-op (not flagged as a duplicate of itself).
+> Supersedes the earlier draft's "block empty/duplicate with inline error" and
+> "rename edits id / re-point selection" decisions — both moot under the
+> separate-optional-name model.
 
 ## Testing
 
-- **Command unit tests:** rename element; rename band; duplicate rejected (no
-  mutation, no stack push); empty/whitespace rejected; undo restores old id;
-  redo re-applies; selection follows the rename; same-id commit is a no-op.
-- **Widget tests:** Properties-header inline editor (Enter commits, Esc cancels,
-  duplicate shows error and stays open); Outline double-click editor (same).
-- **Goldens:** unaffected — `id` is never painted onto the canvas.
+- **Domain unit tests:** `name` defaults to null; `copyWith(name:)` sets and
+  preserves it; codec round-trips with and without `name`; legacy JSON (no
+  `name` key) loads as null.
+- **Label helper tests:** name set → name; TextElement blank name → its text;
+  Shape/Image/Barcode blank → type label; band blank → `bandTypeLabel`;
+  whitespace-only treated as blank.
+- **Command tests:** set name; clear name (empty → null); whitespace → null;
+  same-value no-op (no stack push); undo/redo restores.
+- **Widget tests:** Properties-header inline editor and Outline double-click
+  editor — prefill shows current name, placeholder shows fallback, Enter
+  commits, Esc cancels, clearing reverts label to fallback.
+- **Goldens:** unaffected — `name` is never painted onto the canvas; codecs omit
+  `name` when null so existing serialized fixtures are byte-identical.
 
 ## Out of scope
 
-- A separate display `name` field distinct from `id`.
-- Bulk/rename-find-replace across multiple objects.
+- Renaming the `id` (it stays an internal key).
+- Uniqueness/validation on `name`.
+- Bulk rename / find-replace.
 - Renaming non-object identifiers (group levels, scope totals, fields).
