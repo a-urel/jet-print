@@ -46,6 +46,12 @@ typedef ReportPreviewRequestedCallback = FutureOr<void> Function(
 typedef ReportErrorCallback = void Function(
     Object error, StackTrace stackTrace);
 
+/// Invoked when the author taps "Select data source" in an empty Data Source
+/// panel. The host picks a `*.jetreport.datasource` file, decodes it with
+/// [JetDataSourceFile], and attaches the resulting schema (e.g. by updating the
+/// [JetReportDesigner.dataSchema] it passes). The library does no file I/O.
+typedef ReportSelectDataSourceCallback = FutureOr<void> Function();
+
 /// The report designer **shell**: the visual workspace that arranges the
 /// regions of the designer — a top command bar, a left element toolbox, an
 /// interactive center design surface, and a right three-tab context panel
@@ -88,6 +94,7 @@ class JetReportDesigner extends StatefulWidget {
     this.onSaveRequested,
     this.onOpenRequested,
     this.onPreviewRequested,
+    this.onSelectDataSchema,
     this.onError,
     this.dataSchema,
     this.fonts = const <JetFontFamily>[],
@@ -118,6 +125,10 @@ class JetReportDesigner extends StatefulWidget {
   /// Invoked when the user triggers Preview (wired to the top bar); receives
   /// the live template to render. Null ⇒ the Preview action renders disabled.
   final ReportPreviewRequestedCallback? onPreviewRequested;
+
+  /// Invoked when the author taps "Select data source" in an empty Data Source
+  /// panel; null ⇒ no button is shown. Routed through the error guard.
+  final ReportSelectDataSourceCallback? onSelectDataSchema;
 
   /// Invoked when a host Save/Open/Preview callback fails — sync throw or rejected
   /// Future (wired through the top bar). Null ⇒ such errors propagate unchanged.
@@ -282,6 +293,9 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
     // so the panels can display it and resolve bindings.
     return DesignerSchemaScope(
       dataSchema: widget.dataSchema,
+      onSelectDataSource: widget.onSelectDataSchema == null
+          ? null
+          : () => _guard(() => widget.onSelectDataSchema!()),
       child: DesignerFontScope(
         fonts: _fonts,
         showBuiltIns: widget.showBuiltInFonts,

@@ -53,6 +53,7 @@ class JetReportWorkspace extends StatefulWidget {
     this.dataSchema,
     this.onSaveRequested,
     this.onOpenRequested,
+    this.onSelectDataSchema,
     this.onError,
     this.onExportPdf,
     this.onPrint,
@@ -75,6 +76,10 @@ class JetReportWorkspace extends StatefulWidget {
 
   /// Forwarded to the designer's Open action.
   final ReportOpenRequestedCallback? onOpenRequested;
+
+  /// Forwarded to [JetReportDesigner.onSelectDataSchema]: invoked when the
+  /// author taps "Select data source" in an empty Data Source panel.
+  final ReportSelectDataSourceCallback? onSelectDataSchema;
 
   /// Forwarded to the embedded [JetReportDesigner.onError]: invoked when a host
   /// Save/Open/Preview callback throws or rejects. Null ⇒ errors propagate.
@@ -185,6 +190,7 @@ class _JetReportWorkspaceState extends State<JetReportWorkspace> {
           showBuiltInFonts: widget.showBuiltInFonts,
           onSaveRequested: widget.onSaveRequested,
           onOpenRequested: widget.onOpenRequested,
+          onSelectDataSchema: widget.onSelectDataSchema,
           onPreviewRequested: _enterPreview,
           onError: widget.onError,
         ),
