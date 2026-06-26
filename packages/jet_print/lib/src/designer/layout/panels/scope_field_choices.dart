@@ -39,13 +39,23 @@ List<FieldDef> scalarFieldsForScope(
     ];
 
 /// The collection fields visible at [scopeId]'s level — the ones a direct child
-/// list of [scopeId] may iterate.
+/// list of [scopeId] may iterate — excluding any already iterated by an existing
+/// child list, so the same collection is never offered (and thus bound) twice
+/// and no redundant `List: <field>` node can form.
 List<FieldDef> collectionFieldsForScope(
   JetDataSchema? schema,
   ReportDefinition def,
   String scopeId,
-) =>
-    <FieldDef>[
-      for (final FieldDef f in _inScopeFields(schema, def, scopeId))
-        if (f.type == JetFieldType.collection) f,
-    ];
+) {
+  final DetailScope? scope = findScope(def, scopeId);
+  final Set<String> alreadyBound = <String>{
+    if (scope != null)
+      for (final ScopeNode n in scope.children)
+        if (n is NestedScope && n.scope.collectionField != null)
+          n.scope.collectionField!,
+  };
+  return <FieldDef>[
+    for (final FieldDef f in _inScopeFields(schema, def, scopeId))
+      if (f.type == JetFieldType.collection && !alreadyBound.contains(f.name)) f,
+  ];
+}

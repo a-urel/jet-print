@@ -211,7 +211,15 @@ class _OutlinePanelState extends State<OutlinePanel> {
       onToggle: () => _toggle(scope.id),
       onSelect: () => controller.selectScope(scope.id),
       theme: theme,
-      actions: <Widget>[_addMenu(controller, scope, theme, l10n, schema)],
+      actions: <Widget>[
+        _addMenu(controller, scope, theme, l10n, schema),
+        // The root scope is the report body and is not deletable; a nested list
+        // can be removed (with everything it contains) so redundant or empty
+        // "List: <field>" nodes never get stuck in the tree.
+        if (!isRoot)
+          _act('$scopeBase.remove', LucideIcons.trash2, l10n.outlineRemove,
+              () => controller.deleteScope(scope.id), theme.colorScheme),
+      ],
     ));
     if (!expanded) return;
     // Groups are not shown as separate nodes (Jasper-style): they surface
