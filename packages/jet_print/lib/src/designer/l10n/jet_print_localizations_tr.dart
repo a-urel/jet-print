@@ -787,4 +787,10 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String barcodeAutoInferred(String symbology) {
     return 'Otomatik → $symbology';
   }
+
+  @override
+  String get propertiesVisible => 'Görünür';
+
+  @override
+  String get propertiesVisibleWhen => 'Görünür koşul';
 }

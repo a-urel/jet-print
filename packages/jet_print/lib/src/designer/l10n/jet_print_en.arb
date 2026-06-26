@@ -1026,5 +1026,10 @@
   "@barcodeAutoInferred": {
     "description": "Inline hint showing the inferred symbology",
     "placeholders": { "symbology": { "type": "String" } }
-  }
+  },
+
+  "propertiesVisible": "Visible",
+  "@propertiesVisible": { "description": "Properties panel toggle label for the element/band visibility switch." },
+  "propertiesVisibleWhen": "Visible when",
+  "@propertiesVisibleWhen": { "description": "Properties panel label for the boolean-expression that controls visibility." }
 }

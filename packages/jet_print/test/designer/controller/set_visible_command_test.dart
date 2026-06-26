@@ -3,7 +3,6 @@
 // binding_command_test.dart and band_selection_resize_test.dart.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
-import 'package:jet_print/src/domain/bool_property.dart';
 
 /// The detail band's single element of type [T].
 T _only<T extends ReportElement>(JetReportDesignerController c) =>

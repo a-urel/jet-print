@@ -275,8 +275,10 @@ abstract class JetPrintLocalizations {
   /// **'No data source attached.'**
   String get dataSourceEmpty;
 
-  /// Label of the button shown in the empty Data Source panel that lets the
-  /// author attach a data source (`*.jetreport.datasource`).
+  /// Button in the empty Data Source panel that lets the author attach a *.jetreport.datasource file.
+  ///
+  /// In en, this message translates to:
+  /// **'Select data source'**
   String get dataSourceSelect;
 
   /// Toolbox element: a static or data-bound text element. Shown as an icon-button tooltip.
@@ -1592,6 +1594,18 @@ abstract class JetPrintLocalizations {
   /// In en, this message translates to:
   /// **'Auto → {symbology}'**
   String barcodeAutoInferred(String symbology);
+
+  /// Properties panel toggle label for the element/band visibility switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Visible'**
+  String get propertiesVisible;
+
+  /// Properties panel label for the boolean-expression that controls visibility.
+  ///
+  /// In en, this message translates to:
+  /// **'Visible when'**
+  String get propertiesVisibleWhen;
 }
 
 class _JetPrintLocalizationsDelegate

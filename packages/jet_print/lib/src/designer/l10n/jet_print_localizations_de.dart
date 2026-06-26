@@ -789,4 +789,10 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   String barcodeAutoInferred(String symbology) {
     return 'Auto → $symbology';
   }
+
+  @override
+  String get propertiesVisible => 'Sichtbar';
+
+  @override
+  String get propertiesVisibleWhen => 'Sichtbar wenn';
 }

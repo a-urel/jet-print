@@ -277,5 +277,8 @@
   "barcodeQuietZone": "Ruhezone",
   "barcodeEccLevel": "Fehlerkorrektur",
   "barcodeInvalidValue": "Wert ist für diese Symbologie ungültig",
-  "barcodeAutoInferred": "Auto → {symbology}"
+  "barcodeAutoInferred": "Auto → {symbology}",
+
+  "propertiesVisible": "Sichtbar",
+  "propertiesVisibleWhen": "Sichtbar wenn"
 }

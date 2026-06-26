@@ -14,8 +14,7 @@ bool _blank(String? s) => s == null || s.trim().isEmpty;
 
 /// The label for [element]: its display [ReportElement.name] when set; else a
 /// [TextElement]'s literal text when non-blank; else the localized type label.
-String elementDisplayLabel(
-    ReportElement element, JetPrintLocalizations l10n) {
+String elementDisplayLabel(ReportElement element, JetPrintLocalizations l10n) {
   if (!_blank(element.name)) return element.name!.trim();
   if (element is TextElement && !_blank(element.text)) return element.text;
   return elementTypeLabel(element, l10n);

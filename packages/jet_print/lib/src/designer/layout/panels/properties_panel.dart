@@ -8,6 +8,7 @@ import '../../../data/binding_scope.dart';
 import '../../../data/data_schema.dart';
 import '../../../data/field_def.dart';
 import '../../../domain/band.dart';
+import '../../../domain/bool_property.dart';
 import '../../../domain/column_layout.dart';
 import '../../../domain/detail_scope.dart';
 import '../../../domain/elements/barcode_element.dart';
@@ -325,6 +326,14 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
             ),
           ),
         ],
+      ),
+      const SizedBox(height: 12),
+      SectionLabel(l10n.propertiesVisible),
+      _visibleSection(
+        visible: element.visible,
+        onChanged: (BoolProperty v) =>
+            controller.setElementVisible(element.id, v),
+        l10n: l10n,
       ),
       if (element is TextElement) ...<Widget>[
         const SizedBox(height: 12),
@@ -902,6 +911,13 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
         focusNode: _bandHeightFocus,
         onCommit: (double v) => controller.setBandHeight(bandId, v),
       ),
+      const SizedBox(height: 12),
+      SectionLabel(l10n.propertiesVisible),
+      _visibleSection(
+        visible: band.visible,
+        onChanged: (BoolProperty v) => controller.setBandVisible(band.id, v),
+        l10n: l10n,
+      ),
     ];
     if (band.type == BandType.detail) {
       children
@@ -1439,6 +1455,53 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
       if (e.id == id) return e;
     }
     return null;
+  }
+
+  /// The Visible toggle + optional expression control, shared by the element
+  /// inspector and [_bandInspector].  [l10n] is the caller's resolved
+  /// localizations instance.
+  Widget _visibleSection({
+    required BoolProperty visible,
+    required ValueChanged<BoolProperty> onChanged,
+    required JetPrintLocalizations l10n,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        _LabeledRow(
+          label: l10n.propertiesVisible,
+          child: ShadSwitch(
+            key: const ValueKey<String>('$_p.field.visible'),
+            value: visible.value,
+            onChanged: (bool v) => onChanged(visible.copyWith(value: v)),
+          ),
+        ),
+        _LabeledRow(
+          label: l10n.propertiesVisibleWhen,
+          child: ShadButton.ghost(
+            key: const ValueKey<String>('$_p.field.visibleWhen'),
+            size: ShadButtonSize.sm,
+            child: Text(
+              visible.expression?.isNotEmpty == true
+                  ? visible.expression!
+                  : '—',
+              overflow: TextOverflow.ellipsis,
+            ),
+            onPressed: () async {
+              final String? next = await showExpressionEditor(
+                context,
+                initialText: visible.expression ?? '',
+                resolvableNames: const <String>{},
+                fields: const <FieldDef>[],
+              );
+              if (next == null) return; // dialog cancelled
+              onChanged(visible.copyWith(
+                  expression: () => next.isEmpty ? null : next));
+            },
+          ),
+        ),
+      ],
+    );
   }
 }
 

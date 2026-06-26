@@ -277,5 +277,8 @@
   "barcodeQuietZone": "Sessiz bölge",
   "barcodeEccLevel": "Hata düzeltme",
   "barcodeInvalidValue": "Değer bu semboloji için geçersiz",
-  "barcodeAutoInferred": "Otomatik → {symbology}"
+  "barcodeAutoInferred": "Otomatik → {symbology}",
+
+  "propertiesVisible": "Görünür",
+  "propertiesVisibleWhen": "Görünür koşul"
 }
