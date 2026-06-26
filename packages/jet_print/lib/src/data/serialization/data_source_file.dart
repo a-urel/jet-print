@@ -138,6 +138,7 @@ JetDataSchema _decodeSchema(Map<String, Object?> json) {
 Map<String, Object?> _encodeField(FieldDef field) => <String, Object?>{
       'name': field.name,
       'type': field.type.name,
+      if (field.description != null) 'description': field.description,
       if (field.type == JetFieldType.collection)
         'fields': <Map<String, Object?>>[
           for (final FieldDef child in field.fields) _encodeField(child),
@@ -160,10 +161,16 @@ FieldDef _decodeField(Map<String, Object?> json) {
   if (type == null) {
     throw JetDataSourceFormatException('Unknown field type "$typeName".');
   }
+  final Object? rawDescription = json['description'];
+  if (rawDescription != null && rawDescription is! String) {
+    throw const JetDataSourceFormatException(
+        'Field "description" must be a string.');
+  }
   final Object? children = json['fields'];
   return FieldDef(
     name,
     type: type,
+    description: rawDescription as String?,
     fields: <FieldDef>[
       if (children is List)
         for (final Object? c in children)

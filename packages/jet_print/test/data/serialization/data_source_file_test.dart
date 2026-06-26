@@ -158,5 +158,53 @@ void main() {
         throwsA(isA<JetDataSourceFormatException>()),
       );
     });
+
+    test('round-trips a field description', () {
+      const doc = JetDataSourceDocument(
+        schema: JetDataSchema(
+          name: 'Sales',
+          fields: <FieldDef>[
+            FieldDef('customerTotal',
+                type: JetFieldType.double,
+                description: 'Total spend per customer'),
+          ],
+        ),
+      );
+      final decoded =
+          JetDataSourceFile.decodeJson(JetDataSourceFile.encodeJson(doc));
+      expect(
+          decoded.schema.fields.single.description, 'Total spend per customer');
+      expect(decoded, doc);
+    });
+
+    test('omits the description key when null (byte-identical to legacy)', () {
+      final encoded = JetDataSourceFile.encode(const JetDataSourceDocument(
+        schema: JetDataSchema(
+          name: 'Sales',
+          fields: <FieldDef>[FieldDef('amount', type: JetFieldType.double)],
+        ),
+      ));
+      final field = (encoded['schema'] as Map)['fields'] as List;
+      expect((field.single as Map).containsKey('description'), isFalse);
+    });
+
+    test('rejects a non-string description', () {
+      expect(
+        () => JetDataSourceFile.decode(<String, Object?>{
+          'jetDataSource': 1,
+          'schema': <String, Object?>{
+            'name': 'Sales',
+            'fields': <Object?>[
+              <String, Object?>{
+                'name': 'amount',
+                'type': 'double',
+                'description': 42,
+              },
+            ],
+          },
+        }),
+        throwsA(isA<JetDataSourceFormatException>()),
+      );
+    });
   });
 }
