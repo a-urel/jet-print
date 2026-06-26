@@ -299,7 +299,7 @@ In `build`, replace the `Expanded(child: Text(widget.label, ...))` with a two-li
 
 ```dart
                 Expanded(
-                  child: _LabelWithDescription(
+                  child: LabelWithDescription(
                     label: widget.label,
                     description: widget.description,
                     theme: theme,
@@ -307,17 +307,19 @@ In `build`, replace the `Expanded(child: Text(widget.label, ...))` with a two-li
                 ),
 ```
 
-Add this small private widget at the bottom of `region_chrome.dart` (next to the other private widgets). It centralizes the two-line layout so the leaf-row path in Task 4 can mirror the exact same look:
+Add this small **library-internal (non-private)** widget at the bottom of `region_chrome.dart`. It centralizes the two-line layout so the leaf-row path in Task 4 imports and reuses it (single source — NO duplication):
 
 ```dart
 /// A node caption: [label] on top, and — when [description] is non-null and
 /// non-empty — a muted, smaller line beneath it. Used by tree branches and leaf
 /// field rows so both render the optional field description identically.
-class _LabelWithDescription extends StatelessWidget {
-  const _LabelWithDescription({
+class LabelWithDescription extends StatelessWidget {
+  /// Creates a caption for [label] with an optional muted [description] subtitle.
+  const LabelWithDescription({
     required this.label,
     required this.description,
     required this.theme,
+    super.key,
   });
 
   final String label;
@@ -353,7 +355,7 @@ class _LabelWithDescription extends StatelessWidget {
 }
 ```
 
-NOTE: `_LabelWithDescription` is private to `region_chrome.dart`. Task 4's leaf row lives in `data_source_panel.dart` (a different file) and therefore CANNOT import it — Task 4 reproduces the same two-line column inline. (Keeping it private avoids widening the library's internal surface; the duplication is ~10 lines and the two call sites read identically.)
+NOTE: `LabelWithDescription` is **library-internal but not private** (no leading underscore), so Task 4's leaf row in `data_source_panel.dart` imports it directly — ONE source of the two-line layout, no duplication. It is not added to the public `jet_print.dart` barrel (designer-internal). The leaf path here uses the field name as `label` and `field.description` as `description`; the title style differs slightly (theme.textTheme.small vs small.copyWith(foreground)) — the widget uses the foreground-colored variant, which is correct for both branch and leaf rows.
 
 - [ ] **Step 2: Run the full designer suite to verify no regression.**
 
@@ -477,45 +479,19 @@ Widget _fieldNode(FieldDef field, int depth) {
 }
 ```
 
-In `_FieldRow.build`, replace the `Expanded(child: Text(field.name, ...))` with a two-line column when a description is present (mirrors `_LabelWithDescription` from Task 3, reproduced inline because that helper is private to `region_chrome.dart`):
+In `_FieldRow.build`, replace the `Expanded(child: Text(field.name, ...))` with the shared `LabelWithDescription` from Task 3 (imported from `region_chrome.dart` — `data_source_panel.dart` already imports that file for `TreeBranch`/`RegionEmptyHint`, so no new import line is needed):
 
 ```dart
           Expanded(
-            child: _fieldLabel(theme, field),
+            child: LabelWithDescription(
+              label: field.name,
+              description: field.description,
+              theme: theme,
+            ),
           ),
 ```
 
-Add this top-level helper in `data_source_panel.dart` (near `_labelFor`):
-
-```dart
-/// The leaf field caption: the field name, with its [FieldDef.description] as a
-/// muted second line when present. Mirrors `TreeBranch`'s two-line treatment so
-/// scalar leaves and collection branches read identically. A null/empty
-/// description renders a single line (no stray empty subtitle).
-Widget _fieldLabel(ShadThemeData theme, FieldDef field) {
-  final Text title = Text(
-    field.name,
-    maxLines: 1,
-    overflow: TextOverflow.ellipsis,
-    style: theme.textTheme.small,
-  );
-  final String? desc = field.description;
-  if (desc == null || desc.isEmpty) return title;
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    mainAxisSize: MainAxisSize.min,
-    children: <Widget>[
-      title,
-      Text(
-        desc,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: theme.textTheme.muted.copyWith(fontSize: 11),
-      ),
-    ],
-  );
-}
-```
+This is the SAME widget the collection branch uses (Task 3), so leaf rows and branches render the two-line treatment identically with no duplicated layout code. `LabelWithDescription` returns a single-line title when `description` is null/empty, so the null-description case needs no special handling here.
 
 Leave the `Draggable<FieldDragData>` wrapping and `FieldDragData(fieldName: field.name)` untouched — the drag still carries the binding key, never the description.
 
@@ -552,8 +528,8 @@ git commit -m "feat(designer): Data Source view shows field descriptions (two-li
 
 ## Self-Review
 
-- **Spec coverage:** Model `description` → Task 1. Codec round-trip + omit-when-null + non-string rejection → Task 2. Two-line display (leaf) → Task 4; (collection branch) → Task 3 + Task 4. Fallback to name-only when null → Task 3 (`_LabelWithDescription`) + Task 4 (`_fieldLabel`) early-return. No engine/golden change → Task 4 Step 5 sweep. Inference unchanged → Task 1 Step 3 note.
+- **Spec coverage:** Model `description` → Task 1. Codec round-trip + omit-when-null + non-string rejection → Task 2. Two-line display (leaf + collection branch) → shared `LabelWithDescription` (Task 3), consumed by both `TreeBranch` (Task 3) and `_FieldRow` (Task 4). Fallback to name-only when null → `LabelWithDescription` single-line early-return. No engine/golden change → Task 4 Step 5 sweep. Inference unchanged → Task 1 Step 3 note.
 - **Out-of-scope honored:** no GUI editor for `description`, no rendered-output use, no controller/command/undo, no schema-version bump (schema is host-attached, not in the report template).
 - **Placeholder scan:** none — every code step shows full code and exact commands.
-- **Type consistency:** `FieldDef(..., description:)` named param used identically in Tasks 1/2/4; `TreeBranch(..., description:)` defined in Task 3 and consumed in Task 4; `_fieldLabel(ShadThemeData, FieldDef)` and `_LabelWithDescription` reproduce the same two-line shape (private-to-file, hence intentionally duplicated — noted in Task 3 Step 1 and Task 4 Step 3).
+- **Type consistency:** `FieldDef(..., description:)` named param used identically in Tasks 1/2/4; `TreeBranch(..., description:)` defined in Task 3 and consumed in Task 4; `LabelWithDescription({label, description, theme})` defined in Task 3 (region_chrome.dart, library-internal/non-private) and consumed by both `TreeBranch` (Task 3) and `_FieldRow` (Task 4) — single source, no duplication.
 - **Key risk:** the existing `_invoice` test schema has a *field named* `description` — unrelated to the new property; tests use the separate `_described` schema and distinct description text to avoid `find.text` collisions.
