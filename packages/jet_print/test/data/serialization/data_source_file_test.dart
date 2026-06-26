@@ -76,5 +76,87 @@ void main() {
       expect(() => JetDataSourceFile.decodeJson('[]'),
           throwsA(isA<JetDataSourceFormatException>()));
     });
+
+    test('wraps malformed JSON in JetDataSourceFormatException', () {
+      expect(
+        () => JetDataSourceFile.decodeJson('{bad'),
+        throwsA(isA<JetDataSourceFormatException>()),
+      );
+    });
+
+    test('rejects a too-new version', () {
+      expect(
+        () => JetDataSourceFile.decode(<String, Object?>{
+          'jetDataSource': 999,
+          'schema': <String, Object?>{'name': 'X', 'fields': <Object?>[]},
+        }),
+        throwsA(isA<JetDataSourceFormatException>()),
+      );
+    });
+
+    test('equality and hashCode are deep for nested-list sample rows', () {
+      const JetDataSourceDocument docA = JetDataSourceDocument(
+        schema: schema,
+        sample: <Map<String, Object?>>[
+          <String, Object?>{
+            'id': 1,
+            'lines': <Map<String, Object?>>[
+              <String, Object?>{'sku': 'A', 'qty': 2},
+              <String, Object?>{'sku': 'B', 'qty': 3},
+            ],
+          },
+        ],
+      );
+      // Identical nested structure — must be equal.
+      const JetDataSourceDocument docB = JetDataSourceDocument(
+        schema: schema,
+        sample: <Map<String, Object?>>[
+          <String, Object?>{
+            'id': 1,
+            'lines': <Map<String, Object?>>[
+              <String, Object?>{'sku': 'A', 'qty': 2},
+              <String, Object?>{'sku': 'B', 'qty': 3},
+            ],
+          },
+        ],
+      );
+      expect(docA, equals(docB));
+      expect(docA.hashCode, docB.hashCode);
+
+      // Different nested content — must NOT be equal.
+      const JetDataSourceDocument docC = JetDataSourceDocument(
+        schema: schema,
+        sample: <Map<String, Object?>>[
+          <String, Object?>{
+            'id': 1,
+            'lines': <Map<String, Object?>>[
+              <String, Object?>{'sku': 'X', 'qty': 99},
+            ],
+          },
+        ],
+      );
+      expect(docA, isNot(equals(docC)));
+    });
+
+    test(
+        'non-Map child in collection fields throws JetDataSourceFormatException',
+        () {
+      expect(
+        () => JetDataSourceFile.decode(<String, Object?>{
+          'jetDataSource': 1,
+          'schema': <String, Object?>{
+            'name': 'X',
+            'fields': <Object?>[
+              <String, Object?>{
+                'name': 'lines',
+                'type': 'collection',
+                'fields': <Object?>['not-a-map'],
+              },
+            ],
+          },
+        }),
+        throwsA(isA<JetDataSourceFormatException>()),
+      );
+    });
   });
 }

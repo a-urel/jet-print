@@ -92,7 +92,12 @@ abstract final class JetDataSourceFile {
   /// Decodes a UTF-8 JSON [source] string. Throws [JetDataSourceFormatException]
   /// when the text is not a JSON object.
   static JetDataSourceDocument decodeJson(String source) {
-    final Object? decoded = jsonDecode(source);
+    final Object? decoded;
+    try {
+      decoded = jsonDecode(source);
+    } on FormatException catch (e) {
+      throw JetDataSourceFormatException('Invalid JSON: ${e.message}');
+    }
     if (decoded is! Map) {
       throw const JetDataSourceFormatException(
           'Data source JSON must be a JSON object.');
@@ -162,7 +167,11 @@ FieldDef _decodeField(Map<String, Object?> json) {
     fields: <FieldDef>[
       if (children is List)
         for (final Object? c in children)
-          if (c is Map) _decodeField(c.cast<String, Object?>()),
+          if (c is Map)
+            _decodeField(c.cast<String, Object?>())
+          else
+            throw const JetDataSourceFormatException(
+                'Each field must be an object.'),
     ],
   );
 }
@@ -171,22 +180,10 @@ bool _sampleEquals(
     List<Map<String, Object?>>? a, List<Map<String, Object?>>? b) {
   if (identical(a, b)) return true;
   if (a == null || b == null) return false;
-  if (a.length != b.length) return false;
-  for (int i = 0; i < a.length; i++) {
-    final Map<String, Object?> ra = a[i];
-    final Map<String, Object?> rb = b[i];
-    if (ra.length != rb.length) return false;
-    for (final String key in ra.keys) {
-      if (!rb.containsKey(key)) return false;
-      if (ra[key] != rb[key]) return false;
-    }
-  }
-  return true;
+  return jsonEncode(a) == jsonEncode(b);
 }
 
 int _sampleHash(List<Map<String, Object?>>? sample) {
   if (sample == null) return null.hashCode;
-  return Object.hashAll(sample.map((Map<String, Object?> row) => Object.hashAll(
-      row.entries
-          .map((MapEntry<String, Object?> e) => Object.hash(e.key, e.value)))));
+  return jsonEncode(sample).hashCode;
 }
