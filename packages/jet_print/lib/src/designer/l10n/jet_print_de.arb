@@ -36,6 +36,11 @@
 
   "dataSourceEmpty": "Keine Datenquelle verbunden.",
 
+  "dataSourceSelect": "Datenquelle auswählen",
+  "@dataSourceSelect": {
+    "description": "Button in the empty Data Source panel that lets the author attach a *.jetreport.datasource file."
+  },
+
   "toolboxTextEntry": "Text",
   "toolboxShapeEntry": "Form",
   "toolboxTableEntry": "Tabelle",

@@ -275,6 +275,10 @@ abstract class JetPrintLocalizations {
   /// **'No data source attached.'**
   String get dataSourceEmpty;
 
+  /// Label of the button shown in the empty Data Source panel that lets the
+  /// author attach a data source (`*.jetreport.datasource`).
+  String get dataSourceSelect;
+
   /// Toolbox element: a static or data-bound text element. Shown as an icon-button tooltip.
   ///
   /// In en, this message translates to:

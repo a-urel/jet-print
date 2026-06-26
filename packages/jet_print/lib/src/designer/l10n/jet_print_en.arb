@@ -126,6 +126,11 @@
     "description": "Data Source panel empty state shown when no data-source structure is attached to the designer (009)."
   },
 
+  "dataSourceSelect": "Select data source",
+  "@dataSourceSelect": {
+    "description": "Button in the empty Data Source panel that lets the author attach a *.jetreport.datasource file."
+  },
+
   "toolboxTextEntry": "Text",
   "@toolboxTextEntry": {
     "description": "Toolbox element: a static or data-bound text element. Shown as an icon-button tooltip."

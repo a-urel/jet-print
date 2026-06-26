@@ -36,6 +36,11 @@
 
   "dataSourceEmpty": "Veri kaynağı bağlı değil.",
 
+  "dataSourceSelect": "Veri kaynağı seç",
+  "@dataSourceSelect": {
+    "description": "Button in the empty Data Source panel that lets the author attach a *.jetreport.datasource file."
+  },
+
   "toolboxTextEntry": "Metin",
   "toolboxShapeEntry": "Şekil",
   "toolboxTableEntry": "Tablo",

@@ -97,6 +97,9 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   String get dataSourceEmpty => 'Keine Datenquelle verbunden.';
 
   @override
+  String get dataSourceSelect => 'Datenquelle auswählen';
+
+  @override
   String get toolboxTextEntry => 'Text';
 
   @override

@@ -97,6 +97,9 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get dataSourceEmpty => 'Veri kaynağı bağlı değil.';
 
   @override
+  String get dataSourceSelect => 'Veri kaynağı seç';
+
+  @override
   String get toolboxTextEntry => 'Metin';
 
   @override

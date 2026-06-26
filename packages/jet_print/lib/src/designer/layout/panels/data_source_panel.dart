@@ -30,16 +30,59 @@ class DataSourcePanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final JetDataSchema? schema = DesignerSchemaScope.of(context);
     if (schema == null) {
-      return RegionEmptyHint(
-        icon: LucideIcons.database,
-        message: JetPrintLocalizations.of(context).dataSourceEmpty,
-      );
+      final VoidCallback? onSelect =
+          DesignerSchemaScope.selectCallbackOf(context);
+      if (onSelect == null) {
+        return RegionEmptyHint(
+          icon: LucideIcons.database,
+          message: JetPrintLocalizations.of(context).dataSourceEmpty,
+        );
+      }
+      return _SelectDataSourcePrompt(onSelect: onSelect);
     }
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(8, 10, 8, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[_datasetNode(schema)],
+      ),
+    );
+  }
+}
+
+/// Empty-state prompt shown when no data source is attached but the host wired
+/// a select action: a short hint plus a "Select data source" button.
+class _SelectDataSourcePrompt extends StatelessWidget {
+  const _SelectDataSourcePrompt({required this.onSelect});
+
+  final VoidCallback onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
+    final ShadThemeData theme = ShadTheme.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(LucideIcons.database,
+                size: 28, color: theme.colorScheme.mutedForeground),
+            const SizedBox(height: 12),
+            Text(
+              l10n.dataSourceEmpty,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.muted,
+            ),
+            const SizedBox(height: 16),
+            ShadButton.outline(
+              key: const ValueKey<String>('jet_print.dataSource.selectButton'),
+              onPressed: onSelect,
+              child: Text(l10n.dataSourceSelect),
+            ),
+          ],
+        ),
       ),
     );
   }

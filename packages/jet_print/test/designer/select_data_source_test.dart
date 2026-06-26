@@ -116,6 +116,84 @@ void main() {
     });
   });
 
+  group('DataSourcePanel select button', () {
+    Future<void> pumpSelectWorkspace(
+      WidgetTester tester, {
+      VoidCallback? onSelectDataSchema,
+      JetDataSchema? dataSchema,
+    }) async {
+      await tester.binding.setSurfaceSize(const Size(1400, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final JetReportDesignerController controller =
+          JetReportDesignerController();
+      addTearDown(controller.dispose);
+      await tester.pumpWidget(ShadApp(
+        localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+          JetPrintLocalizations.delegate,
+        ],
+        supportedLocales: JetPrintLocalizations.supportedLocales,
+        theme: ShadThemeData(
+          brightness: Brightness.light,
+          colorScheme: const ShadSlateColorScheme.light(),
+        ),
+        home: JetReportWorkspace(
+          controller: controller,
+          renderReport: (_) async => throw UnimplementedError(),
+          onSelectDataSchema: onSelectDataSchema,
+          dataSchema: dataSchema,
+        ),
+      ));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets(
+        'empty panel + wired callback shows the button and tapping invokes it',
+        (WidgetTester tester) async {
+      int taps = 0;
+      await pumpSelectWorkspace(tester, onSelectDataSchema: () => taps++);
+
+      // Data Source is the default-active tab — no navigation needed.
+      final Finder button = find.byKey(
+          const ValueKey<String>('jet_print.dataSource.selectButton'));
+      expect(button, findsOneWidget);
+      await tester.tap(button);
+      await tester.pump();
+      expect(taps, 1);
+    });
+
+    testWidgets('empty panel without a wired callback shows no button',
+        (WidgetTester tester) async {
+      await pumpSelectWorkspace(tester);
+
+      // No callback wired → just the empty-state hint, no select button.
+      expect(
+          find.byKey(
+              const ValueKey<String>('jet_print.dataSource.selectButton')),
+          findsNothing);
+    });
+
+    testWidgets('schema attached → dataset tree, no button',
+        (WidgetTester tester) async {
+      await pumpSelectWorkspace(
+        tester,
+        onSelectDataSchema: () {},
+        dataSchema: const JetDataSchema(
+          name: 'TestSchema',
+          fields: <FieldDef>[
+            FieldDef('amount', type: JetFieldType.double),
+          ],
+        ),
+      );
+
+      // Schema present → tree shown, button absent.
+      expect(find.text('TestSchema'), findsOneWidget);
+      expect(
+          find.byKey(
+              const ValueKey<String>('jet_print.dataSource.selectButton')),
+          findsNothing);
+    });
+  });
+
   group('onSelectDataSchema guard path', () {
     testWidgets(
         'error thrown by onSelectDataSchema is routed to onError, not propagated',
