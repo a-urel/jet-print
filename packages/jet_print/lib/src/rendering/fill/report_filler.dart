@@ -693,7 +693,10 @@ class ReportFiller {
     final List<FieldDef> fields = <FieldDef>[
       for (final FieldDef f in row.fields)
         if (replaced.containsKey(f.name) && replaced[f.name]!.isNotEmpty)
-          FieldDef(f.name, type: f.type, fields: replaced[f.name]!.first.fields)
+          FieldDef(f.name,
+              type: f.type,
+              description: f.description,
+              fields: replaced[f.name]!.first.fields)
         else
           f,
       for (final String name in extras.keys)
