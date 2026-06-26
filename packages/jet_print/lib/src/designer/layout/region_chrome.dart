@@ -146,6 +146,7 @@ class TreeBranch extends StatefulWidget {
     required this.children,
     this.initiallyExpanded = true,
     this.actions = const <Widget>[],
+    this.description,
     super.key,
   });
 
@@ -165,6 +166,11 @@ class TreeBranch extends StatefulWidget {
   /// add-list "+"). They manage their own gestures, so tapping/dragging one does
   /// not toggle the branch. Empty by default.
   final List<Widget> actions;
+
+  /// An optional muted subtitle shown under [label] (e.g. a data field's
+  /// human-friendly description). Null or empty → the branch renders a single
+  /// line, exactly as before.
+  final String? description;
 
   /// The rows revealed while the branch is expanded.
   final List<Widget> children;
@@ -208,13 +214,10 @@ class _TreeBranchState extends State<TreeBranch> {
                 Icon(widget.icon, size: 15, color: colors.foreground),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    widget.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.small.copyWith(
-                      color: colors.foreground,
-                    ),
+                  child: LabelWithDescription(
+                    label: widget.label,
+                    description: widget.description,
+                    theme: theme,
                   ),
                 ),
                 ...widget.actions,
@@ -223,6 +226,50 @@ class _TreeBranchState extends State<TreeBranch> {
           ),
         ),
         if (_expanded) ...widget.children,
+      ],
+    );
+  }
+}
+
+/// A node caption: [label] on top, and — when [description] is non-null and
+/// non-empty — a muted, smaller line beneath it. Used by tree branches and leaf
+/// field rows so both render the optional field description identically.
+class LabelWithDescription extends StatelessWidget {
+  /// Creates a caption for [label] with an optional muted [description] subtitle.
+  const LabelWithDescription({
+    required this.label,
+    required this.description,
+    required this.theme,
+    super.key,
+  });
+
+  final String label;
+  final String? description;
+  final ShadThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final String? desc = description;
+    final Text title = Text(
+      label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: theme.textTheme.small.copyWith(
+        color: theme.colorScheme.foreground,
+      ),
+    );
+    if (desc == null || desc.isEmpty) return title;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        title,
+        Text(
+          desc,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.muted.copyWith(fontSize: 11),
+        ),
       ],
     );
   }
