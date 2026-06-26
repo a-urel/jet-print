@@ -34,6 +34,8 @@ import 'commands/delete_command.dart';
 import 'commands/group_commands.dart';
 import 'commands/move_command.dart';
 import 'commands/remove_column_layout_command.dart';
+import 'commands/rename_band_command.dart';
+import 'commands/rename_element_command.dart';
 import 'commands/reorder_command.dart';
 import 'commands/resize_command.dart';
 import 'commands/scope_commands.dart';
@@ -722,6 +724,23 @@ class JetReportDesignerController extends ChangeNotifier {
   /// entry and notifies no listeners. The new name appears on [definition],
   /// which is the value a host persists on save.
   void rename(String name) => _commit(SetDefinitionNameCommand(name));
+
+  /// Sets the display [name] of the element [id] as one undoable step.
+  ///
+  /// A blank or whitespace-only [name] is normalized to `null` (clearing the
+  /// override so the fallback label shows). Renaming to the current value is a
+  /// no-op (no history, no notify). Mirrors the report-level [rename].
+  void renameElement(String id, String? name) =>
+      _commit(RenameElementCommand(id: id, name: _normalizeName(name)));
+
+  /// Sets the display [name] of the band [bandId] as one undoable step; blank
+  /// normalizes to `null` (falling back to the band-type label). No-op when
+  /// unchanged.
+  void renameBand(String bandId, String? name) =>
+      _commit(RenameBandCommand(bandId: bandId, name: _normalizeName(name)));
+
+  static String? _normalizeName(String? name) =>
+      (name == null || name.trim().isEmpty) ? null : name.trim();
 
   /// Binds the [TextElement] [id] to [expression] (a `$F{}`/`$P{}`/`$V{}`
   /// string), as one undoable step (US2 / FR-009). No-op for a non-text or
