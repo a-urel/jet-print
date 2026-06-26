@@ -9,6 +9,7 @@
 library;
 
 import '../band.dart';
+import '../bool_property.dart';
 import '../column_layout.dart';
 import '../detail_scope.dart';
 import '../group_level.dart';
@@ -137,6 +138,7 @@ Map<String, Object?> _encodeBand(Band band, ElementCodecRegistry registry) {
       ],
     if (band.columnLayout != null) 'columnLayout': band.columnLayout!.toJson(),
     if (band.name != null) 'name': band.name,
+    if (band.visible != const BoolProperty()) 'visible': band.visible.toJson(),
   };
 }
 
@@ -323,6 +325,10 @@ Band _decodeBand(Map<String, Object?> json, ElementCodecRegistry registry) {
         : ColumnLayout.fromJson(
             (json['columnLayout']! as Map).cast<String, Object?>()),
     name: json['name'] as String?,
+    visible: json['visible'] is Map
+        ? BoolProperty.fromJson(
+            (json['visible']! as Map).cast<String, Object?>())
+        : const BoolProperty(),
   );
 }
 
