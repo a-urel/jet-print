@@ -102,7 +102,7 @@ class _JetPrintPlaygroundAppState extends State<JetPrintPlaygroundApp> {
   @override
   Widget build(BuildContext context) {
     return ShadApp(
-      title: 'jet_print playground',
+      title: 'JetPrint Playground',
       themeMode: _themeMode,
       locale: _locale,
       localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
