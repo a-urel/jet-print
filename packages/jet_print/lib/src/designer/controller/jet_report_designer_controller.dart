@@ -4,6 +4,7 @@ library;
 import 'package:flutter/foundation.dart';
 
 import '../../domain/band.dart';
+import '../../domain/bool_property.dart';
 import '../../domain/column_layout.dart';
 import '../../domain/detail_scope.dart';
 import '../../domain/diagnostic.dart';
@@ -54,6 +55,7 @@ import 'commands/set_shape_style_command.dart';
 import 'commands/set_text_command.dart';
 import 'commands/set_text_style_command.dart';
 import 'commands/set_value_command.dart';
+import 'commands/set_visible_command.dart';
 import 'default_definition.dart';
 import 'designer_document.dart';
 import 'edit_command.dart';
@@ -754,6 +756,14 @@ class JetReportDesignerController extends ChangeNotifier {
   void clearBinding(String id) {
     _commit(SetTextBindingCommand(id: id, expression: null));
   }
+
+  /// Sets the [visible] property of element [id] (undoable). No-op when equal.
+  void setElementVisible(String id, BoolProperty visible) =>
+      _commit(SetElementVisibleCommand(id: id, visible: visible));
+
+  /// Sets the [visible] property of band [bandId] (undoable). No-op when equal.
+  void setBandVisible(String bandId, BoolProperty visible) =>
+      _commit(SetBandVisibleCommand(bandId: bandId, visible: visible));
 
   /// Sets the [TextElement] [id] from the unified value field's [raw] text (013).
   ///
