@@ -12,6 +12,7 @@ import 'package:jet_print_google_fonts/jet_print_google_fonts.dart';
 import 'package:printing/printing.dart' show Printing;
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import 'barcode_gallery_sample.dart';
 import 'barcode_sample.dart';
 import 'invoice_sample.dart';
 import 'l10n/app_localizations.dart';
@@ -22,6 +23,7 @@ import 'nested_list_sample.dart';
 import 'packing_slip_sample.dart';
 import 'payroll_sample.dart';
 import 'rendered_barcode_example.dart';
+import 'rendered_barcode_gallery_example.dart';
 import 'rendered_invoice_example.dart';
 import 'rendered_label_example.dart';
 import 'rendered_ledger_example.dart';
@@ -219,6 +221,13 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
             (d) => renderBarcodeDefinition(definition: d, fonts: widget.fonts)),
       ),
       (
+        value: 'barkod-galeri',
+        icon: LucideIcons.qrCode,
+        body: tab(barcodeGalleryDefinition(), barcodeGallerySchema,
+            (d) =>
+                renderBarcodeGalleryDefinition(definition: d, fonts: widget.fonts)),
+      ),
+      (
         value: 'makbuz',
         icon: LucideIcons.package,
         body: tab(
@@ -274,6 +283,7 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
       l10n.tabInvoice,
       l10n.tabLabel,
       l10n.tabBarcode,
+      'Symbology gallery',
       l10n.tabPackingSlip,
       l10n.tabPayroll,
       l10n.tabList,

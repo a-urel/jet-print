@@ -28,11 +28,11 @@ void main() {
   );
 
   testWidgets(
-    'the shell shows nine live designer tabs and no placeholder',
+    'the shell shows ten live designer tabs and no placeholder',
     (WidgetTester tester) async {
       await tester.pumpWidget(const JetPrintPlaygroundApp());
 
-      // All nine tab labels are present in the strip. The app launches in its
+      // All ten tab labels are present in the strip. The app launches in its
       // first supported locale (English), so the labels resolve through
       // AppLocalizations to their English values. Scope the match to the tab
       // strip (ShadTab) so e.g. "Invoice" matches the tab — not the identical
@@ -42,6 +42,7 @@ void main() {
         'Invoice',
         'Label',
         'Barcode',
+        'Symbology gallery',
         'Packing slip',
         'Payroll',
         'List',
@@ -67,7 +68,7 @@ void main() {
       // overflow: the rightmost 'Empty' tab would otherwise scroll under the
       // pinned theme/locale toggle cluster (the strip and the cluster share a
       // Stack), leaving it obscured and untappable.
-      await tester.binding.setSurfaceSize(const Size(1400, 700));
+      await tester.binding.setSurfaceSize(const Size(1700, 700));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(const JetPrintPlaygroundApp());
       await tester.pumpAndSettle();
@@ -111,6 +112,7 @@ void main() {
         'Invoice',
         'Label',
         'Barcode',
+        'Symbology gallery',
         'Packing slip',
         'Payroll',
         'List',
@@ -140,7 +142,7 @@ void main() {
   testWidgets(
     'only the Empty demo wires the Save/Open callbacks (FR-022)',
     (WidgetTester tester) async {
-      await tester.binding.setSurfaceSize(const Size(1400, 700));
+      await tester.binding.setSurfaceSize(const Size(1700, 700));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(const JetPrintPlaygroundApp());
       await tester.pumpAndSettle();
@@ -166,7 +168,7 @@ void main() {
   testWidgets(
     'Open/Save show only on the Empty demo (gated host file I/O)',
     (WidgetTester tester) async {
-      await tester.binding.setSurfaceSize(const Size(1400, 700));
+      await tester.binding.setSurfaceSize(const Size(1700, 700));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(const JetPrintPlaygroundApp());
       await tester.pumpAndSettle();
@@ -190,7 +192,7 @@ void main() {
       // Wide enough for the full tab strip to be on-screen so both 'Invoice'
       // and 'Empty' taps actually hit their targets (same reason as the
       // 'Empty tab activates a blank designer' test above).
-      await tester.binding.setSurfaceSize(const Size(1400, 700));
+      await tester.binding.setSurfaceSize(const Size(1700, 700));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       await tester.pumpWidget(const JetPrintPlaygroundApp());
