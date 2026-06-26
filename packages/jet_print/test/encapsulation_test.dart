@@ -145,6 +145,11 @@ bool _isWhiteBoxSeamTest(File file) {
       // the band_walker_test precedent).
       path.endsWith('/test/designer/controller/rename_command_test.dart') ||
       path.endsWith('/test/designer/controller/rename_controller_test.dart') ||
+      // C1 fix: the name-preservation regression test walks the definition via
+      // the unexported `src/` `band_walker` to assert the display name survives
+      // value/format/binding/column-layout edits — a white-box seam test.
+      path.endsWith(
+          '/test/designer/controller/rename_preservation_test.dart') ||
       // object_display_label resolver (Task 8 l10n): an unexported `src/`
       // designer l10n helper; its unit test is white-box (Principle III).
       path.endsWith('/test/designer/l10n/object_display_label_test.dart') ||
