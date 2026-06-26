@@ -215,6 +215,14 @@ ReportDefinition invoiceSampleDefinition() => const ReportDefinition(
                 type: BandType.groupFooter,
                 height: 212,
                 elements: <ReportElement>[
+                  // Hairline rule across the full content width — separates the
+                  // invoice line items above from the footer totals/notes below.
+                  ShapeElement(
+                    id: 'footerSeparator',
+                    bounds: JetRect(x: 0, y: 0, width: _contentWidth, height: 0.75),
+                    kind: ShapeKind.rectangle,
+                    style: JetBoxStyle(fill: _muted),
+                  ),
                   // Right column — the running money tally: subtotal less the
                   // discount, plus tax and shipping, equals the Grand Total
                   // (the only emphasized line). `discount` is stored negative,

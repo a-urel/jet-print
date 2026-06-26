@@ -609,6 +609,24 @@ class _TypeMenuState extends State<_TypeMenu> {
   Widget _item(_MenuOption opt) => ShadContextMenuItem(
         key: opt.optionKey,
         enabled: opt.enabled,
+        // shadcn's default submenu anchor stacks the child panel over the
+        // parent (its right edge pins to the parent's right edge), so the
+        // nested options read as a flat list. Open it BESIDE the parent
+        // instead: the child's left edge meets the parent's right edge. No
+        // horizontal flip ships upstream, so a near-bottom trigger gets a
+        // vertical fallback only. Leaf items keep the default (null).
+        anchor: opt.children.isEmpty
+            ? null
+            : const ShadAnchorAuto(
+                targetAnchor: Alignment.topRight,
+                followerAnchor: Alignment.topLeft,
+                offset: Offset(4, -8),
+                fallback: ShadAnchorAuto(
+                  targetAnchor: Alignment.bottomRight,
+                  followerAnchor: Alignment.bottomLeft,
+                  offset: Offset(4, 8),
+                ),
+              ),
         onPressed: opt.children.isEmpty
             ? () {
                 _menu.hide();
