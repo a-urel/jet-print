@@ -795,4 +795,7 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
 
   @override
   String get propertiesVisibleWhen => 'Sichtbar wenn';
+
+  @override
+  String get propertiesVisibleClear => 'Sichtbarkeitsausdruck löschen';
 }

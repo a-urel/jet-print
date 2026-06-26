@@ -792,4 +792,7 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
 
   @override
   String get propertiesVisibleWhen => 'Visible when';
+
+  @override
+  String get propertiesVisibleClear => 'Clear visibility expression';
 }

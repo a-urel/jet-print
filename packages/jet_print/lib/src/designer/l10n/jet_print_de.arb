@@ -280,5 +280,6 @@
   "barcodeAutoInferred": "Auto → {symbology}",
 
   "propertiesVisible": "Sichtbar",
-  "propertiesVisibleWhen": "Sichtbar wenn"
+  "propertiesVisibleWhen": "Sichtbar wenn",
+  "propertiesVisibleClear": "Sichtbarkeitsausdruck löschen"
 }

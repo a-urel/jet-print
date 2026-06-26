@@ -134,4 +134,52 @@ void main() {
       expect(band().visible, const BoolProperty(value: false));
     });
   });
+
+  group('properties — Visible expression state', () {
+    final Finder exprField =
+        find.byKey(const ValueKey<String>('$_p.field.visibleExpression'));
+    final Finder clearButton =
+        find.byKey(const ValueKey<String>('$_p.field.visibleClear'));
+
+    testWidgets(
+        'an expression hides the switch and shows the field + clear button',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await openPropertiesTab(tester);
+      c.createElement(DesignerToolType.text,
+          bandId: firstDetailBandId(c), at: const JetOffset(20, 30));
+      final String id = c.selection.singleOrNull!;
+      c.setElementVisible(id, const BoolProperty(expression: '1 == 2'));
+      await tester.pumpAndSettle();
+
+      expect(_visibleSwitchWidget, findsNothing);
+      expect(exprField, findsOneWidget);
+      expect(clearButton, findsOneWidget);
+    });
+
+    testWidgets('clearing the expression reverts to the static switch',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await openPropertiesTab(tester);
+      c.createElement(DesignerToolType.text,
+          bandId: firstDetailBandId(c), at: const JetOffset(20, 30));
+      final String id = c.selection.singleOrNull!;
+      c.setElementVisible(id, const BoolProperty(expression: '1 == 2'));
+      await tester.pumpAndSettle();
+
+      ReportElement element() => c.definition.body.root.children
+          .whereType<BandNode>()
+          .first
+          .band
+          .elements
+          .firstWhere((ReportElement e) => e.id == id);
+
+      await tester.tap(clearButton);
+      await tester.pumpAndSettle();
+
+      expect(element().visible.expression, isNull);
+      expect(_visibleSwitchWidget, findsOneWidget);
+      expect(exprField, findsNothing);
+    });
+  });
 }

@@ -280,5 +280,6 @@
   "barcodeAutoInferred": "Otomatik → {symbology}",
 
   "propertiesVisible": "Görünür",
-  "propertiesVisibleWhen": "Görünür koşul"
+  "propertiesVisibleWhen": "Görünür koşul",
+  "propertiesVisibleClear": "Görünürlük ifadesini temizle"
 }

@@ -1031,5 +1031,7 @@
   "propertiesVisible": "Visible",
   "@propertiesVisible": { "description": "Properties panel toggle label for the element/band visibility switch." },
   "propertiesVisibleWhen": "Visible when",
-  "@propertiesVisibleWhen": { "description": "Properties panel label for the boolean-expression that controls visibility." }
+  "@propertiesVisibleWhen": { "description": "Properties panel label for the boolean-expression that controls visibility." },
+  "propertiesVisibleClear": "Clear visibility expression",
+  "@propertiesVisibleClear": { "description": "Accessible name / tooltip for the button that clears the visibility expression, reverting to the static toggle." }
 }

@@ -1606,6 +1606,12 @@ abstract class JetPrintLocalizations {
   /// In en, this message translates to:
   /// **'Visible when'**
   String get propertiesVisibleWhen;
+
+  /// Accessible name / tooltip for the button that clears the visibility expression, reverting to the static toggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear visibility expression'**
+  String get propertiesVisibleClear;
 }
 
 class _JetPrintLocalizationsDelegate

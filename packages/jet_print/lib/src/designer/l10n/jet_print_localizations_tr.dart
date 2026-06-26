@@ -793,4 +793,7 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
 
   @override
   String get propertiesVisibleWhen => 'Görünür koşul';
+
+  @override
+  String get propertiesVisibleClear => 'Görünürlük ifadesini temizle';
 }

@@ -1464,45 +1464,13 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     required BoolProperty visible,
     required ValueChanged<BoolProperty> onChanged,
     required JetPrintLocalizations l10n,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        _LabeledRow(
-          label: l10n.propertiesVisible,
-          child: ShadSwitch(
-            key: const ValueKey<String>('$_p.field.visible'),
-            value: visible.value,
-            onChanged: (bool v) => onChanged(visible.copyWith(value: v)),
-          ),
-        ),
-        _LabeledRow(
-          label: l10n.propertiesVisibleWhen,
-          child: ShadButton.ghost(
-            key: const ValueKey<String>('$_p.field.visibleWhen'),
-            size: ShadButtonSize.sm,
-            child: Text(
-              visible.expression?.isNotEmpty == true
-                  ? visible.expression!
-                  : '—',
-              overflow: TextOverflow.ellipsis,
-            ),
-            onPressed: () async {
-              final String? next = await showExpressionEditor(
-                context,
-                initialText: visible.expression ?? '',
-                resolvableNames: const <String>{},
-                fields: const <FieldDef>[],
-              );
-              if (next == null) return; // dialog cancelled
-              onChanged(visible.copyWith(
-                  expression: () => next.isEmpty ? null : next));
-            },
-          ),
-        ),
-      ],
-    );
-  }
+  }) =>
+      _VisibleField(
+        visible: visible,
+        onChanged: onChanged,
+        fxTooltip: l10n.propertiesVisibleWhen,
+        clearTooltip: l10n.propertiesVisibleClear,
+      );
 }
 
 IconData _elementGlyph(ReportElement element) {
@@ -2427,6 +2395,140 @@ class _OrientationToggle extends StatelessWidget {
 /// the raw text on Enter/blur — the controller parses the three forms. A binding
 /// that is outside the template grammar (legacy/exotic) is shown read-only via
 /// [ValueDisplay.editable] so it is never silently lost (013 / FR-006a).
+/// The Visible section control. Two states share one section:
+///
+/// * **static** (no expression) — a bare [ShadSwitch] on the left and an fx
+///   button on the right that opens the expression editor. No row labels (the
+///   "VISIBLE" section heading already names it).
+/// * **expression** (a non-empty `visibleWhen`) — the switch is hidden and a
+///   read-only field shows the expression, with an fx button (re-edit) and a
+///   clear button that drops the expression back to the static switch.
+///
+/// Mirrors the Value field's fx affordance (spec 032). The field is read-only
+/// because a visibility expression is only ever authored through the editor.
+class _VisibleField extends StatefulWidget {
+  const _VisibleField({
+    required this.visible,
+    required this.onChanged,
+    required this.fxTooltip,
+    required this.clearTooltip,
+  });
+
+  final BoolProperty visible;
+  final ValueChanged<BoolProperty> onChanged;
+
+  /// Accessible name / tooltip for the fx (expression editor) button.
+  final String fxTooltip;
+
+  /// Accessible name / tooltip for the clear-expression button.
+  final String clearTooltip;
+
+  @override
+  State<_VisibleField> createState() => _VisibleFieldState();
+}
+
+class _VisibleFieldState extends State<_VisibleField> {
+  late final TextEditingController _controller =
+      TextEditingController(text: widget.visible.expression ?? '');
+
+  @override
+  void didUpdateWidget(_VisibleField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final String expr = widget.visible.expression ?? '';
+    if (expr != _controller.text) _controller.text = expr;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  /// Opens the fx expression editor seeded with the current expression and
+  /// commits its result (empty ⇒ clears, reverting to the static switch). Null
+  /// (Cancel/dismiss) leaves the value untouched.
+  Future<void> _openFx() async {
+    final String? next = await showExpressionEditor(
+      context,
+      initialText: widget.visible.expression ?? '',
+      resolvableNames: const <String>{},
+      fields: const <FieldDef>[],
+    );
+    if (next == null) return;
+    widget.onChanged(
+        widget.visible.copyWith(expression: () => next.isEmpty ? null : next));
+  }
+
+  void _clear() =>
+      widget.onChanged(widget.visible.copyWith(expression: () => null));
+
+  Widget _fxButton(Color color) => Semantics(
+        label: widget.fxTooltip,
+        button: true,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: _openFx,
+          child: Icon(
+            LucideIcons.squareFunction,
+            key: const ValueKey<String>('$_p.field.visibleWhen'),
+            size: 16,
+            color: color,
+          ),
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final ShadColorScheme colors = ShadTheme.of(context).colorScheme;
+    final String? expr = widget.visible.expression;
+    final bool hasExpression = expr != null && expr.isNotEmpty;
+
+    if (!hasExpression) {
+      // Static: switch + fx affordance, no labels.
+      return Row(
+        children: <Widget>[
+          ShadSwitch(
+            key: const ValueKey<String>('$_p.field.visible'),
+            value: widget.visible.value,
+            onChanged: (bool v) =>
+                widget.onChanged(widget.visible.copyWith(value: v)),
+          ),
+          const Spacer(),
+          _fxButton(colors.mutedForeground),
+        ],
+      );
+    }
+
+    // Expression: read-only field showing it, with fx (edit) + clear buttons.
+    return ShadInput(
+      key: const ValueKey<String>('$_p.field.visibleExpression'),
+      controller: _controller,
+      readOnly: true,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          _fxButton(colors.mutedForeground),
+          const SizedBox(width: 6),
+          Semantics(
+            label: widget.clearTooltip,
+            button: true,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _clear,
+              child: Icon(
+                LucideIcons.x,
+                key: const ValueKey<String>('$_p.field.visibleClear'),
+                size: 14,
+                color: colors.mutedForeground,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ValueField extends StatefulWidget {
   const _ValueField({
     required this.fieldKey,
