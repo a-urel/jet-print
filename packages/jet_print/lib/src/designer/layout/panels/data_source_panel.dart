@@ -3,12 +3,8 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../data/data_schema.dart';
 import '../../../data/field_def.dart';
-import '../../../domain/detail_scope.dart';
-import '../../../domain/report_definition.dart';
 import '../../canvas/field_drag_data.dart';
-import '../../controller/jet_report_designer_controller.dart';
 import '../../designer_schema_scope.dart';
-import '../../designer_scope.dart';
 import '../../field_type_glyph.dart';
 import '../../l10n/jet_print_localizations.dart';
 import '../region_chrome.dart';
@@ -102,7 +98,7 @@ Widget _datasetNode(JetDataSchema schema) {
 
 /// One field at [depth]: a collapsible branch for a nested collection (its
 /// children are the collection's own fields), or a leaf row for a scalar.
-Widget _fieldNode(FieldDef field, int depth, {String? parentCollection}) {
+Widget _fieldNode(FieldDef field, int depth) {
   if (field.type == JetFieldType.collection) {
     return TreeBranch(
       icon: fieldTypeGlyph(JetFieldType.collection),
@@ -111,17 +107,13 @@ Widget _fieldNode(FieldDef field, int depth, {String? parentCollection}) {
       // Collections start collapsed so deep structures don't flood the panel;
       // the disclosure chevron advertises that children are inside.
       initiallyExpanded: false,
-      actions: <Widget>[
-        _CollectionActions(field: field, parentCollection: parentCollection),
-      ],
+      actions: const <Widget>[_CollectionActions()],
       children: <Widget>[
-        for (final FieldDef child in field.fields)
-          _fieldNode(child, depth + 1, parentCollection: field.name),
+        for (final FieldDef child in field.fields) _fieldNode(child, depth + 1),
       ],
     );
   }
-  return _FieldRow(
-      field: field, depth: depth, parentCollection: parentCollection);
+  return _FieldRow(field: field, depth: depth);
 }
 
 /// A short, technical type caption shown trailing a leaf field (not localized —
@@ -139,24 +131,15 @@ String _labelFor(JetFieldType type) => switch (type) {
 /// A leaf field row: its data-type glyph, the field name, and the type token.
 /// Branch (dataset / collection) rows come from the shared [TreeBranch].
 class _FieldRow extends StatelessWidget {
-  const _FieldRow(
-      {required this.field, required this.depth, this.parentCollection});
+  const _FieldRow({required this.field, required this.depth});
 
   final FieldDef field;
   final int depth;
-  final String? parentCollection;
 
   @override
   Widget build(BuildContext context) {
     final ShadThemeData theme = ShadTheme.of(context);
     final ShadColorScheme colors = theme.colorScheme;
-    final JetReportDesignerController controller = DesignerScope.of(context);
-    final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
-    // A scalar field can seed a group only when there is a scope to host it: the
-    // root for a top-level field, or the scope already bound to its parent
-    // collection. No host → no "＋ group" affordance.
-    final String? targetScope =
-        _boundScopeForField(controller.definition, parentCollection);
     final Widget row = Padding(
       padding: EdgeInsets.only(
         left: treeRowInset(depth),
@@ -181,22 +164,6 @@ class _FieldRow extends StatelessWidget {
             _labelFor(field.type),
             style: theme.textTheme.muted.copyWith(fontSize: 11),
           ),
-          if (targetScope != null) ...<Widget>[
-            const SizedBox(width: 6),
-            Semantics(
-              button: true,
-              label: l10n.dataSourceAddGroup,
-              child: GestureDetector(
-                key: ValueKey<String>(
-                    'jet_print.designer.datasource.addGroup.${field.name}'),
-                behavior: HitTestBehavior.opaque,
-                onTap: () => DesignerScope.of(context, listen: false)
-                    .createGroupBoundToField(targetScope, field.name),
-                child: Icon(LucideIcons.plus,
-                    size: 14, color: colors.mutedForeground),
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -247,86 +214,18 @@ class _FieldDragChip extends StatelessWidget {
   }
 }
 
-/// The trailing affordances on a Data Source collection field: a drag handle
-/// (drop on the canvas to create a list under the drop band's scope) and a "+"
-/// that creates a list bound to this collection without aiming — under the scope
-/// already bound to its parent collection, or the root for a top-level one.
+/// The trailing token on a Data Source collection field: its type caption,
+/// matching the trailing token on scalar leaf rows ([_FieldRow]) so a list reads
+/// as a typed field too.
 class _CollectionActions extends StatelessWidget {
-  const _CollectionActions({required this.field, this.parentCollection});
-
-  final FieldDef field;
-  final String? parentCollection;
+  const _CollectionActions();
 
   @override
   Widget build(BuildContext context) {
     final ShadThemeData theme = ShadTheme.of(context);
-    final ShadColorScheme colors = theme.colorScheme;
-    final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        // The collection's type token, matching the trailing token on scalar
-        // leaf rows ([_FieldRow]) so a list reads as a typed field too.
-        Text(
-          _labelFor(JetFieldType.collection),
-          style: theme.textTheme.muted.copyWith(fontSize: 11),
-        ),
-        const SizedBox(width: 6),
-        Semantics(
-          button: true,
-          label: l10n.dataSourceAddList,
-          child: GestureDetector(
-            key: ValueKey<String>(
-                'jet_print.designer.datasource.addList.${field.name}'),
-            behavior: HitTestBehavior.opaque,
-            onTap: () {
-              final JetReportDesignerController c =
-                  DesignerScope.of(context, listen: false);
-              c.createListWithBand(
-                _resolveParentScope(c.definition, parentCollection),
-                collectionField: field.name,
-              );
-            },
-            child:
-                Icon(LucideIcons.plus, size: 14, color: colors.mutedForeground),
-          ),
-        ),
-      ],
+    return Text(
+      _labelFor(JetFieldType.collection),
+      style: theme.textTheme.muted.copyWith(fontSize: 11),
     );
   }
-}
-
-/// The scope a new list for a collection should nest under: the scope already
-/// bound to [parentCollection] (its parent in the schema tree), or the root
-/// scope for a top-level collection / when no bound parent scope exists yet.
-String _resolveParentScope(ReportDefinition def, String? parentCollection) {
-  if (parentCollection == null) return def.body.root.id;
-  String? found;
-  void walk(DetailScope s) {
-    found ??= s.collectionField == parentCollection ? s.id : null;
-    for (final ScopeNode n in s.children) {
-      if (n is NestedScope) walk(n.scope);
-    }
-  }
-
-  walk(def.body.root);
-  return found ?? def.body.root.id;
-}
-
-/// The scope a new group keyed on a scalar field should attach to: the root
-/// scope for a top-level field ([parentCollection] null), or the scope already
-/// bound to [parentCollection]. Null when a nested field's collection has no
-/// bound scope yet — there is nowhere to put the group, so no affordance shows.
-String? _boundScopeForField(ReportDefinition def, String? parentCollection) {
-  if (parentCollection == null) return def.body.root.id;
-  String? found;
-  void walk(DetailScope s) {
-    found ??= s.collectionField == parentCollection ? s.id : null;
-    for (final ScopeNode n in s.children) {
-      if (n is NestedScope) walk(n.scope);
-    }
-  }
-
-  walk(def.body.root);
-  return found;
 }
