@@ -10,6 +10,7 @@ library;
 
 import 'package:flutter/foundation.dart' show listEquals;
 
+import 'bool_property.dart';
 import 'column_layout.dart';
 import 'report_band.dart' show BandType;
 import 'report_element.dart';
@@ -27,6 +28,7 @@ class Band {
     this.elements = const <ReportElement>[],
     this.columnLayout,
     this.name,
+    this.visible = const BoolProperty(),
   });
 
   /// Stable identity (selection + lifecycle are no longer index-based).
@@ -50,6 +52,10 @@ class Band {
   /// Properties show the localized [bandTypeLabel]. Unconstrained.
   final String? name;
 
+  /// Controls whether this band is visible when rendering the report.
+  /// Defaults to visible (true value, no expression).
+  final BoolProperty visible;
+
   /// Returns a copy with the given fields replaced.
   Band copyWith({
     String? id,
@@ -58,6 +64,7 @@ class Band {
     List<ReportElement>? elements,
     ColumnLayout? columnLayout,
     String? name,
+    BoolProperty? visible,
   }) =>
       Band(
         id: id ?? this.id,
@@ -66,6 +73,7 @@ class Band {
         elements: elements ?? this.elements,
         columnLayout: columnLayout ?? this.columnLayout,
         name: name ?? this.name,
+        visible: visible ?? this.visible,
       );
 
   @override
@@ -76,11 +84,12 @@ class Band {
       other.height == height &&
       listEquals(other.elements, elements) &&
       other.columnLayout == columnLayout &&
-      other.name == name;
+      other.name == name &&
+      other.visible == visible;
 
   @override
-  int get hashCode =>
-      Object.hash(id, type, height, Object.hashAll(elements), columnLayout, name);
+  int get hashCode => Object.hash(
+      id, type, height, Object.hashAll(elements), columnLayout, name, visible);
 
   @override
   String toString() => 'Band($id, ${type.name}, ${height}pt, '
