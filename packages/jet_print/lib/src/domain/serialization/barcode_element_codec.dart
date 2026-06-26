@@ -1,6 +1,7 @@
 /// JSON codec for [BarcodeElement].
 library;
 
+import '../bool_property.dart';
 import '../elements/barcode_element.dart';
 import '../geometry.dart';
 import '../styles/color.dart';
@@ -30,6 +31,10 @@ class BarcodeElementCodec extends ElementCodec<BarcodeElement> {
             ? QrErrorCorrectionLevel.values.byName(json['ecc']! as String)
             : QrErrorCorrectionLevel.m,
         name: json['name'] as String?,
+        visible: json['visible'] is Map
+            ? BoolProperty.fromJson(
+                (json['visible']! as Map).cast<String, Object?>())
+            : const BoolProperty(),
       );
 
   @override
@@ -45,5 +50,7 @@ class BarcodeElementCodec extends ElementCodec<BarcodeElement> {
         if (element.eccLevel != QrErrorCorrectionLevel.m)
           'ecc': element.eccLevel.name,
         if (element.name != null) 'name': element.name,
+        if (element.visible != const BoolProperty())
+          'visible': element.visible.toJson(),
       };
 }

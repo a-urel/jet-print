@@ -1,6 +1,7 @@
 /// JSON codec for [TextElement].
 library;
 
+import '../bool_property.dart';
 import '../elements/text_element.dart';
 import '../geometry.dart';
 import '../styles/text_style.dart';
@@ -26,6 +27,10 @@ class TextElementCodec extends ElementCodec<TextElement> {
         expression: json['expression'] as String?,
         format: json['format'] as String?,
         name: json['name'] as String?,
+        visible: json['visible'] is Map
+            ? BoolProperty.fromJson(
+                (json['visible']! as Map).cast<String, Object?>())
+            : const BoolProperty(),
       );
 
   @override
@@ -38,5 +43,7 @@ class TextElementCodec extends ElementCodec<TextElement> {
         if (element.expression != null) 'expression': element.expression,
         if (element.format != null) 'format': element.format,
         if (element.name != null) 'name': element.name,
+        if (element.visible != const BoolProperty())
+          'visible': element.visible.toJson(),
       };
 }

@@ -1,6 +1,7 @@
 /// JSON codec for [ShapeElement].
 library;
 
+import '../bool_property.dart';
 import '../elements/shape_element.dart';
 import '../geometry.dart';
 import '../styles/box_style.dart';
@@ -31,6 +32,10 @@ class ShapeElementCodec extends ElementCodec<ShapeElement> {
       flipDiagonal: (json['flipDiagonal'] as bool?) ?? false,
       unknownForm: known == null ? raw : null,
       name: json['name'] as String?,
+      visible: json['visible'] is Map
+          ? BoolProperty.fromJson(
+              (json['visible']! as Map).cast<String, Object?>())
+          : const BoolProperty(),
     );
   }
 
@@ -44,5 +49,7 @@ class ShapeElementCodec extends ElementCodec<ShapeElement> {
         if (element.style != JetBoxStyle.none) 'style': element.style.toJson(),
         if (element.flipDiagonal) 'flipDiagonal': true,
         if (element.name != null) 'name': element.name,
+        if (element.visible != const BoolProperty())
+          'visible': element.visible.toJson(),
       };
 }

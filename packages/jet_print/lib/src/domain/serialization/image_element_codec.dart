@@ -1,6 +1,7 @@
 /// JSON codec for [ImageElement].
 library;
 
+import '../bool_property.dart';
 import '../elements/image_element.dart';
 import '../elements/image_source.dart';
 import '../geometry.dart';
@@ -20,6 +21,10 @@ class ImageElementCodec extends ElementCodec<ImageElement> {
             (json['source']! as Map).cast<String, Object?>()),
         fit: JetBoxFit.values.byName(json['fit']! as String),
         name: json['name'] as String?,
+        visible: json['visible'] is Map
+            ? BoolProperty.fromJson(
+                (json['visible']! as Map).cast<String, Object?>())
+            : const BoolProperty(),
       );
 
   @override
@@ -29,5 +34,7 @@ class ImageElementCodec extends ElementCodec<ImageElement> {
         'source': element.source.toJson(),
         'fit': element.fit.name,
         if (element.name != null) 'name': element.name,
+        if (element.visible != const BoolProperty())
+          'visible': element.visible.toJson(),
       };
 }
