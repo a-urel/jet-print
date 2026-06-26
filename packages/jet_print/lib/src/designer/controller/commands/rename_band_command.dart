@@ -39,6 +39,7 @@ class RenameBandCommand extends EditCommand {
             elements: b.elements,
             columnLayout: b.columnLayout,
             name: name,
+            visible: b.visible,
           ),
         ),
       );

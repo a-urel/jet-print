@@ -12,10 +12,11 @@ import '../selection.dart';
 ///
 /// `Band.copyWith` cannot null a field (`columnLayout ?? this.columnLayout`), so
 /// removal rebuilds the band through its constructor, explicitly carrying every
-/// OTHER field (id, type, height, elements, name) and omitting `columnLayout` —
-/// the spec-031 silent-drop guard (also applies to `name`, per the same class of
-/// latent silent-drop bug). A no-op for an unknown [bandId] or a band that
-/// already has no layout (the rebuilt band is value-equal, so commit no-ops).
+/// OTHER field (id, type, height, elements, name, visible) and omitting
+/// `columnLayout` — the spec-031 silent-drop guard (also applies to `name` and
+/// `visible`, per the same class of latent silent-drop bug). A no-op for an
+/// unknown [bandId] or a band that already has no layout (the rebuilt band is
+/// value-equal, so commit no-ops).
 class RemoveColumnLayoutCommand extends EditCommand {
   /// Creates a command clearing band [bandId]'s column layout.
   const RemoveColumnLayoutCommand({required this.bandId});
@@ -37,6 +38,7 @@ class RemoveColumnLayoutCommand extends EditCommand {
             height: b.height,
             elements: b.elements,
             name: b.name,
+            visible: b.visible,
           ),
         ),
         selection: Selection.band(bandId),

@@ -9,6 +9,7 @@ import 'package:jet_print/src/designer/controller/commands/rename_element_comman
 import 'package:jet_print/src/designer/controller/designer_document.dart';
 import 'package:jet_print/src/designer/controller/selection.dart';
 import 'package:jet_print/src/domain/band.dart';
+import 'package:jet_print/src/domain/bool_property.dart';
 import 'package:jet_print/src/domain/detail_scope.dart';
 import 'package:jet_print/src/domain/elements/text_element.dart';
 import 'package:jet_print/src/domain/geometry.dart';
@@ -174,6 +175,67 @@ void main() {
       final Band? band = findBand(after.definition, 'detail');
       expect(band?.elements.length, 1);
       expect(band?.elements.first.id, 't1');
+    });
+
+    // Regression: RenameBandCommand rebuilt Band via direct constructor and
+    // silently dropped `visible` (spec-visible-property bug).
+    test('preserves visible=false when renaming a band', () {
+      final DesignerDocument doc = DesignerDocument(
+        definition: ReportDefinition(
+          name: 'r',
+          page: PageFormat.a4Portrait,
+          body: ReportBody(
+            root: DetailScope(
+              id: 'root',
+              children: <ScopeNode>[
+                BandNode(Band(
+                  id: 'detail',
+                  type: BandType.detail,
+                  height: 100,
+                  visible: const BoolProperty(value: false),
+                  elements: const <ReportElement>[],
+                )),
+              ],
+            ),
+          ),
+        ),
+        selection: Selection.empty,
+      );
+      final DesignerDocument after =
+          const RenameBandCommand(bandId: 'detail', name: 'Lines').apply(doc);
+      expect(findBand(after.definition, 'detail')?.visible,
+          const BoolProperty(value: false));
+    });
+
+    // Regression: same bug for the null-name (clear) path.
+    test('preserves visible=false when clearing a band name', () {
+      final DesignerDocument doc = DesignerDocument(
+        definition: ReportDefinition(
+          name: 'r',
+          page: PageFormat.a4Portrait,
+          body: ReportBody(
+            root: DetailScope(
+              id: 'root',
+              children: <ScopeNode>[
+                BandNode(Band(
+                  id: 'detail',
+                  type: BandType.detail,
+                  height: 100,
+                  name: 'OldName',
+                  visible: const BoolProperty(value: false),
+                  elements: const <ReportElement>[],
+                )),
+              ],
+            ),
+          ),
+        ),
+        selection: Selection.empty,
+      );
+      final DesignerDocument after =
+          const RenameBandCommand(bandId: 'detail', name: null).apply(doc);
+      expect(findBand(after.definition, 'detail')?.name, isNull);
+      expect(findBand(after.definition, 'detail')?.visible,
+          const BoolProperty(value: false));
     });
   });
 }

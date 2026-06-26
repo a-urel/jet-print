@@ -95,4 +95,52 @@ void main() {
 
     expect(c.canUndo, isFalse);
   });
+
+  // Regression: RemoveColumnLayoutCommand rebuilt Band via direct constructor
+  // and silently dropped `visible` (spec-visible-property bug).
+  test('removeColumnLayout preserves visible=false while clearing columnLayout',
+      () {
+    // Build a definition with a non-default visible on the detail band.
+    final ReportDefinition base = ReportDefinition(
+      name: 'labels',
+      page: PageFormat.a4Portrait,
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(
+              id: 'detail',
+              type: BandType.detail,
+              height: 80,
+              visible: const BoolProperty(value: false),
+              elements: const <ReportElement>[
+                TextElement(
+                  id: 't',
+                  bounds: JetRect(x: 0, y: 0, width: 100, height: 20),
+                  text: 'x',
+                ),
+              ],
+            )),
+          ],
+        ),
+      ),
+    );
+
+    final JetReportDesignerController c =
+        JetReportDesignerController(definition: base);
+    addTearDown(c.dispose);
+
+    c.setColumnLayout(
+      'detail',
+      const ColumnLayout(
+          columnCount: 2, columnWidth: 200, columnSpacing: 8, rowSpacing: 4),
+    );
+    c.removeColumnLayout('detail');
+
+    final Band b = _detail(c);
+    expect(b.columnLayout, isNull,
+        reason: 'columnLayout must be cleared by the command');
+    expect(b.visible, const BoolProperty(value: false),
+        reason: 'visible must survive removeColumnLayout');
+  });
 }
