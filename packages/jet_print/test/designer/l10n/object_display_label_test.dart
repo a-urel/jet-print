@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:jet_print/src/domain/band.dart';
-import 'package:jet_print/src/domain/report_band.dart' show BandType;
-import 'package:jet_print/src/domain/elements/text_element.dart';
-import 'package:jet_print/src/domain/elements/shape_element.dart';
-import 'package:jet_print/src/domain/geometry.dart';
 import 'package:jet_print/src/designer/l10n/jet_print_localizations_en.dart';
 import 'package:jet_print/src/designer/l10n/object_display_label.dart';
+import 'package:jet_print/src/domain/band.dart';
+import 'package:jet_print/src/domain/elements/shape_element.dart';
+import 'package:jet_print/src/domain/elements/text_element.dart';
+import 'package:jet_print/src/domain/geometry.dart';
+import 'package:jet_print/src/domain/report_band.dart' show BandType;
 
 void main() {
   final l10n = JetPrintLocalizationsEn();

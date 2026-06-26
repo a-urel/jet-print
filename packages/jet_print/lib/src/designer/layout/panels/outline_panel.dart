@@ -116,6 +116,18 @@ class _OutlinePanelState extends State<OutlinePanel> {
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
     final JetDataSchema? schema = DesignerSchemaScope.of(context);
 
+    // If the id being renamed is no longer in the definition or not in the
+    // current selection, discard the stale inline editor (synchronous build-
+    // time correction — same pattern as properties_panel._editingHeader).
+    if (_editingId != null) {
+      final bool presentInDef = allIds(def).contains(_editingId!);
+      final bool inSelection =
+          selection.bandId == _editingId || selection.contains(_editingId!);
+      if (!presentInDef || !inSelection) {
+        _editingId = null;
+      }
+    }
+
     final List<Widget> rows = <Widget>[
       _branchRow(
         rowKey: const ValueKey<String>('jet_print.designer.outline.report'),

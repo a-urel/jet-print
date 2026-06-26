@@ -138,7 +138,20 @@ bool _isWhiteBoxSeamTest(File file) {
       // its internal type to assert the guarded callback is correctly plumbed
       // through the designer subtree — this is a white-box seam test
       // (Principle III / the binding_token_test precedent).
-      path.endsWith('/test/designer/select_data_source_test.dart');
+      path.endsWith('/test/designer/select_data_source_test.dart') ||
+      // Rename feature (Task 8): the rename `EditCommand`s and `band_walker`
+      // are unexported `src/` modules; the command unit test and the controller
+      // rename test exercise them as white-box seam tests (Principle III /
+      // the band_walker_test precedent).
+      path.endsWith('/test/designer/controller/rename_command_test.dart') ||
+      path.endsWith('/test/designer/controller/rename_controller_test.dart') ||
+      // object_display_label resolver (Task 8 l10n): an unexported `src/`
+      // designer l10n helper; its unit test is white-box (Principle III).
+      path.endsWith('/test/designer/l10n/object_display_label_test.dart') ||
+      // EditableLabel widget (Task 8 inline-rename widget): an unexported
+      // `src/` designer widget; its widget test is white-box (Principle III /
+      // the zoom_control_test precedent).
+      path.endsWith('/test/designer/widgets/editable_label_test.dart');
 }
 
 void main() {
