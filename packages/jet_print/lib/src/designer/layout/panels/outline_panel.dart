@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart' show Material, MaterialType;
 import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
@@ -19,8 +22,11 @@ import '../../controller/selection.dart';
 import '../../designer_schema_scope.dart';
 import '../../designer_scope.dart';
 import '../../l10n/band_type_label.dart';
+import '../../l10n/element_type_label.dart';
 import '../../l10n/jet_print_localizations.dart';
+import '../../l10n/object_display_label.dart';
 import '../region_chrome.dart';
+import '../widgets/editable_label.dart';
 import 'scope_field_choices.dart';
 
 /// Subtle accent tint marking the row whose object is currently selected; matches
@@ -57,6 +63,44 @@ class _OutlinePanelState extends State<OutlinePanel> {
   /// Stable ids of branches (bands, groups, scopes) the user has collapsed
   /// (absent ⇒ expanded). Keyed by id so it survives add/remove/reorder.
   final Set<String> _collapsed = <String>{};
+
+  /// The id of the band or element currently being renamed inline; null means
+  /// no inline edit is active.
+  String? _editingId;
+
+  // ── Manual double-tap tracking ──────────────────────────────────────────
+  // Flutter's GestureDetector delays onTap when onDoubleTap is also present
+  // (it waits for the double-tap window). To avoid delaying single-tap
+  // selection, we track double-taps manually on the outer onTap handler:
+  // two taps on the same node within [_doubleTapWindow] → rename start.
+  static const Duration _doubleTapWindow = Duration(milliseconds: 300);
+  String? _lastTappedId;
+  Timer? _doubleTapTimer;
+
+  /// Called for every single tap on a row identified by [id].  Fires [onSingle]
+  /// immediately; also fires [onDouble] when this tap arrives within
+  /// [_doubleTapWindow] of a previous tap on the same [id].
+  void _handleTap(String id, VoidCallback onSingle, VoidCallback onDouble) {
+    onSingle();
+    if (_lastTappedId == id) {
+      // Second tap on the same node within the window → double-tap.
+      _doubleTapTimer?.cancel();
+      _lastTappedId = null;
+      onDouble();
+    } else {
+      // First tap: record and arm the expiry timer.
+      _doubleTapTimer?.cancel();
+      _lastTappedId = id;
+      _doubleTapTimer =
+          Timer(_doubleTapWindow, () => _lastTappedId = null);
+    }
+  }
+
+  @override
+  void dispose() {
+    _doubleTapTimer?.cancel();
+    super.dispose();
+  }
 
   void _toggle(String id) => setState(() {
         // Set.add returns false when already collapsed → expand instead.
@@ -298,12 +342,24 @@ class _OutlinePanelState extends State<OutlinePanel> {
       toggleKey: ValueKey<String>('$base.toggle'),
       depth: depth,
       icon: _bandGlyph(band.type),
-      label: bandTypeLabel(band.type, l10n),
+      label: bandDisplayLabel(band, l10n),
       expanded: expanded,
       selected: selection.bandId == band.id,
       onToggle: () => _toggle(band.id),
-      onSelect: () => controller.selectBand(band.id),
+      onSelect: () => _handleTap(
+            band.id,
+            () => controller.selectBand(band.id),
+            () => setState(() => _editingId = band.id),
+          ),
       theme: theme,
+      rawName: band.name,
+      fallback: bandTypeLabel(band.type, l10n),
+      editing: _editingId == band.id,
+      onEditingEnd: () => setState(() => _editingId = null),
+      onCommit: (String? name) {
+        controller.renameBand(band.id, name);
+        setState(() => _editingId = null);
+      },
       actions: <Widget>[
         if (reorderable) ...<Widget>[
           _act('$base.up', LucideIcons.arrowUp, l10n.outlineMoveUp,
@@ -323,9 +379,21 @@ class _OutlinePanelState extends State<OutlinePanel> {
             'jet_print.designer.outline.element.${element.id}'),
         depth: depth + 1,
         icon: _elementGlyph(element),
-        label: element.id,
+        label: elementDisplayLabel(element, l10n),
+        rawName: element.name,
+        fallback: elementTypeLabel(element, l10n),
+        editing: _editingId == element.id,
+        onEditingEnd: () => setState(() => _editingId = null),
+        onCommit: (String? name) {
+          controller.renameElement(element.id, name);
+          setState(() => _editingId = null);
+        },
         selected: selection.contains(element.id),
-        onSelect: () => controller.select(element.id),
+        onSelect: () => _handleTap(
+              element.id,
+              () => controller.select(element.id),
+              () => setState(() => _editingId = element.id),
+            ),
         theme: theme,
       ));
     }
@@ -334,6 +402,11 @@ class _OutlinePanelState extends State<OutlinePanel> {
   /// An expandable branch row (the report, a scope, a group, or a band): a
   /// disclosure chevron that toggles, then the node glyph and label; tapping the
   /// row (not the chevron) selects the node.
+  ///
+  /// The optional editing params wire inline rename for band rows only. When
+  /// [editing] is true the label is replaced with an [EditableLabel]. Pass
+  /// [onEditingStart] to enable double-tap; leave all null for report/scope/group
+  /// rows that are not renameable.
   Widget _branchRow({
     required Key rowKey,
     required Key toggleKey,
@@ -345,6 +418,11 @@ class _OutlinePanelState extends State<OutlinePanel> {
     required VoidCallback onToggle,
     required VoidCallback onSelect,
     required ShadThemeData theme,
+    String? rawName,
+    String? fallback,
+    bool editing = false,
+    VoidCallback? onEditingEnd,
+    ValueChanged<String?>? onCommit,
     List<Widget> actions = const <Widget>[],
   }) {
     final ShadColorScheme colors = theme.colorScheme;
@@ -383,12 +461,25 @@ class _OutlinePanelState extends State<OutlinePanel> {
                     // The label fills the slack so the lifecycle actions trail
                     // at the row's right edge.
                     Expanded(
-                      child: Text(
-                        label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.small,
-                      ),
+                      child: editing
+                          ? Material(
+                              type: MaterialType.transparency,
+                              child: EditableLabel(
+                                display: label,
+                                value: rawName,
+                                placeholder: fallback ?? label,
+                                editing: true,
+                                onEditingEnd: onEditingEnd,
+                                onCommit: onCommit ?? (_) {},
+                                textStyle: theme.textTheme.small,
+                              ),
+                            )
+                          : Text(
+                              label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.small,
+                            ),
                     ),
                     ...actions,
                   ],
@@ -470,13 +561,19 @@ class _OutlinePanelState extends State<OutlinePanel> {
     BandType.noData,
   ];
 
-  /// A leaf element row: the element glyph then its id; tapping it selects the
-  /// element. Indented past the chevron column so it aligns under branch labels.
+  /// A leaf element row: the element glyph then its display label; tapping it
+  /// selects the element; double-tapping starts an inline rename.
+  /// Indented past the chevron column so it aligns under branch labels.
   Widget _leafRow({
     required Key rowKey,
     required int depth,
     required IconData icon,
     required String label,
+    required String? rawName,
+    required String fallback,
+    required bool editing,
+    required VoidCallback onEditingEnd,
+    required ValueChanged<String?> onCommit,
     required bool selected,
     required VoidCallback onSelect,
     required ShadThemeData theme,
@@ -506,12 +603,25 @@ class _OutlinePanelState extends State<OutlinePanel> {
                     Icon(icon, size: 14, color: colors.mutedForeground),
                     const SizedBox(width: 8),
                     Flexible(
-                      child: Text(
-                        label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.small,
-                      ),
+                      child: editing
+                          ? Material(
+                              type: MaterialType.transparency,
+                              child: EditableLabel(
+                                display: label,
+                                value: rawName,
+                                placeholder: fallback,
+                                editing: true,
+                                onEditingEnd: onEditingEnd,
+                                onCommit: onCommit,
+                                textStyle: theme.textTheme.small,
+                              ),
+                            )
+                          : Text(
+                              label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.small,
+                            ),
                     ),
                   ],
                 ),
