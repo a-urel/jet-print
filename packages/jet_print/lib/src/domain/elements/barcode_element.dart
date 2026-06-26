@@ -94,7 +94,7 @@ class BarcodeElement extends ReportElement {
   const BarcodeElement({
     required super.id,
     required super.bounds,
-    this.symbology = BarcodeSymbology.auto,
+    required this.symbology,
     required this.data,
     this.dataField,
     this.color = JetColor.black,

@@ -12,7 +12,7 @@ class ImageElement extends ReportElement {
   const ImageElement({
     required super.id,
     required super.bounds,
-    this.source = const FieldImageSource(''),
+    required this.source,
     this.fit = JetBoxFit.contain,
     super.name,
     super.visible,

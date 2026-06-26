@@ -56,7 +56,7 @@ class ShapeElement extends ReportElement {
   const ShapeElement({
     required super.id,
     required super.bounds,
-    this.kind = ShapeKind.rectangle,
+    required this.kind,
     this.style = JetBoxStyle.none,
     this.flipDiagonal = false,
     this.unknownForm,
