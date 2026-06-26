@@ -1,6 +1,7 @@
 /// A static or (later) data-bound text element.
 library;
 
+import '../bool_property.dart';
 import '../geometry.dart';
 import '../report_element.dart';
 import '../styles/text_style.dart';
@@ -20,6 +21,7 @@ class TextElement extends ReportElement {
     this.expression,
     this.format,
     super.name,
+    super.visible,
   });
 
   /// The literal text to render (the resolved value after Fill, or the authored
@@ -42,7 +44,11 @@ class TextElement extends ReportElement {
   /// Returns a copy with the given fields replaced; all others (incl.
   /// [expression] and [format]) are preserved (FR-019 / FR-025 / 013).
   TextElement copyWith(
-          {String? text, JetTextStyle? style, JetRect? bounds, String? name}) =>
+          {String? text,
+          JetTextStyle? style,
+          JetRect? bounds,
+          String? name,
+          BoolProperty? visible}) =>
       TextElement(
         id: id,
         bounds: bounds ?? this.bounds,
@@ -51,6 +57,7 @@ class TextElement extends ReportElement {
         expression: expression,
         format: format,
         name: name ?? this.name,
+        visible: visible ?? this.visible,
       );
 
   @override
@@ -65,6 +72,19 @@ class TextElement extends ReportElement {
         expression: expression,
         format: format,
         name: name,
+        visible: visible,
+      );
+
+  @override
+  TextElement withVisible(BoolProperty visible) => TextElement(
+        id: id,
+        bounds: bounds,
+        text: text,
+        style: style,
+        expression: expression,
+        format: format,
+        name: name,
+        visible: visible,
       );
 
   @override
@@ -76,11 +96,12 @@ class TextElement extends ReportElement {
       other.style == style &&
       other.expression == expression &&
       other.format == format &&
-      other.name == name;
+      other.name == name &&
+      other.visible == visible;
 
   @override
   int get hashCode =>
-      Object.hash(id, bounds, text, style, expression, format, name);
+      Object.hash(id, bounds, text, style, expression, format, name, visible);
 
   @override
   String toString() => 'TextElement($id, "$text"'

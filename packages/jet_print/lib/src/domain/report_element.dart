@@ -1,6 +1,7 @@
 /// The base type for everything placed on a band.
 library;
 
+import 'bool_property.dart';
 import 'geometry.dart';
 
 /// An immutable element definition positioned at absolute [bounds] within its
@@ -9,7 +10,11 @@ import 'geometry.dart';
 abstract class ReportElement {
   /// Creates an element with a unique [id] and absolute [bounds], and an
   /// optional human-facing [name].
-  const ReportElement({required this.id, required this.bounds, this.name});
+  const ReportElement(
+      {required this.id,
+      required this.bounds,
+      this.name,
+      this.visible = const BoolProperty()});
 
   /// Stable, unique identifier within a template (used for selection/binding).
   final String id;
@@ -21,6 +26,11 @@ abstract class ReportElement {
   /// fallback (the element's text, or its type label). Never referenced by
   /// expressions; purely a label. Unconstrained — may be empty or duplicated.
   final String? name;
+
+  /// Whether this element renders. A static bool or a boolean expression
+  /// (BoolProperty); when invisible the element is omitted at fill time and
+  /// never painted. Defaults to always-visible.
+  final BoolProperty visible;
 
   /// Stable string key identifying this element's type for serialization.
   /// Must be unique per registered type (see `ElementCodecRegistry`).
@@ -40,4 +50,10 @@ abstract class ReportElement {
   /// preserved. The polymorphic rename primitive (mirrors [withBounds]). An
   /// [UnknownElement] is a no-op passthrough (its preserved JSON is inert).
   ReportElement withName(String? name);
+
+  /// Returns a copy of this element of the **same concrete type** with its
+  /// [visible] property replaced, every other field preserved. The polymorphic
+  /// visibility primitive (mirrors [withName]). An [UnknownElement] is a no-op
+  /// passthrough (its preserved JSON is inert).
+  ReportElement withVisible(BoolProperty visible);
 }

@@ -167,7 +167,12 @@ class LazyLayout {
     if (el is! TextElement || el.expression == null) return el;
     if (_chromeParseFailed.contains(el.id)) {
       return TextElement(
-          id: el.id, bounds: el.bounds, text: '!ERR', style: el.style);
+          id: el.id,
+          bounds: el.bounds,
+          text: '!ERR',
+          style: el.style,
+          name: el.name,
+          visible: el.visible);
     }
     final Expression? expr = _chromeExprs[el.id];
     if (expr == null) {
@@ -179,7 +184,12 @@ class LazyLayout {
           'internal: no compiled chrome expression for "${el.id}"',
           elementId: el.id);
       return TextElement(
-          id: el.id, bounds: el.bounds, text: '!ERR', style: el.style);
+          id: el.id,
+          bounds: el.bounds,
+          text: '!ERR',
+          style: el.style,
+          name: el.name,
+          visible: el.visible);
     }
     final JetValue value = expr.evaluate(PageEvalContext(
       pageNumber: pageNumber,
@@ -198,7 +208,9 @@ class LazyLayout {
         id: el.id,
         bounds: el.bounds,
         text: jetStringify(value),
-        style: el.style);
+        style: el.style,
+        name: el.name,
+        visible: el.visible);
   }
 
   /// Builds page [index]'s frame: the boundary pass's body placements in

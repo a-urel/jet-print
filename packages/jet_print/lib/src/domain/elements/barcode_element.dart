@@ -1,6 +1,7 @@
 /// A 1D/2D barcode element.
 library;
 
+import '../bool_property.dart';
 import '../geometry.dart';
 import '../report_element.dart';
 import '../styles/color.dart';
@@ -93,7 +94,7 @@ class BarcodeElement extends ReportElement {
   const BarcodeElement({
     required super.id,
     required super.bounds,
-    required this.symbology,
+    this.symbology = BarcodeSymbology.auto,
     required this.data,
     this.dataField,
     this.color = JetColor.black,
@@ -101,6 +102,7 @@ class BarcodeElement extends ReportElement {
     this.quietZone = true,
     this.eccLevel = QrErrorCorrectionLevel.m,
     super.name,
+    super.visible,
   });
 
   /// The barcode encoding (or [BarcodeSymbology.auto]).
@@ -142,6 +144,7 @@ class BarcodeElement extends ReportElement {
     bool? quietZone,
     QrErrorCorrectionLevel? eccLevel,
     String? name,
+    BoolProperty? visible,
   }) =>
       BarcodeElement(
         id: id,
@@ -154,6 +157,7 @@ class BarcodeElement extends ReportElement {
         quietZone: quietZone ?? this.quietZone,
         eccLevel: eccLevel ?? this.eccLevel,
         name: name ?? this.name,
+        visible: visible ?? this.visible,
       );
 
   @override
@@ -171,6 +175,22 @@ class BarcodeElement extends ReportElement {
         quietZone: quietZone,
         eccLevel: eccLevel,
         name: name,
+        visible: visible,
+      );
+
+  @override
+  BarcodeElement withVisible(BoolProperty visible) => BarcodeElement(
+        id: id,
+        bounds: bounds,
+        symbology: symbology,
+        data: data,
+        dataField: dataField,
+        color: color,
+        showText: showText,
+        quietZone: quietZone,
+        eccLevel: eccLevel,
+        name: name,
+        visible: visible,
       );
 
   @override
@@ -185,11 +205,12 @@ class BarcodeElement extends ReportElement {
       other.showText == showText &&
       other.quietZone == quietZone &&
       other.eccLevel == eccLevel &&
-      other.name == name;
+      other.name == name &&
+      other.visible == visible;
 
   @override
   int get hashCode => Object.hash(id, bounds, symbology, data, dataField, color,
-      showText, quietZone, eccLevel, name);
+      showText, quietZone, eccLevel, name, visible);
 
   @override
   String toString() => 'BarcodeElement($id, ${symbology.name})';

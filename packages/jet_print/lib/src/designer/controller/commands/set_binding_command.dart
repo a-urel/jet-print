@@ -46,6 +46,7 @@ class SetTextBindingCommand extends EditCommand {
                   expression: expression,
                   format: e.format,
                   name: e.name,
+                  visible: e.visible,
                 )
               : e,
         ),
@@ -80,6 +81,7 @@ class SetImageBindingCommand extends EditCommand {
                   source: FieldImageSource(field),
                   fit: e.fit,
                   name: e.name,
+                  visible: e.visible,
                 )
               : e,
         ),

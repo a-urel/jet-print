@@ -1,6 +1,7 @@
 /// An image element.
 library;
 
+import '../bool_property.dart';
 import '../geometry.dart';
 import '../report_element.dart';
 import 'image_source.dart';
@@ -11,9 +12,10 @@ class ImageElement extends ReportElement {
   const ImageElement({
     required super.id,
     required super.bounds,
-    required this.source,
+    this.source = const FieldImageSource(''),
     this.fit = JetBoxFit.contain,
     super.name,
+    super.visible,
   });
 
   /// Where the image comes from.
@@ -26,12 +28,31 @@ class ImageElement extends ReportElement {
   String get typeKey => 'image';
 
   @override
-  ImageElement withBounds(JetRect bounds) =>
-      ImageElement(id: id, bounds: bounds, source: source, fit: fit, name: name);
+  ImageElement withBounds(JetRect bounds) => ImageElement(
+      id: id,
+      bounds: bounds,
+      source: source,
+      fit: fit,
+      name: name,
+      visible: visible);
 
   @override
-  ImageElement withName(String? name) =>
-      ImageElement(id: id, bounds: bounds, source: source, fit: fit, name: name);
+  ImageElement withName(String? name) => ImageElement(
+      id: id,
+      bounds: bounds,
+      source: source,
+      fit: fit,
+      name: name,
+      visible: visible);
+
+  @override
+  ImageElement withVisible(BoolProperty visible) => ImageElement(
+      id: id,
+      bounds: bounds,
+      source: source,
+      fit: fit,
+      name: name,
+      visible: visible);
 
   @override
   bool operator ==(Object other) =>
@@ -40,10 +61,11 @@ class ImageElement extends ReportElement {
       other.bounds == bounds &&
       other.source == source &&
       other.fit == fit &&
-      other.name == name;
+      other.name == name &&
+      other.visible == visible;
 
   @override
-  int get hashCode => Object.hash(id, bounds, source, fit, name);
+  int get hashCode => Object.hash(id, bounds, source, fit, name, visible);
 
   @override
   String toString() => 'ImageElement($id, ${fit.name})';

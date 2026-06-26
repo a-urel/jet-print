@@ -1,6 +1,7 @@
 /// Preserves an element whose type is not registered in this build.
 library;
 
+import 'bool_property.dart';
 import 'geometry.dart';
 import 'report_element.dart';
 
@@ -41,6 +42,12 @@ class UnknownElement extends ReportElement {
   /// element is intentionally inert rather than lossy.
   @override
   UnknownElement withName(String? name) => this;
+
+  /// A no-op: an unknown element's preserved JSON is never rewritten, so it
+  /// round-trips byte-for-byte (Constitution V). Setting visibility on an
+  /// unrecognized element is intentionally inert rather than lossy.
+  @override
+  UnknownElement withVisible(BoolProperty visible) => this;
 
   @override
   String toString() => 'UnknownElement($typeKey)';

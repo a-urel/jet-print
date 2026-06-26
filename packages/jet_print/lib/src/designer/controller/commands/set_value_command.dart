@@ -46,6 +46,7 @@ class SetValueCommand extends EditCommand {
                   expression: expression,
                   format: e.format,
                   name: e.name,
+                  visible: e.visible,
                 )
               : e,
         ),

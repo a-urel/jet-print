@@ -1,6 +1,7 @@
 /// A vector shape element — a line, a rectangle, or one of the closed forms.
 library;
 
+import '../bool_property.dart';
 import '../geometry.dart';
 import '../report_element.dart';
 import '../styles/box_style.dart';
@@ -55,11 +56,12 @@ class ShapeElement extends ReportElement {
   const ShapeElement({
     required super.id,
     required super.bounds,
-    required this.kind,
+    this.kind = ShapeKind.rectangle,
     this.style = JetBoxStyle.none,
     this.flipDiagonal = false,
     this.unknownForm,
     super.name,
+    super.visible,
   });
 
   /// The form this shape draws.
@@ -89,6 +91,7 @@ class ShapeElement extends ReportElement {
     bool? flipDiagonal,
     bool clearUnknownForm = false,
     String? name,
+    BoolProperty? visible,
   }) =>
       ShapeElement(
         id: id,
@@ -98,6 +101,7 @@ class ShapeElement extends ReportElement {
         flipDiagonal: flipDiagonal ?? this.flipDiagonal,
         unknownForm: clearUnknownForm ? null : unknownForm,
         name: name ?? this.name,
+        visible: visible ?? this.visible,
       );
 
   @override
@@ -112,6 +116,7 @@ class ShapeElement extends ReportElement {
         flipDiagonal: flipDiagonal,
         unknownForm: unknownForm,
         name: name,
+        visible: visible,
       );
 
   @override
@@ -123,6 +128,19 @@ class ShapeElement extends ReportElement {
         flipDiagonal: flipDiagonal,
         unknownForm: unknownForm,
         name: name,
+        visible: visible,
+      );
+
+  @override
+  ShapeElement withVisible(BoolProperty visible) => ShapeElement(
+        id: id,
+        bounds: bounds,
+        kind: kind,
+        style: style,
+        flipDiagonal: flipDiagonal,
+        unknownForm: unknownForm,
+        name: name,
+        visible: visible,
       );
 
   @override
@@ -134,11 +152,12 @@ class ShapeElement extends ReportElement {
       other.style == style &&
       other.flipDiagonal == flipDiagonal &&
       other.unknownForm == unknownForm &&
-      other.name == name;
+      other.name == name &&
+      other.visible == visible;
 
   @override
-  int get hashCode =>
-      Object.hash(id, bounds, kind, style, flipDiagonal, unknownForm, name);
+  int get hashCode => Object.hash(
+      id, bounds, kind, style, flipDiagonal, unknownForm, name, visible);
 
   @override
   String toString() => unknownForm == null

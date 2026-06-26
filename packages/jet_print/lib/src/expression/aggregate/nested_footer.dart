@@ -86,5 +86,6 @@ ReportElement _rewrite(
     style: e.style,
     expression: '\$V{$name}',
     format: e.format,
+    visible: e.visible,
   );
 }

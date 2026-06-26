@@ -209,7 +209,9 @@ class ElementResolver {
       id: el.id,
       bounds: el.bounds,
       source: BytesImageSource(bytes),
-      fit: el.fit);
+      fit: el.fit,
+      name: el.name,
+      visible: el.visible);
 
   BarcodeElement _resolveBarcode(BarcodeElement el, DataRow? row) {
     String value = el.data;

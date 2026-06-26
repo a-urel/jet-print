@@ -87,6 +87,7 @@ ReportDefinition expandAggregates(ReportDefinition def) {
             style: e.style,
             expression: next,
             format: e.format,
+            visible: e.visible,
           ));
           continue;
         }
@@ -400,6 +401,7 @@ DescendantLift liftDescendantAggregates(
             style: e.style,
             expression: next,
             format: e.format,
+            visible: e.visible,
           ));
           continue;
         }

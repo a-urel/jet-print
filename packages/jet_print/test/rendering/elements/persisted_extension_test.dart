@@ -7,6 +7,7 @@ import 'package:jet_print/src/domain/geometry.dart';
 import 'package:jet_print/src/domain/page_format.dart';
 import 'package:jet_print/src/domain/report_band.dart' show BandType;
 import 'package:jet_print/src/domain/report_definition.dart';
+import 'package:jet_print/src/domain/bool_property.dart';
 import 'package:jet_print/src/domain/report_element.dart';
 import 'package:jet_print/src/domain/serialization/element_codec.dart';
 import 'package:jet_print/src/domain/serialization/report_definition_codec.dart';
@@ -32,6 +33,9 @@ class StarElement extends ReportElement {
       StarElement(id: id, bounds: bounds, points: points);
   @override
   StarElement withName(String? name) =>
+      StarElement(id: id, bounds: bounds, points: points);
+  @override
+  StarElement withVisible(BoolProperty visible) =>
       StarElement(id: id, bounds: bounds, points: points);
   @override
   bool operator ==(Object other) =>
