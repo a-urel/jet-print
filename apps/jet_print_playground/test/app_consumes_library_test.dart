@@ -9,7 +9,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
-import 'package:jet_print_playground/invoice_sample.dart';
 import 'package:jet_print_playground/main.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
@@ -82,8 +81,10 @@ void main() {
       // others are hidden via IndexedStack/Visibility.maintain/Offstage.
       final JetReportDesigner designer =
           tester.widget<JetReportDesigner>(find.byType(JetReportDesigner));
-      expect(designer.dataSchema, same(invoiceSchema),
-          reason: 'the empty tab shares the invoice data source');
+      expect(designer.dataSchema, isNull,
+          reason: 'the empty tab starts with no data source attached');
+      expect(designer.onSelectDataSchema, isNotNull,
+          reason: 'the empty tab wires the Select data source callback');
       final ReportDefinition definition = designer.controller!.definition;
       expect(definition.name, 'Empty');
       final Iterable<ReportElement> elements = definition.body.root.children

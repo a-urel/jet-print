@@ -189,15 +189,16 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
     super.initState();
     // Build the body widgets once. Labels come from l10n in build(); the bodies
     // (designer tabs) must be structurally stable across rebuilds.
-    _DesignerTab tab(ReportDefinition seed, JetDataSchema schema,
+    _DesignerTab tab(ReportDefinition seed, JetDataSchema? schema,
             RenderedReport Function(ReportDefinition) render,
-            {bool fileIo = false}) =>
+            {bool fileIo = false, bool selectDataSource = false}) =>
         _DesignerTab(
             fonts: widget.fonts,
             seed: seed,
             dataSchema: schema,
             renderReport: render,
-            enableFileIo: fileIo);
+            enableFileIo: fileIo,
+            enableSelectDataSource: selectDataSource);
     _demoBodies = <({String value, IconData icon, Widget body})>[
       (
         value: 'fatura',
@@ -256,9 +257,9 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
       (
         value: 'bos',
         icon: LucideIcons.squareDashed,
-        body: tab(emptyDesignDefinition(), invoiceSchema,
+        body: tab(emptyDesignDefinition(), null,
             (d) => renderInvoiceDefinition(definition: d, fonts: widget.fonts),
-            fileIo: true),
+            fileIo: true, selectDataSource: true),
       ),
     ];
   }
@@ -390,6 +391,7 @@ class _DesignerTab extends StatefulWidget {
     required this.dataSchema,
     required this.renderReport,
     this.enableFileIo = false,
+    this.enableSelectDataSource = false,
   });
 
   /// The host-contributed fonts, shared by the designer (picker + canvas) and
@@ -401,10 +403,14 @@ class _DesignerTab extends StatefulWidget {
   /// model (spec 024).
   final ReportDefinition seed;
 
-  /// The data structure bound in this tab — drives the field palette and
-  /// binding validation. Each sample brings its own schema (invoice vs.
-  /// customers).
-  final JetDataSchema dataSchema;
+  /// The data structure bound in this tab, or null when the tab starts with no
+  /// data source (the Empty tab, which attaches one via "Select data source").
+  final JetDataSchema? dataSchema;
+
+  /// Whether this tab offers the "Select data source" action. Only the Empty
+  /// tab does; the sample demos ship their own schema and leave it unwired so
+  /// the designer hides those buttons.
+  final bool enableSelectDataSource;
 
   /// Renders the live definition for the preview/export seam — the sample's own
   /// render entry point ([renderInvoiceDefinition] / [renderNestedListsDefinition]),
@@ -426,6 +432,16 @@ class _DesignerTabState extends State<_DesignerTab> {
   late final JetReportDesignerController _controller =
       JetReportDesignerController(definition: widget.seed);
 
+  /// The live data source for this tab — seeded from the widget and replaced
+  /// when the author attaches one via "Select data source".
+  JetDataSchema? _schema;
+
+  @override
+  void initState() {
+    super.initState();
+    _schema = widget.dataSchema;
+  }
+
   /// The file type the designer reads/writes: a JSON document produced by
   /// `JetReportFormat.encodeJson`.
   static const XTypeGroup _reportType = XTypeGroup(
@@ -433,10 +449,29 @@ class _DesignerTabState extends State<_DesignerTab> {
     extensions: <String>['jetreport', 'json'],
   );
 
+  /// The data-source file the Empty tab attaches: a `*.jetreport.datasource`
+  /// JSON document decoded by [JetDataSourceFile].
+  static const XTypeGroup _dataSourceType = XTypeGroup(
+    label: 'Jet data source',
+    extensions: <String>['datasource', 'json'],
+  );
+
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  /// Select a data source: pick a `*.jetreport.datasource` file, decode it, and
+  /// attach its schema. Decode failures surface through the workspace onError.
+  Future<void> _selectDataSource() async {
+    final XFile? file = await openFile(
+      acceptedTypeGroups: const <XTypeGroup>[_dataSourceType],
+    );
+    if (file == null) return; // user cancelled
+    final JetDataSourceDocument doc =
+        JetDataSourceFile.decodeJson(await file.readAsString());
+    setState(() => _schema = doc.schema);
   }
 
   /// Cross-platform save: on web, download via the browser (file picking is
@@ -510,7 +545,8 @@ class _DesignerTabState extends State<_DesignerTab> {
     return JetReportWorkspace(
       controller: _controller,
       // Each sample brings its own data structure (invoice vs. customers).
-      dataSchema: widget.dataSchema,
+      // The Empty tab starts null and gets its schema via _selectDataSource.
+      dataSchema: _schema,
       // The SAME host-font list reaches the designer picker/canvas here and the
       // engine via renderReport below (FR-012).
       fonts: widget.fonts,
@@ -523,6 +559,8 @@ class _DesignerTabState extends State<_DesignerTab> {
       renderReport: widget.renderReport,
       onSaveRequested: widget.enableFileIo ? _save : null,
       onOpenRequested: widget.enableFileIo ? _open : null,
+      onSelectDataSchema:
+          widget.enableSelectDataSource ? _selectDataSource : null,
       onExportPdf: _exportPdf,
       onPrint: (RenderedReport report) =>
           const JetReportPrinter().printReport(report),
