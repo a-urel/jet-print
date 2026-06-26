@@ -59,6 +59,7 @@ class ShapeElement extends ReportElement {
     this.style = JetBoxStyle.none,
     this.flipDiagonal = false,
     this.unknownForm,
+    super.name,
   });
 
   /// The form this shape draws.
@@ -87,6 +88,7 @@ class ShapeElement extends ReportElement {
     JetBoxStyle? style,
     bool? flipDiagonal,
     bool clearUnknownForm = false,
+    String? name,
   }) =>
       ShapeElement(
         id: id,
@@ -95,6 +97,7 @@ class ShapeElement extends ReportElement {
         style: style ?? this.style,
         flipDiagonal: flipDiagonal ?? this.flipDiagonal,
         unknownForm: clearUnknownForm ? null : unknownForm,
+        name: name ?? this.name,
       );
 
   @override
@@ -108,6 +111,18 @@ class ShapeElement extends ReportElement {
         style: style,
         flipDiagonal: flipDiagonal,
         unknownForm: unknownForm,
+        name: name,
+      );
+
+  @override
+  ShapeElement withName(String? name) => ShapeElement(
+        id: id,
+        bounds: bounds,
+        kind: kind,
+        style: style,
+        flipDiagonal: flipDiagonal,
+        unknownForm: unknownForm,
+        name: name,
       );
 
   @override
@@ -118,11 +133,12 @@ class ShapeElement extends ReportElement {
       other.kind == kind &&
       other.style == style &&
       other.flipDiagonal == flipDiagonal &&
-      other.unknownForm == unknownForm;
+      other.unknownForm == unknownForm &&
+      other.name == name;
 
   @override
   int get hashCode =>
-      Object.hash(id, bounds, kind, style, flipDiagonal, unknownForm);
+      Object.hash(id, bounds, kind, style, flipDiagonal, unknownForm, name);
 
   @override
   String toString() => unknownForm == null

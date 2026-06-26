@@ -31,6 +31,9 @@ class StarElement extends ReportElement {
   StarElement withBounds(JetRect bounds) =>
       StarElement(id: id, bounds: bounds, points: points);
   @override
+  StarElement withName(String? name) =>
+      StarElement(id: id, bounds: bounds, points: points);
+  @override
   bool operator ==(Object other) =>
       other is StarElement &&
       other.id == id &&

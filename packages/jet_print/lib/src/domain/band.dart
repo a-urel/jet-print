@@ -26,6 +26,7 @@ class Band {
     required this.height,
     this.elements = const <ReportElement>[],
     this.columnLayout,
+    this.name,
   });
 
   /// Stable identity (selection + lifecycle are no longer index-based).
@@ -45,6 +46,10 @@ class Band {
   /// the band out as a multi-column label grid (spec 034). Null elsewhere.
   final ColumnLayout? columnLayout;
 
+  /// Optional human-facing display name; when null/blank the Outline and
+  /// Properties show the localized [bandTypeLabel]. Unconstrained.
+  final String? name;
+
   /// Returns a copy with the given fields replaced.
   Band copyWith({
     String? id,
@@ -52,6 +57,7 @@ class Band {
     double? height,
     List<ReportElement>? elements,
     ColumnLayout? columnLayout,
+    String? name,
   }) =>
       Band(
         id: id ?? this.id,
@@ -59,6 +65,7 @@ class Band {
         height: height ?? this.height,
         elements: elements ?? this.elements,
         columnLayout: columnLayout ?? this.columnLayout,
+        name: name ?? this.name,
       );
 
   @override
@@ -68,11 +75,12 @@ class Band {
       other.type == type &&
       other.height == height &&
       listEquals(other.elements, elements) &&
-      other.columnLayout == columnLayout;
+      other.columnLayout == columnLayout &&
+      other.name == name;
 
   @override
   int get hashCode =>
-      Object.hash(id, type, height, Object.hashAll(elements), columnLayout);
+      Object.hash(id, type, height, Object.hashAll(elements), columnLayout, name);
 
   @override
   String toString() => 'Band($id, ${type.name}, ${height}pt, '

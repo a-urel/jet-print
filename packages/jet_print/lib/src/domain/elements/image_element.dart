@@ -13,6 +13,7 @@ class ImageElement extends ReportElement {
     required super.bounds,
     required this.source,
     this.fit = JetBoxFit.contain,
+    super.name,
   });
 
   /// Where the image comes from.
@@ -26,7 +27,11 @@ class ImageElement extends ReportElement {
 
   @override
   ImageElement withBounds(JetRect bounds) =>
-      ImageElement(id: id, bounds: bounds, source: source, fit: fit);
+      ImageElement(id: id, bounds: bounds, source: source, fit: fit, name: name);
+
+  @override
+  ImageElement withName(String? name) =>
+      ImageElement(id: id, bounds: bounds, source: source, fit: fit, name: name);
 
   @override
   bool operator ==(Object other) =>
@@ -34,10 +39,11 @@ class ImageElement extends ReportElement {
       other.id == id &&
       other.bounds == bounds &&
       other.source == source &&
-      other.fit == fit;
+      other.fit == fit &&
+      other.name == name;
 
   @override
-  int get hashCode => Object.hash(id, bounds, source, fit);
+  int get hashCode => Object.hash(id, bounds, source, fit, name);
 
   @override
   String toString() => 'ImageElement($id, ${fit.name})';

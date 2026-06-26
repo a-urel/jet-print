@@ -63,5 +63,12 @@ void main() {
           band.copyWith(type: BandType.groupHeader).type, BandType.groupHeader);
       expect(band.copyWith().id, 'b');
     });
+
+    test('Band carries an optional name (default null)', () {
+      const Band b = Band(id: 'b1', type: BandType.detail, height: 20);
+      expect(b.name, isNull);
+      expect(b.copyWith(name: 'Lines').name, 'Lines');
+      expect(b.copyWith(name: 'Lines') == b, isFalse);
+    });
   });
 }

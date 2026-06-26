@@ -17,6 +17,7 @@ class UnknownElement extends ReportElement {
       : super(
           id: rawJson['id'] is String ? rawJson['id']! as String : '',
           bounds: _readBounds(rawJson['bounds']),
+          name: rawJson['name'] is String ? rawJson['name']! as String : null,
         );
 
   @override
@@ -34,6 +35,12 @@ class UnknownElement extends ReportElement {
   /// unrecognized element is intentionally inert rather than lossy.
   @override
   UnknownElement withBounds(JetRect bounds) => this;
+
+  /// A no-op: an unknown element's preserved JSON is never rewritten, so it
+  /// round-trips byte-for-byte (Constitution V). Renaming an unrecognized
+  /// element is intentionally inert rather than lossy.
+  @override
+  UnknownElement withName(String? name) => this;
 
   @override
   String toString() => 'UnknownElement($typeKey)';

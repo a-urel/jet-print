@@ -19,6 +19,7 @@ class TextElement extends ReportElement {
     this.style = JetTextStyle.fallback,
     this.expression,
     this.format,
+    super.name,
   });
 
   /// The literal text to render (the resolved value after Fill, or the authored
@@ -40,7 +41,8 @@ class TextElement extends ReportElement {
 
   /// Returns a copy with the given fields replaced; all others (incl.
   /// [expression] and [format]) are preserved (FR-019 / FR-025 / 013).
-  TextElement copyWith({String? text, JetTextStyle? style, JetRect? bounds}) =>
+  TextElement copyWith(
+          {String? text, JetTextStyle? style, JetRect? bounds, String? name}) =>
       TextElement(
         id: id,
         bounds: bounds ?? this.bounds,
@@ -48,10 +50,22 @@ class TextElement extends ReportElement {
         style: style ?? this.style,
         expression: expression,
         format: format,
+        name: name ?? this.name,
       );
 
   @override
   TextElement withBounds(JetRect bounds) => copyWith(bounds: bounds);
+
+  @override
+  TextElement withName(String? name) => TextElement(
+        id: id,
+        bounds: bounds,
+        text: text,
+        style: style,
+        expression: expression,
+        format: format,
+        name: name,
+      );
 
   @override
   bool operator ==(Object other) =>
@@ -61,10 +75,12 @@ class TextElement extends ReportElement {
       other.text == text &&
       other.style == style &&
       other.expression == expression &&
-      other.format == format;
+      other.format == format &&
+      other.name == name;
 
   @override
-  int get hashCode => Object.hash(id, bounds, text, style, expression, format);
+  int get hashCode =>
+      Object.hash(id, bounds, text, style, expression, format, name);
 
   @override
   String toString() => 'TextElement($id, "$text"'

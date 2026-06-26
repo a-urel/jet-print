@@ -60,6 +60,7 @@ class BarcodeElement extends ReportElement {
     this.showText = true,
     this.quietZone = true,
     this.eccLevel = QrErrorCorrectionLevel.m,
+    super.name,
   });
 
   /// The barcode encoding (or [BarcodeSymbology.auto]).
@@ -100,6 +101,7 @@ class BarcodeElement extends ReportElement {
     bool? showText,
     bool? quietZone,
     QrErrorCorrectionLevel? eccLevel,
+    String? name,
   }) =>
       BarcodeElement(
         id: id,
@@ -111,10 +113,25 @@ class BarcodeElement extends ReportElement {
         showText: showText ?? this.showText,
         quietZone: quietZone ?? this.quietZone,
         eccLevel: eccLevel ?? this.eccLevel,
+        name: name ?? this.name,
       );
 
   @override
   BarcodeElement withBounds(JetRect bounds) => copyWith(bounds: bounds);
+
+  @override
+  BarcodeElement withName(String? name) => BarcodeElement(
+        id: id,
+        bounds: bounds,
+        symbology: symbology,
+        data: data,
+        dataField: dataField,
+        color: color,
+        showText: showText,
+        quietZone: quietZone,
+        eccLevel: eccLevel,
+        name: name,
+      );
 
   @override
   bool operator ==(Object other) =>
@@ -127,11 +144,12 @@ class BarcodeElement extends ReportElement {
       other.color == color &&
       other.showText == showText &&
       other.quietZone == quietZone &&
-      other.eccLevel == eccLevel;
+      other.eccLevel == eccLevel &&
+      other.name == name;
 
   @override
   int get hashCode => Object.hash(id, bounds, symbology, data, dataField, color,
-      showText, quietZone, eccLevel);
+      showText, quietZone, eccLevel, name);
 
   @override
   String toString() => 'BarcodeElement($id, ${symbology.name})';
