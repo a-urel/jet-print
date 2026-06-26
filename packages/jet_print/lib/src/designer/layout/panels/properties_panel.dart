@@ -2804,7 +2804,7 @@ class _UnresolvedHint extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 6),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
           Icon(LucideIcons.triangleAlert, size: 13, color: color),
           const SizedBox(width: 6),

@@ -132,7 +132,7 @@ String _labelFor(JetFieldType type) => switch (type) {
       JetFieldType.double => 'Decimal',
       JetFieldType.boolean => 'Boolean',
       JetFieldType.dateTime => 'DateTime',
-      JetFieldType.collection => 'Collection',
+      JetFieldType.collection => 'List',
       JetFieldType.unknown => '',
     };
 
@@ -265,14 +265,11 @@ class _CollectionActions extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Draggable<FieldDragData>(
-          key: ValueKey<String>(
-              'jet_print.designer.datasource.dragList.${field.name}'),
-          data: FieldDragData(fieldName: field.name, isCollection: true),
-          dragAnchorStrategy: pointerDragAnchorStrategy,
-          feedback: _FieldDragChip(name: field.name, theme: theme),
-          child: Icon(LucideIcons.gripVertical,
-              size: 13, color: colors.mutedForeground),
+        // The collection's type token, matching the trailing token on scalar
+        // leaf rows ([_FieldRow]) so a list reads as a typed field too.
+        Text(
+          _labelFor(JetFieldType.collection),
+          style: theme.textTheme.muted.copyWith(fontSize: 11),
         ),
         const SizedBox(width: 6),
         Semantics(
