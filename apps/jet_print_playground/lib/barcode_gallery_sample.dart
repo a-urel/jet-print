@@ -90,13 +90,13 @@ const double _qrStride = 118;
 const double _qrSize = 96;
 
 /// Top of the first 1D cell row.
-const double _oneDTop = 40;
+const double _oneDTop = 16;
 
 /// Top of the QR section heading (below the four 1D rows).
-const double _qrHeadingTop = 386;
+const double _qrHeadingTop = 362;
 
 /// Top of the first QR cell row.
-const double _qrTop = 406;
+const double _qrTop = 382;
 
 /// The gallery needs no real fields — every value is a literal — so the schema
 /// is empty. A single empty row drives the one render of the detail band.
@@ -183,18 +183,11 @@ ReportDefinition barcodeGalleryDefinition() => ReportDefinition(
             BandNode(Band(
               id: 'gallery',
               type: BandType.detail,
-              height: 762,
+              height: 738,
               elements: <ReportElement>[
                 TextElement(
-                  id: 'heading',
-                  bounds: const JetRect(x: 0, y: 0, width: 538, height: 20),
-                  text: 'Newly supported barcode symbologies',
-                  style: const JetTextStyle(
-                      fontSize: 15, weight: JetFontWeight.bold),
-                ),
-                TextElement(
                   id: 'sub1',
-                  bounds: const JetRect(x: 0, y: 24, width: 538, height: 12),
+                  bounds: const JetRect(x: 0, y: 0, width: 538, height: 12),
                   text: '1D symbologies',
                   style: const JetTextStyle(
                       fontSize: 10, color: JetColor(0xFF666666)),

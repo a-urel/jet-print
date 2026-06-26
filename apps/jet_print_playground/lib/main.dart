@@ -283,7 +283,7 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
       l10n.tabInvoice,
       l10n.tabLabel,
       l10n.tabBarcode,
-      'Symbology gallery',
+      'Symbologies',
       l10n.tabPackingSlip,
       l10n.tabPayroll,
       l10n.tabList,
