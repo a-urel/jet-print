@@ -55,6 +55,38 @@ void main() {
         greaterThanOrEqualTo(low.symbol.modules.length));
   });
 
+  // Cheap-add 1D symbologies (encoder already in the `barcode` package): each
+  // encodes its sample value to in-bounds bars, classifies as 1D, and rejects
+  // a value that is invalid for it.
+  final newOneD = <BarcodeSymbology, (String good, String bad)>{
+    BarcodeSymbology.code93: ('CODE-93', ''),
+    BarcodeSymbology.codabar: ('1234567', 'XYZ'),
+    BarcodeSymbology.ean2: ('12', '123'),
+    BarcodeSymbology.ean5: ('12345', '12'),
+    BarcodeSymbology.gs128: ('(01)00012345678905', 'café'),
+    BarcodeSymbology.itf: ('1234', '12345'),
+    BarcodeSymbology.postnet: ('55555', 'ABC'),
+    BarcodeSymbology.upcE: ('01234565', 'ABCDEFGH'),
+  };
+  for (final entry in newOneD.entries) {
+    final s = entry.key;
+    final (good, bad) = entry.value;
+    test('$s encodes "$good" as in-bounds 1D bars', () {
+      final r = ok(enc.encode(s, good, width: 220, height: 80));
+      expect(r.resolvedSymbology, s);
+      expect(r.symbol.isTwoD, isFalse, reason: '$s should be 1D');
+      expect(r.symbol.modules, isNotEmpty, reason: '$s has no modules');
+      for (final m in r.symbol.modules) {
+        expect(m.left >= -0.001 && m.left + m.width <= 220.001, isTrue,
+            reason: '$s bar out of bounds: ${m.left}..${m.left + m.width}');
+      }
+    });
+    test('$s rejects "$bad"', () {
+      expect(enc.encode(s, bad, width: 220, height: 80),
+          isA<BarcodeInvalid>(), reason: '$s should reject "$bad"');
+    });
+  }
+
   test('DataMatrix / PDF417 / Aztec encode and all modules fit in space', () {
     for (final s in <BarcodeSymbology>[
       BarcodeSymbology.dataMatrix,

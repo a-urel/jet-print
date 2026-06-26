@@ -112,6 +112,22 @@ class PackageBarcodeEncoder implements BarcodeEncoder {
         return bc.Barcode.upcA();
       case BarcodeSymbology.itf14:
         return bc.Barcode.itf14();
+      case BarcodeSymbology.code93:
+        return bc.Barcode.code93();
+      case BarcodeSymbology.codabar:
+        return bc.Barcode.codabar();
+      case BarcodeSymbology.itf:
+        return bc.Barcode.itf();
+      case BarcodeSymbology.gs128:
+        return bc.Barcode.gs128();
+      case BarcodeSymbology.upcE:
+        return bc.Barcode.upcE();
+      case BarcodeSymbology.ean2:
+        return bc.Barcode.ean2();
+      case BarcodeSymbology.ean5:
+        return bc.Barcode.ean5();
+      case BarcodeSymbology.postnet:
+        return bc.Barcode.postnet();
       case BarcodeSymbology.dataMatrix:
         return bc.Barcode.dataMatrix();
       case BarcodeSymbology.pdf417:

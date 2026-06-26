@@ -46,6 +46,14 @@ String barcodeAutoFix(BarcodeSymbology concrete, String value) {
     case BarcodeSymbology.qrCode:
     case BarcodeSymbology.code128:
     case BarcodeSymbology.code39:
+    case BarcodeSymbology.code93:
+    case BarcodeSymbology.codabar:
+    case BarcodeSymbology.itf:
+    case BarcodeSymbology.gs128:
+    case BarcodeSymbology.upcE:
+    case BarcodeSymbology.ean2:
+    case BarcodeSymbology.ean5:
+    case BarcodeSymbology.postnet:
     case BarcodeSymbology.dataMatrix:
     case BarcodeSymbology.pdf417:
     case BarcodeSymbology.aztec:

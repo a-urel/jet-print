@@ -32,6 +32,30 @@ enum BarcodeSymbology {
   /// 1D ITF-14 (interleaved 2-of-5, shipping containers).
   itf14,
 
+  /// 1D Code 93 (alphanumeric, denser than Code 39).
+  code93,
+
+  /// 1D Codabar (numeric + a few symbols; pass digits, start/stop added).
+  codabar,
+
+  /// 1D Interleaved 2-of-5 (generic; requires an even digit count).
+  itf,
+
+  /// 1D GS1-128 / EAN-128 (Code 128 with GS1 Application Identifiers).
+  gs128,
+
+  /// 1D UPC-E (compressed UPC; covers UPC-E0 and UPC-E1).
+  upcE,
+
+  /// 1D EAN/UPC 2-digit supplemental add-on.
+  ean2,
+
+  /// 1D EAN/UPC 5-digit supplemental add-on.
+  ean5,
+
+  /// 1D POSTNET (USPS postal routing).
+  postnet,
+
   /// 2D Data Matrix.
   dataMatrix,
 
