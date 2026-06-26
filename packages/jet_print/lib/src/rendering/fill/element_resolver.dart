@@ -9,6 +9,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import '../../data/data_row.dart';
+import '../../domain/bool_property.dart';
 import '../../domain/elements/barcode_element.dart';
 import '../../domain/elements/image_element.dart';
 import '../../domain/elements/image_source.dart';
@@ -22,6 +23,7 @@ import '../../expression/value.dart';
 import 'diagnostic_budget.dart';
 import 'fill_eval_context.dart';
 import 'report_diagnostics.dart';
+import 'visibility.dart';
 
 /// Resolves elements against a row + variables, recording diagnostics.
 class ElementResolver {
@@ -67,6 +69,31 @@ class ElementResolver {
   /// Image elements already diagnosed for a URL-only source, so a band that
   /// repeats per row warns once per element, not once per instance.
   final Set<String> _warnedUrlImages = <String>{};
+
+  /// Whether [element] is visible for this row (FR — visible property). Builds
+  /// the same evaluation context a text expression sees; fail-safe to visible.
+  bool isVisible(
+    ReportElement element, {
+    DataRow? row,
+    Map<String, Object?> params = const <String, Object?>{},
+    Map<String, JetValue> variables = const <String, JetValue>{},
+  }) {
+    if (element.visible == const BoolProperty()) return true; // fast path
+    final Set<String> pageRefs = <String>{};
+    final FillEvalContext ctx = FillEvalContext(
+      row: row,
+      params: params,
+      variables: variables,
+      functions: functions,
+      diagnostics: diagnostics,
+      warnedFields: warnedFields,
+      pageRefs: pageRefs,
+      elementId: element.id,
+      budget: budget,
+    );
+    return resolveVisibility(element.visible, ctx, diagnostics,
+        id: element.id, pageRefs: pageRefs);
+  }
 
   /// Returns the resolved copy of [element].
   ReportElement resolve(

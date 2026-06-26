@@ -11,6 +11,7 @@ import '../../data/data_set.dart';
 import '../../data/field_def.dart';
 import '../../data/jet_data_source.dart';
 import '../../domain/band.dart';
+import '../../domain/bool_property.dart';
 import '../../domain/detail_scope.dart';
 import '../../domain/group_level.dart';
 import '../../domain/report_definition.dart';
@@ -34,6 +35,7 @@ import 'element_resolver.dart';
 import 'fill_eval_context.dart';
 import 'filled_report.dart';
 import 'report_diagnostics.dart';
+import 'visibility.dart';
 
 /// The result of a fill: the resolved [report] and the collected [diagnostics].
 class FillResult {
@@ -234,12 +236,33 @@ class ReportFiller {
 
     void addBand(Band band, DataRow? row, Map<String, JetValue> vars,
         {String? group}) {
+      // Band-level visibility gate: skip entirely (collapse) when invisible.
+      if (band.visible != const BoolProperty()) {
+        final Set<String> pageRefs = <String>{};
+        final FillEvalContext ctx = FillEvalContext(
+          row: row,
+          params: params,
+          variables: vars,
+          functions: _functions,
+          diagnostics: diagnostics,
+          warnedFields: warnedFields,
+          pageRefs: pageRefs,
+          elementId: band.id,
+          budget: budget,
+        );
+        if (!resolveVisibility(band.visible, ctx, diagnostics,
+            id: band.id, pageRefs: pageRefs)) {
+          return;
+        }
+      }
       bands.add(FilledBand(
         type: band.type,
         height: band.height,
         elements: <ReportElement>[
           for (final ReportElement e in band.elements)
-            resolver.resolve(e, row: row, params: params, variables: vars),
+            if (resolver.isVisible(e,
+                row: row, params: params, variables: vars))
+              resolver.resolve(e, row: row, params: params, variables: vars),
         ],
         variables: vars,
         group: group,
