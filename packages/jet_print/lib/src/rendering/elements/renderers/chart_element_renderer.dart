@@ -97,7 +97,7 @@ class ChartElementRenderer extends ElementRenderer<ChartElement> {
     // chart-glyph placeholder instead of a blank box (render-don't-crash), the
     // same affordance the source-less image element gives.
     if (el.points.isEmpty) {
-      emitChartPlaceholder(out, plot, elementId: el.id);
+      emitChartPlaceholder(out, plot, el.chartType, elementId: el.id);
       return;
     }
 

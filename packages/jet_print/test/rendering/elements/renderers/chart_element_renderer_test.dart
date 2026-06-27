@@ -61,27 +61,54 @@ void main() {
         greaterThanOrEqualTo(3));
   });
 
-  test('empty series draws a placeholder glyph (outline + bars), no throw', () {
+  List<FramePrimitive> placeholderPrims(ChartType type) {
     final FrameBuilder out = FrameBuilder(PageFormat.a4Portrait);
     renderer.emit(
-        const ChartElement(
+        ChartElement(
             id: 'e',
             bounds: bounds,
-            chartType: ChartType.bar,
+            chartType: type,
             collectionField: 'm',
             valueExpression: r'$F{v}'),
         ctx,
         bounds,
         out);
-    final List<FramePrimitive> prims = out.build().primitives;
-    // Placeholder = a full-bounds outline rect + three filled glyph bars + a
-    // baseline line — all tagged with the element id. (No data → no real chart.)
+    return out.build().primitives;
+  }
+
+  test('empty bar chart draws a bars glyph placeholder, no throw', () {
+    final List<FramePrimitive> prims = placeholderPrims(ChartType.bar);
+    // outline rect + 3 filled glyph bars + a baseline line. (No data → no chart.)
     final Iterable<RectPrimitive> rects =
         prims.whereType<RectPrimitive>().where((r) => r.elementId == 'e');
     expect(rects.length, greaterThanOrEqualTo(4)); // outline + 3 bars
     expect(rects.where((r) => r.fill != null).length, greaterThanOrEqualTo(3));
     expect(prims.whereType<LinePrimitive>().where((l) => l.elementId == 'e'),
         isNotEmpty);
+  });
+
+  test('empty line chart draws a polyline glyph placeholder', () {
+    final List<FramePrimitive> prims = placeholderPrims(ChartType.line);
+    // The polyline is a PathPrimitive; no filled bars (distinguishes from bar).
+    expect(prims.whereType<PathPrimitive>().where((p) => p.elementId == 'e'),
+        isNotEmpty);
+    final Iterable<RectPrimitive> filled = prims
+        .whereType<RectPrimitive>()
+        .where((r) => r.elementId == 'e' && r.fill != null);
+    expect(filled, isEmpty); // only the outline rect (stroke), no glyph bars
+  });
+
+  test('empty pie chart draws a sliced-circle glyph placeholder', () {
+    final List<FramePrimitive> prims = placeholderPrims(ChartType.pie);
+    // Ring is a PathPrimitive; two slice-divider LinePrimitives from the centre.
+    expect(prims.whereType<PathPrimitive>().where((p) => p.elementId == 'e'),
+        isNotEmpty);
+    expect(
+        prims
+            .whereType<LinePrimitive>()
+            .where((l) => l.elementId == 'e')
+            .length,
+        greaterThanOrEqualTo(2));
   });
 
   test('pie: showValueLabels emits extra TextRunPrimitives vs without', () {
