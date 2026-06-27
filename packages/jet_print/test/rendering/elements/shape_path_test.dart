@@ -41,6 +41,7 @@ const Map<ShapeKind, int> _vertexCount = <ShapeKind, int>{
   ShapeKind.arrowDown: 7,
   ShapeKind.arrowDouble: 10,
   ShapeKind.chevron: 6,
+  ShapeKind.roundRect: 4 * (kCornerSegments + 1),
 };
 
 void main() {
@@ -197,6 +198,23 @@ void main() {
           p.any((JetOffset v) =>
               (v.dx - right).abs() < eps && (v.dy - cy).abs() < eps),
           isTrue);
+    });
+  });
+
+  group('roundRect corners', () {
+    test('all vertices lie inside the bounds box', () {
+      final List<JetOffset> p = _points(shapePath(ShapeKind.roundRect, bounds));
+      for (final JetOffset v in p) {
+        expect(v.dx, inInclusiveRange(left - eps, right + eps));
+        expect(v.dy, inInclusiveRange(top - eps, bottom + eps));
+      }
+    });
+    test('radius clamps on a thin box (no overshoot)', () {
+      const JetRect thin = JetRect(x: 0, y: 0, width: 100, height: 4);
+      final List<JetOffset> p = _points(shapePath(ShapeKind.roundRect, thin));
+      for (final JetOffset v in p) {
+        expect(v.dy, inInclusiveRange(-eps, 4 + eps));
+      }
     });
   });
 

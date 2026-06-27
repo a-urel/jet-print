@@ -33,6 +33,16 @@ const double kArrowHeadRatio = 0.45;
 /// the chevron points right).
 const double kChevronThicknessRatio = 0.50;
 
+/// Rounded-rect corner radius as a fraction of the box's shorter side. Clamped
+/// so the radius never exceeds half the shorter side (a fully-rounded "stadium"
+/// at the limit, never an overshoot).
+const double kRoundRectRadiusRatio = 0.20;
+
+/// Straight segments approximating each quarter-circle corner of a [roundRect].
+/// 8 is visually smooth at report point sizes while reusing the LineTo replay,
+/// so no curve primitive is needed (same rationale as [kEllipseSegments]).
+const int kCornerSegments = 8;
+
 /// The straight angle quarter turn that puts a regular polygon's first vertex at
 /// the top centre (a "point-up" orientation): screen `y` grows downward, so the
 /// top is at angle −90°.
@@ -177,13 +187,7 @@ List<PathCommand> shapePath(ShapeKind kind, JetRect bounds) {
           JetOffset(left + t, top),
         ];
       }(),
-    // roundRect geometry is added in Task 3; this stub keeps the switch
-    // exhaustive until then. It must not be reached in production: the renderer
-    // will route roundRect through its own path once Task 3 lands.
-    ShapeKind.roundRect => <JetOffset>[
-        JetOffset(bounds.x, bounds.y),
-        JetOffset(bounds.x + bounds.width, bounds.y + bounds.height),
-      ],
+    ShapeKind.roundRect => _roundRect(bounds),
     // line/rectangle are special-cased by the renderer and never reach here.
     ShapeKind.line || ShapeKind.rectangle => <JetOffset>[
         JetOffset(bounds.x, bounds.y),
@@ -215,6 +219,39 @@ List<JetOffset> _regularPolygon(
         cx + rx * math.cos(startAngle + i * step),
         cy + ry * math.sin(startAngle + i * step),
       ),
+  ];
+}
+
+/// The closed corner-fan polygon for a rounded rectangle inscribed in [bounds].
+///
+/// Each of the four corners is a quarter-circle of [kCornerSegments] `+1`
+/// sampled points; the straight edges are the `LineTo`s between adjacent
+/// corners. Radius is clamped to half the shorter side so a thin box collapses
+/// to a valid (non-overshooting) path rather than self-intersecting.
+List<JetOffset> _roundRect(JetRect bounds) {
+  final double left = bounds.x;
+  final double top = bounds.y;
+  final double right = bounds.x + bounds.width;
+  final double bottom = bounds.y + bounds.height;
+  final double shorter = math.min(bounds.width, bounds.height);
+  final double r = math.min(kRoundRectRadiusRatio * shorter, shorter / 2);
+
+  // Corner arc centres and start angles (screen y grows downward, angles sweep
+  // +90° clockwise). Order TL→TR→BR→BL yields a clockwise outline whose corner
+  // ends meet the straight edges exactly.
+  List<JetOffset> arc(double ccx, double ccy, double startAngle) => <JetOffset>[
+        for (int i = 0; i <= kCornerSegments; i++)
+          () {
+            final double a = startAngle + (math.pi / 2) * (i / kCornerSegments);
+            return JetOffset(ccx + r * math.cos(a), ccy + r * math.sin(a));
+          }(),
+      ];
+
+  return <JetOffset>[
+    ...arc(left + r, top + r, math.pi), // TL: 180°→270°
+    ...arc(right - r, top + r, math.pi * 1.5), // TR: 270°→360°
+    ...arc(right - r, bottom - r, 0), // BR: 0°→90°
+    ...arc(left + r, bottom - r, math.pi / 2), // BL: 90°→180°
   ];
 }
 
