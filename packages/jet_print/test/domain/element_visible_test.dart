@@ -1,13 +1,13 @@
 // test/domain/element_visible_test.dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/domain/bool_property.dart';
-import 'package:jet_print/src/domain/geometry.dart';
-import 'package:jet_print/src/domain/report_element.dart';
-import 'package:jet_print/src/domain/elements/text_element.dart';
-import 'package:jet_print/src/domain/elements/shape_element.dart';
+import 'package:jet_print/src/domain/elements/barcode_element.dart';
 import 'package:jet_print/src/domain/elements/image_element.dart';
 import 'package:jet_print/src/domain/elements/image_source.dart';
-import 'package:jet_print/src/domain/elements/barcode_element.dart';
+import 'package:jet_print/src/domain/elements/shape_element.dart';
+import 'package:jet_print/src/domain/elements/text_element.dart';
+import 'package:jet_print/src/domain/geometry.dart';
+import 'package:jet_print/src/domain/report_element.dart';
 
 const _b = JetRect(x: 0, y: 0, width: 10, height: 10);
 const _b2 = JetRect(x: 1, y: 1, width: 5, height: 5);
