@@ -698,11 +698,11 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
               // --- Title -------------------------------------------------------
               _LabeledRow(
                 label: l10n.propertiesChartTitle,
-                child: ShadInput(
-                  key: ValueKey<String>('$_p.field.chartTitle.$id'),
-                  initialValue: element.title ?? '',
-                  placeholder: Text(l10n.valueFieldHint),
-                  onChanged: (String v) => controller.setChartOptions(id,
+                child: _TextInput(
+                  fieldKey: ValueKey<String>('$_p.field.chartTitle.$id'),
+                  value: element.title ?? '',
+                  placeholder: l10n.valueFieldHint,
+                  onCommit: (String v) => controller.setChartOptions(id,
                       title: v.isEmpty ? null : v),
                 ),
               ),

@@ -977,12 +977,6 @@ abstract class JetPrintLocalizations {
   /// **'Barcode'**
   String get elementTypeBarcode;
 
-  /// Element type name (accessibility / outline) for a chart element.
-  ///
-  /// In en, this message translates to:
-  /// **'Chart'**
-  String get elementTypeChart;
-
   /// Element type name (accessibility / outline) fallback for an unknown element type.
   ///
   /// In en, this message translates to:
@@ -1188,24 +1182,45 @@ abstract class JetPrintLocalizations {
   String get shapeFormStar;
 
   /// Shape gallery thumbnail name: a right-pointing block arrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrow right'**
   String get shapeFormArrowRight;
 
   /// Shape gallery thumbnail name: a left-pointing block arrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrow left'**
   String get shapeFormArrowLeft;
 
   /// Shape gallery thumbnail name: an up-pointing block arrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrow up'**
   String get shapeFormArrowUp;
 
   /// Shape gallery thumbnail name: a down-pointing block arrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrow down'**
   String get shapeFormArrowDown;
 
   /// Shape gallery thumbnail name: a two-headed horizontal block arrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Double arrow'**
   String get shapeFormArrowDouble;
 
   /// Shape gallery thumbnail name: a right-pointing chevron band.
+  ///
+  /// In en, this message translates to:
+  /// **'Chevron'**
   String get shapeFormChevron;
 
   /// Shape gallery thumbnail name: a rectangle with rounded corners.
+  ///
+  /// In en, this message translates to:
+  /// **'Rounded rectangle'**
   String get shapeFormRoundRect;
 
   /// Properties panel section label for the text styling controls shown when a text element is selected (021).
@@ -1622,13 +1637,19 @@ abstract class JetPrintLocalizations {
   /// **'Auto → {symbology}'**
   String barcodeAutoInferred(String symbology);
 
+  /// Element type name (accessibility / outline) for a chart element.
+  ///
+  /// In en, this message translates to:
+  /// **'Chart'**
+  String get elementTypeChart;
+
   /// Properties panel section label for the chart-specific settings.
   ///
   /// In en, this message translates to:
   /// **'Chart'**
   String get propertiesChart;
 
-  /// Chart type picker label.
+  /// Chart properties: chart type picker label (Bar / Line / Pie).
   ///
   /// In en, this message translates to:
   /// **'Type'**
@@ -1652,49 +1673,49 @@ abstract class JetPrintLocalizations {
   /// **'Pie'**
   String get chartTypePie;
 
-  /// Chart collection field picker label.
+  /// Chart properties: the collection field the chart iterates to build its series.
   ///
   /// In en, this message translates to:
   /// **'Collection'**
   String get propertiesChartCollection;
 
-  /// Chart value expression field label.
+  /// Chart properties: the numeric field (or expression) plotted as the series value.
   ///
   /// In en, this message translates to:
   /// **'Value'**
   String get propertiesChartValue;
 
-  /// Chart category expression field label.
+  /// Chart properties: the field (or expression) used as the category / X-axis label.
   ///
   /// In en, this message translates to:
   /// **'Category'**
   String get propertiesChartCategory;
 
-  /// Chart title field label.
+  /// Chart properties: optional chart title rendered above the chart.
   ///
   /// In en, this message translates to:
   /// **'Title'**
   String get propertiesChartTitle;
 
-  /// Toggle: draw value axis and category labels.
+  /// Chart properties toggle: show/hide the chart axes.
   ///
   /// In en, this message translates to:
   /// **'Show axes'**
   String get propertiesChartShowAxes;
 
-  /// Toggle: draw value labels on each bar / slice.
+  /// Chart properties toggle: show/hide per-data-point value labels.
   ///
   /// In en, this message translates to:
   /// **'Value labels'**
   String get propertiesChartShowValueLabels;
 
-  /// Toggle: draw a legend swatch.
+  /// Chart properties toggle: show/hide the series legend.
   ///
   /// In en, this message translates to:
   /// **'Legend'**
   String get propertiesChartShowLegend;
 
-  /// Chart series color label.
+  /// Chart properties: series color picker.
   ///
   /// In en, this message translates to:
   /// **'Color'**
