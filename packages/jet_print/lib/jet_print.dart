@@ -107,6 +107,8 @@ export 'src/domain/styles/text_style.dart'
     show JetFontWeight, JetTextAlign, JetTextStyle;
 export 'src/domain/unknown_element.dart' show UnknownElement;
 export 'src/domain/value_type.dart' show JetFieldType;
+export 'src/expression/value.dart'
+    show JetValue, JetNull, JetBool, JetNumber, JetString, JetDate, JetError;
 // --- Print (012): present the system print dialog for the exported PDF —
 // the one sanctioned exception to the library's headlessness. The presenter
 // seam is injectable; unavailability is a structured exception. ---
@@ -117,6 +119,8 @@ export 'src/print/jet_report_printer.dart'
 // consumes the resulting [RenderedReport]. ---
 export 'src/rendering/engine/jet_report_engine.dart' show JetReportEngine;
 export 'src/rendering/engine/render_options.dart' show RenderOptions;
+export 'src/rendering/engine/element_print_callback.dart'
+    show ElementPrintContext, JetElementPrintCallback;
 export 'src/rendering/engine/rendered_report.dart'
     show RenderedPage, RenderedReport;
 // --- Export (012): turn the same RenderedReport the preview displays into
