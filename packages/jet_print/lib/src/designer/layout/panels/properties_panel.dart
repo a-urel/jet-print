@@ -2736,14 +2736,15 @@ class _FieldPicker extends StatelessWidget {
     final ShadColorScheme colors = ShadTheme.of(context).colorScheme;
     return ShadContextMenu(
       controller: controller,
+      // A single scrollable, searchable body rather than one raw item per field:
+      // ShadContextMenu lays its items in a non-scrolling Column, so a long
+      // schema would overflow off-screen with no way to reach the lower fields.
       items: <Widget>[
-        for (final FieldDef field in fields)
-          ShadContextMenuItem(
-            key: ValueKey<String>('$keyPrefix.${field.name}'),
-            leading: Icon(fieldTypeGlyph(field.type), size: 16),
-            onPressed: () => onPick(field.name),
-            child: Text(field.name),
-          ),
+        _FieldPickerMenu(
+          fields: fields,
+          keyPrefix: keyPrefix,
+          onPick: onPick,
+        ),
       ],
       child: Semantics(
         label: tooltip,
@@ -2758,6 +2759,88 @@ class _FieldPicker extends StatelessWidget {
             color: colors.mutedForeground,
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// The scrollable, searchable body of the field picker. A search box filters the
+/// fields by a case-insensitive substring match on the name, and the matches sit
+/// in a height-capped scroll view so a large schema stays reachable. Each match
+/// keeps the `$keyPrefix.$name` key the flat menu used, so its stable test seam
+/// (and the field-type glyph) is unchanged.
+class _FieldPickerMenu extends StatefulWidget {
+  const _FieldPickerMenu({
+    required this.fields,
+    required this.keyPrefix,
+    required this.onPick,
+  });
+
+  final List<FieldDef> fields;
+  final String keyPrefix;
+  final ValueChanged<String> onPick;
+
+  @override
+  State<_FieldPickerMenu> createState() => _FieldPickerMenuState();
+}
+
+class _FieldPickerMenuState extends State<_FieldPickerMenu> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final ShadColorScheme colors = ShadTheme.of(context).colorScheme;
+    final String q = _query.trim().toLowerCase();
+    final List<FieldDef> matches = q.isEmpty
+        ? widget.fields
+        : <FieldDef>[
+            for (final FieldDef f in widget.fields)
+              if (f.name.toLowerCase().contains(q)) f,
+          ];
+    return SizedBox(
+      width: 240,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 2, 4, 6),
+            child: ShadInput(
+              key: ValueKey<String>('${widget.keyPrefix}.search'),
+              autofocus: true,
+              placeholder: const Text('Search fields'),
+              onChanged: (String v) => setState(() => _query = v),
+            ),
+          ),
+          if (matches.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              child: Text(
+                'No matching fields',
+                style: TextStyle(fontSize: 13, color: colors.mutedForeground),
+              ),
+            )
+          else
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 280),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    for (final FieldDef field in matches)
+                      ShadContextMenuItem(
+                        key: ValueKey<String>(
+                            '${widget.keyPrefix}.${field.name}'),
+                        leading: Icon(fieldTypeGlyph(field.type), size: 16),
+                        onPressed: () => widget.onPick(field.name),
+                        child: Text(field.name),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

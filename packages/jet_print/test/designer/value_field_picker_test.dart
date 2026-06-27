@@ -109,6 +109,32 @@ void main() {
     );
   });
 
+  testWidgets('a search box filters the listed fields by name', (
+    WidgetTester tester,
+  ) async {
+    final JetReportDesignerController c =
+        await pumpDesignerWith(tester, dataSchema: _schema);
+    await _selectedText(tester, c);
+
+    await tester.tap(find.byKey(_pickKey));
+    await tester.pumpAndSettle();
+
+    // Both scalars listed before typing.
+    expect(_pickItem('customerName'), findsOneWidget);
+    expect(_pickItem('total'), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const ValueKey<String>(
+          'jet_print.designer.properties.field.value.pick.search')),
+      'cust',
+    );
+    await tester.pumpAndSettle();
+
+    // Only the matching field survives the filter.
+    expect(_pickItem('customerName'), findsOneWidget);
+    expect(_pickItem('total'), findsNothing);
+  });
+
   testWidgets('choosing a field binds the element as a single undoable edit',
       (WidgetTester tester) async {
     final JetReportDesignerController c =
