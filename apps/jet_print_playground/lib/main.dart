@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/foundation.dart'
     show kIsWeb, defaultTargetPlatform, TargetPlatform;
-import 'package:flutter/material.dart' show ThemeMode;
+import 'package:flutter/material.dart' show ThemeMode, Scaffold, Drawer;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:jet_print/jet_print.dart';
@@ -15,6 +15,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'barcode_gallery_sample.dart';
 import 'barcode_sample.dart';
 import 'custom_onprint_sample.dart';
+import 'demo_nav_list.dart';
 import 'invoice_sample.dart';
 import 'l10n/app_localizations.dart';
 import 'label_sample.dart';
@@ -137,17 +138,14 @@ class _JetPrintPlaygroundAppState extends State<JetPrintPlaygroundApp> {
   }
 }
 
-/// The playground shell: a `scrollable` [ShadTabs] strip used as a pure
-/// selector, driving a structurally-stable [IndexedStack] that hosts all the
-/// live-designer demo bodies at once. Only the shown index changes on a switch,
-/// so no designer is ever remounted — edits survive.
-///
-/// The app-global theme/language cluster switches the WHOLE app, not any single
-/// report, so it rides beside the strip. The two are laid out by width: at
-/// desktop/tablet widths the strip fills and the cluster is overlaid at its
-/// (roomy) right end; on a phone the cluster moves to a compact row ABOVE the
-/// full-width strip, so it never overlays — and hides — the strip's right-hand
-/// demo tabs (an iOS-Simulator smoke caught that occlusion).
+/// The playground shell: a [Scaffold] whose body is a [LayoutBuilder] that
+/// switches layout at [_PlaygroundHomeState._narrowWidth]. The nav pane — a
+/// [DemoNavList] for demo selection with the theme/locale toggles pinned at its
+/// bottom — renders as a persistent fixed sidebar on wide screens (no top bar
+/// over the body) and moves into a [Drawer] opened by a hamburger button on
+/// narrow screens. Either way, demo bodies live in a structurally-stable
+/// [IndexedStack] keyed by [_PlaygroundHomeState._bodyKey], so no designer is
+/// ever remounted across a switch or a wide⇄narrow layout swap — edits survive.
 class _PlaygroundHome extends StatefulWidget {
   const _PlaygroundHome({
     required this.isDark,
@@ -168,18 +166,19 @@ class _PlaygroundHome extends StatefulWidget {
 }
 
 class _PlaygroundHomeState extends State<_PlaygroundHome> {
-  /// Below this width the demo strip cannot share a row with the theme/locale
-  /// toggle cluster without the cluster overlaying — and hiding — the strip's
-  /// right-hand tabs (the iOS-Simulator smoke bug: only the first demo was
-  /// reachable). At or above it the roomy desktop overlay layout is kept.
+  /// Below this width the shell switches to the hamburger-drawer layout: the
+  /// [DemoNavList] moves into a [Drawer] opened by a hamburger button. At or
+  /// above this width the persistent fixed sidebar is shown instead.
   static const double _narrowWidth = 600;
 
-  /// A stable identity for the demo [ShadTabs] so the selector strip survives
-  /// the narrow⇄wide layout swap (e.g. a phone rotation crossing [_narrowWidth])
-  /// and the parent's theme/locale rebuilds.
-  final GlobalKey _demoTabsKey = GlobalKey();
+  /// A stable identity for the demo body [IndexedStack] so it survives the
+  /// narrow⇄wide layout swap. On that swap the sidebar appears/disappears as a
+  /// sibling of the body; without this key the body's element would reparent
+  /// and every designer would remount (losing in-progress edits). The GlobalKey
+  /// migrates the element intact across the rebuild.
+  final GlobalKey _bodyKey = GlobalKey();
 
-  /// The selected demo's value; drives the body IndexedStack and the strip.
+  /// The selected demo's value; drives the body IndexedStack and the nav.
   String _selectedDemo = 'fatura';
 
   /// The demo bodies, created once in [initState] so the same widget instances
@@ -305,38 +304,38 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
       l10n.tabEmpty,
     ];
 
+    // The shared nav model: zip the stable registry with the per-build labels.
+    // One source drives both the wide sidebar and the narrow drawer.
+    final List<DemoNavItem> navItems = <DemoNavItem>[
+      for (int i = 0; i < _demoBodies.length; i++)
+        DemoNavItem(
+          value: _demoBodies[i].value,
+          icon: _demoBodies[i].icon,
+          label: labels[i],
+        ),
+    ];
+
     final int index = _demoBodies
         .indexWhere((d) => d.value == _selectedDemo)
         .clamp(0, _demoBodies.length - 1);
 
-    // Selector only: tapping a tab changes _selectedDemo; the heavy bodies live
-    // in the IndexedStack below, so the strip never hosts (or remounts) them.
-    final Widget demoStrip = ShadTabs<String>(
-      key: _demoTabsKey,
-      value: _selectedDemo,
-      onChanged: (String v) => setState(() => _selectedDemo = v),
-      scrollable: true,
-      tabs: <ShadTab<String>>[
-        for (int i = 0; i < _demoBodies.length; i++)
-          ShadTab<String>(
-            value: _demoBodies[i].value,
-            leading: Icon(_demoBodies[i].icon, size: 16),
-            child: Text(labels[i]),
-          ),
-      ],
-    );
-
     // The hero: one structurally-stable IndexedStack keeps every designer
-    // mounted (edits survive) and swaps which is shown by index alone — no
-    // Expanded-flip, so no remount on switch.
+    // mounted (edits survive) and swaps which is shown by index alone. The
+    // [_bodyKey] preserves this element across the wide⇄narrow swap.
     final Widget bodies = IndexedStack(
+      key: _bodyKey,
       index: index,
       sizing: StackFit.expand,
       children: <Widget>[for (final d in _demoBodies) d.body],
     );
 
+    void select(String value) => setState(() => _selectedDemo = value);
+
+    final ShadThemeData theme = ShadTheme.of(context);
+
     // App-global theme + language toggles: they switch the WHOLE app, not any
-    // single report, so they ride beside the demo strip rather than inside it.
+    // single report, so they pin to the bottom of the nav pane — shared by the
+    // wide sidebar and the narrow drawer — rather than any per-demo chrome.
     final Widget toggleCluster = Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
@@ -354,54 +353,99 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
       ],
     );
 
-    // Keep the shell clear of the status bar / notch / home indicator on mobile
-    // (a no-op inset on desktop/web). The host app owns safe-area framing; the
-    // library's JetReportDesigner fills whatever space it is given.
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.only(top: 4),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    // The nav pane: the scrollable demo list fills the height, the app-global
+    // toggles pin to the bottom above a hairline divider. Used verbatim by the
+    // wide sidebar and the narrow drawer — [onSelect] differs only in whether
+    // it also closes the drawer.
+    Widget navPane(ValueChanged<String> onSelect) => Column(
           children: <Widget>[
-            // The selector header: width-gated like before — a compact row above
-            // on a phone, an overlaid cluster on the right at desktop width.
-            LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-                if (constraints.maxWidth < _narrowWidth) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: <Widget>[
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8, bottom: 4),
-                        child: Align(
-                          alignment: Alignment.centerRight,
-                          child: toggleCluster,
+            Expanded(
+              child: DemoNavList(
+                items: navItems,
+                selected: _selectedDemo,
+                onSelect: onSelect,
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: theme.colorScheme.border),
+                ),
+              ),
+              padding: const EdgeInsets.all(8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: toggleCluster,
+              ),
+            ),
+          ],
+        );
+
+    // The drawer hosts the same nav pane on narrow screens; selecting an item
+    // closes it. It is always supplied (harmless on wide, where no hamburger
+    // opens it) so the Scaffold — and thus [bodies] in its body — stays
+    // structurally constant across the layout swap.
+    final Widget navDrawer = Drawer(
+      child: SafeArea(
+        child: navPane((String value) {
+          select(value);
+          Navigator.of(context).pop();
+        }),
+      ),
+    );
+
+    return Scaffold(
+      drawer: navDrawer,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            if (constraints.maxWidth < _narrowWidth) {
+              // Narrow: a minimal top bar holds only the hamburger; the toggles
+              // live at the bottom of the drawer's nav pane.
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      // A Builder gives a context under the Scaffold so
+                      // Scaffold.of finds it to open the drawer.
+                      child: Builder(
+                        builder: (BuildContext ctx) => ShadButton.ghost(
+                          size: ShadButtonSize.sm,
+                          onPressed: () => Scaffold.of(ctx).openDrawer(),
+                          child: Semantics(
+                            label: 'Open navigation',
+                            child: const Icon(LucideIcons.menu, size: 16),
+                          ),
                         ),
                       ),
-                      demoStrip,
-                    ],
-                  );
-                }
-                // Bounded row, not a Stack overlay: the demo strip is
-                // `scrollable: true`, so it claims full width and would paint
-                // its last tab under an absolutely-positioned cluster. Expanded
-                // caps the scroll region and reserves real space for the
-                // toggles, so the two never collide.
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    Expanded(child: demoStrip),
-                    const SizedBox(width: 8),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: toggleCluster,
                     ),
-                  ],
-                );
-              },
-            ),
-            Expanded(child: bodies),
-          ],
+                  ),
+                  Expanded(child: bodies),
+                ],
+              );
+            }
+            // Wide: a persistent fixed sidebar owns demo selection and the
+            // toggles (pinned at its bottom). No top bar over the body.
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Container(
+                  width: 220,
+                  decoration: BoxDecoration(
+                    border: Border(
+                      right: BorderSide(color: theme.colorScheme.border),
+                    ),
+                  ),
+                  child: navPane(select),
+                ),
+                Expanded(child: bodies),
+              ],
+            );
+          },
         ),
       ),
     );

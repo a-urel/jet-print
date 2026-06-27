@@ -9,10 +9,20 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
+import 'package:jet_print_playground/demo_nav_list.dart';
 import 'package:jet_print_playground/main.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 void main() {
+  // A nav entry is a ShadButton (label as its text) inside the shared
+  // DemoNavList. Scoping to DemoNavList avoids matching the identical report
+  // name the designer's own top bar shows. On a wide surface only the sidebar
+  // copy is onstage (the drawer copy is offstage), so a default find matches
+  // exactly one; on a phone the only copy is the drawer's, onstage once opened.
+  Finder navItem(String label) => find.descendant(
+        of: find.byType(DemoNavList),
+        matching: find.widgetWithText(ShadButton, label),
+      );
   testWidgets(
     'root widget renders a JetReportWorkspace wrapping the designer',
     (WidgetTester tester) async {
@@ -32,11 +42,11 @@ void main() {
     (WidgetTester tester) async {
       await tester.pumpWidget(const JetPrintPlaygroundApp());
 
-      // All eleven tab labels are present in the strip. The app launches in its
-      // first supported locale (English), so the labels resolve through
-      // AppLocalizations to their English values. Scope the match to the tab
-      // strip (ShadTab) so e.g. "Invoice" matches the tab — not the identical
-      // report name the designer's top bar also shows.
+      // All eleven nav entries are present in the DemoNavList. The app launches
+      // in its first supported locale (English), so the labels resolve through
+      // AppLocalizations to their English values. Scope the match to the
+      // DemoNavList via the navItem helper so e.g. "Invoice" matches the nav
+      // entry — not the identical report name the designer's top bar also shows.
       for (final String label in const <String>[
         'Empty',
         'Invoice',
@@ -50,8 +60,7 @@ void main() {
         'Menu',
         'Custom',
       ]) {
-        expect(find.widgetWithText(ShadTab<String>, label), findsOneWidget,
-            reason: '"$label" tab label');
+        expect(navItem(label), findsOneWidget, reason: '"$label" nav entry');
       }
       // All demo designers are mounted in the IndexedStack; non-selected are
       // Offstage (Visibility.maintain), so pass skipOffstage:false.
@@ -65,10 +74,8 @@ void main() {
   testWidgets(
     'the Empty tab activates a blank designer over the same invoice data',
     (WidgetTester tester) async {
-      // Wide enough that the full sample tab strip fits without horizontal
-      // overflow: the rightmost 'Empty' tab would otherwise scroll under the
-      // pinned theme/locale toggle cluster (the strip and the cluster share a
-      // Stack), leaving it obscured and untappable.
+      // Wide enough that the sidebar is visible and all nav entries are
+      // reachable without opening a drawer.
       await tester.binding.setSurfaceSize(const Size(1850, 700));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(const JetPrintPlaygroundApp());
@@ -76,7 +83,7 @@ void main() {
 
       // Switching to the Empty tab changes the IndexedStack index — all designers
       // stay mounted; only the shown one changes.
-      await tester.tap(find.widgetWithText(ShadTab<String>, 'Empty'));
+      await tester.tap(navItem('Empty'));
       await tester.pumpAndSettle();
 
       // The now-shown designer (the blank seed) is the only onstage one — the
@@ -97,7 +104,7 @@ void main() {
   );
 
   testWidgets(
-    'at phone width every demo tab is reachable, not hidden by the toggles',
+    'at phone width the hamburger drawer reaches every demo',
     (WidgetTester tester) async {
       // A phone-portrait surface (below the 600px shell breakpoint).
       await tester.binding.setSurfaceSize(const Size(390, 844));
@@ -107,8 +114,15 @@ void main() {
       expect(tester.takeException(), isNull,
           reason: 'the shell lays out cleanly at phone width');
 
-      // Every demo tab still exists in the strip (kept alive Offstage where
-      // unselected; scrolled-but-present where the strip overflows).
+      // The nav lives in a closed drawer — no entry is onstage yet.
+      expect(navItem('Invoice'), findsNothing,
+          reason: 'nav is hidden until the hamburger is tapped');
+
+      // Open the drawer via the hamburger.
+      await tester.tap(find.byIcon(LucideIcons.menu));
+      await tester.pumpAndSettle();
+
+      // Every demo entry is now present and reachable in the open drawer.
       for (final String label in const <String>[
         'Invoice',
         'Label',
@@ -122,22 +136,14 @@ void main() {
         'Custom',
         'Empty',
       ]) {
-        expect(find.widgetWithText(ShadTab<String>, label), findsOneWidget,
-            reason: '"$label" tab');
+        expect(navItem(label), findsOneWidget, reason: '"$label" nav entry');
       }
 
-      // The theme/locale toggles sit ABOVE the demo strip on a phone — not
-      // overlaid on its right end where they hid the rightmost demos (the
-      // iOS-Simulator smoke bug). Prove it geometrically: the toggle row's
-      // bottom is at or above the (always-visible, leftmost) Invoice tab's top,
-      // so the cluster cannot occlude any tab.
-      final Rect toggle =
-          tester.getRect(find.widgetWithText(ShadButton, 'Dark'));
-      final Rect invoiceTab =
-          tester.getRect(find.widgetWithText(ShadTab<String>, 'Invoice'));
-      expect(toggle.bottom, lessThanOrEqualTo(invoiceTab.top + 1.0),
-          reason:
-              'the toggles are stacked above the strip, not overlaid on it');
+      // Selecting an entry closes the drawer (and switches the demo).
+      await tester.tap(navItem('Menu'));
+      await tester.pumpAndSettle();
+      expect(navItem('Menu'), findsNothing,
+          reason: 'the drawer closes after a selection');
     },
   );
 
@@ -158,7 +164,7 @@ void main() {
       expect(onstage().onOpenRequested, isNull);
 
       // The Empty tab wires the host persistence seam.
-      await tester.tap(find.widgetWithText(ShadTab<String>, 'Empty'));
+      await tester.tap(navItem('Empty'));
       await tester.pumpAndSettle();
       expect(onstage().onSaveRequested, isNotNull,
           reason: 'Save is wired on the Empty tab');
@@ -181,7 +187,7 @@ void main() {
       expect(find.text('Save'), findsNothing);
 
       // The Empty tab wires the host persistence seam, so both appear.
-      await tester.tap(find.widgetWithText(ShadTab<String>, 'Empty'));
+      await tester.tap(navItem('Empty'));
       await tester.pumpAndSettle();
       expect(find.text('Open'), findsOneWidget);
       expect(find.text('Save'), findsOneWidget);
@@ -191,9 +197,8 @@ void main() {
   testWidgets(
     'a designer survives a tab switch as the SAME State (no remount, edits kept)',
     (WidgetTester tester) async {
-      // Wide enough for the full tab strip to be on-screen so both 'Invoice'
-      // and 'Empty' taps actually hit their targets (same reason as the
-      // 'Empty tab activates a blank designer' test above).
+      // Wide enough for the sidebar to be on-screen so both 'Invoice' and
+      // 'Empty' taps actually hit their targets.
       await tester.binding.setSurfaceSize(const Size(1850, 700));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -208,9 +213,9 @@ void main() {
           tester.state(find.byType(JetReportDesigner));
 
       // Switch away and back.
-      await tester.tap(find.widgetWithText(ShadTab<String>, 'Empty'));
+      await tester.tap(navItem('Empty'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(ShadTab<String>, 'Invoice'));
+      await tester.tap(navItem('Invoice'));
       await tester.pumpAndSettle();
 
       // Same State instance ⇒ the subtree was never torn down, so its
@@ -220,6 +225,32 @@ void main() {
           tester.state(find.byType(JetReportDesigner));
       expect(identical(before, after), isTrue,
           reason: 'designer must not remount on a tab switch');
+    },
+  );
+
+  testWidgets(
+    'a designer survives the wide<->narrow layout swap (no remount)',
+    (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(1850, 700));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(const JetPrintPlaygroundApp());
+      await tester.pumpAndSettle();
+
+      // Capture the onstage designer's State at wide layout.
+      final State<StatefulWidget> before =
+          tester.state(find.byType(JetReportDesigner));
+
+      // Shrink to phone width — crosses the 600dp breakpoint, toggling the
+      // sidebar out and the hamburger drawer in. The _bodyKey GlobalKey must
+      // migrate the IndexedStack element intact so no designer remounts.
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      await tester.pumpAndSettle();
+
+      final State<StatefulWidget> after =
+          tester.state(find.byType(JetReportDesigner));
+      expect(identical(before, after), isTrue,
+          reason:
+              'the designer must survive the wide↔narrow layout swap (the _bodyKey GlobalKey)');
     },
   );
 
