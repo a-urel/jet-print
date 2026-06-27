@@ -38,8 +38,7 @@ AxisScale niceAxis(double maxValue, {int targetTicks = 4}) {
   final double mag =
       math.pow(10, (math.log(rawStep) / math.ln10).floor()).toDouble();
   final double norm = rawStep / mag;
-  final double niceNorm =
-      norm < 1.5 ? 1 : (norm < 3 ? 2 : (norm < 5.5 ? 5 : (norm < 7 ? 6 : 10)));
+  final double niceNorm = norm < 1.5 ? 1 : (norm < 3 ? 2 : (norm < 7 ? 5 : 10));
   final double step = niceNorm * mag;
   final double niceMax = (maxValue / step).ceil() * step;
   final List<double> ticks = <double>[];

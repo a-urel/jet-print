@@ -8,9 +8,9 @@ void main() {
   group('niceAxis', () {
     test('rounds the max up to a nice multiple', () {
       final a = niceAxis(23);
-      expect(a.niceMax, 24); // step 6, ceil(23/6)*6
-      expect(a.step, 6);
-      expect(a.ticks, <double>[0, 6, 12, 18, 24]);
+      expect(a.niceMax, 25); // step 5, ceil(23/5)*5
+      expect(a.step, 5);
+      expect(a.ticks, <double>[0, 5, 10, 15, 20, 25]);
     });
     test('non-positive max is safe', () {
       expect(niceAxis(0).niceMax, greaterThan(0));
