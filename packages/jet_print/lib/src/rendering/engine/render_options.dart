@@ -10,6 +10,7 @@ library;
 import 'dart:ui' show Locale;
 
 import '../text/jet_font.dart';
+import 'element_print_callback.dart';
 
 /// The per-render inputs of a [JetReportEngine.render] call, separate from the
 /// template: the values that may change on every render of the same design.
@@ -29,6 +30,7 @@ class RenderOptions {
     this.knownFields,
     this.unresolvedFieldToken = '#ERROR',
     this.fonts = const <JetFontFamily>[],
+    this.onElementPrint,
   });
 
   /// Host-supplied parameter values keyed by parameter name, resolved by
@@ -82,4 +84,9 @@ class RenderOptions {
   /// `JetReportDesigner.fonts`/`JetReportWorkspace.fonts` so the designer picker
   /// and the render chain offer and resolve the same families.
   final List<JetFontFamily> fonts;
+
+  /// Host hook invoked once per element at emit time, on preview/export/print
+  /// alike (spec 2026-06-27). Null (default) means no hook and byte-identical
+  /// output to today. See [JetElementPrintCallback] for the contract.
+  final JetElementPrintCallback? onElementPrint;
 }

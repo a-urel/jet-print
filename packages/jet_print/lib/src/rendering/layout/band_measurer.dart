@@ -26,8 +26,8 @@ class MeasuredBand {
   /// Creates a measured band, defensively freezing [elements] so the snapshot is
   /// immutable after construction (matching the FilledBand/GroupBandIndex
   /// convention).
-  MeasuredBand(
-      this.height, List<({ReportElement element, JetRect bounds})> elements)
+  MeasuredBand(this.height,
+      List<({ReportElement element, JetRect bounds})> elements, this.source)
       : elements = List<({ReportElement element, JetRect bounds})>.unmodifiable(
             elements);
 
@@ -37,6 +37,10 @@ class MeasuredBand {
   /// Each element with its grown, band-local box (reused for placement, so the
   /// layouter does not re-measure an element's geometry at emit time).
   final List<({ReportElement element, JetRect bounds})> elements;
+
+  /// The filled band this was measured from (spec 2026-06-27 — gives the emit
+  /// hook the band's type/group/fields/variables).
+  final FilledBand source;
 }
 
 /// Measures [FilledBand]s for layout, delegating per-element sizing to the
@@ -73,6 +77,6 @@ class BandMeasurer {
       final double bottom = el.bounds.y + grownHeight;
       if (bottom > maxBottom) maxBottom = bottom;
     }
-    return MeasuredBand(maxBottom, boxes);
+    return MeasuredBand(maxBottom, boxes, band);
   }
 }

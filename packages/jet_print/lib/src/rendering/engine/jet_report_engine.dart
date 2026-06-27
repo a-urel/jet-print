@@ -86,7 +86,8 @@ class JetReportEngine {
     final LazyLayout lazy = _withLocale(
       localeTag,
       () => ReportLayouter(measurer: MetricsTextMeasurer(fonts))
-          .layoutLazyDefinition(definition, fill.report),
+          .layoutLazyDefinition(definition, fill.report,
+              onElementPrint: options.onElementPrint),
     );
     return RenderedReport(
       title: definition.name,

@@ -33,6 +33,7 @@ import '../elements/built_in_element_renderers.dart';
 import '../elements/element_renderer_registry.dart';
 import '../elements/element_type_registry.dart';
 import '../elements/render_context.dart';
+import '../engine/element_print_callback.dart';
 import '../fill/filled_report.dart';
 import '../fill/page_variables.dart';
 import '../fill/report_diagnostics.dart';
@@ -100,6 +101,7 @@ class LazyLayout {
     required double left,
     required double top,
     required double bodyBottom,
+    JetElementPrintCallback? onElementPrint,
   })  : _page = page,
         _plans = plans,
         _renderers = renderers,
@@ -113,7 +115,8 @@ class LazyLayout {
         _params = params,
         _left = left,
         _top = top,
-        _bodyBottom = bodyBottom;
+        _bodyBottom = bodyBottom,
+        _onElementPrint = onElementPrint;
 
   final PageFormat _page;
   final List<List<_PlacedBand>> _plans;
@@ -129,6 +132,7 @@ class LazyLayout {
   final double _left;
   final double _top;
   final double _bodyBottom;
+  final JetElementPrintCallback? _onElementPrint;
 
   /// Chrome expressions already diagnosed at runtime, deduped across every
   /// page build regardless of build order.
@@ -143,16 +147,54 @@ class LazyLayout {
 
   /// Translates band-local boxes to the page and emits each element's
   /// primitives — the unchanged 008a placement path, replayed on demand.
-  void _place(List<({ReportElement element, JetRect bounds})> boxes,
-      double leftX, double topY, FrameBuilder fb) {
+  void _place(
+    List<({ReportElement element, JetRect bounds})> boxes,
+    double leftX,
+    double topY,
+    FrameBuilder fb, {
+    required int pageNumber,
+    required BandType bandType,
+    required String? bandName,
+    required Map<String, JetValue> fields,
+    required Map<String, JetValue> variables,
+  }) {
+    final JetElementPrintCallback? cb = _onElementPrint;
+    final ElementPrintContext ctx = ElementPrintContext(
+      pageNumber: pageNumber,
+      pageCount: pageCount,
+      bandType: bandType,
+      bandName: bandName,
+      fields: fields,
+      variables: variables,
+    );
     for (final ({ReportElement element, JetRect bounds}) e in boxes) {
-      _renderers.rendererFor(e.element).emit(
-            e.element,
+      ReportElement el = e.element;
+      if (cb != null) {
+        ReportElement? out;
+        try {
+          out = cb(el, ctx);
+        } catch (err) {
+          diagnostics.warning('onElementPrint threw for "${el.id}": $err',
+              elementId: el.id);
+          out = el; // fail-safe to original
+        }
+        if (out == null) continue; // suppress
+        if (out.runtimeType != el.runtimeType) {
+          diagnostics.warning(
+              'onElementPrint returned ${out.runtimeType} for "${el.id}" '
+              '(expected ${el.runtimeType}); ignoring',
+              elementId: el.id);
+          out = el; // same-type guard
+        }
+        el = out;
+      }
+      _renderers.rendererFor(el).emit(
+            el,
             _ctx,
             JetRect(
-              x: leftX + e.bounds.x,
-              y: topY + e.bounds.y,
-              width: e.bounds.width,
+              x: leftX + el.bounds.x,
+              y: topY + el.bounds.y,
+              width: el.bounds.width,
               height: e.bounds.height,
             ),
             fb,
@@ -222,23 +264,46 @@ class LazyLayout {
     }
     final FrameBuilder fb = FrameBuilder(_page);
     for (final _PlacedBand placed in _plans[index]) {
-      _place(placed.band.elements, placed.x, placed.y, fb);
+      _place(placed.band.elements, placed.x, placed.y, fb,
+          pageNumber: index + 1,
+          bandType: placed.band.source.type,
+          bandName: placed.band.source.group,
+          fields: placed.band.source.fields,
+          variables: placed.band.source.variables);
     }
     final int pageNumber = index + 1;
     double y = _top;
     for (final Band h in _headers) {
-      _place(<({ReportElement element, JetRect bounds})>[
-        for (final ReportElement el in h.elements)
-          (element: _substitute(el, pageNumber), bounds: el.bounds),
-      ], _left, y, fb);
+      _place(
+          <({ReportElement element, JetRect bounds})>[
+            for (final ReportElement el in h.elements)
+              (element: _substitute(el, pageNumber), bounds: el.bounds),
+          ],
+          _left,
+          y,
+          fb,
+          pageNumber: pageNumber,
+          bandType: h.type,
+          bandName: null,
+          fields: const <String, JetValue>{},
+          variables: const <String, JetValue>{});
       y += h.height;
     }
     y = _bodyBottom;
     for (final Band f in _footers) {
-      _place(<({ReportElement element, JetRect bounds})>[
-        for (final ReportElement el in f.elements)
-          (element: _substitute(el, pageNumber), bounds: el.bounds),
-      ], _left, y, fb);
+      _place(
+          <({ReportElement element, JetRect bounds})>[
+            for (final ReportElement el in f.elements)
+              (element: _substitute(el, pageNumber), bounds: el.bounds),
+          ],
+          _left,
+          y,
+          fb,
+          pageNumber: pageNumber,
+          bandType: f.type,
+          bandName: null,
+          fields: const <String, JetValue>{},
+          variables: const <String, JetValue>{});
       y += f.height;
     }
     return fb.build();
@@ -279,8 +344,10 @@ class ReportLayouter {
   /// Lays a reified [ReportDefinition] out eagerly (spec 024): build-all over
   /// [layoutLazyDefinition], identical frames — only the driving loop differs
   /// (build-all here, on-demand there).
-  LayoutResult layoutDefinition(ReportDefinition def, FilledReport filled) {
-    final LazyLayout lazy = layoutLazyDefinition(def, filled);
+  LayoutResult layoutDefinition(ReportDefinition def, FilledReport filled,
+      {JetElementPrintCallback? onElementPrint}) {
+    final LazyLayout lazy =
+        layoutLazyDefinition(def, filled, onElementPrint: onElementPrint);
     return LayoutResult(
       pages: <PageFrame>[
         for (int i = 0; i < lazy.pageCount; i++) lazy.buildPage(i),
@@ -295,7 +362,8 @@ class ReportLayouter {
   /// break, and records per-page placements **without** constructing paint
   /// primitives; the returned [LazyLayout] knows the exact page count and builds
   /// any page's frame on demand.
-  LazyLayout layoutLazyDefinition(ReportDefinition def, FilledReport filled) {
+  LazyLayout layoutLazyDefinition(ReportDefinition def, FilledReport filled,
+      {JetElementPrintCallback? onElementPrint}) {
     final ReportDiagnostics diagnostics = ReportDiagnostics();
     final RenderContext ctx = RenderContext(measurer: _measurer);
     final BandMeasurer bandMeasurer = BandMeasurer(_renderers, ctx);
@@ -635,6 +703,7 @@ class ReportLayouter {
       left: left,
       top: top,
       bodyBottom: bodyBottom,
+      onElementPrint: onElementPrint,
     );
   }
 }
