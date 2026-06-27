@@ -369,10 +369,20 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
                     ],
                   );
                 }
-                return Stack(
+                // Bounded row, not a Stack overlay: the demo strip is
+                // `scrollable: true`, so it claims full width and would paint
+                // its last tab under an absolutely-positioned cluster. Expanded
+                // caps the scroll region and reserves real space for the
+                // toggles, so the two never collide.
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
-                    demoStrip,
-                    Positioned(top: 0, right: 8, child: toggleCluster),
+                    Expanded(child: demoStrip),
+                    const SizedBox(width: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: toggleCluster,
+                    ),
                   ],
                 );
               },
