@@ -3,18 +3,19 @@
   "schema": {
     "name": "Invoice",
     "fields": [
-      { "name": "number", "type": "string" },
-      { "name": "date", "type": "dateTime" },
-      { "name": "customer", "type": "string" },
-      { "name": "total", "type": "double" },
+      { "name": "number", "type": "string", "description": "Invoice number" },
+      { "name": "date", "type": "dateTime", "description": "Issue date" },
+      { "name": "customer", "type": "string", "description": "Customer name" },
+      { "name": "total", "type": "double", "description": "Invoice total" },
       {
         "name": "lines",
         "type": "collection",
+        "description": "Line items",
         "fields": [
-          { "name": "description", "type": "string" },
-          { "name": "qty", "type": "integer" },
-          { "name": "unitPrice", "type": "double" },
-          { "name": "lineTotal", "type": "double" }
+          { "name": "description", "type": "string", "description": "Item description" },
+          { "name": "qty", "type": "integer", "description": "Quantity" },
+          { "name": "unitPrice", "type": "double", "description": "Unit price" },
+          { "name": "lineTotal", "type": "double", "description": "Line total" }
         ]
       }
     ]
