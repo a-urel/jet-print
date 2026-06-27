@@ -138,17 +138,14 @@ class _JetPrintPlaygroundAppState extends State<JetPrintPlaygroundApp> {
   }
 }
 
-/// The playground shell: a `scrollable` [ShadTabs] strip used as a pure
-/// selector, driving a structurally-stable [IndexedStack] that hosts all the
-/// live-designer demo bodies at once. Only the shown index changes on a switch,
-/// so no designer is ever remounted — edits survive.
-///
-/// The app-global theme/language cluster switches the WHOLE app, not any single
-/// report, so it rides beside the strip. The two are laid out by width: at
-/// desktop/tablet widths the strip fills and the cluster is overlaid at its
-/// (roomy) right end; on a phone the cluster moves to a compact row ABOVE the
-/// full-width strip, so it never overlays — and hides — the strip's right-hand
-/// demo tabs (an iOS-Simulator smoke caught that occlusion).
+/// The playground shell: a [Scaffold] whose body is a [LayoutBuilder] that
+/// switches layout at [_PlaygroundHomeState._narrowWidth]. On wide screens a
+/// persistent [DemoNavList] sidebar handles demo selection and the theme/locale
+/// toggles live in a slim top bar alongside it. On narrow screens the sidebar
+/// moves into a [Drawer] opened by a hamburger button; the toggles remain in
+/// the top bar. Either way, demo bodies live in a structurally-stable
+/// [IndexedStack] keyed by [_PlaygroundHomeState._bodyKey], so no designer is
+/// ever remounted across a switch or a wide⇄narrow layout swap — edits survive.
 class _PlaygroundHome extends StatefulWidget {
   const _PlaygroundHome({
     required this.isDark,
@@ -169,10 +166,9 @@ class _PlaygroundHome extends StatefulWidget {
 }
 
 class _PlaygroundHomeState extends State<_PlaygroundHome> {
-  /// Below this width the demo strip cannot share a row with the theme/locale
-  /// toggle cluster without the cluster overlaying — and hiding — the strip's
-  /// right-hand tabs (the iOS-Simulator smoke bug: only the first demo was
-  /// reachable). At or above it the roomy desktop overlay layout is kept.
+  /// Below this width the shell switches to the hamburger-drawer layout: the
+  /// [DemoNavList] moves into a [Drawer] opened by a hamburger button. At or
+  /// above this width the persistent fixed sidebar is shown instead.
   static const double _narrowWidth = 600;
 
   /// A stable identity for the demo body [IndexedStack] so it survives the
@@ -182,7 +178,7 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
   /// migrates the element intact across the rebuild.
   final GlobalKey _bodyKey = GlobalKey();
 
-  /// The selected demo's value; drives the body IndexedStack and the strip.
+  /// The selected demo's value; drives the body IndexedStack and the nav.
   String _selectedDemo = 'fatura';
 
   /// The demo bodies, created once in [initState] so the same widget instances
@@ -394,7 +390,10 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
                           builder: (BuildContext ctx) => ShadButton.ghost(
                             size: ShadButtonSize.sm,
                             onPressed: () => Scaffold.of(ctx).openDrawer(),
-                            child: const Icon(LucideIcons.menu, size: 16),
+                            child: Semantics(
+                              label: 'Open navigation',
+                              child: const Icon(LucideIcons.menu, size: 16),
+                            ),
                           ),
                         ),
                         const Spacer(),

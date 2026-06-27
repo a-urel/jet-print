@@ -42,11 +42,11 @@ void main() {
     (WidgetTester tester) async {
       await tester.pumpWidget(const JetPrintPlaygroundApp());
 
-      // All eleven tab labels are present in the strip. The app launches in its
-      // first supported locale (English), so the labels resolve through
-      // AppLocalizations to their English values. Scope the match to the tab
-      // strip (ShadTab) so e.g. "Invoice" matches the tab — not the identical
-      // report name the designer's top bar also shows.
+      // All eleven nav entries are present in the DemoNavList. The app launches
+      // in its first supported locale (English), so the labels resolve through
+      // AppLocalizations to their English values. Scope the match to the
+      // DemoNavList via the navItem helper so e.g. "Invoice" matches the nav
+      // entry — not the identical report name the designer's top bar also shows.
       for (final String label in const <String>[
         'Empty',
         'Invoice',
@@ -74,10 +74,8 @@ void main() {
   testWidgets(
     'the Empty tab activates a blank designer over the same invoice data',
     (WidgetTester tester) async {
-      // Wide enough that the full sample tab strip fits without horizontal
-      // overflow: the rightmost 'Empty' tab would otherwise scroll under the
-      // pinned theme/locale toggle cluster (the strip and the cluster share a
-      // Stack), leaving it obscured and untappable.
+      // Wide enough that the sidebar is visible and all nav entries are
+      // reachable without opening a drawer.
       await tester.binding.setSurfaceSize(const Size(1850, 700));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(const JetPrintPlaygroundApp());
@@ -199,9 +197,8 @@ void main() {
   testWidgets(
     'a designer survives a tab switch as the SAME State (no remount, edits kept)',
     (WidgetTester tester) async {
-      // Wide enough for the full tab strip to be on-screen so both 'Invoice'
-      // and 'Empty' taps actually hit their targets (same reason as the
-      // 'Empty tab activates a blank designer' test above).
+      // Wide enough for the sidebar to be on-screen so both 'Invoice' and
+      // 'Empty' taps actually hit their targets.
       await tester.binding.setSurfaceSize(const Size(1850, 700));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -228,6 +225,32 @@ void main() {
           tester.state(find.byType(JetReportDesigner));
       expect(identical(before, after), isTrue,
           reason: 'designer must not remount on a tab switch');
+    },
+  );
+
+  testWidgets(
+    'a designer survives the wide<->narrow layout swap (no remount)',
+    (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(1850, 700));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(const JetPrintPlaygroundApp());
+      await tester.pumpAndSettle();
+
+      // Capture the onstage designer's State at wide layout.
+      final State<StatefulWidget> before =
+          tester.state(find.byType(JetReportDesigner));
+
+      // Shrink to phone width — crosses the 600dp breakpoint, toggling the
+      // sidebar out and the hamburger drawer in. The _bodyKey GlobalKey must
+      // migrate the IndexedStack element intact so no designer remounts.
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      await tester.pumpAndSettle();
+
+      final State<StatefulWidget> after =
+          tester.state(find.byType(JetReportDesigner));
+      expect(identical(before, after), isTrue,
+          reason:
+              'the designer must survive the wide↔narrow layout swap (the _bodyKey GlobalKey)');
     },
   );
 
