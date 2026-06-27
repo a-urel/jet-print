@@ -199,6 +199,21 @@ void main() {
               (v.dx - right).abs() < eps && (v.dy - cy).abs() < eps),
           isTrue);
     });
+    test('chevron walks its outline in order (simple, non-self-crossing band)',
+        () {
+      // bounds = (10,20,80,60) → t = 0.5*80 = 40; left=10 right=90 top=20
+      // bottom=80 cy=50. The vertex ORDER (not just the set) is what makes the
+      // band a simple ">" rather than a self-overlapping arrowhead, so pin it.
+      final List<JetOffset> p = _points(shapePath(ShapeKind.chevron, bounds));
+      expect(p, <JetOffset>[
+        const JetOffset(10, 20), // outer top-left
+        const JetOffset(50, 20), // top-flat right end
+        const JetOffset(90, 50), // tip
+        const JetOffset(50, 80), // bottom-flat right end
+        const JetOffset(10, 80), // outer bottom-left
+        const JetOffset(50, 50), // inner notch
+      ]);
+    });
   });
 
   group('roundRect corners', () {

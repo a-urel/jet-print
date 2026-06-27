@@ -178,13 +178,17 @@ List<PathCommand> shapePath(ShapeKind kind, JetRect bounds) {
         final double right = bounds.x + bounds.width;
         final double top = bounds.y;
         final double bottom = bounds.y + bounds.height;
+        // Walk the outline in order so the polygon is simple (no self-cross):
+        // top-flat → outer top arm → tip → outer bottom arm → bottom-flat →
+        // inner bottom arm → inner notch → inner top arm → close. The two arms
+        // stay parallel, giving a constant-thickness ">" band.
         return <JetOffset>[
-          JetOffset(left, top),
-          JetOffset(right, cy),
-          JetOffset(left, bottom),
-          JetOffset(left + t, bottom),
-          JetOffset(right - t, cy),
-          JetOffset(left + t, top),
+          JetOffset(left, top), // outer top-left
+          JetOffset(left + t, top), // top-flat right end
+          JetOffset(right, cy), // tip
+          JetOffset(left + t, bottom), // bottom-flat right end
+          JetOffset(left, bottom), // outer bottom-left
+          JetOffset(right - t, cy), // inner notch (points back toward the tail)
         ];
       }(),
     ShapeKind.roundRect => _roundRect(bounds),
