@@ -19,9 +19,11 @@ class FilledBand {
     required this.height,
     required List<ReportElement> elements,
     required Map<String, JetValue> variables,
+    Map<String, JetValue> fields = const <String, JetValue>{},
     this.group,
   })  : elements = List<ReportElement>.unmodifiable(elements),
-        variables = Map<String, JetValue>.unmodifiable(variables);
+        variables = Map<String, JetValue>.unmodifiable(variables),
+        fields = Map<String, JetValue>.unmodifiable(fields);
 
   /// The band's role (title/groupHeader/detail/groupFooter/summary/noData).
   final BandType type;
@@ -34,6 +36,14 @@ class FilledBand {
 
   /// The calculator's frozen variable values at this instance (unmodifiable).
   final Map<String, JetValue> variables;
+
+  /// The originating row's field values (spec 2026-06-27), keyed by field name;
+  /// `{}` for rowless bands (chrome/static). Carry-through for the
+  /// `onElementPrint` hook — intentionally excluded from `==`/`hashCode`/
+  /// `toString`: a band's identity is its type/height/elements/variables/group,
+  /// and equal designs over equal data already imply equal source rows, so
+  /// including `fields` would only churn fill-snapshot goldens.
+  final Map<String, JetValue> fields;
 
   /// The [ReportGroup] name this band belongs to (008b); set for
   /// `groupHeader`/`groupFooter` bands, null otherwise. Lets the layout engine

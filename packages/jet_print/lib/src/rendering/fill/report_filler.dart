@@ -265,6 +265,12 @@ class ReportFiller {
               resolver.resolve(e, row: row, params: params, variables: vars),
         ],
         variables: vars,
+        fields: row == null
+            ? const <String, JetValue>{}
+            : <String, JetValue>{
+                for (final FieldDef f in row.fields)
+                  f.name: JetValue.from(row.field(f.name)),
+              },
         group: group,
       ));
     }
