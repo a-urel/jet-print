@@ -1,4 +1,4 @@
-/// The fx expression editor (032): a centered modal that composes a value-field
+/// The fx expression editor (032): a right-side sheet that composes a value-field
 /// expression in the friendly template syntax, with field + function palettes
 /// and live syntax/resolution feedback. Presentation only — it speaks the same
 /// language as the inline field (`value_template_compiler`) and returns the
@@ -31,8 +31,9 @@ Future<String?> showExpressionEditor(
   Set<String> descendantOperands = const <String>{},
   List<FieldDef> descendantFields = const <FieldDef>[],
 }) {
-  return showShadDialog<String>(
+  return showShadSheet<String>(
     context: context,
+    side: ShadSheetSide.right,
     builder: (BuildContext context) => _ExpressionEditorDialog(
       initialText: initialText,
       resolvableNames: resolvableNames,
@@ -169,74 +170,98 @@ class _ExpressionEditorDialogState extends State<_ExpressionEditorDialog> {
   @override
   Widget build(BuildContext context) {
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
-    return ShadDialog(
-      title: Text(l10n.exprEditorTitle),
-      actions: <Widget>[
-        ShadButton.outline(
-          key: const ValueKey<String>('$_k.cancel'),
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.exprEditorCancel),
-        ),
-        ShadButton(
-          key: const ValueKey<String>('$_k.insert'),
-          onPressed: () => Navigator.of(context).pop(_controller.text),
-          child: Text(l10n.exprEditorInsert),
-        ),
-      ],
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 560),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            const SizedBox(height: 8),
-            ShadInput(
-              key: const ValueKey<String>('$_k.input'),
-              controller: _controller,
-              maxLines: 4,
-              minLines: 2,
-            ),
-            const SizedBox(height: 8),
-            _StatusLine(status: _status, l10n: l10n),
-            const SizedBox(height: 12),
-            Text(l10n.exprEditorFieldsLabel),
-            const SizedBox(height: 4),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: <Widget>[
-                for (final FieldDef f in widget.fields)
-                  ShadButton.ghost(
-                    key: ValueKey<String>('$_k.field.${f.name}'),
-                    size: ShadButtonSize.sm,
-                    onPressed: () =>
-                        _insertAtCaret('[${f.name}]', '[${f.name}]'.length),
-                    child: Text(f.name),
+    return ShadSheet(
+      constraints: const BoxConstraints(maxWidth: 440),
+      // We lay out our own fixed header + scroll region, so the sheet must not
+      // wrap the child in its own scroll view.
+      scrollable: false,
+      // Cancel button replaces the default top-right close (X) — hide it.
+      closeIcon: const SizedBox.shrink(),
+      // Trim the default all-24 padding: no bottom so scroll content runs to
+      // the edge.
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          // Fixed header: title + actions. Never scrolls.
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(l10n.exprEditorTitle,
+                    style: ShadTheme.of(context).textTheme.large),
+              ),
+              ShadButton.outline(
+                key: const ValueKey<String>('$_k.cancel'),
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(l10n.exprEditorCancel),
+              ),
+              const SizedBox(width: 8),
+              ShadButton(
+                key: const ValueKey<String>('$_k.insert'),
+                onPressed: () => Navigator.of(context).pop(_controller.text),
+                child: Text(l10n.exprEditorInsert),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Fixed expression input + status. Never scrolls.
+          ShadInput(
+            key: const ValueKey<String>('$_k.input'),
+            controller: _controller,
+            maxLines: 4,
+            minLines: 2,
+          ),
+          const SizedBox(height: 8),
+          _StatusLine(status: _status, l10n: l10n),
+          const SizedBox(height: 12),
+          // Only the field + function palettes scroll.
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(l10n.exprEditorFieldsLabel),
+                  const SizedBox(height: 4),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: <Widget>[
+                      for (final FieldDef f in widget.fields)
+                        ShadButton.ghost(
+                          key: ValueKey<String>('$_k.field.${f.name}'),
+                          size: ShadButtonSize.sm,
+                          onPressed: () => _insertAtCaret(
+                              '[${f.name}]', '[${f.name}]'.length),
+                          child: Text(f.name),
+                        ),
+                      // Descendant leaves (spec 033) — valid only inside an
+                      // aggregate. Rendered marked (↳, italic) and tooltip'd as
+                      // "deeper" so they read distinctly from in-scope fields.
+                      for (final FieldDef f in widget.descendantFields)
+                        ShadTooltip(
+                          builder: (BuildContext context) =>
+                              Text(l10n.exprEditorDeeperFieldHint),
+                          child: ShadButton.ghost(
+                            key: ValueKey<String>('$_k.deepField.${f.name}'),
+                            size: ShadButtonSize.sm,
+                            onPressed: () => _insertAtCaret(
+                                '[${f.name}]', '[${f.name}]'.length),
+                            child: Text('↳ ${f.name}',
+                                style: const TextStyle(
+                                    fontStyle: FontStyle.italic)),
+                          ),
+                        ),
+                    ],
                   ),
-                // Descendant leaves (spec 033) — valid only inside an aggregate.
-                // Rendered marked (↳, italic) and tooltip'd as "deeper" so they
-                // read distinctly from in-scope fields.
-                for (final FieldDef f in widget.descendantFields)
-                  ShadTooltip(
-                    builder: (BuildContext context) =>
-                        Text(l10n.exprEditorDeeperFieldHint),
-                    child: ShadButton.ghost(
-                      key: ValueKey<String>('$_k.deepField.${f.name}'),
-                      size: ShadButtonSize.sm,
-                      onPressed: () =>
-                          _insertAtCaret('[${f.name}]', '[${f.name}]'.length),
-                      child: Text('↳ ${f.name}',
-                          style: const TextStyle(fontStyle: FontStyle.italic)),
-                    ),
-                  ),
-              ],
+                  const SizedBox(height: 12),
+                  Text(l10n.exprEditorFunctionsLabel),
+                  const SizedBox(height: 4),
+                  _FunctionPalette(l10n: l10n, onPick: _insertAtCaret),
+                ],
+              ),
             ),
-            const SizedBox(height: 12),
-            Text(l10n.exprEditorFunctionsLabel),
-            const SizedBox(height: 4),
-            _FunctionPalette(l10n: l10n, onPick: _insertAtCaret),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
