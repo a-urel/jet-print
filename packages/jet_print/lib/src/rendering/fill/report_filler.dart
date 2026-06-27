@@ -6,6 +6,7 @@
 library;
 
 import '../../data/aggregate_path.dart';
+import '../../data/collection_rows.dart';
 import '../../data/data_row.dart';
 import '../../data/data_set.dart';
 import '../../data/field_def.dart';
@@ -300,30 +301,18 @@ class ReportFiller {
         }
         return const <DataRow>[];
       }
-      final List<Map<String, Object?>> maps = <Map<String, Object?>>[];
-      for (final Object? entry in raw) {
-        if (entry is Map) {
-          maps.add(entry.map((Object? k, Object? v) =>
-              MapEntry<String, Object?>(k.toString(), v)));
-        } else {
-          budget.recordRowIssue(
-              'coll-entry:$name',
-              'Collection field "$name" contains a non-row entry; it is '
-                  'skipped');
-        }
-      }
       final FieldDef declared = scopeRow.fields.firstWhere(
         (FieldDef f) => f.name == name,
         orElse: () => const FieldDef(''),
       );
-      final List<FieldDef> fields =
-          declared.fields.isNotEmpty ? declared.fields : inferFields(maps);
-      return <DataRow>[
-        for (final Map<String, Object?> m in maps)
-          DataRow(fields: fields, values: <String, Object?>{
-            for (final FieldDef f in fields) f.name: m[f.name],
-          }),
-      ];
+      return coerceCollectionRows(
+        raw,
+        declaredChildFields: declared.fields,
+        onSkippedEntry: (String k, String msg) => budget.recordRowIssue(
+            'coll-entry:$name',
+            'Collection field "$name" contains a non-row entry; it is '
+                'skipped'),
+      );
     }
 
     // Spec 033: fold one master row's descendant leaves into accumulator [a].
