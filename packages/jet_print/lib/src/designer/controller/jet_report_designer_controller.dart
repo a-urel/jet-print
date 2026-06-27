@@ -10,6 +10,7 @@ import '../../domain/detail_scope.dart';
 import '../../domain/diagnostic.dart';
 import '../../domain/elements/barcode_element.dart'
     show BarcodeSymbology, QrErrorCorrectionLevel;
+import '../../domain/elements/chart_element.dart' show ChartType;
 import '../../domain/elements/shape_element.dart';
 import '../../domain/elements/text_element.dart';
 import '../../domain/geometry.dart';
@@ -42,6 +43,7 @@ import 'commands/resize_command.dart';
 import 'commands/scope_commands.dart';
 import 'commands/set_band_height_command.dart';
 import 'commands/set_barcode_color_command.dart';
+import 'commands/set_chart_options_command.dart';
 import 'commands/set_barcode_data_command.dart';
 import 'commands/set_barcode_options_command.dart';
 import 'commands/set_barcode_symbology_command.dart';
@@ -851,6 +853,34 @@ class JetReportDesignerController extends ChangeNotifier {
   void setBarcodeEccLevel(String id, QrErrorCorrectionLevel level) =>
       _commit(SetBarcodeOptionsCommand(id: id, eccLevel: level));
 
+  /// Updates one or more properties of the [ChartElement] [id] as one undoable
+  /// step, preserving every field not mentioned. A no-op for a non-chart or
+  /// absent id.
+  void setChartOptions(
+    String id, {
+    ChartType? chartType,
+    String? collectionField,
+    String? valueExpression,
+    String? categoryExpression,
+    String? title,
+    bool? showAxes,
+    bool? showValueLabels,
+    bool? showLegend,
+    JetColor? seriesColor,
+  }) =>
+      _commit(SetChartOptionsCommand(
+        id: id,
+        chartType: chartType,
+        collectionField: collectionField,
+        valueExpression: valueExpression,
+        categoryExpression: categoryExpression,
+        title: title,
+        showAxes: showAxes,
+        showValueLabels: showValueLabels,
+        showLegend: showLegend,
+        seriesColor: seriesColor,
+      ));
+
   /// Binds the [ImageElement] [id] to read its picture from the data [field]
   /// (US2 / FR-013). No-op for a non-image or absent id, or when already bound
   /// to the same field.
@@ -1461,6 +1491,8 @@ class JetReportDesignerController extends ChangeNotifier {
         return 'image';
       case DesignerToolType.barcode:
         return 'barcode';
+      case DesignerToolType.chart:
+        return 'chart';
     }
   }
 }

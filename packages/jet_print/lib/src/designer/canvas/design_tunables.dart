@@ -24,6 +24,9 @@ enum DesignerToolType {
 
   /// A barcode element ([BarcodeElement]).
   barcode,
+
+  /// A chart element ([ChartElement]).
+  chart,
 }
 
 /// Grid/snap spacing, in **millimetres** — the unit of record for this decision
@@ -103,6 +106,7 @@ const Map<DesignerToolType, JetSize> kDefaultElementSize =
   DesignerToolType.shape: JetSize(96, 96),
   DesignerToolType.image: JetSize(96, 96),
   DesignerToolType.barcode: JetSize(96, 48),
+  DesignerToolType.chart: JetSize(200, 130),
 };
 
 // --- Rulers (spec 014) -------------------------------------------------------

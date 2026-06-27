@@ -3,6 +3,7 @@ library;
 
 import '../../../domain/band.dart';
 import '../../../domain/elements/barcode_element.dart';
+import '../../../domain/elements/chart_element.dart';
 import '../../../domain/elements/image_element.dart';
 import '../../../domain/elements/image_source.dart';
 import '../../../domain/elements/shape_element.dart';
@@ -49,6 +50,14 @@ ReportElement buildDefaultElement(
         bounds: bounds,
         symbology: BarcodeSymbology.auto,
         data: '1234567890',
+      );
+    case DesignerToolType.chart:
+      return ChartElement(
+        id: id,
+        bounds: bounds,
+        chartType: ChartType.bar,
+        collectionField: '',
+        valueExpression: '',
       );
   }
 }

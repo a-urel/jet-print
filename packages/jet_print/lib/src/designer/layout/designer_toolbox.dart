@@ -39,6 +39,8 @@ class DesignerToolbox extends StatelessWidget {
           DesignerToolType.image, LucideIcons.image, l10n.toolboxImageEntry),
       _ToolboxEntry(DesignerToolType.barcode, LucideIcons.barcode,
           l10n.toolboxBarcodeEntry),
+      _ToolboxEntry(
+          DesignerToolType.chart, LucideIcons.chartBar, l10n.toolboxChartEntry),
     ];
 
     return SizedBox(

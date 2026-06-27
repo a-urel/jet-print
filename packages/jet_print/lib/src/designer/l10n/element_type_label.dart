@@ -17,6 +17,8 @@ String elementTypeLabel(ReportElement element, JetPrintLocalizations l10n) {
       return l10n.elementTypeImage;
     case 'barcode':
       return l10n.elementTypeBarcode;
+    case 'chart':
+      return l10n.elementTypeChart;
     default:
       return l10n.elementTypeGeneric;
   }

@@ -977,6 +977,12 @@ abstract class JetPrintLocalizations {
   /// **'Barcode'**
   String get elementTypeBarcode;
 
+  /// Element type name (accessibility / outline) for a chart element.
+  ///
+  /// In en, this message translates to:
+  /// **'Chart'**
+  String get elementTypeChart;
+
   /// Element type name (accessibility / outline) fallback for an unknown element type.
   ///
   /// In en, this message translates to:
@@ -1615,6 +1621,84 @@ abstract class JetPrintLocalizations {
   /// In en, this message translates to:
   /// **'Auto → {symbology}'**
   String barcodeAutoInferred(String symbology);
+
+  /// Properties panel section label for the chart-specific settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Chart'**
+  String get propertiesChart;
+
+  /// Chart type picker label.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get propertiesChartType;
+
+  /// Chart type option: bar chart.
+  ///
+  /// In en, this message translates to:
+  /// **'Bar'**
+  String get chartTypeBar;
+
+  /// Chart type option: line chart.
+  ///
+  /// In en, this message translates to:
+  /// **'Line'**
+  String get chartTypeLine;
+
+  /// Chart type option: pie chart.
+  ///
+  /// In en, this message translates to:
+  /// **'Pie'**
+  String get chartTypePie;
+
+  /// Chart collection field picker label.
+  ///
+  /// In en, this message translates to:
+  /// **'Collection'**
+  String get propertiesChartCollection;
+
+  /// Chart value expression field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Value'**
+  String get propertiesChartValue;
+
+  /// Chart category expression field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get propertiesChartCategory;
+
+  /// Chart title field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get propertiesChartTitle;
+
+  /// Toggle: draw value axis and category labels.
+  ///
+  /// In en, this message translates to:
+  /// **'Show axes'**
+  String get propertiesChartShowAxes;
+
+  /// Toggle: draw value labels on each bar / slice.
+  ///
+  /// In en, this message translates to:
+  /// **'Value labels'**
+  String get propertiesChartShowValueLabels;
+
+  /// Toggle: draw a legend swatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Legend'**
+  String get propertiesChartShowLegend;
+
+  /// Chart series color label.
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get propertiesChartColor;
 
   /// Properties panel toggle label for the element/band visibility switch.
   ///

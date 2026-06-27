@@ -454,6 +454,9 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get elementTypeBarcode => 'Barcode';
 
   @override
+  String get elementTypeChart => 'Chart';
+
+  @override
   String get elementTypeGeneric => 'Element';
 
   @override
@@ -807,6 +810,45 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String barcodeAutoInferred(String symbology) {
     return 'Auto → $symbology';
   }
+
+  @override
+  String get propertiesChart => 'Chart';
+
+  @override
+  String get propertiesChartType => 'Type';
+
+  @override
+  String get chartTypeBar => 'Bar';
+
+  @override
+  String get chartTypeLine => 'Line';
+
+  @override
+  String get chartTypePie => 'Pie';
+
+  @override
+  String get propertiesChartCollection => 'Collection';
+
+  @override
+  String get propertiesChartValue => 'Value';
+
+  @override
+  String get propertiesChartCategory => 'Category';
+
+  @override
+  String get propertiesChartTitle => 'Title';
+
+  @override
+  String get propertiesChartShowAxes => 'Show axes';
+
+  @override
+  String get propertiesChartShowValueLabels => 'Value labels';
+
+  @override
+  String get propertiesChartShowLegend => 'Legend';
+
+  @override
+  String get propertiesChartColor => 'Color';
 
   @override
   String get propertiesVisible => 'Visible';

@@ -12,6 +12,7 @@ import '../../../domain/bool_property.dart';
 import '../../../domain/column_layout.dart';
 import '../../../domain/detail_scope.dart';
 import '../../../domain/elements/barcode_element.dart';
+import '../../../domain/elements/chart_element.dart';
 import '../../../domain/elements/image_element.dart';
 import '../../../domain/elements/image_source.dart';
 import '../../../domain/elements/shape_element.dart';
@@ -608,6 +609,147 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
           ),
         ),
       ],
+      // Chart inspector: type picker, binding (collection + expressions), chrome
+      // toggles (showAxes / showValueLabels / showLegend), and series color.
+      // Each control dispatches one setChartOptions call → one undoable step.
+      if (element is ChartElement) ...<Widget>[
+        const SizedBox(height: 12),
+        KeyedSubtree(
+          key: ValueKey<String>('$_p.chart.$id'),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              SectionLabel(l10n.propertiesChart),
+              // --- Chart type --------------------------------------------------
+              _LabeledRow(
+                label: l10n.propertiesChartType,
+                child: ShadSelect<ChartType>(
+                  selectedOptionBuilder:
+                      (BuildContext context, ChartType value) =>
+                          Text(_chartTypeLabel(value, l10n)),
+                  initialValue: element.chartType,
+                  options: <Widget>[
+                    for (final ChartType t in ChartType.values)
+                      ShadOption<ChartType>(
+                        value: t,
+                        child: Text(_chartTypeLabel(t, l10n)),
+                      ),
+                  ],
+                  onChanged: (ChartType? v) {
+                    if (v != null) controller.setChartOptions(id, chartType: v);
+                  },
+                ),
+              ),
+              // --- Collection field --------------------------------------------
+              _LabeledRow(
+                label: l10n.propertiesChartCollection,
+                child: _BindingField(
+                  fieldKey: ValueKey<String>('$_p.field.chartCollection.$id'),
+                  value: element.collectionField,
+                  placeholder: l10n.bindingCollectionHint,
+                  clearTooltip: l10n.bindingClearTooltip,
+                  fields: _chartCollectionChoices(schema, controller, id),
+                  pickerTooltip: l10n.bindingFieldPickerTooltip,
+                  pickerKeyPrefix: '$_p.field.chartCollection.pick.$id',
+                  onSet: (String v) =>
+                      controller.setChartOptions(id, collectionField: v),
+                  onClear: () =>
+                      controller.setChartOptions(id, collectionField: ''),
+                ),
+              ),
+              // --- Value expression --------------------------------------------
+              _LabeledRow(
+                label: l10n.propertiesChartValue,
+                child: _ValueField(
+                  fieldKey: ValueKey<String>('$_p.field.chartValue.$id'),
+                  display: reverseCompile(element.valueExpression),
+                  placeholder: l10n.valueFieldHint,
+                  fields: _valueFieldChoices(schema, controller, id),
+                  pickerTooltip: l10n.valueFieldPickerTooltip,
+                  fxTooltip: l10n.valueFieldFxTooltip,
+                  resolvableNames: _resolvableNames(schema, controller, id),
+                  descendantOperands:
+                      _descendantOperands(schema, controller, id),
+                  descendantFields: _descendantFields(schema, controller, id),
+                  onCommit: (String v) =>
+                      controller.setChartOptions(id, valueExpression: v),
+                ),
+              ),
+              // --- Category expression -----------------------------------------
+              _LabeledRow(
+                label: l10n.propertiesChartCategory,
+                child: _ValueField(
+                  fieldKey: ValueKey<String>('$_p.field.chartCategory.$id'),
+                  display: element.categoryExpression != null
+                      ? reverseCompile(element.categoryExpression!)
+                      : const ValueDisplay(''),
+                  placeholder: l10n.valueFieldHint,
+                  fields: _valueFieldChoices(schema, controller, id),
+                  pickerTooltip: l10n.valueFieldPickerTooltip,
+                  fxTooltip: l10n.valueFieldFxTooltip,
+                  resolvableNames: _resolvableNames(schema, controller, id),
+                  descendantOperands:
+                      _descendantOperands(schema, controller, id),
+                  descendantFields: _descendantFields(schema, controller, id),
+                  onCommit: (String v) => controller.setChartOptions(id,
+                      categoryExpression: v.isEmpty ? null : v),
+                ),
+              ),
+              // --- Title -------------------------------------------------------
+              _LabeledRow(
+                label: l10n.propertiesChartTitle,
+                child: ShadInput(
+                  key: ValueKey<String>('$_p.field.chartTitle.$id'),
+                  initialValue: element.title ?? '',
+                  placeholder: Text(l10n.valueFieldHint),
+                  onChanged: (String v) => controller.setChartOptions(id,
+                      title: v.isEmpty ? null : v),
+                ),
+              ),
+              // --- Chrome toggles ----------------------------------------------
+              _LabeledRow(
+                label: l10n.propertiesChartShowAxes,
+                child: ShadSwitch(
+                  value: element.showAxes,
+                  onChanged: (bool v) =>
+                      controller.setChartOptions(id, showAxes: v),
+                ),
+              ),
+              _LabeledRow(
+                label: l10n.propertiesChartShowValueLabels,
+                child: ShadSwitch(
+                  value: element.showValueLabels,
+                  onChanged: (bool v) =>
+                      controller.setChartOptions(id, showValueLabels: v),
+                ),
+              ),
+              _LabeledRow(
+                label: l10n.propertiesChartShowLegend,
+                child: ShadSwitch(
+                  value: element.showLegend,
+                  onChanged: (bool v) =>
+                      controller.setChartOptions(id, showLegend: v),
+                ),
+              ),
+              // --- Series color ------------------------------------------------
+              const SizedBox(height: 12),
+              _LabeledRow(
+                label: l10n.propertiesChartColor,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: _ColorField(
+                    keyBase: '$_p.field.chartColor.$id',
+                    value: element.seriesColor,
+                    compact: true,
+                    onCommit: (JetColor? c) =>
+                        controller.setChartOptions(id, seriesColor: c!),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
       // Shape gallery: pick the form from a visual roster (020 / FR-001/002).
       // Shape-gated, so it is absent for text/image/barcode and for no/multi
       // selection (the latter fall through to the empty state before this runs).
@@ -684,6 +826,39 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
           ),
         ),
       ],
+    ];
+  }
+
+  /// The localized label for a [ChartType] value.
+  String _chartTypeLabel(ChartType type, JetPrintLocalizations l10n) =>
+      switch (type) {
+        ChartType.bar => l10n.chartTypeBar,
+        ChartType.line => l10n.chartTypeLine,
+        ChartType.pie => l10n.chartTypePie,
+      };
+
+  /// The collection fields available for a chart element to iterate, derived
+  /// from the element's band scope. Mirrors the scope-collection picker in the
+  /// band inspector but for a chart element rather than a scope node.
+  List<FieldDef> _chartCollectionChoices(
+    JetDataSchema? schema,
+    JetReportDesignerController controller,
+    String elementId,
+  ) {
+    if (schema == null) return const <FieldDef>[];
+    final Band? band = findBandOfElement(controller.definition, elementId);
+    if (band == null) return const <FieldDef>[];
+    final DetailScope? scope = findScopeOfBand(controller.definition, band.id);
+    if (scope == null) return const <FieldDef>[];
+    // Walk the scope path up to (but not including) this scope to get
+    // the collections available at this scope's parent level.
+    final List<DetailScope> chain =
+        scopePathToScope(controller.definition, scope.id);
+    final List<DetailScope> ancestors =
+        chain.length > 1 ? chain.sublist(0, chain.length - 1) : chain;
+    return <FieldDef>[
+      for (final FieldDef f in fieldsInScopeForChain(schema, ancestors))
+        if (f.type == JetFieldType.collection) f,
     ];
   }
 
@@ -1478,6 +1653,7 @@ IconData _elementGlyph(ReportElement element) {
   if (element is ShapeElement) return LucideIcons.square;
   if (element is ImageElement) return LucideIcons.image;
   if (element is BarcodeElement) return LucideIcons.barcode;
+  if (element is ChartElement) return LucideIcons.chartBar;
   return LucideIcons.square;
 }
 

@@ -455,6 +455,9 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get elementTypeBarcode => 'Barkod';
 
   @override
+  String get elementTypeChart => 'Grafik';
+
+  @override
   String get elementTypeGeneric => 'Öğe';
 
   @override
@@ -808,6 +811,45 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String barcodeAutoInferred(String symbology) {
     return 'Otomatik → $symbology';
   }
+
+  @override
+  String get propertiesChart => 'Grafik';
+
+  @override
+  String get propertiesChartType => 'Tür';
+
+  @override
+  String get chartTypeBar => 'Çubuk';
+
+  @override
+  String get chartTypeLine => 'Çizgi';
+
+  @override
+  String get chartTypePie => 'Pasta';
+
+  @override
+  String get propertiesChartCollection => 'Koleksiyon';
+
+  @override
+  String get propertiesChartValue => 'Değer';
+
+  @override
+  String get propertiesChartCategory => 'Kategori';
+
+  @override
+  String get propertiesChartTitle => 'Başlık';
+
+  @override
+  String get propertiesChartShowAxes => 'Eksenleri göster';
+
+  @override
+  String get propertiesChartShowValueLabels => 'Değer etiketleri';
+
+  @override
+  String get propertiesChartShowLegend => 'Açıklama';
+
+  @override
+  String get propertiesChartColor => 'Renk';
 
   @override
   String get propertiesVisible => 'Görünür';
