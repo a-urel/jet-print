@@ -35,6 +35,12 @@ const Map<ShapeKind, int> _vertexCount = <ShapeKind, int>{
   ShapeKind.pentagon: 5,
   ShapeKind.hexagon: 6,
   ShapeKind.star: 10,
+  ShapeKind.arrowRight: 7,
+  ShapeKind.arrowLeft: 7,
+  ShapeKind.arrowUp: 7,
+  ShapeKind.arrowDown: 7,
+  ShapeKind.arrowDouble: 10,
+  ShapeKind.chevron: 6,
 };
 
 void main() {
@@ -141,6 +147,57 @@ void main() {
         expect(() => shapePath(kind, sliver), returnsNormally);
       });
     }
+  });
+
+  group('block arrow tips sit on the pointed edge', () {
+    test('arrowRight tip is at the right-edge vertical centre', () {
+      final List<JetOffset> p =
+          _points(shapePath(ShapeKind.arrowRight, bounds));
+      expect(
+          p.any((JetOffset v) =>
+              (v.dx - right).abs() < eps && (v.dy - cy).abs() < eps),
+          isTrue);
+    });
+    test('arrowLeft tip is at the left-edge vertical centre', () {
+      final List<JetOffset> p = _points(shapePath(ShapeKind.arrowLeft, bounds));
+      expect(
+          p.any((JetOffset v) =>
+              (v.dx - left).abs() < eps && (v.dy - cy).abs() < eps),
+          isTrue);
+    });
+    test('arrowUp tip is at the top-edge horizontal centre', () {
+      final List<JetOffset> p = _points(shapePath(ShapeKind.arrowUp, bounds));
+      expect(
+          p.any((JetOffset v) =>
+              (v.dx - cx).abs() < eps && (v.dy - top).abs() < eps),
+          isTrue);
+    });
+    test('arrowDown tip is at the bottom-edge horizontal centre', () {
+      final List<JetOffset> p = _points(shapePath(ShapeKind.arrowDown, bounds));
+      expect(
+          p.any((JetOffset v) =>
+              (v.dx - cx).abs() < eps && (v.dy - bottom).abs() < eps),
+          isTrue);
+    });
+    test('arrowDouble has both left and right tips at vertical centre', () {
+      final List<JetOffset> p =
+          _points(shapePath(ShapeKind.arrowDouble, bounds));
+      expect(
+          p.any((JetOffset v) =>
+              (v.dx - left).abs() < eps && (v.dy - cy).abs() < eps),
+          isTrue);
+      expect(
+          p.any((JetOffset v) =>
+              (v.dx - right).abs() < eps && (v.dy - cy).abs() < eps),
+          isTrue);
+    });
+    test('chevron tip is at the right-edge vertical centre', () {
+      final List<JetOffset> p = _points(shapePath(ShapeKind.chevron, bounds));
+      expect(
+          p.any((JetOffset v) =>
+              (v.dx - right).abs() < eps && (v.dy - cy).abs() < eps),
+          isTrue);
+    });
   });
 
   test('the ellipse uses kEllipseSegments points on the inscribed ellipse', () {

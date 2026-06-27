@@ -21,6 +21,18 @@ import '../frame/primitive.dart';
 /// is needed. A single tunable: raise it only if a fidelity issue is observed.
 const int kEllipseSegments = 64;
 
+/// Block-arrow shaft thickness as a fraction of the cross-axis (the box
+/// dimension perpendicular to the arrow). 0.50 = the classic office look.
+const double kArrowShaftRatio = 0.50;
+
+/// Block-arrow head length as a fraction of the long-axis (the box dimension
+/// along the arrow's direction).
+const double kArrowHeadRatio = 0.45;
+
+/// Chevron band thickness as a fraction of the long-axis (the box width, since
+/// the chevron points right).
+const double kChevronThicknessRatio = 0.50;
+
 /// The straight angle quarter turn that puts a regular polygon's first vertex at
 /// the top centre (a "point-up" orientation): screen `y` grows downward, so the
 /// top is at angle −90°.
@@ -56,6 +68,122 @@ List<PathCommand> shapePath(ShapeKind kind, JetRect bounds) {
     ShapeKind.pentagon => _regularPolygon(cx, cy, rx, ry, 5),
     ShapeKind.hexagon => _regularPolygon(cx, cy, rx, ry, 6),
     ShapeKind.star => _star(cx, cy, rx, ry, points: 5, innerRatio: 0.5),
+    ShapeKind.arrowRight => () {
+        final double shaftHalf = bounds.height * kArrowShaftRatio / 2;
+        final double headW = bounds.width * kArrowHeadRatio;
+        final double baseX = bounds.x + bounds.width - headW;
+        final double left = bounds.x;
+        final double right = bounds.x + bounds.width;
+        final double top = bounds.y;
+        final double bottom = bounds.y + bounds.height;
+        return <JetOffset>[
+          JetOffset(left, cy - shaftHalf),
+          JetOffset(baseX, cy - shaftHalf),
+          JetOffset(baseX, top),
+          JetOffset(right, cy),
+          JetOffset(baseX, bottom),
+          JetOffset(baseX, cy + shaftHalf),
+          JetOffset(left, cy + shaftHalf),
+        ];
+      }(),
+    ShapeKind.arrowLeft => () {
+        final double shaftHalf = bounds.height * kArrowShaftRatio / 2;
+        final double headW = bounds.width * kArrowHeadRatio;
+        final double baseX = bounds.x + headW;
+        final double left = bounds.x;
+        final double right = bounds.x + bounds.width;
+        final double top = bounds.y;
+        final double bottom = bounds.y + bounds.height;
+        return <JetOffset>[
+          JetOffset(right, cy - shaftHalf),
+          JetOffset(baseX, cy - shaftHalf),
+          JetOffset(baseX, top),
+          JetOffset(left, cy),
+          JetOffset(baseX, bottom),
+          JetOffset(baseX, cy + shaftHalf),
+          JetOffset(right, cy + shaftHalf),
+        ];
+      }(),
+    ShapeKind.arrowUp => () {
+        final double shaftHalf = bounds.width * kArrowShaftRatio / 2;
+        final double headH = bounds.height * kArrowHeadRatio;
+        final double baseY = bounds.y + headH;
+        final double left = bounds.x;
+        final double right = bounds.x + bounds.width;
+        final double top = bounds.y;
+        final double bottom = bounds.y + bounds.height;
+        return <JetOffset>[
+          JetOffset(cx - shaftHalf, bottom),
+          JetOffset(cx - shaftHalf, baseY),
+          JetOffset(left, baseY),
+          JetOffset(cx, top),
+          JetOffset(right, baseY),
+          JetOffset(cx + shaftHalf, baseY),
+          JetOffset(cx + shaftHalf, bottom),
+        ];
+      }(),
+    ShapeKind.arrowDown => () {
+        final double shaftHalf = bounds.width * kArrowShaftRatio / 2;
+        final double headH = bounds.height * kArrowHeadRatio;
+        final double baseY = bounds.y + bounds.height - headH;
+        final double left = bounds.x;
+        final double right = bounds.x + bounds.width;
+        final double top = bounds.y;
+        final double bottom = bounds.y + bounds.height;
+        return <JetOffset>[
+          JetOffset(cx - shaftHalf, top),
+          JetOffset(cx - shaftHalf, baseY),
+          JetOffset(left, baseY),
+          JetOffset(cx, bottom),
+          JetOffset(right, baseY),
+          JetOffset(cx + shaftHalf, baseY),
+          JetOffset(cx + shaftHalf, top),
+        ];
+      }(),
+    ShapeKind.arrowDouble => () {
+        final double shaftHalf = bounds.height * kArrowShaftRatio / 2;
+        final double headW = bounds.width * kArrowHeadRatio;
+        final double leftBase = bounds.x + headW;
+        final double rightBase = bounds.x + bounds.width - headW;
+        final double left = bounds.x;
+        final double right = bounds.x + bounds.width;
+        final double top = bounds.y;
+        final double bottom = bounds.y + bounds.height;
+        return <JetOffset>[
+          JetOffset(left, cy),
+          JetOffset(leftBase, top),
+          JetOffset(leftBase, cy - shaftHalf),
+          JetOffset(rightBase, cy - shaftHalf),
+          JetOffset(rightBase, top),
+          JetOffset(right, cy),
+          JetOffset(rightBase, bottom),
+          JetOffset(rightBase, cy + shaftHalf),
+          JetOffset(leftBase, cy + shaftHalf),
+          JetOffset(leftBase, bottom),
+        ];
+      }(),
+    ShapeKind.chevron => () {
+        final double t = bounds.width * kChevronThicknessRatio;
+        final double left = bounds.x;
+        final double right = bounds.x + bounds.width;
+        final double top = bounds.y;
+        final double bottom = bounds.y + bounds.height;
+        return <JetOffset>[
+          JetOffset(left, top),
+          JetOffset(right, cy),
+          JetOffset(left, bottom),
+          JetOffset(left + t, bottom),
+          JetOffset(right - t, cy),
+          JetOffset(left + t, top),
+        ];
+      }(),
+    // roundRect geometry is added in Task 3; this stub keeps the switch
+    // exhaustive until then. It must not be reached in production: the renderer
+    // will route roundRect through its own path once Task 3 lands.
+    ShapeKind.roundRect => <JetOffset>[
+        JetOffset(bounds.x, bounds.y),
+        JetOffset(bounds.x + bounds.width, bounds.y + bounds.height),
+      ],
     // line/rectangle are special-cased by the renderer and never reach here.
     ShapeKind.line || ShapeKind.rectangle => <JetOffset>[
         JetOffset(bounds.x, bounds.y),
