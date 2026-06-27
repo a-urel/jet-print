@@ -36,8 +36,7 @@ ReportDefinition _definition() => const ReportDefinition(
                   id: 'heading',
                   bounds: JetRect(x: 0, y: 4, width: 500, height: 22),
                   text: 'Monthly Sales',
-                  style:
-                      JetTextStyle(fontSize: 16, weight: JetFontWeight.bold),
+                  style: JetTextStyle(fontSize: 16, weight: JetFontWeight.bold),
                 ),
               ],
             )),
@@ -91,6 +90,7 @@ ReportDefinition _definition() => const ReportDefinition(
                   title: 'Revenue Share (Pie)',
                   showAxes: false,
                   showValueLabels: true,
+                  showLegend: true,
                 ),
               ],
             )),
@@ -176,7 +176,7 @@ void main() {
     );
   });
 
-  test('chart page 1 PDF export golden', () async {
+  test('chart page 1 raster (PNG) export golden', () async {
     final RenderedReport report = _report();
     const JetReportExporter exporter = JetReportExporter();
     final Uint8List png = await exporter.pageToPng(report, 0, scale: 2);

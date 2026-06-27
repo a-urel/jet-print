@@ -75,4 +75,73 @@ void main() {
         out);
     // no exception; may emit only chrome (axis lines / text)
   });
+
+  test('pie: showValueLabels emits extra TextRunPrimitives vs without', () {
+    ChartElement pieChart({required bool labels}) => ChartElement(
+          id: 'p1',
+          bounds: bounds,
+          chartType: ChartType.pie,
+          collectionField: 'm',
+          valueExpression: r'$F{v}',
+          showValueLabels: labels,
+          points: const <ChartPoint>[
+            ChartPoint('Jan', 10),
+            ChartPoint('Feb', 20),
+            ChartPoint('Mar', 30),
+          ],
+        );
+
+    final FrameBuilder outOff = FrameBuilder(PageFormat.a4Portrait);
+    renderer.emit(pieChart(labels: false), ctx, bounds, outOff);
+    final int textsOff =
+        outOff.build().primitives.whereType<TextRunPrimitive>().length;
+
+    final FrameBuilder outOn = FrameBuilder(PageFormat.a4Portrait);
+    renderer.emit(pieChart(labels: true), ctx, bounds, outOn);
+    final int textsOn =
+        outOn.build().primitives.whereType<TextRunPrimitive>().length;
+
+    // With labels on there should be one extra TextRunPrimitive per slice (3).
+    expect(textsOn, textsOff + 3);
+  });
+
+  test('showLegend emits legend swatch RectPrimitives and TextRunPrimitives',
+      () {
+    ChartElement barChart({required bool legend}) => ChartElement(
+          id: 'b2',
+          bounds: bounds,
+          chartType: ChartType.bar,
+          collectionField: 'm',
+          valueExpression: r'$F{v}',
+          title: 'My Series',
+          showLegend: legend,
+          points: const <ChartPoint>[
+            ChartPoint('Jan', 10),
+            ChartPoint('Feb', 20),
+          ],
+        );
+
+    final FrameBuilder outOff = FrameBuilder(PageFormat.a4Portrait);
+    renderer.emit(barChart(legend: false), ctx, bounds, outOff);
+    final List<FramePrimitive> primsOff = outOff.build().primitives;
+
+    final FrameBuilder outOn = FrameBuilder(PageFormat.a4Portrait);
+    renderer.emit(barChart(legend: true), ctx, bounds, outOn);
+    final List<FramePrimitive> primsOn = outOn.build().primitives;
+
+    // Legend adds at least one swatch RectPrimitive and one label TextRunPrimitive.
+    final int rectsOff = primsOff
+        .whereType<RectPrimitive>()
+        .where((r) => r.elementId == 'b2')
+        .length;
+    final int rectsOn = primsOn
+        .whereType<RectPrimitive>()
+        .where((r) => r.elementId == 'b2')
+        .length;
+    expect(rectsOn, greaterThan(rectsOff));
+
+    final int textsOff = primsOff.whereType<TextRunPrimitive>().length;
+    final int textsOn = primsOn.whereType<TextRunPrimitive>().length;
+    expect(textsOn, greaterThan(textsOff));
+  });
 }

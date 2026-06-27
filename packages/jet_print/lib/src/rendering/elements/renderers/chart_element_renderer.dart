@@ -3,6 +3,8 @@
 /// preview, and export agree by construction.
 library;
 
+import 'dart:math' as math;
+
 import '../../../domain/elements/chart_element.dart';
 import '../../../domain/geometry.dart';
 import '../../../domain/styles/color.dart';
@@ -21,6 +23,18 @@ const double kChartGutterBottom = 14;
 
 /// Top gutter (points) reserved for the title (used only when a title is set).
 const double kChartTitleGutter = 14;
+
+/// Bottom gutter (points) reserved for the legend row.
+const double kChartLegendGutter = 16;
+
+/// Width and height of each legend color swatch.
+const double kChartLegendSwatchSize = 8;
+
+/// Horizontal gap between swatch and its label.
+const double kChartLegendSwatchLabelGap = 3;
+
+/// Horizontal gap between legend entries.
+const double kChartLegendEntryGap = 12;
 
 /// The slice palette for pie charts (bar/line use the element's seriesColor).
 const List<JetColor> kChartPalette = <JetColor>[
@@ -48,11 +62,14 @@ class ChartElementRenderer extends ElementRenderer<ChartElement> {
   void emit(
       ChartElement el, RenderContext ctx, JetRect bounds, FrameBuilder out) {
     final double titleGutter = el.title != null ? kChartTitleGutter : 0;
+    final double legendGutter = el.showLegend ? kChartLegendGutter : 0;
     final bool axes = el.showAxes && el.chartType != ChartType.pie;
     final double plotLeft = bounds.x + (axes ? kChartGutterLeft : 0);
     final double plotTop = bounds.y + titleGutter;
-    final double plotBottom =
-        bounds.y + bounds.height - (axes ? kChartGutterBottom : 0);
+    final double plotBottom = bounds.y +
+        bounds.height -
+        (axes ? kChartGutterBottom : 0) -
+        legendGutter;
     final JetRect plot = JetRect(
       x: plotLeft,
       y: plotTop,
@@ -81,18 +98,107 @@ class ChartElementRenderer extends ElementRenderer<ChartElement> {
       case ChartType.line:
         _emitCartesian(el, ctx, plot, out, bars: false);
       case ChartType.pie:
-        _emitPie(el, plot, out);
+        _emitPie(el, ctx, plot, out);
+    }
+
+    // Legend (below the plot area)
+    if (el.showLegend) {
+      _emitLegend(el, ctx, bounds, plot, out);
     }
   }
 
-  void _emitPie(ChartElement el, JetRect plot, FrameBuilder out) {
-    for (final PieSlice s in pieSlices(el.points, plot)) {
+  void _emitPie(
+      ChartElement el, RenderContext ctx, JetRect plot, FrameBuilder out) {
+    final List<PieSlice> slices = pieSlices(el.points, plot);
+    final double total = el.points.fold<double>(
+        0, (double s, ChartPoint p) => p.value > 0 ? s + p.value : s);
+
+    for (final PieSlice s in slices) {
       out.add(PathPrimitive(
         bounds: plot,
         commands: s.commands,
         fill: kChartPalette[s.index % kChartPalette.length],
         elementId: el.id,
       ));
+
+      // Percent label at mid-angle, 60% of radius from center.
+      if (el.showValueLabels && total > 0) {
+        final double midAngle = s.startAngle + s.sweepAngle / 2;
+        final double cx = plot.x + plot.width / 2;
+        final double cy = plot.y + plot.height / 2;
+        final double r = math.min(plot.width, plot.height) / 2;
+        const double labelRadius = 0.60;
+        final double lx = cx + r * labelRadius * math.cos(midAngle);
+        final double ly = cy + r * labelRadius * math.sin(midAngle);
+        final int pct = ((s.value / total) * 100).round();
+        const double hw = 14;
+        const double hh = 8;
+        _text(
+          ctx,
+          out,
+          '$pct%',
+          JetRect(x: lx - hw / 2, y: ly - hh / 2, width: hw, height: hh),
+          el.id,
+        );
+      }
+    }
+  }
+
+  /// Draws a horizontal legend row below the plot area.
+  ///
+  /// For pie charts one entry per slice (palette color + category label);
+  /// for bar/line a single entry (series color + chart title or "Series").
+  /// Entries that exceed the available width are silently clipped (v1).
+  void _emitLegend(ChartElement el, RenderContext ctx, JetRect bounds,
+      JetRect plot, FrameBuilder out) {
+    final double legendY = bounds.y +
+        bounds.height -
+        kChartLegendGutter +
+        (kChartLegendGutter - kChartLegendSwatchSize) / 2;
+
+    final List<({JetColor color, String label})> entries;
+    if (el.chartType == ChartType.pie) {
+      final List<ChartPoint> pos = el.points.where((p) => p.value > 0).toList();
+      entries = <({JetColor color, String label})>[
+        for (var i = 0; i < pos.length; i++)
+          (
+            color: kChartPalette[i % kChartPalette.length],
+            label: pos[i].label,
+          ),
+      ];
+    } else {
+      entries = <({JetColor color, String label})>[
+        (color: el.seriesColor, label: el.title ?? 'Series'),
+      ];
+    }
+
+    double x = bounds.x;
+    for (final entry in entries) {
+      if (x >= bounds.x + bounds.width) break; // clipped
+
+      // Color swatch
+      out.add(RectPrimitive(
+        bounds: JetRect(
+            x: x,
+            y: legendY,
+            width: kChartLegendSwatchSize,
+            height: kChartLegendSwatchSize),
+        fill: entry.color,
+        elementId: el.id,
+      ));
+      x += kChartLegendSwatchSize + kChartLegendSwatchLabelGap;
+
+      // Label
+      const double labelW = 40;
+      _text(
+        ctx,
+        out,
+        entry.label,
+        JetRect(
+            x: x, y: legendY, width: labelW, height: kChartLegendSwatchSize),
+        el.id,
+      );
+      x += labelW + kChartLegendEntryGap;
     }
   }
 
@@ -142,15 +248,21 @@ class ChartElementRenderer extends ElementRenderer<ChartElement> {
         out.add(RectPrimitive(
             bounds: rects[i], fill: el.seriesColor, elementId: el.id));
         if (el.showValueLabels) {
+          // Clamp label y so it doesn't clip above the plot top.
+          const double labelH = 8;
+          final double rawY = rects[i].y - labelH;
+          final double labelY = rawY < plot.y
+              ? rects[i].y
+              : rawY; // draw inside bar when too close
           _text(
             ctx,
             out,
             el.points[i].value.toStringAsFixed(0),
             JetRect(
                 x: rects[i].x,
-                y: rects[i].y - 8,
+                y: labelY,
                 width: rects[i].width,
-                height: 8),
+                height: labelH),
             el.id,
           );
         }
