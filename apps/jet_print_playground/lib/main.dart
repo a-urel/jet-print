@@ -139,11 +139,11 @@ class _JetPrintPlaygroundAppState extends State<JetPrintPlaygroundApp> {
 }
 
 /// The playground shell: a [Scaffold] whose body is a [LayoutBuilder] that
-/// switches layout at [_PlaygroundHomeState._narrowWidth]. On wide screens a
-/// persistent [DemoNavList] sidebar handles demo selection and the theme/locale
-/// toggles live in a slim top bar alongside it. On narrow screens the sidebar
-/// moves into a [Drawer] opened by a hamburger button; the toggles remain in
-/// the top bar. Either way, demo bodies live in a structurally-stable
+/// switches layout at [_PlaygroundHomeState._narrowWidth]. The nav pane — a
+/// [DemoNavList] for demo selection with the theme/locale toggles pinned at its
+/// bottom — renders as a persistent fixed sidebar on wide screens (no top bar
+/// over the body) and moves into a [Drawer] opened by a hamburger button on
+/// narrow screens. Either way, demo bodies live in a structurally-stable
 /// [IndexedStack] keyed by [_PlaygroundHomeState._bodyKey], so no designer is
 /// ever remounted across a switch or a wide⇄narrow layout swap — edits survive.
 class _PlaygroundHome extends StatefulWidget {
@@ -331,8 +331,11 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
 
     void select(String value) => setState(() => _selectedDemo = value);
 
+    final ShadThemeData theme = ShadTheme.of(context);
+
     // App-global theme + language toggles: they switch the WHOLE app, not any
-    // single report, so they ride in the top bar, never the per-demo nav.
+    // single report, so they pin to the bottom of the nav pane — shared by the
+    // wide sidebar and the narrow drawer — rather than any per-demo chrome.
     final Widget toggleCluster = Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
@@ -350,24 +353,46 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
       ],
     );
 
-    // The drawer hosts the same nav on narrow screens; selecting an item closes
-    // it. It is always supplied (harmless on wide, where no hamburger opens it)
-    // so the Scaffold — and thus [bodies] in its body — stays structurally
-    // constant across the layout swap.
+    // The nav pane: the scrollable demo list fills the height, the app-global
+    // toggles pin to the bottom above a hairline divider. Used verbatim by the
+    // wide sidebar and the narrow drawer — [onSelect] differs only in whether
+    // it also closes the drawer.
+    Widget navPane(ValueChanged<String> onSelect) => Column(
+          children: <Widget>[
+            Expanded(
+              child: DemoNavList(
+                items: navItems,
+                selected: _selectedDemo,
+                onSelect: onSelect,
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: theme.colorScheme.border),
+                ),
+              ),
+              padding: const EdgeInsets.all(8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: toggleCluster,
+              ),
+            ),
+          ],
+        );
+
+    // The drawer hosts the same nav pane on narrow screens; selecting an item
+    // closes it. It is always supplied (harmless on wide, where no hamburger
+    // opens it) so the Scaffold — and thus [bodies] in its body — stays
+    // structurally constant across the layout swap.
     final Widget navDrawer = Drawer(
       child: SafeArea(
-        child: DemoNavList(
-          items: navItems,
-          selected: _selectedDemo,
-          onSelect: (String value) {
-            select(value);
-            Navigator.of(context).pop();
-          },
-        ),
+        child: navPane((String value) {
+          select(value);
+          Navigator.of(context).pop();
+        }),
       ),
     );
-
-    final ShadThemeData theme = ShadTheme.of(context);
 
     return Scaffold(
       drawer: navDrawer,
@@ -375,38 +400,36 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
             if (constraints.maxWidth < _narrowWidth) {
-              // Narrow: a hamburger opens the drawer; toggles sit at the right.
+              // Narrow: a minimal top bar holds only the hamburger; the toggles
+              // live at the bottom of the drawer's nav pane.
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   Padding(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    child: Row(
-                      children: <Widget>[
-                        // A Builder gives a context under the Scaffold so
-                        // Scaffold.of finds it to open the drawer.
-                        Builder(
-                          builder: (BuildContext ctx) => ShadButton.ghost(
-                            size: ShadButtonSize.sm,
-                            onPressed: () => Scaffold.of(ctx).openDrawer(),
-                            child: Semantics(
-                              label: 'Open navigation',
-                              child: const Icon(LucideIcons.menu, size: 16),
-                            ),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      // A Builder gives a context under the Scaffold so
+                      // Scaffold.of finds it to open the drawer.
+                      child: Builder(
+                        builder: (BuildContext ctx) => ShadButton.ghost(
+                          size: ShadButtonSize.sm,
+                          onPressed: () => Scaffold.of(ctx).openDrawer(),
+                          child: Semantics(
+                            label: 'Open navigation',
+                            child: const Icon(LucideIcons.menu, size: 16),
                           ),
                         ),
-                        const Spacer(),
-                        toggleCluster,
-                      ],
+                      ),
                     ),
                   ),
                   Expanded(child: bodies),
                 ],
               );
             }
-            // Wide: a persistent fixed sidebar owns demo selection; the toggles
-            // sit in a slim top bar over the body.
+            // Wide: a persistent fixed sidebar owns demo selection and the
+            // toggles (pinned at its bottom). No top bar over the body.
             return Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
@@ -417,28 +440,9 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
                       right: BorderSide(color: theme.colorScheme.border),
                     ),
                   ),
-                  child: DemoNavList(
-                    items: navItems,
-                    selected: _selectedDemo,
-                    onSelect: select,
-                  ),
+                  child: navPane(select),
                 ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: <Widget>[
-                      Padding(
-                        padding:
-                            const EdgeInsets.only(right: 8, top: 4, bottom: 4),
-                        child: Align(
-                          alignment: Alignment.centerRight,
-                          child: toggleCluster,
-                        ),
-                      ),
-                      Expanded(child: bodies),
-                    ],
-                  ),
-                ),
+                Expanded(child: bodies),
               ],
             );
           },

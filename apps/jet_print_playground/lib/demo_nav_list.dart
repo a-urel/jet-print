@@ -57,7 +57,9 @@ class DemoNavList extends StatelessWidget {
   Widget _tile(DemoNavItem item) {
     final bool isSelected = item.value == selected;
     final Widget leading = Icon(item.icon, size: 16);
-    final Widget label = Text(item.label);
+    // `expands: true` lets the label fill the button's width; textAlign.left
+    // then keeps it flush against the leading icon (the default centers it).
+    final Widget label = Text(item.label, textAlign: TextAlign.left);
     void onPressed() => onSelect(item.value);
     return isSelected
         ? ShadButton.secondary(
