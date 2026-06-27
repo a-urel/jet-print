@@ -136,6 +136,36 @@ void main() {
     });
   });
 
+  group('block-arrow + roundRect forms emit a PathPrimitive', () {
+    for (final ShapeKind kind in <ShapeKind>[
+      ShapeKind.arrowRight,
+      ShapeKind.arrowLeft,
+      ShapeKind.arrowUp,
+      ShapeKind.arrowDown,
+      ShapeKind.arrowDouble,
+      ShapeKind.chevron,
+      ShapeKind.roundRect,
+    ]) {
+      test('${kind.name} emits a PathPrimitive (not Rect/Line)', () {
+        final ShapeElement el = ShapeElement(
+          id: 'p',
+          bounds: bounds,
+          kind: kind,
+          style: const JetBoxStyle(
+            fill: JetColor(0xFF7CB3F0),
+            stroke: JetColor.black,
+            strokeWidth: 2,
+          ),
+        );
+        final FrameBuilder out = FrameBuilder(PageFormat.a4Portrait);
+        renderer.emit(el, ctx, bounds, out);
+        final FramePrimitive p = out.build().primitives.single;
+        expect(p, isA<PathPrimitive>());
+        expect((p as PathPrimitive).commands, shapePath(kind, bounds));
+      });
+    }
+  });
+
   // 020 / C7.1 — every form that is not line/rectangle renders as exactly one
   // PathPrimitive whose commands ARE `shapePath(kind, bounds)` and whose
   // fill/stroke/strokeWidth come straight from the element's style. This is the

@@ -69,6 +69,13 @@ class ShapeElementRenderer extends ElementRenderer<ShapeElement> {
       case ShapeKind.pentagon:
       case ShapeKind.hexagon:
       case ShapeKind.star:
+      case ShapeKind.arrowRight:
+      case ShapeKind.arrowLeft:
+      case ShapeKind.arrowUp:
+      case ShapeKind.arrowDown:
+      case ShapeKind.arrowDouble:
+      case ShapeKind.chevron:
+      case ShapeKind.roundRect:
         out.add(PathPrimitive(
           bounds: bounds,
           commands: shapePath(el.kind, bounds),
