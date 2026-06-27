@@ -8,9 +8,12 @@ library;
 import 'dart:convert';
 import 'dart:typed_data';
 
+import '../../data/collection_rows.dart';
 import '../../data/data_row.dart';
+import '../../data/field_def.dart';
 import '../../domain/bool_property.dart';
 import '../../domain/elements/barcode_element.dart';
+import '../../domain/elements/chart_element.dart';
 import '../../domain/elements/image_element.dart';
 import '../../domain/elements/image_source.dart';
 import '../../domain/elements/text_element.dart';
@@ -102,6 +105,10 @@ class ElementResolver {
     Map<String, Object?> params = const <String, Object?>{},
     Map<String, JetValue> variables = const <String, JetValue>{},
   }) {
+    if (element is ChartElement) {
+      return _resolveChart(element,
+          row: row, params: params, variables: variables);
+    }
     if (element is BarcodeElement) {
       return _resolveBarcode(element, row);
     }
@@ -126,6 +133,63 @@ class ElementResolver {
       return element;
     }
     return element;
+  }
+
+  ChartElement _resolveChart(
+    ChartElement el, {
+    required DataRow? row,
+    required Map<String, Object?> params,
+    required Map<String, JetValue> variables,
+  }) {
+    final Object? raw = (row != null && row.hasField(el.collectionField))
+        ? row.field(el.collectionField)
+        : null;
+    final List<DataRow> rows =
+        coerceCollectionRows(raw, declaredChildFields: const <FieldDef>[]);
+
+    final Expression valueExpr;
+    final Expression? catExpr;
+    try {
+      valueExpr = Expression.parse(el.valueExpression);
+      catExpr = el.categoryExpression == null
+          ? null
+          : Expression.parse(el.categoryExpression!);
+    } on ExpressionException catch (e) {
+      diagnostics.error('Expression parse failed: ${e.message}',
+          elementId: el.id);
+      return el.copyWith(points: const <ChartPoint>[]);
+    }
+
+    final List<ChartPoint> pts = <ChartPoint>[];
+    for (var i = 0; i < rows.length; i++) {
+      final FillEvalContext ctx = FillEvalContext(
+        row: rows[i],
+        params: params,
+        variables: variables,
+        functions: functions,
+        diagnostics: diagnostics,
+        warnedFields: warnedFields,
+        pageRefs: <String>{},
+        elementId: el.id,
+        budget: budget,
+      );
+      final JetValue v = valueExpr.evaluate(ctx);
+      final double value;
+      if (v is JetNumber) {
+        value = v.value.toDouble();
+      } else {
+        value = 0;
+        if (warnedFields.add('chart-nan:${el.id}')) {
+          diagnostics.warning(
+              'Chart "${el.id}" value expression did not resolve to a number',
+              elementId: el.id);
+        }
+      }
+      final String label =
+          catExpr == null ? '${i + 1}' : jetStringify(catExpr.evaluate(ctx));
+      pts.add(ChartPoint(label, value));
+    }
+    return el.copyWith(points: pts);
   }
 
   TextElement _resolveText(
