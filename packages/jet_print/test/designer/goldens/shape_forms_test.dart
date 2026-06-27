@@ -19,10 +19,10 @@ import 'package:jet_print/jet_print.dart';
 
 import '../support/designer_harness.dart';
 
-// A compact page holding the six new forms in a row, each filled + stroked so
-// both the fill and the stroke of the shared PathPrimitive are exercised.
+// A compact page holding the thirteen new forms in a row, each filled + stroked
+// so both the fill and the stroke of the shared PathPrimitive are exercised.
 const PageFormat _page = PageFormat(
-  width: 452,
+  width: 952,
   height: 96,
   margins: JetEdgeInsets.all(8),
 );
@@ -62,6 +62,13 @@ ReportDefinition _definition() => ReportDefinition(
                 _form('pentagon', ShapeKind.pentagon, 216),
                 _form('hexagon', ShapeKind.hexagon, 288),
                 _form('star', ShapeKind.star, 360),
+                _form('arrowRight', ShapeKind.arrowRight, 432),
+                _form('arrowLeft', ShapeKind.arrowLeft, 504),
+                _form('arrowUp', ShapeKind.arrowUp, 576),
+                _form('arrowDown', ShapeKind.arrowDown, 648),
+                _form('arrowDouble', ShapeKind.arrowDouble, 720),
+                _form('chevron', ShapeKind.chevron, 792),
+                _form('roundRect', ShapeKind.roundRect, 864),
               ],
             )),
           ],
