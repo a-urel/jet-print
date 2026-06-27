@@ -342,7 +342,14 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
         ShadButton.ghost(
           size: ShadButtonSize.sm,
           onPressed: widget.onToggleTheme,
-          child: Text(widget.isDark ? 'Light' : 'Dark'),
+          // A sun in dark mode (tap → light), a moon in light mode (tap → dark).
+          child: Semantics(
+            label: widget.isDark ? 'Switch to light theme' : 'Switch to dark theme',
+            child: Icon(
+              widget.isDark ? LucideIcons.sun : LucideIcons.moon,
+              size: 16,
+            ),
+          ),
         ),
         const SizedBox(width: 4),
         ShadButton.outline(
