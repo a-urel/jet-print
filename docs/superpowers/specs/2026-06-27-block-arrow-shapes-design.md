@@ -76,7 +76,7 @@ roles of width/height (vertical shaft, head at top/bottom). Each is its own
 vertex list — explicit, not a runtime rotation — to keep `shapePath` a flat
 `switch` like the existing forms.
 
-### Double arrow — 8-vertex polygon (heads at both ends)
+### Double arrow — 10-vertex polygon (heads at both ends)
 
 `headW = kArrowHeadRatio · w` at each end; central shaft band of thickness
 `kArrowShaftRatio · h`; tips at `(x, cy)` and `(x+w, cy)`.
