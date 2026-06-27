@@ -63,6 +63,7 @@ class DemoNavList extends StatelessWidget {
         ? ShadButton.secondary(
             width: double.infinity,
             mainAxisAlignment: MainAxisAlignment.start,
+            expands: true,
             leading: leading,
             onPressed: onPressed,
             child: label,
@@ -70,6 +71,7 @@ class DemoNavList extends StatelessWidget {
         : ShadButton.ghost(
             width: double.infinity,
             mainAxisAlignment: MainAxisAlignment.start,
+            expands: true,
             leading: leading,
             onPressed: onPressed,
             child: label,
