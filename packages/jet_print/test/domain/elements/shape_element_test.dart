@@ -106,6 +106,29 @@ void main() {
     });
   });
 
+  group('new forms (block arrows + rounded rect)', () {
+    test('the seven new ShapeKind values exist and serialize by name', () {
+      const List<ShapeKind> added = <ShapeKind>[
+        ShapeKind.arrowRight,
+        ShapeKind.arrowLeft,
+        ShapeKind.arrowUp,
+        ShapeKind.arrowDown,
+        ShapeKind.arrowDouble,
+        ShapeKind.chevron,
+        ShapeKind.roundRect,
+      ];
+      expect(added.map((ShapeKind k) => k.name), <String>[
+        'arrowRight',
+        'arrowLeft',
+        'arrowUp',
+        'arrowDown',
+        'arrowDouble',
+        'chevron',
+        'roundRect',
+      ]);
+    });
+  });
+
   group('ShapeElement equality + identity carry unknownForm (020)', () {
     const JetRect b = JetRect(x: 0, y: 0, width: 10, height: 10);
 

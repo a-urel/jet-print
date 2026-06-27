@@ -40,6 +40,31 @@ enum ShapeKind {
 
   /// A five-point, point-up star inscribed in the bounds.
   star,
+
+  /// A right-pointing block arrow: a horizontal shaft ending in a triangular
+  /// head at the right edge.
+  arrowRight,
+
+  /// A left-pointing block arrow (the [arrowRight] form mirrored on X).
+  arrowLeft,
+
+  /// An up-pointing block arrow: a vertical shaft ending in a triangular head
+  /// at the top edge.
+  arrowUp,
+
+  /// A down-pointing block arrow (the [arrowUp] form mirrored on Y).
+  arrowDown,
+
+  /// A two-headed horizontal block arrow: triangular heads at both the left and
+  /// right edges joined by a central shaft.
+  arrowDouble,
+
+  /// A right-pointing chevron: a constant-thickness ">"-band with no tail.
+  chevron,
+
+  /// A rectangle with rounded corners (each corner approximated by a fan of
+  /// straight segments, like the ellipse — no curve primitive needed).
+  roundRect,
 }
 
 /// A vector shape ([kind]) drawn within [bounds] using [style]. For a
