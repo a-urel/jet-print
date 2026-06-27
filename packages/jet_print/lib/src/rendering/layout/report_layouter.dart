@@ -159,20 +159,22 @@ class LazyLayout {
     required Map<String, JetValue> variables,
   }) {
     final JetElementPrintCallback? cb = _onElementPrint;
-    final ElementPrintContext ctx = ElementPrintContext(
-      pageNumber: pageNumber,
-      pageCount: pageCount,
-      bandType: bandType,
-      bandName: bandName,
-      fields: fields,
-      variables: variables,
-    );
+    final ElementPrintContext? ctx = cb == null
+        ? null
+        : ElementPrintContext(
+            pageNumber: pageNumber,
+            pageCount: pageCount,
+            bandType: bandType,
+            bandName: bandName,
+            fields: fields,
+            variables: variables,
+          );
     for (final ({ReportElement element, JetRect bounds}) e in boxes) {
       ReportElement el = e.element;
       if (cb != null) {
         ReportElement? out;
         try {
-          out = cb(el, ctx);
+          out = cb(el, ctx!);
         } catch (err) {
           diagnostics.warning('onElementPrint threw for "${el.id}": $err',
               elementId: el.id);
