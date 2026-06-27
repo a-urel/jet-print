@@ -52,10 +52,12 @@ void main() {
     c.createListWithBand(c.definition.body.root.id, collectionField: 'lines');
     await _openOutline(tester);
 
-    final String scopeId =
-        c.definition.body.root.children.whereType<NestedScope>().single.scope.id;
-    await _tapKey(
-        tester, 'jet_print.designer.outline.scope.$scopeId.remove');
+    final String scopeId = c.definition.body.root.children
+        .whereType<NestedScope>()
+        .single
+        .scope
+        .id;
+    await _tapKey(tester, 'jet_print.designer.outline.scope.$scopeId.remove');
 
     expect(c.definition.body.root.children.whereType<NestedScope>(), isEmpty,
         reason: 'the trash affordance removes the List scope');
@@ -76,9 +78,10 @@ void main() {
         find.byKey(const ValueKey<String>(
             'jet_print.designer.outline.scope.root.add.list.field.lines')),
         findsNothing,
-        reason: 'the only collection is already bound, so it is not re-offered');
+        reason:
+            'the only collection is already bound, so it is not re-offered');
     // Adding again is impossible → no duplicate "List: lines" can form.
-    expect(c.definition.body.root.children.whereType<NestedScope>(),
-        hasLength(1));
+    expect(
+        c.definition.body.root.children.whereType<NestedScope>(), hasLength(1));
   });
 }

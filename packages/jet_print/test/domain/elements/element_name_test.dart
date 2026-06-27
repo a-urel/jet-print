@@ -15,10 +15,7 @@ void main() {
         isNull);
     expect(
         const BarcodeElement(
-                id: 'b',
-                bounds: r,
-                symbology: BarcodeSymbology.auto,
-                data: 'x')
+                id: 'b', bounds: r, symbology: BarcodeSymbology.auto, data: 'x')
             .name,
         isNull);
   });
@@ -41,8 +38,8 @@ void main() {
   });
 
   test('constructor accepts name', () {
-    const ShapeElement s =
-        ShapeElement(id: 's', bounds: r, kind: ShapeKind.rectangle, name: 'Line');
+    const ShapeElement s = ShapeElement(
+        id: 's', bounds: r, kind: ShapeKind.rectangle, name: 'Line');
     expect(s.name, 'Line');
   });
 }

@@ -16,9 +16,16 @@ const _vis = BoolProperty(value: false, expression: 'show');
 void main() {
   final List<ReportElement> samples = <ReportElement>[
     const TextElement(id: 't', bounds: _b, text: 'x', visible: _vis),
-    const ShapeElement(id: 's', bounds: _b, kind: ShapeKind.rectangle, visible: _vis),
-    const ImageElement(id: 'i', bounds: _b, source: FieldImageSource(''), visible: _vis),
-    const BarcodeElement(id: 'c', bounds: _b, symbology: BarcodeSymbology.auto, data: '1', visible: _vis),
+    const ShapeElement(
+        id: 's', bounds: _b, kind: ShapeKind.rectangle, visible: _vis),
+    const ImageElement(
+        id: 'i', bounds: _b, source: FieldImageSource(''), visible: _vis),
+    const BarcodeElement(
+        id: 'c',
+        bounds: _b,
+        symbology: BarcodeSymbology.auto,
+        data: '1',
+        visible: _vis),
   ];
 
   for (final ReportElement e in samples) {

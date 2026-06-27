@@ -56,6 +56,7 @@ List<FieldDef> collectionFieldsForScope(
   };
   return <FieldDef>[
     for (final FieldDef f in _inScopeFields(schema, def, scopeId))
-      if (f.type == JetFieldType.collection && !alreadyBound.contains(f.name)) f,
+      if (f.type == JetFieldType.collection && !alreadyBound.contains(f.name))
+        f,
   ];
 }

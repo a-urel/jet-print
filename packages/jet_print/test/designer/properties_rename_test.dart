@@ -12,8 +12,7 @@ import 'package:jet_print/jet_print.dart';
 import 'support/designer_harness.dart';
 
 const String _p = 'jet_print.designer.properties';
-final Finder _header =
-    find.byKey(const ValueKey<String>('$_p.header'));
+final Finder _header = find.byKey(const ValueKey<String>('$_p.header'));
 
 Future<void> _openProperties(WidgetTester tester) async {
   final Finder tab = find.text('Properties');

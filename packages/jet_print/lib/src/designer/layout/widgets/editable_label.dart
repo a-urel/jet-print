@@ -114,7 +114,8 @@ class _EditableLabelState extends State<EditableLabel> {
         decoration: InputDecoration(
           isDense: true,
           hintText: widget.placeholder,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         ),
         style: widget.textStyle,
         onSubmitted: (_) => _commit(),

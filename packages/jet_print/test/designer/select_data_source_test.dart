@@ -153,8 +153,8 @@ void main() {
       await pumpSelectWorkspace(tester, onSelectDataSchema: () => taps++);
 
       // Data Source is the default-active tab — no navigation needed.
-      final Finder button = find.byKey(
-          const ValueKey<String>('jet_print.dataSource.selectButton'));
+      final Finder button = find
+          .byKey(const ValueKey<String>('jet_print.dataSource.selectButton'));
       expect(button, findsOneWidget);
       await tester.tap(button);
       await tester.pump();

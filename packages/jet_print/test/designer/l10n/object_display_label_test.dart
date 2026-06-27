@@ -37,7 +37,8 @@ void main() {
   });
 
   test('band name wins, else type label', () {
-    const named = Band(id: 'b', type: BandType.detail, height: 20, name: 'Lines');
+    const named =
+        Band(id: 'b', type: BandType.detail, height: 20, name: 'Lines');
     const plain = Band(id: 'b', type: BandType.groupFooter, height: 20);
     expect(bandDisplayLabel(named, l10n), 'Lines');
     expect(bandDisplayLabel(plain, l10n), l10n.bandTypeGroupFooter);

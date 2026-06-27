@@ -91,8 +91,7 @@ class _OutlinePanelState extends State<OutlinePanel> {
       // First tap: record and arm the expiry timer.
       _doubleTapTimer?.cancel();
       _lastTappedId = id;
-      _doubleTapTimer =
-          Timer(_doubleTapWindow, () => _lastTappedId = null);
+      _doubleTapTimer = Timer(_doubleTapWindow, () => _lastTappedId = null);
     }
   }
 
@@ -367,10 +366,10 @@ class _OutlinePanelState extends State<OutlinePanel> {
       selected: selection.bandId == band.id,
       onToggle: () => _toggle(band.id),
       onSelect: () => _handleTap(
-            band.id,
-            () => controller.selectBand(band.id),
-            () => setState(() => _editingId = band.id),
-          ),
+        band.id,
+        () => controller.selectBand(band.id),
+        () => setState(() => _editingId = band.id),
+      ),
       theme: theme,
       rawName: band.name,
       fallback: bandTypeLabel(band.type, l10n),
@@ -410,10 +409,10 @@ class _OutlinePanelState extends State<OutlinePanel> {
         },
         selected: selection.contains(element.id),
         onSelect: () => _handleTap(
-              element.id,
-              () => controller.select(element.id),
-              () => setState(() => _editingId = element.id),
-            ),
+          element.id,
+          () => controller.select(element.id),
+          () => setState(() => _editingId = element.id),
+        ),
         theme: theme,
       ));
     }

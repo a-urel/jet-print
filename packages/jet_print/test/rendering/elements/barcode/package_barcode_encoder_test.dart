@@ -88,8 +88,8 @@ void main() {
       }
     });
     test('$s rejects "$bad"', () {
-      expect(enc.encode(s, bad, width: 220, height: 80),
-          isA<BarcodeInvalid>(), reason: '$s should reject "$bad"');
+      expect(enc.encode(s, bad, width: 220, height: 80), isA<BarcodeInvalid>(),
+          reason: '$s should reject "$bad"');
     });
   }
 

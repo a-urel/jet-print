@@ -8,7 +8,8 @@ void main() {
     expect(barcodeSymbologyLabel(BarcodeSymbology.code128), 'Code 128');
     expect(barcodeSymbologyLabel(BarcodeSymbology.gs128), 'GS1-128 (EAN-128)');
     expect(barcodeSymbologyLabel(BarcodeSymbology.itf), 'Interleaved 2 of 5');
-    expect(barcodeSymbologyLabel(BarcodeSymbology.rm4scc), 'RM4SCC (Royal Mail)');
+    expect(
+        barcodeSymbologyLabel(BarcodeSymbology.rm4scc), 'RM4SCC (Royal Mail)');
     expect(barcodeSymbologyLabel(BarcodeSymbology.dataMatrix), 'Data Matrix');
   });
 
