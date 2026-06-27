@@ -33,6 +33,8 @@ import 'rendered_menu_example.dart';
 import 'rendered_nested_list_example.dart';
 import 'rendered_packing_slip_example.dart';
 import 'rendered_payroll_example.dart';
+import 'rendered_sales_chart_example.dart';
+import 'sales_chart_sample.dart';
 
 Future<void> main() async {
   // Loading the bundled font assets needs the binding up before runApp.
@@ -275,6 +277,15 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
                 definition: d, fonts: widget.fonts)),
       ),
       (
+        value: 'grafik',
+        icon: LucideIcons.areaChart,
+        body: tab(
+            salesChartDefinition(),
+            salesChartSchema,
+            (d) => renderSalesChartDefinition(
+                definition: d, fonts: widget.fonts)),
+      ),
+      (
         value: 'bos',
         icon: LucideIcons.squareDashed,
         body: tab(emptyDesignDefinition(), null,
@@ -301,6 +312,7 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
       l10n.tabLedger,
       l10n.tabMenu,
       'Custom',
+      'Sales Chart',
       l10n.tabEmpty,
     ];
 
