@@ -626,13 +626,13 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                 child: ShadSelect<ChartType>(
                   selectedOptionBuilder:
                       (BuildContext context, ChartType value) =>
-                          Text(_chartTypeLabel(value, l10n)),
+                          _chartTypeItem(value, l10n),
                   initialValue: element.chartType,
                   options: <Widget>[
                     for (final ChartType t in ChartType.values)
                       ShadOption<ChartType>(
                         value: t,
-                        child: Text(_chartTypeLabel(t, l10n)),
+                        child: _chartTypeItem(t, l10n),
                       ),
                   ],
                   onChanged: (ChartType? v) {
@@ -836,6 +836,23 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
         ChartType.line => l10n.chartTypeLine,
         ChartType.pie => l10n.chartTypePie,
       };
+
+  /// The glyph for a [ChartType] value (vertical bars, line, pie).
+  IconData _chartTypeIcon(ChartType type) => switch (type) {
+        ChartType.bar => LucideIcons.chartColumn,
+        ChartType.line => LucideIcons.chartLine,
+        ChartType.pie => LucideIcons.chartPie,
+      };
+
+  /// A [ChartType] dropdown entry: its glyph beside its localized label.
+  Widget _chartTypeItem(ChartType type, JetPrintLocalizations l10n) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(_chartTypeIcon(type), size: 16),
+          const SizedBox(width: 8),
+          Text(_chartTypeLabel(type, l10n)),
+        ],
+      );
 
   /// The collection fields available for a chart element to iterate, derived
   /// from the element's band scope. Mirrors the scope-collection picker in the
