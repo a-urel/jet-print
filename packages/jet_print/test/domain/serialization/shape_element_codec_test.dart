@@ -136,4 +136,33 @@ void main() {
       expect(codec.fromJson(json).unknownForm, isNull);
     });
   });
+
+  group('new forms round-trip + unknown-name still degrades (block arrows)',
+      () {
+    test('roundRect serializes by name and decodes back equal', () {
+      const ShapeElement s = ShapeElement(
+        id: 's',
+        bounds: JetRect(x: 4, y: 6, width: 50, height: 30),
+        kind: ShapeKind.roundRect,
+        style: JetBoxStyle(stroke: JetColor.black, strokeWidth: 2),
+      );
+      final Map<String, Object?> json = codec.toJson(s);
+      expect(json['kind'], 'roundRect');
+      expect(codec.fromJson(json), s);
+    });
+
+    test('an unknown future form name still loads as rectangle, name preserved',
+        () {
+      final Map<String, Object?> json = codec.toJson(const ShapeElement(
+        id: 's',
+        bounds: JetRect(x: 0, y: 0, width: 10, height: 10),
+        kind: ShapeKind.rectangle,
+      ));
+      json['kind'] = 'someFutureArrow';
+      final ShapeElement decoded = codec.fromJson(json);
+      expect(decoded.kind, ShapeKind.rectangle);
+      expect(decoded.unknownForm, 'someFutureArrow');
+      expect(codec.toJson(decoded)['kind'], 'someFutureArrow');
+    });
+  });
 }
