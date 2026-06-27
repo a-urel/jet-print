@@ -19,7 +19,7 @@ import 'package:jet_print/jet_print.dart';
 
 import '../support/designer_harness.dart';
 
-// A compact page holding the thirteen new forms in a row, each filled + stroked
+// A page holding all thirteen closed forms in a row, each filled + stroked
 // so both the fill and the stroke of the shared PathPrimitive are exercised.
 const PageFormat _page = PageFormat(
   width: 952,
