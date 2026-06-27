@@ -560,6 +560,27 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get shapeFormStar => 'Star';
 
   @override
+  String get shapeFormArrowRight => 'Arrow right';
+
+  @override
+  String get shapeFormArrowLeft => 'Arrow left';
+
+  @override
+  String get shapeFormArrowUp => 'Arrow up';
+
+  @override
+  String get shapeFormArrowDown => 'Arrow down';
+
+  @override
+  String get shapeFormArrowDouble => 'Double arrow';
+
+  @override
+  String get shapeFormChevron => 'Chevron';
+
+  @override
+  String get shapeFormRoundRect => 'Rounded rectangle';
+
+  @override
   String get propertiesFont => 'Font';
 
   @override

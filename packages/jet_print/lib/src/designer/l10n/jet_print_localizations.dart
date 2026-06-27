@@ -1181,6 +1181,27 @@ abstract class JetPrintLocalizations {
   /// **'Star'**
   String get shapeFormStar;
 
+  /// Shape gallery thumbnail name: a right-pointing block arrow.
+  String get shapeFormArrowRight;
+
+  /// Shape gallery thumbnail name: a left-pointing block arrow.
+  String get shapeFormArrowLeft;
+
+  /// Shape gallery thumbnail name: an up-pointing block arrow.
+  String get shapeFormArrowUp;
+
+  /// Shape gallery thumbnail name: a down-pointing block arrow.
+  String get shapeFormArrowDown;
+
+  /// Shape gallery thumbnail name: a two-headed horizontal block arrow.
+  String get shapeFormArrowDouble;
+
+  /// Shape gallery thumbnail name: a right-pointing chevron band.
+  String get shapeFormChevron;
+
+  /// Shape gallery thumbnail name: a rectangle with rounded corners.
+  String get shapeFormRoundRect;
+
   /// Properties panel section label for the text styling controls shown when a text element is selected (021).
   ///
   /// In en, this message translates to:

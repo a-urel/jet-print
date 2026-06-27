@@ -561,6 +561,27 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get shapeFormStar => 'Yıldız';
 
   @override
+  String get shapeFormArrowRight => 'Sağ ok';
+
+  @override
+  String get shapeFormArrowLeft => 'Sol ok';
+
+  @override
+  String get shapeFormArrowUp => 'Yukarı ok';
+
+  @override
+  String get shapeFormArrowDown => 'Aşağı ok';
+
+  @override
+  String get shapeFormArrowDouble => 'Çift ok';
+
+  @override
+  String get shapeFormChevron => 'Şerit ok';
+
+  @override
+  String get shapeFormRoundRect => 'Yuvarlatılmış dikdörtgen';
+
+  @override
   String get propertiesFont => 'Yazı Tipi';
 
   @override

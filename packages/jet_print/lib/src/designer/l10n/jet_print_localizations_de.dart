@@ -562,6 +562,27 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   String get shapeFormStar => 'Stern';
 
   @override
+  String get shapeFormArrowRight => 'Pfeil rechts';
+
+  @override
+  String get shapeFormArrowLeft => 'Pfeil links';
+
+  @override
+  String get shapeFormArrowUp => 'Pfeil hoch';
+
+  @override
+  String get shapeFormArrowDown => 'Pfeil runter';
+
+  @override
+  String get shapeFormArrowDouble => 'Doppelpfeil';
+
+  @override
+  String get shapeFormChevron => 'Winkel';
+
+  @override
+  String get shapeFormRoundRect => 'Abgerundetes Rechteck';
+
+  @override
   String get propertiesFont => 'Schrift';
 
   @override

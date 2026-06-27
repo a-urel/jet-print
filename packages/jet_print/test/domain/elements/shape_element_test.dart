@@ -129,6 +129,28 @@ void main() {
     });
   });
 
+  test('every ShapeKind except line is offered in the gallery roster', () {
+    // Mirror of _galleryForms (private) — the roster must list every form a
+    // user can author. line is intentionally excluded (not an authoring form).
+    const Set<ShapeKind> expectedRoster = <ShapeKind>{
+      ShapeKind.rectangle,
+      ShapeKind.ellipse,
+      ShapeKind.triangle,
+      ShapeKind.diamond,
+      ShapeKind.pentagon,
+      ShapeKind.hexagon,
+      ShapeKind.star,
+      ShapeKind.arrowRight,
+      ShapeKind.arrowLeft,
+      ShapeKind.arrowUp,
+      ShapeKind.arrowDown,
+      ShapeKind.arrowDouble,
+      ShapeKind.chevron,
+      ShapeKind.roundRect,
+    };
+    expect(expectedRoster, ShapeKind.values.toSet()..remove(ShapeKind.line));
+  });
+
   group('ShapeElement equality + identity carry unknownForm (020)', () {
     const JetRect b = JetRect(x: 0, y: 0, width: 10, height: 10);
 

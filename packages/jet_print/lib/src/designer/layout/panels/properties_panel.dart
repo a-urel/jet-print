@@ -3314,6 +3314,13 @@ String _shapeFormLabel(ShapeKind kind, JetPrintLocalizations l10n) =>
       ShapeKind.pentagon => l10n.shapeFormPentagon,
       ShapeKind.hexagon => l10n.shapeFormHexagon,
       ShapeKind.star => l10n.shapeFormStar,
+      ShapeKind.arrowRight => l10n.shapeFormArrowRight,
+      ShapeKind.arrowLeft => l10n.shapeFormArrowLeft,
+      ShapeKind.arrowUp => l10n.shapeFormArrowUp,
+      ShapeKind.arrowDown => l10n.shapeFormArrowDown,
+      ShapeKind.arrowDouble => l10n.shapeFormArrowDouble,
+      ShapeKind.chevron => l10n.shapeFormChevron,
+      ShapeKind.roundRect => l10n.shapeFormRoundRect,
     };
 
 /// The closed forms the gallery offers, in roster order.
@@ -3330,6 +3337,13 @@ const List<ShapeKind> _galleryForms = <ShapeKind>[
   ShapeKind.pentagon,
   ShapeKind.hexagon,
   ShapeKind.star,
+  ShapeKind.arrowRight,
+  ShapeKind.arrowLeft,
+  ShapeKind.arrowUp,
+  ShapeKind.arrowDown,
+  ShapeKind.arrowDouble,
+  ShapeKind.chevron,
+  ShapeKind.roundRect,
 ];
 
 /// The shape form gallery (020 / US1): a wrap of the [_galleryForms] thumbnails,
@@ -3473,6 +3487,13 @@ class _ShapeThumbPainter extends CustomPainter {
       case ShapeKind.pentagon:
       case ShapeKind.hexagon:
       case ShapeKind.star:
+      case ShapeKind.arrowRight:
+      case ShapeKind.arrowLeft:
+      case ShapeKind.arrowUp:
+      case ShapeKind.arrowDown:
+      case ShapeKind.arrowDouble:
+      case ShapeKind.chevron:
+      case ShapeKind.roundRect:
         canvas.drawPath(
           _toUiPath(shapePath(kind,
               JetRect(x: 0, y: 0, width: size.width, height: size.height))),
