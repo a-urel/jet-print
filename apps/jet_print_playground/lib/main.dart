@@ -14,6 +14,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'barcode_gallery_sample.dart';
 import 'barcode_sample.dart';
+import 'custom_onprint_sample.dart';
 import 'invoice_sample.dart';
 import 'l10n/app_localizations.dart';
 import 'label_sample.dart';
@@ -137,7 +138,7 @@ class _JetPrintPlaygroundAppState extends State<JetPrintPlaygroundApp> {
 }
 
 /// The playground shell: a `scrollable` [ShadTabs] strip used as a pure
-/// selector, driving a structurally-stable [IndexedStack] that hosts all 8
+/// selector, driving a structurally-stable [IndexedStack] that hosts all the
 /// live-designer demo bodies at once. Only the shown index changes on a switch,
 /// so no designer is ever remounted — edits survive.
 ///
@@ -223,9 +224,11 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
       (
         value: 'barkod-galeri',
         icon: LucideIcons.qrCode,
-        body: tab(barcodeGalleryDefinition(), barcodeGallerySchema,
-            (d) =>
-                renderBarcodeGalleryDefinition(definition: d, fonts: widget.fonts)),
+        body: tab(
+            barcodeGalleryDefinition(),
+            barcodeGallerySchema,
+            (d) => renderBarcodeGalleryDefinition(
+                definition: d, fonts: widget.fonts)),
       ),
       (
         value: 'makbuz',
@@ -264,6 +267,15 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
             (d) => renderMenuDefinition(definition: d, fonts: widget.fonts)),
       ),
       (
+        value: 'custom',
+        icon: LucideIcons.trendingUp,
+        body: tab(
+            customOnPrintDefinition(),
+            watchlistSchema,
+            (d) => renderCustomOnPrintDefinition(
+                definition: d, fonts: widget.fonts)),
+      ),
+      (
         value: 'bos',
         icon: LucideIcons.squareDashed,
         body: tab(emptyDesignDefinition(), null,
@@ -289,6 +301,7 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
       l10n.tabList,
       l10n.tabLedger,
       l10n.tabMenu,
+      'Custom',
       l10n.tabEmpty,
     ];
 
