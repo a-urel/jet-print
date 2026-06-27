@@ -75,6 +75,8 @@ export 'src/domain/detail_scope.dart'
     show BandNode, DetailScope, NestedScope, ScopeNode;
 export 'src/domain/elements/barcode_element.dart'
     show BarcodeElement, BarcodeSymbology, QrErrorCorrectionLevel;
+export 'src/domain/elements/chart_element.dart'
+    show ChartElement, ChartType, ChartPoint, kDefaultChartColor;
 export 'src/domain/elements/image_element.dart' show ImageElement;
 export 'src/domain/elements/image_source.dart'
     show
