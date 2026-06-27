@@ -172,6 +172,10 @@ void main() {
     expect(detailCtx.pageNumber, greaterThanOrEqualTo(1));
     expect(detailCtx.pageCount, greaterThanOrEqualTo(1));
     expect(detailCtx.pageNumber, lessThanOrEqualTo(detailCtx.pageCount));
+    expect(detailCtx.variables, isA<Map<String, JetValue>>());
+    // No report variables declared in this definition → empty map; confirms the
+    // field is populated and correctly typed, not null.
+    expect(detailCtx.variables, isEmpty);
   });
 
   test('hook fires for page chrome with empty fields', () {
@@ -237,6 +241,8 @@ void main() {
       (ElementPrintContext c) => c.bandType == BandType.pageHeader,
     );
     expect(chromeCtx.fields, isEmpty);
+    expect(chromeCtx.bandType, BandType.pageHeader);
+    expect(chromeCtx.bandName, isNull);
   });
 
   test('null onElementPrint produces the same frames as no options', () {
