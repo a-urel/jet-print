@@ -13,6 +13,7 @@ import '../../frame/frame_builder.dart';
 import '../../frame/primitive.dart';
 import '../chart/chart_geometry.dart';
 import '../element_renderer.dart';
+import '../placeholder.dart';
 import '../render_context.dart';
 
 /// Left gutter (points) reserved for the value-axis tick labels.
@@ -90,6 +91,14 @@ class ChartElementRenderer extends ElementRenderer<ChartElement> {
             height: kChartTitleGutter),
         el.id,
       );
+    }
+
+    // No resolved series (design-time, unbound, or an empty collection): draw a
+    // chart-glyph placeholder instead of a blank box (render-don't-crash), the
+    // same affordance the source-less image element gives.
+    if (el.points.isEmpty) {
+      emitChartPlaceholder(out, plot, elementId: el.id);
+      return;
     }
 
     switch (el.chartType) {

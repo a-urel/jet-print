@@ -61,7 +61,7 @@ void main() {
         greaterThanOrEqualTo(3));
   });
 
-  test('empty series does not throw', () {
+  test('empty series draws a placeholder glyph (outline + bars), no throw', () {
     final FrameBuilder out = FrameBuilder(PageFormat.a4Portrait);
     renderer.emit(
         const ChartElement(
@@ -73,7 +73,15 @@ void main() {
         ctx,
         bounds,
         out);
-    // no exception; may emit only chrome (axis lines / text)
+    final List<FramePrimitive> prims = out.build().primitives;
+    // Placeholder = a full-bounds outline rect + three filled glyph bars + a
+    // baseline line — all tagged with the element id. (No data → no real chart.)
+    final Iterable<RectPrimitive> rects =
+        prims.whereType<RectPrimitive>().where((r) => r.elementId == 'e');
+    expect(rects.length, greaterThanOrEqualTo(4)); // outline + 3 bars
+    expect(rects.where((r) => r.fill != null).length, greaterThanOrEqualTo(3));
+    expect(prims.whereType<LinePrimitive>().where((l) => l.elementId == 'e'),
+        isNotEmpty);
   });
 
   test('pie: showValueLabels emits extra TextRunPrimitives vs without', () {

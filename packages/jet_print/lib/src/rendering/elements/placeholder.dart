@@ -127,3 +127,56 @@ void emitImagePlaceholder(
     elementId: elementId,
   ));
 }
+
+/// Appends a chart-glyph placeholder over [bounds]: the full-bounds outline
+/// [RectPrimitive], plus — when the element is large enough to be legible — a
+/// centered bar-chart glyph (three filled bars of varying height standing on a
+/// baseline), all in [_placeholderColor] and tagged with [elementId].
+///
+/// Used for a [ChartElement] with no resolved series (the designer canvas, an
+/// unbound chart, or an empty collection), in place of a blank box. Composed
+/// from existing primitives so it paints identically on canvas and PDF.
+void emitChartPlaceholder(
+  FrameBuilder out,
+  JetRect bounds, {
+  String? elementId,
+}) {
+  // Full-bounds element outline — the same affordance the image placeholder gives.
+  out.add(RectPrimitive(
+    bounds: bounds,
+    stroke: _placeholderColor,
+    elementId: elementId,
+  ));
+
+  final double side =
+      (math.min(bounds.width, bounds.height) * 0.55).clamp(0.0, 40.0);
+  if (side < 8.0) return; // too small for a legible glyph
+
+  final double cx = bounds.x + bounds.width / 2;
+  final double cy = bounds.y + bounds.height / 2;
+  final double left = cx - side / 2;
+  final double bottom = cy + side / 2;
+
+  // Baseline (the chart's x-axis).
+  out.add(LinePrimitive(
+    bounds: bounds,
+    start: JetOffset(left, bottom),
+    end: JetOffset(left + side, bottom),
+    color: _placeholderColor,
+    elementId: elementId,
+  ));
+
+  // Three bars of varying height standing on the baseline.
+  const List<double> heights = <double>[0.45, 0.85, 0.65];
+  final double barW = side * 0.22;
+  final double gap = (side - barW * heights.length) / (heights.length + 1);
+  for (int i = 0; i < heights.length; i++) {
+    final double bx = left + gap + i * (barW + gap);
+    final double bh = side * heights[i];
+    out.add(RectPrimitive(
+      bounds: JetRect(x: bx, y: bottom - bh, width: barW, height: bh),
+      fill: _placeholderColor,
+      elementId: elementId,
+    ));
+  }
+}
