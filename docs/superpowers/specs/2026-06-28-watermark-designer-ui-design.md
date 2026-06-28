@@ -15,7 +15,7 @@ Out of scope for this slice: authoring **image** watermarks (the designer has no
 ## Decisions (locked)
 
 - **Text watermark only** in the UI. Image watermarks remain API/JSON-authored.
-- **Enable toggle** (`ShadSwitch`) gates the section: off ⇒ `watermark = null`; on ⇒ a default `Watermark(text: <localized "DRAFT">)` so something renders immediately.
+- **Enable toggle** (`ShadSwitch`) gates the section: off ⇒ `watermark = null`; on ⇒ a default `Watermark(text: <localized "DRAFT">, textStyle: JetTextStyle(fontSize: 64))` so something renders immediately. **The default MUST set a large `fontSize`** — `JetTextStyle.fallback` is 12pt and the engine draws text at literal size (no page-scaling), so a 12pt watermark on A4 is a near-invisible dot. 64 matches the scale of the engine's watermark goldens (56–80).
 - **Knobs:** text, color, font size, opacity (0–1), angle (degrees). Dropped: font family, italic, underline, align — irrelevant for a centered watermark.
 - Each edit commits a **whole new `Watermark`** via one command = one undo step (mirrors how `setTextStyle` commits a whole `copyWith`).
 - Designer-only: no domain/render/serialization change.
@@ -87,10 +87,10 @@ void setWatermark(Watermark? watermark) => _commit(SetWatermarkCommand(watermark
 
 Layout:
 - `SectionLabel(l10n.propertiesWatermark)`.
-- **Enable toggle** (`ShadSwitch`, label `l10n.watermarkEnable`): off → `controller.setWatermark(null)`; on → `controller.setWatermark(Watermark(text: l10n.watermarkDefaultText))`.
+- **Enable toggle** (`ShadSwitch`, label `l10n.watermarkEnable`): off → `controller.setWatermark(null)`; on → `controller.setWatermark(Watermark(text: l10n.watermarkDefaultText, textStyle: const JetTextStyle(fontSize: 64)))` (large default size — see Decisions).
 - When `watermark != null` AND it is a **text** watermark (or freshly enabled), show editors. Each reads the current `Watermark wm` and commits `controller.setWatermark(wm.copyWith(...))`:
   - **Text** — `_TextInput` → `wm.copyWith(text: v)`.
-  - **Color** — `_ColorField` (full, not compact) → `wm.copyWith(textStyle: wm.textStyle.copyWith(color: v))`.
+  - **Color** — `_ColorField` (full, not compact) → `wm.copyWith(textStyle: wm.textStyle.copyWith(color: v))`. Note its real API: `_ColorField(keyBase: '$_p.field.watermarkColor', value: wm.textStyle.color, onCommit: (JetColor? v) {...})` — `keyBase` is a `String`, `onCommit` is `ValueChanged<JetColor?>` (the None entry can emit null; here `allowNone` stays false so color is always set).
   - **Font size** — `_NumberField` → `wm.copyWith(textStyle: wm.textStyle.copyWith(fontSize: v))`.
   - **Opacity** — `_NumberField` (0–1; clamp lives in the `Watermark` ctor) → `wm.copyWith(opacity: v)`.
   - **Angle°** — `_NumberField` → `wm.copyWith(angleDegrees: v)`.
@@ -121,6 +121,7 @@ Author selects the report root (`selection.isReport`) → panel renders `_waterm
 - **Image watermark loaded from JSON** (`imageBytes != null`, `text == null`): the section shows a read-only `watermarkImageExternal` row plus still-editable **opacity** and **angle** (both apply to images too), and the enable toggle still clears it. Image bytes are never dropped by a text edit — text editors are hidden in this state. (If both text and image are somehow set, the model already resolves "text wins" at render; the panel treats it as a text watermark.)
 - **Empty text:** allowed; renders nothing (engine no-ops on empty/whitespace). Not an error.
 - **Toggle off then undo:** `setWatermark(null)` is one undoable step; undo restores the prior watermark intact.
+- **Image watermark, toggle off then on:** toggling off clears it (`null`); toggling on creates the **default text** watermark (`fontSize: 64`) — the image is not restored by re-enabling (it was cleared). The two steps are separately undoable, so `undo` twice brings the image watermark back. The image is only lost if the author keeps the text watermark and saves.
 - **Opacity out of range / angle any value:** opacity is clamped in the `Watermark` constructor; angle is unrestricted.
 
 ## Testing
