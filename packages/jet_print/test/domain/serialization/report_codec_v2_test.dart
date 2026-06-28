@@ -15,6 +15,7 @@ import 'package:jet_print/src/domain/scope_total.dart';
 import 'package:jet_print/src/domain/serialization/report_format.dart';
 import 'package:jet_print/src/domain/serialization/report_format_exception.dart';
 import 'package:jet_print/src/domain/value_type.dart';
+import 'package:jet_print/src/domain/watermark.dart';
 
 TextElement _txt(String id, {String? expression}) => TextElement(
       id: id,
@@ -379,6 +380,34 @@ void main() {
         }),
         throwsA(isA<ReportFormatException>()),
       );
+    });
+
+    test('round-trips a text watermark with no schema bump (spec 043)', () {
+      final ReportDefinition def = const ReportDefinition(
+        name: 'WM',
+        page: PageFormat.a4Portrait,
+        body: ReportBody(root: DetailScope(id: 'root')),
+        furniture:
+            PageFurniture(watermark: Watermark(text: 'DRAFT', opacity: 0.2)),
+      );
+      final Map<String, Object?> json = JetReportFormat.encodeDefinition(def);
+      expect(json['schemaVersion'], 2);
+      final ReportDefinition back = JetReportFormat.decodeDefinition(json);
+      expect(back.furniture.watermark,
+          const Watermark(text: 'DRAFT', opacity: 0.2));
+    });
+
+    test('absent watermark decodes to null (old documents)', () {
+      const ReportDefinition def = ReportDefinition(
+        name: 'NoWM',
+        page: PageFormat.a4Portrait,
+        body: ReportBody(root: DetailScope(id: 'root')),
+      );
+      final Map<String, Object?> json = JetReportFormat.encodeDefinition(def);
+      expect((json['furniture'] as Map?)?.containsKey('watermark') ?? false,
+          isFalse);
+      expect(
+          JetReportFormat.decodeDefinition(json).furniture.watermark, isNull);
     });
 
     test('Band.columnLayout round-trips and is omitted when null (spec 034)',

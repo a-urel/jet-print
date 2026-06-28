@@ -20,6 +20,7 @@ import '../report_element.dart';
 import '../report_parameter.dart';
 import '../report_variable.dart';
 import '../scope_total.dart';
+import '../watermark.dart';
 import 'element_codec.dart';
 import 'migration.dart';
 import 'report_format_exception.dart';
@@ -63,6 +64,7 @@ Map<String, Object?> _encodeFurniture(
       'columnFooter': _encodeBand(f.columnFooter!, registry),
     if (f.background != null)
       'background': _encodeBand(f.background!, registry),
+    if (f.watermark != null) 'watermark': f.watermark!.toJson(),
   };
 }
 
@@ -199,6 +201,9 @@ PageFurniture _decodeFurniture(Object? raw, ElementCodecRegistry registry) {
     columnHeader: _decodeBandOrNull(f['columnHeader'], registry),
     columnFooter: _decodeBandOrNull(f['columnFooter'], registry),
     background: _decodeBandOrNull(f['background'], registry),
+    watermark: f['watermark'] == null
+        ? null
+        : Watermark.fromJson((f['watermark']! as Map).cast<String, Object?>()),
   );
 }
 
