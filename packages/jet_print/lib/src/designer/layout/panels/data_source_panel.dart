@@ -89,6 +89,7 @@ Widget _datasetNode(JetDataSchema schema) {
   return TreeBranch(
     icon: LucideIcons.database,
     label: schema.name,
+    description: schema.description,
     depth: 0,
     children: <Widget>[
       for (final FieldDef field in schema.fields) _fieldNode(field, 1),

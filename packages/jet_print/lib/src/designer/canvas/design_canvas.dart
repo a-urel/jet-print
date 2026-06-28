@@ -725,5 +725,4 @@ class _DesignCanvasState extends State<DesignCanvas> {
       ),
     );
   }
-
 }

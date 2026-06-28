@@ -506,5 +506,4 @@ class JetReportDesignerController extends ChangeNotifier {
     notifyListeners();
     return true;
   }
-
 }

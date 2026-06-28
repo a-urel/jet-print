@@ -206,5 +206,43 @@ void main() {
         throwsA(isA<JetDataSourceFormatException>()),
       );
     });
+
+    test('round-trips a schema description', () {
+      const doc = JetDataSourceDocument(
+        schema: JetDataSchema(
+          name: 'Sales',
+          fields: <FieldDef>[FieldDef('amount', type: JetFieldType.double)],
+          description: 'All booked sales orders',
+        ),
+      );
+      final decoded =
+          JetDataSourceFile.decodeJson(JetDataSourceFile.encodeJson(doc));
+      expect(decoded.schema.description, 'All booked sales orders');
+      expect(decoded, doc);
+    });
+
+    test('omits the schema description key when null (byte-identical)', () {
+      final encoded = JetDataSourceFile.encode(const JetDataSourceDocument(
+        schema: JetDataSchema(
+          name: 'Sales',
+          fields: <FieldDef>[FieldDef('amount', type: JetFieldType.double)],
+        ),
+      ));
+      expect((encoded['schema'] as Map).containsKey('description'), isFalse);
+    });
+
+    test('rejects a non-string schema description', () {
+      expect(
+        () => JetDataSourceFile.decode(<String, Object?>{
+          'jetDataSource': 1,
+          'schema': <String, Object?>{
+            'name': 'Sales',
+            'fields': <Object?>[],
+            'description': 42,
+          },
+        }),
+        throwsA(isA<JetDataSourceFormatException>()),
+      );
+    });
   });
 }

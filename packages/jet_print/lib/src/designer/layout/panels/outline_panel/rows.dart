@@ -75,6 +75,7 @@ extension _OutlineRows on _OutlinePanelState {
       }
     }
   }
+
   /// Appends a band branch (selectable → Properties) and, when expanded, a leaf
   /// per element it contains. Trailing lifecycle affordances (FR-012): move
   /// up/down for a [reorderable] scope per-row band, retype, and remove.
@@ -152,6 +153,7 @@ extension _OutlineRows on _OutlinePanelState {
       ));
     }
   }
+
   /// An expandable branch row (the report, a scope, a group, or a band): a
   /// disclosure chevron that toggles, then the node glyph and label; tapping the
   /// row (not the chevron) selects the node.
@@ -244,6 +246,7 @@ extension _OutlineRows on _OutlinePanelState {
       ),
     );
   }
+
   /// A compact trailing affordance on an outline row (add / remove / move): a
   /// keyed, button-role tappable glyph. Its own tap handler wins over the row's
   /// select gesture, so an action never doubles as a selection.
@@ -269,6 +272,7 @@ extension _OutlineRows on _OutlinePanelState {
           ),
         ),
       );
+
   /// A leaf element row: the element glyph then its display label; tapping it
   /// selects the element; double-tapping starts an inline rename.
   /// Indented past the chevron column so it aligns under branch labels.
@@ -340,6 +344,7 @@ extension _OutlineRows on _OutlinePanelState {
       ),
     );
   }
+
   /// The tree glyph for a band: header-like bands get a top-panel glyph,
   /// footer-like bands a bottom-panel glyph, detail/no-data a rows glyph.
   IconData _bandGlyph(BandType type) {
@@ -361,6 +366,7 @@ extension _OutlineRows on _OutlinePanelState {
         return LucideIcons.image;
     }
   }
+
   /// The toolbox glyph for an element, so an outline leaf and the palette element
   /// it came from read as the same thing.
   IconData _elementGlyph(ReportElement element) {

@@ -97,6 +97,7 @@ class _Header extends StatelessWidget {
     return row;
   }
 }
+
 /// A compact inline warning row: a small alert glyph plus muted destructive
 /// text, used to flag an unbound list where the author edits it.
 class _InlineWarning extends StatelessWidget {
@@ -121,6 +122,7 @@ class _InlineWarning extends StatelessWidget {
     );
   }
 }
+
 /// A compact inline informational notice row: a small info glyph plus muted
 /// secondary text, used for non-error status messages such as an inactive layout.
 /// Visually distinct from [_InlineWarning] (neutral/muted rather than destructive).
@@ -147,6 +149,7 @@ class _InlineNotice extends StatelessWidget {
     );
   }
 }
+
 /// The "Add column layout" affordance. Disabled (greyed, non-tappable) when the
 /// report shape can't host a label grid, wrapped in a tooltip that explains the
 /// requirement (spec 035 / FR-003). Enabled, it commits a default layout.
@@ -185,6 +188,7 @@ class _ColumnLayoutAddButton extends StatelessWidget {
     return Align(alignment: Alignment.centerLeft, child: content);
   }
 }
+
 /// The "Remove column layout" affordance — restores a plain detail band.
 class _ColumnLayoutRemoveButton extends StatelessWidget {
   const _ColumnLayoutRemoveButton(
@@ -208,6 +212,7 @@ class _ColumnLayoutRemoveButton extends StatelessWidget {
         ),
       );
 }
+
 /// A labelled inspector row: a muted [label] on the leading edge and its editor
 /// [child] filling the trailing space.
 class _LabeledRow extends StatelessWidget {
@@ -242,6 +247,7 @@ class _LabeledRow extends StatelessWidget {
     );
   }
 }
+
 /// A small inline warning shown beneath a binding whose field is missing from
 /// (or out of scope in) the attached data source (FR-018) — a triangle glyph
 /// plus the localized message, in the theme's destructive color.
@@ -272,6 +278,7 @@ class _UnresolvedHint extends StatelessWidget {
     );
   }
 }
+
 /// Shown when nothing editable is selected: a centered glyph and a short hint
 /// (or a count when several elements are selected).
 class _EmptyState extends StatelessWidget {

@@ -190,6 +190,4 @@ class _OutlinePanelState extends State<OutlinePanel> {
       ),
     );
   }
-
 }
-

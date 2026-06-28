@@ -33,6 +33,7 @@ class _DropdownOption {
   /// thickness. Null ⇒ label only.
   final Widget? preview;
 }
+
 /// A compact Office-style picker for the PAGE section: an outlined trigger
 /// showing the current [label] with a chevron, that drops down a menu of
 /// [options]. Reused for the paper-type and margin-preset pickers. The trigger
@@ -62,6 +63,7 @@ class _PresetDropdown extends StatefulWidget {
   @override
   State<_PresetDropdown> createState() => _PresetDropdownState();
 }
+
 class _PresetDropdownState extends State<_PresetDropdown> {
   final ShadPopoverController _menu = ShadPopoverController();
 
@@ -174,6 +176,7 @@ class _PresetDropdownState extends State<_PresetDropdown> {
     );
   }
 }
+
 /// The font sizes (points) the Font row's size picker offers, in ascending
 /// order. A stored size outside this set still displays as the trigger label —
 /// it is simply not check-marked, mirroring the family picker's handling of an
@@ -196,6 +199,7 @@ const List<double> _fontSizePresets = <double>[
   72,
   96,
 ];
+
 /// The Value field's suffix affordance: a small database glyph that drops down a
 /// menu of the in-scope data-source [fields]; choosing one inserts it as a
 /// `[field]` binding through [onPick]. Each item carries the field's type glyph
@@ -252,6 +256,7 @@ class _FieldPicker extends StatelessWidget {
     );
   }
 }
+
 /// The scrollable, searchable body of the field picker. A search box filters the
 /// fields by a case-insensitive substring match on the name, and the matches sit
 /// in a height-capped scroll view so a large schema stays reachable. Each match
@@ -271,6 +276,7 @@ class _FieldPickerMenu extends StatefulWidget {
   @override
   State<_FieldPickerMenu> createState() => _FieldPickerMenuState();
 }
+
 class _FieldPickerMenuState extends State<_FieldPickerMenu> {
   String _query = '';
 
@@ -332,6 +338,7 @@ class _FieldPickerMenuState extends State<_FieldPickerMenu> {
     );
   }
 }
+
 /// The Format field (013): a free-text ICU pattern bound to `TextElement.format`,
 /// committed on Enter/blur, with a suffix button that drops down the quick-pick
 /// [presets] (mirroring the Value field's field picker). Picking a preset fills
@@ -364,6 +371,7 @@ class _FormatField extends StatefulWidget {
   @override
   State<_FormatField> createState() => _FormatFieldState();
 }
+
 class _FormatFieldState extends State<_FormatField> {
   late final TextEditingController _controller =
       TextEditingController(text: widget.value);
@@ -425,6 +433,7 @@ class _FormatFieldState extends State<_FormatField> {
     );
   }
 }
+
 /// The Format field's suffix affordance: a small dropdown glyph that opens a
 /// menu of the quick-pick [presets]; choosing one fills its pattern through
 /// [onPick]. Presets that cannot apply to the bound value's [fieldType] are
@@ -476,6 +485,7 @@ class _FormatPicker extends StatelessWidget {
     );
   }
 }
+
 /// A data-binding inspector field (US2 / FR-009, FR-012, FR-013): an input
 /// holding the current binding ([value] — a text element's expression or an
 /// image element's field), with a trailing clear affordance. Committing a
@@ -518,6 +528,7 @@ class _BindingField extends StatefulWidget {
   @override
   State<_BindingField> createState() => _BindingFieldState();
 }
+
 class _BindingFieldState extends State<_BindingField> {
   /// Wraps a stored bare field name as the `[name]` shorthand for display.
   static String _wrap(String v) => v.isEmpty ? '' : '[$v]';

@@ -98,6 +98,7 @@ extension _OutlineAddMenus on _OutlinePanelState {
       colors: theme.colorScheme,
     );
   }
+
   /// The scalar fields a new group on [scope] may key on — the choices behind
   /// the "Add group ▸" submenu (empty disables it).
   List<FieldDef> _groupFields(
@@ -106,6 +107,7 @@ extension _OutlineAddMenus on _OutlinePanelState {
     JetDataSchema? schema,
   ) =>
       scalarFieldsForScope(schema, controller.definition, scope.id);
+
   /// The "change band type" affordance: a menu of the empty singleton slots
   /// this band could move into (FR-012). Inert when no target slot is free.
   Widget _retypeMenu(
@@ -133,6 +135,7 @@ extension _OutlineAddMenus on _OutlinePanelState {
       colors: theme.colorScheme,
     );
   }
+
   /// The report-root "+" affordance: a menu that creates one of the empty
   /// **rendered** singleton-slot bands — report header/footer, page
   /// header/footer, or no-data. Mirrors [_retypeTargets] so the add- and

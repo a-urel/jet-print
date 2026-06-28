@@ -65,6 +65,7 @@ class _GridPainter extends CustomPainter {
       oldDelegate.layout != layout ||
       oldDelegate.color != color;
 }
+
 class _BandChromePainter extends CustomPainter {
   const _BandChromePainter({
     required this.layout,
@@ -97,6 +98,7 @@ class _BandChromePainter extends CustomPainter {
       oldDelegate.layout != layout ||
       oldDelegate.separatorColor != separatorColor;
 }
+
 /// Draws the multi-column label cue (spec 035): the editable cell's boundary
 /// plus faint read-only ghost outlines for the remaining columns. Design-only
 /// chrome — non-interactive, never part of the shared render pipeline.

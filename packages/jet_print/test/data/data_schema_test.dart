@@ -81,6 +81,36 @@ void main() {
       );
     });
 
+    test('carries an optional description, null by default', () {
+      expect(invoice.description, isNull);
+      const JetDataSchema annotated = JetDataSchema(
+        name: 'Invoice',
+        fields: <FieldDef>[],
+        description: 'All issued customer invoices',
+      );
+      expect(annotated.description, 'All issued customer invoices');
+    });
+
+    test('value equality distinguishes by description', () {
+      const JetDataSchema a = JetDataSchema(
+        name: 'Invoice',
+        fields: <FieldDef>[],
+        description: 'Customer invoices',
+      );
+      const JetDataSchema sameDesc = JetDataSchema(
+        name: 'Invoice',
+        fields: <FieldDef>[],
+        description: 'Customer invoices',
+      );
+      const JetDataSchema noDesc = JetDataSchema(
+        name: 'Invoice',
+        fields: <FieldDef>[],
+      );
+      expect(a, sameDesc);
+      expect(a.hashCode, sameDesc.hashCode);
+      expect(a == noDesc, isFalse);
+    });
+
     test('supports a collection-within-a-collection tree', () {
       const JetDataSchema deep = JetDataSchema(
         name: 'Invoice',

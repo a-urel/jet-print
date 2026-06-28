@@ -117,6 +117,7 @@ class _PagePreview extends StatelessWidget {
     );
   }
 }
+
 /// Paints the page preview's margin chrome over the sheet: a faint wash over the
 /// margin band and a dashed frame around the printable content area, both scaled
 /// from the live [PageFormat]'s margins. Schematic only — the canvas/preview/
@@ -171,6 +172,7 @@ class _PagePreviewPainter extends CustomPainter {
   bool shouldRepaint(_PagePreviewPainter old) =>
       old.page != page || old.guideColor != guideColor;
 }
+
 /// The orientation toggle in the PAGE section (018): a two-segment
 /// Portrait | Landscape control in the iOS-style tray (mirroring the workspace
 /// mode switch). The active segment reads as a raised tile and is inert;
@@ -286,6 +288,7 @@ class _OrientationToggle extends StatelessWidget {
     );
   }
 }
+
 /// The outline widths (points) the Appearance row's width picker offers, in
 /// ascending order. 0 hides the outline (the color stays remembered). A stored
 /// width outside this set still displays as the trigger label. All entries sit
@@ -304,6 +307,7 @@ const List<double> _strokeWidthPresets = <double>[
   16,
   20,
 ];
+
 /// A full-width preview of a stroke [width]: a horizontal rule that fills the
 /// space it is given, drawn at the width's thickness (capped to the box so
 /// heavy widths stay legible — the numeric label carries the exact value). A
@@ -333,6 +337,7 @@ class _LineWidthPreview extends StatelessWidget {
     );
   }
 }
+
 /// Formats a points value: a whole number drops its decimals, otherwise one.
 String _format(double value) => value == value.roundToDouble()
     ? value.toInt().toString()

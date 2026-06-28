@@ -15,8 +15,10 @@ extension CtrlMove on JetReportDesignerController {
     if (targets.isEmpty) return;
     _commit(MoveCommand(targets));
   }
+
   /// Begins a live move of the current selection (no history yet).
   void beginMove() => _moveDelta = const JetOffset(0, 0);
+
   /// Updates the in-progress move to a cumulative [delta] (points). When a
   /// single element is selected and snapping is on, [threshold] (points) and the
   /// grid/sibling/band candidates pull the delta to an aligned position and
@@ -55,6 +57,7 @@ extension CtrlMove on JetReportDesignerController {
     _frameSerial++;
     _notify();
   }
+
   /// Commits the in-progress move as a single history entry (FR-017), or clears
   /// the transient state when nothing moved.
   void commitMove() {
@@ -73,6 +76,7 @@ extension CtrlMove on JetReportDesignerController {
     // never stays frozen on the canvas with no drag in progress.
     if (!committed) _notify();
   }
+
   /// Discards an in-progress move, restoring the pre-drag view.
   void cancelMove() {
     if (_moveDelta == null) return;

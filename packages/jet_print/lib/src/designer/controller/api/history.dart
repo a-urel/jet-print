@@ -13,6 +13,7 @@ extension CtrlHistory on JetReportDesignerController {
     _document = _history.undo(_document);
     _notify();
   }
+
   /// Re-applies the last undone edit (no-op if [canRedo] is false).
   void redo() {
     if (!_history.canRedo) return;

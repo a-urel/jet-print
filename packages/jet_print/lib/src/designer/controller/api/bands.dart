@@ -13,6 +13,7 @@ extension CtrlBands on JetReportDesignerController {
     if (findBand(_document.definition, bandId) == null) return;
     _applyBandHeight(bandId, height);
   }
+
   /// Sets band [bandId]'s multi-column label [layout] as one undoable step
   /// (spec 035). An unknown id is ignored; a value-equal layout records no
   /// history (routed through `_commit`).
@@ -20,6 +21,7 @@ extension CtrlBands on JetReportDesignerController {
     if (findBand(_document.definition, bandId) == null) return;
     _commit(SetColumnLayoutCommand(bandId: bandId, layout: layout));
   }
+
   /// Clears band [bandId]'s column layout as one undoable step (spec 035). An
   /// unknown id — or a band that already has no layout — is ignored.
   void removeColumnLayout(String bandId) {
@@ -27,14 +29,17 @@ extension CtrlBands on JetReportDesignerController {
     if (band == null || band.columnLayout == null) return;
     _commit(RemoveColumnLayoutCommand(bandId: bandId));
   }
+
   /// Sets the display [name] of the band [bandId] as one undoable step; blank
   /// normalizes to `null` (falling back to the band-type label). No-op when
   /// unchanged.
   void renameBand(String bandId, String? name) =>
       _commit(RenameBandCommand(bandId: bandId, name: _normalizeName(name)));
+
   /// Sets the [visible] property of band [bandId] (undoable). No-op when equal.
   void setBandVisible(String bandId, BoolProperty visible) =>
       _commit(SetBandVisibleCommand(bandId: bandId, visible: visible));
+
   /// Adds a band to the singleton slot for [type] (a furniture slot, or a body
   /// title/summary/no-data band) and selects it, as one undoable step. A no-op
   /// for a non-singleton [type] or an already-occupied slot.
@@ -49,6 +54,7 @@ extension CtrlBands on JetReportDesignerController {
       selection: Selection.band(band.id),
     ));
   }
+
   /// Appends a per-row detail band to scope [scopeId] and selects it, as one
   /// undoable step. A no-op for an unknown scope.
   void addDetailBand(String scopeId) {
@@ -64,6 +70,7 @@ extension CtrlBands on JetReportDesignerController {
       selection: Selection.band(band.id),
     ));
   }
+
   /// Adds group [groupId]'s [header] (or footer, when false) band and selects
   /// it, as one undoable step. A no-op for an unknown group or an occupied slot.
   void addGroupBand(String groupId, {required bool header}) {
@@ -80,6 +87,7 @@ extension CtrlBands on JetReportDesignerController {
       selection: Selection.band(band.id),
     ));
   }
+
   /// Removes the band [bandId] wherever it lives (a furniture slot, a body
   /// once-band, a group header/footer, or a scope per-row band) as one undoable
   /// step, clearing the selection. A no-op for an unknown id.
@@ -91,6 +99,7 @@ extension CtrlBands on JetReportDesignerController {
       selection: Selection.empty,
     ));
   }
+
   /// Moves the per-row band [bandId] by [delta] positions within its scope's
   /// ordered children (negative = toward the front), as one undoable step,
   /// keeping it selected. A no-op when the band is not a scope per-row band or
@@ -106,6 +115,7 @@ extension CtrlBands on JetReportDesignerController {
           reorderScopeChild(d, scope.id, bandId, delta),
     ));
   }
+
   /// Retypes band [bandId] to [newType], relocating it to that type's slot and
   /// updating its [Band.type] (FR-012 / FR-001a) — id, height, and elements are
   /// preserved. Supported for the singleton-slot types (furniture + body

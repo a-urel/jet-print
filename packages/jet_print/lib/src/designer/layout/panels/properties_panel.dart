@@ -1036,4 +1036,3 @@ IconData _elementGlyph(ReportElement element) {
   if (element is ChartElement) return LucideIcons.chartBar;
   return LucideIcons.square;
 }
-

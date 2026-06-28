@@ -10,6 +10,7 @@ extension CtrlResize on JetReportDesignerController {
   /// The overlay draws the selection at this preview while dragging a handle.
   JetRect? previewBoundsFor(String id) =>
       _resizeId == id ? _resizePreview : null;
+
   /// Begins resizing element [id] by dragging [handle].
   void beginResize(String id, ResizeHandle handle) {
     final ({Band band, ReportElement element})? loc = _locate(id);
@@ -21,6 +22,7 @@ extension CtrlResize on JetReportDesignerController {
     _activeBandId = loc.band.id;
     _guides = const <SnapGuide>[];
   }
+
   /// Updates the in-progress resize by a cumulative pointer [delta] (points),
   /// applying the min-size floor, optional snapping (within [threshold] points,
   /// [bypassSnap] to disable), and band clamping; publishes the preview + guides.
@@ -69,6 +71,7 @@ extension CtrlResize on JetReportDesignerController {
     _frameSerial++;
     _notify();
   }
+
   /// Commits the in-progress resize as one history entry, or clears state.
   void commitResize() {
     final String? id = _resizeId;
@@ -91,6 +94,7 @@ extension CtrlResize on JetReportDesignerController {
     // nothing (a clamped no-op), so no guide stays frozen on the canvas.
     if (!committed) _notify();
   }
+
   /// Discards an in-progress resize.
   void cancelResize() {
     if (_resizeId == null) return;
@@ -103,6 +107,7 @@ extension CtrlResize on JetReportDesignerController {
     _frameSerial++;
     _notify();
   }
+
   /// Resizes [id] to [bounds] (clamped to its band) as one undoable step — the
   /// committed form used by numeric Properties editing and tests.
   void resizeTo(String id, JetRect bounds) {
@@ -124,6 +129,7 @@ extension CtrlResize on JetReportDesignerController {
   /// The overlay draws the band at this height while dragging the divider.
   double? bandResizePreviewHeight(String bandId) =>
       _bandResizeId == bandId ? _bandResizePreviewHeight : null;
+
   /// Begins resizing the band with stable id [bandId] (no history yet). An
   /// unknown id is ignored.
   void beginBandResize(String bandId) {
@@ -133,6 +139,7 @@ extension CtrlResize on JetReportDesignerController {
     _bandResizeStartHeight = band.height;
     _bandResizePreviewHeight = band.height;
   }
+
   /// Updates the in-progress band resize to a cumulative [heightDelta] (points,
   /// positive grows the band), applying the [kMinBandHeight] floor; publishes the
   /// preview.
@@ -144,6 +151,7 @@ extension CtrlResize on JetReportDesignerController {
     _frameSerial++;
     _notify();
   }
+
   /// Commits the in-progress band resize as one history entry, or clears the
   /// transient state when nothing changed.
   void commitBandResize() {
@@ -160,6 +168,7 @@ extension CtrlResize on JetReportDesignerController {
     // Repaint to drop the preview even when the resize committed nothing.
     if (!committed) _notify();
   }
+
   /// Discards an in-progress band resize.
   void cancelBandResize() {
     if (_bandResizeId == null) return;

@@ -66,6 +66,7 @@ class _ValueField extends StatefulWidget {
   @override
   State<_ValueField> createState() => _ValueFieldState();
 }
+
 class _ValueFieldState extends State<_ValueField> {
   late final TextEditingController _controller =
       TextEditingController(text: widget.display.text);
@@ -181,6 +182,7 @@ class _ValueFieldState extends State<_ValueField> {
     );
   }
 }
+
 /// The unified value field (013): one input for a text element's literal text or
 /// its `[field]`/`{ … }` binding, shown exactly as the canvas token. It commits
 /// the raw text on Enter/blur — the controller parses the three forms. A binding
@@ -217,6 +219,7 @@ class _VisibleField extends StatefulWidget {
   @override
   State<_VisibleField> createState() => _VisibleFieldState();
 }
+
 class _VisibleFieldState extends State<_VisibleField> {
   late final TextEditingController _controller =
       TextEditingController(text: widget.visible.expression ?? '');

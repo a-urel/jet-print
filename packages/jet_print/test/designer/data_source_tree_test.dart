@@ -185,4 +185,35 @@ void main() {
       await tester.pumpAndSettle();
     });
   });
+
+  group('data source tree (dataset description)', () {
+    const JetDataSchema describedDataset = JetDataSchema(
+      name: 'Sales',
+      fields: <FieldDef>[FieldDef('amount', type: JetFieldType.double)],
+      description: 'All booked sales orders',
+    );
+
+    testWidgets('the dataset root shows its description under the name', (
+      WidgetTester tester,
+    ) async {
+      await pumpDesigner(
+        tester,
+        designer: const JetReportDesigner(dataSchema: describedDataset),
+      );
+      expect(find.text('Sales'), findsOneWidget);
+      expect(find.text('All booked sales orders'), findsOneWidget);
+    });
+
+    testWidgets('a dataset without a description shows only its name', (
+      WidgetTester tester,
+    ) async {
+      await pumpDesigner(
+        tester,
+        designer: const JetReportDesigner(dataSchema: _invoice),
+      );
+      expect(find.text('Invoice'), findsOneWidget);
+      // No stray empty subtitle under the dataset root.
+      expect(find.text(''), findsNothing);
+    });
+  });
 }

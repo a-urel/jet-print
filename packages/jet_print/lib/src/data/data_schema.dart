@@ -15,8 +15,13 @@ import 'field_def.dart';
 /// Pure Dart (no Flutter dependency); value-equality, so two schemas with the
 /// same name and (deeply) equal fields are equal.
 class JetDataSchema {
-  /// Creates a schema for a dataset named [name] with the given root [fields].
-  const JetDataSchema({required this.name, required this.fields});
+  /// Creates a schema for a dataset named [name] with the given root [fields]
+  /// and an optional [description].
+  const JetDataSchema({
+    required this.name,
+    required this.fields,
+    this.description,
+  });
 
   /// The dataset's display name (shown as the structure tree's root).
   final String name;
@@ -25,14 +30,21 @@ class JetDataSchema {
   /// [JetFieldType.collection] carrying its own child schema.
   final List<FieldDef> fields;
 
+  /// An optional human-friendly description of the data source, shown as a muted
+  /// second line under [name] in the designer's Data Source view. Pure display
+  /// sugar mirroring [FieldDef.description]: it never affects binding, type,
+  /// expression resolution, or rendering. Null when unspecified.
+  final String? description;
+
   @override
   bool operator ==(Object other) =>
       other is JetDataSchema &&
       other.name == name &&
+      other.description == description &&
       _fieldListEquals(other.fields, fields);
 
   @override
-  int get hashCode => Object.hash(name, Object.hashAll(fields));
+  int get hashCode => Object.hash(name, description, Object.hashAll(fields));
 
   @override
   String toString() => 'JetDataSchema($name, ${fields.length} fields)';

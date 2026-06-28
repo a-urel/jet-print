@@ -4,6 +4,7 @@ part of '../jet_report_designer_controller.dart';
 
 String? _normalizeName(String? name) =>
     (name == null || name.trim().isEmpty) ? null : name.trim();
+
 /// A sensible default height (points) for a freshly-added band of [type].
 double _defaultBandHeight(BandType type) => switch (type) {
       BandType.title || BandType.summary => 32,

@@ -24,6 +24,7 @@ class _CanvasScrollBehavior extends ScrollBehavior {
           BuildContext context, Widget child, ScrollableDetails details) =>
       child;
 }
+
 /// A minimal scrollbar pinned to a viewport edge, driven by a [ScrollController].
 /// Drawn as a fixed overlay (not inside the scroll view) so it stays at the
 /// viewport edge; the thumb is draggable. Renders nothing until the controller
@@ -94,6 +95,7 @@ class _CanvasScrollbar extends StatelessWidget {
     );
   }
 }
+
 /// A small, subtle caption naming a band's role, sat flush in the band's
 /// top-left corner (a "tab" — only the bottom-right corner is rounded). This is
 /// the band-identity affordance every report designer surfaces; it uses the
@@ -128,6 +130,7 @@ class _BandBadge extends StatelessWidget {
     );
   }
 }
+
 /// A centered hint shown while the design has no elements, so an empty surface
 /// reads as "drop something here" rather than a blank void (FR-023 edge case).
 /// It sits over the white page, so it uses the fixed paper-chrome foreground

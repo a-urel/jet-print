@@ -21,6 +21,7 @@ extension CtrlReport on JetReportDesignerController {
   void setPageFormat(PageFormat format) {
     _commit(SetPageFormatCommand(clampPageFormat(format)));
   }
+
   /// Sets (or clears, with null) the report's page watermark as one undoable
   /// step. Routed through `_commit`, so setting the current watermark records no
   /// history; canvas/preview/export all read `definition.furniture.watermark`,

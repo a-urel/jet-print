@@ -300,5 +300,4 @@ extension _CanvasGestures on _DesignCanvasState {
     _panStartPage = null;
     controller.commitMove();
   }
-
 }

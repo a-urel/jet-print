@@ -108,6 +108,7 @@ abstract final class JetDataSourceFile {
 
 Map<String, Object?> _encodeSchema(JetDataSchema schema) => <String, Object?>{
       'name': schema.name,
+      if (schema.description != null) 'description': schema.description,
       'fields': <Map<String, Object?>>[
         for (final FieldDef f in schema.fields) _encodeField(f),
       ],
@@ -118,12 +119,18 @@ JetDataSchema _decodeSchema(Map<String, Object?> json) {
   if (name is! String) {
     throw const JetDataSourceFormatException('Schema "name" must be a string.');
   }
+  final Object? rawDescription = json['description'];
+  if (rawDescription != null && rawDescription is! String) {
+    throw const JetDataSourceFormatException(
+        'Schema "description" must be a string.');
+  }
   final Object? fields = json['fields'];
   if (fields is! List) {
     throw const JetDataSourceFormatException('Schema "fields" must be a list.');
   }
   return JetDataSchema(
     name: name,
+    description: rawDescription as String?,
     fields: <FieldDef>[
       for (final Object? f in fields)
         if (f is Map)

@@ -42,6 +42,7 @@ class _TextInput extends StatefulWidget {
   @override
   State<_TextInput> createState() => _TextInputState();
 }
+
 class _TextInputState extends State<_TextInput> {
   late final TextEditingController _controller =
       TextEditingController(text: widget.value);
@@ -112,6 +113,7 @@ class _TextInputState extends State<_TextInput> {
     );
   }
 }
+
 /// A numeric inspector field bound to a model [value]: it shows the live value,
 /// commits a typed value on Enter or blur, and nudges by one via its stepper —
 /// each commit a single undoable model edit. While the field is focused the
@@ -143,6 +145,7 @@ class _NumberField extends StatefulWidget {
   @override
   State<_NumberField> createState() => _NumberFieldState();
 }
+
 class _NumberFieldState extends State<_NumberField> {
   late final TextEditingController _controller =
       TextEditingController(text: _format(widget.value));
@@ -215,6 +218,7 @@ class _NumberFieldState extends State<_NumberField> {
     );
   }
 }
+
 /// A pair of stacked chevron buttons (up over down) for a numeric field's
 /// trailing affordance, nudging the value by one per tap.
 class _Stepper extends StatelessWidget {
@@ -235,6 +239,7 @@ class _Stepper extends StatelessWidget {
     );
   }
 }
+
 /// One step chevron: a small, muted, tappable glyph with an opaque hit area.
 class _StepButton extends StatelessWidget {
   const _StepButton({required this.icon, required this.onTap});

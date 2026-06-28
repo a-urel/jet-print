@@ -23,6 +23,7 @@ import 'package:jet_print/jet_print.dart';
 /// the totals.
 const JetDataSchema invoiceSchema = JetDataSchema(
   name: 'Invoice',
+  description: 'One issued customer invoice with its line items',
   fields: <FieldDef>[
     FieldDef('invoiceNo',
         type: JetFieldType.string, description: 'Invoice number'),

@@ -25,6 +25,7 @@ extension CtrlElementEdit on JetReportDesignerController {
       element: buildDefaultElement(type, id, bounds),
     ));
   }
+
   /// Creates a **data-bound** text element at the band-relative point [at]
   /// within the band with stable id [bandId], bound to [expression] (a
   /// `$F{}`/`$P{}`/`$V{}` string), and selects it (US2 / FR-009, FR-011). Used by
@@ -69,11 +70,13 @@ extension CtrlElementEdit on JetReportDesignerController {
     if (clamped == b) return;
     _commit(ResizeCommand(id: id, bounds: clamped));
   }
+
   /// Sets the text of the [TextElement] [id] (inline or Properties), one
   /// undoable step (FR-019). No-op for a non-text or absent id.
   void setText(String id, String text) {
     _commit(SetTextCommand(id: id, text: text));
   }
+
   /// Sets the display [name] of the element [id] as one undoable step.
   ///
   /// A blank or whitespace-only [name] is normalized to `null` (clearing the
@@ -81,20 +84,24 @@ extension CtrlElementEdit on JetReportDesignerController {
   /// no-op (no history, no notify). Mirrors the report-level [rename].
   void renameElement(String id, String? name) =>
       _commit(RenameElementCommand(id: id, name: _normalizeName(name)));
+
   /// Binds the [TextElement] [id] to [expression] (a `$F{}`/`$P{}`/`$V{}`
   /// string), as one undoable step (US2 / FR-009). No-op for a non-text or
   /// absent id, or when already bound to the same expression.
   void setBinding(String id, String expression) {
     _commit(SetTextBindingCommand(id: id, expression: expression));
   }
+
   /// Clears the [TextElement] [id]'s binding, reverting it to its static text
   /// (US2 / FR-012). No-op for a non-text or absent id, or when already static.
   void clearBinding(String id) {
     _commit(SetTextBindingCommand(id: id, expression: null));
   }
+
   /// Sets the [visible] property of element [id] (undoable). No-op when equal.
   void setElementVisible(String id, BoolProperty visible) =>
       _commit(SetElementVisibleCommand(id: id, visible: visible));
+
   /// Sets the [TextElement] [id] from the unified value field's [raw] text (013).
   ///
   /// Parses the three forms — a `[field]` simple binding, a `{ … }` template, or
@@ -112,26 +119,31 @@ extension CtrlElementEdit on JetReportDesignerController {
         _commit(SetValueCommand(id: id, text: el.text, expression: expression));
     }
   }
+
   /// Sets the [TextElement] [id]'s display [format] (013) — an ICU pattern, or an
   /// empty string to clear it. One undoable step; no-op for a non-text/absent id
   /// or an unchanged format.
   void setFormat(String id, String format) {
     _commit(SetFormatCommand(id: id, format: format.isEmpty ? null : format));
   }
+
   /// Changes the form of the [ShapeElement] [id] to [kind] as one undoable step
   /// (020 / FR-004), preserving the element's bounds and fill/stroke.
   void setShapeKind(String id, ShapeKind kind) =>
       _commit(SetShapeKindCommand(id: id, kind: kind));
+
   /// Replaces the [TextElement] [id]'s whole style with [style] as one
   /// undoable step (021 / FR-001…FR-005), preserving its text, bounds,
   /// binding, and format.
   void setTextStyle(String id, JetTextStyle style) =>
       _commit(SetTextStyleCommand(id: id, style: style));
+
   /// Replaces the [ShapeElement] [id]'s whole style with [style] as one
   /// undoable step (021 / FR-007, FR-008), preserving its kind, bounds, and
   /// flip state.
   void setShapeStyle(String id, JetBoxStyle style) =>
       _commit(SetShapeStyleCommand(id: id, style: style));
+
   /// Updates one or more properties of the [ChartElement] [id] as one undoable
   /// step, preserving every field not mentioned. A no-op for a non-chart or
   /// absent id.
@@ -159,6 +171,7 @@ extension CtrlElementEdit on JetReportDesignerController {
         showLegend: showLegend,
         seriesColor: seriesColor,
       ));
+
   /// Binds the [ImageElement] [id] to read its picture from the data [field]
   /// (US2 / FR-013). No-op for a non-image or absent id, or when already bound
   /// to the same field.

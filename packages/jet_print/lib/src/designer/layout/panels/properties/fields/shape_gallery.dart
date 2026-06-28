@@ -40,6 +40,7 @@ class _ShapeGallery extends StatelessWidget {
     );
   }
 }
+
 /// One gallery thumbnail: a focusable, keyboard-activatable button drawing the
 /// [kind]'s geometry. It carries a localized [label] and `selected`/button
 /// semantics (FR-012), highlights when [active] or focused, and runs [onPick]
@@ -60,6 +61,7 @@ class _ShapeThumbnail extends StatefulWidget {
   @override
   State<_ShapeThumbnail> createState() => _ShapeThumbnailState();
 }
+
 class _ShapeThumbnailState extends State<_ShapeThumbnail> {
   static const double _size = 44;
   bool _focused = false;
@@ -113,6 +115,7 @@ class _ShapeThumbnailState extends State<_ShapeThumbnail> {
     );
   }
 }
+
 /// Strokes a single shape form into the thumbnail. Line and rectangle draw their
 /// dedicated geometry (mirroring the renderer's special cases); every other form
 /// is stroked from the shared `shapePath`, so the thumbnail can never diverge
@@ -179,6 +182,7 @@ class _ShapeThumbPainter extends CustomPainter {
   bool shouldRepaint(_ShapeThumbPainter old) =>
       old.kind != kind || old.color != color;
 }
+
 /// The localized accessible name for a shape [kind] (020 / FR-012).
 String _shapeFormLabel(ShapeKind kind, JetPrintLocalizations l10n) =>
     switch (kind) {
@@ -198,6 +202,7 @@ String _shapeFormLabel(ShapeKind kind, JetPrintLocalizations l10n) =>
       ShapeKind.chevron => l10n.shapeFormChevron,
       ShapeKind.roundRect => l10n.shapeFormRoundRect,
     };
+
 /// The closed forms the gallery offers, in roster order.
 ///
 /// [ShapeKind.line] is intentionally absent: a corner-to-corner diagonal is not
