@@ -385,13 +385,16 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: theme.colorScheme.border)),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      // Left inset 24 lines the brand icon up with the nav item icons below:
+      // each tile is wrapped in horizontal-8 padding, then the ShadButton adds
+      // its regular-size horizontal-16 content padding (8 + 16 = 24).
+      padding: const EdgeInsets.fromLTRB(24, 12, 12, 12),
       child: Row(
         children: <Widget>[
-          Icon(LucideIcons.printer, size: 18, color: theme.colorScheme.primary),
+          Icon(LucideIcons.printer, size: 16, color: theme.colorScheme.primary),
           const SizedBox(width: 8),
           Text(
-            'jet_print',
+            'JetPrint',
             style: theme.textTheme.large.copyWith(
               color: theme.colorScheme.foreground,
             ),
