@@ -1657,37 +1657,53 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     out
       ..add(const SizedBox(height: 10))
       ..add(SectionLabel(l10n.watermarkText))
-      ..add(_TextInput(
-        fieldKey: const ValueKey<String>('$_p.field.watermarkText'),
-        value: wm.text ?? '',
-        placeholder: l10n.watermarkDefaultText,
-        onCommit: (String v) => controller.setWatermark(wm.copyWith(text: v)),
-      ))
-      ..add(const SizedBox(height: 8))
-      ..add(SectionLabel(l10n.watermarkColor))
-      ..add(_ColorField(
-        keyBase: '$_p.field.watermarkColor',
-        value: wm.textStyle.color,
-        onCommit: (JetColor? c) => controller.setWatermark(
-          wm.copyWith(
-            textStyle: wm.textStyle.copyWith(color: c ?? JetColor.black),
+      // Text + a small inline colour swatch share one row; the compact picker
+      // mirrors the element font-colour control.
+      ..add(Row(
+        children: <Widget>[
+          Expanded(
+            child: _TextInput(
+              fieldKey: const ValueKey<String>('$_p.field.watermarkText'),
+              value: wm.text ?? '',
+              placeholder: l10n.watermarkDefaultText,
+              onCommit: (String v) =>
+                  controller.setWatermark(wm.copyWith(text: v)),
+            ),
           ),
-        ),
+          const SizedBox(width: 8),
+          _ColorField(
+            keyBase: '$_p.field.watermarkColor',
+            value: wm.textStyle.color,
+            compact: true,
+            onCommit: (JetColor? c) => controller.setWatermark(
+              wm.copyWith(
+                textStyle: wm.textStyle.copyWith(color: c ?? JetColor.black),
+              ),
+            ),
+          ),
+        ],
       ))
       ..add(const SizedBox(height: 8))
-      ..add(SectionLabel(l10n.watermarkFontSize))
-      ..add(_NumberField(
-        fieldKey: const ValueKey<String>('$_p.field.watermarkFontSize'),
-        prefix: LucideIcons.type,
-        value: wm.textStyle.fontSize,
-        onCommit: (double v) => controller.setWatermark(
-          wm.copyWith(textStyle: wm.textStyle.copyWith(fontSize: v)),
-        ),
-      ))
-      ..add(const SizedBox(height: 8))
-      ..add(_watermarkOpacity(controller, wm))
-      ..add(const SizedBox(height: 8))
-      ..add(_watermarkAngle(controller, wm));
+      // Font size, opacity, angle in one row; each field's prefix icon
+      // (type / droplet / rotate) stands in for the dropped label.
+      ..add(Row(
+        children: <Widget>[
+          Expanded(
+            child: _NumberField(
+              fieldKey: const ValueKey<String>('$_p.field.watermarkFontSize'),
+              prefix: LucideIcons.type,
+              value: wm.textStyle.fontSize,
+              onCommit: (double v) => controller.setWatermark(
+                wm.copyWith(textStyle: wm.textStyle.copyWith(fontSize: v)),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(child: _watermarkOpacity(controller, wm)),
+          const SizedBox(width: 8),
+          Expanded(child: _watermarkAngle(controller, wm)),
+        ],
+      ));
     return out;
   }
 
@@ -1699,6 +1715,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
         fieldKey: const ValueKey<String>('$_p.field.watermarkOpacity'),
         prefix: LucideIcons.droplet,
         value: wm.opacity,
+        step: 0.1,
         onCommit: (double v) =>
             controller.setWatermark(wm.copyWith(opacity: v)),
       );
@@ -2486,6 +2503,7 @@ class _NumberField extends StatefulWidget {
     required this.prefix,
     required this.value,
     required this.onCommit,
+    this.step = 1,
     this.focusNode,
   });
 
@@ -2493,6 +2511,9 @@ class _NumberField extends StatefulWidget {
   final IconData prefix;
   final double value;
   final ValueChanged<double> onCommit;
+
+  /// The amount one stepper nudge adds or subtracts.
+  final double step;
 
   /// An externally-owned focus node (the panel's double-tap focus target);
   /// null ⇒ the field owns a private one.
@@ -2568,8 +2589,8 @@ class _NumberFieldState extends State<_NumberField> {
       onSubmitted: (_) => _commit(),
       leading: Icon(widget.prefix, size: 14, color: colors.mutedForeground),
       trailing: _Stepper(
-        onIncrement: () => _bump(1),
-        onDecrement: () => _bump(-1),
+        onIncrement: () => _bump(widget.step),
+        onDecrement: () => _bump(-widget.step),
       ),
     );
   }
