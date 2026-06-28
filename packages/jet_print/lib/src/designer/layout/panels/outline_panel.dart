@@ -140,6 +140,9 @@ class _OutlinePanelState extends State<OutlinePanel> {
         onToggle: () => setState(() => _rootExpanded = !_rootExpanded),
         onSelect: controller.selectReport,
         theme: theme,
+        actions: <Widget>[
+          _reportAddMenu(controller, theme, l10n),
+        ],
       ),
     ];
 
@@ -560,6 +563,36 @@ class _OutlinePanelState extends State<OutlinePanel> {
       triggerKey: ValueKey<String>(base),
       icon: LucideIcons.replace,
       tooltip: l10n.outlineRetype,
+      options: options,
+      colors: theme.colorScheme,
+    );
+  }
+
+  /// The report-root "+" affordance: a menu that creates one of the empty
+  /// **rendered** singleton-slot bands — report header/footer, page
+  /// header/footer, or no-data. Mirrors [_retypeTargets] so the add- and
+  /// retype-menus offer the identical slot set and cannot drift; the reserved
+  /// furniture types (column header/footer, background) are excluded because the
+  /// layouter does not lay them out yet. Inert when every such slot is occupied.
+  Widget _reportAddMenu(
+    JetReportDesignerController controller,
+    ShadThemeData theme,
+    JetPrintLocalizations l10n,
+  ) {
+    const String base = 'jet_print.designer.outline.report.add';
+    final List<_MenuOption> options = <_MenuOption>[
+      for (final BandType type in _retypeTargets)
+        if (bandInSlot(controller.definition, type) == null)
+          _MenuOption(
+            optionKey: ValueKey<String>('$base.${type.name}'),
+            label: bandTypeLabel(type, l10n),
+            onPick: () => controller.addBand(type),
+          ),
+    ];
+    return _TypeMenu(
+      triggerKey: const ValueKey<String>(base),
+      icon: LucideIcons.plus,
+      tooltip: l10n.outlineAddBand,
       options: options,
       colors: theme.colorScheme,
     );
