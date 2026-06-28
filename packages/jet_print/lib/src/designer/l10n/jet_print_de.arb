@@ -304,5 +304,15 @@
 
   "propertiesVisible": "Sichtbar",
   "propertiesVisibleWhen": "Sichtbar wenn",
-  "propertiesVisibleClear": "Sichtbarkeitsausdruck löschen"
+  "propertiesVisibleClear": "Sichtbarkeitsausdruck löschen",
+
+  "propertiesWatermark": "Wasserzeichen",
+  "watermarkEnable": "Aktivieren",
+  "watermarkText": "Text",
+  "watermarkColor": "Farbe",
+  "watermarkFontSize": "Schriftgröße",
+  "watermarkOpacity": "Deckkraft",
+  "watermarkAngle": "Winkel",
+  "watermarkDefaultText": "ENTWURF",
+  "watermarkImageExternal": "Bild-Wasserzeichen (außerhalb des Designers gesetzt)"
 }

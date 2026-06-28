@@ -859,4 +859,32 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
 
   @override
   String get propertiesVisibleClear => 'Görünürlük ifadesini temizle';
+
+  @override
+  String get propertiesWatermark => 'Filigran';
+
+  @override
+  String get watermarkEnable => 'Etkinleştir';
+
+  @override
+  String get watermarkText => 'Metin';
+
+  @override
+  String get watermarkColor => 'Renk';
+
+  @override
+  String get watermarkFontSize => 'Yazı boyutu';
+
+  @override
+  String get watermarkOpacity => 'Opaklık';
+
+  @override
+  String get watermarkAngle => 'Açı';
+
+  @override
+  String get watermarkDefaultText => 'TASLAK';
+
+  @override
+  String get watermarkImageExternal =>
+      'Görsel filigran (tasarımcı dışında ayarlandı)';
 }

@@ -304,5 +304,15 @@
 
   "propertiesVisible": "Görünür",
   "propertiesVisibleWhen": "Görünür koşul",
-  "propertiesVisibleClear": "Görünürlük ifadesini temizle"
+  "propertiesVisibleClear": "Görünürlük ifadesini temizle",
+
+  "propertiesWatermark": "Filigran",
+  "watermarkEnable": "Etkinleştir",
+  "watermarkText": "Metin",
+  "watermarkColor": "Renk",
+  "watermarkFontSize": "Yazı boyutu",
+  "watermarkOpacity": "Opaklık",
+  "watermarkAngle": "Açı",
+  "watermarkDefaultText": "TASLAK",
+  "watermarkImageExternal": "Görsel filigran (tasarımcı dışında ayarlandı)"
 }

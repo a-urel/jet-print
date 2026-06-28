@@ -1738,6 +1738,60 @@ abstract class JetPrintLocalizations {
   /// In en, this message translates to:
   /// **'Clear visibility expression'**
   String get propertiesVisibleClear;
+
+  /// Properties panel section label for the report watermark.
+  ///
+  /// In en, this message translates to:
+  /// **'Watermark'**
+  String get propertiesWatermark;
+
+  /// Toggle that turns the report watermark on or off.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable'**
+  String get watermarkEnable;
+
+  /// Label for the watermark's text content.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get watermarkText;
+
+  /// Label for the watermark text color picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get watermarkColor;
+
+  /// Label for the watermark text font size field.
+  ///
+  /// In en, this message translates to:
+  /// **'Font size'**
+  String get watermarkFontSize;
+
+  /// Label for the watermark opacity field (0 to 1).
+  ///
+  /// In en, this message translates to:
+  /// **'Opacity'**
+  String get watermarkOpacity;
+
+  /// Label for the watermark rotation angle field, in degrees.
+  ///
+  /// In en, this message translates to:
+  /// **'Angle'**
+  String get watermarkAngle;
+
+  /// Default text inserted when a watermark is first enabled.
+  ///
+  /// In en, this message translates to:
+  /// **'DRAFT'**
+  String get watermarkDefaultText;
+
+  /// Read-only note shown when the report has an image watermark, which the designer cannot edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Image watermark (set outside the designer)'**
+  String get watermarkImageExternal;
 }
 
 class _JetPrintLocalizationsDelegate

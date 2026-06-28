@@ -858,4 +858,32 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
 
   @override
   String get propertiesVisibleClear => 'Clear visibility expression';
+
+  @override
+  String get propertiesWatermark => 'Watermark';
+
+  @override
+  String get watermarkEnable => 'Enable';
+
+  @override
+  String get watermarkText => 'Text';
+
+  @override
+  String get watermarkColor => 'Color';
+
+  @override
+  String get watermarkFontSize => 'Font size';
+
+  @override
+  String get watermarkOpacity => 'Opacity';
+
+  @override
+  String get watermarkAngle => 'Angle';
+
+  @override
+  String get watermarkDefaultText => 'DRAFT';
+
+  @override
+  String get watermarkImageExternal =>
+      'Image watermark (set outside the designer)';
 }

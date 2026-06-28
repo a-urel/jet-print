@@ -861,4 +861,32 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
 
   @override
   String get propertiesVisibleClear => 'Sichtbarkeitsausdruck löschen';
+
+  @override
+  String get propertiesWatermark => 'Wasserzeichen';
+
+  @override
+  String get watermarkEnable => 'Aktivieren';
+
+  @override
+  String get watermarkText => 'Text';
+
+  @override
+  String get watermarkColor => 'Farbe';
+
+  @override
+  String get watermarkFontSize => 'Schriftgröße';
+
+  @override
+  String get watermarkOpacity => 'Deckkraft';
+
+  @override
+  String get watermarkAngle => 'Winkel';
+
+  @override
+  String get watermarkDefaultText => 'ENTWURF';
+
+  @override
+  String get watermarkImageExternal =>
+      'Bild-Wasserzeichen (außerhalb des Designers gesetzt)';
 }

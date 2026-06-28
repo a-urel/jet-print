@@ -1077,5 +1077,24 @@
   "propertiesVisibleWhen": "Visible when",
   "@propertiesVisibleWhen": { "description": "Properties panel label for the boolean-expression that controls visibility." },
   "propertiesVisibleClear": "Clear visibility expression",
-  "@propertiesVisibleClear": { "description": "Accessible name / tooltip for the button that clears the visibility expression, reverting to the static toggle." }
+  "@propertiesVisibleClear": { "description": "Accessible name / tooltip for the button that clears the visibility expression, reverting to the static toggle." },
+
+  "propertiesWatermark": "Watermark",
+  "@propertiesWatermark": { "description": "Properties panel section label for the report watermark." },
+  "watermarkEnable": "Enable",
+  "@watermarkEnable": { "description": "Toggle that turns the report watermark on or off." },
+  "watermarkText": "Text",
+  "@watermarkText": { "description": "Label for the watermark's text content." },
+  "watermarkColor": "Color",
+  "@watermarkColor": { "description": "Label for the watermark text color picker." },
+  "watermarkFontSize": "Font size",
+  "@watermarkFontSize": { "description": "Label for the watermark text font size field." },
+  "watermarkOpacity": "Opacity",
+  "@watermarkOpacity": { "description": "Label for the watermark opacity field (0 to 1)." },
+  "watermarkAngle": "Angle",
+  "@watermarkAngle": { "description": "Label for the watermark rotation angle field, in degrees." },
+  "watermarkDefaultText": "DRAFT",
+  "@watermarkDefaultText": { "description": "Default text inserted when a watermark is first enabled." },
+  "watermarkImageExternal": "Image watermark (set outside the designer)",
+  "@watermarkImageExternal": { "description": "Read-only note shown when the report has an image watermark, which the designer cannot edit." }
 }
