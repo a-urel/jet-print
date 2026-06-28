@@ -24,6 +24,7 @@ import '../../domain/page_format.dart';
 import '../../domain/report_band.dart';
 import '../../domain/report_definition.dart';
 import '../../domain/report_element.dart';
+import '../../domain/watermark.dart';
 import '../../expression/expression.dart';
 import '../../expression/expression_exception.dart';
 import '../../expression/function_registry.dart';
@@ -39,9 +40,11 @@ import '../fill/page_variables.dart';
 import '../fill/report_diagnostics.dart';
 import '../frame/frame_builder.dart';
 import '../frame/page_frame.dart';
+import '../frame/primitive.dart';
 import '../text/font_registry.dart';
 import '../text/metrics_text_measurer.dart';
 import '../text/text_measurer.dart';
+import '../watermark_primitive.dart';
 import 'band_measurer.dart';
 import 'page_eval_context.dart';
 
@@ -102,6 +105,7 @@ class LazyLayout {
     required double top,
     required double bodyBottom,
     JetElementPrintCallback? onElementPrint,
+    FramePrimitive? watermark,
   })  : _page = page,
         _plans = plans,
         _renderers = renderers,
@@ -116,7 +120,8 @@ class LazyLayout {
         _left = left,
         _top = top,
         _bodyBottom = bodyBottom,
-        _onElementPrint = onElementPrint;
+        _onElementPrint = onElementPrint,
+        _watermark = watermark;
 
   final PageFormat _page;
   final List<List<_PlacedBand>> _plans;
@@ -133,6 +138,7 @@ class LazyLayout {
   final double _top;
   final double _bodyBottom;
   final JetElementPrintCallback? _onElementPrint;
+  final FramePrimitive? _watermark;
 
   /// Chrome expressions already diagnosed at runtime, deduped across every
   /// page build regardless of build order.
@@ -270,6 +276,9 @@ class LazyLayout {
       throw RangeError.range(index, 0, pageCount - 1, 'index');
     }
     final FrameBuilder fb = FrameBuilder(_page);
+
+    final FramePrimitive? wm = _watermark;
+    if (wm != null) fb.add(wm); // bottom of z-order: painted behind content
 
     // On page 0, detect the title band so the page-header chrome can be
     // shifted below it.  titleShift is 0 on every other page (or when there
@@ -715,6 +724,11 @@ class ReportLayouter {
       plans = linearPlans;
     }
 
+    final Watermark? wmDef = def.furniture.watermark;
+    final FramePrimitive? watermark = wmDef == null
+        ? null
+        : buildWatermarkPrimitive(wmDef, def.page, _measurer);
+
     return LazyLayout._(
       page: page,
       plans: plans,
@@ -732,6 +746,7 @@ class ReportLayouter {
       top: top,
       bodyBottom: bodyBottom,
       onElementPrint: onElementPrint,
+      watermark: watermark,
     );
   }
 }
