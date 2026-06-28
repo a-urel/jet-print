@@ -1,68 +1,70 @@
+// SetWatermarkCommand tests, exercised through the public controller surface.
+//
+// Black-box: drives only JetReportDesignerController.setWatermark() and
+// asserts via controller.definition.furniture.watermark. The command class and
+// DesignerDocument are implementation details. Tests cover:
+//   - set a watermark
+//   - clear the watermark (null → fresh PageFurniture path)
+//   - preserve other furniture slots (the silent-drop trap)
+//   - no-op when the watermark already equals the target (canUndo stays false)
+//   - round-trip + undo
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
-import 'package:jet_print/src/designer/controller/commands/set_watermark_command.dart';
-import 'package:jet_print/src/designer/controller/designer_document.dart';
 
-ReportDefinition _def({Watermark? watermark}) => ReportDefinition(
+ReportDefinition _def({Watermark? watermark, Band? pageHeader}) =>
+    ReportDefinition(
       name: 'r',
       page: PageFormat.a4Portrait,
-      furniture: PageFurniture(watermark: watermark),
+      furniture: PageFurniture(watermark: watermark, pageHeader: pageHeader),
       body: const ReportBody(root: DetailScope(id: 'root')),
     );
 
-DesignerDocument _doc({Watermark? watermark}) => DesignerDocument(
-      definition: _def(watermark: watermark),
-      selection: Selection.empty,
+JetReportDesignerController _controller(
+        {Watermark? watermark, Band? pageHeader}) =>
+    JetReportDesignerController(
+      definition: _def(watermark: watermark, pageHeader: pageHeader),
     );
 
 void main() {
-  group('SetWatermarkCommand', () {
-    test('sets a watermark onto furniture', () {
-      final DesignerDocument before = _doc();
-      final DesignerDocument after =
-          const SetWatermarkCommand(Watermark(text: 'DRAFT')).apply(before);
-      expect(
-          after.definition.furniture.watermark, const Watermark(text: 'DRAFT'));
+  group('setWatermark — sets / clears watermark', () {
+    test('set — stores the watermark on furniture', () {
+      final c = _controller();
+      c.setWatermark(const Watermark(text: 'DRAFT'));
+      expect(c.definition.furniture.watermark, const Watermark(text: 'DRAFT'));
+      c.dispose();
     });
 
-    test('clears the watermark (null) — copyWith cannot, so fresh furniture',
-        () {
-      final DesignerDocument before =
-          _doc(watermark: const Watermark(text: 'X'));
-      final DesignerDocument after =
-          const SetWatermarkCommand(null).apply(before);
-      expect(after.definition.furniture.watermark, isNull);
-    });
-
-    test('preserves other furniture slots when setting watermark', () {
-      const header = Band(id: 'ph', type: BandType.pageHeader, height: 20);
-      final DesignerDocument before = DesignerDocument(
-        definition: ReportDefinition(
-          name: 'r',
-          page: PageFormat.a4Portrait,
-          furniture: const PageFurniture(pageHeader: header),
-          body: const ReportBody(root: DetailScope(id: 'root')),
-        ),
-        selection: Selection.empty,
-      );
-      final DesignerDocument after =
-          const SetWatermarkCommand(Watermark(text: 'D')).apply(before);
-      expect(after.definition.furniture.pageHeader, header);
-      expect(after.definition.furniture.watermark, const Watermark(text: 'D'));
-    });
-
-    test('no-op when watermark already equals target', () {
-      final DesignerDocument before =
-          _doc(watermark: const Watermark(text: 'D'));
-      final DesignerDocument after =
-          const SetWatermarkCommand(Watermark(text: 'D')).apply(before);
-      expect(identical(after, before), isTrue);
+    test('clear — null removes the watermark (fresh-furniture path)', () {
+      final c = _controller(watermark: const Watermark(text: 'X'));
+      c.setWatermark(null);
+      expect(c.definition.furniture.watermark, isNull);
+      c.dispose();
     });
   });
 
-  group('controller.setWatermark', () {
-    test('commits and is undoable', () {
-      final c = JetReportDesignerController(definition: _def());
+  group('setWatermark — preserves other furniture slots', () {
+    test('pageHeader is untouched after setting watermark', () {
+      const header = Band(id: 'ph', type: BandType.pageHeader, height: 20);
+      final c = _controller(pageHeader: header);
+      c.setWatermark(const Watermark(text: 'D'));
+      expect(c.definition.furniture.pageHeader, header);
+      expect(c.definition.furniture.watermark, const Watermark(text: 'D'));
+      c.dispose();
+    });
+  });
+
+  group('setWatermark — no-op when value unchanged', () {
+    test('canUndo is false after setting the already-current watermark', () {
+      final c = _controller(watermark: const Watermark(text: 'D'));
+      c.setWatermark(const Watermark(text: 'D'));
+      expect(c.canUndo, isFalse);
+      c.dispose();
+    });
+  });
+
+  group('setWatermark — undoable', () {
+    test('undo restores the prior watermark', () {
+      final c = _controller();
       c.setWatermark(const Watermark(text: 'DRAFT'));
       expect(c.definition.furniture.watermark, const Watermark(text: 'DRAFT'));
       expect(c.canUndo, isTrue);
