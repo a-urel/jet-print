@@ -67,6 +67,7 @@ Both-set is a documented "either/or"; debug-asserts, and **text wins** at emit i
 
 - **`FramePrimitive.rotation: double`** (radians, about `bounds` center). Default `0` → every existing primitive is byte-for-byte unchanged. Added on the sealed base in `lib/src/rendering/frame/primitive.dart`.
 - **`ImagePrimitive.opacity: double`** (default `1.0`) — needed because image pixels carry their own color (text opacity is already expressible via `JetColor` alpha).
+- **Equality is hand-rolled per subclass.** All 5 subclasses (`TextRunPrimitive`, `ImagePrimitive`, `LinePrimitive`, `RectPrimitive`, `PathPrimitive`) implement `==`/`hashCode` manually and read base fields field-by-field — none compares a base field generically. A new base `rotation` is therefore **silently ignored by equality** unless each subclass is updated. The plan MUST: add `rotation` to all 5 `==` and all 5 `hashCode`, and add `opacity` to `ImagePrimitive`'s `==`/`hashCode`. ("Byte-identical golden output" does NOT imply equality is unchanged — two primitives differing only in `rotation` must not compare equal.)
 
 ### Rendering — paint layer
 
@@ -76,7 +77,7 @@ Both-set is a documented "either/or"; debug-asserts, and **text wins** at emit i
   - `CanvasPainter` — `dart:ui.Canvas` save/restore.
   - `PdfPainter` — `package:pdf` graphics save/transform/restore.
   - `PageRasterizer` — records the same `CanvasPainter` path, so it inherits rotation for free.
-- Image opacity: `drawImage` applies `opacity` (e.g. paint alpha / pdf graphics alpha).
+- **Image opacity:** `drawImage` applies `opacity`. On Canvas: a `Paint` with `color: Color.fromRGBO(0,0,0, opacity)` (alpha-only). On PDF: **reuse the existing constant-alpha mechanism** — `pdf_painter.dart` already wraps fill/text draws in `g.setGraphicState(PdfGraphicState(opacity: alpha))` (ExtGState `/ca`, see `pdf_painter.dart:281–287`). PDF `/ca` applies to images as constant opacity, so wrap `drawImage` in the same helper. This is the only place where a backend could diverge; it is de-risked by the existing working pattern but the plan's first PDF task should still **spike-verify** image-under-`/ca` against a golden before finalizing the painter API. (Note: the `/SMask` path at `pdf_painter.dart:306` is for per-pixel PNG alpha — unrelated to watermark constant opacity.)
 
 ### Rendering — page assembly
 
@@ -95,7 +96,8 @@ Author sets `PageFurniture.watermark` (via API or decoded JSON) → fill + layou
 
 - `_encodeFurniture`: add `if (f.watermark != null) 'watermark': _encodeWatermark(f.watermark!)`.
 - `_decodeFurniture`: decode the optional `'watermark'` key.
-- New `_encodeWatermark`/`_decodeWatermark` (or a small `watermark_codec.dart`): omit-when-null fields; image bytes base64; reuse the existing text-style codec.
+- New `_encodeWatermark`/`_decodeWatermark` (or a small `watermark_codec.dart`): omit-when-null fields; image bytes base64; serialize the style by calling `JetTextStyle.toJson`/`JetTextStyle.fromJson` directly (these already exist — `text_style.dart:29,95`; there is **no** standalone text-style codec to reuse).
+- **`background` field comment:** `report_definition.dart:51` currently calls the reserved `background` band the "future watermark/frame layer". Since `watermark` is now its own sibling field, update that comment so two slots don't both claim watermarking (background → "future frame/border layer").
 - **No `schemaVersion` bump.** Additive optional field — old files decode with `watermark == null` (nothing drawn); new files with a watermark are still version 2.
 
 ## Error handling
@@ -105,6 +107,11 @@ Author sets `PageFurniture.watermark` (via API or decoded JSON) → fill + layou
 - Undecodable image bytes → reuse the existing `ImageElement`/`ImagePrimitive` decode-failure path; watermark is skipped, the rest of the page still renders.
 - `opacity` clamped to 0–1; `angleDegrees` accepted as any value, normalized at paint.
 
+### Known limitations (documented, not bugs)
+
+- **`PageFurniture.copyWith` cannot null-out `watermark`.** Consistent with every existing furniture field (`background: background ?? this.background` — `report_definition.dart:67`): `copyWith` only sets, never clears. Removing a watermark = construct a new `PageFurniture`. Documented on the method.
+- **Text watermark has no auto-fit.** Size comes from the explicit `JetTextStyle` font size; the text is not auto-scaled to span the page. Authors pick a large size. Auto-fit is a possible follow-up.
+
 ## Testing
 
 - **Domain:** `Watermark` `==`/`copyWith`; `PageFurniture` holds and round-trips it.
@@ -112,6 +119,7 @@ Author sets `PageFurniture.watermark` (via API or decoded JSON) → fill + layou
 - **Primitive defaults:** `rotation` defaults `0`, `ImagePrimitive.opacity` defaults `1.0` → existing primitives unchanged.
 - **Paint:** a rotated primitive calls `pushTransform`/`popTransform` exactly once around its draw (fake painter records calls).
 - **Golden (new):** a report with a diagonal "DRAFT" text watermark → preview golden; an image-watermark golden. Verify watermark sits behind content.
+- **Golden (raster — required):** add a **PNG raster** golden for the image watermark, not just the vector preview. Image-opacity divergence (Canvas alpha vs PDF `/ca`) only manifests in rasterized/PDF output, not in the primitive-structure preview. (A PDF byte-check or rasterized-PDF compare is the spike from the paint section.)
 - **Golden (regression — key guard):** all existing goldens **unchanged** — with `watermark == null` everywhere, output is byte-identical. If any existing golden diffs, STOP and inspect.
 
 ## Constitution Check
