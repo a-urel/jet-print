@@ -23,6 +23,7 @@ import '../../domain/report_validation.dart';
 import '../../domain/styles/box_style.dart';
 import '../../domain/styles/color.dart';
 import '../../domain/styles/text_style.dart';
+import '../../domain/watermark.dart';
 import '../canvas/design_tunables.dart';
 import '../canvas/resize_handle.dart';
 import '../template/value_template_compiler.dart';
@@ -43,11 +44,11 @@ import 'commands/resize_command.dart';
 import 'commands/scope_commands.dart';
 import 'commands/set_band_height_command.dart';
 import 'commands/set_barcode_color_command.dart';
-import 'commands/set_chart_options_command.dart';
 import 'commands/set_barcode_data_command.dart';
 import 'commands/set_barcode_options_command.dart';
 import 'commands/set_barcode_symbology_command.dart';
 import 'commands/set_binding_command.dart';
+import 'commands/set_chart_options_command.dart';
 import 'commands/set_column_layout_command.dart';
 import 'commands/set_definition_name_command.dart';
 import 'commands/set_format_command.dart';
@@ -58,6 +59,7 @@ import 'commands/set_text_command.dart';
 import 'commands/set_text_style_command.dart';
 import 'commands/set_value_command.dart';
 import 'commands/set_visible_command.dart';
+import 'commands/set_watermark_command.dart';
 import 'default_definition.dart';
 import 'designer_document.dart';
 import 'edit_command.dart';
@@ -692,6 +694,13 @@ class JetReportDesignerController extends ChangeNotifier {
   void setPageFormat(PageFormat format) {
     _commit(SetPageFormatCommand(clampPageFormat(format)));
   }
+
+  /// Sets (or clears, with null) the report's page watermark as one undoable
+  /// step. Routed through `_commit`, so setting the current watermark records no
+  /// history; canvas/preview/export all read `definition.furniture.watermark`,
+  /// so the one notification propagates everywhere (WYSIWYG).
+  void setWatermark(Watermark? watermark) =>
+      _commit(SetWatermarkCommand(watermark));
 
   // --- Numeric geometry + text (Properties / inline) -------------------------
 
