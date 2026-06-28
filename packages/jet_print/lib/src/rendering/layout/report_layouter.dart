@@ -260,12 +260,38 @@ class LazyLayout {
   /// Builds page [index]'s frame: the boundary pass's body placements in
   /// order, then the page header/footer chrome with this page's substitution —
   /// the identical primitive order the eager pass produced before 011.
+  ///
+  /// On page 0 only: if a title band is present, it is rendered at [_top]
+  /// (above the page header), and the page-header chrome is shifted down by
+  /// the title's height — matching JasperReports default ordering.  Body
+  /// bands other than the title keep their boundary-pass y unchanged.
   PageFrame buildPage(int index) {
     if (index < 0 || index >= pageCount) {
       throw RangeError.range(index, 0, pageCount - 1, 'index');
     }
     final FrameBuilder fb = FrameBuilder(_page);
+
+    // On page 0, detect the title band so the page-header chrome can be
+    // shifted below it.  titleShift is 0 on every other page (or when there
+    // is no title), so the rest of the logic is byte-identical to before.
+    double titleShift = 0;
+    bool titleHandled = false;
     for (final _PlacedBand placed in _plans[index]) {
+      if (!titleHandled &&
+          index == 0 &&
+          placed.band.source.type == BandType.title) {
+        // Render the title at the very top of the page instead of at its
+        // boundary-pass y (which sits below the page header).
+        _place(placed.band.elements, placed.x, _top, fb,
+            pageNumber: index + 1,
+            bandType: placed.band.source.type,
+            bandName: placed.band.source.group,
+            fields: placed.band.source.fields,
+            variables: placed.band.source.variables);
+        titleShift = placed.band.height;
+        titleHandled = true;
+        continue;
+      }
       _place(placed.band.elements, placed.x, placed.y, fb,
           pageNumber: index + 1,
           bandType: placed.band.source.type,
@@ -274,7 +300,7 @@ class LazyLayout {
           variables: placed.band.source.variables);
     }
     final int pageNumber = index + 1;
-    double y = _top;
+    double y = _top + titleShift;
     for (final Band h in _headers) {
       _place(
           <({ReportElement element, JetRect bounds})>[

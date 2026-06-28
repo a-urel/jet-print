@@ -105,6 +105,32 @@ PageFurniture _slot(Band band) {
   }
 }
 
+// A body band carrying one TextElement (type-generic, used for title / detail).
+FilledBand _textBand(BandType type, String id, double height) => FilledBand(
+      type: type,
+      height: height,
+      elements: <ReportElement>[
+        TextElement(
+          id: id,
+          bounds: JetRect(x: 0, y: 0, width: 180, height: height),
+          text: id,
+        ),
+      ],
+      variables: const <String, JetValue>{},
+    );
+
+// Page-absolute y of the TextRunPrimitive with [id] on [page].
+double _textRunY(PageFrame page, String id) => page.primitives
+    .whereType<TextRunPrimitive>()
+    .firstWhere((TextRunPrimitive p) => p.elementId == id)
+    .bounds
+    .y;
+
+// True when no TextRunPrimitive with [id] exists on [page].
+bool _textRunAbsent(PageFrame page, String id) => !page.primitives
+    .whereType<TextRunPrimitive>()
+    .any((TextRunPrimitive p) => p.elementId == id);
+
 // The rendered text of the chrome TextRunPrimitive with [id] on [page].
 String _chromeRun(PageFrame page, String id) => page.primitives
     .whereType<TextRunPrimitive>()
@@ -1182,5 +1208,129 @@ void main() {
             .map((Diagnostic d) => (d.severity, d.message, d.elementId))
             .toList();
     expect(proj(a), proj(b));
+  });
+
+  // ── Title-before-pageHeader (fix) ─────────────────────────────────────────
+  //
+  // _smallPage: 200×100, margins=10 → printable top=10, content height=80.
+  // ph=30 (pageHeader), th=20 (title).
+  // After fix: page 0 → title at [10,30], pageHeader at [30,60].
+  // Before fix: page 0 → pageHeader at [10,40], title at [40,60].
+
+  test(
+      'title band prints above the page header on page 1 '
+      '(single-page report)', () {
+    // pageHeader ph=30, title th=20.
+    // bodyTop = top+ph = 40; capacity = 80-30 = 50.
+    // title (th=20) consumes 20 of capacity → remaining 30.
+    // One detail band of 30 fills the rest exactly → 1 page.
+    const double ph = 30;
+    const double th = 20;
+    final ReportDefinition tpl = ReportDefinition(
+      name: 'titleOrderTest',
+      page: _smallPage,
+      furniture: PageFurniture(
+        pageHeader: Band(
+          id: 'pageHeader',
+          type: BandType.pageHeader,
+          height: ph,
+          elements: <ReportElement>[
+            TextElement(
+              id: 'colHead',
+              bounds: JetRect(x: 0, y: 0, width: 180, height: ph),
+              text: 'colHead',
+            ),
+          ],
+        ),
+      ),
+      body: ReportBody(
+        title: Band(
+          id: 'title',
+          type: BandType.title,
+          height: th,
+          elements: <ReportElement>[
+            TextElement(
+              id: 'rptHdr',
+              bounds: JetRect(x: 0, y: 0, width: 180, height: th),
+              text: 'rptHdr',
+            ),
+          ],
+        ),
+        root: const DetailScope(id: 'root'),
+      ),
+    );
+    final FilledReport filled = _filled(<FilledBand>[
+      _textBand(BandType.title, 'rptHdr', th),
+      _textBand(BandType.detail, 'row0', 30),
+    ]);
+    final LayoutResult r = ReportLayouter().layoutDefinition(tpl, filled);
+    expect(r.pages.length, 1);
+    final PageFrame p0 = r.pages[0];
+    // title at margins.top (10); pageHeader below title (10+th=30).
+    expect(_textRunY(p0, 'rptHdr'), _smallPage.margins.top);
+    expect(_textRunY(p0, 'colHead'), _smallPage.margins.top + th);
+    expect(_textRunY(p0, 'rptHdr'), lessThan(_textRunY(p0, 'colHead')));
+  });
+
+  test(
+      'title absent on page 2; page header at margins.top on every page '
+      '(two-page report)', () {
+    // pageHeader ph=30, title th=20.
+    // bodyTop = top+ph = 40; capacity = 80-30 = 50.
+    // Page 0 plan: title(20) + detail(30) = 50 (full). Page 1: detail(30).
+    const double ph = 30;
+    const double th = 20;
+    final ReportDefinition tpl = ReportDefinition(
+      name: 'titleOrderTwoPage',
+      page: _smallPage,
+      furniture: PageFurniture(
+        pageHeader: Band(
+          id: 'pageHeader',
+          type: BandType.pageHeader,
+          height: ph,
+          elements: <ReportElement>[
+            TextElement(
+              id: 'colHead',
+              bounds: JetRect(x: 0, y: 0, width: 180, height: ph),
+              text: 'colHead',
+            ),
+          ],
+        ),
+      ),
+      body: ReportBody(
+        title: Band(
+          id: 'title',
+          type: BandType.title,
+          height: th,
+          elements: <ReportElement>[
+            TextElement(
+              id: 'rptHdr',
+              bounds: JetRect(x: 0, y: 0, width: 180, height: th),
+              text: 'rptHdr',
+            ),
+          ],
+        ),
+        root: const DetailScope(id: 'root'),
+      ),
+    );
+    final FilledReport filled = _filled(<FilledBand>[
+      _textBand(BandType.title, 'rptHdr', th),
+      _textBand(BandType.detail, 'row0', 30),
+      _textBand(BandType.detail, 'row1', 30),
+    ]);
+    final LayoutResult r = ReportLayouter().layoutDefinition(tpl, filled);
+    expect(r.pages.length, 2);
+
+    // Page 0: rptHdr at top (10), colHead below at 10+th=30.
+    final PageFrame p0 = r.pages[0];
+    expect(_textRunY(p0, 'rptHdr'), _smallPage.margins.top);
+    expect(_textRunY(p0, 'colHead'), _smallPage.margins.top + th);
+    expect(_textRunY(p0, 'rptHdr'), lessThan(_textRunY(p0, 'colHead')));
+
+    // Page 1: pageHeader at margins.top; no title.
+    final PageFrame p1 = r.pages[1];
+    expect(_textRunY(p1, 'colHead'), _smallPage.margins.top);
+    expect(_textRunAbsent(p1, 'rptHdr'), isTrue,
+        reason: 'title should not appear on page 2');
   });
 }
