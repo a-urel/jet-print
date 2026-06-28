@@ -2,6 +2,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jet_print/src/domain/elements/image_source.dart';
 import 'package:jet_print/src/domain/geometry.dart';
 import 'package:jet_print/src/domain/styles/color.dart';
 import 'package:jet_print/src/domain/styles/text_style.dart';
@@ -68,5 +69,35 @@ void main() {
         bounds: const JetRect(x: 0, y: 0, width: 8, height: 8),
         bytes: Uint8List.fromList(<int>[1, 2, 3]));
     expect(i1, i2);
+  });
+
+  const b = JetRect(x: 0, y: 0, width: 10, height: 10);
+
+  test('rotation defaults to 0 on every primitive', () {
+    expect(const RectPrimitive(bounds: b).rotation, 0);
+    expect(
+        const LinePrimitive(
+                bounds: b,
+                start: JetOffset(0, 0),
+                end: JetOffset(1, 1),
+                color: JetColor.black)
+            .rotation,
+        0);
+  });
+
+  test('rotation breaks equality (base field is compared)', () {
+    const a = RectPrimitive(bounds: b, fill: JetColor.black);
+    const c = RectPrimitive(bounds: b, fill: JetColor.black, rotation: 0.5);
+    expect(a, isNot(c));
+    expect(a.hashCode, isNot(c.hashCode));
+  });
+
+  test('ImagePrimitive.opacity defaults to 1.0 and is compared', () {
+    final bytes = Uint8List.fromList(<int>[1, 2, 3]);
+    final a = ImagePrimitive(bounds: b, bytes: bytes);
+    final c = ImagePrimitive(bounds: b, bytes: bytes, opacity: 0.15);
+    expect(a.opacity, 1.0);
+    expect(a, isNot(c));
+    expect(a.hashCode, isNot(c.hashCode));
   });
 }

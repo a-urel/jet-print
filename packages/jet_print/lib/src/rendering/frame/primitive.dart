@@ -14,14 +14,19 @@ import '../text/text_measurer.dart';
 /// A single positioned primitive on a page.
 sealed class FramePrimitive {
   /// Creates a primitive bounded by [bounds] (page points), optionally tagged
-  /// with the originating [elementId].
-  const FramePrimitive({required this.bounds, this.elementId});
+  /// with the originating [elementId] and rotated by [rotation].
+  const FramePrimitive(
+      {required this.bounds, this.elementId, this.rotation = 0});
 
   /// Position and size, in page points.
   final JetRect bounds;
 
   /// The originating element's id, or null (e.g. chrome).
   final String? elementId;
+
+  /// Clockwise rotation in radians, applied about [bounds]'s center by the
+  /// paint layer. Default 0 (no rotation) — keeps existing frames byte-identical.
+  final double rotation;
 }
 
 /// Pre-broken text: the measurer's [lines] drawn without re-wrapping.
@@ -33,6 +38,7 @@ final class TextRunPrimitive extends FramePrimitive {
     required this.style,
     required this.fontFamily,
     super.elementId,
+    super.rotation,
   });
 
   /// Laid-out lines (the painter never re-wraps these).
@@ -49,13 +55,14 @@ final class TextRunPrimitive extends FramePrimitive {
       other is TextRunPrimitive &&
       other.bounds == bounds &&
       other.elementId == elementId &&
+      other.rotation == rotation &&
       other.style == style &&
       other.fontFamily == fontFamily &&
       _listEquals(other.lines, lines);
 
   @override
-  int get hashCode =>
-      Object.hash(bounds, elementId, style, fontFamily, Object.hashAll(lines));
+  int get hashCode => Object.hash(
+      bounds, elementId, rotation, style, fontFamily, Object.hashAll(lines));
 
   @override
   String toString() =>
@@ -69,7 +76,9 @@ final class ImagePrimitive extends FramePrimitive {
     required super.bounds,
     required this.bytes,
     this.fit = JetBoxFit.contain,
+    this.opacity = 1.0,
     super.elementId,
+    super.rotation,
   });
 
   /// Encoded image bytes.
@@ -78,12 +87,17 @@ final class ImagePrimitive extends FramePrimitive {
   /// How the image fills [bounds].
   final JetBoxFit fit;
 
+  /// 0..1 constant opacity applied when drawing. Default 1.0 (opaque).
+  final double opacity;
+
   @override
   bool operator ==(Object other) {
     if (other is! ImagePrimitive ||
         other.bounds != bounds ||
         other.elementId != elementId ||
+        other.rotation != rotation ||
         other.fit != fit ||
+        other.opacity != opacity ||
         other.bytes.length != bytes.length) {
       return false;
     }
@@ -94,8 +108,8 @@ final class ImagePrimitive extends FramePrimitive {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(bounds, elementId, fit, Object.hashAll(bytes));
+  int get hashCode => Object.hash(
+      bounds, elementId, rotation, fit, opacity, Object.hashAll(bytes));
 
   @override
   String toString() => 'ImagePrimitive($bounds, ${bytes.length}B, $fit)';
@@ -111,6 +125,7 @@ final class LinePrimitive extends FramePrimitive {
     required this.color,
     this.strokeWidth = 1.0,
     super.elementId,
+    super.rotation,
   });
 
   /// Start point, in page points.
@@ -130,6 +145,7 @@ final class LinePrimitive extends FramePrimitive {
       other is LinePrimitive &&
       other.bounds == bounds &&
       other.elementId == elementId &&
+      other.rotation == rotation &&
       other.start == start &&
       other.end == end &&
       other.color == color &&
@@ -137,7 +153,7 @@ final class LinePrimitive extends FramePrimitive {
 
   @override
   int get hashCode =>
-      Object.hash(bounds, elementId, start, end, color, strokeWidth);
+      Object.hash(bounds, elementId, rotation, start, end, color, strokeWidth);
 
   @override
   String toString() => 'LinePrimitive($start -> $end, $color)';
@@ -152,6 +168,7 @@ final class RectPrimitive extends FramePrimitive {
     this.stroke,
     this.strokeWidth = 1.0,
     super.elementId,
+    super.rotation,
   });
 
   /// Fill color, or null for no fill.
@@ -168,12 +185,14 @@ final class RectPrimitive extends FramePrimitive {
       other is RectPrimitive &&
       other.bounds == bounds &&
       other.elementId == elementId &&
+      other.rotation == rotation &&
       other.fill == fill &&
       other.stroke == stroke &&
       other.strokeWidth == strokeWidth;
 
   @override
-  int get hashCode => Object.hash(bounds, elementId, fill, stroke, strokeWidth);
+  int get hashCode =>
+      Object.hash(bounds, elementId, rotation, fill, stroke, strokeWidth);
 
   @override
   String toString() => 'RectPrimitive($bounds, fill: $fill, stroke: $stroke)';
@@ -189,6 +208,7 @@ final class PathPrimitive extends FramePrimitive {
     this.stroke,
     this.strokeWidth = 1.0,
     super.elementId,
+    super.rotation,
   });
 
   /// The path commands, in order.
@@ -208,14 +228,15 @@ final class PathPrimitive extends FramePrimitive {
       other is PathPrimitive &&
       other.bounds == bounds &&
       other.elementId == elementId &&
+      other.rotation == rotation &&
       other.fill == fill &&
       other.stroke == stroke &&
       other.strokeWidth == strokeWidth &&
       _listEquals(other.commands, commands);
 
   @override
-  int get hashCode => Object.hash(
-      bounds, elementId, fill, stroke, strokeWidth, Object.hashAll(commands));
+  int get hashCode => Object.hash(bounds, elementId, rotation, fill, stroke,
+      strokeWidth, Object.hashAll(commands));
 
   @override
   String toString() => 'PathPrimitive($bounds, ${commands.length} cmds)';
