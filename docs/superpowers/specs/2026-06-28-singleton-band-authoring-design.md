@@ -46,61 +46,62 @@ Designer authoring + user-facing labels + one playground demo correction.
 
 ## Architecture
 
-The change spans three layers, all already established:
+The change spans two layers plus a demo fix — and the controller command it
+needs **already exists**:
 
-1. **Controller (command).** A new undoable command that creates an empty band
-   in an empty singleton slot — the additive sibling of the existing
-   `retypeBand` (which only *relocates* an existing band).
+1. **Controller (command) — already built.** `JetReportDesignerController.addBand(BandType)`
+   (`jet_report_designer_controller.dart:1027`) already creates an empty band in
+   an empty singleton slot, with exactly the guards and commit shape this design
+   needs. No new controller method; the new menu wires straight to it.
 2. **Outline panel (UI).** A report-level "+" menu on the existing Report root
    row, parallel to the per-scope "+" menu, listing only the currently-empty
-   singleton slots.
+   **rendered** singleton slots.
 3. **Localization (labels).** Two ARB value changes, single-sourced through the
    existing `bandTypeLabel`.
 
 Plus a data-only fix to one playground demo definition.
 
+## Which singleton slots the menu offers
+
+`isSingletonSlotType` (`band_walker.dart:420`) covers **eight** slots:
+`title`, `summary`, `noData`, `pageHeader`, `pageFooter`, **`columnHeader`,
+`columnFooter`, `background`**. The controller's `addBand` already handles all
+eight. But the layouter explicitly **does not render** the last three — it logs
+*"`<type>` bands are not laid out in 008a; ignored"* and skips them
+(`report_layouter.dart:411-421`, reserved since 008b).
+
+Offering a non-rendering band would let an author create a band that silently
+never prints — a worse trap than the discoverability gap this design closes.
+**Decision: the menu offers only the five rendered slots** — report header,
+page header, page footer, report footer, no-data — and **deliberately excludes**
+`columnHeader`, `columnFooter`, `background` until the engine lays them out.
+(They remain reachable via retype, an unchanged pre-existing path; that latent
+gap is out of scope here and should close when column/background rendering
+lands.)
+
 ## Components
 
-### Component 1 — `addSingletonBand(BandType type)` on the controller
-
-New method on `JetReportDesignerController`, modeled directly on `retypeBand`
-(`jet_report_designer_controller.dart:1106`).
-
-- **Guards (no-op when violated):**
-  - `isSingletonSlotType(type)` is false → no-op (only the five singleton slots
-    are valid targets).
-  - `bandInSlot(definition, type) != null` → no-op (slot already occupied).
-- **Action:** construct `Band(id: <newly generated id>, type: type,
-  height: _defaultBandHeight(type), elements: <empty>)`, then commit
-  `setSlotBand(definition, type, band)` as a single `DefinitionEditCommand`
-  (one undoable step), with `selection: Selection.band(newId)` so the new band
-  is selected and its Properties panel opens.
-- Reuses the existing `_defaultBandHeight(type)` helper
-  (`jet_report_designer_controller.dart:1121`): title/summary = 32, noData = 40,
-  others = 24.
-- Id generation follows the same approach `addDetailBand` uses (the
-  implementation plan will confirm the exact id-minting helper).
-
-### Component 2 — Report-root "+" menu in the outline
+### Component 1 — Report-root "+" menu in the outline
 
 The Report root branch row (`outline_panel.dart:131`) currently has no
 `actions:`. Add a `_TypeMenu` "+" affordance there (icon `LucideIcons.plus`),
 parallel to the per-scope `_addMenu` (`outline_panel.dart:258`).
 
-- Menu options: one entry per singleton slot type, in a stable, sensible order
-  (report header, page header, page footer, report footer, no-data).
+- Menu options: one entry per **rendered** singleton slot type (the five above),
+  in a stable, sensible order (report header, page header, page footer,
+  report footer, no-data). The three reserved/unrendered types are not listed.
 - Each entry is **omitted when its slot is occupied**
   (`bandInSlot(definition, type) != null`) — so the menu only ever offers slots
   you can actually fill. (Omit rather than disable, matching how the scope menu
   omits an already-present group header/footer.)
 - Entry label = `bandTypeLabel(type, l10n)` (already localized; the same caption
   the retype menu and canvas badges use).
-- `onPick` → `controller.addSingletonBand(type)`.
+- `onPick` → `controller.addBand(type)` (the existing controller command).
 - Stable `ValueKey`s under `jet_print.designer.outline.report.add...` for tests.
 
 The retype menu and `_retypeTargets` whitelist are left unchanged.
 
-### Component 3 — Labels
+### Component 2 — Labels
 
 `bandTypeLabel` (`designer/l10n/band_type_label.dart`) is the single source for
 band captions, used by canvas band badges, the outline, the retype menu, and the
@@ -119,7 +120,7 @@ localization delegate; do not hand-edit generated Dart (a known trap from the
 chart spec, where keys existed only in generated Dart and were missing from the
 ARBs).
 
-### Component 4 — Ledger demo fix
+### Component 3 — Ledger demo fix
 
 In `apps/jet_print_playground/lib/ledger_sample.dart`, move the `'Sales Ledger'`
 `TextElement` out of `PageFurniture.pageHeader` and into `ReportBody.title`
@@ -134,10 +135,10 @@ report-header authoring.
 ## Data Flow
 
 Author clicks the Report root "+" → picks "Report Header" → controller
-`addSingletonBand(BandType.title)` commits an empty title band into
-`body.title` and selects it → outline shows the new band row, canvas shows the
-once-at-top band, Properties panel targets it → author drops elements in. No
-fill/render code path changes; the engine already prints `body.title` once.
+`addBand(BandType.title)` commits an empty title band into `body.title` and
+selects it → outline shows the new band row, canvas shows the once-at-top band,
+Properties panel targets it → author drops elements in. No fill/render code path
+changes; the engine already prints `body.title` once.
 
 ## Error Handling / Edge Cases
 
@@ -150,14 +151,14 @@ fill/render code path changes; the engine already prints `body.title` once.
 
 ## Testing
 
-- **Controller unit tests** (`test/designer/controller/...`): for each of the
-  five types, adding into an empty slot creates a band of the right type with
-  the default height and selects it; adding into an occupied slot is a no-op;
-  adding a non-singleton type is a no-op; undo restores the prior definition and
-  selection.
-- **Outline widget test**: the report "+" menu lists exactly the empty singleton
-  slots; an occupied slot's entry is absent; tapping an entry adds the band and
-  selects it (assert via the stable `ValueKey`s).
+- **Controller — reuse existing coverage.** `addBand` already exists and is
+  tested; this design adds no controller behavior. If a gap exists, extend the
+  existing `addBand` tests rather than adding new ones.
+- **Outline widget test**: the report "+" menu lists exactly the five rendered
+  singleton slots that are currently empty; an occupied slot's entry is absent;
+  the three reserved types (`columnHeader`/`columnFooter`/`background`) are never
+  listed; tapping an entry calls `addBand` and the new band becomes selected
+  (assert via the stable `ValueKey`s).
 - **Label test**: `bandTypeLabel(BandType.title)` / `bandTypeSummary` return the
   new captions for each locale.
 - **Intentional golden churn** (regenerate deliberately, document why; do not
@@ -169,8 +170,9 @@ fill/render code path changes; the engine already prints `body.title` once.
 
 ## Constitution Alignment
 
-- **Library-first / clean API:** additive controller method; no new public
-  surface beyond the designer.
+- **Library-first / clean API:** no new public surface — reuses the existing
+  `addBand` command; the only additions are designer-internal (a menu) and
+  user-facing labels.
 - **Layered architecture:** domain/render untouched; the change is confined to
   the designer controller + outline panel + l10n.
 - **Test-First:** every new behavior lands Red→Green.
