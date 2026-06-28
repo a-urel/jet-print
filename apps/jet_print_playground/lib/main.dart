@@ -378,8 +378,31 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
     // toggles pin to the bottom above a hairline divider. Used verbatim by the
     // wide sidebar and the narrow drawer — [onSelect] differs only in whether
     // it also closes the drawer.
+    // The brand header pins to the top of the nav pane — mirroring the toggle
+    // cluster at its bottom — so the wordmark shows in both the wide sidebar and
+    // the narrow drawer (the pane is shared verbatim by both).
+    final Widget brandHeader = Container(
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: theme.colorScheme.border)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      child: Row(
+        children: <Widget>[
+          Icon(LucideIcons.printer, size: 18, color: theme.colorScheme.primary),
+          const SizedBox(width: 8),
+          Text(
+            'jet_print',
+            style: theme.textTheme.large.copyWith(
+              color: theme.colorScheme.foreground,
+            ),
+          ),
+        ],
+      ),
+    );
+
     Widget navPane(ValueChanged<String> onSelect) => Column(
           children: <Widget>[
+            brandHeader,
             Expanded(
               child: DemoNavList(
                 items: navItems,

@@ -38,6 +38,18 @@ void main() {
   );
 
   testWidgets(
+    'the navigation shows the jet_print brand wordmark at its top',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(const JetPrintPlaygroundApp());
+
+      // The brand header lives at the top of the shared nav pane, so on a wide
+      // surface the sidebar copy is onstage exactly once (the drawer copy is
+      // offstage). A default (onstage-only) finder therefore matches one.
+      expect(find.text('jet_print'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'the shell shows eleven live designer tabs and no placeholder',
     (WidgetTester tester) async {
       await tester.pumpWidget(const JetPrintPlaygroundApp());
