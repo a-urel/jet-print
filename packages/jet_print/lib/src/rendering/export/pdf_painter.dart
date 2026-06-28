@@ -18,6 +18,7 @@ import 'dart:typed_data';
 
 import 'package:image/image.dart' as img;
 import 'package:pdf/pdf.dart';
+import 'package:vector_math/vector_math_64.dart' show Matrix4;
 
 import '../../domain/geometry.dart';
 import '../../domain/page_format.dart';
@@ -83,13 +84,21 @@ class PdfPainter implements ReportPainter {
     }
   }
 
-  // TODO(Task 8): real PDF transform
   @override
-  void pushTransform(JetOffset c, double r) {}
+  void pushTransform(JetOffset center, double radians) {
+    final PdfGraphics g = _g;
+    final double cx = center.dx;
+    final double cy = _mapY(center.dy); // PDF y-up origin
+    g.saveContext();
+    // jet rotates clockwise in y-down space; PDF is y-up → negate the angle.
+    g.setTransform(Matrix4.identity()
+      ..translateByDouble(cx, cy, 0, 1)
+      ..rotateZ(-radians)
+      ..translateByDouble(-cx, -cy, 0, 1));
+  }
 
-  // TODO(Task 8): real PDF transform
   @override
-  void popTransform() {}
+  void popTransform() => _g.restoreContext();
 
   @override
   void beginPage(PageFormat format) {
@@ -162,41 +171,43 @@ class PdfPainter implements ReportPainter {
     final _DecodedImage? decoded = _decoded[p];
     if (decoded == null) return; // undecodable bytes: draw nothing, like
     // an unresolved source upstream — never crash the export (B5).
-    final PdfGraphics g = _g;
-    final PdfImage image = _embeddedImages.putIfAbsent(
-      p.bytes,
-      () => decoded.embed(_document),
-    );
-    final ImageFit fit = computeImageFit(
-      p.fit,
-      p.bounds,
-      decoded.width.toDouble(),
-      decoded.height.toDouble(),
-    );
-    // drawImageRect semantics: clip to dst, then draw the FULL image scaled
-    // so the src window lands exactly on dst.
-    final double scaleX = fit.dst.width / fit.src.width;
-    final double scaleY = fit.dst.height / fit.src.height;
-    final double fullWidth = decoded.width * scaleX;
-    final double fullHeight = decoded.height * scaleY;
-    final double fullLeft = fit.dst.x - fit.src.x * scaleX;
-    final double fullTop = fit.dst.y - fit.src.y * scaleY;
-    g.saveContext();
-    g.drawRect(
-      fit.dst.x,
-      _mapY(fit.dst.y + fit.dst.height),
-      fit.dst.width,
-      fit.dst.height,
-    );
-    g.clipPath();
-    g.drawImage(
-      image,
-      fullLeft,
-      _mapY(fullTop + fullHeight),
-      fullWidth,
-      fullHeight,
-    );
-    g.restoreContext();
+    _withOpacity(_g, p.opacity, () {
+      final PdfGraphics g = _g;
+      final PdfImage image = _embeddedImages.putIfAbsent(
+        p.bytes,
+        () => decoded.embed(_document),
+      );
+      final ImageFit fit = computeImageFit(
+        p.fit,
+        p.bounds,
+        decoded.width.toDouble(),
+        decoded.height.toDouble(),
+      );
+      // drawImageRect semantics: clip to dst, then draw the FULL image scaled
+      // so the src window lands exactly on dst.
+      final double scaleX = fit.dst.width / fit.src.width;
+      final double scaleY = fit.dst.height / fit.src.height;
+      final double fullWidth = decoded.width * scaleX;
+      final double fullHeight = decoded.height * scaleY;
+      final double fullLeft = fit.dst.x - fit.src.x * scaleX;
+      final double fullTop = fit.dst.y - fit.src.y * scaleY;
+      g.saveContext();
+      g.drawRect(
+        fit.dst.x,
+        _mapY(fit.dst.y + fit.dst.height),
+        fit.dst.width,
+        fit.dst.height,
+      );
+      g.clipPath();
+      g.drawImage(
+        image,
+        fullLeft,
+        _mapY(fullTop + fullHeight),
+        fullWidth,
+        fullHeight,
+      );
+      g.restoreContext();
+    });
   }
 
   @override
@@ -281,6 +292,21 @@ class PdfPainter implements ReportPainter {
   Future<Uint8List> save() => _document.save();
 
   static PdfColor _pdfColor(JetColor color) => PdfColor.fromInt(color.argb);
+
+  /// Runs [draw] inside a graphics-state scope that applies [opacity] as the
+  /// constant `/ca` (non-stroking) alpha. When [opacity] is already 1.0 the
+  /// save/restore is skipped entirely — matching CanvasPainter's fast path.
+  static void _withOpacity(
+      PdfGraphics g, double opacity, void Function() draw) {
+    if (opacity >= 1.0) {
+      draw();
+      return;
+    }
+    g.saveContext();
+    g.setGraphicState(PdfGraphicState(opacity: opacity));
+    draw();
+    g.restoreContext();
+  }
 
   /// Runs [draw] with the color's alpha installed as an ExtGState when it is
   /// not fully opaque (PDF color operators carry no alpha). The state is
