@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/domain/elements/image_source.dart';
+import 'package:jet_print/src/domain/serialization/report_format_exception.dart';
 import 'package:jet_print/src/domain/styles/text_style.dart';
 import 'package:jet_print/src/domain/watermark.dart';
 
@@ -70,6 +71,13 @@ void main() {
           imageFit: JetBoxFit.cover,
           opacity: 0.1);
       expect(Watermark.fromJson(a.toJson()), a);
+    });
+
+    test('fromJson throws ReportFormatException on bad imageFit', () {
+      expect(
+        () => Watermark.fromJson(<String, Object?>{'imageFit': 'bogus'}),
+        throwsA(isA<ReportFormatException>()),
+      );
     });
   });
 }

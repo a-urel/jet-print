@@ -9,6 +9,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'elements/image_source.dart';
+import 'serialization/report_format_exception.dart';
 import 'styles/text_style.dart';
 
 /// An immutable watermark description carried by `PageFurniture.watermark`.
@@ -40,7 +41,7 @@ class Watermark {
             : base64Decode(json['imageBytes']! as String),
         imageFit: json['imageFit'] == null
             ? JetBoxFit.contain
-            : JetBoxFit.values.byName(json['imageFit']! as String),
+            : _parseFit(json['imageFit']! as String),
         opacity: json['opacity'] == null
             ? 0.15
             : (json['opacity']! as num).toDouble(),
@@ -49,11 +50,20 @@ class Watermark {
             : (json['angleDegrees']! as num).toDouble(),
       );
 
+  static JetBoxFit _parseFit(String name) {
+    try {
+      return JetBoxFit.values.byName(name);
+    } on ArgumentError {
+      throw ReportFormatException('Invalid watermark imageFit "$name".');
+    }
+  }
+
   /// The watermark caption, or null for an image watermark.
   final String? text;
 
-  /// Appearance of [text]. The renderer multiplies the color's alpha by
-  /// [opacity].
+  /// Appearance of [text]. For text watermarks the renderer folds [opacity]
+  /// into the text color's alpha once — it is NOT applied a second time at the
+  /// primitive level.
   final JetTextStyle textStyle;
 
   /// Encoded image bytes (PNG/JPEG), or null for a text watermark.
@@ -62,7 +72,9 @@ class Watermark {
   /// How the image fills its centered box.
   final JetBoxFit imageFit;
 
-  /// 0..1; the watermark's overall opacity. 0 draws nothing.
+  /// 0..1; the watermark's overall opacity. 0 draws nothing. For text
+  /// watermarks this is folded into the text color's alpha (applied once, not
+  /// again at primitive level).
   final double opacity;
 
   /// Rotation in degrees, about the page center. Default -45 (bottom-left to
