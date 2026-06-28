@@ -51,7 +51,7 @@
 
   "surfaceEmptyHint": "Ziehen Sie Elemente aus dem Werkzeugkasten auf die Seite, um zu beginnen.",
 
-  "bandTypeTitle": "Titel",
+  "bandTypeTitle": "Berichtskopf",
   "bandTypePageHeader": "Seitenkopf",
   "bandTypeColumnHeader": "Spaltenkopf",
   "bandTypeGroupHeader": "Gruppenkopf",
@@ -59,7 +59,7 @@
   "bandTypeGroupFooter": "Gruppenfuß",
   "bandTypeColumnFooter": "Spaltenfuß",
   "bandTypePageFooter": "Seitenfuß",
-  "bandTypeSummary": "Zusammenfassung",
+  "bandTypeSummary": "Berichtsfuß",
   "bandTypeBackground": "Hintergrund",
   "bandTypeNoData": "Keine Daten",
 

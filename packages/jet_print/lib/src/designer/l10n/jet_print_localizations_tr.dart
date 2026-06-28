@@ -122,7 +122,7 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
       'Başlamak için araç kutusundan öğeleri sayfaya sürükleyin.';
 
   @override
-  String get bandTypeTitle => 'Başlık';
+  String get bandTypeTitle => 'Rapor Başlığı';
 
   @override
   String get bandTypePageHeader => 'Sayfa Başlığı';
@@ -146,7 +146,7 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get bandTypePageFooter => 'Sayfa Alt Bilgisi';
 
   @override
-  String get bandTypeSummary => 'Özet';
+  String get bandTypeSummary => 'Rapor Altbilgisi';
 
   @override
   String get bandTypeBackground => 'Arka Plan';

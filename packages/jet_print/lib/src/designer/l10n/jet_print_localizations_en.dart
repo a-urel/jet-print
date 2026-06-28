@@ -122,7 +122,7 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
       'Drag elements from the toolbox onto the page to begin.';
 
   @override
-  String get bandTypeTitle => 'Title';
+  String get bandTypeTitle => 'Report Header';
 
   @override
   String get bandTypePageHeader => 'Page Header';
@@ -146,7 +146,7 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get bandTypePageFooter => 'Page Footer';
 
   @override
-  String get bandTypeSummary => 'Summary';
+  String get bandTypeSummary => 'Report Footer';
 
   @override
   String get bandTypeBackground => 'Background';

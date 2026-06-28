@@ -122,7 +122,7 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
       'Ziehen Sie Elemente aus dem Werkzeugkasten auf die Seite, um zu beginnen.';
 
   @override
-  String get bandTypeTitle => 'Titel';
+  String get bandTypeTitle => 'Berichtskopf';
 
   @override
   String get bandTypePageHeader => 'Seitenkopf';
@@ -146,7 +146,7 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   String get bandTypePageFooter => 'Seitenfuß';
 
   @override
-  String get bandTypeSummary => 'Zusammenfassung';
+  String get bandTypeSummary => 'Berichtsfuß';
 
   @override
   String get bandTypeBackground => 'Hintergrund';

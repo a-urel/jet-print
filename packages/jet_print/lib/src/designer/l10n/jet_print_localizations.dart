@@ -323,10 +323,10 @@ abstract class JetPrintLocalizations {
   /// **'Drag elements from the toolbox onto the page to begin.'**
   String get surfaceEmptyHint;
 
-  /// Caption on the design-surface badge for a Title band (printed once at the report start).
+  /// Caption on the design-surface badge for the report header band (printed once at the report start). Modelled as BandType.title.
   ///
   /// In en, this message translates to:
-  /// **'Title'**
+  /// **'Report Header'**
   String get bandTypeTitle;
 
   /// Caption on the design-surface badge for a Page Header band (repeated atop every page).
@@ -371,10 +371,10 @@ abstract class JetPrintLocalizations {
   /// **'Page Footer'**
   String get bandTypePageFooter;
 
-  /// Caption on the design-surface badge for a Summary band (printed once at the report end).
+  /// Caption on the design-surface badge for the report footer band (printed once at the report end). Modelled as BandType.summary.
   ///
   /// In en, this message translates to:
-  /// **'Summary'**
+  /// **'Report Footer'**
   String get bandTypeSummary;
 
   /// Caption on the design-surface badge for a Background band (drawn behind every page).
