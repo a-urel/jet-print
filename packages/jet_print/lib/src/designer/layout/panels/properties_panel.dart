@@ -1648,9 +1648,9 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
               .copyWith(color: theme.colorScheme.mutedForeground),
         ))
         ..add(const SizedBox(height: 10))
-        ..add(_watermarkOpacity(controller, wm, l10n))
+        ..add(_watermarkOpacity(controller, wm))
         ..add(const SizedBox(height: 8))
-        ..add(_watermarkAngle(controller, wm, l10n));
+        ..add(_watermarkAngle(controller, wm));
       return out;
     }
 
@@ -1675,6 +1675,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
         ),
       ))
       ..add(const SizedBox(height: 8))
+      ..add(SectionLabel(l10n.watermarkFontSize))
       ..add(_NumberField(
         fieldKey: const ValueKey<String>('$_p.field.watermarkFontSize'),
         prefix: LucideIcons.type,
@@ -1684,16 +1685,15 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
         ),
       ))
       ..add(const SizedBox(height: 8))
-      ..add(_watermarkOpacity(controller, wm, l10n))
+      ..add(_watermarkOpacity(controller, wm))
       ..add(const SizedBox(height: 8))
-      ..add(_watermarkAngle(controller, wm, l10n));
+      ..add(_watermarkAngle(controller, wm));
     return out;
   }
 
   Widget _watermarkOpacity(
     JetReportDesignerController controller,
     Watermark wm,
-    JetPrintLocalizations l10n,
   ) =>
       _NumberField(
         fieldKey: const ValueKey<String>('$_p.field.watermarkOpacity'),
@@ -1706,7 +1706,6 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
   Widget _watermarkAngle(
     JetReportDesignerController controller,
     Watermark wm,
-    JetPrintLocalizations l10n,
   ) =>
       _NumberField(
         fieldKey: const ValueKey<String>('$_p.field.watermarkAngle'),
