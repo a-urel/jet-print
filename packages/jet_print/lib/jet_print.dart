@@ -44,7 +44,21 @@ export 'src/designer/controller/bulk_geometry.dart'
     show AlignKind, DistributeAxis;
 export 'src/designer/controller/commands/reorder_command.dart' show ReorderMode;
 export 'src/designer/controller/jet_report_designer_controller.dart'
-    show JetReportDesignerController;
+    show
+        JetReportDesignerController,
+        // Command families split across `part` files as extensions; exported so
+        // the controller's methods stay callable through the package barrel.
+        CtrlSelection,
+        CtrlElementEdit,
+        CtrlBarcode,
+        CtrlMove,
+        CtrlResize,
+        CtrlBands,
+        CtrlGroupsScopes,
+        CtrlReport,
+        CtrlClipboard,
+        CtrlView,
+        CtrlHistory;
 export 'src/designer/controller/selection.dart' show Selection;
 export 'src/designer/controller/view_fit_mode.dart' show JetViewFitMode;
 export 'src/designer/jet_report_designer.dart'
