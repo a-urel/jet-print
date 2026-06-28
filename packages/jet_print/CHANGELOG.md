@@ -6,6 +6,26 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+> **Highlights** — the first public shape of `jet_print`. In one sentence: design
+> a report as a reified, id'd section tree, fill it with your data, and preview,
+> paginate, export to PDF/PNG, or print it — from a single entry point.
+>
+> - **Reified model** — `ReportDefinition` (page furniture + body, bands, groups,
+>   nested/recursive detail scopes) with author-time `validate()` diagnostics,
+>   versioned serialization, and a forward migration framework.
+> - **Render & export** — `JetReportEngine` fills and paginates lazily;
+>   `JetReportExporter` writes deterministic PDFs (selectable text, embedded
+>   fonts) and PNGs; `JetReportPrinter` drives system printing behind an
+>   injectable seam.
+> - **Interactive designer** — `JetReportDesigner` with select/move/resize/align,
+>   undo/redo, zoom, rulers, grid-snap, and clipboard, themed via shadcn_ui.
+> - **Rich elements** — fx-expression text, shapes, images, charts, 10 barcode/QR
+>   symbologies, and multi-column label layouts; host & system fonts; en/de/tr
+>   chrome.
+>
+> The detailed, spec-by-spec log below records every change since the legacy flat
+> model and is aimed at upgraders, not first-time readers.
+
 ### Changed
 
 - **BREAKING — the report model is reified (spec 024-band-model-reification).**

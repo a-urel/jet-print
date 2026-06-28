@@ -85,9 +85,26 @@ const JetReportDesigner();
 
 ## Platform support
 
-Verified on **macOS desktop** today. Windows, Linux, web, and mobile are on the
-roadmap and not yet verified. The library code itself is platform-agnostic; the
-`printing` dependency carries the platform-specific print integration.
+The core is pure Dart — the domain, data, expression, render, and export layers
+carry no `dart:ui` or platform dependency — so `jet_print` runs everywhere
+Flutter runs. CI exercises every target on each push to `main`:
+
+| Platform        | CI coverage                                               |
+| --------------- | -------------------------------------------------------- |
+| macOS desktop   | full test suite **incl. golden / WYSIWYG** + format gate |
+| Linux desktop   | full test suite (goldens excluded¹) + app build          |
+| Windows desktop | full test suite (goldens excluded¹) + app build          |
+| Web (Chrome)    | web build + Chrome test leg (goldens + VM-only excluded)  |
+| iOS             | app build (no codesign)                                  |
+| Android         | APK build                                                |
+
+¹ Goldens run only on the macOS runner — host text rasterization and PDF font
+subsetting differ per OS, so pixel-level fidelity is pinned on one canonical
+platform rather than asserted everywhere.
+
+System printing is provided by the `printing` dependency, which carries its own
+per-platform integration: a desktop print dialog on macOS/Windows/Linux, and the
+OS share sheet on iOS/Android (a user dismissal there may report as success).
 
 ## License
 

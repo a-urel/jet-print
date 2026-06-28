@@ -20,7 +20,7 @@ jet-print/
 │   ├── lib/jet_print.dart       # the single PUBLIC entry point (exports only)
 │   └── lib/src/                  # PRIVATE internals (domain · expression · data
 │                                 #   · rendering · designer · print)
-└── apps/jet_print_playground/   # playground app (consumer; macOS desktop only)
+└── apps/jet_print_playground/   # playground app (consumer; desktop · web · mobile)
     └── lib/*_sample.dart        # invoice, label, barcode, menu, nested-list,
                                   #   packing-slip, payroll samples
 ```
@@ -28,7 +28,8 @@ jet-print/
 ## Prerequisites
 
 - Flutter **3.44.0+** / Dart **3.6.0+** (pub workspaces require Dart `^3.6.0`).
-- macOS with desktop support: `flutter config --enable-macos-desktop`.
+- Enable the desktop target you build for (e.g. `flutter config
+  --enable-macos-desktop`); web and mobile need no extra flag.
 - Verify your toolchain with `flutter doctor`.
 
 ## Install
@@ -37,14 +38,16 @@ jet-print/
 flutter pub get        # run from the repository root (single root lockfile)
 ```
 
-## Run the playground app (macOS desktop only)
+## Run the playground app
 
-> The playground targets **macOS desktop** this iteration and fails fast with a
-> clear message elsewhere. The `jet_print` library itself is platform-agnostic;
-> cross-platform verification is tracked on the production-readiness roadmap.
+> The playground runs on macOS, Windows, Linux, web, and iOS/Android — CI builds
+> every target on each push, and the desktop trio also runs the full test suite
+> (see the library's [Platform support](packages/jet_print/README.md#platform-support)
+> table). macOS is the canonical platform: it alone runs the golden/WYSIWYG
+> surface, since host rasterization differs per OS.
 
 ```bash
-cd apps/jet_print_playground && flutter run -d macos
+cd apps/jet_print_playground && flutter run -d macos    # or: -d chrome, windows, linux, …
 ```
 
 The app shows the report designer with several worked samples (invoice, labels,
