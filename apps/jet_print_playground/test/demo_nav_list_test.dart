@@ -51,11 +51,12 @@ void main() {
     // ghost. shadcn exposes the variant on ShadButton.variant.
     final Iterable<ShadButton> buttons =
         tester.widgetList<ShadButton>(find.byType(ShadButton));
-    final ShadButton selected = buttons.firstWhere(
-        (ShadButton b) => b.variant == ShadButtonVariant.secondary);
+    final ShadButton selected = buttons
+        .firstWhere((ShadButton b) => b.variant == ShadButtonVariant.secondary);
     expect((selected.child as Text).data, 'Bravo');
     expect(
-        buttons.where((ShadButton b) => b.variant == ShadButtonVariant.ghost)
+        buttons
+            .where((ShadButton b) => b.variant == ShadButtonVariant.ghost)
             .length,
         2,
         reason: 'the two unselected entries stay ghost');

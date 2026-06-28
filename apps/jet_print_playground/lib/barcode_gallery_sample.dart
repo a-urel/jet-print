@@ -47,7 +47,11 @@ const List<_OneDEntry> _oneD = <_OneDEntry>[
   (symbology: BarcodeSymbology.ean2, label: 'EAN-2', value: '12'),
   (symbology: BarcodeSymbology.ean5, label: 'EAN-5', value: '12345'),
   (symbology: BarcodeSymbology.postnet, label: 'POSTNET', value: '55555'),
-  (symbology: BarcodeSymbology.itf16, label: 'ITF-16', value: '123456789012345'),
+  (
+    symbology: BarcodeSymbology.itf16,
+    label: 'ITF-16',
+    value: '123456789012345'
+  ),
   (symbology: BarcodeSymbology.isbn, label: 'ISBN', value: '9780306406157'),
   (symbology: BarcodeSymbology.telepen, label: 'Telepen', value: 'ABC123'),
   (symbology: BarcodeSymbology.rm4scc, label: 'RM4SCC', value: 'LE28HE'),
@@ -154,8 +158,8 @@ ShapeElement _border(String id, double x, double y, double height) =>
 /// A bold cell caption at the top of the cell at ([x], [y]).
 TextElement _caption(String id, double x, double y, String text) => TextElement(
       id: id,
-      bounds:
-          JetRect(x: x + _pad, y: y + 4, width: _cellWidth - _pad * 2, height: 14),
+      bounds: JetRect(
+          x: x + _pad, y: y + 4, width: _cellWidth - _pad * 2, height: 14),
       text: text,
       style: const JetTextStyle(fontSize: 10, weight: JetFontWeight.bold),
     );
@@ -253,9 +257,11 @@ ReportDefinition barcodeGalleryDefinition() => ReportDefinition(
               height: 766,
               elements: <ReportElement>[
                 _heading('sub1', 0, '1D symbologies'),
-                for (int i = 0; i < _oneD.length; i++) ..._oneDCell(i, _oneD[i]),
+                for (int i = 0; i < _oneD.length; i++)
+                  ..._oneDCell(i, _oneD[i]),
                 _heading('sub2', _twoDHeadingTop, '2D matrix codes'),
-                for (int i = 0; i < _twoD.length; i++) ..._twoDCell(i, _twoD[i]),
+                for (int i = 0; i < _twoD.length; i++)
+                  ..._twoDCell(i, _twoD[i]),
                 _heading('sub3', _qrHeadingTop,
                     'QR codes — one symbology, many payloads'),
                 for (int i = 0; i < _qr.length; i++) ..._qrCell(i, _qr[i]),

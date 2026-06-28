@@ -43,8 +43,7 @@ ReportDefinition salesChartDefinition() => const ReportDefinition(
                   id: 'heading',
                   bounds: JetRect(x: 0, y: 4, width: 500, height: 22),
                   text: 'Monthly Sales',
-                  style:
-                      JetTextStyle(fontSize: 16, weight: JetFontWeight.bold),
+                  style: JetTextStyle(fontSize: 16, weight: JetFontWeight.bold),
                 ),
               ],
             )),

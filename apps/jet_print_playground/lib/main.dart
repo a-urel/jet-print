@@ -282,8 +282,8 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
         body: tab(
             salesChartDefinition(),
             salesChartSchema,
-            (d) => renderSalesChartDefinition(
-                definition: d, fonts: widget.fonts)),
+            (d) =>
+                renderSalesChartDefinition(definition: d, fonts: widget.fonts)),
       ),
       (
         value: 'bos',
@@ -356,7 +356,9 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
           onPressed: widget.onToggleTheme,
           // A sun in dark mode (tap → light), a moon in light mode (tap → dark).
           child: Semantics(
-            label: widget.isDark ? 'Switch to light theme' : 'Switch to dark theme',
+            label: widget.isDark
+                ? 'Switch to light theme'
+                : 'Switch to dark theme',
             child: Icon(
               widget.isDark ? LucideIcons.sun : LucideIcons.moon,
               size: 16,
