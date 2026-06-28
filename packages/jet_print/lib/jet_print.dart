@@ -117,13 +117,13 @@ export 'src/expression/value.dart'
 // seam is injectable; unavailability is a structured exception. ---
 export 'src/print/jet_report_printer.dart'
     show JetReportPrinter, PrintDialogPresenter, PrintUnavailableException;
+export 'src/rendering/engine/element_print_callback.dart'
+    show ElementPrintContext, JetElementPrintCallback;
 // --- Render engine (011): fill a designed template with real data, paginate
 // lazily, and surface structured render diagnostics. The preview widget
 // consumes the resulting [RenderedReport]. ---
 export 'src/rendering/engine/jet_report_engine.dart' show JetReportEngine;
 export 'src/rendering/engine/render_options.dart' show RenderOptions;
-export 'src/rendering/engine/element_print_callback.dart'
-    show ElementPrintContext, JetElementPrintCallback;
 export 'src/rendering/engine/rendered_report.dart'
     show RenderedPage, RenderedReport;
 // --- Export (012): turn the same RenderedReport the preview displays into

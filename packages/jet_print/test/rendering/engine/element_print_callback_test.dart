@@ -17,7 +17,7 @@ void main() {
     expect(ctx.bandName, 'customer');
     expect(ctx.fields['total'], const JetNumber(-3));
 
-    final JetElementPrintCallback cb = (el, c) =>
+    ReportElement? cb(ReportElement el, ElementPrintContext c) =>
         el is TextElement ? el.copyWith(text: 'p${c.pageNumber}') : el;
     final TextElement src = const TextElement(
       id: 't',

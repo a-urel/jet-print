@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/domain/bool_property.dart';
-import 'package:jet_print/src/domain/geometry.dart';
 import 'package:jet_print/src/domain/elements/text_element.dart';
+import 'package:jet_print/src/domain/geometry.dart';
 import 'package:jet_print/src/domain/serialization/text_element_codec.dart';
 
 void main() {
