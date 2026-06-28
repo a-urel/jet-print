@@ -109,6 +109,7 @@ export 'src/domain/styles/text_style.dart'
     show JetFontWeight, JetTextAlign, JetTextStyle;
 export 'src/domain/unknown_element.dart' show UnknownElement;
 export 'src/domain/value_type.dart' show JetFieldType;
+export 'src/domain/watermark.dart' show Watermark;
 export 'src/expression/value.dart'
     show JetValue, JetNull, JetBool, JetNumber, JetString, JetDate, JetError;
 // --- Print (012): present the system print dialog for the exported PDF —

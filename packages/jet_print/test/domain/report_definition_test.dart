@@ -7,6 +7,7 @@ import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/domain/report_parameter.dart';
 import 'package:jet_print/src/domain/report_variable.dart';
 import 'package:jet_print/src/domain/value_type.dart';
+import 'package:jet_print/src/domain/watermark.dart';
 
 const Band _ph =
     Band(id: 'furniture/pageHeader', type: BandType.pageHeader, height: 20);
@@ -61,6 +62,26 @@ void main() {
     test('copyWith replaces only named fields', () {
       expect(_body.copyWith(title: _title).title, _title);
       expect(_body.copyWith(title: _title).root.id, 'root');
+    });
+  });
+
+  group('PageFurniture.watermark', () {
+    test('defaults to null and is held', () {
+      expect(const PageFurniture().watermark, isNull);
+      const wm = Watermark(text: 'DRAFT');
+      expect(const PageFurniture(watermark: wm).watermark, wm);
+    });
+    test('participates in equality', () {
+      const a = PageFurniture(watermark: Watermark(text: 'DRAFT'));
+      const b = PageFurniture(watermark: Watermark(text: 'DRAFT'));
+      const c = PageFurniture(watermark: Watermark(text: 'OTHER'));
+      expect(a, b);
+      expect(a.hashCode, b.hashCode);
+      expect(a, isNot(c));
+    });
+    test('copyWith sets watermark', () {
+      const wm = Watermark(text: 'DRAFT');
+      expect(const PageFurniture().copyWith(watermark: wm).watermark, wm);
     });
   });
 

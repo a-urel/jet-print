@@ -20,12 +20,14 @@ import 'detail_scope.dart';
 import 'page_format.dart';
 import 'report_parameter.dart';
 import 'report_variable.dart';
+import 'watermark.dart';
 
 /// Record-blind, per-page chrome. Every slot is laid out against a page-scoped
 /// context (`PAGE_NUMBER`/`PAGE_COUNT`/params) with no data row — so a furniture
 /// band carries no `$F{}` field bindings (validated). [columnHeader],
 /// [columnFooter] and [background] are **reserved** (not laid out yet;
-/// multi-column is a future feature).
+/// multi-column is a future feature). [watermark] is laid out on every page
+/// (not reserved).
 class PageFurniture {
   /// Creates page furniture with the given (all optional) slots.
   const PageFurniture({
@@ -34,6 +36,7 @@ class PageFurniture {
     this.columnHeader,
     this.columnFooter,
     this.background,
+    this.watermark,
   });
 
   /// Laid out at the top of every page.
@@ -48,8 +51,12 @@ class PageFurniture {
   /// **Reserved** — not laid out (future multi-column).
   final Band? columnFooter;
 
-  /// **Reserved** — not laid out (future watermark/frame layer).
+  /// **Reserved** — not laid out (future frame/border layer).
   final Band? background;
+
+  /// The page watermark (faint text/image behind content), or null. Unlike the
+  /// reserved [background] band, this is laid out on every page.
+  final Watermark? watermark;
 
   /// Returns a copy with the given slots replaced.
   PageFurniture copyWith({
@@ -58,6 +65,7 @@ class PageFurniture {
     Band? columnHeader,
     Band? columnFooter,
     Band? background,
+    Watermark? watermark,
   }) =>
       PageFurniture(
         pageHeader: pageHeader ?? this.pageHeader,
@@ -65,6 +73,7 @@ class PageFurniture {
         columnHeader: columnHeader ?? this.columnHeader,
         columnFooter: columnFooter ?? this.columnFooter,
         background: background ?? this.background,
+        watermark: watermark ?? this.watermark,
       );
 
   @override
@@ -74,11 +83,12 @@ class PageFurniture {
       other.pageFooter == pageFooter &&
       other.columnHeader == columnHeader &&
       other.columnFooter == columnFooter &&
-      other.background == background;
+      other.background == background &&
+      other.watermark == watermark;
 
   @override
-  int get hashCode => Object.hash(
-      pageHeader, pageFooter, columnHeader, columnFooter, background);
+  int get hashCode => Object.hash(pageHeader, pageFooter, columnHeader,
+      columnFooter, background, watermark);
 
   @override
   String toString() => 'PageFurniture('
@@ -88,6 +98,7 @@ class PageFurniture {
         if (columnHeader != null) 'columnHeader',
         if (columnFooter != null) 'columnFooter',
         if (background != null) 'background',
+        if (watermark != null) 'watermark',
       ].join(', ')})';
 }
 
