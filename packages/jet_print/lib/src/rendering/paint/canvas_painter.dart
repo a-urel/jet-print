@@ -9,6 +9,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart' show visibleForTesting;
 
+import '../../domain/geometry.dart';
 import '../../domain/page_format.dart';
 import '../../domain/styles/color.dart';
 import '../../domain/styles/text_style.dart';
@@ -86,6 +87,17 @@ class CanvasPainter implements ReportPainter {
   void endPage() {}
 
   @override
+  void pushTransform(JetOffset center, double radians) {
+    _canvas.save();
+    _canvas.translate(center.dx, center.dy);
+    _canvas.rotate(radians);
+    _canvas.translate(-center.dx, -center.dy);
+  }
+
+  @override
+  void popTransform() => _canvas.restore();
+
+  @override
   void drawTextRun(TextRunPrimitive p) {
     final String uiFamily =
         uiFontFamily(p.fontFamily, p.style.weight, p.style.italic);
@@ -137,7 +149,7 @@ class CanvasPainter implements ReportPainter {
       img,
       ui.Rect.fromLTWH(fit.src.x, fit.src.y, fit.src.width, fit.src.height),
       ui.Rect.fromLTWH(fit.dst.x, fit.dst.y, fit.dst.width, fit.dst.height),
-      ui.Paint(),
+      ui.Paint()..color = ui.Color.fromRGBO(0, 0, 0, p.opacity),
     );
   }
 

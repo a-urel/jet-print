@@ -15,6 +15,10 @@ class _Recorder implements ReportPainter {
   @override
   void beginPage(PageFormat format) => calls.add('beginPage');
   @override
+  void pushTransform(JetOffset center, double radians) => calls.add('push');
+  @override
+  void popTransform() => calls.add('pop');
+  @override
   void drawTextRun(TextRunPrimitive p) => calls.add('text');
   @override
   void drawImage(ImagePrimitive p) => calls.add('image');

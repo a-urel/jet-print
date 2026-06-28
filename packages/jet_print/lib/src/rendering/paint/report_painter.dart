@@ -3,6 +3,7 @@
 /// image decode) so the synchronous draw walk stays backend-agnostic.
 library;
 
+import '../../domain/geometry.dart';
 import '../../domain/page_format.dart';
 import '../frame/page_frame.dart';
 import '../frame/primitive.dart';
@@ -14,6 +15,13 @@ abstract class ReportPainter {
 
   /// Begins a page of size [format].
   void beginPage(PageFormat format);
+
+  /// Pushes a rotation of [radians] about [center] (page points). Paired with
+  /// [popTransform]. Backends save/restore their own graphics state.
+  void pushTransform(JetOffset center, double radians);
+
+  /// Restores the state saved by the matching [pushTransform].
+  void popTransform();
 
   /// Draws a text run.
   void drawTextRun(TextRunPrimitive primitive);
@@ -41,6 +49,12 @@ Future<void> paintFrame(PageFrame frame, ReportPainter painter) async {
   await painter.prepare(frame);
   painter.beginPage(frame.page);
   for (final FramePrimitive primitive in frame.primitives) {
+    final bool rotated = primitive.rotation != 0;
+    if (rotated) {
+      final JetRect b = primitive.bounds;
+      painter.pushTransform(
+          JetOffset(b.x + b.width / 2, b.y + b.height / 2), primitive.rotation);
+    }
     switch (primitive) {
       case TextRunPrimitive():
         painter.drawTextRun(primitive);
@@ -53,6 +67,7 @@ Future<void> paintFrame(PageFrame frame, ReportPainter painter) async {
       case PathPrimitive():
         painter.drawPath(primitive);
     }
+    if (rotated) painter.popTransform();
   }
   painter.endPage();
 }

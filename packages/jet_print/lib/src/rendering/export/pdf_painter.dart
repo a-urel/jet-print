@@ -19,6 +19,7 @@ import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:pdf/pdf.dart';
 
+import '../../domain/geometry.dart';
 import '../../domain/page_format.dart';
 import '../../domain/styles/color.dart';
 import '../../domain/styles/text_style.dart';
@@ -81,6 +82,14 @@ class PdfPainter implements ReportPainter {
       }
     }
   }
+
+  // TODO(Task 8): real PDF transform
+  @override
+  void pushTransform(JetOffset c, double r) {}
+
+  // TODO(Task 8): real PDF transform
+  @override
+  void popTransform() {}
 
   @override
   void beginPage(PageFormat format) {
