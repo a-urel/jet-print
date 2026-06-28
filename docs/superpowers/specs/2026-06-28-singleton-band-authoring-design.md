@@ -75,9 +75,15 @@ never prints — a worse trap than the discoverability gap this design closes.
 **Decision: the menu offers only the five rendered slots** — report header,
 page header, page footer, report footer, no-data — and **deliberately excludes**
 `columnHeader`, `columnFooter`, `background` until the engine lays them out.
-(They remain reachable via retype, an unchanged pre-existing path; that latent
-gap is out of scope here and should close when column/background rendering
-lands.)
+
+This is exactly the set the existing retype menu already whitelists:
+`_retypeTargets` (`outline_panel.dart:575-581`) lists those same five and
+documents the same exclusion rationale. **The add-menu sources its slot list
+from `_retypeTargets`** (promote it to a shared const if scoping requires) so the
+two menus cannot drift — when column/background rendering lands, adding the type
+to that one list lights it up in both menus at once. (The excluded three remain
+reachable via retype only because that path shares the same whitelist; closing
+that residual gap is out of scope here.)
 
 ## Components
 
@@ -87,9 +93,10 @@ The Report root branch row (`outline_panel.dart:131`) currently has no
 `actions:`. Add a `_TypeMenu` "+" affordance there (icon `LucideIcons.plus`),
 parallel to the per-scope `_addMenu` (`outline_panel.dart:258`).
 
-- Menu options: one entry per **rendered** singleton slot type (the five above),
-  in a stable, sensible order (report header, page header, page footer,
-  report footer, no-data). The three reserved/unrendered types are not listed.
+- Menu options: one entry per type in `_retypeTargets` (the five rendered
+  slots). Iterating that shared list — not a fresh literal — is what keeps the
+  add-menu and retype-menu in lockstep. The three reserved/unrendered types are
+  not in the list, so they are never offered.
 - Each entry is **omitted when its slot is occupied**
   (`bandInSlot(definition, type) != null`) — so the menu only ever offers slots
   you can actually fill. (Omit rather than disable, matching how the scope menu
