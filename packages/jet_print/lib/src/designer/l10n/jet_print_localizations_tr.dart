@@ -146,7 +146,7 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get bandTypePageFooter => 'Sayfa Alt Bilgisi';
 
   @override
-  String get bandTypeSummary => 'Rapor Altbilgisi';
+  String get bandTypeSummary => 'Rapor Alt Bilgisi';
 
   @override
   String get bandTypeBackground => 'Arka Plan';
