@@ -25,6 +25,7 @@ import '../../../domain/report_definition.dart';
 import '../../../domain/report_element.dart';
 import '../../../domain/styles/color.dart';
 import '../../../domain/styles/text_style.dart';
+import '../../../domain/watermark.dart';
 import '../../../expression/expression.dart';
 import '../../../rendering/elements/barcode/barcode_encoder.dart';
 import '../../../rendering/elements/barcode/package_barcode_encoder.dart';
@@ -1604,8 +1605,116 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
           ),
         ],
       ),
+      ..._watermarkSection(controller, theme, l10n),
     ];
   }
+
+  /// The report-level watermark editors (text watermark authoring). Shown in the
+  /// report-root inspector when the report root is selected. The enable toggle
+  /// creates a large-font default so the watermark is visible immediately; an
+  /// image watermark (no UI to author bytes) is shown read-only with opacity/angle
+  /// still editable.
+  List<Widget> _watermarkSection(
+    JetReportDesignerController controller,
+    ShadThemeData theme,
+    JetPrintLocalizations l10n,
+  ) {
+    final Watermark? wm = controller.definition.furniture.watermark;
+    final List<Widget> out = <Widget>[
+      const SizedBox(height: 14),
+      SectionLabel(l10n.propertiesWatermark),
+      ShadSwitch(
+        key: const ValueKey<String>('$_p.field.watermarkEnable'),
+        value: wm != null,
+        onChanged: (bool on) => controller.setWatermark(
+          on
+              ? Watermark(
+                  text: l10n.watermarkDefaultText,
+                  textStyle: const JetTextStyle(fontSize: 64))
+              : null,
+        ),
+        label: Text(l10n.watermarkEnable),
+      ),
+    ];
+    if (wm == null) return out;
+
+    final bool isImage = wm.imageBytes != null && wm.text == null;
+    if (isImage) {
+      out
+        ..add(const SizedBox(height: 10))
+        ..add(Text(
+          l10n.watermarkImageExternal,
+          style: theme.textTheme.muted
+              .copyWith(color: theme.colorScheme.mutedForeground),
+        ))
+        ..add(const SizedBox(height: 10))
+        ..add(_watermarkOpacity(controller, wm, l10n))
+        ..add(const SizedBox(height: 8))
+        ..add(_watermarkAngle(controller, wm, l10n));
+      return out;
+    }
+
+    out
+      ..add(const SizedBox(height: 10))
+      ..add(SectionLabel(l10n.watermarkText))
+      ..add(_TextInput(
+        fieldKey: const ValueKey<String>('$_p.field.watermarkText'),
+        value: wm.text ?? '',
+        placeholder: l10n.watermarkDefaultText,
+        onCommit: (String v) => controller.setWatermark(wm.copyWith(text: v)),
+      ))
+      ..add(const SizedBox(height: 8))
+      ..add(SectionLabel(l10n.watermarkColor))
+      ..add(_ColorField(
+        keyBase: '$_p.field.watermarkColor',
+        value: wm.textStyle.color,
+        onCommit: (JetColor? c) => controller.setWatermark(
+          wm.copyWith(
+            textStyle: wm.textStyle.copyWith(color: c ?? JetColor.black),
+          ),
+        ),
+      ))
+      ..add(const SizedBox(height: 8))
+      ..add(_NumberField(
+        fieldKey: const ValueKey<String>('$_p.field.watermarkFontSize'),
+        prefix: LucideIcons.type,
+        value: wm.textStyle.fontSize,
+        onCommit: (double v) => controller.setWatermark(
+          wm.copyWith(textStyle: wm.textStyle.copyWith(fontSize: v)),
+        ),
+      ))
+      ..add(const SizedBox(height: 8))
+      ..add(_watermarkOpacity(controller, wm, l10n))
+      ..add(const SizedBox(height: 8))
+      ..add(_watermarkAngle(controller, wm, l10n));
+    return out;
+  }
+
+  Widget _watermarkOpacity(
+    JetReportDesignerController controller,
+    Watermark wm,
+    JetPrintLocalizations l10n,
+  ) =>
+      _NumberField(
+        fieldKey: const ValueKey<String>('$_p.field.watermarkOpacity'),
+        prefix: LucideIcons.droplet,
+        value: wm.opacity,
+        onCommit: (double v) =>
+            controller.setWatermark(wm.copyWith(opacity: v)),
+      );
+
+  Widget _watermarkAngle(
+    JetReportDesignerController controller,
+    Watermark wm,
+    JetPrintLocalizations l10n,
+  ) =>
+      _NumberField(
+        fieldKey: const ValueKey<String>('$_p.field.watermarkAngle'),
+        prefix: LucideIcons.rotateCw,
+        value: wm.angleDegrees,
+        onCommit: (double v) =>
+            controller.setWatermark(wm.copyWith(angleDegrees: v)),
+      );
 
   /// One per-side margin [_NumberField] (label-less; its arrow [prefix] names
   /// the side) that commits the edited side through `setPageFormat`, composing
