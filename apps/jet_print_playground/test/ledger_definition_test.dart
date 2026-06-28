@@ -18,6 +18,27 @@ void main() {
       ]);
     });
 
+    test('the report title is a body.title band, not in the page header', () {
+      final ReportDefinition def = ledgerSampleDefinition();
+
+      final Band? title = def.body.title;
+      expect(title, isNotNull, reason: 'the report header exists');
+      expect(title!.type, BandType.title);
+      expect(
+        title.elements
+            .whereType<TextElement>()
+            .any((TextElement e) => e.text == 'Sales Ledger'),
+        isTrue,
+        reason: 'the title text lives on the report header',
+      );
+
+      // The page header no longer carries the title element.
+      final Set<String> headerIds = def.furniture.pageHeader!.elements
+          .map((ReportElement e) => e.id)
+          .toSet();
+      expect(headerIds.contains('title'), isFalse);
+    });
+
     test('has a single detail band and a summary with the grand totals', () {
       final ReportDefinition def = ledgerSampleDefinition();
       // Exactly one per-row (detail) band under the root scope.

@@ -44,57 +44,51 @@ ReportDefinition ledgerSampleDefinition() => ReportDefinition(
         pageHeader: Band(
           id: 'pageHeader',
           type: BandType.pageHeader,
-          height: 40,
+          height: 18,
           elements: <ReportElement>[
-            TextElement(
-              id: 'title',
-              bounds: JetRect(x: 0, y: 0, width: 538, height: 18),
-              text: 'Sales Ledger',
-              style: JetTextStyle(fontSize: 14, weight: JetFontWeight.bold),
-            ),
             // Column headings — repeat on every page via the page header.
             TextElement(
               id: 'hTime',
-              bounds: JetRect(x: 0, y: 24, width: 92, height: 12),
+              bounds: JetRect(x: 0, y: 2, width: 92, height: 12),
               text: 'Time',
               style: JetTextStyle(fontSize: 8, color: _grey),
             ),
             TextElement(
               id: 'hReceipt',
-              bounds: JetRect(x: 96, y: 24, width: 66, height: 12),
+              bounds: JetRect(x: 96, y: 2, width: 66, height: 12),
               text: 'Receipt',
               style: JetTextStyle(fontSize: 8, color: _grey),
             ),
             TextElement(
               id: 'hItem',
-              bounds: JetRect(x: 166, y: 24, width: 190, height: 12),
+              bounds: JetRect(x: 166, y: 2, width: 190, height: 12),
               text: 'Item',
               style: JetTextStyle(fontSize: 8, color: _grey),
             ),
             TextElement(
               id: 'hQty',
-              bounds: JetRect(x: 360, y: 24, width: 34, height: 12),
+              bounds: JetRect(x: 360, y: 2, width: 34, height: 12),
               text: 'Qty',
               style: JetTextStyle(
                   fontSize: 8, color: _grey, align: JetTextAlign.right),
             ),
             TextElement(
               id: 'hAmount',
-              bounds: JetRect(x: 398, y: 24, width: 74, height: 12),
+              bounds: JetRect(x: 398, y: 2, width: 74, height: 12),
               text: 'Amount',
               style: JetTextStyle(
                   fontSize: 8, color: _grey, align: JetTextAlign.right),
             ),
             TextElement(
               id: 'hStatus',
-              bounds: JetRect(x: 476, y: 24, width: 62, height: 12),
+              bounds: JetRect(x: 476, y: 2, width: 62, height: 12),
               text: 'Status',
               style: JetTextStyle(
                   fontSize: 8, color: _grey, align: JetTextAlign.right),
             ),
             ShapeElement(
               id: 'headerRule',
-              bounds: JetRect(x: 0, y: 38, width: 538, height: 0.75),
+              bounds: JetRect(x: 0, y: 16, width: 538, height: 0.75),
               kind: ShapeKind.rectangle,
               style: JetBoxStyle(fill: _rule),
             ),
@@ -118,6 +112,19 @@ ReportDefinition ledgerSampleDefinition() => ReportDefinition(
         ),
       ),
       body: ReportBody(
+        title: const Band(
+          id: 'reportHeader',
+          type: BandType.title,
+          height: 22,
+          elements: <ReportElement>[
+            TextElement(
+              id: 'title',
+              bounds: JetRect(x: 0, y: 2, width: 538, height: 18),
+              text: 'Sales Ledger',
+              style: JetTextStyle(fontSize: 14, weight: JetFontWeight.bold),
+            ),
+          ],
+        ),
         summary: const Band(
           id: 'summary',
           type: BandType.summary,

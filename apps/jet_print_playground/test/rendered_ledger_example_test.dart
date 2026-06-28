@@ -39,6 +39,16 @@ void main() {
       );
     });
 
+    test('the report title renders once (first page only)', () {
+      final RenderedReport report = renderLedgerDefinition();
+      final List<int> pagesWithTitle = <int>[
+        for (int i = 0; i < report.pageCount; i++)
+          if (_runsOnPage(report, i, 'title').isNotEmpty) i,
+      ];
+      expect(pagesWithTitle, <int>[0],
+          reason: 'the report header prints once at the very start');
+    });
+
     test('grand totals equal the deterministic feed sums', () {
       final RenderedReport report = renderLedgerDefinition();
       double sum = 0;
