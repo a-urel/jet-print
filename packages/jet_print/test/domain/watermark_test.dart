@@ -55,6 +55,15 @@ void main() {
       expect(Watermark.fromJson(a.toJson()), a);
     });
 
+    test('fromJson tolerates missing opacity/angle (defaults)', () {
+      final wm = Watermark.fromJson(<String, Object?>{
+        'textStyle': const JetTextStyle().toJson(),
+        'imageFit': 'contain',
+      });
+      expect(wm.opacity, 0.15);
+      expect(wm.angleDegrees, -45);
+    });
+
     test('JSON round-trips the image variant', () {
       final a = Watermark(
           imageBytes: Uint8List.fromList(<int>[10, 20, 30, 40]),

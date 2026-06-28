@@ -41,8 +41,12 @@ class Watermark {
         imageFit: json['imageFit'] == null
             ? JetBoxFit.contain
             : JetBoxFit.values.byName(json['imageFit']! as String),
-        opacity: (json['opacity']! as num).toDouble(),
-        angleDegrees: (json['angleDegrees']! as num).toDouble(),
+        opacity: json['opacity'] == null
+            ? 0.15
+            : (json['opacity']! as num).toDouble(),
+        angleDegrees: json['angleDegrees'] == null
+            ? -45.0
+            : (json['angleDegrees']! as num).toDouble(),
       );
 
   /// The watermark caption, or null for an image watermark.
