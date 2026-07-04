@@ -4,24 +4,18 @@
 library;
 
 import '../../../domain/elements/text_element.dart';
-import '../../../domain/report_element.dart';
-import '../band_walker.dart';
-import '../designer_document.dart';
-import '../edit_command.dart';
+import '../element_edit_command.dart';
 
 /// Sets the [TextElement] [id]'s [text] and [expression] atomically (preserving
 /// style/bounds/format). A no-op for a non-text or absent id, or when both
 /// already match.
-class SetValueCommand extends EditCommand {
+class SetValueCommand extends ElementEditCommand<TextElement> {
   /// Creates a set-value of [id].
   const SetValueCommand({
-    required this.id,
+    required String id,
     required this.text,
     required this.expression,
-  });
-
-  /// The target text element.
-  final String id;
+  }) : super(id);
 
   /// The element's literal text after the edit.
   final String text;
@@ -33,13 +27,6 @@ class SetValueCommand extends EditCommand {
   String get label => expression == null ? 'Edit value' : 'Bind value';
 
   @override
-  DesignerDocument apply(DesignerDocument before) => before.withDefinition(
-        updateElement(
-          before.definition,
-          id,
-          (ReportElement e) => e is TextElement
-              ? e.copyWith(text: text, expression: () => expression)
-              : e,
-        ),
-      );
+  TextElement edit(TextElement element) =>
+      element.copyWith(text: text, expression: () => expression);
 }

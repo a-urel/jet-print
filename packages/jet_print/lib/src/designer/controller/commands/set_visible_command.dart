@@ -7,23 +7,21 @@ import '../../../domain/report_element.dart';
 import '../band_walker.dart';
 import '../designer_document.dart';
 import '../edit_command.dart';
+import '../element_edit_command.dart';
 
 /// Sets the [visible] property of the element with [id]. No-op for an absent id
 /// or an already-equal value.
-class SetElementVisibleCommand extends EditCommand {
-  const SetElementVisibleCommand({required this.id, required this.visible});
+class SetElementVisibleCommand extends ElementEditCommand<ReportElement> {
+  const SetElementVisibleCommand({required String id, required this.visible})
+      : super(id);
 
-  final String id;
   final BoolProperty visible;
 
   @override
   String get label => 'Set visibility';
 
   @override
-  DesignerDocument apply(DesignerDocument before) => before.withDefinition(
-        updateElement(
-            before.definition, id, (ReportElement e) => e.withVisible(visible)),
-      );
+  ReportElement edit(ReportElement element) => element.withVisible(visible);
 }
 
 /// Sets the [visible] property of the band with [bandId].

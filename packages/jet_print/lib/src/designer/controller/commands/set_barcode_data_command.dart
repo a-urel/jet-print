@@ -2,18 +2,13 @@
 library;
 
 import '../../../domain/elements/barcode_element.dart';
-import '../../../domain/report_element.dart';
-import '../band_walker.dart';
-import '../designer_document.dart';
-import '../edit_command.dart';
+import '../element_edit_command.dart';
 
 /// Sets the literal [data] and clears any bound field.
-class SetBarcodeDataCommand extends EditCommand {
+class SetBarcodeDataCommand extends ElementEditCommand<BarcodeElement> {
   /// Creates the command.
-  const SetBarcodeDataCommand({required this.id, required this.data});
-
-  /// Target element id.
-  final String id;
+  const SetBarcodeDataCommand({required String id, required this.data})
+      : super(id);
 
   /// Literal value to encode.
   final String data;
@@ -22,23 +17,15 @@ class SetBarcodeDataCommand extends EditCommand {
   String get label => 'Edit barcode data';
 
   @override
-  DesignerDocument apply(DesignerDocument before) => before.withDefinition(
-        updateElement(
-            before.definition,
-            id,
-            (ReportElement e) => e is BarcodeElement
-                ? e.copyWith(data: data, dataField: () => null)
-                : e),
-      );
+  BarcodeElement edit(BarcodeElement element) =>
+      element.copyWith(data: data, dataField: () => null);
 }
 
 /// Binds the barcode value to [field] (or clears it to null → literal).
-class SetBarcodeDataFieldCommand extends EditCommand {
+class SetBarcodeDataFieldCommand extends ElementEditCommand<BarcodeElement> {
   /// Creates the command.
-  const SetBarcodeDataFieldCommand({required this.id, required this.field});
-
-  /// Target element id.
-  final String id;
+  const SetBarcodeDataFieldCommand({required String id, required this.field})
+      : super(id);
 
   /// Field name, or null to clear the binding.
   final String? field;
@@ -47,11 +34,6 @@ class SetBarcodeDataFieldCommand extends EditCommand {
   String get label => 'Edit barcode field';
 
   @override
-  DesignerDocument apply(DesignerDocument before) => before.withDefinition(
-        updateElement(
-            before.definition,
-            id,
-            (ReportElement e) =>
-                e is BarcodeElement ? e.copyWith(dataField: () => field) : e),
-      );
+  BarcodeElement edit(BarcodeElement element) =>
+      element.copyWith(dataField: () => field);
 }

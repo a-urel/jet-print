@@ -2,23 +2,17 @@
 library;
 
 import '../../../domain/elements/barcode_element.dart';
-import '../../../domain/report_element.dart';
-import '../band_walker.dart';
-import '../designer_document.dart';
-import '../edit_command.dart';
+import '../element_edit_command.dart';
 
 /// Updates any of [showText]/[quietZone]/[eccLevel] (omitted = unchanged).
-class SetBarcodeOptionsCommand extends EditCommand {
+class SetBarcodeOptionsCommand extends ElementEditCommand<BarcodeElement> {
   /// Creates the command.
   const SetBarcodeOptionsCommand({
-    required this.id,
+    required String id,
     this.showText,
     this.quietZone,
     this.eccLevel,
-  });
-
-  /// Target element id.
-  final String id;
+  }) : super(id);
 
   /// New HRI-text flag, or null.
   final bool? showText;
@@ -33,15 +27,6 @@ class SetBarcodeOptionsCommand extends EditCommand {
   String get label => 'Edit barcode options';
 
   @override
-  DesignerDocument apply(DesignerDocument before) => before.withDefinition(
-        updateElement(
-            before.definition,
-            id,
-            (ReportElement e) => e is BarcodeElement
-                ? e.copyWith(
-                    showText: showText,
-                    quietZone: quietZone,
-                    eccLevel: eccLevel)
-                : e),
-      );
+  BarcodeElement edit(BarcodeElement element) => element.copyWith(
+      showText: showText, quietZone: quietZone, eccLevel: eccLevel);
 }

@@ -2,11 +2,8 @@
 library;
 
 import '../../../domain/elements/text_element.dart';
-import '../../../domain/report_element.dart';
 import '../../../domain/styles/text_style.dart';
-import '../band_walker.dart';
-import '../designer_document.dart';
-import '../edit_command.dart';
+import '../element_edit_command.dart';
 
 /// Replaces the [TextElement] [id]'s whole style with [style] in one undoable
 /// step, preserving its text, bounds, binding, and format.
@@ -14,12 +11,10 @@ import '../edit_command.dart';
 /// **No-op** when the element already carries an equal style (value-equal
 /// definition → no history, FR-013). Also a no-op for a non-text or absent
 /// [id].
-class SetTextStyleCommand extends EditCommand {
+class SetTextStyleCommand extends ElementEditCommand<TextElement> {
   /// Creates a restyle of the text element [id] to [style].
-  const SetTextStyleCommand({required this.id, required this.style});
-
-  /// The target text element.
-  final String id;
+  const SetTextStyleCommand({required String id, required this.style})
+      : super(id);
 
   /// The style to apply (whole-value replacement; editors build it with
   /// [JetTextStyle.copyWith] from the current style).
@@ -29,11 +24,5 @@ class SetTextStyleCommand extends EditCommand {
   String get label => 'Edit text style';
 
   @override
-  DesignerDocument apply(DesignerDocument before) => before.withDefinition(
-        updateElement(
-          before.definition,
-          id,
-          (ReportElement e) => e is TextElement ? e.copyWith(style: style) : e,
-        ),
-      );
+  TextElement edit(TextElement element) => element.copyWith(style: style);
 }

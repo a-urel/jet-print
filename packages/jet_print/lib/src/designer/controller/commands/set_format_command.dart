@@ -4,20 +4,15 @@
 library;
 
 import '../../../domain/elements/text_element.dart';
-import '../../../domain/report_element.dart';
-import '../band_walker.dart';
-import '../designer_document.dart';
-import '../edit_command.dart';
+import '../element_edit_command.dart';
 
 /// Sets (or, when [format] is null, clears) the [TextElement] [id]'s display
 /// format, preserving text/style/bounds/expression. A no-op for a non-text or
 /// absent id, or when the format already matches.
-class SetFormatCommand extends EditCommand {
+class SetFormatCommand extends ElementEditCommand<TextElement> {
   /// Sets [id]'s format to [format] (null clears it).
-  const SetFormatCommand({required this.id, required this.format});
-
-  /// The target text element.
-  final String id;
+  const SetFormatCommand({required String id, required this.format})
+      : super(id);
 
   /// The new format pattern, or null to clear it.
   final String? format;
@@ -26,12 +21,6 @@ class SetFormatCommand extends EditCommand {
   String get label => format == null ? 'Clear format' : 'Set format';
 
   @override
-  DesignerDocument apply(DesignerDocument before) => before.withDefinition(
-        updateElement(
-          before.definition,
-          id,
-          (ReportElement e) =>
-              e is TextElement ? e.copyWith(format: () => format) : e,
-        ),
-      );
+  TextElement edit(TextElement element) =>
+      element.copyWith(format: () => format);
 }

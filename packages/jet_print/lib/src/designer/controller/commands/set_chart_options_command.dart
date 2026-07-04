@@ -3,11 +3,8 @@
 library;
 
 import '../../../domain/elements/chart_element.dart';
-import '../../../domain/report_element.dart';
 import '../../../domain/styles/color.dart';
-import '../band_walker.dart';
-import '../designer_document.dart';
-import '../edit_command.dart';
+import '../element_edit_command.dart';
 
 /// Sets the named chart properties on element [id].
 ///
@@ -16,11 +13,11 @@ import '../edit_command.dart';
 /// explicitly-supplied non-null overrides into the existing element.
 ///
 /// A no-op for a non-chart or absent [id].
-class SetChartOptionsCommand extends EditCommand {
+class SetChartOptionsCommand extends ElementEditCommand<ChartElement> {
   /// Creates a chart-options edit. Every parameter except [id] is optional;
   /// pass only the fields that should change.
   const SetChartOptionsCommand({
-    required this.id,
+    required String id,
     this.chartType,
     this.collectionField,
     this.valueExpression,
@@ -30,10 +27,7 @@ class SetChartOptionsCommand extends EditCommand {
     this.showValueLabels,
     this.showLegend,
     this.seriesColor,
-  });
-
-  /// The target chart element.
-  final String id;
+  }) : super(id);
 
   /// The chart form (null = leave unchanged).
   final ChartType? chartType;
@@ -66,23 +60,15 @@ class SetChartOptionsCommand extends EditCommand {
   String get label => 'Edit chart';
 
   @override
-  DesignerDocument apply(DesignerDocument before) => before.withDefinition(
-        updateElement(
-          before.definition,
-          id,
-          (ReportElement e) => e is ChartElement
-              ? e.copyWith(
-                  chartType: chartType,
-                  collectionField: collectionField,
-                  valueExpression: valueExpression,
-                  categoryExpression: categoryExpression,
-                  title: title,
-                  showAxes: showAxes,
-                  showValueLabels: showValueLabels,
-                  showLegend: showLegend,
-                  seriesColor: seriesColor,
-                )
-              : e,
-        ),
+  ChartElement edit(ChartElement element) => element.copyWith(
+        chartType: chartType,
+        collectionField: collectionField,
+        valueExpression: valueExpression,
+        categoryExpression: categoryExpression,
+        title: title,
+        showAxes: showAxes,
+        showValueLabels: showValueLabels,
+        showLegend: showLegend,
+        seriesColor: seriesColor,
       );
 }

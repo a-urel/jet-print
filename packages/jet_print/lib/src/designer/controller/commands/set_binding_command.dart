@@ -10,20 +10,15 @@ library;
 import '../../../domain/elements/image_element.dart';
 import '../../../domain/elements/image_source.dart';
 import '../../../domain/elements/text_element.dart';
-import '../../../domain/report_element.dart';
-import '../band_walker.dart';
-import '../designer_document.dart';
-import '../edit_command.dart';
+import '../element_edit_command.dart';
 
 /// Sets (or, when [expression] is null, clears) the data-binding [expression] of
 /// the [TextElement] with [id]. A no-op for a non-text or absent id, or when the
 /// expression is already equal.
-class SetTextBindingCommand extends EditCommand {
+class SetTextBindingCommand extends ElementEditCommand<TextElement> {
   /// Binds [id] to [expression] (null clears the binding).
-  const SetTextBindingCommand({required this.id, required this.expression});
-
-  /// The target text element.
-  final String id;
+  const SetTextBindingCommand({required String id, required this.expression})
+      : super(id);
 
   /// The new binding expression, or null to clear it (revert to static text).
   final String? expression;
@@ -32,26 +27,17 @@ class SetTextBindingCommand extends EditCommand {
   String get label => expression == null ? 'Clear binding' : 'Bind text';
 
   @override
-  DesignerDocument apply(DesignerDocument before) => before.withDefinition(
-        updateElement(
-          before.definition,
-          id,
-          (ReportElement e) => e is TextElement
-              ? e.copyWith(expression: () => expression)
-              : e,
-        ),
-      );
+  TextElement edit(TextElement element) =>
+      element.copyWith(expression: () => expression);
 }
 
 /// Binds the [ImageElement] with [id] to read its picture from the data [field]
 /// (a [FieldImageSource]). A no-op for a non-image or absent id, or when it is
 /// already bound to the same field.
-class SetImageBindingCommand extends EditCommand {
+class SetImageBindingCommand extends ElementEditCommand<ImageElement> {
   /// Binds image [id] to [field].
-  const SetImageBindingCommand({required this.id, required this.field});
-
-  /// The target image element.
-  final String id;
+  const SetImageBindingCommand({required String id, required this.field})
+      : super(id);
 
   /// The data field supplying the image.
   final String field;
@@ -60,13 +46,6 @@ class SetImageBindingCommand extends EditCommand {
   String get label => 'Bind image';
 
   @override
-  DesignerDocument apply(DesignerDocument before) => before.withDefinition(
-        updateElement(
-          before.definition,
-          id,
-          (ReportElement e) => e is ImageElement
-              ? e.copyWith(source: FieldImageSource(field))
-              : e,
-        ),
-      );
+  ImageElement edit(ImageElement element) =>
+      element.copyWith(source: FieldImageSource(field));
 }

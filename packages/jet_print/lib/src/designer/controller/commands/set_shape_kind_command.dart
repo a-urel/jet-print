@@ -2,10 +2,7 @@
 library;
 
 import '../../../domain/elements/shape_element.dart';
-import '../../../domain/report_element.dart';
-import '../band_walker.dart';
-import '../designer_document.dart';
-import '../edit_command.dart';
+import '../element_edit_command.dart';
 
 /// Sets the [ShapeElement] [id]'s form to [kind] in one undoable step,
 /// preserving its bounds and style.
@@ -21,12 +18,10 @@ import '../edit_command.dart';
 /// * Any deliberate pick clears [ShapeElement.unknownForm] (FR-009).
 ///
 /// A no-op for a non-shape or absent [id].
-class SetShapeKindCommand extends EditCommand {
+class SetShapeKindCommand extends ElementEditCommand<ShapeElement> {
   /// Creates a pick of [kind] for the shape [id].
-  const SetShapeKindCommand({required this.id, required this.kind});
-
-  /// The target shape element.
-  final String id;
+  const SetShapeKindCommand({required String id, required this.kind})
+      : super(id);
 
   /// The form to switch to.
   final ShapeKind kind;
@@ -35,17 +30,9 @@ class SetShapeKindCommand extends EditCommand {
   String get label => 'Set shape';
 
   @override
-  DesignerDocument apply(DesignerDocument before) => before.withDefinition(
-        updateElement(
-          before.definition,
-          id,
-          (ReportElement e) => e is ShapeElement
-              ? e.copyWith(
-                  kind: kind,
-                  flipDiagonal: kind == ShapeKind.line ? e.flipDiagonal : false,
-                  clearUnknownForm: true,
-                )
-              : e,
-        ),
+  ShapeElement edit(ShapeElement element) => element.copyWith(
+        kind: kind,
+        flipDiagonal: kind == ShapeKind.line ? element.flipDiagonal : false,
+        clearUnknownForm: true,
       );
 }
