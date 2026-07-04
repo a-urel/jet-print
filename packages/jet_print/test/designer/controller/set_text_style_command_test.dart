@@ -8,30 +8,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
-/// A one-band report holding [elements], so a style change can be driven and
-/// asserted against known elements.
-ReportDefinition _report(List<ReportElement> elements) => ReportDefinition(
-      name: 'Text style test',
-      page: PageFormat.a4Portrait,
-      body: ReportBody(
-        root: DetailScope(
-          id: 'root',
-          children: <ScopeNode>[
-            BandNode(Band(
-                id: 'detail',
-                type: BandType.detail,
-                height: 120,
-                elements: elements)),
-          ],
-        ),
-      ),
-    );
-
-TextElement _text(JetReportDesignerController c, String id) =>
-    c.definition.body.root.children
-        .whereType<BandNode>()
-        .expand((BandNode n) => n.band.elements)
-        .firstWhere((ReportElement e) => e.id == id) as TextElement;
+import '../../support/report_builders.dart';
 
 const JetRect _bounds = JetRect(x: 12, y: 8, width: 120, height: 24);
 
@@ -56,17 +33,17 @@ void main() {
   group('setTextStyle — replaces the style (C2/C5)', () {
     test('a commit replaces the whole style, preserving text and bounds', () {
       final JetReportDesignerController c = JetReportDesignerController(
-          definition: _report(const <ReportElement>[_element]));
+          definition: oneBandReport(elements: const <ReportElement>[_element]));
       c.setTextStyle('t', _next);
-      expect(_text(c, 't').style, _next);
-      expect(_text(c, 't').text, 'Hello');
-      expect(_text(c, 't').bounds, _bounds);
+      expect(elementById<TextElement>(c, 't').style, _next);
+      expect(elementById<TextElement>(c, 't').text, 'Hello');
+      expect(elementById<TextElement>(c, 't').bounds, _bounds);
       c.dispose();
     });
 
     test('a real change is a single notifying, undoable step', () {
       final JetReportDesignerController c = JetReportDesignerController(
-          definition: _report(const <ReportElement>[_element]));
+          definition: oneBandReport(elements: const <ReportElement>[_element]));
       int notifications = 0;
       c.addListener(() => notifications++);
 
@@ -81,7 +58,7 @@ void main() {
   group('setTextStyle — no-ops (C5 / FR-013)', () {
     test('an equal style records no history and notifies no one', () {
       final JetReportDesignerController c = JetReportDesignerController(
-          definition: _report(const <ReportElement>[_element]));
+          definition: oneBandReport(elements: const <ReportElement>[_element]));
       int notifications = 0;
       c.addListener(() => notifications++);
 
@@ -95,7 +72,7 @@ void main() {
 
     test('a missing target is a no-op', () {
       final JetReportDesignerController c = JetReportDesignerController(
-          definition: _report(const <ReportElement>[_element]));
+          definition: oneBandReport(elements: const <ReportElement>[_element]));
       int notifications = 0;
       c.addListener(() => notifications++);
 
@@ -108,7 +85,7 @@ void main() {
 
     test('a non-text target is a no-op', () {
       final JetReportDesignerController c = JetReportDesignerController(
-        definition: _report(const <ReportElement>[
+        definition: oneBandReport(elements: const <ReportElement>[
           _element,
           ShapeElement(id: 's', bounds: _bounds, kind: ShapeKind.rectangle),
         ]),
@@ -128,30 +105,31 @@ void main() {
     test('one undo restores the prior style; one redo reapplies the new one',
         () {
       final JetReportDesignerController c = JetReportDesignerController(
-          definition: _report(const <ReportElement>[_element]));
+          definition: oneBandReport(elements: const <ReportElement>[_element]));
       c.setTextStyle('t', _next);
-      expect(_text(c, 't').style, _next);
+      expect(elementById<TextElement>(c, 't').style, _next);
 
       c.undo();
-      expect(_text(c, 't').style,
+      expect(elementById<TextElement>(c, 't').style,
           const JetTextStyle(fontSize: 14, weight: JetFontWeight.medium),
           reason: 'one-step undo');
 
       c.redo();
-      expect(_text(c, 't').style, _next, reason: 'one-step redo');
+      expect(elementById<TextElement>(c, 't').style, _next,
+          reason: 'one-step redo');
       c.dispose();
     });
 
     test('two commits are exactly two undoable steps', () {
       final JetReportDesignerController c = JetReportDesignerController(
-          definition: _report(const <ReportElement>[_element]));
+          definition: oneBandReport(elements: const <ReportElement>[_element]));
       c.setTextStyle('t', _element.style.copyWith(fontSize: 36));
       c.setTextStyle('t', _next);
 
       c.undo();
-      expect(_text(c, 't').style.fontSize, 36);
+      expect(elementById<TextElement>(c, 't').style.fontSize, 36);
       c.undo();
-      expect(_text(c, 't').style.fontSize, 14);
+      expect(elementById<TextElement>(c, 't').style.fontSize, 14);
       expect(c.canUndo, isFalse, reason: 'exactly two steps');
       c.dispose();
     });

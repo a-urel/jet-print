@@ -41,6 +41,7 @@ import '../../controller/jet_report_designer_controller.dart';
 import '../../designer_font_scope.dart';
 import '../../designer_schema_scope.dart';
 import '../../designer_scope.dart';
+import '../../element_glyph.dart';
 import '../../field_type_glyph.dart';
 import '../../format_presets.dart';
 import '../../l10n/band_type_label.dart';
@@ -1026,13 +1027,4 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
         fxTooltip: l10n.propertiesVisibleWhen,
         clearTooltip: l10n.propertiesVisibleClear,
       );
-}
-
-IconData _elementGlyph(ReportElement element) {
-  if (element is TextElement) return LucideIcons.type;
-  if (element is ShapeElement) return LucideIcons.square;
-  if (element is ImageElement) return LucideIcons.image;
-  if (element is BarcodeElement) return LucideIcons.barcode;
-  if (element is ChartElement) return LucideIcons.chartBar;
-  return LucideIcons.square;
 }

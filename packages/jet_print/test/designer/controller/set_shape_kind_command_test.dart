@@ -8,31 +8,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
+import '../../support/report_builders.dart';
+
 /// A one-band report holding a single [ShapeElement] [shape], so a form change
 /// can be driven and asserted against a known element.
-ReportDefinition _report(ShapeElement shape) => ReportDefinition(
-      name: 'Shape test',
-      page: PageFormat.a4Portrait,
-      body: ReportBody(
-        root: DetailScope(
-          id: 'root',
-          children: <ScopeNode>[
-            BandNode(Band(
-              id: 'detail',
-              type: BandType.detail,
-              height: 120,
-              elements: <ReportElement>[shape],
-            )),
-          ],
-        ),
-      ),
-    );
-
-ShapeElement _shape(JetReportDesignerController c, String id) =>
-    c.definition.body.root.children
-        .whereType<BandNode>()
-        .expand((BandNode n) => n.band.elements)
-        .firstWhere((ReportElement e) => e.id == id) as ShapeElement;
+ReportDefinition _report(ShapeElement shape) =>
+    oneBandReport(elements: <ReportElement>[shape]);
 
 void main() {
   const JetRect bounds = JetRect(x: 12, y: 8, width: 60, height: 40);
@@ -45,9 +26,9 @@ void main() {
             id: 's', bounds: bounds, kind: ShapeKind.rectangle, style: style)),
       );
       c.setShapeKind('s', ShapeKind.hexagon);
-      expect(_shape(c, 's').kind, ShapeKind.hexagon);
-      expect(_shape(c, 's').bounds, bounds);
-      expect(_shape(c, 's').style, style);
+      expect(elementById<ShapeElement>(c, 's').kind, ShapeKind.hexagon);
+      expect(elementById<ShapeElement>(c, 's').bounds, bounds);
+      expect(elementById<ShapeElement>(c, 's').style, style);
       c.dispose();
     });
   });
@@ -63,7 +44,7 @@ void main() {
 
       c.setShapeKind('s', ShapeKind.star); // same form
 
-      expect(_shape(c, 's').kind, ShapeKind.star);
+      expect(elementById<ShapeElement>(c, 's').kind, ShapeKind.star);
       expect(c.canUndo, isFalse, reason: 'a no-op arms no undo');
       expect(notifications, 0, reason: 'a no-op fires no notification');
       c.dispose();
@@ -94,8 +75,8 @@ void main() {
             id: 's', bounds: bounds, kind: ShapeKind.line, flipDiagonal: true)),
       );
       c.setShapeKind('s', ShapeKind.diamond);
-      expect(_shape(c, 's').kind, ShapeKind.diamond);
-      expect(_shape(c, 's').flipDiagonal, isFalse,
+      expect(elementById<ShapeElement>(c, 's').kind, ShapeKind.diamond);
+      expect(elementById<ShapeElement>(c, 's').flipDiagonal, isFalse,
           reason: 'flipDiagonal is meaningless off a line');
       c.dispose();
     });
@@ -106,8 +87,9 @@ void main() {
             id: 's', bounds: bounds, kind: ShapeKind.rectangle)),
       );
       c.setShapeKind('s', ShapeKind.line);
-      expect(_shape(c, 's').kind, ShapeKind.line);
-      expect(_shape(c, 's').flipDiagonal, isFalse); // default diagonal
+      expect(elementById<ShapeElement>(c, 's').kind, ShapeKind.line);
+      expect(elementById<ShapeElement>(c, 's').flipDiagonal,
+          isFalse); // default diagonal
       c.dispose();
     });
   });
@@ -122,8 +104,8 @@ void main() {
             unknownForm: 'octagon')),
       );
       c.setShapeKind('s', ShapeKind.star);
-      expect(_shape(c, 's').kind, ShapeKind.star);
-      expect(_shape(c, 's').unknownForm, isNull);
+      expect(elementById<ShapeElement>(c, 's').kind, ShapeKind.star);
+      expect(elementById<ShapeElement>(c, 's').unknownForm, isNull);
       c.dispose();
     });
 
@@ -143,7 +125,7 @@ void main() {
       // gallery shows nothing highlighted and picking rectangle IS a real edit.
       c.setShapeKind('s', ShapeKind.rectangle);
 
-      expect(_shape(c, 's').unknownForm, isNull);
+      expect(elementById<ShapeElement>(c, 's').unknownForm, isNull);
       expect(notifications, 1, reason: 'clearing an unknown form is a change');
       expect(c.canUndo, isTrue);
       c.dispose();
@@ -159,13 +141,15 @@ void main() {
             id: 's', bounds: bounds, kind: ShapeKind.hexagon)),
       );
       c.setShapeKind('s', ShapeKind.star);
-      expect(_shape(c, 's').kind, ShapeKind.star);
+      expect(elementById<ShapeElement>(c, 's').kind, ShapeKind.star);
 
       c.undo();
-      expect(_shape(c, 's').kind, ShapeKind.hexagon, reason: 'one-step undo');
+      expect(elementById<ShapeElement>(c, 's').kind, ShapeKind.hexagon,
+          reason: 'one-step undo');
 
       c.redo();
-      expect(_shape(c, 's').kind, ShapeKind.star, reason: 'one-step redo');
+      expect(elementById<ShapeElement>(c, 's').kind, ShapeKind.star,
+          reason: 'one-step redo');
       c.dispose();
     });
   });
@@ -181,17 +165,17 @@ void main() {
 
       expect(c.canUndo, isTrue);
       c.undo();
-      expect(_shape(c, 's').kind, ShapeKind.hexagon);
+      expect(elementById<ShapeElement>(c, 's').kind, ShapeKind.hexagon);
       c.undo();
-      expect(_shape(c, 's').kind, ShapeKind.rectangle);
+      expect(elementById<ShapeElement>(c, 's').kind, ShapeKind.rectangle);
       expect(c.canUndo, isFalse,
           reason: 'exactly two steps — no orphaned intermediate entry');
 
       // Redo replays both, in order.
       c.redo();
-      expect(_shape(c, 's').kind, ShapeKind.hexagon);
+      expect(elementById<ShapeElement>(c, 's').kind, ShapeKind.hexagon);
       c.redo();
-      expect(_shape(c, 's').kind, ShapeKind.star);
+      expect(elementById<ShapeElement>(c, 's').kind, ShapeKind.star);
       c.dispose();
     });
 
@@ -204,7 +188,7 @@ void main() {
       c.setShapeKind('s', ShapeKind.diamond); // no-op — must not stack
 
       c.undo();
-      expect(_shape(c, 's').kind, ShapeKind.rectangle);
+      expect(elementById<ShapeElement>(c, 's').kind, ShapeKind.rectangle);
       expect(c.canUndo, isFalse, reason: 'the no-op pushed no history');
       c.dispose();
     });

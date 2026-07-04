@@ -5,12 +5,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
+import '../../support/report_builders.dart';
+
 JetRect _bounds(JetReportDesignerController c, String id) =>
-    c.definition.body.root.children
-        .whereType<BandNode>()
-        .expand((BandNode n) => n.band.elements)
-        .firstWhere((ReportElement e) => e.id == id)
-        .bounds;
+    elementById<ReportElement>(c, id).bounds;
 
 String _createAt(JetReportDesignerController c, double x, double y) {
   c.createElement(DesignerToolType.text, bandId: 'detail', at: JetOffset(x, y));

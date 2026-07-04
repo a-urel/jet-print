@@ -2,6 +2,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
+import '../../support/report_builders.dart';
+
 // Two-band fixture: a 'header' band (one element) and a 'detail' band (two).
 ReportDefinition _fixture() => const ReportDefinition(
       name: 'F',
@@ -41,12 +43,6 @@ ReportDefinition _fixture() => const ReportDefinition(
       ),
     );
 
-Band _band(JetReportDesignerController c, String id) =>
-    c.definition.body.root.children
-        .whereType<BandNode>()
-        .firstWhere((BandNode n) => n.band.id == id)
-        .band;
-
 JetReportDesignerController _open() =>
     JetReportDesignerController()..open(_fixture());
 
@@ -60,11 +56,11 @@ void main() {
     c.paste();
 
     // Copy lands in the selected (header) band, not back in detail.
-    expect(_band(c, 'header').elements.length, 2);
-    expect(_band(c, 'detail').elements.length, 2);
+    expect(bandById(c, 'header').elements.length, 2);
+    expect(bandById(c, 'detail').elements.length, 2);
 
     final String newId = c.selection.singleOrNull!;
-    final ReportElement pasted = _band(c, 'header')
+    final ReportElement pasted = bandById(c, 'header')
         .elements
         .firstWhere((ReportElement e) => e.id == newId);
     // Original X/Y preserved (no +8/+8 across bands).
@@ -82,8 +78,8 @@ void main() {
     c.selectBand('header');
     c.paste();
 
-    expect(_band(c, 'header').elements.length, 3); // h1 + two copies
-    expect(_band(c, 'detail').elements.length, 2); // originals untouched
+    expect(bandById(c, 'header').elements.length, 3); // h1 + two copies
+    expect(bandById(c, 'detail').elements.length, 2); // originals untouched
     expect(c.selection.length, 2); // the two copies are selected
     c.dispose();
   });
@@ -94,9 +90,9 @@ void main() {
     c.selectBand('detail'); // selected == source band
     c.paste();
 
-    expect(_band(c, 'detail').elements.length, 3);
+    expect(bandById(c, 'detail').elements.length, 3);
     final String newId = c.selection.singleOrNull!;
-    final ReportElement pasted = _band(c, 'detail')
+    final ReportElement pasted = bandById(c, 'detail')
         .elements
         .firstWhere((ReportElement e) => e.id == newId);
     expect(pasted.bounds.x, 58); // 50 + 8
@@ -111,8 +107,8 @@ void main() {
     c.clearSelection();
     c.paste();
 
-    expect(_band(c, 'detail').elements.length, 3); // back in source band
-    expect(_band(c, 'header').elements.length, 1); // unchanged
+    expect(bandById(c, 'detail').elements.length, 3); // back in source band
+    expect(bandById(c, 'header').elements.length, 1); // unchanged
     c.dispose();
   });
 
@@ -126,8 +122,8 @@ void main() {
     c.paste();
 
     // Each copy returns to its own source band, not the selected one.
-    expect(_band(c, 'header').elements.length, 2); // h1 + its copy
-    expect(_band(c, 'detail').elements.length, 3); // d1, d2 + d1's copy
+    expect(bandById(c, 'header').elements.length, 2); // h1 + its copy
+    expect(bandById(c, 'detail').elements.length, 3); // d1, d2 + d1's copy
     c.dispose();
   });
 }

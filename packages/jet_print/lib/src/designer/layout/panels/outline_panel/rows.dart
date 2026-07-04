@@ -133,7 +133,7 @@ extension _OutlineRows on _OutlinePanelState {
         rowKey: ValueKey<String>(
             'jet_print.designer.outline.element.${element.id}'),
         depth: depth + 1,
-        icon: _elementGlyph(element),
+        icon: elementGlyph(element),
         label: elementDisplayLabel(element, l10n),
         rawName: element.name,
         fallback: elementTypeLabel(element, l10n),
@@ -365,15 +365,5 @@ extension _OutlineRows on _OutlinePanelState {
       case BandType.background:
         return LucideIcons.image;
     }
-  }
-
-  /// The toolbox glyph for an element, so an outline leaf and the palette element
-  /// it came from read as the same thing.
-  IconData _elementGlyph(ReportElement element) {
-    if (element is TextElement) return LucideIcons.type;
-    if (element is ShapeElement) return LucideIcons.square;
-    if (element is ImageElement) return LucideIcons.image;
-    if (element is BarcodeElement) return LucideIcons.barcode;
-    return LucideIcons.square;
   }
 }

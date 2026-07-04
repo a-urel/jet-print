@@ -6,12 +6,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
+import '../../support/report_builders.dart';
+
 JetRect _bounds(JetReportDesignerController c, String id) =>
-    c.definition.body.root.children
-        .whereType<BandNode>()
-        .expand((BandNode n) => n.band.elements)
-        .firstWhere((ReportElement e) => e.id == id)
-        .bounds;
+    elementById<ReportElement>(c, id).bounds;
 
 double _detailBandHeight(JetReportDesignerController c) =>
     c.definition.body.root.children.whereType<BandNode>().first.band.height;

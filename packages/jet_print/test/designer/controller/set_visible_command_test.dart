@@ -4,6 +4,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
+import '../../support/report_builders.dart';
+
 /// The detail band's single element of type [T].
 T _only<T extends ReportElement>(JetReportDesignerController c) =>
     c.definition.body.root.children
@@ -13,13 +15,6 @@ T _only<T extends ReportElement>(JetReportDesignerController c) =>
         .elements
         .whereType<T>()
         .single;
-
-/// The band with the given [id] from the body tree.
-Band _band(JetReportDesignerController c, String id) =>
-    c.definition.body.root.children
-        .whereType<BandNode>()
-        .firstWhere((BandNode n) => n.band.id == id)
-        .band;
 
 void main() {
   test('setElementVisible sets visible and is undoable', () {
@@ -44,10 +39,10 @@ void main() {
     addTearDown(c.dispose);
 
     c.setBandVisible('detail', BoolProperty(expression: r'$F{x}'));
-    expect(_band(c, 'detail').visible.expression, r'$F{x}');
+    expect(bandById(c, 'detail').visible.expression, r'$F{x}');
 
     c.undo();
-    expect(_band(c, 'detail').visible, const BoolProperty());
+    expect(bandById(c, 'detail').visible, const BoolProperty());
   });
 
   test('setElementVisible on equal value is a no-op (no history entry)', () {

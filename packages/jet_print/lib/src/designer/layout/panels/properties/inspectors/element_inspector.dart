@@ -17,7 +17,7 @@ extension _ElementInspector on _PropertiesPanelState {
     final JetRect b = element.bounds;
     return <Widget>[
       _Header(
-        icon: _elementGlyph(element),
+        icon: elementGlyph(element),
         title: elementDisplayLabel(element, l10n),
         rawName: element.name,
         fallback: elementTypeLabel(element, l10n),

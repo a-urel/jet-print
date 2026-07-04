@@ -9,6 +9,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
+import '../../../support/report_builders.dart';
+
 const JetRect _bounds = JetRect(x: 0, y: 0, width: 200, height: 130);
 
 ChartElement _chart({
@@ -25,35 +27,14 @@ ChartElement _chart({
       valueExpression: valueExpression,
     );
 
-ReportDefinition _report(List<ReportElement> elements) => ReportDefinition(
-      name: 'Chart options test',
-      page: PageFormat.a4Portrait,
-      body: ReportBody(
-        root: DetailScope(
-          id: 'root',
-          children: <ScopeNode>[
-            BandNode(Band(
-              id: 'detail',
-              type: BandType.detail,
-              height: 200,
-              elements: elements,
-            )),
-          ],
-        ),
-      ),
-    );
-
 JetReportDesignerController _controller(
         {ChartType chartType = ChartType.bar}) =>
     JetReportDesignerController(
-      definition: _report(<ReportElement>[_chart(chartType: chartType)]),
+      definition: oneBandReport(
+        bandHeight: 200,
+        elements: <ReportElement>[_chart(chartType: chartType)],
+      ),
     );
-
-ChartElement _find(JetReportDesignerController c, String id) =>
-    c.definition.body.root.children
-        .whereType<BandNode>()
-        .expand((BandNode n) => n.band.elements)
-        .firstWhere((ReportElement e) => e.id == id) as ChartElement;
 
 void main() {
   group('setChartOptions — sets named field, preserves others', () {
@@ -61,7 +42,7 @@ void main() {
       final JetReportDesignerController c = _controller();
       c.setChartOptions('c1', chartType: ChartType.line);
 
-      final el = _find(c, 'c1');
+      final el = elementById<ChartElement>(c, 'c1');
       expect(el.chartType, ChartType.line);
       // ALL other fields preserved (the silent-drop test):
       expect(el.collectionField, 'months');
@@ -79,7 +60,7 @@ void main() {
       c.setChartOptions('c1',
           collectionField: 'quarters', valueExpression: r'$F{profit}');
 
-      final el = _find(c, 'c1');
+      final el = elementById<ChartElement>(c, 'c1');
       expect(el.collectionField, 'quarters');
       expect(el.valueExpression, r'$F{profit}');
       expect(el.chartType, ChartType.bar); // untouched
@@ -90,7 +71,7 @@ void main() {
       final JetReportDesignerController c = _controller();
       c.setChartOptions('c1', showAxes: false);
 
-      final el = _find(c, 'c1');
+      final el = elementById<ChartElement>(c, 'c1');
       expect(el.showAxes, false);
       expect(el.showValueLabels, false); // untouched
       expect(el.showLegend, false); // untouched
@@ -102,8 +83,9 @@ void main() {
       final JetReportDesignerController c = _controller();
       c.setChartOptions('c1', seriesColor: red);
 
-      expect(_find(c, 'c1').seriesColor, red);
-      expect(_find(c, 'c1').chartType, ChartType.bar); // preserved
+      expect(elementById<ChartElement>(c, 'c1').seriesColor, red);
+      expect(elementById<ChartElement>(c, 'c1').chartType,
+          ChartType.bar); // preserved
       c.dispose();
     });
 
@@ -112,7 +94,7 @@ void main() {
       c.setChartOptions('c1',
           categoryExpression: r'$F{month}', title: 'Revenue by Month');
 
-      final el = _find(c, 'c1');
+      final el = elementById<ChartElement>(c, 'c1');
       expect(el.categoryExpression, r'$F{month}');
       expect(el.title, 'Revenue by Month');
       expect(el.collectionField, 'months'); // preserved
@@ -125,8 +107,8 @@ void main() {
       final JetReportDesignerController c = _controller();
       c.setChartOptions('nope', chartType: ChartType.pie);
 
-      expect(_find(c, 'c1').chartType, ChartType.bar);
-      expect(_find(c, 'c1').collectionField, 'months');
+      expect(elementById<ChartElement>(c, 'c1').chartType, ChartType.bar);
+      expect(elementById<ChartElement>(c, 'c1').collectionField, 'months');
       c.dispose();
     });
   });
@@ -135,11 +117,11 @@ void main() {
     test('a chart type change is undoable', () {
       final JetReportDesignerController c = _controller();
       c.setChartOptions('c1', chartType: ChartType.pie);
-      expect(_find(c, 'c1').chartType, ChartType.pie);
+      expect(elementById<ChartElement>(c, 'c1').chartType, ChartType.pie);
 
       expect(c.canUndo, isTrue);
       c.undo();
-      expect(_find(c, 'c1').chartType, ChartType.bar);
+      expect(elementById<ChartElement>(c, 'c1').chartType, ChartType.bar);
       c.dispose();
     });
 
@@ -149,9 +131,9 @@ void main() {
       c.setChartOptions('c1', chartType: ChartType.pie);
 
       c.undo();
-      expect(_find(c, 'c1').chartType, ChartType.line);
+      expect(elementById<ChartElement>(c, 'c1').chartType, ChartType.line);
       c.undo();
-      expect(_find(c, 'c1').chartType, ChartType.bar);
+      expect(elementById<ChartElement>(c, 'c1').chartType, ChartType.bar);
       expect(c.canUndo, isFalse);
       c.dispose();
     });

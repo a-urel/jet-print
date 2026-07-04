@@ -8,28 +8,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
-ReportDefinition _report(List<ReportElement> elements) => ReportDefinition(
-      name: 'Barcode color test',
-      page: PageFormat.a4Portrait,
-      body: ReportBody(
-        root: DetailScope(
-          id: 'root',
-          children: <ScopeNode>[
-            BandNode(Band(
-                id: 'detail',
-                type: BandType.detail,
-                height: 120,
-                elements: elements)),
-          ],
-        ),
-      ),
-    );
-
-BarcodeElement _barcode(JetReportDesignerController c, String id) =>
-    c.definition.body.root.children
-        .whereType<BandNode>()
-        .expand((BandNode n) => n.band.elements)
-        .firstWhere((ReportElement e) => e.id == id) as BarcodeElement;
+import '../../support/report_builders.dart';
 
 const JetRect _bounds = JetRect(x: 12, y: 8, width: 40, height: 40);
 
@@ -44,18 +23,20 @@ void main() {
   group('setBarcodeColor — replaces the color (C8)', () {
     test('a commit replaces the color, preserving symbology/data/bounds', () {
       final JetReportDesignerController c = JetReportDesignerController(
-          definition: _report(const <ReportElement>[_element]));
+          definition: oneBandReport(elements: const <ReportElement>[_element]));
       c.setBarcodeColor('b', const JetColor(0xFF1E40AF));
-      expect(_barcode(c, 'b').color, const JetColor(0xFF1E40AF));
-      expect(_barcode(c, 'b').symbology, BarcodeSymbology.qrCode);
-      expect(_barcode(c, 'b').data, '42');
-      expect(_barcode(c, 'b').bounds, _bounds);
+      expect(elementById<BarcodeElement>(c, 'b').color,
+          const JetColor(0xFF1E40AF));
+      expect(elementById<BarcodeElement>(c, 'b').symbology,
+          BarcodeSymbology.qrCode);
+      expect(elementById<BarcodeElement>(c, 'b').data, '42');
+      expect(elementById<BarcodeElement>(c, 'b').bounds, _bounds);
       c.dispose();
     });
 
     test('a real change is a single notifying, undoable step', () {
       final JetReportDesignerController c = JetReportDesignerController(
-          definition: _report(const <ReportElement>[_element]));
+          definition: oneBandReport(elements: const <ReportElement>[_element]));
       int notifications = 0;
       c.addListener(() => notifications++);
 
@@ -70,7 +51,7 @@ void main() {
   group('setBarcodeColor — no-ops (C9 / FR-013)', () {
     test('an equal color records no history and notifies no one', () {
       final JetReportDesignerController c = JetReportDesignerController(
-          definition: _report(const <ReportElement>[_element]));
+          definition: oneBandReport(elements: const <ReportElement>[_element]));
       int notifications = 0;
       c.addListener(() => notifications++);
 
@@ -83,7 +64,7 @@ void main() {
 
     test('a missing target is a no-op', () {
       final JetReportDesignerController c = JetReportDesignerController(
-          definition: _report(const <ReportElement>[_element]));
+          definition: oneBandReport(elements: const <ReportElement>[_element]));
       int notifications = 0;
       c.addListener(() => notifications++);
 
@@ -96,7 +77,7 @@ void main() {
 
     test('a non-barcode target is a no-op', () {
       final JetReportDesignerController c = JetReportDesignerController(
-        definition: _report(const <ReportElement>[
+        definition: oneBandReport(elements: const <ReportElement>[
           _element,
           TextElement(id: 't', bounds: _bounds, text: 'Hi'),
         ]),
@@ -115,14 +96,15 @@ void main() {
   group('setBarcodeColor — undo / redo (C9)', () {
     test('one undo restores black; one redo reapplies the pick', () {
       final JetReportDesignerController c = JetReportDesignerController(
-          definition: _report(const <ReportElement>[_element]));
+          definition: oneBandReport(elements: const <ReportElement>[_element]));
       c.setBarcodeColor('b', const JetColor(0xFF1E40AF));
 
       c.undo();
-      expect(_barcode(c, 'b').color, JetColor.black);
+      expect(elementById<BarcodeElement>(c, 'b').color, JetColor.black);
 
       c.redo();
-      expect(_barcode(c, 'b').color, const JetColor(0xFF1E40AF));
+      expect(elementById<BarcodeElement>(c, 'b').color,
+          const JetColor(0xFF1E40AF));
       c.dispose();
     });
   });
