@@ -6,7 +6,9 @@
 /// the expression engine). Evaluation is injected via [getValue].
 library;
 
-class BoolProperty {
+import 'value_equality.dart';
+
+class BoolProperty with ValueEquality {
   /// Creates a property defaulting to visible/true with no expression.
   const BoolProperty({this.value = true, this.expression});
 
@@ -47,13 +49,7 @@ class BoolProperty {
       );
 
   @override
-  bool operator ==(Object other) =>
-      other is BoolProperty &&
-      other.value == value &&
-      other.expression == expression;
-
-  @override
-  int get hashCode => Object.hash(value, expression);
+  List<Object?> get props => <Object?>[value, expression];
 
   @override
   String toString() => 'BoolProperty($value'

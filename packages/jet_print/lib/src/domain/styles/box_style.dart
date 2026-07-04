@@ -1,11 +1,12 @@
 /// Fill/stroke styling for shapes and boxes (pure Dart).
 library;
 
+import '../value_equality.dart';
 import 'color.dart';
 
 /// Immutable box appearance: an optional [fill], an optional [stroke], and a
 /// [strokeWidth] (points). JSON omits null fill/stroke.
-class JetBoxStyle {
+class JetBoxStyle with ValueEquality {
   /// Creates a box style.
   const JetBoxStyle({this.fill, this.stroke, this.strokeWidth = 1.0});
 
@@ -61,14 +62,7 @@ class JetBoxStyle {
       };
 
   @override
-  bool operator ==(Object other) =>
-      other is JetBoxStyle &&
-      other.fill == fill &&
-      other.stroke == stroke &&
-      other.strokeWidth == strokeWidth;
-
-  @override
-  int get hashCode => Object.hash(fill, stroke, strokeWidth);
+  List<Object?> get props => <Object?>[fill, stroke, strokeWidth];
 
   @override
   String toString() =>

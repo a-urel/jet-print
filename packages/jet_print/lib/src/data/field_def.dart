@@ -7,6 +7,7 @@
 /// Dart, no Flutter dependency.
 library;
 
+import '../domain/value_equality.dart';
 import '../domain/value_type.dart';
 
 export '../domain/value_type.dart' show JetFieldType;
@@ -15,7 +16,7 @@ export '../domain/value_type.dart' show JetFieldType;
 /// coarse [type], and — for a [JetFieldType.collection] field — its own child
 /// [fields] (spec 009). The recursion lets a schema model master/detail to
 /// arbitrary depth (e.g. invoice → lines → sub-lines).
-class FieldDef {
+class FieldDef with ValueEquality {
   /// Creates a field named [name] with the given [type] (default
   /// [JetFieldType.unknown]). Pass [fields] only for a [JetFieldType.collection]
   /// field, to declare its child schema.
@@ -81,16 +82,7 @@ class FieldDef {
   }
 
   @override
-  bool operator ==(Object other) =>
-      other is FieldDef &&
-      other.name == name &&
-      other.type == type &&
-      other.description == description &&
-      _fieldListEquals(other.fields, fields);
-
-  @override
-  int get hashCode =>
-      Object.hash(name, type, description, Object.hashAll(fields));
+  List<Object?> get props => <Object?>[name, type, description, fields];
 
   @override
   String toString() {
@@ -151,16 +143,4 @@ FieldDef inferColumn(String name, Iterable<Object?> values) {
     type: JetFieldType.collection,
     fields: inferFields(entries),
   );
-}
-
-/// Deep, order-sensitive equality over two [FieldDef] lists. Pure Dart (no
-/// Flutter `listEquals`) so the data seam stays headless; the per-element `==`
-/// recurses into nested collection schemas.
-bool _fieldListEquals(List<FieldDef> a, List<FieldDef> b) {
-  if (identical(a, b)) return true;
-  if (a.length != b.length) return false;
-  for (int i = 0; i < a.length; i++) {
-    if (a[i] != b[i]) return false;
-  }
-  return true;
 }

@@ -1,9 +1,11 @@
 /// A pure-Dart color value (no `dart:ui`).
 library;
 
+import '../value_equality.dart';
+
 /// An immutable ARGB32 color. Serialized as a human-inspectable hex string
 /// `#AARRGGBB` (Constitution V); in memory it is a packed [argb] int.
-class JetColor {
+class JetColor with ValueEquality {
   /// Creates a color from a packed 0xAARRGGBB value.
   const JetColor(this.argb);
 
@@ -33,10 +35,7 @@ class JetColor {
   String toJson() => '#${argb.toRadixString(16).padLeft(8, '0').toUpperCase()}';
 
   @override
-  bool operator ==(Object other) => other is JetColor && other.argb == argb;
-
-  @override
-  int get hashCode => argb.hashCode;
+  List<Object?> get props => <Object?>[argb];
 
   @override
   String toString() => 'JetColor(${toJson()})';

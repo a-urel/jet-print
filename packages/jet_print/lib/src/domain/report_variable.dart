@@ -1,6 +1,8 @@
 /// A report variable — a named accumulated/derived value (spec 005b).
 library;
 
+import 'value_equality.dart';
+
 /// How a [ReportVariable] folds its per-row expression values.
 enum JetCalculation {
   /// No folding — the variable's value is its expression evaluated each row.
@@ -38,7 +40,7 @@ enum VariableResetScope {
 }
 
 /// An immutable variable definition.
-class ReportVariable {
+class ReportVariable with ValueEquality {
   /// Creates a variable named [name] folding [expression] via [calculation],
   /// resetting at [resetScope] (and [resetGroup] when scoped to a group).
   const ReportVariable({
@@ -93,17 +95,8 @@ class ReportVariable {
       };
 
   @override
-  bool operator ==(Object other) =>
-      other is ReportVariable &&
-      other.name == name &&
-      other.expression == expression &&
-      other.calculation == calculation &&
-      other.resetScope == resetScope &&
-      other.resetGroup == resetGroup;
-
-  @override
-  int get hashCode =>
-      Object.hash(name, expression, calculation, resetScope, resetGroup);
+  List<Object?> get props =>
+      <Object?>[name, expression, calculation, resetScope, resetGroup];
 
   @override
   String toString() =>

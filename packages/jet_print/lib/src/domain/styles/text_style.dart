@@ -1,6 +1,7 @@
 /// Text styling for the report model (pure Dart, no `dart:ui`).
 library;
 
+import '../value_equality.dart';
 import 'color.dart';
 
 /// Horizontal text alignment within an element's bounds.
@@ -11,7 +12,7 @@ enum JetFontWeight { normal, medium, semiBold, bold }
 
 /// Immutable text appearance. JSON omits [fontFamily] when null and
 /// [underline] when false; other fields are always present.
-class JetTextStyle {
+class JetTextStyle with ValueEquality {
   /// Creates a text style; every field has a default (see [fallback]).
   const JetTextStyle({
     this.fontFamily,
@@ -103,19 +104,8 @@ class JetTextStyle {
       };
 
   @override
-  bool operator ==(Object other) =>
-      other is JetTextStyle &&
-      other.fontFamily == fontFamily &&
-      other.fontSize == fontSize &&
-      other.weight == weight &&
-      other.italic == italic &&
-      other.underline == underline &&
-      other.color == color &&
-      other.align == align;
-
-  @override
-  int get hashCode => Object.hash(
-      fontFamily, fontSize, weight, italic, underline, color, align);
+  List<Object?> get props =>
+      <Object?>[fontFamily, fontSize, weight, italic, underline, color, align];
 
   @override
   String toString() =>

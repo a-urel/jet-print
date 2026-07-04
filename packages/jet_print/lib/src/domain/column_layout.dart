@@ -6,9 +6,11 @@
 /// gutter between columns and `rowSpacing` the vertical gap between label rows.
 library;
 
+import 'value_equality.dart';
+
 /// An immutable label-grid spec: [columnCount] columns of [columnWidth] points,
 /// separated by [columnSpacing] horizontally and [rowSpacing] vertically.
-class ColumnLayout {
+class ColumnLayout with ValueEquality {
   /// Creates a column layout. All distances are in points.
   const ColumnLayout({
     required this.columnCount,
@@ -60,16 +62,8 @@ class ColumnLayout {
       };
 
   @override
-  bool operator ==(Object other) =>
-      other is ColumnLayout &&
-      other.columnCount == columnCount &&
-      other.columnWidth == columnWidth &&
-      other.columnSpacing == columnSpacing &&
-      other.rowSpacing == rowSpacing;
-
-  @override
-  int get hashCode =>
-      Object.hash(columnCount, columnWidth, columnSpacing, rowSpacing);
+  List<Object?> get props =>
+      <Object?>[columnCount, columnWidth, columnSpacing, rowSpacing];
 
   @override
   String toString() => 'ColumnLayout($columnCount x ${columnWidth}pt, '

@@ -5,10 +5,11 @@ import '../bool_property.dart';
 import '../copy_support.dart';
 import '../geometry.dart';
 import '../report_element.dart';
+import '../value_equality.dart';
 import 'image_source.dart';
 
 /// Draws an image from [source], scaled to [bounds] per [fit].
-class ImageElement extends ReportElement {
+class ImageElement extends ReportElement with ValueEquality {
   /// Creates an image element.
   const ImageElement({
     required super.id,
@@ -58,17 +59,7 @@ class ImageElement extends ReportElement {
   ImageElement withVisible(BoolProperty visible) => copyWith(visible: visible);
 
   @override
-  bool operator ==(Object other) =>
-      other is ImageElement &&
-      other.id == id &&
-      other.bounds == bounds &&
-      other.source == source &&
-      other.fit == fit &&
-      other.name == name &&
-      other.visible == visible;
-
-  @override
-  int get hashCode => Object.hash(id, bounds, source, fit, name, visible);
+  List<Object?> get props => <Object?>[...baseProps, source, fit];
 
   @override
   String toString() => 'ImageElement($id, ${fit.name})';

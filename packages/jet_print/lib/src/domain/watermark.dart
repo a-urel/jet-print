@@ -11,9 +11,10 @@ import 'dart:typed_data';
 import 'elements/image_source.dart';
 import 'serialization/report_format_exception.dart';
 import 'styles/text_style.dart';
+import 'value_equality.dart';
 
 /// An immutable watermark description carried by `PageFurniture.watermark`.
-class Watermark {
+class Watermark with ValueEquality {
   /// Creates a watermark. [opacity] is clamped to 0..1. Use [text] for a text
   /// watermark or [imageBytes] for an image watermark.
   const Watermark({
@@ -111,30 +112,8 @@ class Watermark {
       };
 
   @override
-  bool operator ==(Object other) {
-    if (other is! Watermark ||
-        other.text != text ||
-        other.textStyle != textStyle ||
-        other.imageFit != imageFit ||
-        other.opacity != opacity ||
-        other.angleDegrees != angleDegrees) {
-      return false;
-    }
-    final Uint8List? a = imageBytes;
-    final Uint8List? b = other.imageBytes;
-    if ((a == null) != (b == null)) return false;
-    if (a != null && b != null) {
-      if (a.length != b.length) return false;
-      for (var i = 0; i < a.length; i++) {
-        if (a[i] != b[i]) return false;
-      }
-    }
-    return true;
-  }
-
-  @override
-  int get hashCode => Object.hash(text, textStyle, imageFit, opacity,
-      angleDegrees, imageBytes == null ? null : Object.hashAll(imageBytes!));
+  List<Object?> get props =>
+      <Object?>[text, textStyle, imageFit, opacity, angleDegrees, imageBytes];
 
   @override
   String toString() => 'Watermark(${text != null ? 'text "$text"' : 'image'}, '

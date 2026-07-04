@@ -6,11 +6,12 @@ import '../copy_support.dart';
 import '../geometry.dart';
 import '../report_element.dart';
 import '../styles/text_style.dart';
+import '../value_equality.dart';
 
 /// Renders [text] within its [bounds] using [style]. For this iteration [text]
 /// is a literal string; expression binding arrives with the expression engine
 /// (spec 005).
-class TextElement extends ReportElement {
+class TextElement extends ReportElement with ValueEquality {
   /// Creates a text element. [expression] (005a syntax), when non-null, is
   /// evaluated per row by Fill (007b) and replaces [text]; when null the literal
   /// [text] is used.
@@ -76,20 +77,8 @@ class TextElement extends ReportElement {
   TextElement withVisible(BoolProperty visible) => copyWith(visible: visible);
 
   @override
-  bool operator ==(Object other) =>
-      other is TextElement &&
-      other.id == id &&
-      other.bounds == bounds &&
-      other.text == text &&
-      other.style == style &&
-      other.expression == expression &&
-      other.format == format &&
-      other.name == name &&
-      other.visible == visible;
-
-  @override
-  int get hashCode =>
-      Object.hash(id, bounds, text, style, expression, format, name, visible);
+  List<Object?> get props =>
+      <Object?>[...baseProps, text, style, expression, format];
 
   @override
   String toString() => 'TextElement($id, "$text"'

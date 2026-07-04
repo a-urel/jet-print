@@ -2,10 +2,11 @@
 library;
 
 import 'geometry.dart';
+import 'value_equality.dart';
 
 /// An immutable page description: a [width] x [height] sheet (in logical points)
 /// with [margins]. Defaults are provided for common formats.
-class PageFormat {
+class PageFormat with ValueEquality {
   /// Creates a page format.
   const PageFormat({
     required this.width,
@@ -59,14 +60,7 @@ class PageFormat {
       };
 
   @override
-  bool operator ==(Object other) =>
-      other is PageFormat &&
-      other.width == width &&
-      other.height == height &&
-      other.margins == margins;
-
-  @override
-  int get hashCode => Object.hash(width, height, margins);
+  List<Object?> get props => <Object?>[width, height, margins];
 
   @override
   String toString() => 'PageFormat(${width}x$height, $margins)';

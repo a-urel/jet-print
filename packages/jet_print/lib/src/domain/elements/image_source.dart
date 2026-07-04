@@ -4,6 +4,8 @@ library;
 import 'dart:convert';
 import 'dart:typed_data';
 
+import '../value_equality.dart';
+
 /// How an image is scaled to fit its element bounds.
 enum JetBoxFit { contain, cover, fill, none }
 
@@ -34,7 +36,7 @@ sealed class JetImageSource {
 }
 
 /// An image fetched from a network [url] at render time.
-class UrlImageSource extends JetImageSource {
+class UrlImageSource extends JetImageSource with ValueEquality {
   /// Creates a URL image source.
   const UrlImageSource(this.url);
 
@@ -45,14 +47,11 @@ class UrlImageSource extends JetImageSource {
   Map<String, Object?> toJson() => <String, Object?>{'kind': 'url', 'url': url};
 
   @override
-  bool operator ==(Object other) => other is UrlImageSource && other.url == url;
-
-  @override
-  int get hashCode => url.hashCode;
+  List<Object?> get props => <Object?>[url];
 }
 
 /// An image whose bytes come from a data [field], resolved at fill time.
-class FieldImageSource extends JetImageSource {
+class FieldImageSource extends JetImageSource with ValueEquality {
   /// Creates a field-bound image source.
   const FieldImageSource(this.field);
 
@@ -64,15 +63,11 @@ class FieldImageSource extends JetImageSource {
       <String, Object?>{'kind': 'field', 'field': field};
 
   @override
-  bool operator ==(Object other) =>
-      other is FieldImageSource && other.field == field;
-
-  @override
-  int get hashCode => field.hashCode;
+  List<Object?> get props => <Object?>[field];
 }
 
 /// An image with [bytes] embedded directly (base64-encoded in JSON).
-class BytesImageSource extends JetImageSource {
+class BytesImageSource extends JetImageSource with ValueEquality {
   /// Creates an embedded-bytes image source.
   BytesImageSource(this.bytes);
 
@@ -84,18 +79,5 @@ class BytesImageSource extends JetImageSource {
       <String, Object?>{'kind': 'bytes', 'base64': base64Encode(bytes)};
 
   @override
-  bool operator ==(Object other) {
-    if (other is! BytesImageSource || other.bytes.length != bytes.length) {
-      return false;
-    }
-    for (var i = 0; i < bytes.length; i++) {
-      if (other.bytes[i] != bytes[i]) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  @override
-  int get hashCode => Object.hashAll(bytes);
+  List<Object?> get props => <Object?>[bytes];
 }

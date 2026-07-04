@@ -6,6 +6,7 @@ import '../copy_support.dart';
 import '../geometry.dart';
 import '../report_element.dart';
 import '../styles/box_style.dart';
+import '../value_equality.dart';
 
 /// The form of a [ShapeElement].
 ///
@@ -77,7 +78,7 @@ enum ShapeKind {
 /// render default) while preserving the original form name in [unknownForm], so
 /// re-saving does not discard it (a lossless forward-compatible round-trip). A
 /// deliberate gallery pick clears [unknownForm].
-class ShapeElement extends ReportElement {
+class ShapeElement extends ReportElement with ValueEquality {
   /// Creates a shape element.
   const ShapeElement({
     required super.id,
@@ -146,20 +147,8 @@ class ShapeElement extends ReportElement {
   ShapeElement withVisible(BoolProperty visible) => copyWith(visible: visible);
 
   @override
-  bool operator ==(Object other) =>
-      other is ShapeElement &&
-      other.id == id &&
-      other.bounds == bounds &&
-      other.kind == kind &&
-      other.style == style &&
-      other.flipDiagonal == flipDiagonal &&
-      other.unknownForm == unknownForm &&
-      other.name == name &&
-      other.visible == visible;
-
-  @override
-  int get hashCode => Object.hash(
-      id, bounds, kind, style, flipDiagonal, unknownForm, name, visible);
+  List<Object?> get props =>
+      <Object?>[...baseProps, kind, style, flipDiagonal, unknownForm];
 
   @override
   String toString() => unknownForm == null

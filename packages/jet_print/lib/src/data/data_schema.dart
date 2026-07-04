@@ -1,6 +1,7 @@
 /// The structure of a data source attached to the designer (spec 009).
 library;
 
+import '../domain/value_equality.dart';
 import 'field_def.dart';
 
 /// An immutable description of a data source's **structure** — a named dataset
@@ -14,7 +15,7 @@ import 'field_def.dart';
 ///
 /// Pure Dart (no Flutter dependency); value-equality, so two schemas with the
 /// same name and (deeply) equal fields are equal.
-class JetDataSchema {
+class JetDataSchema with ValueEquality {
   /// Creates a schema for a dataset named [name] with the given root [fields]
   /// and an optional [description].
   const JetDataSchema({
@@ -37,27 +38,8 @@ class JetDataSchema {
   final String? description;
 
   @override
-  bool operator ==(Object other) =>
-      other is JetDataSchema &&
-      other.name == name &&
-      other.description == description &&
-      _fieldListEquals(other.fields, fields);
-
-  @override
-  int get hashCode => Object.hash(name, description, Object.hashAll(fields));
+  List<Object?> get props => <Object?>[name, description, fields];
 
   @override
   String toString() => 'JetDataSchema($name, ${fields.length} fields)';
-}
-
-/// Deep, order-sensitive equality over two [FieldDef] lists (each element's
-/// `==` recurses into nested collection schemas). Kept local so the data seam
-/// imports no Flutter `listEquals`.
-bool _fieldListEquals(List<FieldDef> a, List<FieldDef> b) {
-  if (identical(a, b)) return true;
-  if (a.length != b.length) return false;
-  for (int i = 0; i < a.length; i++) {
-    if (a[i] != b[i]) return false;
-  }
-  return true;
 }

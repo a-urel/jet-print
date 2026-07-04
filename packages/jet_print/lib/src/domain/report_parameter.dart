@@ -1,6 +1,7 @@
 /// A declared report parameter — a named external input (spec 005b).
 library;
 
+import 'value_equality.dart';
 import 'value_type.dart';
 
 /// An immutable parameter declaration: a [name], a coarse [type], and an
@@ -10,7 +11,7 @@ import 'value_type.dart';
 /// declaration lets a template advertise its inputs with types and defaults.
 /// The default serializes inline; a [JetFieldType.dateTime] default is written
 /// as an ISO-8601 string.
-class ReportParameter {
+class ReportParameter with ValueEquality {
   /// Creates a parameter declaration.
   const ReportParameter({
     required this.name,
@@ -59,14 +60,7 @@ class ReportParameter {
           : raw;
 
   @override
-  bool operator ==(Object other) =>
-      other is ReportParameter &&
-      other.name == name &&
-      other.type == type &&
-      other.defaultValue == defaultValue;
-
-  @override
-  int get hashCode => Object.hash(name, type, defaultValue);
+  List<Object?> get props => <Object?>[name, type, defaultValue];
 
   @override
   String toString() => 'ReportParameter($name, $type, default: $defaultValue)';

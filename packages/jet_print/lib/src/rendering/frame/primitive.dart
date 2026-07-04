@@ -9,10 +9,11 @@ import '../../domain/elements/image_source.dart';
 import '../../domain/geometry.dart';
 import '../../domain/styles/color.dart';
 import '../../domain/styles/text_style.dart';
+import '../../domain/value_equality.dart';
 import '../text/text_measurer.dart';
 
 /// A single positioned primitive on a page.
-sealed class FramePrimitive {
+sealed class FramePrimitive with ValueEquality {
   /// Creates a primitive bounded by [bounds] (page points), optionally tagged
   /// with the originating [elementId] and rotated by [rotation].
   const FramePrimitive(
@@ -27,6 +28,9 @@ sealed class FramePrimitive {
   /// Clockwise rotation in radians, applied about [bounds]'s center by the
   /// paint layer. Default 0 (no rotation) — keeps existing frames byte-identical.
   final double rotation;
+
+  /// The base fields every primitive's [props] must include — spread first.
+  List<Object?> get baseProps => <Object?>[bounds, elementId, rotation];
 }
 
 /// Pre-broken text: the measurer's [lines] drawn without re-wrapping.
@@ -51,18 +55,7 @@ final class TextRunPrimitive extends FramePrimitive {
   final String fontFamily;
 
   @override
-  bool operator ==(Object other) =>
-      other is TextRunPrimitive &&
-      other.bounds == bounds &&
-      other.elementId == elementId &&
-      other.rotation == rotation &&
-      other.style == style &&
-      other.fontFamily == fontFamily &&
-      _listEquals(other.lines, lines);
-
-  @override
-  int get hashCode => Object.hash(
-      bounds, elementId, rotation, style, fontFamily, Object.hashAll(lines));
+  List<Object?> get props => <Object?>[...baseProps, style, fontFamily, lines];
 
   @override
   String toString() =>
@@ -91,25 +84,7 @@ final class ImagePrimitive extends FramePrimitive {
   final double opacity;
 
   @override
-  bool operator ==(Object other) {
-    if (other is! ImagePrimitive ||
-        other.bounds != bounds ||
-        other.elementId != elementId ||
-        other.rotation != rotation ||
-        other.fit != fit ||
-        other.opacity != opacity ||
-        other.bytes.length != bytes.length) {
-      return false;
-    }
-    for (var i = 0; i < bytes.length; i++) {
-      if (other.bytes[i] != bytes[i]) return false;
-    }
-    return true;
-  }
-
-  @override
-  int get hashCode => Object.hash(
-      bounds, elementId, rotation, fit, opacity, Object.hashAll(bytes));
+  List<Object?> get props => <Object?>[...baseProps, fit, opacity, bytes];
 
   @override
   String toString() => 'ImagePrimitive($bounds, ${bytes.length}B, $fit)';
@@ -141,19 +116,8 @@ final class LinePrimitive extends FramePrimitive {
   final double strokeWidth;
 
   @override
-  bool operator ==(Object other) =>
-      other is LinePrimitive &&
-      other.bounds == bounds &&
-      other.elementId == elementId &&
-      other.rotation == rotation &&
-      other.start == start &&
-      other.end == end &&
-      other.color == color &&
-      other.strokeWidth == strokeWidth;
-
-  @override
-  int get hashCode =>
-      Object.hash(bounds, elementId, rotation, start, end, color, strokeWidth);
+  List<Object?> get props =>
+      <Object?>[...baseProps, start, end, color, strokeWidth];
 
   @override
   String toString() => 'LinePrimitive($start -> $end, $color)';
@@ -181,18 +145,8 @@ final class RectPrimitive extends FramePrimitive {
   final double strokeWidth;
 
   @override
-  bool operator ==(Object other) =>
-      other is RectPrimitive &&
-      other.bounds == bounds &&
-      other.elementId == elementId &&
-      other.rotation == rotation &&
-      other.fill == fill &&
-      other.stroke == stroke &&
-      other.strokeWidth == strokeWidth;
-
-  @override
-  int get hashCode =>
-      Object.hash(bounds, elementId, rotation, fill, stroke, strokeWidth);
+  List<Object?> get props =>
+      <Object?>[...baseProps, fill, stroke, strokeWidth];
 
   @override
   String toString() => 'RectPrimitive($bounds, fill: $fill, stroke: $stroke)';
@@ -224,26 +178,15 @@ final class PathPrimitive extends FramePrimitive {
   final double strokeWidth;
 
   @override
-  bool operator ==(Object other) =>
-      other is PathPrimitive &&
-      other.bounds == bounds &&
-      other.elementId == elementId &&
-      other.rotation == rotation &&
-      other.fill == fill &&
-      other.stroke == stroke &&
-      other.strokeWidth == strokeWidth &&
-      _listEquals(other.commands, commands);
-
-  @override
-  int get hashCode => Object.hash(bounds, elementId, rotation, fill, stroke,
-      strokeWidth, Object.hashAll(commands));
+  List<Object?> get props =>
+      <Object?>[...baseProps, fill, stroke, strokeWidth, commands];
 
   @override
   String toString() => 'PathPrimitive($bounds, ${commands.length} cmds)';
 }
 
 /// A single path instruction.
-sealed class PathCommand {
+sealed class PathCommand with ValueEquality {
   /// Const base constructor.
   const PathCommand();
 }
@@ -257,10 +200,7 @@ final class MoveTo extends PathCommand {
   final JetOffset to;
 
   @override
-  bool operator ==(Object other) => other is MoveTo && other.to == to;
-
-  @override
-  int get hashCode => Object.hash('MoveTo', to);
+  List<Object?> get props => <Object?>[to];
 
   @override
   String toString() => 'MoveTo($to)';
@@ -275,10 +215,7 @@ final class LineTo extends PathCommand {
   final JetOffset to;
 
   @override
-  bool operator ==(Object other) => other is LineTo && other.to == to;
-
-  @override
-  int get hashCode => Object.hash('LineTo', to);
+  List<Object?> get props => <Object?>[to];
 
   @override
   String toString() => 'LineTo($to)';
@@ -290,19 +227,8 @@ final class ClosePath extends PathCommand {
   const ClosePath();
 
   @override
-  bool operator ==(Object other) => other is ClosePath;
-
-  @override
-  int get hashCode => 'ClosePath'.hashCode;
+  List<Object?> get props => const <Object?>[];
 
   @override
   String toString() => 'ClosePath()';
-}
-
-bool _listEquals<T>(List<T> a, List<T> b) {
-  if (a.length != b.length) return false;
-  for (var i = 0; i < a.length; i++) {
-    if (a[i] != b[i]) return false;
-  }
-  return true;
 }

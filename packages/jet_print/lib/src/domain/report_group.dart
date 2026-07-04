@@ -1,13 +1,15 @@
 /// A report group — a reset boundary keyed by an expression (spec 005b).
 library;
 
+import 'value_equality.dart';
+
 /// An immutable group definition: a [name] and a key [expression].
 ///
 /// The calculator evaluates [expression] per row; when its value changes
 /// between consecutive rows the group "breaks" and its group-scoped variables
 /// reset. Groups are ordered (outermost first); an outer break cascades to all
 /// inner groups.
-class ReportGroup {
+class ReportGroup with ValueEquality {
   /// Creates a group keyed by [expression].
   const ReportGroup({
     required this.name,
@@ -60,17 +62,13 @@ class ReportGroup {
       };
 
   @override
-  bool operator ==(Object other) =>
-      other is ReportGroup &&
-      other.name == name &&
-      other.expression == expression &&
-      other.keepTogether == keepTogether &&
-      other.reprintHeaderOnEachPage == reprintHeaderOnEachPage &&
-      other.startNewPage == startNewPage;
-
-  @override
-  int get hashCode => Object.hash(
-      name, expression, keepTogether, reprintHeaderOnEachPage, startNewPage);
+  List<Object?> get props => <Object?>[
+        name,
+        expression,
+        keepTogether,
+        reprintHeaderOnEachPage,
+        startNewPage,
+      ];
 
   @override
   String toString() => 'ReportGroup($name, "$expression"'

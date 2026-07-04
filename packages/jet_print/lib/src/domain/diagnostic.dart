@@ -7,6 +7,8 @@
 /// the designer surfaces validation ones before render.
 library;
 
+import 'value_equality.dart';
+
 /// The severity of a [Diagnostic].
 enum DiagnosticSeverity {
   /// Expected-but-noteworthy conditions (e.g. an empty dataset rendering the
@@ -25,7 +27,7 @@ enum DiagnosticSeverity {
 }
 
 /// One collected issue, optionally tagged with the originating [elementId].
-class Diagnostic {
+class Diagnostic with ValueEquality {
   /// Creates a diagnostic.
   const Diagnostic(this.severity, this.message, {this.elementId});
 
@@ -39,14 +41,7 @@ class Diagnostic {
   final String? elementId;
 
   @override
-  bool operator ==(Object other) =>
-      other is Diagnostic &&
-      other.severity == severity &&
-      other.message == message &&
-      other.elementId == elementId;
-
-  @override
-  int get hashCode => Object.hash(severity, message, elementId);
+  List<Object?> get props => <Object?>[severity, message, elementId];
 
   @override
   String toString() =>

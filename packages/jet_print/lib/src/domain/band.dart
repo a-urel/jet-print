@@ -8,17 +8,16 @@
 /// consistent with that slot — but position, not [type], is authoritative.
 library;
 
-import 'package:flutter/foundation.dart' show listEquals;
-
 import 'bool_property.dart';
 import 'column_layout.dart';
 import 'report_band.dart' show BandType;
 import 'report_element.dart';
+import 'value_equality.dart';
 
 /// An ordered, fixed-height band holding absolutely-positioned [elements],
 /// addressable by a stable [id] (enabling add/remove/reorder/retype and
 /// id-based selection — FR-002).
-class Band {
+class Band with ValueEquality {
   /// Creates a band identified by [id], of [type] and [height] points,
   /// containing [elements].
   const Band({
@@ -77,19 +76,8 @@ class Band {
       );
 
   @override
-  bool operator ==(Object other) =>
-      other is Band &&
-      other.id == id &&
-      other.type == type &&
-      other.height == height &&
-      listEquals(other.elements, elements) &&
-      other.columnLayout == columnLayout &&
-      other.name == name &&
-      other.visible == visible;
-
-  @override
-  int get hashCode => Object.hash(
-      id, type, height, Object.hashAll(elements), columnLayout, name, visible);
+  List<Object?> get props =>
+      <Object?>[id, type, height, elements, columnLayout, name, visible];
 
   @override
   String toString() => 'Band($id, ${type.name}, ${height}pt, '

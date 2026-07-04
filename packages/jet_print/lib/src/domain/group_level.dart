@@ -10,11 +10,12 @@ library;
 
 import 'band.dart';
 import 'copy_support.dart';
+import 'value_equality.dart';
 
 /// An immutable group definition keyed by [key]; when the key changes between
 /// consecutive rows the group "breaks", its [footer] then [header] reprint, and
 /// its group-scoped variables reset. Outermost-first within a scope.
-class GroupLevel {
+class GroupLevel with ValueEquality {
   /// Creates a group identified by [id], named [name], keyed by [key].
   const GroupLevel({
     required this.id,
@@ -80,20 +81,16 @@ class GroupLevel {
       );
 
   @override
-  bool operator ==(Object other) =>
-      other is GroupLevel &&
-      other.id == id &&
-      other.name == name &&
-      other.key == key &&
-      other.header == header &&
-      other.footer == footer &&
-      other.keepTogether == keepTogether &&
-      other.reprintHeaderOnEachPage == reprintHeaderOnEachPage &&
-      other.startNewPage == startNewPage;
-
-  @override
-  int get hashCode => Object.hash(id, name, key, header, footer, keepTogether,
-      reprintHeaderOnEachPage, startNewPage);
+  List<Object?> get props => <Object?>[
+        id,
+        name,
+        key,
+        header,
+        footer,
+        keepTogether,
+        reprintHeaderOnEachPage,
+        startNewPage,
+      ];
 
   @override
   String toString() => 'GroupLevel($id, "$name", key: "$key"'

@@ -13,14 +13,13 @@
 /// the domain seam).
 library;
 
-import 'package:flutter/foundation.dart' show listEquals;
-
 import 'band.dart';
 import 'copy_support.dart';
 import 'detail_scope.dart';
 import 'page_format.dart';
 import 'report_parameter.dart';
 import 'report_variable.dart';
+import 'value_equality.dart';
 import 'watermark.dart';
 
 /// Record-blind, per-page chrome. Every slot is laid out against a page-scoped
@@ -29,7 +28,7 @@ import 'watermark.dart';
 /// [columnFooter] and [background] are **reserved** (not laid out yet;
 /// multi-column is a future feature). [watermark] is laid out on every page
 /// (not reserved).
-class PageFurniture {
+class PageFurniture with ValueEquality {
   /// Creates page furniture with the given (all optional) slots.
   const PageFurniture({
     this.pageHeader,
@@ -81,18 +80,14 @@ class PageFurniture {
       );
 
   @override
-  bool operator ==(Object other) =>
-      other is PageFurniture &&
-      other.pageHeader == pageHeader &&
-      other.pageFooter == pageFooter &&
-      other.columnHeader == columnHeader &&
-      other.columnFooter == columnFooter &&
-      other.background == background &&
-      other.watermark == watermark;
-
-  @override
-  int get hashCode => Object.hash(pageHeader, pageFooter, columnHeader,
-      columnFooter, background, watermark);
+  List<Object?> get props => <Object?>[
+        pageHeader,
+        pageFooter,
+        columnHeader,
+        columnFooter,
+        background,
+        watermark,
+      ];
 
   @override
   String toString() => 'PageFurniture('
@@ -107,7 +102,7 @@ class PageFurniture {
 }
 
 /// The data-driven content: once-bands plus the master [root] scope.
-class ReportBody {
+class ReportBody with ValueEquality {
   /// Creates a body over the master [root] scope.
   const ReportBody({
     this.title,
@@ -146,15 +141,7 @@ class ReportBody {
       );
 
   @override
-  bool operator ==(Object other) =>
-      other is ReportBody &&
-      other.title == title &&
-      other.summary == summary &&
-      other.noData == noData &&
-      other.root == root;
-
-  @override
-  int get hashCode => Object.hash(title, summary, noData, root);
+  List<Object?> get props => <Object?>[title, summary, noData, root];
 
   @override
   String toString() => 'ReportBody(${<String>[
@@ -168,7 +155,7 @@ class ReportBody {
 /// An immutable, reified report definition: a named [page] layout with declared
 /// [parameters] and [variables], record-blind [furniture], and a data-driven
 /// [body]. Serializes to versioned JSON (Constitution V).
-class ReportDefinition {
+class ReportDefinition with ValueEquality {
   /// Creates a report definition.
   const ReportDefinition({
     required this.name,
@@ -238,18 +225,8 @@ class ReportDefinition {
       );
 
   @override
-  bool operator ==(Object other) =>
-      other is ReportDefinition &&
-      other.name == name &&
-      other.page == page &&
-      listEquals(other.parameters, parameters) &&
-      listEquals(other.variables, variables) &&
-      other.furniture == furniture &&
-      other.body == body;
-
-  @override
-  int get hashCode => Object.hash(name, page, Object.hashAll(parameters),
-      Object.hashAll(variables), furniture, body);
+  List<Object?> get props =>
+      <Object?>[name, page, parameters, variables, furniture, body];
 
   @override
   String toString() => 'ReportDefinition("$name", $page, '

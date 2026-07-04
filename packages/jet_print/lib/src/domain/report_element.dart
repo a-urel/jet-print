@@ -36,6 +36,12 @@ abstract class ReportElement {
   /// Must be unique per registered type (see `ElementCodecRegistry`).
   String get typeKey;
 
+  /// The base-class fields every concrete element's equality must include.
+  /// Value-equal subclasses spread this first in their `ValueEquality.props`
+  /// (`props => [...baseProps, own, fields]`), so a field added here flows
+  /// into every subclass's equality without touching each one.
+  List<Object?> get baseProps => <Object?>[id, bounds, name, visible];
+
   /// Returns a copy of this element of the **same concrete type** repositioned
   /// (and/or resized) to [bounds], with every other field preserved.
   ///

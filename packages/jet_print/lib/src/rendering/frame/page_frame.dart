@@ -3,10 +3,11 @@
 library;
 
 import '../../domain/page_format.dart';
+import '../../domain/value_equality.dart';
 import 'primitive.dart';
 
 /// An immutable page frame: [primitives] positioned on [page].
-class PageFrame {
+class PageFrame with ValueEquality {
   /// Creates a page frame; [primitives] is copied into an unmodifiable list.
   PageFrame({required this.page, required List<FramePrimitive> primitives})
       : primitives = List<FramePrimitive>.unmodifiable(primitives);
@@ -18,20 +19,7 @@ class PageFrame {
   final List<FramePrimitive> primitives;
 
   @override
-  bool operator ==(Object other) {
-    if (other is! PageFrame ||
-        other.page != page ||
-        other.primitives.length != primitives.length) {
-      return false;
-    }
-    for (var i = 0; i < primitives.length; i++) {
-      if (other.primitives[i] != primitives[i]) return false;
-    }
-    return true;
-  }
-
-  @override
-  int get hashCode => Object.hash(page, Object.hashAll(primitives));
+  List<Object?> get props => <Object?>[page, primitives];
 
   @override
   String toString() => 'PageFrame(${primitives.length} primitives)';

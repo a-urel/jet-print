@@ -6,6 +6,8 @@
 /// types are immutable, use value equality, and round-trip through JSON.
 library;
 
+import 'value_equality.dart';
+
 /// VM-consistent double stringification.
 ///
 /// On web (JS), `double.toString()` omits the trailing `.0` for integer-valued
@@ -19,7 +21,7 @@ String _d(double v) {
 }
 
 /// An immutable width/height pair, in logical points.
-class JetSize {
+class JetSize with ValueEquality {
   /// Creates a size of [width] x [height] points.
   const JetSize(this.width, this.height);
 
@@ -37,18 +39,14 @@ class JetSize {
   Map<String, Object?> toJson() => <String, Object?>{'w': width, 'h': height};
 
   @override
-  bool operator ==(Object other) =>
-      other is JetSize && other.width == width && other.height == height;
-
-  @override
-  int get hashCode => Object.hash(width, height);
+  List<Object?> get props => <Object?>[width, height];
 
   @override
   String toString() => 'JetSize(${_d(width)}, ${_d(height)})';
 }
 
 /// An immutable (dx, dy) displacement, in logical points.
-class JetOffset {
+class JetOffset with ValueEquality {
   /// Creates an offset of ([dx], [dy]) points.
   const JetOffset(this.dx, this.dy);
 
@@ -66,18 +64,14 @@ class JetOffset {
   Map<String, Object?> toJson() => <String, Object?>{'dx': dx, 'dy': dy};
 
   @override
-  bool operator ==(Object other) =>
-      other is JetOffset && other.dx == dx && other.dy == dy;
-
-  @override
-  int get hashCode => Object.hash(dx, dy);
+  List<Object?> get props => <Object?>[dx, dy];
 
   @override
   String toString() => 'JetOffset(${_d(dx)}, ${_d(dy)})';
 }
 
 /// Immutable inset distances for the four sides of a box, in logical points.
-class JetEdgeInsets {
+class JetEdgeInsets with ValueEquality {
   /// Creates insets with explicit per-side values.
   const JetEdgeInsets({
     required this.left,
@@ -134,15 +128,7 @@ class JetEdgeInsets {
       <String, Object?>{'l': left, 't': top, 'r': right, 'b': bottom};
 
   @override
-  bool operator ==(Object other) =>
-      other is JetEdgeInsets &&
-      other.left == left &&
-      other.top == top &&
-      other.right == right &&
-      other.bottom == bottom;
-
-  @override
-  int get hashCode => Object.hash(left, top, right, bottom);
+  List<Object?> get props => <Object?>[left, top, right, bottom];
 
   @override
   String toString() =>
@@ -151,7 +137,7 @@ class JetEdgeInsets {
 
 /// An immutable axis-aligned rectangle: top-left at ([x], [y]) with [width] x
 /// [height], all in logical points.
-class JetRect {
+class JetRect with ValueEquality {
   /// Creates a rectangle.
   const JetRect({
     required this.x,
@@ -188,15 +174,7 @@ class JetRect {
       <String, Object?>{'x': x, 'y': y, 'w': width, 'h': height};
 
   @override
-  bool operator ==(Object other) =>
-      other is JetRect &&
-      other.x == x &&
-      other.y == y &&
-      other.width == width &&
-      other.height == height;
-
-  @override
-  int get hashCode => Object.hash(x, y, width, height);
+  List<Object?> get props => <Object?>[x, y, width, height];
 
   @override
   String toString() =>
@@ -207,7 +185,7 @@ class JetRect {
 /// and [maxHeight] in logical points. Either may be [double.infinity]
 /// (unbounded). Pure-Dart; mirrors the role of a layout constraint without any
 /// `dart:ui` dependency.
-class JetConstraints {
+class JetConstraints with ValueEquality {
   /// Creates constraints; both axes default to unbounded.
   const JetConstraints({
     this.maxWidth = double.infinity,
@@ -227,13 +205,7 @@ class JetConstraints {
       );
 
   @override
-  bool operator ==(Object other) =>
-      other is JetConstraints &&
-      other.maxWidth == maxWidth &&
-      other.maxHeight == maxHeight;
-
-  @override
-  int get hashCode => Object.hash(maxWidth, maxHeight);
+  List<Object?> get props => <Object?>[maxWidth, maxHeight];
 
   @override
   String toString() =>

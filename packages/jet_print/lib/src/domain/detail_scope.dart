@@ -7,12 +7,11 @@
 /// lines scope → total band") is preserved through migration and editing.
 library;
 
-import 'package:flutter/foundation.dart' show listEquals;
-
 import 'band.dart';
 import 'copy_support.dart';
 import 'group_level.dart';
 import 'scope_total.dart';
+import 'value_equality.dart';
 
 /// One entry in a [DetailScope]'s ordered contents: either a per-row [Band]
 /// (wrapped in [BandNode]) or a nested [DetailScope] (wrapped in [NestedScope]).
@@ -23,7 +22,7 @@ sealed class ScopeNode {
 }
 
 /// A per-row band rendered within the owning scope.
-final class BandNode extends ScopeNode {
+final class BandNode extends ScopeNode with ValueEquality {
   /// Wraps [band] as a scope child.
   const BandNode(this.band);
 
@@ -31,17 +30,14 @@ final class BandNode extends ScopeNode {
   final Band band;
 
   @override
-  bool operator ==(Object other) => other is BandNode && other.band == band;
-
-  @override
-  int get hashCode => band.hashCode;
+  List<Object?> get props => <Object?>[band];
 
   @override
   String toString() => 'BandNode(${band.id})';
 }
 
 /// A nested collection scope rendered within the owning scope.
-final class NestedScope extends ScopeNode {
+final class NestedScope extends ScopeNode with ValueEquality {
   /// Wraps [scope] as a scope child.
   const NestedScope(this.scope);
 
@@ -49,11 +45,7 @@ final class NestedScope extends ScopeNode {
   final DetailScope scope;
 
   @override
-  bool operator ==(Object other) =>
-      other is NestedScope && other.scope == scope;
-
-  @override
-  int get hashCode => scope.hashCode;
+  List<Object?> get props => <Object?>[scope];
 
   @override
   String toString() => 'NestedScope(${scope.id})';
@@ -62,7 +54,7 @@ final class NestedScope extends ScopeNode {
 /// An immutable data-iteration scope: the master/root (`collectionField` null)
 /// or a nested collection. Owns its [groups] (master-level on `root`) and an
 /// ordered list of [children].
-class DetailScope {
+class DetailScope with ValueEquality {
   /// Creates a scope identified by [id]. A non-null [collectionField] makes it a
   /// nested scope iterating that child collection.
   const DetailScope({
@@ -118,18 +110,8 @@ class DetailScope {
       );
 
   @override
-  bool operator ==(Object other) =>
-      other is DetailScope &&
-      other.id == id &&
-      other.collectionField == collectionField &&
-      listEquals(other.groups, groups) &&
-      listEquals(other.children, children) &&
-      other.footer == footer &&
-      listEquals(other.totals, totals);
-
-  @override
-  int get hashCode => Object.hash(id, collectionField, Object.hashAll(groups),
-      Object.hashAll(children), footer, Object.hashAll(totals));
+  List<Object?> get props =>
+      <Object?>[id, collectionField, groups, children, footer, totals];
 
   @override
   String toString() => 'DetailScope($id'

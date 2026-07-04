@@ -8,6 +8,7 @@ import '../copy_support.dart';
 import '../geometry.dart';
 import '../report_element.dart';
 import '../styles/color.dart';
+import '../value_equality.dart';
 
 /// The default series color for a new chart (a mid blue).
 const JetColor kDefaultChartColor = JetColor(0xFF4F8DF7);
@@ -28,7 +29,7 @@ enum ChartType {
 /// One resolved series point: a [label] (category) and its numeric [value].
 /// Produced at fill time from a [ChartElement]'s category/value expressions;
 /// never serialized (a fill-time artifact, like a [TextElement]'s resolved text).
-class ChartPoint {
+class ChartPoint with ValueEquality {
   /// Creates a point.
   const ChartPoint(this.label, this.value);
 
@@ -39,11 +40,7 @@ class ChartPoint {
   final double value;
 
   @override
-  bool operator ==(Object other) =>
-      other is ChartPoint && other.label == label && other.value == value;
-
-  @override
-  int get hashCode => Object.hash(label, value);
+  List<Object?> get props => <Object?>[label, value];
 
   @override
   String toString() => 'ChartPoint($label, $value)';
@@ -55,7 +52,7 @@ class ChartPoint {
 /// [points] is empty in an authored element; the fill phase returns a resolved
 /// copy with [points] filled and the binding fields left intact. The renderer
 /// reads only [points] + the chrome flags.
-class ChartElement extends ReportElement {
+class ChartElement extends ReportElement with ValueEquality {
   /// Creates a chart element.
   const ChartElement({
     required super.id,
@@ -153,27 +150,8 @@ class ChartElement extends ReportElement {
   ChartElement withVisible(BoolProperty visible) => copyWith(visible: visible);
 
   @override
-  bool operator ==(Object other) =>
-      other is ChartElement &&
-      other.id == id &&
-      other.bounds == bounds &&
-      other.chartType == chartType &&
-      other.collectionField == collectionField &&
-      other.valueExpression == valueExpression &&
-      other.categoryExpression == categoryExpression &&
-      other.title == title &&
-      other.showAxes == showAxes &&
-      other.showValueLabels == showValueLabels &&
-      other.showLegend == showLegend &&
-      other.seriesColor == seriesColor &&
-      _pointsEqual(other.points, points) &&
-      other.name == name &&
-      other.visible == visible;
-
-  @override
-  int get hashCode => Object.hash(
-        id,
-        bounds,
+  List<Object?> get props => <Object?>[
+        ...baseProps,
         chartType,
         collectionField,
         valueExpression,
@@ -183,19 +161,9 @@ class ChartElement extends ReportElement {
         showValueLabels,
         showLegend,
         seriesColor,
-        Object.hashAll(points),
-        name,
-        visible,
-      );
+        points,
+      ];
 
   @override
   String toString() => 'ChartElement($id, ${chartType.name}, $collectionField)';
-}
-
-bool _pointsEqual(List<ChartPoint> a, List<ChartPoint> b) {
-  if (a.length != b.length) return false;
-  for (var i = 0; i < a.length; i++) {
-    if (a[i] != b[i]) return false;
-  }
-  return true;
 }

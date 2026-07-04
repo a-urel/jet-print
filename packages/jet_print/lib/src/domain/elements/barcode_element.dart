@@ -6,6 +6,7 @@ import '../copy_support.dart';
 import '../geometry.dart';
 import '../report_element.dart';
 import '../styles/color.dart';
+import '../value_equality.dart';
 
 /// The barcode symbology (encoding) to render. [auto] infers the concrete
 /// symbology from the encoded value at fill time (see `symbology_inference`).
@@ -90,7 +91,7 @@ enum QrErrorCorrectionLevel { l, m, q, h }
 /// Encodes [data] (or, when [dataField] is set, the value of that data-source
 /// field resolved at fill time) as a [symbology] barcode drawn in [color]
 /// within [bounds].
-class BarcodeElement extends ReportElement {
+class BarcodeElement extends ReportElement with ValueEquality {
   /// Creates a barcode element.
   const BarcodeElement({
     required super.id,
@@ -172,23 +173,16 @@ class BarcodeElement extends ReportElement {
       copyWith(visible: visible);
 
   @override
-  bool operator ==(Object other) =>
-      other is BarcodeElement &&
-      other.id == id &&
-      other.bounds == bounds &&
-      other.symbology == symbology &&
-      other.data == data &&
-      other.dataField == dataField &&
-      other.color == color &&
-      other.showText == showText &&
-      other.quietZone == quietZone &&
-      other.eccLevel == eccLevel &&
-      other.name == name &&
-      other.visible == visible;
-
-  @override
-  int get hashCode => Object.hash(id, bounds, symbology, data, dataField, color,
-      showText, quietZone, eccLevel, name, visible);
+  List<Object?> get props => <Object?>[
+        ...baseProps,
+        symbology,
+        data,
+        dataField,
+        color,
+        showText,
+        quietZone,
+        eccLevel,
+      ];
 
   @override
   String toString() => 'BarcodeElement($id, ${symbology.name})';

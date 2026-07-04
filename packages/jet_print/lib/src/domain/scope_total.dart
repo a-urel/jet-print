@@ -6,8 +6,10 @@
 /// scope, a group footer, or the report summary can reference it as `$F{name}`.
 library;
 
+import 'value_equality.dart';
+
 /// An immutable `{name, expression}` published total.
-class ScopeTotal {
+class ScopeTotal with ValueEquality {
   /// Creates a published total binding [name] to the aggregate [expression].
   const ScopeTotal(this.name, this.expression);
 
@@ -18,13 +20,7 @@ class ScopeTotal {
   final String expression;
 
   @override
-  bool operator ==(Object other) =>
-      other is ScopeTotal &&
-      other.name == name &&
-      other.expression == expression;
-
-  @override
-  int get hashCode => Object.hash(name, expression);
+  List<Object?> get props => <Object?>[name, expression];
 
   @override
   String toString() => 'ScopeTotal($name = $expression)';
