@@ -21,15 +21,12 @@ import '../../domain/report_element.dart';
 ReportDefinition mapBands(ReportDefinition def, Band Function(Band) transform) {
   Band? slot(Band? b) => b == null ? null : transform(b);
 
-  GroupLevel group(GroupLevel g) => GroupLevel(
-        id: g.id,
-        name: g.name,
-        key: g.key,
-        header: slot(g.header),
-        footer: slot(g.footer),
-        keepTogether: g.keepTogether,
-        reprintHeaderOnEachPage: g.reprintHeaderOnEachPage,
-        startNewPage: g.startNewPage,
+  // Every rebuild funnels through copyWith so fields this walker doesn't know
+  // about (totals, watermark, a future addition) carry over by construction —
+  // rebuilding field-by-field here has silently dropped fields before.
+  GroupLevel group(GroupLevel g) => g.copyWith(
+        header: () => slot(g.header),
+        footer: () => slot(g.footer),
       );
 
   late final DetailScope Function(DetailScope) scope;
@@ -37,30 +34,26 @@ ReportDefinition mapBands(ReportDefinition def, Band Function(Band) transform) {
         BandNode(band: final Band b) => BandNode(transform(b)),
         NestedScope(scope: final DetailScope s) => NestedScope(scope(s)),
       };
-  scope = (DetailScope s) => DetailScope(
-        id: s.id,
-        collectionField: s.collectionField,
+  scope = (DetailScope s) => s.copyWith(
         groups: <GroupLevel>[for (final GroupLevel g in s.groups) group(g)],
         children: <ScopeNode>[for (final ScopeNode n in s.children) node(n)],
         // A nested scope's footer is a band too (spec 029) — map it through
-        // [transform], and preserve the scope's published totals (spec 030):
-        // both were silently dropped when this rebuilt the scope field-by-field.
-        footer: slot(s.footer),
-        totals: s.totals,
+        // [transform].
+        footer: () => slot(s.footer),
       );
 
   return def.copyWith(
-    furniture: PageFurniture(
-      pageHeader: slot(def.furniture.pageHeader),
-      pageFooter: slot(def.furniture.pageFooter),
-      columnHeader: slot(def.furniture.columnHeader),
-      columnFooter: slot(def.furniture.columnFooter),
-      background: slot(def.furniture.background),
+    furniture: def.furniture.copyWith(
+      pageHeader: () => slot(def.furniture.pageHeader),
+      pageFooter: () => slot(def.furniture.pageFooter),
+      columnHeader: () => slot(def.furniture.columnHeader),
+      columnFooter: () => slot(def.furniture.columnFooter),
+      background: () => slot(def.furniture.background),
     ),
-    body: ReportBody(
-      title: slot(def.body.title),
-      summary: slot(def.body.summary),
-      noData: slot(def.body.noData),
+    body: def.body.copyWith(
+      title: () => slot(def.body.title),
+      summary: () => slot(def.body.summary),
+      noData: () => slot(def.body.noData),
       root: scope(def.body.root),
     ),
   );
@@ -93,9 +86,9 @@ ReportDefinition updateElement(ReportDefinition def, String elementId,
 /// scope's levels; recurses nested scopes too), returning a new definition.
 ReportDefinition mapGroups(
     ReportDefinition def, GroupLevel Function(GroupLevel) transform) {
-  DetailScope scope(DetailScope s) => DetailScope(
-        id: s.id,
-        collectionField: s.collectionField,
+  // Group mapping touches no bands; copyWith carries every other scope field
+  // (footer, totals, …) through unchanged by construction.
+  DetailScope scope(DetailScope s) => s.copyWith(
         groups: <GroupLevel>[for (final GroupLevel g in s.groups) transform(g)],
         children: <ScopeNode>[
           for (final ScopeNode n in s.children)
@@ -105,11 +98,6 @@ ReportDefinition mapGroups(
                 NestedScope(scope(inner)),
             },
         ],
-        // Group mapping touches no bands, so the scope's footer + published
-        // totals pass through unchanged — but they must still be carried over,
-        // not dropped by rebuilding the scope field-by-field.
-        footer: s.footer,
-        totals: s.totals,
       );
   return def.copyWith(body: def.body.copyWith(root: scope(def.body.root)));
 }
@@ -434,30 +422,28 @@ Band? bandInSlot(ReportDefinition def, BandType type) => switch (type) {
       _ => null,
     };
 
-/// Sets (or, when [band] is null, clears) the singleton slot for [type]. Builds
-/// the container directly so a null [band] genuinely clears the slot (copyWith
-/// cannot). A no-op for a non-singleton [type].
+/// Sets (or, when [band] is null, clears) the singleton slot for [type]. The
+/// slot thunks are always supplied, so a null [band] genuinely clears the
+/// slot. A no-op for a non-singleton [type].
 ReportDefinition setSlotBand(ReportDefinition def, BandType type, Band? band) {
+  Band? Function()? put(BandType slot) => type == slot ? () => band : null;
   if (isFurnitureType(type)) {
-    final PageFurniture f = def.furniture;
     return def.copyWith(
-      furniture: PageFurniture(
-        pageHeader: type == BandType.pageHeader ? band : f.pageHeader,
-        pageFooter: type == BandType.pageFooter ? band : f.pageFooter,
-        columnHeader: type == BandType.columnHeader ? band : f.columnHeader,
-        columnFooter: type == BandType.columnFooter ? band : f.columnFooter,
-        background: type == BandType.background ? band : f.background,
+      furniture: def.furniture.copyWith(
+        pageHeader: put(BandType.pageHeader),
+        pageFooter: put(BandType.pageFooter),
+        columnHeader: put(BandType.columnHeader),
+        columnFooter: put(BandType.columnFooter),
+        background: put(BandType.background),
       ),
     );
   }
   if (isOnceType(type)) {
-    final ReportBody b = def.body;
     return def.copyWith(
-      body: ReportBody(
-        title: type == BandType.title ? band : b.title,
-        summary: type == BandType.summary ? band : b.summary,
-        noData: type == BandType.noData ? band : b.noData,
-        root: b.root,
+      body: def.body.copyWith(
+        title: put(BandType.title),
+        summary: put(BandType.summary),
+        noData: put(BandType.noData),
       ),
     );
   }
@@ -465,28 +451,25 @@ ReportDefinition setSlotBand(ReportDefinition def, BandType type, Band? band) {
 }
 
 /// Sets (or, when [band] is null, clears) group [groupId]'s [header]/footer
-/// band. Builds the group directly so a null [band] clears the slot.
+/// band. The slot thunk is always supplied, so a null [band] clears the slot.
 ReportDefinition setGroupBand(ReportDefinition def, String groupId,
         {required bool header, required Band? band}) =>
     updateGroup(
       def,
       groupId,
-      (GroupLevel g) => GroupLevel(
-        id: g.id,
-        name: g.name,
-        key: g.key,
-        header: header ? band : g.header,
-        footer: header ? g.footer : band,
-        keepTogether: g.keepTogether,
-        reprintHeaderOnEachPage: g.reprintHeaderOnEachPage,
-        startNewPage: g.startNewPage,
-      ),
+      (GroupLevel g) => header
+          ? g.copyWith(header: () => band)
+          : g.copyWith(footer: () => band),
     );
 
 /// Removes the band with id [bandId] wherever it lives — a furniture slot, a
 /// body once-band, a group header/footer, or a scope per-row [BandNode] —
 /// returning the new definition. A no-op if no band matches.
 ReportDefinition removeBandFromTree(ReportDefinition def, String bandId) {
+  // Every rebuild funnels through copyWith: a matching slot is cleared with a
+  // `() => null` thunk, everything else carries over by construction.
+  Band? drop(Band? slot) => slot?.id == bandId ? null : slot;
+
   final PageFurniture f = def.furniture;
   if (f.pageHeader?.id == bandId ||
       f.pageFooter?.id == bandId ||
@@ -494,12 +477,12 @@ ReportDefinition removeBandFromTree(ReportDefinition def, String bandId) {
       f.columnFooter?.id == bandId ||
       f.background?.id == bandId) {
     return def.copyWith(
-      furniture: PageFurniture(
-        pageHeader: f.pageHeader?.id == bandId ? null : f.pageHeader,
-        pageFooter: f.pageFooter?.id == bandId ? null : f.pageFooter,
-        columnHeader: f.columnHeader?.id == bandId ? null : f.columnHeader,
-        columnFooter: f.columnFooter?.id == bandId ? null : f.columnFooter,
-        background: f.background?.id == bandId ? null : f.background,
+      furniture: f.copyWith(
+        pageHeader: () => drop(f.pageHeader),
+        pageFooter: () => drop(f.pageFooter),
+        columnHeader: () => drop(f.columnHeader),
+        columnFooter: () => drop(f.columnFooter),
+        background: () => drop(f.background),
       ),
     );
   }
@@ -508,45 +491,32 @@ ReportDefinition removeBandFromTree(ReportDefinition def, String bandId) {
       b.summary?.id == bandId ||
       b.noData?.id == bandId) {
     return def.copyWith(
-      body: ReportBody(
-        title: b.title?.id == bandId ? null : b.title,
-        summary: b.summary?.id == bandId ? null : b.summary,
-        noData: b.noData?.id == bandId ? null : b.noData,
-        root: b.root,
+      body: b.copyWith(
+        title: () => drop(b.title),
+        summary: () => drop(b.summary),
+        noData: () => drop(b.noData),
       ),
     );
   }
   // A group header/footer or a scope per-row band: rebuild each scope.
+  // Removal may target the scope's own footer band (spec 029).
   return mapScopes(def, (DetailScope s) {
-    final List<GroupLevel> groups = <GroupLevel>[
-      for (final GroupLevel g in s.groups)
-        if (g.header?.id == bandId || g.footer?.id == bandId)
-          GroupLevel(
-            id: g.id,
-            name: g.name,
-            key: g.key,
-            header: g.header?.id == bandId ? null : g.header,
-            footer: g.footer?.id == bandId ? null : g.footer,
-            keepTogether: g.keepTogether,
-            reprintHeaderOnEachPage: g.reprintHeaderOnEachPage,
-            startNewPage: g.startNewPage,
-          )
-        else
-          g,
-    ];
-    final List<ScopeNode> children = <ScopeNode>[
-      for (final ScopeNode n in s.children)
-        if (!(n is BandNode && n.band.id == bandId)) n,
-    ];
-    return DetailScope(
-      id: s.id,
-      collectionField: s.collectionField,
-      groups: groups,
-      children: children,
-      // Removal may target the scope's own footer band (spec 029); otherwise it
-      // passes through. Published totals (spec 030) are never touched by removal.
-      footer: s.footer?.id == bandId ? null : s.footer,
-      totals: s.totals,
+    return s.copyWith(
+      groups: <GroupLevel>[
+        for (final GroupLevel g in s.groups)
+          if (g.header?.id == bandId || g.footer?.id == bandId)
+            g.copyWith(
+              header: () => drop(g.header),
+              footer: () => drop(g.footer),
+            )
+          else
+            g,
+      ],
+      children: <ScopeNode>[
+        for (final ScopeNode n in s.children)
+          if (!(n is BandNode && n.band.id == bandId)) n,
+      ],
+      footer: () => drop(s.footer),
     );
   });
 }
@@ -567,14 +537,7 @@ ReportDefinition reorderScopeChild(
       final List<ScopeNode> children = <ScopeNode>[...s.children];
       final ScopeNode node = children.removeAt(idx);
       children.insert(target, node);
-      return DetailScope(
-        id: s.id,
-        collectionField: s.collectionField,
-        groups: s.groups,
-        children: children,
-        // Reordering touches only [children]; the scope's footer (spec 029) and
-        // published totals (spec 030) must carry through unchanged.
-        footer: s.footer,
-        totals: s.totals,
-      );
+      // Reordering touches only [children]; copyWith carries every other
+      // scope field through unchanged by construction.
+      return s.copyWith(children: children);
     });

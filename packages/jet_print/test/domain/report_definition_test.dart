@@ -35,8 +35,13 @@ void main() {
 
     test('copyWith replaces only the named slot', () {
       const PageFurniture f = PageFurniture(pageHeader: _ph);
-      expect(f.copyWith(pageFooter: _ph).pageFooter, _ph);
-      expect(f.copyWith(pageFooter: _ph).pageHeader, _ph);
+      expect(f.copyWith(pageFooter: () => _ph).pageFooter, _ph);
+      expect(f.copyWith(pageFooter: () => _ph).pageHeader, _ph);
+    });
+
+    test('copyWith clears a slot with a null thunk', () {
+      const PageFurniture f = PageFurniture(pageHeader: _ph);
+      expect(f.copyWith(pageHeader: () => null).pageHeader, isNull);
     });
   });
 
@@ -60,8 +65,14 @@ void main() {
     });
 
     test('copyWith replaces only named fields', () {
-      expect(_body.copyWith(title: _title).title, _title);
-      expect(_body.copyWith(title: _title).root.id, 'root');
+      expect(_body.copyWith(title: () => _title).title, _title);
+      expect(_body.copyWith(title: () => _title).root.id, 'root');
+    });
+
+    test('copyWith clears a once-band with a null thunk', () {
+      const ReportBody body =
+          ReportBody(title: _title, root: DetailScope(id: 'root'));
+      expect(body.copyWith(title: () => null).title, isNull);
     });
   });
 
@@ -81,7 +92,8 @@ void main() {
     });
     test('copyWith sets watermark', () {
       const wm = Watermark(text: 'DRAFT');
-      expect(const PageFurniture().copyWith(watermark: wm).watermark, wm);
+      expect(
+          const PageFurniture().copyWith(watermark: () => wm).watermark, wm);
     });
   });
 

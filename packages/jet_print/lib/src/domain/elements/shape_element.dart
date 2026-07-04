@@ -2,6 +2,7 @@
 library;
 
 import '../bool_property.dart';
+import '../copy_support.dart';
 import '../geometry.dart';
 import '../report_element.dart';
 import '../styles/box_style.dart';
@@ -109,13 +110,16 @@ class ShapeElement extends ReportElement {
   /// "leave it" from "set it to null"; pass [clearUnknownForm] `true` to null it
   /// — what a deliberate form pick does, since choosing a known form supersedes
   /// any preserved unknown one.
+  ///
+  /// [name] is nullable, so it takes a thunk: omit to preserve, pass
+  /// `() => value` to replace (`() => null` clears).
   ShapeElement copyWith({
     JetRect? bounds,
     ShapeKind? kind,
     JetBoxStyle? style,
     bool? flipDiagonal,
     bool clearUnknownForm = false,
-    String? name,
+    String? Function()? name,
     BoolProperty? visible,
   }) =>
       ShapeElement(
@@ -125,7 +129,7 @@ class ShapeElement extends ReportElement {
         style: style ?? this.style,
         flipDiagonal: flipDiagonal ?? this.flipDiagonal,
         unknownForm: clearUnknownForm ? null : unknownForm,
-        name: name ?? this.name,
+        name: pick(name, this.name),
         visible: visible ?? this.visible,
       );
 
@@ -133,40 +137,13 @@ class ShapeElement extends ReportElement {
   String get typeKey => 'shape';
 
   @override
-  ShapeElement withBounds(JetRect bounds) => ShapeElement(
-        id: id,
-        bounds: bounds,
-        kind: kind,
-        style: style,
-        flipDiagonal: flipDiagonal,
-        unknownForm: unknownForm,
-        name: name,
-        visible: visible,
-      );
+  ShapeElement withBounds(JetRect bounds) => copyWith(bounds: bounds);
 
   @override
-  ShapeElement withName(String? name) => ShapeElement(
-        id: id,
-        bounds: bounds,
-        kind: kind,
-        style: style,
-        flipDiagonal: flipDiagonal,
-        unknownForm: unknownForm,
-        name: name,
-        visible: visible,
-      );
+  ShapeElement withName(String? name) => copyWith(name: () => name);
 
   @override
-  ShapeElement withVisible(BoolProperty visible) => ShapeElement(
-        id: id,
-        bounds: bounds,
-        kind: kind,
-        style: style,
-        flipDiagonal: flipDiagonal,
-        unknownForm: unknownForm,
-        name: name,
-        visible: visible,
-      );
+  ShapeElement withVisible(BoolProperty visible) => copyWith(visible: visible);
 
   @override
   bool operator ==(Object other) =>

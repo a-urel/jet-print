@@ -80,15 +80,7 @@ ReportDefinition expandAggregates(ReportDefinition def) {
         final String? next = rewriteExpression(e.expression, scope, resetGroup);
         if (next != null) {
           changed = true;
-          els.add(TextElement(
-            id: e.id,
-            bounds: e.bounds,
-            text: e.text,
-            style: e.style,
-            expression: next,
-            format: e.format,
-            visible: e.visible,
-          ));
+          els.add(e.copyWith(expression: () => next));
           continue;
         }
       }
@@ -104,7 +96,7 @@ ReportDefinition expandAggregates(ReportDefinition def) {
   // first), so building it here does not defeat the no-op identity guarantee.
   final List<GroupLevel> groups = <GroupLevel>[
     for (final GroupLevel g in def.body.root.groups)
-      _rewriteGroup(g, rewriteBand),
+      _rewriteGroupFooter(g, rewriteBand),
   ];
 
   if (synth.isEmpty) return def;
@@ -112,7 +104,7 @@ ReportDefinition expandAggregates(ReportDefinition def) {
   return def.copyWith(
     variables: <ReportVariable>[...def.variables, ...synth],
     body: def.body.copyWith(
-      summary: summary,
+      summary: () => summary,
       root: def.body.root.copyWith(groups: groups),
     ),
   );
@@ -248,24 +240,15 @@ bool _isIdentPart(String c) {
   return _isIdentStart(c) || (u >= 0x30 && u <= 0x39);
 }
 
-/// Rewrites a group's footer (group scope, `resetGroup == g.name`), preserving
-/// the group's identity when nothing changed.
-GroupLevel _rewriteGroup(
+/// Maps a group's footer through [rewriteBand] (group scope,
+/// `resetGroup == g.name`), preserving the group's identity when nothing
+/// changed. Shared by the inline-aggregate and descendant-lift passes.
+GroupLevel _rewriteGroupFooter(
   GroupLevel g,
   Band? Function(Band?, VariableResetScope, String?) rewriteBand,
 ) {
   final Band? footer = rewriteBand(g.footer, VariableResetScope.group, g.name);
-  return identical(footer, g.footer) ? g : g.copyWith(footer: footer);
-}
-
-/// Lifts descendant aggregates out of a group's footer, preserving the group's
-/// identity when nothing changed (mirrors [_rewriteGroup]'s identity pattern).
-GroupLevel _liftGroup(
-  GroupLevel g,
-  Band? Function(Band?, VariableResetScope, String?) rewriteBand,
-) {
-  final Band? footer = rewriteBand(g.footer, VariableResetScope.group, g.name);
-  return identical(footer, g.footer) ? g : g.copyWith(footer: footer);
+  return identical(footer, g.footer) ? g : g.copyWith(footer: () => footer);
 }
 
 /// One descendant inline aggregate lifted out of a summary band or root group
@@ -394,15 +377,7 @@ DescendantLift liftDescendantAggregates(
             _expandInlineAggregates(expr, registrar(scope, group));
         if (next != expr) {
           changed = true;
-          els.add(TextElement(
-            id: e.id,
-            bounds: e.bounds,
-            text: e.text,
-            style: e.style,
-            expression: next,
-            format: e.format,
-            visible: e.visible,
-          ));
+          els.add(e.copyWith(expression: () => next));
           continue;
         }
       }
@@ -414,14 +389,15 @@ DescendantLift liftDescendantAggregates(
   final Band? summary =
       rewriteBand(def.body.summary, VariableResetScope.report, null);
   final List<GroupLevel> groups = <GroupLevel>[
-    for (final GroupLevel g in def.body.root.groups) _liftGroup(g, rewriteBand),
+    for (final GroupLevel g in def.body.root.groups)
+      _rewriteGroupFooter(g, rewriteBand),
   ];
 
   if (specs.isEmpty) return DescendantLift(def, const <DescendantAggregate>[]);
   return DescendantLift(
     def.copyWith(
       body: def.body.copyWith(
-        summary: summary,
+        summary: () => summary,
         root: def.body.root.copyWith(groups: groups),
       ),
     ),

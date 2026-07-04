@@ -16,6 +16,7 @@ library;
 import 'package:flutter/foundation.dart' show listEquals;
 
 import 'band.dart';
+import 'copy_support.dart';
 import 'detail_scope.dart';
 import 'page_format.dart';
 import 'report_parameter.dart';
@@ -59,21 +60,24 @@ class PageFurniture {
   final Watermark? watermark;
 
   /// Returns a copy with the given slots replaced.
+  ///
+  /// Every slot is nullable, so each takes a thunk: omit to preserve, pass
+  /// `() => value` to replace (`() => null` clears the slot).
   PageFurniture copyWith({
-    Band? pageHeader,
-    Band? pageFooter,
-    Band? columnHeader,
-    Band? columnFooter,
-    Band? background,
-    Watermark? watermark,
+    Band? Function()? pageHeader,
+    Band? Function()? pageFooter,
+    Band? Function()? columnHeader,
+    Band? Function()? columnFooter,
+    Band? Function()? background,
+    Watermark? Function()? watermark,
   }) =>
       PageFurniture(
-        pageHeader: pageHeader ?? this.pageHeader,
-        pageFooter: pageFooter ?? this.pageFooter,
-        columnHeader: columnHeader ?? this.columnHeader,
-        columnFooter: columnFooter ?? this.columnFooter,
-        background: background ?? this.background,
-        watermark: watermark ?? this.watermark,
+        pageHeader: pick(pageHeader, this.pageHeader),
+        pageFooter: pick(pageFooter, this.pageFooter),
+        columnHeader: pick(columnHeader, this.columnHeader),
+        columnFooter: pick(columnFooter, this.columnFooter),
+        background: pick(background, this.background),
+        watermark: pick(watermark, this.watermark),
       );
 
   @override
@@ -125,16 +129,19 @@ class ReportBody {
   final DetailScope root;
 
   /// Returns a copy with the given fields replaced.
+  ///
+  /// The once-band slots are nullable, so each takes a thunk: omit to
+  /// preserve, pass `() => band` to replace (`() => null` clears the slot).
   ReportBody copyWith({
-    Band? title,
-    Band? summary,
-    Band? noData,
+    Band? Function()? title,
+    Band? Function()? summary,
+    Band? Function()? noData,
     DetailScope? root,
   }) =>
       ReportBody(
-        title: title ?? this.title,
-        summary: summary ?? this.summary,
-        noData: noData ?? this.noData,
+        title: pick(title, this.title),
+        summary: pick(summary, this.summary),
+        noData: pick(noData, this.noData),
         root: root ?? this.root,
       );
 

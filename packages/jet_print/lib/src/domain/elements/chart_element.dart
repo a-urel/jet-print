@@ -4,6 +4,7 @@
 library;
 
 import '../bool_property.dart';
+import '../copy_support.dart';
 import '../geometry.dart';
 import '../report_element.dart';
 import '../styles/color.dart';
@@ -104,6 +105,9 @@ class ChartElement extends ReportElement {
   final List<ChartPoint> points;
 
   /// Returns a copy with the named fields replaced and the rest preserved.
+  ///
+  /// [name] is nullable, so it takes a thunk: omit to preserve, pass
+  /// `() => value` to replace (`() => null` clears).
   ChartElement copyWith({
     JetRect? bounds,
     ChartType? chartType,
@@ -116,7 +120,7 @@ class ChartElement extends ReportElement {
     bool? showLegend,
     JetColor? seriesColor,
     List<ChartPoint>? points,
-    String? name,
+    String? Function()? name,
     BoolProperty? visible,
   }) =>
       ChartElement(
@@ -132,7 +136,7 @@ class ChartElement extends ReportElement {
         showLegend: showLegend ?? this.showLegend,
         seriesColor: seriesColor ?? this.seriesColor,
         points: points ?? this.points,
-        name: name ?? this.name,
+        name: pick(name, this.name),
         visible: visible ?? this.visible,
       );
 
@@ -143,22 +147,7 @@ class ChartElement extends ReportElement {
   ChartElement withBounds(JetRect bounds) => copyWith(bounds: bounds);
 
   @override
-  ChartElement withName(String? name) => ChartElement(
-        id: id,
-        bounds: bounds,
-        chartType: chartType,
-        collectionField: collectionField,
-        valueExpression: valueExpression,
-        categoryExpression: categoryExpression,
-        title: title,
-        showAxes: showAxes,
-        showValueLabels: showValueLabels,
-        showLegend: showLegend,
-        seriesColor: seriesColor,
-        points: points,
-        name: name,
-        visible: visible,
-      );
+  ChartElement withName(String? name) => copyWith(name: () => name);
 
   @override
   ChartElement withVisible(BoolProperty visible) => copyWith(visible: visible);

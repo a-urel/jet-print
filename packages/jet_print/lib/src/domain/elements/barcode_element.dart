@@ -2,6 +2,7 @@
 library;
 
 import '../bool_property.dart';
+import '../copy_support.dart';
 import '../geometry.dart';
 import '../report_element.dart';
 import '../styles/color.dart';
@@ -132,8 +133,8 @@ class BarcodeElement extends ReportElement {
 
   /// Returns a copy with the named fields replaced and the rest preserved.
   ///
-  /// [dataField] uses a wrapped callback so callers can clear it to null
-  /// (`dataField: () => null`) distinctly from leaving it unchanged (omit).
+  /// The nullable fields ([dataField], [name]) take a thunk: omit to preserve,
+  /// pass `() => value` to replace (`() => null` clears).
   BarcodeElement copyWith({
     JetRect? bounds,
     BarcodeSymbology? symbology,
@@ -143,7 +144,7 @@ class BarcodeElement extends ReportElement {
     bool? showText,
     bool? quietZone,
     QrErrorCorrectionLevel? eccLevel,
-    String? name,
+    String? Function()? name,
     BoolProperty? visible,
   }) =>
       BarcodeElement(
@@ -151,12 +152,12 @@ class BarcodeElement extends ReportElement {
         bounds: bounds ?? this.bounds,
         symbology: symbology ?? this.symbology,
         data: data ?? this.data,
-        dataField: dataField != null ? dataField() : this.dataField,
+        dataField: pick(dataField, this.dataField),
         color: color ?? this.color,
         showText: showText ?? this.showText,
         quietZone: quietZone ?? this.quietZone,
         eccLevel: eccLevel ?? this.eccLevel,
-        name: name ?? this.name,
+        name: pick(name, this.name),
         visible: visible ?? this.visible,
       );
 
@@ -164,34 +165,11 @@ class BarcodeElement extends ReportElement {
   BarcodeElement withBounds(JetRect bounds) => copyWith(bounds: bounds);
 
   @override
-  BarcodeElement withName(String? name) => BarcodeElement(
-        id: id,
-        bounds: bounds,
-        symbology: symbology,
-        data: data,
-        dataField: dataField,
-        color: color,
-        showText: showText,
-        quietZone: quietZone,
-        eccLevel: eccLevel,
-        name: name,
-        visible: visible,
-      );
+  BarcodeElement withName(String? name) => copyWith(name: () => name);
 
   @override
-  BarcodeElement withVisible(BoolProperty visible) => BarcodeElement(
-        id: id,
-        bounds: bounds,
-        symbology: symbology,
-        data: data,
-        dataField: dataField,
-        color: color,
-        showText: showText,
-        quietZone: quietZone,
-        eccLevel: eccLevel,
-        name: name,
-        visible: visible,
-      );
+  BarcodeElement withVisible(BoolProperty visible) =>
+      copyWith(visible: visible);
 
   @override
   bool operator ==(Object other) =>

@@ -37,17 +37,7 @@ class SetTextBindingCommand extends EditCommand {
           before.definition,
           id,
           (ReportElement e) => e is TextElement
-              // Build directly (not copyWith) so a null [expression] can clear it.
-              ? TextElement(
-                  id: e.id,
-                  bounds: e.bounds,
-                  text: e.text,
-                  style: e.style,
-                  expression: expression,
-                  format: e.format,
-                  name: e.name,
-                  visible: e.visible,
-                )
+              ? e.copyWith(expression: () => expression)
               : e,
         ),
       );
@@ -75,14 +65,7 @@ class SetImageBindingCommand extends EditCommand {
           before.definition,
           id,
           (ReportElement e) => e is ImageElement
-              ? ImageElement(
-                  id: e.id,
-                  bounds: e.bounds,
-                  source: FieldImageSource(field),
-                  fit: e.fit,
-                  name: e.name,
-                  visible: e.visible,
-                )
+              ? e.copyWith(source: FieldImageSource(field))
               : e,
         ),
       );

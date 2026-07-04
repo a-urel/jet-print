@@ -2,6 +2,7 @@
 library;
 
 import '../bool_property.dart';
+import '../copy_support.dart';
 import '../geometry.dart';
 import '../report_element.dart';
 import 'image_source.dart';
@@ -27,32 +28,34 @@ class ImageElement extends ReportElement {
   @override
   String get typeKey => 'image';
 
-  @override
-  ImageElement withBounds(JetRect bounds) => ImageElement(
-      id: id,
-      bounds: bounds,
-      source: source,
-      fit: fit,
-      name: name,
-      visible: visible);
+  /// Returns a copy with the named fields replaced and the rest preserved.
+  ///
+  /// [name] is nullable, so it takes a thunk: omit to preserve, pass
+  /// `() => value` to replace (`() => null` clears).
+  ImageElement copyWith({
+    JetRect? bounds,
+    JetImageSource? source,
+    JetBoxFit? fit,
+    String? Function()? name,
+    BoolProperty? visible,
+  }) =>
+      ImageElement(
+        id: id,
+        bounds: bounds ?? this.bounds,
+        source: source ?? this.source,
+        fit: fit ?? this.fit,
+        name: pick(name, this.name),
+        visible: visible ?? this.visible,
+      );
 
   @override
-  ImageElement withName(String? name) => ImageElement(
-      id: id,
-      bounds: bounds,
-      source: source,
-      fit: fit,
-      name: name,
-      visible: visible);
+  ImageElement withBounds(JetRect bounds) => copyWith(bounds: bounds);
 
   @override
-  ImageElement withVisible(BoolProperty visible) => ImageElement(
-      id: id,
-      bounds: bounds,
-      source: source,
-      fit: fit,
-      name: name,
-      visible: visible);
+  ImageElement withName(String? name) => copyWith(name: () => name);
+
+  @override
+  ImageElement withVisible(BoolProperty visible) => copyWith(visible: visible);
 
   @override
   bool operator ==(Object other) =>

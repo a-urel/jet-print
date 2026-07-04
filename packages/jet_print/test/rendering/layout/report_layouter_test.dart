@@ -167,7 +167,7 @@ ReportDefinition _tplWithGroups(List<GroupLevel> groups) => ReportDefinition(
             for (final GroupLevel g in groups)
               g.header == null
                   ? g.copyWith(
-                      header: Band(
+                      header: () => Band(
                           id: 'gh-${g.name}',
                           type: BandType.groupHeader,
                           height: 0))

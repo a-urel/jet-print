@@ -66,8 +66,8 @@ void main() {
 
     test('copyWith replaces only named fields', () {
       const DetailScope scope = DetailScope(id: 'root');
-      expect(scope.copyWith(collectionField: 'x').collectionField, 'x');
-      expect(scope.copyWith(collectionField: 'x').id, 'root');
+      expect(scope.copyWith(collectionField: () => 'x').collectionField, 'x');
+      expect(scope.copyWith(collectionField: () => 'x').id, 'root');
       expect(
           scope.copyWith(
               children: const <ScopeNode>[BandNode(_detail)]).children,

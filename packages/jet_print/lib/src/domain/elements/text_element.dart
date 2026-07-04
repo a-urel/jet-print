@@ -2,6 +2,7 @@
 library;
 
 import '../bool_property.dart';
+import '../copy_support.dart';
 import '../geometry.dart';
 import '../report_element.dart';
 import '../styles/text_style.dart';
@@ -41,22 +42,27 @@ class TextElement extends ReportElement {
   @override
   String get typeKey => 'text';
 
-  /// Returns a copy with the given fields replaced; all others (incl.
-  /// [expression] and [format]) are preserved (FR-019 / FR-025 / 013).
+  /// Returns a copy with the given fields replaced; all others are preserved
+  /// (FR-019 / FR-025 / 013).
+  ///
+  /// The nullable fields ([expression], [format], [name]) take a thunk: omit
+  /// to preserve, pass `() => value` to replace (`() => null` clears).
   TextElement copyWith(
           {String? text,
           JetTextStyle? style,
           JetRect? bounds,
-          String? name,
+          String? Function()? expression,
+          String? Function()? format,
+          String? Function()? name,
           BoolProperty? visible}) =>
       TextElement(
         id: id,
         bounds: bounds ?? this.bounds,
         text: text ?? this.text,
         style: style ?? this.style,
-        expression: expression,
-        format: format,
-        name: name ?? this.name,
+        expression: pick(expression, this.expression),
+        format: pick(format, this.format),
+        name: pick(name, this.name),
         visible: visible ?? this.visible,
       );
 
@@ -64,28 +70,10 @@ class TextElement extends ReportElement {
   TextElement withBounds(JetRect bounds) => copyWith(bounds: bounds);
 
   @override
-  TextElement withName(String? name) => TextElement(
-        id: id,
-        bounds: bounds,
-        text: text,
-        style: style,
-        expression: expression,
-        format: format,
-        name: name,
-        visible: visible,
-      );
+  TextElement withName(String? name) => copyWith(name: () => name);
 
   @override
-  TextElement withVisible(BoolProperty visible) => TextElement(
-        id: id,
-        bounds: bounds,
-        text: text,
-        style: style,
-        expression: expression,
-        format: format,
-        name: name,
-        visible: visible,
-      );
+  TextElement withVisible(BoolProperty visible) => copyWith(visible: visible);
 
   @override
   bool operator ==(Object other) =>

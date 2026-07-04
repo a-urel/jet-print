@@ -9,6 +9,7 @@
 library;
 
 import 'band.dart';
+import 'copy_support.dart';
 
 /// An immutable group definition keyed by [key]; when the key changes between
 /// consecutive rows the group "breaks", its [footer] then [header] reprint, and
@@ -53,12 +54,15 @@ class GroupLevel {
   final bool startNewPage;
 
   /// Returns a copy with the given fields replaced.
+  ///
+  /// [header] and [footer] are nullable slots, so they take a thunk: omit to
+  /// preserve, pass `() => band` to replace (`() => null` clears).
   GroupLevel copyWith({
     String? id,
     String? name,
     String? key,
-    Band? header,
-    Band? footer,
+    Band? Function()? header,
+    Band? Function()? footer,
     bool? keepTogether,
     bool? reprintHeaderOnEachPage,
     bool? startNewPage,
@@ -67,8 +71,8 @@ class GroupLevel {
         id: id ?? this.id,
         name: name ?? this.name,
         key: key ?? this.key,
-        header: header ?? this.header,
-        footer: footer ?? this.footer,
+        header: pick(header, this.header),
+        footer: pick(footer, this.footer),
         keepTogether: keepTogether ?? this.keepTogether,
         reprintHeaderOnEachPage:
             reprintHeaderOnEachPage ?? this.reprintHeaderOnEachPage,

@@ -10,6 +10,7 @@ library;
 import 'package:flutter/foundation.dart' show listEquals;
 
 import 'band.dart';
+import 'copy_support.dart';
 import 'group_level.dart';
 import 'scope_total.dart';
 
@@ -96,20 +97,23 @@ class DetailScope {
   final List<ScopeTotal> totals;
 
   /// Returns a copy with the given fields replaced.
+  ///
+  /// [collectionField] and [footer] are nullable slots, so they take a thunk:
+  /// omit to preserve, pass `() => value` to replace (`() => null` clears).
   DetailScope copyWith({
     String? id,
-    String? collectionField,
+    String? Function()? collectionField,
     List<GroupLevel>? groups,
     List<ScopeNode>? children,
-    Band? footer,
+    Band? Function()? footer,
     List<ScopeTotal>? totals,
   }) =>
       DetailScope(
         id: id ?? this.id,
-        collectionField: collectionField ?? this.collectionField,
+        collectionField: pick(collectionField, this.collectionField),
         groups: groups ?? this.groups,
         children: children ?? this.children,
-        footer: footer ?? this.footer,
+        footer: pick(footer, this.footer),
         totals: totals ?? this.totals,
       );
 

@@ -13,6 +13,7 @@ import 'package:jet_print/src/domain/report_band.dart' show BandType;
 import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/domain/report_element.dart';
 import 'package:jet_print/src/domain/scope_total.dart';
+import 'package:jet_print/src/domain/watermark.dart';
 
 TextElement _txt(String id) => TextElement(
     id: id, bounds: const JetRect(x: 0, y: 0, width: 10, height: 10), text: id);
@@ -306,6 +307,31 @@ void main() {
       expect(scope.collectionField, isNull);
       expect(scope.footer?.id, 'lf');
       expect(scope.totals.length, 1);
+    });
+  });
+
+  group('field preservation through band transforms', () {
+    test('mapBands keeps the page watermark (spec 043)', () {
+      final ReportDefinition d = _def().copyWith(
+        furniture: _def().furniture.copyWith(
+              watermark: () => const Watermark(text: 'DRAFT'),
+            ),
+      );
+      final ReportDefinition after = mapBands(d, (Band b) => b);
+      expect(after.furniture.watermark, const Watermark(text: 'DRAFT'));
+    });
+
+    test('updateElement keeps the page watermark (spec 043)', () {
+      final ReportDefinition d = _def().copyWith(
+        furniture: _def().furniture.copyWith(
+              watermark: () => const Watermark(text: 'DRAFT'),
+            ),
+      );
+      final ReportDefinition after = updateElement(
+          d, 'e2', (ReportElement e) => e.withName('renamed'));
+      expect(after.furniture.watermark, const Watermark(text: 'DRAFT'),
+          reason: 'an element edit must not clear page furniture fields');
+      expect(findBandOfElement(after, 'e2'), isNotNull);
     });
   });
 }

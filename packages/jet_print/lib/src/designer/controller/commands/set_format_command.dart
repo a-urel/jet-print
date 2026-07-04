@@ -30,18 +30,8 @@ class SetFormatCommand extends EditCommand {
         updateElement(
           before.definition,
           id,
-          (ReportElement e) => e is TextElement
-              ? TextElement(
-                  id: e.id,
-                  bounds: e.bounds,
-                  text: e.text,
-                  style: e.style,
-                  expression: e.expression,
-                  format: format,
-                  name: e.name,
-                  visible: e.visible,
-                )
-              : e,
+          (ReportElement e) =>
+              e is TextElement ? e.copyWith(format: () => format) : e,
         ),
       );
 }

@@ -38,16 +38,7 @@ class SetValueCommand extends EditCommand {
           before.definition,
           id,
           (ReportElement e) => e is TextElement
-              ? TextElement(
-                  id: e.id,
-                  bounds: e.bounds,
-                  text: text,
-                  style: e.style,
-                  expression: expression,
-                  format: e.format,
-                  name: e.name,
-                  visible: e.visible,
-                )
+              ? e.copyWith(text: text, expression: () => expression)
               : e,
         ),
       );
