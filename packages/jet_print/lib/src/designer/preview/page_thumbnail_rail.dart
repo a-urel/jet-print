@@ -107,6 +107,33 @@ class PageThumbnailRailState extends State<PageThumbnailRail> {
       _pictures.clear();
       _inFlight.clear();
     }
+    if (oldWidget.currentIndex != widget.currentIndex) {
+      // Off the build path: scrolling drives layout.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _revealCurrent();
+      });
+    }
+  }
+
+  /// Scrolls the current page's tile into view — centred — unless it is
+  /// already fully visible. The offset of tile *i* is exactly
+  /// `i * _tileExtent` because the list carries no padding and a fixed extent.
+  void _revealCurrent() {
+    if (!_controller.hasClients) return;
+    final double extent = _tileExtent;
+    final double top = widget.currentIndex * extent;
+    final ScrollPosition position = _controller.position;
+    final double viewport = position.viewportDimension;
+    if (top >= position.pixels && top + extent <= position.pixels + viewport) {
+      return;
+    }
+    final double target = (top - (viewport - extent) / 2)
+        .clamp(position.minScrollExtent, position.maxScrollExtent);
+    _controller.animateTo(
+      target,
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOut,
+    );
   }
 
   @override

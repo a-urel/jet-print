@@ -11,6 +11,7 @@ const PageFormat _page =
 
 const Key _toggleKey = ValueKey<String>('jet_print.preview.thumbnails');
 const Key _listKey = ValueKey<String>('jet_print.preview.thumbnails.list');
+const Key _nextKey = ValueKey<String>('jet_print.preview.next');
 Key _tileKey(int index) => ValueKey<String>('jet_print.preview.thumbnail.$index');
 
 ReportDefinition _definition() => const ReportDefinition(
@@ -176,5 +177,38 @@ void main() {
     await tester.pumpWidget(host(_report(rows: 12)));
     await tester.pumpAndSettle();
     expect(find.byKey(_listKey), findsOneWidget);
+  });
+
+  testWidgets('navigating from the toolbar scrolls the rail to that page', (
+    WidgetTester tester,
+  ) async {
+    // 60 rows -> 30 pages: far more tiles than fit in a 700pt-tall rail.
+    await tester.binding.setSurfaceSize(const Size(1000, 700));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(ShadApp(
+      localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+        JetPrintLocalizations.delegate,
+      ],
+      supportedLocales: JetPrintLocalizations.supportedLocales,
+      home: JetReportPreview(report: _report(rows: 60), initialPage: 0),
+    ));
+    await tester.pumpAndSettle();
+
+    final double before =
+        tester.widget<ListView>(find.byKey(_listKey)).controller!.offset;
+    expect(before, 0);
+
+    // Walk far enough that the target tile is well below the fold.
+    for (int i = 0; i < 20; i++) {
+      await tester.tap(find.byKey(_nextKey));
+      await tester.pumpAndSettle();
+    }
+
+    final double after =
+        tester.widget<ListView>(find.byKey(_listKey)).controller!.offset;
+    expect(after, greaterThan(before),
+        reason: 'the rail should have scrolled to follow the current page');
+    expect(find.byKey(_tileKey(20)), findsOneWidget,
+        reason: 'the current page tile should be built and visible');
   });
 }
