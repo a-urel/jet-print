@@ -150,13 +150,16 @@ void main() {
   });
 
   testWidgets(
-      'the toolbar does not overflow across the former compact/scroll '
-      'threshold band, with both artifact actions wired (regression: the '
-      'thumbnail toggle + divider added ~40px that the old 880px threshold '
-      "didn't leave room for)", (WidgetTester tester) async {
-    // 900 (content 884px, after the bar's 16px padding) is the width that used
-    // to overflow by 3px; 884 and 920 bracket it, both previously scrolling or
-    // exactly at the new threshold.
+      'the toolbar does not overflow at the original regression width, with '
+      'both artifact actions wired (regression: the thumbnail toggle + '
+      "divider added ~40px that the old 880px threshold didn't leave room "
+      'for)', (WidgetTester tester) async {
+    // 900 (content 884px, after the bar's 16px padding) is the exact width
+    // that used to overflow by 3px; 884 and 920 bracket it. All three are
+    // comfortably below the CURRENT (960px) threshold, so this only proves
+    // the scrolling branch — structurally overflow-proof — handles them; it
+    // is kept as a regression pin for the original bug, not as coverage of
+    // the wide (non-scrolling) branch. See the next test for that.
     for (final double width in <double>[884, 900, 920]) {
       await _pumpPreview(
         tester,
@@ -169,10 +172,60 @@ void main() {
     }
   });
 
+  testWidgets(
+      'the wide (non-scrolling) toolbar branch fits at and above its own '
+      'threshold, in the longest locales as well as English', (
+    WidgetTester tester,
+  ) async {
+    // The bug this threshold guards against only reaches the wide,
+    // non-scrolling `Row` branch (unified_top_bar.dart) at content widths AT
+    // OR ABOVE the threshold — a SingleChildScrollView, used below it,
+    // structurally cannot overflow. Content width = window width minus the
+    // bar's 16px horizontal padding, so a content width of 960 is a 976px
+    // window.
+    //
+    // Empirically measured wide-branch breakeven content widths (both
+    // artifact actions wired — the widest realistic action row): English
+    // 887px, Turkish well under that (no overflow found down to 834px), but
+    // German 929px — its longer mode-switch segment labels and its
+    // always-visible "Seite X von Y" page indicator both add width the other
+    // two locales don't. 960 clears all three with margin.
+    for (final Locale locale in <Locale>[
+      Locale('en'),
+      Locale('de'),
+      Locale('tr'),
+    ]) {
+      // 976 -> content 960, exactly at the threshold (the boundary the wide
+      // branch is entered on); 981 -> content 965, just above it; 1016 ->
+      // content 1000, comfortably above.
+      for (final double windowWidth in <double>[976, 981, 1016]) {
+        await tester.binding.setSurfaceSize(Size(windowWidth, 700));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(ShadApp(
+          locale: locale,
+          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+            JetPrintLocalizations.delegate,
+          ],
+          supportedLocales: JetPrintLocalizations.supportedLocales,
+          home: JetReportPreview(
+            report: _report(),
+            onExportPdf: () {},
+            onPrint: () {},
+          ),
+        ));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull,
+            reason: 'locale ${locale.languageCode} at window '
+                '${windowWidth}px (content ${windowWidth - 16}px) should not '
+                'overflow the wide toolbar branch');
+      }
+    }
+  });
+
   testWidgets('next/prev navigate one page at a time, bounded at the ends',
       (WidgetTester tester) async {
     // Wide enough that the 017 mode switch + viewing actions fit without the
-    // toolbar entering its horizontal-scroll regime (< 920 px), so the
+    // toolbar entering its horizontal-scroll regime (< 960 px), so the
     // page-navigation buttons stay on-screen and tappable.
     await _pumpPreview(tester, size: const Size(1000, 600));
 

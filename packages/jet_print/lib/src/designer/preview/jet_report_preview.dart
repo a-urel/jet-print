@@ -166,7 +166,7 @@ class _JetReportPreviewState extends State<JetReportPreview> {
   bool _thumbnailDefaultResolved = false;
 
   /// Below this body width the rail is hidden on first build. Sits above the
-  /// 600 px golden surfaces and below the toolbar's 920 px scroll breakpoint.
+  /// 600 px golden surfaces and below the toolbar's 960 px scroll breakpoint.
   static const double _thumbnailAutoHideWidth = 700;
 
   /// Fonts shared between frame recording (the painter resolves glyph bytes
@@ -418,14 +418,19 @@ class _JetReportPreviewState extends State<JetReportPreview> {
               // divider, export/print + zoom + page-nav groups plus the
               // labelled mode switch no longer fit in the longest locale
               // (de/tr), so the whole bar scrolls instead of overflowing (the
-              // `compact` flag is unused by the preview). 920 (raised from an
-              // earlier 880, empirically: the widest action row — both
-              // artifact actions plus the 044 thumbnail toggle + its divider —
-              // needs 887px of content width to lay out without overflowing,
-              // measured by widening a failing width until the RenderFlex
-              // overflow disappeared; 920 leaves a margin above that).
-              compactWidth: 920,
-              scrollWidth: 920,
+              // `compact` flag is unused by the preview). 960 (raised from an
+              // earlier 880, then 920), measured per-locale with the widest
+              // action row (both artifact actions wired, plus the 044
+              // thumbnail toggle + its divider), by widening a failing width
+              // until the RenderFlex overflow disappeared: English needs
+              // 887px of content width, Turkish needs less (no overflow found
+              // down to 834px), but German — whose longer mode-switch segment
+              // labels and always-visible "Seite X von Y" page indicator both
+              // add width the other two locales don't — needs 929px. 960
+              // leaves a margin above the binding (German) breakeven, not
+              // just the English one.
+              compactWidth: 960,
+              scrollWidth: 960,
               // The preview's mode switch matches the designer: icon-only on a
               // phone / very narrow bar, labelled otherwise.
               centerBuilder: (BuildContext context, bool veryNarrow) =>
