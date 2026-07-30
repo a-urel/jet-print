@@ -297,6 +297,19 @@ class _ThumbnailTile extends StatelessWidget {
                   color: selected ? colors.primary : colors.border,
                   width: selected ? 2 : 1,
                 ),
+                // A soft halo around the selected sheet, so selection reads
+                // at a glance even when the thumbnail's own content is dark
+                // (the border alone can get lost against a dark page).
+                // Unselected tiles are untouched — the contrast is the point.
+                boxShadow: selected
+                    ? <BoxShadow>[
+                        BoxShadow(
+                          color: colors.primary.withValues(alpha: 0.35),
+                          blurRadius: 6,
+                          spreadRadius: 1,
+                        ),
+                      ]
+                    : null,
               ),
               child: CustomPaint(
                 painter: FrameCustomPainter(
@@ -309,12 +322,28 @@ class _ThumbnailTile extends StatelessWidget {
             SizedBox(
               height: _captionHeight,
               child: Center(
-                child: Text(
-                  '${index + 1}',
-                  style: selected
-                      ? theme.textTheme.small
-                      : theme.textTheme.muted,
-                ),
+                // The selected tile's page number gets a filled pill (the
+                // primary colour, like the halo above), so the page number
+                // itself is the selection anchor rather than a subtle text
+                // style swap. Unselected tiles keep the plain muted caption.
+                child: selected
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: colors.primary,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          '${index + 1}',
+                          style: theme.textTheme.small
+                              .copyWith(color: colors.primaryForeground),
+                        ),
+                      )
+                    : Text(
+                        '${index + 1}',
+                        style: theme.textTheme.muted,
+                      ),
               ),
             ),
           ],

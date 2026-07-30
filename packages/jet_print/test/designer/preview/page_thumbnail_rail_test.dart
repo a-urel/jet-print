@@ -195,6 +195,51 @@ void main() {
   });
 
   testWidgets(
+      'the selected tile carries a halo shadow the unselected tile lacks',
+      (WidgetTester tester) async {
+    await _pumpRail(tester, report: _report(), currentIndex: 0);
+
+    final BoxDecoration selectedDecoration = tester
+        .widget<Container>(find.byKey(_tileKey(0)))
+        .decoration! as BoxDecoration;
+    final BoxDecoration unselectedDecoration = tester
+        .widget<Container>(find.byKey(_tileKey(1)))
+        .decoration! as BoxDecoration;
+
+    expect(selectedDecoration.boxShadow, isNotNull,
+        reason: 'the selected sheet should carry a halo shadow');
+    expect(selectedDecoration.boxShadow, isNotEmpty);
+    expect(unselectedDecoration.boxShadow, anyOf(isNull, isEmpty),
+        reason: 'an unselected sheet should not carry the selection halo');
+  });
+
+  testWidgets(
+      'the selected tile\'s caption is a filled pill; the unselected caption '
+      'is plain text', (WidgetTester tester) async {
+    await _pumpRail(tester, report: _report(), currentIndex: 0);
+
+    // The selected caption ('1') sits inside a decorated Container (the
+    // pill); the unselected caption ('2') is a bare Text with no ancestor
+    // Container between it and the tile's Column.
+    final Finder selectedPill = find.ancestor(
+      of: find.text('1'),
+      matching: find.byType(Container),
+    );
+    expect(selectedPill, findsOneWidget,
+        reason: 'the selected page number should be wrapped in a filled pill');
+    final BoxDecoration pillDecoration =
+        tester.widget<Container>(selectedPill).decoration! as BoxDecoration;
+    expect(pillDecoration.color, isNotNull);
+
+    final Finder unselectedPill = find.ancestor(
+      of: find.text('2'),
+      matching: find.byType(Container),
+    );
+    expect(unselectedPill, findsNothing,
+        reason: 'an unselected page number should stay plain text, no pill');
+  });
+
+  testWidgets(
       'the first tile sits below the rail top edge by the inter-tile gap',
       (WidgetTester tester) async {
     await _pumpRail(tester, report: _report());
