@@ -132,4 +132,49 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.bySemanticsLabel('Show page thumbnails'), findsOneWidget);
   });
+
+  testWidgets(
+      'a host rebuild never re-seeds showThumbnails — it is an initial value',
+      (WidgetTester tester) async {
+    // Same root widget type/position at every pump (no key change), so
+    // Flutter runs didUpdateWidget on the existing State instead of
+    // remounting a fresh one — a fresh State would make this test pass
+    // vacuously. A fresh RenderedReport on each pump (varied row count, so
+    // it's a genuinely different, non-identical report — an innocuous stand-
+    // in for "the host re-rendered after some unrelated change") makes the
+    // rebuild observable and exercises the same `!identical(oldWidget.report,
+    // widget.report)` branch a real host hits after e.g. a rename.
+    Widget host(RenderedReport report) => ShadApp(
+          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+            JetPrintLocalizations.delegate,
+          ],
+          supportedLocales: JetPrintLocalizations.supportedLocales,
+          home: JetReportPreview(report: report, showThumbnails: true),
+        );
+
+    await tester.pumpWidget(host(_report()));
+    await tester.pumpAndSettle();
+    expect(find.byKey(_listKey), findsOneWidget);
+
+    // The user explicitly hides the rail.
+    await tester.tap(find.byKey(_toggleKey));
+    await tester.pumpAndSettle();
+    expect(find.byKey(_listKey), findsNothing);
+
+    // The host rebuilds — same showThumbnails: true it always passed — after
+    // some unrelated change (a fresh report). The user's toggle must still
+    // win: showThumbnails is an initial value, not re-seeded on every build.
+    await tester.pumpWidget(host(_report(rows: 9)));
+    await tester.pumpAndSettle();
+    expect(find.byKey(_listKey), findsNothing);
+
+    // Converse direction: re-open, then rebuild again — stays open.
+    await tester.tap(find.byKey(_toggleKey));
+    await tester.pumpAndSettle();
+    expect(find.byKey(_listKey), findsOneWidget);
+
+    await tester.pumpWidget(host(_report(rows: 12)));
+    await tester.pumpAndSettle();
+    expect(find.byKey(_listKey), findsOneWidget);
+  });
 }
