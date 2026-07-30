@@ -5,6 +5,7 @@
 import 'dart:typed_data';
 import 'dart:ui' show Tristate;
 
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter/semantics.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -136,6 +137,7 @@ Future<void> _pumpRail(
   int currentIndex = 0,
   Size size = const Size(400, 600),
   void Function(int)? onSelect,
+  Brightness brightness = Brightness.light,
 }) async {
   await tester.binding.setSurfaceSize(size);
   addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -144,6 +146,15 @@ Future<void> _pumpRail(
       JetPrintLocalizations.delegate,
     ],
     supportedLocales: JetPrintLocalizations.supportedLocales,
+    themeMode: brightness == Brightness.dark ? ThemeMode.dark : ThemeMode.light,
+    theme: ShadThemeData(
+      brightness: Brightness.light,
+      colorScheme: const ShadSlateColorScheme.light(),
+    ),
+    darkTheme: ShadThemeData(
+      brightness: Brightness.dark,
+      colorScheme: const ShadSlateColorScheme.dark(),
+    ),
     home: Align(
       alignment: Alignment.topLeft,
       child: PageThumbnailRail(
@@ -322,6 +333,42 @@ void main() {
     expect(state.debugCachedCount, 0,
         reason: 'neither the abandoned old record nor the fresh new one has '
             'settled — both stay genuinely blocked without runAsync');
+  });
+
+  testWidgets(
+      'the rail is a distinct surface from the preview body, in both themes',
+      (WidgetTester tester) async {
+    for (final Brightness brightness in <Brightness>[
+      Brightness.light,
+      Brightness.dark,
+    ]) {
+      await _pumpRail(tester, report: _report(), brightness: brightness);
+
+      // `.first` is the rail's own surface: depth-first order puts it ahead
+      // of the per-tile decorations nested inside the list.
+      final BoxDecoration decoration = tester
+          .widget<DecoratedBox>(find
+              .descendant(
+                of: find.byType(PageThumbnailRail),
+                matching: find.byType(DecoratedBox),
+              )
+              .first)
+          .decoration as BoxDecoration;
+      final ShadColorScheme colors = ShadTheme.of(
+        tester.element(find.byType(PageThumbnailRail)),
+      ).colorScheme;
+
+      // The preview body paints `muted` behind everything; a rail painted the
+      // same colour has no visible edge of its own — which is exactly what
+      // went wrong in dark mode.
+      expect(decoration.color, isNot(colors.muted),
+          reason: 'the rail must not reuse the body backdrop colour '
+              '($brightness)');
+      expect(decoration.boxShadow, isNotNull, reason: '$brightness');
+      expect(decoration.boxShadow, isNotEmpty,
+          reason: 'the rail should cast a shadow over the page area '
+              '($brightness)');
+    }
   });
 
   testWidgets(

@@ -229,10 +229,29 @@ class PageThumbnailRailState extends State<PageThumbnailRail> {
   @override
   Widget build(BuildContext context) {
     final ShadThemeData theme = ShadTheme.of(context);
+    final ShadColorScheme colors = theme.colorScheme;
     return SizedBox(
       width: kThumbnailRailWidth,
-      child: ColoredBox(
-        color: theme.colorScheme.muted,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          // The rail is its own surface, NOT the preview body's `muted`
+          // backdrop: painted in `muted` it vanished against the surround in
+          // dark mode, where the sheets are light enough to read on their own
+          // and nothing else marked the rail's edge. `background` differs from
+          // `muted` in both themes.
+          color: colors.background,
+          // ...and a soft shadow along the rail's inner edge, so it reads as a
+          // panel raised over the page area rather than a flat colour change.
+          // The page area paints no background of its own, so the shadow
+          // falls on the body's backdrop.
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: colors.foreground.withValues(alpha: 0.12),
+              blurRadius: 8,
+              offset: const Offset(2, 0),
+            ),
+          ],
+        ),
         child: ListView.builder(
           key: const ValueKey<String>('jet_print.preview.thumbnails.list'),
           controller: _controller,
