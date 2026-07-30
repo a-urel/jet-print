@@ -211,4 +211,26 @@ void main() {
     expect(find.byKey(_tileKey(20)), findsOneWidget,
         reason: 'the current page tile should be built and visible');
   });
+
+  testWidgets(
+      'opening deep into a report reveals the current tile without any user '
+      'interaction', (WidgetTester tester) async {
+    // 60 rows -> 30 pages, opened at page 20 (well below the fold in a
+    // 700pt-tall rail): the rail must sync to it on its own first layout,
+    // not wait for a page-navigation event.
+    await tester.binding.setSurfaceSize(const Size(1000, 700));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(ShadApp(
+      localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+        JetPrintLocalizations.delegate,
+      ],
+      supportedLocales: JetPrintLocalizations.supportedLocales,
+      home: JetReportPreview(report: _report(rows: 60), initialPage: 20),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(_tileKey(20)), findsOneWidget,
+        reason: 'the current page tile should be built and visible on open, '
+            'without any user interaction');
+  });
 }

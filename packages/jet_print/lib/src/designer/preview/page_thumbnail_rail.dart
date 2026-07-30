@@ -103,6 +103,20 @@ class PageThumbnailRailState extends State<PageThumbnailRail> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    // Sync with the current page once the rail has had its first layout: a
+    // preview opened deep into a report (`initialPage`), or a rail toggled
+    // back on while the user is far past its first page, must not show the
+    // top of the list with the selected tile off-screen. Reuses
+    // `_revealCurrent`, whose already-visible no-op means opening at page 0
+    // leaves the list untouched.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _revealCurrent();
+    });
+  }
+
+  @override
   void didUpdateWidget(PageThumbnailRail oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!identical(oldWidget.report, widget.report)) {
