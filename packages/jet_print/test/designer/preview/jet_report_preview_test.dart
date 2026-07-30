@@ -174,9 +174,7 @@ void main() {
 
   testWidgets(
       'the wide (non-scrolling) toolbar branch fits at and above its own '
-      'threshold, in the longest locales as well as English', (
-    WidgetTester tester,
-  ) async {
+      'threshold (English)', (WidgetTester tester) async {
     // The bug this threshold guards against only reaches the wide,
     // non-scrolling `Row` branch (unified_top_bar.dart) at content widths AT
     // OR ABOVE the threshold — a SingleChildScrollView, used below it,
@@ -184,41 +182,28 @@ void main() {
     // bar's 16px horizontal padding, so a content width of 960 is a 976px
     // window.
     //
-    // Empirically measured wide-branch breakeven content widths (both
-    // artifact actions wired — the widest realistic action row): English
-    // 887px, Turkish well under that (no overflow found down to 834px), but
-    // German 929px — its longer mode-switch segment labels and its
-    // always-visible "Seite X von Y" page indicator both add width the other
-    // two locales don't. 960 clears all three with margin.
-    for (final Locale locale in <Locale>[
-      Locale('en'),
-      Locale('de'),
-      Locale('tr'),
-    ]) {
-      // 976 -> content 960, exactly at the threshold (the boundary the wide
-      // branch is entered on); 981 -> content 965, just above it; 1016 ->
-      // content 1000, comfortably above.
-      for (final double windowWidth in <double>[976, 981, 1016]) {
-        await tester.binding.setSurfaceSize(Size(windowWidth, 700));
-        addTearDown(() => tester.binding.setSurfaceSize(null));
-        await tester.pumpWidget(ShadApp(
-          locale: locale,
-          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
-            JetPrintLocalizations.delegate,
-          ],
-          supportedLocales: JetPrintLocalizations.supportedLocales,
-          home: JetReportPreview(
-            report: _report(),
-            onExportPdf: () {},
-            onPrint: () {},
-          ),
-        ));
-        await tester.pumpAndSettle();
-        expect(tester.takeException(), isNull,
-            reason: 'locale ${locale.languageCode} at window '
-                '${windowWidth}px (content ${windowWidth - 16}px) should not '
-                'overflow the wide toolbar branch');
-      }
+    // English's empirically measured wide-branch breakeven content width is
+    // 887px, well under the 960 threshold. German (929px measured — the
+    // binding locale) and Turkish get their OWN isolated test files —
+    // preview_toolbar_width_de_test.dart / _tr_test.dart — per this project's
+    // one-isolate-per-non-English-locale convention (switching between two
+    // non-English locales within a single test isolate can leave the later
+    // tree unbuilt); the German file also pins the exact width (content
+    // 920px) that overflowed by 9px before this threshold was raised.
+    //
+    // 976 -> content 960, exactly at the threshold (the boundary the wide
+    // branch is entered on); 981 -> content 965, just above it; 1016 ->
+    // content 1000, comfortably above.
+    for (final double windowWidth in <double>[976, 981, 1016]) {
+      await _pumpPreview(
+        tester,
+        size: Size(windowWidth, 700),
+        onExportPdf: () {},
+        onPrint: () {},
+      );
+      expect(tester.takeException(), isNull,
+          reason: 'window ${windowWidth}px (content ${windowWidth - 16}px) '
+              'should not overflow the wide toolbar branch');
     }
   });
 
