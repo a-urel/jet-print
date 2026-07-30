@@ -168,7 +168,8 @@ bool _isWhiteBoxSeamTest(File file) {
       // Flutter-free so the eviction math is unit-testable; its unit test is
       // white-box (Principle III).
       path.endsWith('/test/designer/preview/lru_cache_test.dart') ||
-      path.endsWith('/test/designer/preview/preview_sheet_test.dart');
+      path.endsWith('/test/designer/preview/preview_sheet_test.dart') ||
+      path.endsWith('/test/designer/preview/page_thumbnail_rail_test.dart');
 }
 
 void main() {
