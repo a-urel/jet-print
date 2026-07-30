@@ -1103,6 +1103,18 @@ abstract class JetPrintLocalizations {
   /// **'Print'**
   String get previewPrint;
 
+  /// Tooltip + accessible name of the report preview's toolbar action that opens the page-thumbnail rail.
+  ///
+  /// In en, this message translates to:
+  /// **'Show page thumbnails'**
+  String get previewShowThumbnails;
+
+  /// Tooltip + accessible name of the report preview's toolbar action that closes the page-thumbnail rail.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide page thumbnails'**
+  String get previewHideThumbnails;
+
   /// Label + accessible name for the Designer segment of the unified toolbar's two-segment Designer|Preview workspace-mode switch (017).
   ///
   /// In en, this message translates to:

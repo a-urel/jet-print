@@ -187,6 +187,8 @@
   "previewFitToWidth": "An Breite anpassen",
   "previewExport": "Als PDF exportieren",
   "previewPrint": "Drucken",
+  "previewShowThumbnails": "Seitenminiaturen einblenden",
+  "previewHideThumbnails": "Seitenminiaturen ausblenden",
 
   "modeDesigner": "Designer",
   "modePreview": "Vorschau",

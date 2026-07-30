@@ -522,6 +522,12 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get previewPrint => 'Yazdır';
 
   @override
+  String get previewShowThumbnails => 'Sayfa küçük resimlerini göster';
+
+  @override
+  String get previewHideThumbnails => 'Sayfa küçük resimlerini gizle';
+
+  @override
   String get modeDesigner => 'Tasarım';
 
   @override

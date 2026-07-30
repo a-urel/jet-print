@@ -523,6 +523,12 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   String get previewPrint => 'Drucken';
 
   @override
+  String get previewShowThumbnails => 'Seitenminiaturen einblenden';
+
+  @override
+  String get previewHideThumbnails => 'Seitenminiaturen ausblenden';
+
+  @override
   String get modeDesigner => 'Designer';
 
   @override

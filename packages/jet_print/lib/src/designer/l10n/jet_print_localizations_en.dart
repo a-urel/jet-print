@@ -521,6 +521,12 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get previewPrint => 'Print';
 
   @override
+  String get previewShowThumbnails => 'Show page thumbnails';
+
+  @override
+  String get previewHideThumbnails => 'Hide page thumbnails';
+
+  @override
   String get modeDesigner => 'Designer';
 
   @override

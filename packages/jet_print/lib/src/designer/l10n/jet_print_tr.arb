@@ -187,6 +187,8 @@
   "previewFitToWidth": "Genişliğe sığdır",
   "previewExport": "PDF olarak dışa aktar",
   "previewPrint": "Yazdır",
+  "previewShowThumbnails": "Sayfa küçük resimlerini göster",
+  "previewHideThumbnails": "Sayfa küçük resimlerini gizle",
 
   "modeDesigner": "Tasarım",
   "modePreview": "Önizleme",

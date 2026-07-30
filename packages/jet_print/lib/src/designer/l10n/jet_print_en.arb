@@ -700,6 +700,14 @@
   "@previewPrint": {
     "description": "Tooltip + accessible name of the report preview's print toolbar action."
   },
+  "previewShowThumbnails": "Show page thumbnails",
+  "@previewShowThumbnails": {
+    "description": "Tooltip + accessible name of the report preview's toolbar action that opens the page-thumbnail rail."
+  },
+  "previewHideThumbnails": "Hide page thumbnails",
+  "@previewHideThumbnails": {
+    "description": "Tooltip + accessible name of the report preview's toolbar action that closes the page-thumbnail rail."
+  },
 
   "modeDesigner": "Designer",
   "@modeDesigner": {
