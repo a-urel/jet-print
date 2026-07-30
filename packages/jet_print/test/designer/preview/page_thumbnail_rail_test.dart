@@ -194,6 +194,20 @@ void main() {
     expect(state.debugCachedCount, greaterThan(0));
   });
 
+  testWidgets(
+      'the first tile sits below the rail top edge by the inter-tile gap',
+      (WidgetTester tester) async {
+    await _pumpRail(tester, report: _report());
+
+    final double railTop =
+        tester.getTopLeft(find.byType(PageThumbnailRail)).dy;
+    final double tileTop = tester.getTopLeft(find.byKey(_tileKey(0))).dy;
+
+    expect(tileTop - railTop, 10,
+        reason: 'the first tile should have the same breathing room above it '
+            'as the gap between tiles, not sit flush against the rail top');
+  });
+
   testWidgets('the picture cache stays within its cap while scrolling', (
     WidgetTester tester,
   ) async {

@@ -33,7 +33,9 @@ const double _thumbWidth = 112;
 /// The fixed height of the page-number caption under each sheet.
 const double _captionHeight = 18;
 
-/// Vertical breathing room below each tile, part of its fixed extent.
+/// Vertical breathing room below each tile, part of its fixed extent. Also
+/// used as the list's top/bottom padding, so the first and last tiles get the
+/// same breathing room as every tile in between.
 const double _tileGap = 10;
 
 /// How many recorded pictures the rail keeps alive at once. Each one also
@@ -116,12 +118,14 @@ class PageThumbnailRailState extends State<PageThumbnailRail> {
   }
 
   /// Scrolls the current page's tile into view — centred — unless it is
-  /// already fully visible. The offset of tile *i* is exactly
-  /// `i * _tileExtent` because the list carries no padding and a fixed extent.
+  /// already fully visible. The offset of tile *i*'s top is exactly
+  /// `_tileGap + i * _tileExtent`: the list has a fixed extent and carries a
+  /// leading `_tileGap` of top padding (matching the inter-tile gap), which
+  /// counts as part of the scroll extent ahead of tile 0.
   void _revealCurrent() {
     if (!_controller.hasClients) return;
     final double extent = _tileExtent;
-    final double top = widget.currentIndex * extent;
+    final double top = _tileGap + widget.currentIndex * extent;
     final ScrollPosition position = _controller.position;
     final double viewport = position.viewportDimension;
     if (top >= position.pixels && top + extent <= position.pixels + viewport) {
@@ -191,9 +195,12 @@ class PageThumbnailRailState extends State<PageThumbnailRail> {
         child: ListView.builder(
           key: const ValueKey<String>('jet_print.preview.thumbnails.list'),
           controller: _controller,
-          // No list padding: the scroll offset of tile i must stay exactly
-          // `i * _tileExtent` for the auto-scroll math.
-          padding: EdgeInsets.zero,
+          // Top/bottom padding of `_tileGap`, matching the gap between
+          // tiles, so the first (and last) tile gets the same breathing room
+          // as its neighbours. `_revealCurrent`'s math accounts for this: the
+          // scroll offset of tile i's top is `_tileGap + i * _tileExtent`,
+          // not the bare `i * _tileExtent` a zero-padding list would give.
+          padding: const EdgeInsets.symmetric(vertical: _tileGap),
           itemExtent: _tileExtent,
           itemCount: widget.report.pageCount,
           itemBuilder: (BuildContext context, int index) {
