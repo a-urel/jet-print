@@ -320,24 +320,20 @@ class _ThumbnailTile extends StatelessWidget {
               height: page.height * scale,
               decoration: BoxDecoration(
                 color: previewSheetColor(theme.brightness),
-                border: Border.all(
-                  color: selected ? colors.primary : colors.border,
-                  width: selected ? 2 : 1,
-                ),
-                // A soft halo around the selected sheet, so selection reads
-                // at a glance even when the thumbnail's own content is dark
-                // (the border alone can get lost against a dark page).
-                // Unselected tiles are untouched — the contrast is the point.
-                boxShadow: selected
-                    ? <BoxShadow>[
-                        BoxShadow(
-                          color: colors.primary.withValues(alpha: 0.35),
-                          blurRadius: 6,
-                          spreadRadius: 1,
-                        ),
-                      ]
-                    : null,
+                border: Border.all(color: colors.border),
               ),
+              // The selection border is a FOREGROUND decoration on purpose: a
+              // border in `decoration` insets the child, so a thicker one on
+              // the selected tile would shrink the box the picture is blitted
+              // into while `scale` stays fixed — the page would appear zoomed
+              // and cropped relative to its neighbours. Painted over the
+              // child instead, every tile's sheet geometry is identical and
+              // only the colour changes.
+              foregroundDecoration: selected
+                  ? BoxDecoration(
+                      border: Border.all(color: colors.primary, width: 2),
+                    )
+                  : null,
               child: CustomPaint(
                 painter: FrameCustomPainter(
                   picture: picture,

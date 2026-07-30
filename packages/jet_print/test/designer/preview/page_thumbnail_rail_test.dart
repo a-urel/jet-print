@@ -325,9 +325,34 @@ void main() {
   });
 
   testWidgets(
-      'the selected tile carries a halo shadow the unselected tile lacks',
+      'the selected tile carries a primary-coloured border the unselected '
+      'tile lacks', (WidgetTester tester) async {
+    await _pumpRail(tester, report: _report(), currentIndex: 0);
+
+    final Container selectedTile =
+        tester.widget<Container>(find.byKey(_tileKey(0)));
+    final Container unselectedTile =
+        tester.widget<Container>(find.byKey(_tileKey(1)));
+
+    expect(selectedTile.foregroundDecoration, isNotNull,
+        reason: 'the selected sheet should carry a selection border');
+    expect((selectedTile.foregroundDecoration! as BoxDecoration).border,
+        isNotNull);
+    expect(unselectedTile.foregroundDecoration, isNull,
+        reason: 'an unselected sheet should carry no selection border');
+  });
+
+  testWidgets('selection never changes the sheet geometry (no zoom)',
       (WidgetTester tester) async {
     await _pumpRail(tester, report: _report(), currentIndex: 0);
+
+    // The selection border is painted as a foreground decoration precisely so
+    // it costs no layout: a border in `decoration` would inset the child,
+    // shrinking the box the page picture is blitted into while its scale
+    // stays fixed — i.e. the selected page would look zoomed and cropped.
+    final Size selectedSize = tester.getSize(find.byKey(_tileKey(0)));
+    final Size unselectedSize = tester.getSize(find.byKey(_tileKey(1)));
+    expect(selectedSize, unselectedSize);
 
     final BoxDecoration selectedDecoration = tester
         .widget<Container>(find.byKey(_tileKey(0)))
@@ -335,12 +360,14 @@ void main() {
     final BoxDecoration unselectedDecoration = tester
         .widget<Container>(find.byKey(_tileKey(1)))
         .decoration! as BoxDecoration;
-
-    expect(selectedDecoration.boxShadow, isNotNull,
-        reason: 'the selected sheet should carry a halo shadow');
-    expect(selectedDecoration.boxShadow, isNotEmpty);
-    expect(unselectedDecoration.boxShadow, anyOf(isNull, isEmpty),
-        reason: 'an unselected sheet should not carry the selection halo');
+    expect(
+      selectedDecoration.border!.dimensions,
+      unselectedDecoration.border!.dimensions,
+      reason: 'the laid-out border must be identical, so the blitted picture '
+          'occupies the same box on every tile',
+    );
+    expect(selectedDecoration.boxShadow, anyOf(isNull, isEmpty),
+        reason: 'no halo — selection is carried by the border alone');
   });
 
   testWidgets(
