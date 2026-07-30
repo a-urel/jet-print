@@ -32,6 +32,7 @@ import '../layout/popover_group.dart';
 import '../layout/unified_top_bar.dart';
 import '../layout/workspace_mode_switch.dart';
 import '../layout/zoom_control.dart';
+import 'page_thumbnail_rail.dart';
 import 'preview_sheet.dart';
 
 /// A read-only paginated viewer for a [RenderedReport] (FR-008), with a top
@@ -74,6 +75,7 @@ class JetReportPreview extends StatefulWidget {
     super.key,
     required this.report,
     this.initialPage = 0,
+    this.showThumbnails = true,
     this.onBack,
     this.onExportPdf,
     this.onPrint,
@@ -86,6 +88,15 @@ class JetReportPreview extends StatefulWidget {
   /// The zero-based page to open at; values outside `[0, pageCount)` are
   /// clamped.
   final int initialPage;
+
+  /// Whether the page-thumbnail rail is open when the preview first builds
+  /// (044). Like [initialPage] this is an **initial value**: the user's later
+  /// toggling wins, and a host rebuild never yanks the rail back.
+  ///
+  /// The rail is auto-hidden on first build when the body is narrower than
+  /// 700 logical pixels, so a phone opens on the page itself; the toolbar
+  /// toggle still opens it at any width.
+  final bool showThumbnails;
 
   /// Invoked when the user triggers the toolbar's back button (e.g. to return
   /// to the designer). Null ⇒ no back button is shown.
@@ -144,6 +155,19 @@ class _JetReportPreviewState extends State<JetReportPreview> {
   /// at 100%, phones fit to width). Resolved on the first [didChangeDependencies]
   /// where MediaQuery is available.
   bool _defaultZoomResolved = false;
+
+  /// Whether the thumbnail rail is currently open. Seeded from
+  /// [JetReportPreview.showThumbnails] and then owned by the user's toggling.
+  late bool _showThumbnails = widget.showThumbnails;
+
+  /// Guards the one-shot narrow-viewport decision, mirroring
+  /// [_defaultZoomResolved]: the breakpoint may only *hide* the rail on first
+  /// build, never open one the host asked to keep shut.
+  bool _thumbnailDefaultResolved = false;
+
+  /// Below this body width the rail is hidden on first build. Sits above the
+  /// 600 px golden surfaces and below the toolbar's 880 px scroll breakpoint.
+  static const double _thumbnailAutoHideWidth = 700;
 
   /// Fonts shared between frame recording (the painter resolves glyph bytes
   /// here) and the measurement already baked into the frame, so a glyph is
@@ -281,6 +305,18 @@ class _JetReportPreviewState extends State<JetReportPreview> {
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
 
     return <Widget>[
+      // Thumbnail rail toggle (044) — leading, because it changes what the rest
+      // of the page-navigation group operates on.
+      _ToolbarButton(
+        buttonKey: const ValueKey<String>('jet_print.preview.thumbnails'),
+        icon: LucideIcons.panelLeft,
+        label: _showThumbnails
+            ? l10n.previewHideThumbnails
+            : l10n.previewShowThumbnails,
+        active: _showThumbnails,
+        onPressed: () => setState(() => _showThumbnails = !_showThumbnails),
+      ),
+      const _Divider(),
       // Page-navigation group — prev / "page X of N" / next. Placed FIRST in the
       // toolbar so page selection is the leading control on both the wide and the
       // narrow (scrolling) bar.
@@ -399,99 +435,134 @@ class _JetReportPreviewState extends State<JetReportPreview> {
             // when it fits, scrolling vertically (always when taller) and
             // horizontally (when zoomed past the viewport). ---
             Expanded(
-              child: Semantics(
-                container: true,
-                label: l10n.previewFitToWidth,
-                child: LayoutBuilder(
-                  builder: (BuildContext context, BoxConstraints constraints) {
-                    const double pad = 16;
-                    final PageFrame frame = _frame;
-                    final Size viewport =
-                        Size(constraints.maxWidth, constraints.maxHeight);
-                    final JetSize content =
-                        JetSize(frame.page.width, frame.page.height);
-
-                    // Default zoom by the page-area width, decided once: a
-                    // desktop-class viewport opens at 100% (actual size); a
-                    // phone-class one keeps the fit-to-width default. The width
-                    // is read from the live viewport (not MediaQuery) so it
-                    // tracks the real render area. Plain field writes (no
-                    // setState) — consumed by the fit handshake just below.
-                    if (!_defaultZoomResolved) {
-                      _defaultZoomResolved = true;
-                      if (defaultFitForScreenWidth(viewport.width) ==
-                          JetViewFitMode.none) {
-                        _fitMode = JetViewFitMode.none;
-                        _viewScale = 1.0;
-                        _viewInitialized = true;
-                      }
+              child: LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints body) {
+                  // One-shot narrow default, mirroring the zoom default just
+                  // below: a plain field write (no setState), consumed by this
+                  // same build.
+                  if (!_thumbnailDefaultResolved) {
+                    _thumbnailDefaultResolved = true;
+                    if (body.maxWidth < _thumbnailAutoHideWidth) {
+                      _showThumbnails = false;
                     }
+                  }
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      if (_showThumbnails) ...<Widget>[
+                        PageThumbnailRail(
+                          report: widget.report,
+                          currentIndex: _index,
+                          onSelect: _goTo,
+                        ),
+                        const ShadSeparator.vertical(margin: EdgeInsets.zero),
+                      ],
+                      Expanded(
+                        child: Semantics(
+                          container: true,
+                          label: l10n.previewFitToWidth,
+                          child: LayoutBuilder(
+                            builder: (BuildContext context,
+                                BoxConstraints constraints) {
+                              const double pad = 16;
+                              final PageFrame frame = _frame;
+                              final Size viewport = Size(
+                                  constraints.maxWidth, constraints.maxHeight);
+                              final JetSize content =
+                                  JetSize(frame.page.width, frame.page.height);
 
-                    // Re-fit OFF the build path (it mutates state) on first
-                    // load, on an explicit fit pick, or when the viewport
-                    // changes — but ONLY while a fit mode is active, so a manual
-                    // zoom (or the desktop 100% default, mode == none) is left
-                    // alone. The designer canvas's handshake (design_canvas.dart).
-                    final bool fitActive = _fitMode != JetViewFitMode.none;
-                    final bool viewportChanged = _lastFitViewport != viewport;
-                    if (fitActive &&
-                        (!_viewInitialized ||
-                            _fitRequest != _appliedFitRequest ||
-                            viewportChanged)) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (!mounted) return;
-                        setState(() {
-                          _viewInitialized = true;
-                          _appliedFitRequest = _fitRequest;
-                          _lastFitViewport = viewport;
-                          _viewScale = _fitMode == JetViewFitMode.page
-                              ? fitPageScale(content, viewport, pad)
-                              : fitWidthScale(content, viewport, pad);
-                        });
-                      });
-                    }
+                              // Default zoom by the page-area width, decided once: a
+                              // desktop-class viewport opens at 100% (actual size); a
+                              // phone-class one keeps the fit-to-width default. The width
+                              // is read from the live viewport (not MediaQuery) so it
+                              // tracks the real render area. Plain field writes (no
+                              // setState) — consumed by the fit handshake just below.
+                              if (!_defaultZoomResolved) {
+                                _defaultZoomResolved = true;
+                                if (defaultFitForScreenWidth(viewport.width) ==
+                                    JetViewFitMode.none) {
+                                  _fitMode = JetViewFitMode.none;
+                                  _viewScale = 1.0;
+                                  _viewInitialized = true;
+                                }
+                              }
 
-                    final double scale = _viewScale;
-                    final double pageWidth = frame.page.width * scale;
-                    final double pageHeight = frame.page.height * scale;
-                    // The horizontal scroll content is at least as wide as the
-                    // viewport, so the page centers when it fits and scrolls
-                    // once zoomed past fit.
-                    final double contentWidth =
-                        math.max(pageWidth + 2 * pad, viewport.width);
-                    return SingleChildScrollView(
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: SizedBox(
-                          width: contentWidth,
-                          child: Padding(
-                            padding: const EdgeInsets.all(pad),
-                            child: Align(
-                              alignment: Alignment.topCenter,
-                              child: Container(
-                                key: const ValueKey<String>(
-                                    'jet_print.preview.page'),
-                                width: pageWidth,
-                                height: pageHeight,
-                                decoration: BoxDecoration(
-                                  color: previewSheetColor(theme.brightness),
-                                  border: Border.all(color: colors.border),
-                                ),
-                                child: CustomPaint(
-                                  painter: FrameCustomPainter(
-                                    picture: _picture,
-                                    scale: scale,
-                                    revision: _index,
+                              // Re-fit OFF the build path (it mutates state) on first
+                              // load, on an explicit fit pick, or when the viewport
+                              // changes — but ONLY while a fit mode is active, so a manual
+                              // zoom (or the desktop 100% default, mode == none) is left
+                              // alone. The designer canvas's handshake (design_canvas.dart).
+                              final bool fitActive =
+                                  _fitMode != JetViewFitMode.none;
+                              final bool viewportChanged =
+                                  _lastFitViewport != viewport;
+                              if (fitActive &&
+                                  (!_viewInitialized ||
+                                      _fitRequest != _appliedFitRequest ||
+                                      viewportChanged)) {
+                                WidgetsBinding.instance
+                                    .addPostFrameCallback((_) {
+                                  if (!mounted) return;
+                                  setState(() {
+                                    _viewInitialized = true;
+                                    _appliedFitRequest = _fitRequest;
+                                    _lastFitViewport = viewport;
+                                    _viewScale = _fitMode == JetViewFitMode.page
+                                        ? fitPageScale(content, viewport, pad)
+                                        : fitWidthScale(content, viewport, pad);
+                                  });
+                                });
+                              }
+
+                              final double scale = _viewScale;
+                              final double pageWidth = frame.page.width * scale;
+                              final double pageHeight =
+                                  frame.page.height * scale;
+                              // The horizontal scroll content is at least as wide as the
+                              // viewport, so the page centers when it fits and scrolls
+                              // once zoomed past fit.
+                              final double contentWidth =
+                                  math.max(pageWidth + 2 * pad, viewport.width);
+                              return SingleChildScrollView(
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: SizedBox(
+                                    width: contentWidth,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(pad),
+                                      child: Align(
+                                        alignment: Alignment.topCenter,
+                                        child: Container(
+                                          key: const ValueKey<String>(
+                                              'jet_print.preview.page'),
+                                          width: pageWidth,
+                                          height: pageHeight,
+                                          decoration: BoxDecoration(
+                                            color: previewSheetColor(
+                                                theme.brightness),
+                                            border: Border.all(
+                                                color: colors.border),
+                                          ),
+                                          child: CustomPaint(
+                                            painter: FrameCustomPainter(
+                                              picture: _picture,
+                                              scale: scale,
+                                              revision: _index,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
+                              );
+                            },
                           ),
                         ),
                       ),
-                    );
-                  },
-                ),
+                    ],
+                  );
+                },
               ),
             ),
           ],
@@ -528,6 +599,7 @@ class _ToolbarButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.buttonKey,
+    this.active = false,
   });
 
   final Key? buttonKey;
@@ -535,24 +607,45 @@ class _ToolbarButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
 
+  /// Whether the button's toggle is on; shadcn has no toggle icon button, so
+  /// the on-state uses the filled `secondary` variant and the off-state the
+  /// usual ghost.
+  final bool active;
+
   @override
   Widget build(BuildContext context) {
-    return ShadTooltip(
-      builder: (BuildContext context) => Text(label),
-      // The tooltip is hover-only; expose it as the button's accessible name
-      // too (the glyph alone is not announced) — FR-018.
-      child: MergeSemantics(
-        child: Semantics(
-          label: label,
-          button: true,
-          child: ShadIconButton.ghost(
+    final Widget button = active
+        ? ShadIconButton.secondary(
             key: buttonKey,
             icon: Icon(icon, size: 16),
             width: 32,
             height: 32,
             padding: EdgeInsets.zero,
             onPressed: onPressed,
-          ),
+          )
+        : ShadIconButton.ghost(
+            key: buttonKey,
+            icon: Icon(icon, size: 16),
+            width: 32,
+            height: 32,
+            padding: EdgeInsets.zero,
+            onPressed: onPressed,
+          );
+
+    return ShadTooltip(
+      // shadcn_ui's touch "tap-to-peek" affordance means the very tap that
+      // fires [onPressed] also flips this tooltip open, so its floating copy
+      // of the label can be on-screen at the same time as the button's own
+      // accessible name. Excluded from semantics: the wrapping [Semantics]
+      // below is the button's one authoritative accessible name — FR-018 —
+      // so the hover-only popup text must not register a second, duplicate
+      // node under the same label.
+      builder: (BuildContext context) => ExcludeSemantics(child: Text(label)),
+      child: MergeSemantics(
+        child: Semantics(
+          label: label,
+          button: true,
+          child: button,
         ),
       ),
     );

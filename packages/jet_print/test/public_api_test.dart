@@ -287,6 +287,18 @@ void main() {
     expect(preview, isA<Widget>());
   });
 
+  test('JetReportPreview exposes the additive showThumbnails flag (044)', () {
+    final RenderedReport report = const JetReportEngine().renderDefinition(
+      _flatTextDef(),
+      JetInMemoryDataSource(const <Map<String, Object?>>[<String, Object?>{}]),
+    );
+    expect(JetReportPreview(report: report).showThumbnails, isTrue);
+    expect(
+      JetReportPreview(report: report, showThumbnails: false).showThumbnails,
+      isFalse,
+    );
+  });
+
   test('the eight ShapeKind forms are public and additive (020)', () {
     expect(
         ShapeKind.values,
