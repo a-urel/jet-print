@@ -166,7 +166,7 @@ class _JetReportPreviewState extends State<JetReportPreview> {
   bool _thumbnailDefaultResolved = false;
 
   /// Below this body width the rail is hidden on first build. Sits above the
-  /// 600 px golden surfaces and below the toolbar's 880 px scroll breakpoint.
+  /// 600 px golden surfaces and below the toolbar's 920 px scroll breakpoint.
   static const double _thumbnailAutoHideWidth = 700;
 
   /// Fonts shared between frame recording (the painter resolves glyph bytes
@@ -414,12 +414,18 @@ class _JetReportPreviewState extends State<JetReportPreview> {
               leadingIcon: LucideIcons.fileText,
               name: _displayedName,
               // The preview's actions are already icon-only and the name
-              // ellipsizes to fit; below this width the export/print + zoom +
-              // page-nav groups plus the labelled mode switch no longer fit in
-              // the longest locale (de/tr), so the whole bar scrolls instead of
-              // overflowing (the `compact` flag is unused by the preview).
-              compactWidth: 880,
-              scrollWidth: 880,
+              // ellipsizes to fit; below this width the thumbnail toggle +
+              // divider, export/print + zoom + page-nav groups plus the
+              // labelled mode switch no longer fit in the longest locale
+              // (de/tr), so the whole bar scrolls instead of overflowing (the
+              // `compact` flag is unused by the preview). 920 (raised from an
+              // earlier 880, empirically: the widest action row — both
+              // artifact actions plus the 044 thumbnail toggle + its divider —
+              // needs 887px of content width to lay out without overflowing,
+              // measured by widening a failing width until the RenderFlex
+              // overflow disappeared; 920 leaves a margin above that).
+              compactWidth: 920,
+              scrollWidth: 920,
               // The preview's mode switch matches the designer: icon-only on a
               // phone / very narrow bar, labelled otherwise.
               centerBuilder: (BuildContext context, bool veryNarrow) =>

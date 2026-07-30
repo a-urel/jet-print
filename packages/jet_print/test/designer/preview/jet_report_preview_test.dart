@@ -149,10 +149,30 @@ void main() {
     );
   });
 
+  testWidgets(
+      'the toolbar does not overflow across the former compact/scroll '
+      'threshold band, with both artifact actions wired (regression: the '
+      'thumbnail toggle + divider added ~40px that the old 880px threshold '
+      "didn't leave room for)", (WidgetTester tester) async {
+    // 900 (content 884px, after the bar's 16px padding) is the width that used
+    // to overflow by 3px; 884 and 920 bracket it, both previously scrolling or
+    // exactly at the new threshold.
+    for (final double width in <double>[884, 900, 920]) {
+      await _pumpPreview(
+        tester,
+        size: Size(width, 700),
+        onExportPdf: () {},
+        onPrint: () {},
+      );
+      expect(tester.takeException(), isNull,
+          reason: 'width ${width}px should not overflow the toolbar');
+    }
+  });
+
   testWidgets('next/prev navigate one page at a time, bounded at the ends',
       (WidgetTester tester) async {
     // Wide enough that the 017 mode switch + viewing actions fit without the
-    // toolbar entering its horizontal-scroll regime (< 880 px), so the
+    // toolbar entering its horizontal-scroll regime (< 920 px), so the
     // page-navigation buttons stay on-screen and tappable.
     await _pumpPreview(tester, size: const Size(1000, 600));
 
