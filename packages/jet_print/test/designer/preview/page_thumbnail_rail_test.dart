@@ -2,6 +2,7 @@
 // count, selection chrome, tap-to-select, and the bounded picture cache. The
 // rail is an unexported `src/` designer-internal seam (the
 // expression_editor_dialog precedent), so this test imports it directly.
+import 'dart:typed_data';
 import 'dart:ui' show Tristate;
 
 import 'package:flutter/semantics.dart';
@@ -44,6 +45,38 @@ ReportDefinition _definition() => const ReportDefinition(
 RenderedReport _report({int rows = 6}) =>
     const JetReportEngine().renderDefinition(
       _definition(),
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        for (int i = 0; i < rows; i++) <String, Object?>{'name': 'row $i'},
+      ]),
+    );
+
+/// A report whose report-header (`body.title`, printed once on page 0 only —
+/// the `imageReport` export-fixture precedent) embeds an image with garbage
+/// bytes: `ui.instantiateImageCodec` throws for it inside
+/// `CanvasPainter.prepare`, so recording page 0 always fails. Later pages hold
+/// plain detail rows and record successfully, isolating the failure to one
+/// known index.
+RenderedReport _reportWithBadTitleImage({int rows = 6}) =>
+    const JetReportEngine().renderDefinition(
+      ReportDefinition(
+        name: 'Corrupt Image',
+        page: _page,
+        body: ReportBody(
+          title: Band(
+            id: 'body/title',
+            type: BandType.title,
+            height: 20,
+            elements: <ReportElement>[
+              ImageElement(
+                id: 'bad-img',
+                bounds: const JetRect(x: 0, y: 0, width: 16, height: 16),
+                source: BytesImageSource(Uint8List.fromList(<int>[1, 2, 3, 4])),
+              ),
+            ],
+          ),
+          root: _definition().body.root,
+        ),
+      ),
       JetInMemoryDataSource(<Map<String, Object?>>[
         for (int i = 0; i < rows; i++) <String, Object?>{'name': 'row $i'},
       ]),
@@ -128,6 +161,36 @@ void main() {
 
     final PageThumbnailRailState state =
         tester.state<PageThumbnailRailState>(find.byType(PageThumbnailRail));
+    expect(state.debugCachedCount, greaterThan(0));
+  });
+
+  testWidgets(
+      'a page whose recording throws is not stuck: a later rebuild retries it',
+      (WidgetTester tester) async {
+    // Page 0's report-header embeds a corrupt image, so
+    // `CanvasPainter.prepare` throws every time page 0 is recorded; later
+    // pages hold plain rows and record fine, isolating the failure.
+    final RenderedReport report = _reportWithBadTitleImage();
+    await _pumpRail(tester, report: report);
+    final PageThumbnailRailState state =
+        tester.state<PageThumbnailRailState>(find.byType(PageThumbnailRail));
+
+    // The very first attempt at page 0 already ran to completion (inside
+    // _pumpRail's pumpAndSettle) and threw. If the index leaked into
+    // `_inFlight` forever (the bug), this would be stuck at 1 for the rest
+    // of the widget's life; the `finally` fix clears it every time.
+    expect(state.debugInFlightCount, 0);
+    // Other pages succeeded, so the cache isn't empty even though page 0
+    // never got a picture.
+    expect(state.debugCachedCount, greaterThan(0));
+
+    // Force a genuine second attempt: rebuilding with a different
+    // `currentIndex` re-invokes `itemBuilder` (and so `_record`) for every
+    // still-visible tile, including page 0's, whose picture is still null.
+    // A stuck index would have no-op'd forever at `_record`'s first guard;
+    // clearing it lets this second attempt actually run (and fail again).
+    await _pumpRail(tester, report: report, currentIndex: 1);
+    expect(state.debugInFlightCount, 0);
     expect(state.debugCachedCount, greaterThan(0));
   });
 

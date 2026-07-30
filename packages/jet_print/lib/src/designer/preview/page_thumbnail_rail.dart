@@ -87,6 +87,11 @@ class PageThumbnailRailState extends State<PageThumbnailRail> {
   @visibleForTesting
   int get debugCachedCount => _pictures.length;
 
+  /// The number of records currently awaiting completion (test seam: proves a
+  /// throwing record clears its flag instead of leaking it forever).
+  @visibleForTesting
+  int get debugInFlightCount => _inFlight.length;
+
   /// The fixed per-tile extent, derived from page 0's aspect ratio. A fixed
   /// extent keeps scrolling O(visible) on a many-page report and makes
   /// scroll-to-index pure arithmetic.
@@ -114,22 +119,39 @@ class PageThumbnailRailState extends State<PageThumbnailRail> {
   /// Records page [index] into a picture through the shared paint pipeline,
   /// then caches it. No-ops while an identical request is in flight; drops the
   /// result if the widget unmounted or the report was swapped meanwhile.
+  ///
+  /// `paintFrame`/`CanvasPainter.prepare` can throw (a bad font, a corrupt
+  /// embedded image, any element-painting exception) — nothing upstream
+  /// catches those. Caught here and swallowed rather than rethrown: `_record`
+  /// runs fire-and-forget from a post-frame callback with nothing awaiting
+  /// it, so a rethrow would surface as an unhandled Future error instead of
+  /// leaving a graceful blank tile (matching the engine's own fail-safe
+  /// philosophy — `ReportDiagnostics` never throws either). The `finally`
+  /// below is what actually matters for correctness: it guarantees
+  /// `_inFlight` is cleared on every path, success or failure, so a later
+  /// rebuild retries the same index instead of leaving it stuck forever.
   Future<void> _record(int index) async {
     if (_inFlight.contains(index) || _pictures.containsKey(index)) return;
     _inFlight.add(index);
-    final RenderedReport report = widget.report;
-    final PageFrame frame = report.pageAt(index).frame;
-    final ui.PictureRecorder recorder = ui.PictureRecorder();
-    final ReportPainter painter =
-        CanvasPainter(ui.Canvas(recorder), report.fonts);
-    await paintFrame(frame, painter);
-    final ui.Picture picture = recorder.endRecording();
-    _inFlight.remove(index);
-    if (!mounted || !identical(report, widget.report)) {
-      picture.dispose();
-      return;
+    try {
+      final RenderedReport report = widget.report;
+      final PageFrame frame = report.pageAt(index).frame;
+      final ui.PictureRecorder recorder = ui.PictureRecorder();
+      final ReportPainter painter =
+          CanvasPainter(ui.Canvas(recorder), report.fonts);
+      await paintFrame(frame, painter);
+      final ui.Picture picture = recorder.endRecording();
+      if (!mounted || !identical(report, widget.report)) {
+        picture.dispose();
+        return;
+      }
+      setState(() => _pictures[index] = picture);
+    } catch (_) {
+      // Best-effort: the tile stays blank and retryable (see the `finally`
+      // below), rather than crashing the rail or permanently wedging.
+    } finally {
+      _inFlight.remove(index);
     }
-    setState(() => _pictures[index] = picture);
   }
 
   @override
