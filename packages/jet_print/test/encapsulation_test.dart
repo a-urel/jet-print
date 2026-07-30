@@ -162,7 +162,12 @@ bool _isWhiteBoxSeamTest(File file) {
       // symbology enum to friendly dropdown text; its unit test is white-box
       // (Principle III / the object_display_label_test precedent).
       path.endsWith(
-          '/test/designer/layout/panels/barcode_symbology_label_test.dart');
+          '/test/designer/layout/panels/barcode_symbology_label_test.dart') ||
+      // Preview thumbnails (044): the bounded LRU cache behind the thumbnail
+      // rail's `ui.Picture` budget is an unexported `src/` pure helper kept
+      // Flutter-free so the eviction math is unit-testable; its unit test is
+      // white-box (Principle III).
+      path.endsWith('/test/designer/preview/lru_cache_test.dart');
 }
 
 void main() {
