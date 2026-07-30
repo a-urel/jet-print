@@ -8,6 +8,7 @@ import 'dart:ui' show Tristate;
 import 'package:flutter/semantics.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as img;
 import 'package:jet_print/jet_print.dart';
 import 'package:jet_print/src/designer/preview/page_thumbnail_rail.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
@@ -82,6 +83,51 @@ RenderedReport _reportWithBadTitleImage({int rows = 6}) =>
       ]),
     );
 
+/// A report whose report-header (`body.title`, printed once on page 0 only)
+/// embeds a GENUINE (not corrupt) image: recording page 0 calls
+/// `ui.instantiateImageCodec`, an engine-mediated async decode a plain widget
+/// test (no `tester.runAsync()`) never completes, so the record for index 0
+/// stays reliably in flight for the whole test — unlike `_reportWithBadTitleImage`,
+/// whose corrupt bytes fail fast and settle within a single `pumpAndSettle`.
+RenderedReport _reportWithBlockingImage({int rows = 6}) =>
+    const JetReportEngine().renderDefinition(
+      ReportDefinition(
+        name: 'Blocking Image',
+        page: _page,
+        body: ReportBody(
+          title: Band(
+            id: 'body/title',
+            type: BandType.title,
+            height: 20,
+            elements: <ReportElement>[
+              ImageElement(
+                id: 'blocking-img',
+                bounds: const JetRect(x: 0, y: 0, width: 16, height: 16),
+                source: BytesImageSource(_validPngBytes()),
+              ),
+            ],
+          ),
+          root: _definition().body.root,
+        ),
+      ),
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        for (int i = 0; i < rows; i++) <String, Object?>{'name': 'row $i'},
+      ]),
+    );
+
+/// A tiny but genuinely valid PNG (the export-fixtures precedent) — real
+/// bytes, so decoding never throws; it just never *finishes* without
+/// `tester.runAsync()`.
+Uint8List _validPngBytes() {
+  final img.Image image = img.Image(width: 4, height: 2);
+  for (int y = 0; y < 2; y++) {
+    for (int x = 0; x < 4; x++) {
+      image.setPixelRgba(x, y, 32 + 48 * x, 64 + 64 * y, 200, 255);
+    }
+  }
+  return img.encodePng(image);
+}
+
 Key _tileKey(int index) => ValueKey<String>('jet_print.preview.thumbnail.$index');
 
 Future<void> _pumpRail(
@@ -108,6 +154,37 @@ Future<void> _pumpRail(
     ),
   ));
   await tester.pumpAndSettle();
+}
+
+/// Like [_pumpRail], but a single `pump()` instead of `pumpAndSettle()` — for
+/// a report whose page 0 embeds a genuinely blocking image (never resolves
+/// without `tester.runAsync()`), `pumpAndSettle()` would otherwise be safe
+/// (no Timer/animation keeps rescheduling frames), but a plain `pump()`
+/// keeps the intent explicit: this call observes the state right after one
+/// frame, deliberately before anything could settle.
+Future<void> _pumpRailWithoutSettling(
+  WidgetTester tester, {
+  required RenderedReport report,
+  int currentIndex = 0,
+  Size size = const Size(400, 600),
+}) async {
+  await tester.binding.setSurfaceSize(size);
+  addTearDown(() => tester.binding.setSurfaceSize(null));
+  await tester.pumpWidget(ShadApp(
+    localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+      JetPrintLocalizations.delegate,
+    ],
+    supportedLocales: JetPrintLocalizations.supportedLocales,
+    home: Align(
+      alignment: Alignment.topLeft,
+      child: PageThumbnailRail(
+        report: report,
+        currentIndex: currentIndex,
+        onSelect: (int _) {},
+      ),
+    ),
+  ));
+  await tester.pump();
 }
 
 void main() {
@@ -192,6 +269,59 @@ void main() {
     await _pumpRail(tester, report: report, currentIndex: 1);
     expect(state.debugInFlightCount, 0);
     expect(state.debugCachedCount, greaterThan(0));
+  });
+
+  testWidgets(
+      'a report swap while a record is in flight leaves debugInFlightCount '
+      'consistent with the new report/generation, not a stale-plus-fresh '
+      'double count', (WidgetTester tester) async {
+    // NOTE on what this test can and cannot prove: the reviewer-identified
+    // race is between a STALE record's `finally` (from before a swap)
+    // actually firing, and a FRESH record already tracking the same index
+    // under the new generation. Reliably forcing that exact interleaving
+    // would need either (a) a real image decode's completion timed to land
+    // precisely between two specific test steps — not controllable without
+    // `tester.runAsync()`, whose real-world timing this test cannot pin to a
+    // specific frame — or (b) a new test-only seam into `_record` (a pause
+    // point), which the brief explicitly asked not to invent. So instead
+    // this pins what IS deterministically reachable: that swapping the
+    // report while an old record is verifiably still in flight (blocking
+    // image, never resolves without runAsync) leaves the rail's bookkeeping
+    // internally consistent — exactly one in-flight record, matching the
+    // freshly (re)scheduled request for the CURRENT report — rather than
+    // either losing track of it (0) or somehow double-tracking it. The
+    // generation-guard's specific job (not letting a stale completion clear
+    // a slot a newer record now owns) was verified by code inspection instead
+    // — see the task-8 report for the full reasoning — and by this suite's
+    // existing throwing-record test still passing unchanged (proving the
+    // guard doesn't break the ordinary, same-generation retry contract).
+    // A single-page report (2 rows -> 1 page): its ONE tile is index 0, so the
+    // aggregate `debugCachedCount`/`debugInFlightCount` counters map exactly
+    // onto that one blocked record, with no other (unblocked) visible tiles
+    // muddying the counts.
+    final RenderedReport reportA = _reportWithBlockingImage(rows: 2);
+    await _pumpRailWithoutSettling(tester, report: reportA, currentIndex: 0);
+    final PageThumbnailRailState state =
+        tester.state<PageThumbnailRailState>(find.byType(PageThumbnailRail));
+
+    expect(state.debugInFlightCount, 1,
+        reason: 'report A page 0 is genuinely recording (blocking image, '
+            'never resolves without runAsync)');
+    expect(state.debugCachedCount, 0);
+
+    // Swap to a different report — also with a blocking image on page 0, so
+    // neither the abandoned old record nor the fresh new one can settle
+    // during this test, keeping the observation window open.
+    final RenderedReport reportB = _reportWithBlockingImage(rows: 2);
+    await _pumpRailWithoutSettling(tester, report: reportB, currentIndex: 0);
+
+    expect(state.debugInFlightCount, 1,
+        reason: 'the swap should track exactly the freshly-scheduled record '
+            'for the new report/generation — not 0 (lost track of it) and '
+            'not more than 1 (double-tracking the same index)');
+    expect(state.debugCachedCount, 0,
+        reason: 'neither the abandoned old record nor the fresh new one has '
+            'settled — both stay genuinely blocked without runAsync');
   });
 
   testWidgets(

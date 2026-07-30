@@ -450,11 +450,23 @@ class _JetReportPreviewState extends State<JetReportPreview> {
                 builder: (BuildContext context, BoxConstraints body) {
                   // One-shot narrow default, mirroring the zoom default just
                   // below: a plain field write (no setState), consumed by this
-                  // same build.
+                  // same build for the body Row below. The toolbar, however,
+                  // was already built earlier in this same frame (it's a
+                  // sibling higher up the Column, and this LayoutBuilder only
+                  // resolves during layout, after the build phase) — so it
+                  // still shows the pre-one-shot (`true`) toggle state. A
+                  // mounted-guarded post-frame setState repaints it with the
+                  // resolved value; the plain write above is kept exactly as
+                  // the `_defaultZoomResolved` precedent does it, this only
+                  // adds the repaint that value needs to actually reach the
+                  // toolbar.
                   if (!_thumbnailDefaultResolved) {
                     _thumbnailDefaultResolved = true;
                     if (body.maxWidth < _thumbnailAutoHideWidth) {
                       _showThumbnails = false;
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) setState(() {});
+                      });
                     }
                   }
                   return Row(

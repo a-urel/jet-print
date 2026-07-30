@@ -40,6 +40,15 @@ const double _tileGap = 10;
 
 /// How many recorded pictures the rail keeps alive at once. Each one also
 /// pins any images decoded for that page, so the cap stays modest.
+///
+/// Invariant: this must comfortably exceed the number of simultaneously
+/// *visible* tiles (a function of the rail's height and [_tileExtent]) — if
+/// it did not, caching a newly-scrolled-into-view tile would evict a
+/// still-mounted one's picture, blanking it and re-triggering `_record` from
+/// `itemBuilder`, which would then evict yet another still-visible tile to
+/// make room, and so on: a self-sustaining record/evict loop rather than a
+/// bounded cache. Unreachable in practice today (an A4-proportioned tile is
+/// ~186px, so 24 tiles would need ~4,500 logical px of rail height).
 const int _cacheCapacity = 24;
 
 /// A scrollable list of page thumbnails for [report], highlighting
@@ -83,6 +92,18 @@ class PageThumbnailRailState extends State<PageThumbnailRail> {
   /// same page twice before the first `await` returns.
   final Set<int> _inFlight = <int>{};
 
+  /// Bumped on every report swap (see [didUpdateWidget]). Each [_record] call
+  /// captures the generation it started under; its `finally` only clears
+  /// `_inFlight` if that generation is still current. Without this, a record
+  /// already in flight when the report swaps would — once it eventually
+  /// completes — remove the SAME index a newer record (started fresh for the
+  /// new report, after `_inFlight` was cleared on swap) is now using, letting
+  /// a third record start concurrently for that index. `_inFlight` itself is
+  /// still cleared immediately on swap (so the new report's pages aren't
+  /// blocked by a stale in-flight marker); the generation guard only stops a
+  /// stale completion from clearing a slot that belongs to a newer record.
+  int _reportGeneration = 0;
+
   final ScrollController _controller = ScrollController();
 
   /// The number of live cached pictures (test seam for the cache cap).
@@ -122,6 +143,7 @@ class PageThumbnailRailState extends State<PageThumbnailRail> {
     if (!identical(oldWidget.report, widget.report)) {
       _pictures.clear();
       _inFlight.clear();
+      _reportGeneration++;
     }
     if (oldWidget.currentIndex != widget.currentIndex) {
       // Off the build path: scrolling drives layout.
@@ -174,10 +196,15 @@ class PageThumbnailRailState extends State<PageThumbnailRail> {
   /// philosophy — `ReportDiagnostics` never throws either). The `finally`
   /// below is what actually matters for correctness: it guarantees
   /// `_inFlight` is cleared on every path, success or failure, so a later
-  /// rebuild retries the same index instead of leaving it stuck forever.
+  /// rebuild retries the same index instead of leaving it stuck forever —
+  /// EXCEPT when [_reportGeneration] has moved on since this call started
+  /// (a report swap mid-record): then a newer record may already be tracking
+  /// the same index under the new generation, and clearing it here would let
+  /// a third, redundant record start concurrently for it.
   Future<void> _record(int index) async {
     if (_inFlight.contains(index) || _pictures.containsKey(index)) return;
     _inFlight.add(index);
+    final int generation = _reportGeneration;
     try {
       final RenderedReport report = widget.report;
       final PageFrame frame = report.pageAt(index).frame;
@@ -195,7 +222,7 @@ class PageThumbnailRailState extends State<PageThumbnailRail> {
       // Best-effort: the tile stays blank and retryable (see the `finally`
       // below), rather than crashing the rail or permanently wedging.
     } finally {
-      _inFlight.remove(index);
+      if (generation == _reportGeneration) _inFlight.remove(index);
     }
   }
 

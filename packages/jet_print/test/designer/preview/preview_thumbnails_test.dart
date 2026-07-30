@@ -1,8 +1,11 @@
 // The preview's thumbnail rail and its toolbar toggle (044). Black-box: this
 // test stands in for an external consumer and imports only the public entry
 // point.
+import 'dart:typed_data';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as img;
 import 'package:jet_print/jet_print.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
@@ -44,6 +47,55 @@ RenderedReport _report({int rows = 6}) =>
       _definition(),
       JetInMemoryDataSource(<Map<String, Object?>>[
         for (int i = 0; i < rows; i++) <String, Object?>{'name': 'row $i'},
+      ]),
+    );
+
+/// A tiny but genuinely valid PNG (the export-fixtures precedent,
+/// `test/rendering/export/support/export_fixtures.dart`) — real bytes, not
+/// corrupt ones, so decoding it never throws; it just never *finishes*
+/// without `tester.runAsync()` (below).
+Uint8List _validPngBytes() {
+  final img.Image image = img.Image(width: 4, height: 2);
+  for (int y = 0; y < 2; y++) {
+    for (int x = 0; x < 4; x++) {
+      image.setPixelRgba(x, y, 32 + 48 * x, 64 + 64 * y, 200, 255);
+    }
+  }
+  return img.encodePng(image);
+}
+
+/// A report whose report-header (`body.title`, printed once on page 0 only —
+/// the `imageReport`/rail-test precedent) embeds a valid image: recording
+/// page 0 calls `ui.instantiateImageCodec`, a genuinely engine-mediated async
+/// operation that a plain widget test (no `tester.runAsync()`) never
+/// completes — the initial page's record stays reliably in flight for the
+/// whole test, so nothing can race the toolbar assertions below. Using real
+/// (not corrupt) bytes matters: the preview's own `_record()` has no
+/// try/catch around `paintFrame`, so a genuinely failing decode would
+/// eventually surface as an uncaught async error once it settled.
+RenderedReport _reportWithBlockingImage() =>
+    const JetReportEngine().renderDefinition(
+      ReportDefinition(
+        name: 'Quarterly Report',
+        page: _page,
+        body: ReportBody(
+          title: Band(
+            id: 'body/title',
+            type: BandType.title,
+            height: 20,
+            elements: <ReportElement>[
+              ImageElement(
+                id: 'blocking-img',
+                bounds: const JetRect(x: 0, y: 0, width: 16, height: 16),
+                source: BytesImageSource(_validPngBytes()),
+              ),
+            ],
+          ),
+          root: _definition().body.root,
+        ),
+      ),
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        for (int i = 0; i < 6; i++) <String, Object?>{'name': 'row $i'},
       ]),
     );
 
@@ -109,6 +161,46 @@ void main() {
     await tester.tap(find.byKey(_toggleKey));
     await tester.pumpAndSettle();
     expect(find.byKey(_listKey), findsOneWidget);
+  });
+
+  testWidgets(
+      'a narrow preview repaints the toolbar toggle to OFF on its own, not '
+      'only once the unrelated async page record happens to complete', (
+    WidgetTester tester,
+  ) async {
+    // The narrow one-shot resolves during the BODY LayoutBuilder's layout —
+    // after the toolbar (a Column sibling built earlier in the same frame)
+    // already painted using the pre-one-shot (`true`) value. `initState`'s
+    // unrelated async `_record()` is what accidentally fixes the toolbar
+    // today (its `setState` forces a correcting rebuild) — so to prove THIS
+    // fix, not that accident, the report's page 0 embeds an image: recording
+    // it calls `ui.instantiateImageCodec`, a genuinely engine-mediated async
+    // call this plain widget test (no `tester.runAsync()`) never completes,
+    // so `_record()` stays reliably in flight for the test's whole lifetime
+    // and cannot race these assertions.
+    await tester.binding.setSurfaceSize(const Size(600, 700));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(ShadApp(
+      localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+        JetPrintLocalizations.delegate,
+      ],
+      supportedLocales: JetPrintLocalizations.supportedLocales,
+      home: JetReportPreview(report: _reportWithBlockingImage()),
+    ));
+    await tester.pump();
+
+    expect(find.byKey(_listKey), findsNothing,
+        reason: 'the rail itself already hides on this frame (a plain field '
+            'write consumed by the same LayoutBuilder build)');
+    expect(find.bySemanticsLabel('Show page thumbnails'), findsOneWidget,
+        reason: 'the toggle should already read as OFF here, not still '
+            'showing the stale pre-one-shot ON state');
+    expect(find.bySemanticsLabel('Hide page thumbnails'), findsNothing);
+    expect(
+      tester.widget<ShadIconButton>(find.byKey(_toggleKey)).variant,
+      ShadButtonVariant.ghost,
+      reason: 'the inactive (ghost) variant, not the active (secondary) one',
+    );
   });
 
   testWidgets('tapping a thumbnail navigates the preview to that page', (
