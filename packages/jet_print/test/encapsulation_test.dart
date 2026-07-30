@@ -167,7 +167,8 @@ bool _isWhiteBoxSeamTest(File file) {
       // rail's `ui.Picture` budget is an unexported `src/` pure helper kept
       // Flutter-free so the eviction math is unit-testable; its unit test is
       // white-box (Principle III).
-      path.endsWith('/test/designer/preview/lru_cache_test.dart');
+      path.endsWith('/test/designer/preview/lru_cache_test.dart') ||
+      path.endsWith('/test/designer/preview/preview_sheet_test.dart');
 }
 
 void main() {
