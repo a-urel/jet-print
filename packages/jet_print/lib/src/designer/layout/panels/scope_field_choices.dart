@@ -50,6 +50,8 @@ List<FieldDef> collectionFieldsForScope(
   final DetailScope? scope = findScope(def, scopeId);
   final Set<String> alreadyBound = <String>{
     if (scope != null)
+      // Predicate, not dispatch: any other node kind correctly fails this
+      // test.
       for (final ScopeNode n in scope.children)
         if (n is NestedScope && n.scope.collectionField != null)
           n.scope.collectionField!,

@@ -80,11 +80,14 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
   if (schema != null) {
     void collectTotals(DetailScope s) {
       for (final ScopeNode node in s.children) {
-        if (node is NestedScope) {
-          for (final ScopeTotal t in node.scope.totals) {
-            publishedTotalNames.add(t.name);
-          }
-          collectTotals(node.scope);
+        switch (node) {
+          case BandNode():
+            break; // a band publishes no totals
+          case NestedScope(scope: final DetailScope inner):
+            for (final ScopeTotal t in inner.totals) {
+              publishedTotalNames.add(t.name);
+            }
+            collectTotals(inner);
         }
       }
     }

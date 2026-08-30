@@ -162,7 +162,12 @@ Iterable<String> allIds(ReportDefinition def) {
       out.add(g.id);
     }
     for (final ScopeNode n in s.children) {
-      if (n is NestedScope) walk(n.scope);
+      switch (n) {
+        case BandNode():
+          break; // band ids come from allBands above
+        case NestedScope(scope: final DetailScope inner):
+          walk(inner);
+      }
     }
   }
 
@@ -195,9 +200,12 @@ GroupLevel? findGroup(ReportDefinition def, String groupId) {
       if (g.id == groupId) return g;
     }
     for (final ScopeNode n in s.children) {
-      if (n is NestedScope) {
-        final GroupLevel? found = search(n.scope);
-        if (found != null) return found;
+      switch (n) {
+        case BandNode():
+          break; // a band holds no groups
+        case NestedScope(scope: final DetailScope inner):
+          final GroupLevel? found = search(inner);
+          if (found != null) return found;
       }
     }
     return null;
@@ -211,9 +219,12 @@ DetailScope? findScope(ReportDefinition def, String scopeId) {
   DetailScope? search(DetailScope s) {
     if (s.id == scopeId) return s;
     for (final ScopeNode n in s.children) {
-      if (n is NestedScope) {
-        final DetailScope? found = search(n.scope);
-        if (found != null) return found;
+      switch (n) {
+        case BandNode():
+          break; // a band is not a nested scope
+        case NestedScope(scope: final DetailScope inner):
+          final DetailScope? found = search(inner);
+          if (found != null) return found;
       }
     }
     return null;
@@ -255,9 +266,12 @@ GroupLevel? findGroupOfBand(ReportDefinition def, String bandId) {
       if (g.header?.id == bandId || g.footer?.id == bandId) return g;
     }
     for (final ScopeNode n in s.children) {
-      if (n is NestedScope) {
-        final GroupLevel? found = search(n.scope);
-        if (found != null) return found;
+      switch (n) {
+        case BandNode():
+          break; // a band cannot hold a group
+        case NestedScope(scope: final DetailScope inner):
+          final GroupLevel? found = search(inner);
+          if (found != null) return found;
       }
     }
     return null;
@@ -315,7 +329,12 @@ List<DetailScope> scopePathToScope(ReportDefinition def, String scopeId) {
       return true;
     }
     for (final ScopeNode n in s.children) {
-      if (n is NestedScope && search(n.scope, here)) return true;
+      switch (n) {
+        case BandNode():
+          break; // a band is not a nested scope
+        case NestedScope(scope: final DetailScope inner):
+          if (search(inner, here)) return true;
+      }
     }
     return false;
   }
@@ -382,6 +401,8 @@ ReportDefinition removeScope(ReportDefinition def, String scopeId) => mapScopes(
     def,
     (DetailScope s) => s.copyWith(
           children: <ScopeNode>[
+            // Predicate, not dispatch: any other node kind correctly fails
+            // this test.
             for (final ScopeNode n in s.children)
               if (!(n is NestedScope && n.scope.id == scopeId)) n,
           ],
@@ -513,6 +534,8 @@ ReportDefinition removeBandFromTree(ReportDefinition def, String bandId) {
             g,
       ],
       children: <ScopeNode>[
+        // Predicate, not dispatch: any other node kind correctly fails this
+        // test.
         for (final ScopeNode n in s.children)
           if (!(n is BandNode && n.band.id == bandId)) n,
       ],
@@ -529,6 +552,8 @@ ReportDefinition reorderScopeChild(
         ReportDefinition def, String scopeId, String bandId, int delta) =>
     mapScopes(def, (DetailScope s) {
       if (s.id != scopeId) return s;
+      // Predicate, not dispatch: any other node kind correctly fails this
+      // test.
       final int idx = s.children
           .indexWhere((ScopeNode n) => n is BandNode && n.band.id == bandId);
       if (idx < 0) return s;

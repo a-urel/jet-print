@@ -69,11 +69,20 @@ bool fieldResolves(List<FieldDef> scopeFields, String name) =>
 /// by [scope]'s DIRECT child scopes (spec 030 — a child scope's `totals` land on
 /// its parent's rows). NOT recursive (a grandchild's totals land on the child's
 /// rows, not here).
-Set<String> publishedTotalsForScope(DetailScope scope) => <String>{
-      for (final ScopeNode n in scope.children)
-        if (n is NestedScope)
-          for (final ScopeTotal t in n.scope.totals) t.name,
-    };
+Set<String> publishedTotalsForScope(DetailScope scope) {
+  final Set<String> out = <String>{};
+  for (final ScopeNode n in scope.children) {
+    switch (n) {
+      case BandNode():
+        break; // a band publishes nothing
+      case NestedScope(scope: final DetailScope s):
+        for (final ScopeTotal t in s.totals) {
+          out.add(t.name);
+        }
+    }
+  }
+  return out;
+}
 
 /// Whether every `$F{}` reference in [expression] resolves against the resolvable
 /// [names]. Mirrors [expressionResolves] but over a name set, so a caller holding
