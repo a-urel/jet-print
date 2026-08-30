@@ -21,6 +21,10 @@
 - Crosstab is **root-scope only** in Spec A; `validate()` rejects one inside a `NestedScope`.
 - Cardinality threshold: **50,000 populated cells** -> one warning, then proceed. Never truncate.
 - Dartdoc every public member; `dart format` and a clean `dart analyze` gate every commit.
+- **Format only the files you touched** (`dart format path/to/a.dart path/to/b.dart`). Running
+  `dart format lib test` reformats ~8 unrelated files in this repo because the local formatter
+  version differs from the one the committed code was formatted with — that churn must never enter
+  a commit.
 
 ---
 
@@ -142,7 +146,7 @@ Expected: PASS, same count as before. This is a pure refactor; a single failure 
 - [ ] **Step 6: Analyze, format, commit.**
 
 ```bash
-cd packages/jet_print && dart format lib test && dart analyze
+cd packages/jet_print && dart format <only the files you touched> && dart analyze
 cd /Users/ahmeturel/Projects/oss/jet-print
 git add packages/jet_print/lib
 git commit -m "refactor(domain): exhaustive switches over ScopeNode traversal"
@@ -637,7 +641,7 @@ Expected: PASS, 4 tests.
 - [ ] **Step 8: Analyze, format, commit.**
 
 ```bash
-cd packages/jet_print && dart format lib test && dart analyze
+cd packages/jet_print && dart format <only the files you touched> && dart analyze
 cd /Users/ahmeturel/Projects/oss/jet-print
 git add packages/jet_print/lib/src/domain/crosstab packages/jet_print/test/domain/crosstab
 git commit -m "feat(domain): crosstab model (axes, measures, style)"
@@ -783,7 +787,7 @@ Expected: PASS. No golden may move — nothing constructs a `CrosstabNode` yet o
 - [ ] **Step 7: Analyze, format, commit.**
 
 ```bash
-cd packages/jet_print && dart format lib test && dart analyze
+cd packages/jet_print && dart format <only the files you touched> && dart analyze
 cd /Users/ahmeturel/Projects/oss/jet-print
 git add packages/jet_print/lib packages/jet_print/test
 git commit -m "feat(domain): CrosstabNode scope variant; allIds collects crosstab ids"
@@ -1189,7 +1193,7 @@ Expected: PASS. The existing codec round-trip and golden-JSON tests must be unto
 - [ ] **Step 9: Analyze, format, commit.**
 
 ```bash
-cd packages/jet_print && dart format lib test && dart analyze
+cd packages/jet_print && dart format <only the files you touched> && dart analyze
 cd /Users/ahmeturel/Projects/oss/jet-print
 git add packages/jet_print/lib packages/jet_print/test
 git commit -m "feat(domain): crosstab JSON codec; UnknownScopeNode preserves future node kinds"
@@ -1381,7 +1385,7 @@ Expected: PASS. Existing validation tests must be untouched — crosstab rules o
 - [ ] **Step 6: Analyze, format, commit.**
 
 ```bash
-cd packages/jet_print && dart format lib test && dart analyze
+cd packages/jet_print && dart format <only the files you touched> && dart analyze
 cd /Users/ahmeturel/Projects/oss/jet-print
 git add packages/jet_print/lib packages/jet_print/test
 git commit -m "feat(domain): validate() rules for crosstabs"
@@ -1623,7 +1627,7 @@ Expected: PASS, 4 tests.
 - [ ] **Step 5: Analyze, format, commit.**
 
 ```bash
-cd packages/jet_print && dart format lib test && dart analyze
+cd packages/jet_print && dart format <only the files you touched> && dart analyze
 cd /Users/ahmeturel/Projects/oss/jet-print
 git add packages/jet_print/lib/src/rendering/crosstab packages/jet_print/test/rendering/crosstab
 git commit -m "feat(rendering): crosstab matrix value types"
@@ -1957,7 +1961,7 @@ Expected: PASS.
 - [ ] **Step 6: Analyze, format, commit.**
 
 ```bash
-cd packages/jet_print && dart format lib test && dart analyze
+cd packages/jet_print && dart format <only the files you touched> && dart analyze
 cd /Users/ahmeturel/Projects/oss/jet-print
 git add packages/jet_print/lib packages/jet_print/test
 git commit -m "feat(rendering): crosstab aggregator (single-pass prefix folding)"
@@ -2143,7 +2147,7 @@ Expected: PASS, 5 tests.
 - [ ] **Step 5: Analyze, format, commit.**
 
 ```bash
-cd packages/jet_print && dart format lib test && dart analyze
+cd packages/jet_print && dart format <only the files you touched> && dart analyze
 cd /Users/ahmeturel/Projects/oss/jet-print
 git add packages/jet_print/lib packages/jet_print/test
 git commit -m "feat(rendering): crosstab horizontal slicing"
@@ -2414,7 +2418,7 @@ Expected: PASS, 9 tests.
 - [ ] **Step 5: Analyze, format, commit.**
 
 ```bash
-cd packages/jet_print && dart format lib test && dart analyze
+cd packages/jet_print && dart format <only the files you touched> && dart analyze
 cd /Users/ahmeturel/Projects/oss/jet-print
 git add packages/jet_print/lib packages/jet_print/test
 git commit -m "feat(rendering): crosstab planner emits bands and one synthetic group"
@@ -2583,7 +2587,7 @@ Expected: PASS with **zero golden changes**. `syntheticGroups` defaults to empty
 - [ ] **Step 8: Analyze, format, commit.**
 
 ```bash
-cd packages/jet_print && dart format lib test && dart analyze
+cd packages/jet_print && dart format <only the files you touched> && dart analyze
 cd /Users/ahmeturel/Projects/oss/jet-print
 git add packages/jet_print/lib packages/jet_print/test
 git commit -m "feat(rendering): layouter honours planner-built synthetic groups"
@@ -2714,7 +2718,7 @@ Expected: PASS with **zero golden changes**. No existing definition contains a `
 - [ ] **Step 8: Analyze, format, commit.**
 
 ```bash
-cd packages/jet_print && dart format lib test && dart analyze
+cd packages/jet_print && dart format <only the files you touched> && dart analyze
 cd /Users/ahmeturel/Projects/oss/jet-print
 git add packages/jet_print/lib packages/jet_print/test
 git commit -m "feat(rendering): fill folds crosstabs during the row walk and splices their bands"
@@ -2803,8 +2807,8 @@ Expected: PASS in both, with **no pre-existing golden changed** — only the new
 - [ ] **Step 9: Analyze, format, commit.**
 
 ```bash
-cd /Users/ahmeturel/Projects/oss/jet-print/packages/jet_print && dart format lib test && dart analyze
-cd ../../apps/jet_print_playground && dart format lib test && dart analyze
+cd /Users/ahmeturel/Projects/oss/jet-print/packages/jet_print && dart format <only the files you touched> && dart analyze
+cd ../../apps/jet_print_playground && dart format <only the files you touched> && dart analyze
 cd /Users/ahmeturel/Projects/oss/jet-print
 git add packages/jet_print apps/jet_print_playground
 git commit -m "feat(jet_print): export crosstab API; add pivot playground demo and goldens"
@@ -2899,7 +2903,7 @@ nodes too.
 - [ ] **Step 8: Analyze, format, commit.**
 
 ```bash
-cd packages/jet_print && dart format lib test && dart analyze
+cd packages/jet_print && dart format <only the files you touched> && dart analyze
 cd /Users/ahmeturel/Projects/oss/jet-print
 git add packages/jet_print/lib packages/jet_print/test
 git commit -m "feat(designer): read-only outline row and canvas placeholder for crosstabs"
