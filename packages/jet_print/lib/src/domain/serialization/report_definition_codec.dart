@@ -11,6 +11,8 @@ library;
 import '../band.dart';
 import '../bool_property.dart';
 import '../column_layout.dart';
+import '../crosstab/crosstab.dart';
+import '../crosstab/crosstab_codec.dart';
 import '../detail_scope.dart';
 import '../group_level.dart';
 import '../page_format.dart';
@@ -112,7 +114,11 @@ Map<String, Object?> _encodeNode(
         'kind': 'scope',
         'scope': _encodeScope(s, registry),
       },
-    CrosstabNode() => throw UnimplementedError('crosstab codec — Task 4'),
+    CrosstabNode(crosstab: final Crosstab ct) => <String, Object?>{
+        'kind': 'crosstab',
+        'crosstab': encodeCrosstab(ct),
+      },
+    UnknownScopeNode(rawJson: final Map<String, Object?> raw) => raw,
   };
 }
 
@@ -284,8 +290,11 @@ ScopeNode _decodeNode(
     case 'scope':
       return NestedScope(_decodeScope(
           (json['scope']! as Map).cast<String, Object?>(), registry));
+    case 'crosstab':
+      return CrosstabNode(
+          decodeCrosstab((json['crosstab']! as Map).cast<String, Object?>()));
     default:
-      throw ReportFormatException('Unknown scope-node kind "${json['kind']}".');
+      return UnknownScopeNode(rawJson: Map<String, Object?>.unmodifiable(json));
   }
 }
 

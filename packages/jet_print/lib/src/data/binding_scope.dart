@@ -81,6 +81,8 @@ Set<String> publishedTotalsForScope(DetailScope scope) {
         }
       case CrosstabNode():
         break; // a crosstab publishes no totals
+      case UnknownScopeNode():
+        break; // an unknown node's contents are opaque; nothing to publish
     }
   }
   return out;

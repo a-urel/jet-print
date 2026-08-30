@@ -138,6 +138,8 @@ class DesignTimeLayout {
             scope(inner);
           case CrosstabNode():
             break; // a crosstab owns no bands to stack in the visual order
+          case UnknownScopeNode():
+            break; // an unknown node's bands, if any, are opaque
         }
       }
       for (final g in s.groups.reversed) {

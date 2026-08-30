@@ -516,6 +516,10 @@ class ReportFiller {
           // Not a per-row node: a crosstab folds during the scope's row walk and
           // its bands are spliced in afterwards (see the crosstab registry).
           break;
+        case UnknownScopeNode():
+          // A node this build doesn't recognize prints nothing rather than
+          // guessing at unfamiliar JSON.
+          break;
       }
     }
 

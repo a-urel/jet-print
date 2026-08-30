@@ -12,6 +12,7 @@ String _describe(ScopeNode node) => switch (node) {
       BandNode(band: final Band b) => 'band:${b.id}',
       NestedScope(scope: final DetailScope s) => 'scope:${s.id}',
       CrosstabNode(crosstab: final Crosstab ct) => 'crosstab:${ct.id}',
+      UnknownScopeNode(:final String? kind) => 'unknown:${kind ?? '?'}',
     };
 
 void main() {

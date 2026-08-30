@@ -35,6 +35,10 @@ ReportDefinition mapBands(ReportDefinition def, Band Function(Band) transform) {
         BandNode(band: final Band b) => BandNode(transform(b)),
         NestedScope(scope: final DetailScope s) => NestedScope(scope(s)),
         CrosstabNode() => n, // a crosstab owns no bands to transform
+        // Identity pass-through: this rebuilds DetailScope.children, so a
+        // `break` would silently drop the node from the tree instead of
+        // preserving it.
+        UnknownScopeNode() => n,
       };
   scope = (DetailScope s) => s.copyWith(
         groups: <GroupLevel>[for (final GroupLevel g in s.groups) group(g)],
@@ -99,6 +103,10 @@ ReportDefinition mapGroups(
               NestedScope(scope: final DetailScope inner) =>
                 NestedScope(scope(inner)),
               CrosstabNode() => n, // group mapping touches no bands
+              // Identity pass-through: this rebuilds DetailScope.children, so
+              // a `break` would silently drop the node from the tree instead
+              // of preserving it.
+              UnknownScopeNode() => n,
             },
         ],
       );
@@ -129,6 +137,8 @@ Iterable<Band> allBands(ReportDefinition def) sync* {
           addScope(inner);
         case CrosstabNode():
           break; // a crosstab owns no bands
+        case UnknownScopeNode():
+          break; // an unknown node's bands, if any, are opaque
       }
     }
     if (s.footer != null) out.add(s.footer!);
@@ -174,6 +184,8 @@ Iterable<String> allIds(ReportDefinition def) {
           walk(inner);
         case CrosstabNode(crosstab: final Crosstab ct):
           out.add(ct.id); // minting must not reuse it
+        case UnknownScopeNode():
+          break; // an unknown node's ids are opaque; minting can't collide
       }
     }
   }
@@ -215,6 +227,8 @@ GroupLevel? findGroup(ReportDefinition def, String groupId) {
           if (found != null) return found;
         case CrosstabNode():
           break; // a crosstab owns no groups
+        case UnknownScopeNode():
+          break; // an unknown node's contents are opaque; it holds no groups
       }
     }
     return null;
@@ -236,6 +250,8 @@ DetailScope? findScope(ReportDefinition def, String scopeId) {
           if (found != null) return found;
         case CrosstabNode():
           break; // a crosstab is not a nested scope
+        case UnknownScopeNode():
+          break; // an unknown node is opaque; it is not a nested scope
       }
     }
     return null;
@@ -262,6 +278,8 @@ DetailScope? findScopeOfBand(ReportDefinition def, String bandId) {
           if (found != null) return found;
         case CrosstabNode():
           break; // a crosstab owns no bands
+        case UnknownScopeNode():
+          break; // an unknown node's bands, if any, are opaque
       }
     }
     return null;
@@ -287,6 +305,8 @@ GroupLevel? findGroupOfBand(ReportDefinition def, String bandId) {
           if (found != null) return found;
         case CrosstabNode():
           break; // a crosstab cannot hold a group
+        case UnknownScopeNode():
+          break; // an unknown node's contents are opaque; it holds no groups
       }
     }
     return null;
@@ -325,6 +345,8 @@ List<DetailScope> scopePathToBand(ReportDefinition def, String bandId) {
           if (search(inner, here)) return true;
         case CrosstabNode():
           break; // a crosstab owns no bands
+        case UnknownScopeNode():
+          break; // an unknown node's bands, if any, are opaque
       }
     }
     return false;
@@ -353,6 +375,8 @@ List<DetailScope> scopePathToScope(ReportDefinition def, String scopeId) {
           if (search(inner, here)) return true;
         case CrosstabNode():
           break; // a crosstab is not a nested scope
+        case UnknownScopeNode():
+          break; // an unknown node is opaque; it is not a nested scope
       }
     }
     return false;
@@ -376,6 +400,10 @@ ReportDefinition mapScopes(
           NestedScope(scope: final DetailScope inner) =>
             NestedScope(visit(inner)),
           CrosstabNode() => n, // scope mapping touches no bands
+          // Identity pass-through: this rebuilds DetailScope.children, so a
+          // `break` would silently drop the node from the tree instead of
+          // preserving it.
+          UnknownScopeNode() => n,
         },
     ];
     return transform(s.copyWith(children: children));

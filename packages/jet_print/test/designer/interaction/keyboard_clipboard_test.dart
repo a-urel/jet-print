@@ -47,6 +47,8 @@ Iterable<Band> _scopeBands(DetailScope scope) sync* {
         yield* _scopeBands(scope);
       case CrosstabNode():
         break; // a crosstab owns no bands
+      case UnknownScopeNode():
+        break; // an unknown node's bands, if any, are opaque
     }
   }
   for (final GroupLevel g in scope.groups) {

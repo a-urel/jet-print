@@ -90,6 +90,8 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
             collectTotals(inner);
           case CrosstabNode():
             break; // a crosstab publishes no totals
+          case UnknownScopeNode():
+            break; // an unknown node's contents are opaque; nothing to publish
         }
       }
     }
@@ -294,6 +296,8 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
           walkScope(s, isRoot: false, chain: <DetailScope>[...chain, scope]);
         case CrosstabNode():
           break; // a crosstab is not a per-row band
+        case UnknownScopeNode():
+          break; // an unknown node is not a per-row band
       }
     }
     if (bandNodes > 1) {
@@ -401,6 +405,8 @@ List<Band> _allBands(ReportDefinition def) {
           walk(child);
         case CrosstabNode():
           break; // a crosstab owns no bands
+        case UnknownScopeNode():
+          break; // an unknown node's bands, if any, are opaque
       }
     }
   }

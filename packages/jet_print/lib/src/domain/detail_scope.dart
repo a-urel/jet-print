@@ -14,6 +14,8 @@ import 'group_level.dart';
 import 'scope_total.dart';
 import 'value_equality.dart';
 
+part 'unknown_scope_node.dart';
+
 /// One entry in a [DetailScope]'s ordered contents: either a per-row [Band]
 /// (wrapped in [BandNode]) or a nested [DetailScope] (wrapped in [NestedScope]).
 /// Sealed, so traversal pattern-matches exhaustively with no default arm.

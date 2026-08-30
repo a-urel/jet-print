@@ -68,6 +68,8 @@ extension _OutlineRows on _OutlinePanelState {
               l10n, schema);
         case CrosstabNode():
           break; // Outline authoring for crosstabs lands in a later task
+        case UnknownScopeNode():
+          break; // nothing to author for a node this build doesn't recognize
       }
     }
     for (final GroupLevel group in scope.groups.reversed) {

@@ -117,6 +117,8 @@ List<ReportElement> _allElements(JetReportDesignerController c) {
           addScope(inner);
         case CrosstabNode():
           break; // a crosstab owns no bands
+        case UnknownScopeNode():
+          break; // an unknown node's bands, if any, are opaque
       }
     }
   }
@@ -158,6 +160,8 @@ List<Band> _allBands(JetReportDesignerController c) {
           addScope(inner);
         case CrosstabNode():
           break; // a crosstab owns no bands
+        case UnknownScopeNode():
+          break; // an unknown node's bands, if any, are opaque
       }
     }
   }
