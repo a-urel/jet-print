@@ -232,8 +232,10 @@ Consequences:
 
 ## 3. Planner — matrix to band plan
 
-`lib/src/rendering/crosstab/crosstab_planner.dart`. Pure: matrix + style + available width in,
-bands + synthetic groups out. No data access, no measurement, no Flutter.
+`lib/src/rendering/crosstab/crosstab_planner.dart`. Pure: crosstab + matrix + available width in,
+bands + synthetic groups out. No data access, no measurement, no Flutter. It takes the `Crosstab`
+itself for its id (element ids, synthetic group name) and its style; `takenGroupNames` lets it
+detect a collision with a user-authored group.
 
 ```dart
 class CrosstabPlan {
@@ -245,8 +247,9 @@ class CrosstabPlan {
   final List<Diagnostic> diagnostics;
 }
 
-CrosstabPlan planCrosstab(CrosstabMatrix m, CrosstabStyle style, {
+CrosstabPlan planCrosstab(Crosstab ct, CrosstabMatrix m, {
   required double availableWidth,
+  Set<String> takenGroupNames = const <String>{},
 });
 ```
 
