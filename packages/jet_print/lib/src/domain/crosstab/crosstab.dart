@@ -5,6 +5,7 @@
 library;
 
 import '../bool_property.dart';
+import '../copy_support.dart';
 import '../value_equality.dart';
 import 'crosstab_group.dart';
 import 'crosstab_measure.dart';
@@ -71,9 +72,8 @@ class Crosstab with ValueEquality {
   }) =>
       Crosstab(
         id: id ?? this.id,
-        name: name == null ? this.name : name(),
-        collectionField:
-            collectionField == null ? this.collectionField : collectionField(),
+        name: pick(name, this.name),
+        collectionField: pick(collectionField, this.collectionField),
         rowGroups: rowGroups ?? this.rowGroups,
         columnGroups: columnGroups ?? this.columnGroups,
         measures: measures ?? this.measures,

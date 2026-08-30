@@ -1,6 +1,7 @@
 /// The appearance and metrics of a crosstab (spec A). All distances are points.
 library;
 
+import '../copy_support.dart';
 import '../styles/box_style.dart';
 import '../styles/text_style.dart';
 import '../value_equality.dart';
@@ -74,12 +75,12 @@ class CrosstabStyle with ValueEquality {
     double? headerRowHeight,
   }) =>
       CrosstabStyle(
-        headerText: headerText == null ? this.headerText : headerText(),
-        headerBox: headerBox == null ? this.headerBox : headerBox(),
-        cellText: cellText == null ? this.cellText : cellText(),
-        cellBox: cellBox == null ? this.cellBox : cellBox(),
-        totalText: totalText == null ? this.totalText : totalText(),
-        totalBox: totalBox == null ? this.totalBox : totalBox(),
+        headerText: pick(headerText, this.headerText),
+        headerBox: pick(headerBox, this.headerBox),
+        cellText: pick(cellText, this.cellText),
+        cellBox: pick(cellBox, this.cellBox),
+        totalText: pick(totalText, this.totalText),
+        totalBox: pick(totalBox, this.totalBox),
         rowLabelWidth: rowLabelWidth ?? this.rowLabelWidth,
         rowLabelIndent: rowLabelIndent ?? this.rowLabelIndent,
         measureColumnWidth: measureColumnWidth ?? this.measureColumnWidth,

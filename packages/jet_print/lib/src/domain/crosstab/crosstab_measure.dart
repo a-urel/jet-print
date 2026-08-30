@@ -2,6 +2,7 @@
 /// into every cell it contributes to.
 library;
 
+import '../copy_support.dart';
 import '../report_variable.dart' show JetCalculation;
 import '../styles/box_style.dart';
 import '../styles/text_style.dart';
@@ -60,10 +61,9 @@ class CrosstabMeasure with ValueEquality {
         name: name ?? this.name,
         expression: expression ?? this.expression,
         aggregate: aggregate ?? this.aggregate,
-        format: format == null ? this.format : format(),
-        cellTextStyle:
-            cellTextStyle == null ? this.cellTextStyle : cellTextStyle(),
-        cellBoxStyle: cellBoxStyle == null ? this.cellBoxStyle : cellBoxStyle(),
+        format: pick(format, this.format),
+        cellTextStyle: pick(cellTextStyle, this.cellTextStyle),
+        cellBoxStyle: pick(cellBoxStyle, this.cellBoxStyle),
       );
 
   @override

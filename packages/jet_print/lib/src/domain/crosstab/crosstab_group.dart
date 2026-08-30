@@ -2,6 +2,7 @@
 /// [expression] produces the key rows are bucketed by.
 library;
 
+import '../copy_support.dart';
 import '../value_equality.dart';
 
 /// How a [CrosstabGroup]'s keys are ordered on its axis.
@@ -66,7 +67,7 @@ class CrosstabGroup with ValueEquality {
         expression: expression ?? this.expression,
         sort: sort ?? this.sort,
         showTotal: showTotal ?? this.showTotal,
-        totalLabel: totalLabel == null ? this.totalLabel : totalLabel(),
+        totalLabel: pick(totalLabel, this.totalLabel),
       );
 
   @override
