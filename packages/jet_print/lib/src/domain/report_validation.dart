@@ -88,6 +88,8 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
               publishedTotalNames.add(t.name);
             }
             collectTotals(inner);
+          case CrosstabNode():
+            break; // a crosstab publishes no totals
         }
       }
     }
@@ -290,6 +292,8 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
           aggregateBand(b, supported: false);
         case NestedScope(scope: final DetailScope s):
           walkScope(s, isRoot: false, chain: <DetailScope>[...chain, scope]);
+        case CrosstabNode():
+          break; // a crosstab is not a per-row band
       }
     }
     if (bandNodes > 1) {
@@ -395,6 +399,8 @@ List<Band> _allBands(ReportDefinition def) {
           add(b);
         case NestedScope(scope: final DetailScope child):
           walk(child);
+        case CrosstabNode():
+          break; // a crosstab owns no bands
       }
     }
   }

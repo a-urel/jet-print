@@ -9,6 +9,7 @@ library;
 
 import 'band.dart';
 import 'copy_support.dart';
+import 'crosstab/crosstab.dart';
 import 'group_level.dart';
 import 'scope_total.dart';
 import 'value_equality.dart';
@@ -49,6 +50,25 @@ final class NestedScope extends ScopeNode with ValueEquality {
 
   @override
   String toString() => 'NestedScope(${scope.id})';
+}
+
+/// A crosstab block rendered within the owning scope.
+///
+/// Unlike a [BandNode], a crosstab is **not** per-row: it folds the scope's rows
+/// as they stream and prints once — before the row loop when it precedes every
+/// row-producing sibling, otherwise after it.
+final class CrosstabNode extends ScopeNode with ValueEquality {
+  /// Wraps [crosstab] as a scope child.
+  const CrosstabNode(this.crosstab);
+
+  /// The crosstab printed once within the owning scope.
+  final Crosstab crosstab;
+
+  @override
+  List<Object?> get props => <Object?>[crosstab];
+
+  @override
+  String toString() => 'CrosstabNode(${crosstab.id})';
 }
 
 /// An immutable data-iteration scope: the master/root (`collectionField` null)

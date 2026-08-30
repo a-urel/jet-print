@@ -4,6 +4,9 @@ import 'package:jet_print/src/designer/controller/commands/scope_commands.dart';
 import 'package:jet_print/src/designer/controller/designer_document.dart';
 import 'package:jet_print/src/designer/controller/selection.dart';
 import 'package:jet_print/src/domain/band.dart';
+import 'package:jet_print/src/domain/crosstab/crosstab.dart';
+import 'package:jet_print/src/domain/crosstab/crosstab_group.dart';
+import 'package:jet_print/src/domain/crosstab/crosstab_measure.dart';
 import 'package:jet_print/src/domain/detail_scope.dart';
 import 'package:jet_print/src/domain/elements/text_element.dart';
 import 'package:jet_print/src/domain/geometry.dart';
@@ -12,6 +15,7 @@ import 'package:jet_print/src/domain/page_format.dart';
 import 'package:jet_print/src/domain/report_band.dart' show BandType;
 import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/domain/report_element.dart';
+import 'package:jet_print/src/domain/report_variable.dart' show JetCalculation;
 import 'package:jet_print/src/domain/scope_total.dart';
 import 'package:jet_print/src/domain/watermark.dart';
 
@@ -327,11 +331,56 @@ void main() {
               watermark: () => const Watermark(text: 'DRAFT'),
             ),
       );
-      final ReportDefinition after = updateElement(
-          d, 'e2', (ReportElement e) => e.withName('renamed'));
+      final ReportDefinition after =
+          updateElement(d, 'e2', (ReportElement e) => e.withName('renamed'));
       expect(after.furniture.watermark, const Watermark(text: 'DRAFT'),
           reason: 'an element edit must not clear page furniture fields');
       expect(findBandOfElement(after, 'e2'), isNotNull);
+    });
+  });
+
+  group('crosstab nodes', () {
+    const Crosstab ct = Crosstab(
+      id: 'ct1',
+      rowGroups: <CrosstabGroup>[
+        CrosstabGroup(id: 'g/r', name: 'R', expression: r'$F{region}'),
+      ],
+      columnGroups: <CrosstabGroup>[
+        CrosstabGroup(id: 'g/c', name: 'C', expression: r'$F{quarter}'),
+      ],
+      measures: <CrosstabMeasure>[
+        CrosstabMeasure(
+          id: 'm/a',
+          name: 'A',
+          expression: r'$F{amount}',
+          aggregate: JetCalculation.sum,
+        ),
+      ],
+    );
+    final ReportDefinition def = ReportDefinition(
+      name: 'R',
+      page: PageFormat.a4Portrait,
+      body: const ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(id: 'detail', type: BandType.detail, height: 12)),
+            CrosstabNode(ct),
+          ],
+        ),
+      ),
+    );
+
+    test('allIds collects the crosstab id so minting cannot collide', () {
+      expect(allIds(def), contains('ct1'));
+    });
+
+    test('allBands ignores a crosstab (it owns no bands)', () {
+      expect(allBands(def).map((Band b) => b.id), <String>['detail']);
+    });
+
+    test('findScope still walks past a crosstab sibling', () {
+      expect(findScope(def, 'root')?.id, 'root');
     });
   });
 }

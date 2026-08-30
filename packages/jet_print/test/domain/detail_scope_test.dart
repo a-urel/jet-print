@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/domain/band.dart';
+import 'package:jet_print/src/domain/crosstab/crosstab.dart';
 import 'package:jet_print/src/domain/detail_scope.dart';
 import 'package:jet_print/src/domain/group_level.dart';
 import 'package:jet_print/src/domain/report_band.dart' show BandType;
@@ -10,6 +11,7 @@ const Band _detail = Band(id: 'd', type: BandType.detail, height: 10);
 String _describe(ScopeNode node) => switch (node) {
       BandNode(band: final Band b) => 'band:${b.id}',
       NestedScope(scope: final DetailScope s) => 'scope:${s.id}',
+      CrosstabNode(crosstab: final Crosstab ct) => 'crosstab:${ct.id}',
     };
 
 void main() {

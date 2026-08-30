@@ -86,7 +86,7 @@ export 'src/domain/band.dart' show Band;
 export 'src/domain/bool_property.dart' show BoolProperty;
 export 'src/domain/column_layout.dart' show ColumnLayout;
 export 'src/domain/detail_scope.dart'
-    show BandNode, DetailScope, NestedScope, ScopeNode;
+    show BandNode, CrosstabNode, DetailScope, NestedScope, ScopeNode;
 export 'src/domain/elements/barcode_element.dart'
     show BarcodeElement, BarcodeSymbology, QrErrorCorrectionLevel;
 export 'src/domain/elements/chart_element.dart'

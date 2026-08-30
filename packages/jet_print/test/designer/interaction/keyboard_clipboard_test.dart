@@ -45,6 +45,8 @@ Iterable<Band> _scopeBands(DetailScope scope) sync* {
         yield band;
       case NestedScope(:final DetailScope scope):
         yield* _scopeBands(scope);
+      case CrosstabNode():
+        break; // a crosstab owns no bands
     }
   }
   for (final GroupLevel g in scope.groups) {

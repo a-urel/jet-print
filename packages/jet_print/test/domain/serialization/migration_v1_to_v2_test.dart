@@ -24,11 +24,13 @@ ReportDefinition _fixture(String name) {
 Band _bandOf(ScopeNode node) => switch (node) {
       BandNode(band: final Band b) => b,
       NestedScope() => throw StateError('expected a BandNode'),
+      CrosstabNode() => throw StateError('expected a BandNode'),
     };
 
 DetailScope _scopeOf(ScopeNode node) => switch (node) {
       NestedScope(scope: final DetailScope s) => s,
       BandNode() => throw StateError('expected a NestedScope'),
+      CrosstabNode() => throw StateError('expected a NestedScope'),
     };
 
 void main() {

@@ -512,6 +512,10 @@ class ReportFiller {
             }
             addBand(footer.band, scopeRow, vars);
           }
+        case CrosstabNode():
+          // Not a per-row node: a crosstab folds during the scope's row walk and
+          // its bands are spliced in afterwards (see the crosstab registry).
+          break;
       }
     }
 

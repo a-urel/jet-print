@@ -66,6 +66,8 @@ extension _OutlineRows on _OutlinePanelState {
         case NestedScope(scope: final DetailScope inner):
           _addScopeRows(rows, inner, depth + 1, controller, selection, theme,
               l10n, schema);
+        case CrosstabNode():
+          break; // Outline authoring for crosstabs lands in a later task
       }
     }
     for (final GroupLevel group in scope.groups.reversed) {

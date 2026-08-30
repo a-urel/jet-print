@@ -79,6 +79,8 @@ Set<String> publishedTotalsForScope(DetailScope scope) {
         for (final ScopeTotal t in s.totals) {
           out.add(t.name);
         }
+      case CrosstabNode():
+        break; // a crosstab publishes no totals
     }
   }
   return out;

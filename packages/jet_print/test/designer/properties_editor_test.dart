@@ -115,6 +115,8 @@ List<ReportElement> _allElements(JetReportDesignerController c) {
           addBand(band);
         case NestedScope(scope: final DetailScope inner):
           addScope(inner);
+        case CrosstabNode():
+          break; // a crosstab owns no bands
       }
     }
   }
@@ -154,6 +156,8 @@ List<Band> _allBands(JetReportDesignerController c) {
           add(band);
         case NestedScope(scope: final DetailScope inner):
           addScope(inner);
+        case CrosstabNode():
+          break; // a crosstab owns no bands
       }
     }
   }

@@ -136,6 +136,8 @@ class DesignTimeLayout {
             add(b);
           case NestedScope(scope: final DetailScope inner):
             scope(inner);
+          case CrosstabNode():
+            break; // a crosstab owns no bands to stack in the visual order
         }
       }
       for (final g in s.groups.reversed) {

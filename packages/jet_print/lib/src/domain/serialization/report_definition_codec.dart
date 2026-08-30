@@ -112,6 +112,7 @@ Map<String, Object?> _encodeNode(
         'kind': 'scope',
         'scope': _encodeScope(s, registry),
       },
+    CrosstabNode() => throw UnimplementedError('crosstab codec — Task 4'),
   };
 }
 

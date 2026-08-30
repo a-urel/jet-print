@@ -9,6 +9,7 @@
 library;
 
 import '../../domain/band.dart';
+import '../../domain/crosstab/crosstab.dart';
 import '../../domain/detail_scope.dart';
 import '../../domain/group_level.dart';
 import '../../domain/report_band.dart' show BandType;
@@ -33,6 +34,7 @@ ReportDefinition mapBands(ReportDefinition def, Band Function(Band) transform) {
   ScopeNode node(ScopeNode n) => switch (n) {
         BandNode(band: final Band b) => BandNode(transform(b)),
         NestedScope(scope: final DetailScope s) => NestedScope(scope(s)),
+        CrosstabNode() => n, // a crosstab owns no bands to transform
       };
   scope = (DetailScope s) => s.copyWith(
         groups: <GroupLevel>[for (final GroupLevel g in s.groups) group(g)],
@@ -96,6 +98,7 @@ ReportDefinition mapGroups(
               BandNode() => n,
               NestedScope(scope: final DetailScope inner) =>
                 NestedScope(scope(inner)),
+              CrosstabNode() => n, // group mapping touches no bands
             },
         ],
       );
@@ -124,6 +127,8 @@ Iterable<Band> allBands(ReportDefinition def) sync* {
           out.add(b);
         case NestedScope(scope: final DetailScope inner):
           addScope(inner);
+        case CrosstabNode():
+          break; // a crosstab owns no bands
       }
     }
     if (s.footer != null) out.add(s.footer!);
@@ -167,6 +172,8 @@ Iterable<String> allIds(ReportDefinition def) {
           break; // band ids come from allBands above
         case NestedScope(scope: final DetailScope inner):
           walk(inner);
+        case CrosstabNode(crosstab: final Crosstab ct):
+          out.add(ct.id); // minting must not reuse it
       }
     }
   }
@@ -206,6 +213,8 @@ GroupLevel? findGroup(ReportDefinition def, String groupId) {
         case NestedScope(scope: final DetailScope inner):
           final GroupLevel? found = search(inner);
           if (found != null) return found;
+        case CrosstabNode():
+          break; // a crosstab owns no groups
       }
     }
     return null;
@@ -225,6 +234,8 @@ DetailScope? findScope(ReportDefinition def, String scopeId) {
         case NestedScope(scope: final DetailScope inner):
           final DetailScope? found = search(inner);
           if (found != null) return found;
+        case CrosstabNode():
+          break; // a crosstab is not a nested scope
       }
     }
     return null;
@@ -249,6 +260,8 @@ DetailScope? findScopeOfBand(ReportDefinition def, String bandId) {
         case NestedScope(scope: final DetailScope inner):
           final DetailScope? found = search(inner);
           if (found != null) return found;
+        case CrosstabNode():
+          break; // a crosstab owns no bands
       }
     }
     return null;
@@ -272,6 +285,8 @@ GroupLevel? findGroupOfBand(ReportDefinition def, String bandId) {
         case NestedScope(scope: final DetailScope inner):
           final GroupLevel? found = search(inner);
           if (found != null) return found;
+        case CrosstabNode():
+          break; // a crosstab cannot hold a group
       }
     }
     return null;
@@ -308,6 +323,8 @@ List<DetailScope> scopePathToBand(ReportDefinition def, String bandId) {
           }
         case NestedScope(scope: final DetailScope inner):
           if (search(inner, here)) return true;
+        case CrosstabNode():
+          break; // a crosstab owns no bands
       }
     }
     return false;
@@ -334,6 +351,8 @@ List<DetailScope> scopePathToScope(ReportDefinition def, String scopeId) {
           break; // a band is not a nested scope
         case NestedScope(scope: final DetailScope inner):
           if (search(inner, here)) return true;
+        case CrosstabNode():
+          break; // a crosstab is not a nested scope
       }
     }
     return false;
@@ -356,6 +375,7 @@ ReportDefinition mapScopes(
           BandNode() => n,
           NestedScope(scope: final DetailScope inner) =>
             NestedScope(visit(inner)),
+          CrosstabNode() => n, // scope mapping touches no bands
         },
     ];
     return transform(s.copyWith(children: children));
