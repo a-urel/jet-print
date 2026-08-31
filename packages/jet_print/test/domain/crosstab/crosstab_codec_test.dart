@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/domain/band.dart';
+import 'package:jet_print/src/domain/bool_property.dart';
 import 'package:jet_print/src/domain/crosstab/crosstab.dart';
 import 'package:jet_print/src/domain/crosstab/crosstab_codec.dart';
 import 'package:jet_print/src/domain/crosstab/crosstab_group.dart';
@@ -13,6 +14,9 @@ import 'package:jet_print/src/domain/report_variable.dart' show JetCalculation;
 import 'package:jet_print/src/domain/serialization/built_in_element_codecs.dart';
 import 'package:jet_print/src/domain/serialization/element_codec.dart';
 import 'package:jet_print/src/domain/serialization/report_definition_codec.dart';
+import 'package:jet_print/src/domain/styles/box_style.dart';
+import 'package:jet_print/src/domain/styles/color.dart';
+import 'package:jet_print/src/domain/styles/text_style.dart';
 
 const Crosstab _minimal = Crosstab(
   id: 'ct1',
@@ -59,7 +63,17 @@ void main() {
       final Crosstab full = _minimal.copyWith(
         name: () => 'Sales',
         collectionField: () => 'lines',
-        style: const CrosstabStyle(rowLabelWidth: 90, rowHeight: 16),
+        visible: const BoolProperty(value: false),
+        style: const CrosstabStyle(
+          headerText: JetTextStyle(weight: JetFontWeight.bold),
+          headerBox: JetBoxStyle(fill: JetColor.fromARGB(255, 230, 230, 230)),
+          cellText: JetTextStyle(italic: true),
+          cellBox: JetBoxStyle(stroke: JetColor.fromARGB(255, 0, 0, 0)),
+          totalText: JetTextStyle(underline: true),
+          totalBox: JetBoxStyle(fill: JetColor.fromARGB(255, 255, 255, 0)),
+          rowLabelWidth: 90,
+          rowHeight: 16,
+        ),
         rowGroups: <CrosstabGroup>[
           _minimal.rowGroups.first.copyWith(
             sort: CrosstabSort.descending,
@@ -67,10 +81,20 @@ void main() {
             totalLabel: () => 'All regions',
           ),
         ],
+        columnGroups: <CrosstabGroup>[
+          _minimal.columnGroups.first.copyWith(
+            sort: CrosstabSort.descending,
+            showTotal: false,
+            totalLabel: () => 'All quarters',
+          ),
+        ],
         measures: <CrosstabMeasure>[
           _minimal.measures.first.copyWith(
             aggregate: JetCalculation.average,
             format: () => '#,##0.00',
+            cellTextStyle: () => const JetTextStyle(fontSize: 9),
+            cellBoxStyle: () =>
+                const JetBoxStyle(fill: JetColor.fromARGB(255, 200, 220, 255)),
           ),
         ],
       );
