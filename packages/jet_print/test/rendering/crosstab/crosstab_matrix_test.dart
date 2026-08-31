@@ -100,5 +100,47 @@ void main() {
       expect(forward, equals(backward));
       expect(forward.hashCode, backward.hashCode);
     });
+
+    test(
+        'distinct cell keys whose paths collide under a naive '
+        "space-joined string ('A B' + 'C' vs 'A' + 'B C') are not confused, "
+        'regardless of insertion order', () {
+      // rowPath: ['A B'], colPath: ['C']  and
+      // rowPath: ['A'],   colPath: ['B C']
+      // both flatten to the same "A B C" string if paths are simply
+      // space-joined together — a real hazard, since path segments are group
+      // labels drawn from data (e.g. "New York", "Q1 2026") and routinely
+      // contain spaces. A correct implementation must keep these two keys
+      // distinguishable, and matrix equality must still be insertion-order
+      // independent even though the two keys collide under a naive joined
+      // string.
+      const CrosstabCellKey keyX =
+          CrosstabCellKey(<String>['A B'], <String>['C'], 'm/a');
+      const CrosstabCellKey keyY =
+          CrosstabCellKey(<String>['A'], <String>['B C'], 'm/a');
+      expect(keyX, isNot(equals(keyY)));
+
+      final CrosstabMatrix forward = CrosstabMatrix(
+        rowAxis: rowAxis,
+        columnAxis: columnAxis,
+        measures: measures,
+        cells: <CrosstabCellKey, JetValue>{
+          keyX: const JetNumber(1),
+          keyY: const JetNumber(2),
+        },
+      );
+      final CrosstabMatrix backward = CrosstabMatrix(
+        rowAxis: rowAxis,
+        columnAxis: columnAxis,
+        measures: measures,
+        cells: <CrosstabCellKey, JetValue>{
+          keyY: const JetNumber(2),
+          keyX: const JetNumber(1),
+        },
+      );
+
+      expect(forward, equals(backward));
+      expect(forward.hashCode, backward.hashCode);
+    });
   });
 }

@@ -106,9 +106,8 @@ class CrosstabMatrix with ValueEquality {
   /// [cells] is a [Map], and [ValueEquality] compares a `Map` field by
   /// identity — two maps with the same entries would otherwise compare
   /// unequal — so it is flattened into a `List` here instead of listed
-  /// directly. That flattening is sorted by a stable composite key (`rowPath`
-  /// and `colPath` joined with a space, which cannot occur inside a path
-  /// segment, followed by `measureId`), so **matrix equality — and
+  /// directly. That flattening is ordered by [_compareCellKeys] (`rowPath`,
+  /// then `colPath`, then `measureId`), so **matrix equality — and
   /// `hashCode` — is independent of cell insertion order**: two matrices
   /// holding the same cells, inserted in different orders, compare equal.
   @override
@@ -117,7 +116,7 @@ class CrosstabMatrix with ValueEquality {
         cells.entries.toList()
           ..sort((MapEntry<CrosstabCellKey, JetValue> a,
                   MapEntry<CrosstabCellKey, JetValue> b) =>
-              _cellSortKey(a.key).compareTo(_cellSortKey(b.key)));
+              _compareCellKeys(a.key, b.key));
     return <Object?>[
       rowAxis,
       columnAxis,
@@ -135,11 +134,35 @@ class CrosstabMatrix with ValueEquality {
       '${columnAxis.length} column root(s), ${cells.length} cell(s))';
 }
 
-/// The stable sort key used to make [CrosstabMatrix.props] order-independent:
-/// `rowPath` and `colPath` joined with a space (which cannot occur inside a
-/// path segment), then `measureId`.
-String _cellSortKey(CrosstabCellKey key) =>
-    '${key.rowPath.join(' ')} ${key.colPath.join(' ')} ${key.measureId}';
+/// Orders two cell keys by `rowPath`, then `colPath`, then `measureId` — the
+/// ordering that makes [CrosstabMatrix.props] independent of cell insertion
+/// order.
+///
+/// Compares the paths' components directly (via [_compareStringLists])
+/// rather than joining them into one string first: path segments are group
+/// labels drawn from data (e.g. `New York`, `Q1 2026`) and routinely contain
+/// spaces or any other separator, so no join-with-a-separator scheme can be
+/// collision-free. Comparing structurally is collision-free by construction —
+/// two distinct [CrosstabCellKey]s can never compare equal here — so there
+/// are no ties for [List.sort]'s documented instability to disturb.
+int _compareCellKeys(CrosstabCellKey a, CrosstabCellKey b) {
+  final int rowCmp = _compareStringLists(a.rowPath, b.rowPath);
+  if (rowCmp != 0) return rowCmp;
+  final int colCmp = _compareStringLists(a.colPath, b.colPath);
+  if (colCmp != 0) return colCmp;
+  return a.measureId.compareTo(b.measureId);
+}
+
+/// Lexicographic comparison of two path segment lists: element by element,
+/// with the shorter list sorting first when one is a prefix of the other.
+int _compareStringLists(List<String> a, List<String> b) {
+  final int shorterLength = a.length < b.length ? a.length : b.length;
+  for (int i = 0; i < shorterLength; i++) {
+    final int cmp = a[i].compareTo(b[i]);
+    if (cmp != 0) return cmp;
+  }
+  return a.length.compareTo(b.length);
+}
 
 /// The depth-first leaves of [axis]; a childless node is its own leaf.
 List<CrosstabAxisNode> leavesOf(List<CrosstabAxisNode> axis) {
