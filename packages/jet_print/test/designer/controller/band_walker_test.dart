@@ -382,5 +382,86 @@ void main() {
     test('findScope still walks past a crosstab sibling', () {
       expect(findScope(def, 'root')?.id, 'root');
     });
+
+    // Pins the ruling in band_walker.dart's mapBands/mapGroups/mapScopes:
+    // their `children`-rebuilding switches must pass a CrosstabNode/
+    // UnknownScopeNode through unchanged (`=> n`), not `break` it out of the
+    // list — a `break` there would silently delete the node from every
+    // report on the next designer edit. If either arm were changed to
+    // `break`, these two assertions on `whereType<CrosstabNode>().length`
+    // would drop from 1 to 0.
+    test('mapBands preserves a crosstab node alongside its BandNode sibling',
+        () {
+      final ReportDefinition after = mapBands(def, (Band b) => b);
+      final DetailScope root = after.body.root;
+      expect(root.children.whereType<CrosstabNode>().length, 1);
+      expect(root.children.whereType<CrosstabNode>().single.crosstab, ct);
+      expect(root.children.whereType<BandNode>().length, 1);
+    });
+
+    test('mapScopes preserves a crosstab node alongside its BandNode sibling',
+        () {
+      // addGroup is a real designer edit operation that routes through
+      // mapScopes — reaching the switch under test via a public entry point
+      // rather than calling mapScopes directly.
+      final ReportDefinition after = addGroup(
+        def,
+        'root',
+        const GroupLevel(id: 'g0', name: 'g', key: r'$F{x}'),
+      );
+      final DetailScope root = after.body.root;
+      expect(root.children.whereType<CrosstabNode>().length, 1);
+      expect(root.children.whereType<CrosstabNode>().single.crosstab, ct);
+      expect(root.children.whereType<BandNode>().length, 1);
+    });
+  });
+
+  group('unknown scope nodes', () {
+    const Map<String, Object?> alienJson = <String, Object?>{
+      'kind': 'sparkline',
+      'payload': <String, Object?>{'id': 'x1'},
+    };
+    const UnknownScopeNode alien = UnknownScopeNode(rawJson: alienJson);
+    final ReportDefinition def = ReportDefinition(
+      name: 'R',
+      page: PageFormat.a4Portrait,
+      body: const ReportBody(
+        root: DetailScope(
+          id: 'root',
+          children: <ScopeNode>[
+            BandNode(Band(id: 'detail', type: BandType.detail, height: 12)),
+            alien,
+          ],
+        ),
+      ),
+    );
+
+    // Same ruling as the crosstab-node pair above, pinned for the other
+    // pass-through variant. If either arm were changed to `break`, these two
+    // assertions on `whereType<UnknownScopeNode>().length` would drop from 1
+    // to 0.
+    test('mapBands preserves an unknown node alongside its BandNode sibling',
+        () {
+      final ReportDefinition after = mapBands(def, (Band b) => b);
+      final DetailScope root = after.body.root;
+      expect(root.children.whereType<UnknownScopeNode>().length, 1);
+      expect(root.children.whereType<UnknownScopeNode>().single.rawJson,
+          alienJson);
+      expect(root.children.whereType<BandNode>().length, 1);
+    });
+
+    test('mapScopes preserves an unknown node alongside its BandNode sibling',
+        () {
+      final ReportDefinition after = addGroup(
+        def,
+        'root',
+        const GroupLevel(id: 'g0', name: 'g', key: r'$F{x}'),
+      );
+      final DetailScope root = after.body.root;
+      expect(root.children.whereType<UnknownScopeNode>().length, 1);
+      expect(root.children.whereType<UnknownScopeNode>().single.rawJson,
+          alienJson);
+      expect(root.children.whereType<BandNode>().length, 1);
+    });
   });
 }
