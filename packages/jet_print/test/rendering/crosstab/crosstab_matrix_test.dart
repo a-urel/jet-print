@@ -142,5 +142,81 @@ void main() {
       expect(forward, equals(backward));
       expect(forward.hashCode, backward.hashCode);
     });
+
+    test('two matrices with empty cells maps are equal', () {
+      const CrosstabMatrix a = CrosstabMatrix(
+        rowAxis: <CrosstabAxisNode>[],
+        columnAxis: <CrosstabAxisNode>[],
+        measures: <CrosstabMeasure>[],
+        cells: <CrosstabCellKey, JetValue>{},
+      );
+      const CrosstabMatrix b = CrosstabMatrix(
+        rowAxis: <CrosstabAxisNode>[],
+        columnAxis: <CrosstabAxisNode>[],
+        measures: <CrosstabMeasure>[],
+        cells: <CrosstabCellKey, JetValue>{},
+      );
+      expect(a, equals(b));
+      expect(a.hashCode, b.hashCode);
+    });
+  });
+
+  group('cell path ordering', () {
+    final List<CrosstabAxisNode> rowAxis = <CrosstabAxisNode>[_node('North')];
+    final List<CrosstabAxisNode> columnAxis = <CrosstabAxisNode>[_node('Q1')];
+    final List<CrosstabMeasure> measures = <CrosstabMeasure>[
+      const CrosstabMeasure(
+        id: 'm/a',
+        name: 'Total',
+        expression: r'$F{qty}',
+        aggregate: JetCalculation.sum,
+      ),
+    ];
+
+    test('a path that is a prefix of another sorts first', () {
+      // ['North'] is a prefix of ['North', 'Istanbul'] -- the shorter path
+      // (the region subtotal) must sort before the longer one (the city
+      // leaf), matching _compareStringLists's documented shorter-sorts-first
+      // rule for prefix pairs.
+      const CrosstabCellKey shortKey =
+          CrosstabCellKey(<String>['North'], <String>['Q1'], 'm/a');
+      const CrosstabCellKey longKey =
+          CrosstabCellKey(<String>['North', 'Istanbul'], <String>['Q1'], 'm/a');
+
+      final CrosstabMatrix inOrder = CrosstabMatrix(
+        rowAxis: rowAxis,
+        columnAxis: columnAxis,
+        measures: measures,
+        cells: <CrosstabCellKey, JetValue>{
+          shortKey: const JetNumber(1),
+          longKey: const JetNumber(2),
+        },
+      );
+      final CrosstabMatrix reversed = CrosstabMatrix(
+        rowAxis: rowAxis,
+        columnAxis: columnAxis,
+        measures: measures,
+        cells: <CrosstabCellKey, JetValue>{
+          longKey: const JetNumber(2),
+          shortKey: const JetNumber(1),
+        },
+      );
+
+      // Insertion order must not matter (props flattens in a fixed order)...
+      expect(inOrder, equals(reversed));
+      expect(inOrder.hashCode, reversed.hashCode);
+      expect(inOrder.props, equals(reversed.props));
+
+      // ...and that fixed order must actually put the prefix first: the
+      // flattened cell list (props[3]) is [key, value, key, value, ...], so
+      // the shorter path's key/value pair must precede the longer path's.
+      final List<Object?> flatCells = inOrder.props[3]! as List<Object?>;
+      expect(flatCells, <Object?>[
+        shortKey,
+        const JetNumber(1),
+        longKey,
+        const JetNumber(2),
+      ]);
+    });
   });
 }
