@@ -299,7 +299,16 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
         case NestedScope(scope: final DetailScope s):
           walkScope(s, isRoot: false, chain: <DetailScope>[...chain, scope]);
         case CrosstabNode(crosstab: final Crosstab ct):
-          _validateCrosstab(ct, def, out, inRootScope: isRoot);
+          claim(ct.id);
+          _validateCrosstab(
+            ct,
+            def,
+            out,
+            inRootScope: isRoot,
+            scopeFields: schema == null
+                ? null
+                : fieldsInScopeForChain(schema, <DetailScope>[...chain, scope]),
+          );
         case UnknownScopeNode(:final String? kind):
           out.add(Diagnostic(
               DiagnosticSeverity.info,
@@ -368,12 +377,21 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
 /// measure expression that fails to parse · a non-root crosstab · a
 /// non-positive style metric. Then warnings: a `visible` expression that
 /// references a field (a crosstab prints outside the row loop, so it has none)
-/// and a crosstab wider than the page body.
+/// · a crosstab wider than the page body · and, when [scopeFields] is
+/// non-null (the caller has a schema), any group/measure expression
+/// referencing a field that does not resolve in scope.
+///
+/// [scopeFields] are the schema fields visible at [ct]'s enclosing scope
+/// (i.e. `fieldsInScopeForChain` for the chain up to and including that
+/// scope), or null when `validate()` was called without a schema — mirrors
+/// how [_validateColumns]/`checkOperands` take schema-derived inputs from the
+/// caller rather than resolving the schema themselves.
 void _validateCrosstab(
   Crosstab ct,
   ReportDefinition def,
   List<Diagnostic> out, {
   required bool inRootScope,
+  required List<FieldDef>? scopeFields,
 }) {
   void error(String message) =>
       out.add(Diagnostic(DiagnosticSeverity.error, message, elementId: ct.id));
@@ -395,18 +413,23 @@ void _validateCrosstab(
     }
   }
 
+  // Expressions that failed to parse — excluded from the schema-aware field
+  // check below so a single bad expression isn't reported twice.
+  final Set<String> unparseable = <String>{};
   void checkParses(String expression) {
     try {
       Expression.parse(expression);
     } on ExpressionException catch (e) {
+      unparseable.add(expression);
       error('crosstab "${ct.id}" expression does not parse: ${e.message}');
     }
   }
 
-  for (final CrosstabGroup g in <CrosstabGroup>[
+  final List<CrosstabGroup> groups = <CrosstabGroup>[
     ...ct.rowGroups,
     ...ct.columnGroups,
-  ]) {
+  ];
+  for (final CrosstabGroup g in groups) {
     checkParses(g.expression);
   }
   for (final CrosstabMeasure m in ct.measures) {
@@ -438,6 +461,43 @@ void _validateCrosstab(
       ct.style.rowLabelWidth + ct.measures.length * ct.style.measureColumnWidth;
   if (crosstabWidth > bodyWidth) {
     warn('crosstab "${ct.id}" is wider than the page body');
+  }
+
+  if (scopeFields == null) return;
+
+  // The crosstab's own `collectionField` (distinct from the enclosing
+  // scope's) pools a nested collection across the enclosing scope's rows; a
+  // group/measure expression then resolves against THAT collection's fields,
+  // not the enclosing scope's.
+  List<FieldDef> resolveFields = scopeFields;
+  if (ct.collectionField != null) {
+    final List<FieldDef> children =
+        collectionChildren(scopeFields, ct.collectionField!);
+    if (children.isEmpty) {
+      warn('crosstab "${ct.id}" collection field "${ct.collectionField}" '
+          'was not found in the schema');
+      return; // the root cause is already reported; skip per-name noise.
+    }
+    resolveFields = children;
+  }
+
+  final Set<String> knownNames =
+      resolveFields.map((FieldDef f) => f.name).toSet();
+  final Set<String> warnedNames = <String>{};
+  void checkFieldRefs(String expression) {
+    if (unparseable.contains(expression)) return;
+    for (final String name in fieldRefsIn(expression)) {
+      if (!knownNames.contains(name) && warnedNames.add(name)) {
+        warn('crosstab "${ct.id}" references unknown field "$name"');
+      }
+    }
+  }
+
+  for (final CrosstabGroup g in groups) {
+    checkFieldRefs(g.expression);
+  }
+  for (final CrosstabMeasure m in ct.measures) {
+    checkFieldRefs(m.expression);
   }
 }
 

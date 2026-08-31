@@ -31,15 +31,17 @@ List<FieldDef> fieldsInScopeForChain(
   for (final DetailScope s in chain) {
     final String? cf = s.collectionField;
     if (cf != null) {
-      scope = _collectionChildren(scope, cf);
+      scope = collectionChildren(scope, cf);
     }
   }
   return scope;
 }
 
 /// The child schema of the [name] collection field within [fields], or empty if
-/// there is no such collection field (an unresolvable scope).
-List<FieldDef> _collectionChildren(List<FieldDef> fields, String name) {
+/// there is no such collection field (an unresolvable scope). Exposed for
+/// callers that descend one collection level from something other than a
+/// [DetailScope] chain (e.g. a crosstab's own `collectionField`).
+List<FieldDef> collectionChildren(List<FieldDef> fields, String name) {
   for (final FieldDef f in fields) {
     if (f.name == name && f.type == JetFieldType.collection) return f.fields;
   }

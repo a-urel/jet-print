@@ -1,4 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jet_print/src/data/data_schema.dart';
+import 'package:jet_print/src/data/field_def.dart';
+import 'package:jet_print/src/domain/band.dart';
 import 'package:jet_print/src/domain/bool_property.dart';
 import 'package:jet_print/src/domain/crosstab/crosstab.dart';
 import 'package:jet_print/src/domain/crosstab/crosstab_group.dart';
@@ -7,6 +10,7 @@ import 'package:jet_print/src/domain/crosstab/crosstab_style.dart';
 import 'package:jet_print/src/domain/detail_scope.dart';
 import 'package:jet_print/src/domain/diagnostic.dart';
 import 'package:jet_print/src/domain/page_format.dart';
+import 'package:jet_print/src/domain/report_band.dart' show BandType;
 import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/domain/report_validation.dart';
 import 'package:jet_print/src/domain/report_variable.dart' show JetCalculation;
@@ -49,10 +53,25 @@ ReportDefinition _def(Crosstab ct, {bool nested = false}) => ReportDefinition(
       ),
     );
 
-Iterable<String> _messages(ReportDefinition def, DiagnosticSeverity s) =>
-    validate(def)
+Iterable<String> _messages(ReportDefinition def, DiagnosticSeverity s,
+        {JetDataSchema? schema}) =>
+    validate(def, schema: schema)
         .where((Diagnostic d) => d.severity == s)
         .map((Diagnostic d) => d.message);
+
+/// A schema for the schema-aware field-resolution tests: root fields `region`,
+/// `quarter`, `amount`, plus a `lines` collection whose only child is `qty`.
+const JetDataSchema _schema = JetDataSchema(
+  name: 'S',
+  fields: <FieldDef>[
+    FieldDef('region', type: JetFieldType.string),
+    FieldDef('quarter', type: JetFieldType.string),
+    FieldDef('amount', type: JetFieldType.double),
+    FieldDef('lines', type: JetFieldType.collection, fields: <FieldDef>[
+      FieldDef('qty', type: JetFieldType.integer),
+    ]),
+  ],
+);
 
 void main() {
   group('crosstab validation', () {
@@ -121,6 +140,90 @@ void main() {
           _ok.copyWith(visible: const BoolProperty(expression: r'$F{flag}'));
       expect(_messages(_def(bad), DiagnosticSeverity.warning),
           anyElement(contains('visibility cannot use fields')));
+    });
+
+    test('a crosstab id colliding with a band id is a duplicate-id error', () {
+      final ReportDefinition def = ReportDefinition(
+        name: 'R',
+        page: PageFormat.a4Portrait,
+        body: ReportBody(
+          title: const Band(id: 'dup', type: BandType.title, height: 10),
+          root: DetailScope(id: 'root', children: <ScopeNode>[
+            CrosstabNode(_ok.copyWith(id: 'dup')),
+          ]),
+        ),
+      );
+      expect(
+        validate(def).map((Diagnostic d) => d.message),
+        anyElement(equals('duplicate id "dup" (2 uses)')),
+      );
+    });
+  });
+
+  group('crosstab validation — schema-aware field resolution', () {
+    test('a measure referencing an unknown field warns', () {
+      final Crosstab bad = _ok.copyWith(
+        measures: <CrosstabMeasure>[_m.copyWith(expression: r'$F{bogus}')],
+      );
+      expect(
+        _messages(_def(bad), DiagnosticSeverity.warning, schema: _schema),
+        anyElement(contains('references unknown field "bogus"')),
+      );
+    });
+
+    test('the same unresolved name across expressions warns only once', () {
+      final Crosstab bad = _ok.copyWith(measures: <CrosstabMeasure>[
+        _m.copyWith(expression: r'$F{bogus}'),
+        const CrosstabMeasure(
+          id: 'm/b',
+          name: 'B',
+          expression: r'$F{bogus}',
+          aggregate: JetCalculation.sum,
+        ),
+      ]);
+      final Iterable<String> warnings =
+          _messages(_def(bad), DiagnosticSeverity.warning, schema: _schema)
+              .where((String m) => m.contains('bogus'));
+      expect(warnings, hasLength(1));
+    });
+
+    test(
+        'a crosstab with collectionField resolves fields against the child '
+        'schema', () {
+      final Crosstab ct = _ok.copyWith(
+        collectionField: () => 'lines',
+        rowGroups: <CrosstabGroup>[_row.copyWith(expression: r'$F{qty}')],
+        columnGroups: <CrosstabGroup>[_col.copyWith(expression: r'$F{qty}')],
+        measures: <CrosstabMeasure>[_m.copyWith(expression: r'$F{amount}')],
+      );
+      final Iterable<String> warnings =
+          _messages(_def(ct), DiagnosticSeverity.warning, schema: _schema);
+      // `qty` lives only in the child `lines` collection — resolves, no warn.
+      expect(warnings, isNot(anyElement(contains('"qty"'))));
+      // `amount` lives only at the root — unresolved once scoped to `lines`.
+      expect(
+          warnings, anyElement(contains('references unknown field "amount"')));
+    });
+
+    test(
+        'an unresolvable collectionField warns once and skips per-name '
+        'checks', () {
+      final Crosstab ct = _ok.copyWith(collectionField: () => 'nope');
+      final Iterable<String> warnings =
+          _messages(_def(ct), DiagnosticSeverity.warning, schema: _schema);
+      expect(
+        warnings.where((String m) => m.contains('collection field "nope"')),
+        hasLength(1),
+      );
+      expect(warnings, isNot(anyElement(contains('references unknown field'))));
+    });
+
+    test('without a schema, no field-resolution warnings are produced', () {
+      final Crosstab bad = _ok.copyWith(
+        measures: <CrosstabMeasure>[_m.copyWith(expression: r'$F{bogus}')],
+      );
+      expect(_messages(_def(bad), DiagnosticSeverity.warning),
+          isNot(anyElement(contains('bogus'))));
     });
   });
 }
