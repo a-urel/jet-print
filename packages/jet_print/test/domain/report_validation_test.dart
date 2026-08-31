@@ -482,5 +482,20 @@ void main() {
               .map((d) => d.message),
           anyElement(contains('duplicate')));
     });
+
+    test('an unknown scope node is an info diagnostic naming its kind', () {
+      final def = ReportDefinition(
+          name: 'r',
+          page: PageFormat.a4Portrait,
+          body: const ReportBody(
+              root: DetailScope(id: 'root', children: <ScopeNode>[
+            UnknownScopeNode(rawJson: <String, Object?>{'kind': 'futureBlock'}),
+          ])));
+      expect(
+          validate(def)
+              .where((d) => d.severity == DiagnosticSeverity.info)
+              .map((d) => d.message),
+          anyElement(allOf(contains('futureBlock'), contains('not rendered'))));
+    });
   });
 }

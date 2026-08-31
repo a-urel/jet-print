@@ -19,6 +19,9 @@ import '../expression/expression.dart';
 import '../expression/expression_exception.dart';
 import 'band.dart';
 import 'column_layout.dart';
+import 'crosstab/crosstab.dart';
+import 'crosstab/crosstab_group.dart';
+import 'crosstab/crosstab_measure.dart';
 import 'detail_scope.dart';
 import 'diagnostic.dart';
 import 'elements/image_element.dart';
@@ -28,6 +31,7 @@ import 'group_level.dart';
 import 'report_band.dart' show BandType;
 import 'report_definition.dart';
 import 'report_element.dart';
+import 'report_variable.dart' show JetCalculation;
 import 'scope_total.dart';
 
 /// Validates [def]'s semantic invariants (I1–I8), returning a [Diagnostic] for
@@ -294,10 +298,14 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
           aggregateBand(b, supported: false);
         case NestedScope(scope: final DetailScope s):
           walkScope(s, isRoot: false, chain: <DetailScope>[...chain, scope]);
-        case CrosstabNode():
-          break; // a crosstab is not a per-row band
-        case UnknownScopeNode():
-          break; // an unknown node is not a per-row band
+        case CrosstabNode(crosstab: final Crosstab ct):
+          _validateCrosstab(ct, def, out, inRootScope: isRoot);
+        case UnknownScopeNode(:final String? kind):
+          out.add(Diagnostic(
+              DiagnosticSeverity.info,
+              'unknown scope node of kind '
+              '${kind == null ? '(none)' : '"$kind"'} is not rendered by '
+              'this build'));
       }
     }
     if (bandNodes > 1) {
@@ -349,6 +357,88 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
   }
 
   return out;
+}
+
+/// Validates [ct] (spec A crosstab), appending diagnostics to [out]. Every
+/// diagnostic is tagged `elementId: ct.id`. [inRootScope] is whether [ct]'s
+/// enclosing scope is the document root — Spec A crosstabs are root-scope only.
+///
+/// Errors first, so a broken crosstab reports its worst problem first:
+/// empty axes/measures · a measure using `JetCalculation.none` · a group or
+/// measure expression that fails to parse · a non-root crosstab · a
+/// non-positive style metric. Then warnings: a `visible` expression that
+/// references a field (a crosstab prints outside the row loop, so it has none)
+/// and a crosstab wider than the page body.
+void _validateCrosstab(
+  Crosstab ct,
+  ReportDefinition def,
+  List<Diagnostic> out, {
+  required bool inRootScope,
+}) {
+  void error(String message) =>
+      out.add(Diagnostic(DiagnosticSeverity.error, message, elementId: ct.id));
+  void warn(String message) => out
+      .add(Diagnostic(DiagnosticSeverity.warning, message, elementId: ct.id));
+
+  if (ct.rowGroups.isEmpty) {
+    error('crosstab "${ct.id}" has no row groups');
+  }
+  if (ct.columnGroups.isEmpty) {
+    error('crosstab "${ct.id}" has no column groups');
+  }
+  if (ct.measures.isEmpty) {
+    error('crosstab "${ct.id}" has no measures');
+  }
+  for (final CrosstabMeasure m in ct.measures) {
+    if (m.aggregate == JetCalculation.none) {
+      error('measure "${m.name}" cannot use calculation "none"');
+    }
+  }
+
+  void checkParses(String expression) {
+    try {
+      Expression.parse(expression);
+    } on ExpressionException catch (e) {
+      error('crosstab "${ct.id}" expression does not parse: ${e.message}');
+    }
+  }
+
+  for (final CrosstabGroup g in <CrosstabGroup>[
+    ...ct.rowGroups,
+    ...ct.columnGroups,
+  ]) {
+    checkParses(g.expression);
+  }
+  for (final CrosstabMeasure m in ct.measures) {
+    checkParses(m.expression);
+  }
+
+  if (!inRootScope) {
+    error('crosstab "${ct.id}" must be in the root scope');
+  }
+
+  for (final MapEntry<String, double> metric in <String, double>{
+    'rowLabelWidth': ct.style.rowLabelWidth,
+    'measureColumnWidth': ct.style.measureColumnWidth,
+    'rowHeight': ct.style.rowHeight,
+  }.entries) {
+    if (metric.value <= 0) {
+      error('crosstab "${ct.id}" has a non-positive ${metric.key}');
+    }
+  }
+
+  final String? visibleExpr = ct.visible.expression;
+  if (visibleExpr != null && fieldRefsIn(visibleExpr).isNotEmpty) {
+    warn('crosstab "${ct.id}" visibility cannot use fields');
+  }
+
+  final double bodyWidth =
+      def.page.width - def.page.margins.left - def.page.margins.right;
+  final double crosstabWidth =
+      ct.style.rowLabelWidth + ct.measures.length * ct.style.measureColumnWidth;
+  if (crosstabWidth > bodyWidth) {
+    warn('crosstab "${ct.id}" is wider than the page body');
+  }
 }
 
 /// The data fields an element binds to (record-dependent). A malformed
