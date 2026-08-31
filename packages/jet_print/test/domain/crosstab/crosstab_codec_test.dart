@@ -149,7 +149,14 @@ void main() {
           reJson['body']! as Map<String, Object?>;
       final Map<String, Object?> reRoot =
           reBody['root']! as Map<String, Object?>;
-      expect((reRoot['children']! as List<Object?>).single, alien);
+      final Object? reAlien = (reRoot['children']! as List<Object?>).single;
+      expect(reAlien, alien);
+      // Regression: the encoder must hand back a plain copy, not the
+      // decoder's own unmodifiable map, or a caller that post-processes the
+      // encoded output throws UnsupportedError the moment it touches an
+      // unknown node's map.
+      expect(
+          () => (reAlien! as Map<String, Object?>)['x'] = 1, returnsNormally);
     });
   });
 }
