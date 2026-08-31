@@ -144,18 +144,27 @@ void main() {
     });
 
     test('two matrices with empty cells maps are equal', () {
+      // `a` is const; if `b` were const too, every argument would be
+      // const-canonicalized to the very same instance, so `ValueEquality.==`
+      // would short-circuit on `identical(this, other)`
+      // (value_equality.dart:21-27) and the test would pass even with `==`
+      // entirely unimplemented. `b` is built with a runtime `cells` literal
+      // specifically to defeat that canonicalization; the `isFalse` check
+      // below guards against this test silently degrading back into the
+      // vacuous case if a future edit makes `b` constable again.
       const CrosstabMatrix a = CrosstabMatrix(
         rowAxis: <CrosstabAxisNode>[],
         columnAxis: <CrosstabAxisNode>[],
         measures: <CrosstabMeasure>[],
         cells: <CrosstabCellKey, JetValue>{},
       );
-      const CrosstabMatrix b = CrosstabMatrix(
+      final CrosstabMatrix b = CrosstabMatrix(
         rowAxis: <CrosstabAxisNode>[],
         columnAxis: <CrosstabAxisNode>[],
         measures: <CrosstabMeasure>[],
-        cells: <CrosstabCellKey, JetValue>{},
+        cells: <CrosstabCellKey, JetValue>{}, // runtime literal, not const
       );
+      expect(identical(a, b), isFalse);
       expect(a, equals(b));
       expect(a.hashCode, b.hashCode);
     });

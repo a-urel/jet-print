@@ -69,6 +69,7 @@ const CrosstabMeasure _sum = CrosstabMeasure(
 
 Crosstab _ct({
   List<CrosstabGroup>? rowGroups,
+  List<CrosstabGroup>? columnGroups,
   List<CrosstabMeasure>? measures,
 }) =>
     Crosstab(
@@ -78,9 +79,11 @@ Crosstab _ct({
             CrosstabGroup(id: 'g/r', name: 'Region', expression: r'$F{region}'),
             CrosstabGroup(id: 'g/c2', name: 'City', expression: r'$F{city}'),
           ],
-      columnGroups: const <CrosstabGroup>[
-        CrosstabGroup(id: 'g/q', name: 'Quarter', expression: r'$F{quarter}'),
-      ],
+      columnGroups: columnGroups ??
+          const <CrosstabGroup>[
+            CrosstabGroup(
+                id: 'g/q', name: 'Quarter', expression: r'$F{quarter}'),
+          ],
       measures: measures ?? const <CrosstabMeasure>[_sum],
     );
 
@@ -247,15 +250,91 @@ void main() {
       expect(_cell(m, <String>['North', 'Istanbul'], <String>['Q1']), 120);
     });
 
-    test('keys sort by their typed value, not their text', () {
-      final List<DataRow> numeric = <DataRow>[
+    test('string-keyed groups sort lexicographically ("10" before "9")', () {
+      // This pins the STRING-keyed case only -- it does not exercise typed
+      // (numeric) comparison, since every field in this fixture's row-group
+      // expression is JetFieldType.string, so the key is a JetString either
+      // way. A stringified comparator would pass this test too; see the
+      // numeric-keyed test below for the case that actually distinguishes
+      // typed comparison from a stringified one.
+      final List<DataRow> stringKeyed = <DataRow>[
         _row('9', 'x', 'Q1', 1),
         _row('10', 'x', 'Q1', 1),
       ];
-      final CrosstabMatrix m = _run(_ct(), numeric);
+      final CrosstabMatrix m = _run(_ct(), stringKeyed);
       // '9' and '10' are strings here, so they sort as strings: '10' first.
       expect(m.rowAxis.map((CrosstabAxisNode n) => n.pathKey),
           <String>['10', '9']);
+    });
+
+    test('numeric-keyed groups sort by number, not by digit string', () {
+      // Unlike the string-keyed test above, a numeric group key makes typed
+      // and string order disagree: numerically 9 < 10, but as digit strings
+      // '10' < '9'. Only a comparator that consults the typed JetValue (not
+      // its stringified pathKey/label) can produce ['9', '10'] here.
+      const List<FieldDef> numericFields = <FieldDef>[
+        FieldDef('region', type: JetFieldType.integer),
+        FieldDef('city', type: JetFieldType.string),
+        FieldDef('quarter', type: JetFieldType.string),
+        FieldDef('amount', type: JetFieldType.double),
+      ];
+      DataRow numericRow(int region, String city, String quarter, num amount) =>
+          DataRow(
+            fields: numericFields,
+            values: <String, Object?>{
+              'region': region,
+              'city': city,
+              'quarter': quarter,
+              'amount': amount,
+            },
+          );
+      final List<DataRow> numeric = <DataRow>[
+        numericRow(9, 'x', 'Q1', 1),
+        numericRow(10, 'x', 'Q1', 1),
+      ];
+      final CrosstabMatrix m = _run(_ct(), numeric);
+      // JetValue's all-double model stringifies 9/10 as '9.0'/'10.0' (see
+      // value.dart's `_doubleToString`) -- the point here is the ORDER
+      // (numeric 9 before 10), not the exact text.
+      expect(m.rowAxis.map((CrosstabAxisNode n) => n.pathKey),
+          <String>['9.0', '10.0']);
+    });
+
+    test(
+        "column-axis showTotal gates that column group's own collapse "
+        '(mirrors the row-axis rule, wired to columnGroups instead)', () {
+      // Same fixture as "a group's own showTotal gates collapsing that group,
+      // not its parent" above, but with Region/City moved onto the COLUMN
+      // axis and Quarter left as the (single-level) row axis. This exercises
+      // `_prefixes(colPath, ct.columnGroups)` specifically -- a mis-wiring
+      // that fed it `ct.rowGroups` instead would survive every other test in
+      // this file, since they only vary rowGroups.
+      final CrosstabMatrix m = _run(
+        _ct(
+          rowGroups: const <CrosstabGroup>[
+            CrosstabGroup(
+                id: 'g/q', name: 'Quarter', expression: r'$F{quarter}'),
+          ],
+          columnGroups: const <CrosstabGroup>[
+            CrosstabGroup(
+                id: 'g/r',
+                name: 'Region',
+                expression: r'$F{region}',
+                showTotal: false),
+            CrosstabGroup(id: 'g/c2', name: 'City', expression: r'$F{city}'),
+          ],
+        ),
+        rows,
+      );
+      // City's own showTotal (true, default) gates collapsing City -> the
+      // Region-only column (City's own total) is folded: North's Q1 rows
+      // (Istanbul 120 + Ankara 80) sum to 200.
+      expect(_cell(m, <String>['Q1'], <String>['North']), 200);
+      // Region's own showTotal (false), being outermost on the COLUMN axis,
+      // gates the column-axis grand total -> absent.
+      expect(_cell(m, <String>[], <String>[]), isNull);
+      // The leaf is always folded regardless.
+      expect(_cell(m, <String>['Q1'], <String>['North', 'Istanbul']), 120);
     });
 
     test('dataOrder keeps first-seen order', () {
@@ -285,6 +364,17 @@ void main() {
         rows,
       );
       expect(m.rowAxis.first.pathKey, 'South');
+    });
+  });
+
+  group('cardinality', () {
+    test('below the threshold, no cardinality diagnostic is raised', () {
+      // Pins the threshold from below: without this test, a threshold of 0
+      // (which would warn on every crosstab, however small) would still
+      // leave the whole suite green, since only the above-threshold test
+      // asserted anything about diagnostics.
+      final CrosstabMatrix m = _run(_ct(), rows);
+      expect(m.diagnostics, isEmpty);
     });
 
     test('above 50k cells it warns once and still builds', () {

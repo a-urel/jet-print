@@ -9,12 +9,16 @@
 /// The core technique is **prefix folding**: for each row, this evaluates the
 /// row-axis expressions into a path and the column-axis expressions into a
 /// path, then folds the row's measure values into *every* `(row-path prefix)
-/// x (column-path prefix)` combination — including the empty prefix, which is
-/// the grand total. A shortened prefix *is* that level's subtotal, so
-/// subtotals cost nothing extra to compute later and, critically, `average`
-/// stays correct at every level: each subtotal's accumulator sees the raw
-/// per-row values directly, rather than rolling up already-averaged children
-/// (which would compute an average of averages).
+/// x (column-path prefix)` combination — including, when every collapsed
+/// group along the way allows it, the empty prefix, which is the grand total
+/// (see [_prefixes]: a shortened prefix is only folded when the group it
+/// collapses away has `showTotal: true`; the empty row-path prefix is not
+/// addressable at all when the outermost row group has `showTotal: false`,
+/// and likewise for columns). A shortened prefix *is* that level's subtotal,
+/// so subtotals cost nothing extra to compute later and, critically,
+/// `average` stays correct at every level: each subtotal's accumulator sees
+/// the raw per-row values directly, rather than rolling up already-averaged
+/// children (which would compute an average of averages).
 library;
 
 import '../../data/data_row.dart';
@@ -187,11 +191,18 @@ void _insert(
 /// [CrosstabAxisNode]s, recursing into children. [groups] is the full axis
 /// group list and [depth] indexes into it for this level's [CrosstabGroup]
 /// (which supplies the [CrosstabSort] to apply among this level's siblings).
+///
+/// `validate()` rejects an empty axis (`rowGroups`/`columnGroups` must have
+/// at least one level), but this engine never crashes on an unvalidated
+/// input (render-don't-crash): a caller that skips validation and supplies
+/// an empty axis gets an empty axis tree back, rather than a `RangeError`
+/// from indexing `groups[depth]` on an empty list.
 List<CrosstabAxisNode> _toAxis(
   Map<String, _AxisNodeBuilder> level,
   List<CrosstabGroup> groups,
   int depth,
 ) {
+  if (depth >= groups.length) return const <CrosstabAxisNode>[];
   final List<_AxisNodeBuilder> nodes = level.values.toList();
   switch (groups[depth].sort) {
     case CrosstabSort.ascending:
@@ -239,6 +250,11 @@ int _compareTyped(JetValue a, JetValue b) =>
 /// Each length is gated independently: a `false` at one level does not
 /// suppress shorter prefixes gated by a different level.
 List<List<String>> _prefixes(List<String> path, List<CrosstabGroup> groups) {
+  // `n` is derived from `path.length` while the gating loop below indexes
+  // `groups[k]`; the two lengths are always equal by construction (`path` is
+  // built from evaluating one expression per group, in `fold`), which is
+  // exactly what keeps that index in range. This documents the coupling.
+  assert(path.length == groups.length);
   final int n = path.length;
   final List<List<String>> out = <List<String>>[path];
   for (int k = n - 1; k >= 0; k--) {
