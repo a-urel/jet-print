@@ -22,8 +22,16 @@ void main() {
     test('equal paths make equal keys, so it works as a map key', () {
       const CrosstabCellKey a =
           CrosstabCellKey(<String>['North'], <String>['Q1'], 'm/a');
-      const CrosstabCellKey b =
+      // `b` is built with a runtime `rowPath` literal, not `const`: if both
+      // were const, identical arguments would const-canonicalize `a` and `b`
+      // to the very same instance, and `ValueEquality.==` would short-circuit
+      // on `identical(this, other)` (value_equality.dart:21-27) — the
+      // `equals(b)` check below would pass even if equality were entirely
+      // unimplemented. The `isFalse` check guards against that silently
+      // degrading back if a future edit makes `b` constable again.
+      final CrosstabCellKey b =
           CrosstabCellKey(<String>['North'], <String>['Q1'], 'm/a');
+      expect(identical(a, b), isFalse);
       expect(a, equals(b));
       final Map<CrosstabCellKey, JetValue> cells = <CrosstabCellKey, JetValue>{
         a: const JetNumber(1),
