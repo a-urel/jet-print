@@ -118,7 +118,12 @@ Map<String, Object?> _encodeNode(
         'kind': 'crosstab',
         'crosstab': encodeCrosstab(ct),
       },
-    UnknownScopeNode(rawJson: final Map<String, Object?> raw) => raw,
+    // A plain copy, not `raw` itself: `raw` is the unmodifiable map the
+    // decoder built (below), and handing that out verbatim means any caller
+    // that post-processes this function's result throws UnsupportedError the
+    // moment it touches an unknown node's map.
+    UnknownScopeNode(rawJson: final Map<String, Object?> raw) =>
+      Map<String, Object?>.of(raw),
   };
 }
 
