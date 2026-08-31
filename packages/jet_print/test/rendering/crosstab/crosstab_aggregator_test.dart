@@ -190,7 +190,18 @@ void main() {
   });
 
   group('axis construction', () {
-    test('showTotal false suppresses that level subtotal', () {
+    // Each group's own showTotal gates the prefix that collapses THAT
+    // group away (Jasper semantics: the city group's total aggregates
+    // across cities within a region; the region group's total -- being
+    // the outermost -- aggregates across regions, i.e. the grand total).
+    // Prefix length k is gated by groups[k].showTotal; the full-length leaf
+    // prefix is always folded, ungated. A single-level axis cannot
+    // distinguish this from the (wrong) "last kept level" rule, because
+    // with one group, groups[0] is simultaneously "the only level" and "the
+    // outermost level" under both readings -- these two-level tests are
+    // what pin it down.
+    test('a group\'s own showTotal gates collapsing that group, not its parent',
+        () {
       final CrosstabMatrix m = _run(
         _ct(rowGroups: const <CrosstabGroup>[
           CrosstabGroup(
@@ -202,7 +213,37 @@ void main() {
         ]),
         rows,
       );
+      // City.showTotal (true, default) gates collapsing City -> the
+      // Region-only prefix (City's own total) is folded.
+      expect(_cell(m, <String>['North'], <String>['Q1']), 200);
+      // Region.showTotal (false) gates collapsing Region -> the grand
+      // total (Region's own total, since Region is outermost) is not.
+      expect(_cell(m, <String>[], <String>[]), isNull);
+      // The leaf is always folded regardless.
+      expect(_cell(m, <String>['North', 'Istanbul'], <String>['Q1']), 120);
+    });
+
+    test(
+        'the reverse split (outermost true, innermost false) proves the '
+        'bijection, not just the direction', () {
+      final CrosstabMatrix m = _run(
+        _ct(rowGroups: const <CrosstabGroup>[
+          CrosstabGroup(id: 'g/r', name: 'Region', expression: r'$F{region}'),
+          CrosstabGroup(
+              id: 'g/c2',
+              name: 'City',
+              expression: r'$F{city}',
+              showTotal: false),
+        ]),
+        rows,
+      );
+      // Region.showTotal (true, default) gates the grand total -> present.
+      expect(_cell(m, <String>[], <String>[]), 390);
+      // City.showTotal (false) gates the Region-only prefix -> absent. The
+      // "last kept level" rule would gate this by Region (true) instead and
+      // wrongly produce 200 here.
       expect(_cell(m, <String>['North'], <String>['Q1']), isNull);
+      // The leaf is always folded regardless.
       expect(_cell(m, <String>['North', 'Istanbul'], <String>['Q1']), 120);
     });
 

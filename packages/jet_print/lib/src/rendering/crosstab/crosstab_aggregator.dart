@@ -225,11 +225,16 @@ List<CrosstabAxisNode> _toAxis(
 int _compareTyped(JetValue a, JetValue b) =>
     jetCompare(a, b) ?? jetStringify(a).compareTo(jetStringify(b));
 
-/// The full path plus every shortened prefix whose *last kept* level has
-/// `showTotal: true` — that level's own subtotal, aggregating away everything
-/// nested beneath it. The empty prefix (the grand total) is gated by the
-/// outermost level's `showTotal` instead, since it has no "last kept level"
-/// of its own.
+/// The full path plus every shortened prefix produced by collapsing away one
+/// group at a time, gated by *that collapsed group's own* `showTotal` —
+/// Jasper semantics: a group's total is what you get by collapsing that group
+/// (e.g. the city group's total aggregates across cities within a region; the
+/// outermost group's total aggregates across everything, i.e. the grand
+/// total, since there is no separate grand-total flag). Prefix length `k`
+/// (`0 <= k < n`) is therefore gated by `groups[k].showTotal` — the group
+/// that a prefix of that length has collapsed away. The full-length leaf
+/// prefix (`k == n`) is always folded, ungated: each group gates exactly one
+/// of the `n` foldable shortened lengths, so no group's flag is ever inert.
 ///
 /// Each length is gated independently: a `false` at one level does not
 /// suppress shorter prefixes gated by a different level.
@@ -237,8 +242,7 @@ List<List<String>> _prefixes(List<String> path, List<CrosstabGroup> groups) {
   final int n = path.length;
   final List<List<String>> out = <List<String>>[path];
   for (int k = n - 1; k >= 0; k--) {
-    final CrosstabGroup gate = groups[k == 0 ? 0 : k - 1];
-    if (gate.showTotal) {
+    if (groups[k].showTotal) {
       out.add(path.sublist(0, k));
     }
   }
