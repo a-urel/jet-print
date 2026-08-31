@@ -116,4 +116,40 @@ void main() {
       expect(a.copyWith(totals: const <ScopeTotal>[u]).totals, <ScopeTotal>[u]);
     });
   });
+
+  group('UnknownScopeNode equality', () {
+    // A fresh map literal each call, so two "separately decoded" nodes never
+    // share object identity — this is what two independent decodes of the
+    // same JSON document actually produce.
+    Map<String, Object?> alienJson() => <String, Object?>{
+          'kind': 'sparkline',
+          'payload': <String, Object?>{
+            'id': 'x1',
+            // A list of objects nested inside the object payload: exercises
+            // Map-inside-List-inside-Map, not just one level of nesting.
+            'tags': <Object?>[
+              <String, Object?>{'k': 'v'},
+            ],
+          },
+        };
+
+    test(
+        'two nodes decoded from identical JSON with a nested object payload '
+        'are value-equal', () {
+      final UnknownScopeNode a = UnknownScopeNode(rawJson: alienJson());
+      final UnknownScopeNode b = UnknownScopeNode(rawJson: alienJson());
+      expect(identical(a.rawJson, b.rawJson), isFalse,
+          reason: 'the two nodes must not share the same map instance');
+      expect(a, equals(b));
+      expect(a.hashCode, b.hashCode);
+    });
+
+    test('a node with a differing nested payload value is unequal', () {
+      final UnknownScopeNode a = UnknownScopeNode(rawJson: alienJson());
+      final Map<String, Object?> differentJson = alienJson();
+      (differentJson['payload']! as Map<String, Object?>)['id'] = 'x2';
+      final UnknownScopeNode b = UnknownScopeNode(rawJson: differentJson);
+      expect(a, isNot(equals(b)));
+    });
+  });
 }
