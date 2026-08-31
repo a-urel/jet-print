@@ -151,5 +151,25 @@ void main() {
       final UnknownScopeNode b = UnknownScopeNode(rawJson: differentJson);
       expect(a, isNot(equals(b)));
     });
+
+    test(
+        'a JSON object payload is unequal to a JSON array payload with the '
+        'same flattened contents', () {
+      // Same flattened shape ([a, 1, b, 2]) but one comes from a JSON object
+      // and the other from a JSON array — these are different documents and
+      // must never compare equal.
+      final UnknownScopeNode object =
+          UnknownScopeNode(rawJson: <String, Object?>{
+        'kind': 'sparkline',
+        'payload': <String, Object?>{'a': 1, 'b': 2},
+      });
+      final UnknownScopeNode array =
+          UnknownScopeNode(rawJson: <String, Object?>{
+        'kind': 'sparkline',
+        'payload': <Object?>['a', 1, 'b', 2],
+      });
+      expect(object, isNot(equals(array)));
+      expect(object.hashCode, isNot(array.hashCode));
+    });
   });
 }

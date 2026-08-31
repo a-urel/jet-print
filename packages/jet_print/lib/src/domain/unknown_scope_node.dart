@@ -44,20 +44,31 @@ final class UnknownScopeNode extends ScopeNode with ValueEquality {
 /// element-wise `List` recursion reaches every leaf instead of falling back to
 /// identity comparison on a nested [Map] (which does not override `==`).
 ///
-/// A [Map] flattens to `[key1, flatten(value1), key2, flatten(value2), …]` in
-/// [Map.entries] order — this makes equality **key-order-sensitive** for
-/// unknown nodes. That is acceptable here because [rawJson] only ever comes
-/// from a JSON decode, whose key order is stable for a given document, not
-/// from hand-built maps a caller might construct in different orders.
+/// Each flattened container is tagged with a leading [Symbol] marker
+/// (`#jsonObject` / `#jsonArray`) identifying which JSON shape it came from.
+/// Without this, a JSON object and a JSON array can flatten to the exact same
+/// `List` (e.g. `{'a': 1, 'b': 2}` and `['a', 1, 'b', 2]` both become
+/// `[a, 1, b, 2]`), making two structurally different documents compare
+/// equal. A JSON value decodes only to `null` / `bool` / `num` / `String` /
+/// [List] / [Map], so a [Symbol] marker can never collide with payload data.
+///
+/// A [Map] flattens to `[#jsonObject, key1, flatten(value1), key2,
+/// flatten(value2), …]` in [Map.entries] order — this makes equality
+/// **key-order-sensitive** for unknown nodes. That is acceptable here because
+/// [rawJson] only ever comes from a JSON decode, whose key order is stable for
+/// a given document, not from hand-built maps a caller might construct in
+/// different orders.
 Object? _flatten(Object? v) => switch (v) {
       final Map<Object?, Object?> m => <Object?>[
+          #jsonObject,
           for (final MapEntry<Object?, Object?> e in m.entries) ...<Object?>[
             e.key,
             _flatten(e.value),
           ],
         ],
       final List<Object?> l => <Object?>[
-          for (final Object? x in l) _flatten(x)
+          #jsonArray,
+          for (final Object? x in l) _flatten(x),
         ],
       _ => v,
     };
