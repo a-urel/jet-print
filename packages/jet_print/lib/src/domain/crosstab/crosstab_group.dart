@@ -46,7 +46,13 @@ class CrosstabGroup with ValueEquality {
   /// grand total — there is no separate grand-total flag.
   final bool showTotal;
 
-  /// Overrides the default `'<name> Total'` label, or null for the default.
+  /// Overrides the total's printed label, or null for the default.
+  ///
+  /// The default is `'∑ <parent label>'` — the label of the node the total
+  /// collapses this level within (`∑ North`), since a total addresses that
+  /// parent's path. The grand total has no parent, so its default is
+  /// `'∑ Total'`. (`planCrosstab` builds these; this level's own [name] is
+  /// not part of the default.)
   final String? totalLabel;
 
   /// Returns a copy with the given fields replaced.
