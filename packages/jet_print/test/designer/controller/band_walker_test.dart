@@ -432,6 +432,28 @@ void main() {
       expect(children.last, isA<BandNode>());
     });
 
+    test('findCrosstab and findScopeOfCrosstab resolve it and its owner', () {
+      expect(findCrosstab(def, 'ct1'), ct);
+      expect(findScopeOfCrosstab(def, 'ct1')?.id, 'root');
+      expect(findCrosstab(def, 'nope'), isNull);
+      expect(findScopeOfCrosstab(def, 'nope'), isNull);
+    });
+
+    test('mapCrosstabs rewrites in place, leaving siblings untouched', () {
+      final ReportDefinition after =
+          mapCrosstabs(def, (Crosstab c) => c.copyWith(name: () => 'Pivot'));
+      expect(findCrosstab(after, 'ct1')?.name, 'Pivot');
+      expect(after.body.root.children.whereType<BandNode>().single.band.id,
+          'detail');
+    });
+
+    test('removeCrosstab drops only that node', () {
+      final ReportDefinition after = removeCrosstab(def, 'ct1');
+      expect(findCrosstab(after, 'ct1'), isNull);
+      expect(after.body.root.children, hasLength(1));
+      expect(removeCrosstab(def, 'nope'), def);
+    });
+
     test('reorderScopeNode still moves a band, and clamps to a no-op', () {
       expect(reorderScopeNode(def, 'root', 'detail', 1).body.root.children.last,
           isA<BandNode>());

@@ -458,6 +458,88 @@ ReportDefinition addScopeChild(
             ? s.copyWith(children: <ScopeNode>[...s.children, child])
             : s);
 
+/// The [Crosstab] with id [crosstabId], or null.
+Crosstab? findCrosstab(ReportDefinition def, String crosstabId) {
+  Crosstab? search(DetailScope s) {
+    for (final ScopeNode n in s.children) {
+      switch (n) {
+        case BandNode():
+          break; // a band is not a crosstab
+        case NestedScope(scope: final DetailScope inner):
+          final Crosstab? found = search(inner);
+          if (found != null) return found;
+        case CrosstabNode(crosstab: final Crosstab ct):
+          if (ct.id == crosstabId) return ct;
+        case UnknownScopeNode():
+          break; // opaque to this build
+      }
+    }
+    return null;
+  }
+
+  return search(def.body.root);
+}
+
+/// The [DetailScope] holding crosstab [crosstabId] as a child, or null.
+DetailScope? findScopeOfCrosstab(ReportDefinition def, String crosstabId) {
+  DetailScope? search(DetailScope s) {
+    for (final ScopeNode n in s.children) {
+      switch (n) {
+        case BandNode():
+          break; // a band is not a crosstab
+        case NestedScope(scope: final DetailScope inner):
+          final DetailScope? found = search(inner);
+          if (found != null) return found;
+        case CrosstabNode(crosstab: final Crosstab ct):
+          if (ct.id == crosstabId) return s;
+        case UnknownScopeNode():
+          break; // opaque to this build
+      }
+    }
+    return null;
+  }
+
+  return search(def.body.root);
+}
+
+/// Rewrites every crosstab in the tree through [transform], leaving every other
+/// node kind untouched. The single edit seam designer crosstab commands go
+/// through (spec B), mirroring [mapBands] / [mapScopes].
+ReportDefinition mapCrosstabs(
+    ReportDefinition def, Crosstab Function(Crosstab) transform) {
+  DetailScope visit(DetailScope s) => s.copyWith(
+        children: <ScopeNode>[
+          for (final ScopeNode n in s.children)
+            switch (n) {
+              BandNode() => n,
+              NestedScope(scope: final DetailScope inner) =>
+                NestedScope(visit(inner)),
+              CrosstabNode(crosstab: final Crosstab ct) =>
+                CrosstabNode(transform(ct)),
+              // Identity pass-through: this rebuilds DetailScope.children, so
+              // a `break` would silently drop the node from the tree.
+              UnknownScopeNode() => n,
+            },
+        ],
+      );
+
+  return def.copyWith(body: def.body.copyWith(root: visit(def.body.root)));
+}
+
+/// Removes the crosstab [crosstabId] from whichever scope holds it. A no-op if
+/// absent.
+ReportDefinition removeCrosstab(ReportDefinition def, String crosstabId) =>
+    mapScopes(
+        def,
+        (DetailScope s) => s.copyWith(
+              children: <ScopeNode>[
+                // Predicate, not dispatch: any other node kind correctly fails
+                // this test.
+                for (final ScopeNode n in s.children)
+                  if (!(n is CrosstabNode && n.crosstab.id == crosstabId)) n,
+              ],
+            ));
+
 /// Removes the nested scope [scopeId] from its parent's children. A no-op if
 /// absent.
 ReportDefinition removeScope(ReportDefinition def, String scopeId) => mapScopes(
