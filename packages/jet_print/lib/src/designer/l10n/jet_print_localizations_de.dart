@@ -726,6 +726,77 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   String get crosstabLabel => 'Kreuztabelle';
 
   @override
+  String get outlineAddCrosstab => 'Kreuztabelle hinzufügen';
+
+  @override
+  String get crosstabScopeRows => '(Zeilen dieses Bereichs)';
+
+  @override
+  String get crosstabMoveUpHint =>
+      'Nach oben – über dem ersten Band wird die Kreuztabelle einmal vor den Zeilen gedruckt';
+
+  @override
+  String get crosstabMoveDownHint =>
+      'Nach unten – unter den Bändern wird die Kreuztabelle einmal nach den Zeilen gedruckt';
+
+  @override
+  String get crosstabRowGroups => 'Zeilengruppen';
+
+  @override
+  String get crosstabColumnGroups => 'Spaltengruppen';
+
+  @override
+  String get crosstabMeasures => 'Kennzahlen';
+
+  @override
+  String get crosstabLayout => 'Layout';
+
+  @override
+  String get crosstabAddLevel => 'Ebene hinzufügen';
+
+  @override
+  String get crosstabAddMeasure => 'Kennzahl hinzufügen';
+
+  @override
+  String get crosstabSort => 'Sortierung';
+
+  @override
+  String get crosstabSortAscending => 'Aufsteigend';
+
+  @override
+  String get crosstabSortDescending => 'Absteigend';
+
+  @override
+  String get crosstabSortDataOrder => 'Datenreihenfolge';
+
+  @override
+  String get crosstabShowTotal => 'Summe anzeigen';
+
+  @override
+  String get crosstabTotalLabel => 'Summenbezeichnung';
+
+  @override
+  String get crosstabAggregate => 'Aggregat';
+
+  @override
+  String get crosstabRowLabelWidth => 'Zeilenbeschriftungsbreite';
+
+  @override
+  String get crosstabRowLabelIndent => 'Zeilenbeschriftungseinzug';
+
+  @override
+  String get crosstabMeasureColumnWidth => 'Kennzahlspaltenbreite';
+
+  @override
+  String get crosstabRowHeight => 'Zeilenhöhe';
+
+  @override
+  String get crosstabHeaderRowHeight => 'Kopfzeilenhöhe';
+
+  @override
+  String get crosstabTooWide => 'Breiter als der Seitenkörper';
+
+  @override
   String get exprEditorDeeperFieldHint =>
       'Nachgeordnetes Feld – nur innerhalb eines Aggregats wie SUM(…) gültig';
 

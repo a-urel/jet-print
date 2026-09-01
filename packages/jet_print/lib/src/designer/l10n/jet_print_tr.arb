@@ -261,6 +261,51 @@
 
   "crosstabLabel": "Çapraz tablo",
 
+  "outlineAddCrosstab": "Çapraz tablo ekle",
+
+  "crosstabScopeRows": "(bu kapsamın satırları)",
+
+  "crosstabMoveUpHint": "Yukarı taşı — ilk banttan önce çapraz tablo satır döngüsünden önce bir kez yazılır",
+
+  "crosstabMoveDownHint": "Aşağı taşı — bantların altında çapraz tablo satır döngüsünden sonra bir kez yazılır",
+
+  "crosstabRowGroups": "Satır grupları",
+
+  "crosstabColumnGroups": "Sütun grupları",
+
+  "crosstabMeasures": "Ölçüler",
+
+  "crosstabLayout": "Yerleşim",
+
+  "crosstabAddLevel": "Düzey ekle",
+
+  "crosstabAddMeasure": "Ölçü ekle",
+
+  "crosstabSort": "Sıralama",
+
+  "crosstabSortAscending": "Artan",
+
+  "crosstabSortDescending": "Azalan",
+
+  "crosstabSortDataOrder": "Veri sırası",
+
+  "crosstabShowTotal": "Toplamı göster",
+
+  "crosstabTotalLabel": "Toplam etiketi",
+
+  "crosstabAggregate": "Toplama",
+
+  "crosstabRowLabelWidth": "Satır etiketi genişliği",
+
+  "crosstabRowLabelIndent": "Satır etiketi girintisi",
+
+  "crosstabMeasureColumnWidth": "Ölçü sütunu genişliği",
+
+  "crosstabRowHeight": "Satır yüksekliği",
+
+  "crosstabHeaderRowHeight": "Başlık satırı yüksekliği",
+
+  "crosstabTooWide": "Sayfa gövdesinden geniş",
   "exprEditorDeeperFieldHint": "Alt alan – yalnızca SUM(…) gibi bir toplama içinde geçerlidir",
 
   "propertiesColumnLayout": "Sütun düzeni",

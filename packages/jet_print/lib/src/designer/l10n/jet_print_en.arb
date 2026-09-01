@@ -964,6 +964,120 @@
     "description": "Fallback label for a crosstab (pivot grid) with no author-given name, shown in the Outline row and the canvas placeholder block."
   },
 
+  "outlineAddCrosstab": "Add crosstab",
+  "@outlineAddCrosstab": {
+    "description": "Outline scope plus-menu entry that adds a crosstab (pivot grid) to the report body (spec B)."
+  },
+
+  "crosstabScopeRows": "(rows of this scope)",
+  "@crosstabScopeRows": {
+    "description": "Data-source option meaning the crosstab folds the enclosing scope's own rows rather than a nested collection."
+  },
+
+  "crosstabMoveUpHint": "Move up — above the first band a crosstab prints once, before the rows",
+  "@crosstabMoveUpHint": {
+    "description": "Tooltip on the Outline move-up action for a crosstab. States the position rule: a crosstab above the first row-producing sibling prints once before the row loop."
+  },
+
+  "crosstabMoveDownHint": "Move down — below the bands a crosstab prints once, after the rows",
+  "@crosstabMoveDownHint": {
+    "description": "Tooltip on the Outline move-down action for a crosstab. States the position rule: a crosstab below the bands prints once after the row loop."
+  },
+
+  "crosstabRowGroups": "Row groups",
+  "@crosstabRowGroups": {
+    "description": "Properties section heading for a crosstab's row-axis levels, outermost first."
+  },
+
+  "crosstabColumnGroups": "Column groups",
+  "@crosstabColumnGroups": {
+    "description": "Properties section heading for a crosstab's column-axis levels, outermost first."
+  },
+
+  "crosstabMeasures": "Measures",
+  "@crosstabMeasures": {
+    "description": "Properties section heading for a crosstab's measures, in column order."
+  },
+
+  "crosstabLayout": "Layout",
+  "@crosstabLayout": {
+    "description": "Properties section heading for a crosstab's size metrics (column widths, row heights, indent)."
+  },
+
+  "crosstabAddLevel": "Add level",
+  "@crosstabAddLevel": {
+    "description": "Menu label that appends an axis level to a crosstab's row or column axis."
+  },
+
+  "crosstabAddMeasure": "Add measure",
+  "@crosstabAddMeasure": {
+    "description": "Menu label that appends a measure to a crosstab."
+  },
+
+  "crosstabSort": "Sort",
+  "@crosstabSort": {
+    "description": "Field label for a crosstab axis level's key ordering."
+  },
+
+  "crosstabSortAscending": "Ascending",
+  "@crosstabSortAscending": {
+    "description": "Crosstab axis sort mode: ascending by the typed group key."
+  },
+
+  "crosstabSortDescending": "Descending",
+  "@crosstabSortDescending": {
+    "description": "Crosstab axis sort mode: descending by the typed group key."
+  },
+
+  "crosstabSortDataOrder": "Data order",
+  "@crosstabSortDataOrder": {
+    "description": "Crosstab axis sort mode: the order keys were first seen while folding rows."
+  },
+
+  "crosstabShowTotal": "Show total",
+  "@crosstabShowTotal": {
+    "description": "Switch label for whether a crosstab axis level emits a subtotal (on the outermost level, the grand total)."
+  },
+
+  "crosstabTotalLabel": "Total label",
+  "@crosstabTotalLabel": {
+    "description": "Field label overriding a crosstab subtotal's printed text; blank uses the default."
+  },
+
+  "crosstabAggregate": "Aggregate",
+  "@crosstabAggregate": {
+    "description": "Field label for how a crosstab measure's per-row values fold into a cell."
+  },
+
+  "crosstabRowLabelWidth": "Row label width",
+  "@crosstabRowLabelWidth": {
+    "description": "Crosstab metric: width of the row-label column, repeated in every horizontal slice."
+  },
+
+  "crosstabRowLabelIndent": "Row label indent",
+  "@crosstabRowLabelIndent": {
+    "description": "Crosstab metric: horizontal indent applied per row-axis depth level."
+  },
+
+  "crosstabMeasureColumnWidth": "Measure column width",
+  "@crosstabMeasureColumnWidth": {
+    "description": "Crosstab metric: width of one measure column."
+  },
+
+  "crosstabRowHeight": "Row height",
+  "@crosstabRowHeight": {
+    "description": "Crosstab metric: height of a data or total row."
+  },
+
+  "crosstabHeaderRowHeight": "Header row height",
+  "@crosstabHeaderRowHeight": {
+    "description": "Crosstab metric: height of one column-header row."
+  },
+
+  "crosstabTooWide": "Wider than the page body",
+  "@crosstabTooWide": {
+    "description": "Inline warning shown when a crosstab's minimum width (row-label column plus one column per measure) exceeds the printable body width."
+  },
   "exprEditorDeeperFieldHint": "Descendant field — valid inside an aggregate like SUM(…)",
   "@exprEditorDeeperFieldHint": {
     "description": "Tooltip on a descendant (↳) field chip in the expression editor palette (spec 033). Explains that the field is from a child collection and is only valid inside an aggregate call."

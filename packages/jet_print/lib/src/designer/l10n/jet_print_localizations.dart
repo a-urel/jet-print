@@ -1499,6 +1499,144 @@ abstract class JetPrintLocalizations {
   /// **'Crosstab'**
   String get crosstabLabel;
 
+  /// Outline scope plus-menu entry that adds a crosstab (pivot grid) to the report body (spec B).
+  ///
+  /// In en, this message translates to:
+  /// **'Add crosstab'**
+  String get outlineAddCrosstab;
+
+  /// Data-source option meaning the crosstab folds the enclosing scope's own rows rather than a nested collection.
+  ///
+  /// In en, this message translates to:
+  /// **'(rows of this scope)'**
+  String get crosstabScopeRows;
+
+  /// Tooltip on the Outline move-up action for a crosstab. States the position rule: a crosstab above the first row-producing sibling prints once before the row loop.
+  ///
+  /// In en, this message translates to:
+  /// **'Move up — above the first band a crosstab prints once, before the rows'**
+  String get crosstabMoveUpHint;
+
+  /// Tooltip on the Outline move-down action for a crosstab. States the position rule: a crosstab below the bands prints once after the row loop.
+  ///
+  /// In en, this message translates to:
+  /// **'Move down — below the bands a crosstab prints once, after the rows'**
+  String get crosstabMoveDownHint;
+
+  /// Properties section heading for a crosstab's row-axis levels, outermost first.
+  ///
+  /// In en, this message translates to:
+  /// **'Row groups'**
+  String get crosstabRowGroups;
+
+  /// Properties section heading for a crosstab's column-axis levels, outermost first.
+  ///
+  /// In en, this message translates to:
+  /// **'Column groups'**
+  String get crosstabColumnGroups;
+
+  /// Properties section heading for a crosstab's measures, in column order.
+  ///
+  /// In en, this message translates to:
+  /// **'Measures'**
+  String get crosstabMeasures;
+
+  /// Properties section heading for a crosstab's size metrics (column widths, row heights, indent).
+  ///
+  /// In en, this message translates to:
+  /// **'Layout'**
+  String get crosstabLayout;
+
+  /// Menu label that appends an axis level to a crosstab's row or column axis.
+  ///
+  /// In en, this message translates to:
+  /// **'Add level'**
+  String get crosstabAddLevel;
+
+  /// Menu label that appends a measure to a crosstab.
+  ///
+  /// In en, this message translates to:
+  /// **'Add measure'**
+  String get crosstabAddMeasure;
+
+  /// Field label for a crosstab axis level's key ordering.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get crosstabSort;
+
+  /// Crosstab axis sort mode: ascending by the typed group key.
+  ///
+  /// In en, this message translates to:
+  /// **'Ascending'**
+  String get crosstabSortAscending;
+
+  /// Crosstab axis sort mode: descending by the typed group key.
+  ///
+  /// In en, this message translates to:
+  /// **'Descending'**
+  String get crosstabSortDescending;
+
+  /// Crosstab axis sort mode: the order keys were first seen while folding rows.
+  ///
+  /// In en, this message translates to:
+  /// **'Data order'**
+  String get crosstabSortDataOrder;
+
+  /// Switch label for whether a crosstab axis level emits a subtotal (on the outermost level, the grand total).
+  ///
+  /// In en, this message translates to:
+  /// **'Show total'**
+  String get crosstabShowTotal;
+
+  /// Field label overriding a crosstab subtotal's printed text; blank uses the default.
+  ///
+  /// In en, this message translates to:
+  /// **'Total label'**
+  String get crosstabTotalLabel;
+
+  /// Field label for how a crosstab measure's per-row values fold into a cell.
+  ///
+  /// In en, this message translates to:
+  /// **'Aggregate'**
+  String get crosstabAggregate;
+
+  /// Crosstab metric: width of the row-label column, repeated in every horizontal slice.
+  ///
+  /// In en, this message translates to:
+  /// **'Row label width'**
+  String get crosstabRowLabelWidth;
+
+  /// Crosstab metric: horizontal indent applied per row-axis depth level.
+  ///
+  /// In en, this message translates to:
+  /// **'Row label indent'**
+  String get crosstabRowLabelIndent;
+
+  /// Crosstab metric: width of one measure column.
+  ///
+  /// In en, this message translates to:
+  /// **'Measure column width'**
+  String get crosstabMeasureColumnWidth;
+
+  /// Crosstab metric: height of a data or total row.
+  ///
+  /// In en, this message translates to:
+  /// **'Row height'**
+  String get crosstabRowHeight;
+
+  /// Crosstab metric: height of one column-header row.
+  ///
+  /// In en, this message translates to:
+  /// **'Header row height'**
+  String get crosstabHeaderRowHeight;
+
+  /// Inline warning shown when a crosstab's minimum width (row-label column plus one column per measure) exceeds the printable body width.
+  ///
+  /// In en, this message translates to:
+  /// **'Wider than the page body'**
+  String get crosstabTooWide;
+
   /// Tooltip on a descendant (↳) field chip in the expression editor palette (spec 033). Explains that the field is from a child collection and is only valid inside an aggregate call.
   ///
   /// In en, this message translates to:

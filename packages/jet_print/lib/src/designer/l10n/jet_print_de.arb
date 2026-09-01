@@ -261,6 +261,51 @@
 
   "crosstabLabel": "Kreuztabelle",
 
+  "outlineAddCrosstab": "Kreuztabelle hinzufügen",
+
+  "crosstabScopeRows": "(Zeilen dieses Bereichs)",
+
+  "crosstabMoveUpHint": "Nach oben – über dem ersten Band wird die Kreuztabelle einmal vor den Zeilen gedruckt",
+
+  "crosstabMoveDownHint": "Nach unten – unter den Bändern wird die Kreuztabelle einmal nach den Zeilen gedruckt",
+
+  "crosstabRowGroups": "Zeilengruppen",
+
+  "crosstabColumnGroups": "Spaltengruppen",
+
+  "crosstabMeasures": "Kennzahlen",
+
+  "crosstabLayout": "Layout",
+
+  "crosstabAddLevel": "Ebene hinzufügen",
+
+  "crosstabAddMeasure": "Kennzahl hinzufügen",
+
+  "crosstabSort": "Sortierung",
+
+  "crosstabSortAscending": "Aufsteigend",
+
+  "crosstabSortDescending": "Absteigend",
+
+  "crosstabSortDataOrder": "Datenreihenfolge",
+
+  "crosstabShowTotal": "Summe anzeigen",
+
+  "crosstabTotalLabel": "Summenbezeichnung",
+
+  "crosstabAggregate": "Aggregat",
+
+  "crosstabRowLabelWidth": "Zeilenbeschriftungsbreite",
+
+  "crosstabRowLabelIndent": "Zeilenbeschriftungseinzug",
+
+  "crosstabMeasureColumnWidth": "Kennzahlspaltenbreite",
+
+  "crosstabRowHeight": "Zeilenhöhe",
+
+  "crosstabHeaderRowHeight": "Kopfzeilenhöhe",
+
+  "crosstabTooWide": "Breiter als der Seitenkörper",
   "exprEditorDeeperFieldHint": "Nachgeordnetes Feld – nur innerhalb eines Aggregats wie SUM(…) gültig",
 
   "propertiesColumnLayout": "Spaltenlayout",

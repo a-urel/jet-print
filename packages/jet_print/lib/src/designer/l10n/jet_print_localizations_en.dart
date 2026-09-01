@@ -724,6 +724,77 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get crosstabLabel => 'Crosstab';
 
   @override
+  String get outlineAddCrosstab => 'Add crosstab';
+
+  @override
+  String get crosstabScopeRows => '(rows of this scope)';
+
+  @override
+  String get crosstabMoveUpHint =>
+      'Move up — above the first band a crosstab prints once, before the rows';
+
+  @override
+  String get crosstabMoveDownHint =>
+      'Move down — below the bands a crosstab prints once, after the rows';
+
+  @override
+  String get crosstabRowGroups => 'Row groups';
+
+  @override
+  String get crosstabColumnGroups => 'Column groups';
+
+  @override
+  String get crosstabMeasures => 'Measures';
+
+  @override
+  String get crosstabLayout => 'Layout';
+
+  @override
+  String get crosstabAddLevel => 'Add level';
+
+  @override
+  String get crosstabAddMeasure => 'Add measure';
+
+  @override
+  String get crosstabSort => 'Sort';
+
+  @override
+  String get crosstabSortAscending => 'Ascending';
+
+  @override
+  String get crosstabSortDescending => 'Descending';
+
+  @override
+  String get crosstabSortDataOrder => 'Data order';
+
+  @override
+  String get crosstabShowTotal => 'Show total';
+
+  @override
+  String get crosstabTotalLabel => 'Total label';
+
+  @override
+  String get crosstabAggregate => 'Aggregate';
+
+  @override
+  String get crosstabRowLabelWidth => 'Row label width';
+
+  @override
+  String get crosstabRowLabelIndent => 'Row label indent';
+
+  @override
+  String get crosstabMeasureColumnWidth => 'Measure column width';
+
+  @override
+  String get crosstabRowHeight => 'Row height';
+
+  @override
+  String get crosstabHeaderRowHeight => 'Header row height';
+
+  @override
+  String get crosstabTooWide => 'Wider than the page body';
+
+  @override
   String get exprEditorDeeperFieldHint =>
       'Descendant field — valid inside an aggregate like SUM(…)';
 

@@ -725,6 +725,77 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get crosstabLabel => 'Çapraz tablo';
 
   @override
+  String get outlineAddCrosstab => 'Çapraz tablo ekle';
+
+  @override
+  String get crosstabScopeRows => '(bu kapsamın satırları)';
+
+  @override
+  String get crosstabMoveUpHint =>
+      'Yukarı taşı — ilk banttan önce çapraz tablo satır döngüsünden önce bir kez yazılır';
+
+  @override
+  String get crosstabMoveDownHint =>
+      'Aşağı taşı — bantların altında çapraz tablo satır döngüsünden sonra bir kez yazılır';
+
+  @override
+  String get crosstabRowGroups => 'Satır grupları';
+
+  @override
+  String get crosstabColumnGroups => 'Sütun grupları';
+
+  @override
+  String get crosstabMeasures => 'Ölçüler';
+
+  @override
+  String get crosstabLayout => 'Yerleşim';
+
+  @override
+  String get crosstabAddLevel => 'Düzey ekle';
+
+  @override
+  String get crosstabAddMeasure => 'Ölçü ekle';
+
+  @override
+  String get crosstabSort => 'Sıralama';
+
+  @override
+  String get crosstabSortAscending => 'Artan';
+
+  @override
+  String get crosstabSortDescending => 'Azalan';
+
+  @override
+  String get crosstabSortDataOrder => 'Veri sırası';
+
+  @override
+  String get crosstabShowTotal => 'Toplamı göster';
+
+  @override
+  String get crosstabTotalLabel => 'Toplam etiketi';
+
+  @override
+  String get crosstabAggregate => 'Toplama';
+
+  @override
+  String get crosstabRowLabelWidth => 'Satır etiketi genişliği';
+
+  @override
+  String get crosstabRowLabelIndent => 'Satır etiketi girintisi';
+
+  @override
+  String get crosstabMeasureColumnWidth => 'Ölçü sütunu genişliği';
+
+  @override
+  String get crosstabRowHeight => 'Satır yüksekliği';
+
+  @override
+  String get crosstabHeaderRowHeight => 'Başlık satırı yüksekliği';
+
+  @override
+  String get crosstabTooWide => 'Sayfa gövdesinden geniş';
+
+  @override
   String get exprEditorDeeperFieldHint =>
       'Alt alan – yalnızca SUM(…) gibi bir toplama içinde geçerlidir';
 
