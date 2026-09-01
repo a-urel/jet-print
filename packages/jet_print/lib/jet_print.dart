@@ -54,6 +54,7 @@ export 'src/designer/controller/jet_report_designer_controller.dart'
         CtrlMove,
         CtrlResize,
         CtrlBands,
+        CtrlCrosstab,
         CtrlGroupsScopes,
         CtrlReport,
         CtrlClipboard,

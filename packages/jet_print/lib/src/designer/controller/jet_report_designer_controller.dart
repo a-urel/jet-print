@@ -3,9 +3,14 @@ library;
 
 import 'package:flutter/foundation.dart';
 
+import '../../data/field_def.dart';
 import '../../domain/band.dart';
 import '../../domain/bool_property.dart';
 import '../../domain/column_layout.dart';
+import '../../domain/crosstab/crosstab.dart';
+import '../../domain/crosstab/crosstab_group.dart';
+import '../../domain/crosstab/crosstab_measure.dart';
+import '../../domain/crosstab/crosstab_style.dart';
 import '../../domain/detail_scope.dart';
 import '../../domain/diagnostic.dart';
 import '../../domain/elements/barcode_element.dart'
@@ -20,6 +25,7 @@ import '../../domain/report_band.dart' show BandType;
 import '../../domain/report_definition.dart';
 import '../../domain/report_element.dart';
 import '../../domain/report_validation.dart';
+import '../../domain/report_variable.dart' show JetCalculation;
 import '../../domain/styles/box_style.dart';
 import '../../domain/styles/color.dart';
 import '../../domain/styles/text_style.dart';
@@ -32,6 +38,7 @@ import 'bulk_geometry.dart';
 import 'clipboard.dart';
 import 'commands/clipboard_command.dart';
 import 'commands/create_element_command.dart';
+import 'commands/crosstab_commands.dart';
 import 'commands/definition_edit_command.dart';
 import 'commands/delete_command.dart';
 import 'commands/group_commands.dart';
@@ -79,6 +86,7 @@ part 'api/barcode.dart';
 part 'api/move.dart';
 part 'api/resize.dart';
 part 'api/bands.dart';
+part 'api/crosstab.dart';
 part 'api/groups_scopes.dart';
 part 'api/report.dart';
 part 'api/clipboard.dart';
