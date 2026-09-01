@@ -193,8 +193,17 @@ attached.
 |---|---|---|
 | `headerText` | column headers (`_columnHeaderText`) | `JetTextStyle(align: center)` — **displayed** |
 | `headerText` | the row-label stub column (`_rowLabelText`) | `JetTextStyle.fallback` (left) |
-| `totalText` | total *values* (`_totalCellText`) | `JetTextStyle(align: right)` — **displayed** |
+| `totalText` | total *values* (`_totalCellText`) | `cellText` if set, else `JetTextStyle(align: right)` — **displayed** |
 | `totalText` | total *labels* (`_totalLabelText`) | cascades to `_rowLabelText` (left) |
+
+**Totals inherits from Cells, not from the bare default.** `_totalCellText` is
+`style.totalText ?? _cellTextStyle(measure)`, and `_cellBoxStyle`'s caller is
+`style.totalBox ?? _cellBoxStyle(measure)` — so an unset Totals slot reaches the renderer default
+only when Cells is *also* unset. The Totals section therefore displays
+`ct.style.cellText ?? _kCrosstabCellDefault`, not the constant alone. An earlier draft of this spec
+listed only the terminal default in the table above, and the implementation plan copied the table
+rather than the planner; the result was a panel that showed a bare default while the report rendered
+the authored Cells style. The two-hop case now has its own test.
 
 The section shows the first of each pair: column headers outnumber the single row-label column, and
 total values outnumber their labels. The approximation is confined to alignment, and it is
@@ -208,9 +217,14 @@ or splitting Header into two sections) would expose a renderer-internal distinct
 as soon as the author touches it.
 
 **This mirroring is the one real risk in this spec** — the defaults are stated in two places and can
-drift. Mitigation: a test asserts the panel's fallbacks equal the planner's for all three roles, so
-a change to either side fails loudly rather than silently showing an author the wrong inherited
-value. The alternative (exporting the planner's defaults into the domain layer) is a larger change
+drift. The mitigation is a **pair of literals, one pinned on each side**: no single test can compare
+them directly, because the planner's defaults are private to the render library and the panel's to
+the designer library. So the designer suite pins the panel's value and the render suite pins the
+planner's, and a change to either side fails loudly. (An earlier draft claimed one test could assert
+the two are equal. That test cannot be written in Dart, and a mitigation that cannot compile is worse
+than none, because it stops anyone looking. The render-side pin for the centred column-header default
+was in fact missing until this was checked; the right-aligned cell default was already covered by
+`crosstab_planner_test.dart`.) The alternative (exporting the planner's defaults into the domain layer) is a larger change
 than this spec's scope and would move render-layer policy into the model.
 
 ## 3. Measure card additions
