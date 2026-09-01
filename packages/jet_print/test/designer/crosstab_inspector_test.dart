@@ -102,6 +102,53 @@ void main() {
     expect(_key('crosstab.group.g-region.remove'), findsOneWidget);
   });
 
+  // Rebinding to another source keeps the authored expressions — nothing is
+  // silently rewritten or reset — and each one that no longer resolves against
+  // the new source is flagged where the author edits it.
+  testWidgets('rebinding preserves expressions and flags unresolved ones',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c = JetReportDesignerController(
+      definition: _def(),
+    );
+    addTearDown(c.dispose);
+    await pumpDesigner(
+      tester,
+      designer: JetReportDesigner(
+        controller: c,
+        dataSchema: const JetDataSchema(
+          name: 'Sales',
+          fields: <FieldDef>[
+            FieldDef('region', type: JetFieldType.string),
+            FieldDef('year', type: JetFieldType.string),
+            FieldDef('amount', type: JetFieldType.double),
+            // A collection with entirely different field names.
+            FieldDef('lines', type: JetFieldType.collection, fields: <FieldDef>[
+              FieldDef('sku', type: JetFieldType.string),
+              FieldDef('qty', type: JetFieldType.integer),
+            ]),
+          ],
+        ),
+      ),
+    );
+    c.selectCrosstab('ct1');
+    final Finder tab = find.text('Properties');
+    await tester.ensureVisible(tab);
+    await tester.pumpAndSettle();
+    await tester.tap(tab);
+    await tester.pumpAndSettle();
+
+    final JetPrintLocalizations l10n = JetPrintLocalizations.of(
+        tester.element(find.byType(JetReportDesigner)));
+    expect(find.text(l10n.bindingUnresolved), findsNothing);
+
+    c.setCrosstabCollection('ct1', 'lines');
+    await tester.pumpAndSettle();
+    expect(_ct(c).rowGroups.single.expression, r'$F{region}',
+        reason: 'a rebind must not rewrite authored expressions');
+    // One per axis level plus one per measure: three stale bindings.
+    expect(find.text(l10n.bindingUnresolved), findsNWidgets(3));
+  });
+
   testWidgets('the layout metrics commit through the controller',
       (WidgetTester tester) async {
     final JetReportDesignerController c = await _pump(tester);

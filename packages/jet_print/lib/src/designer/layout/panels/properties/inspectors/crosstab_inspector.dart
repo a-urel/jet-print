@@ -172,6 +172,8 @@ extension _CrosstabInspector on _PropertiesPanelState {
               group.id,
               (CrosstabGroup g) => g.copyWith(expression: _compileKey(v))),
         ),
+        if (_crosstabUnresolved(group.expression, fields))
+          _UnresolvedHint(message: l10n.bindingUnresolved),
         const SizedBox(height: 8),
         _PresetDropdown(
           fieldKey: ValueKey<String>('$base.sort'),
@@ -285,6 +287,8 @@ extension _CrosstabInspector on _PropertiesPanelState {
               measure.id,
               (CrosstabMeasure m) => m.copyWith(expression: _compileKey(v))),
         ),
+        if (_crosstabUnresolved(measure.expression, fields))
+          _UnresolvedHint(message: l10n.bindingUnresolved),
         const SizedBox(height: 8),
         // JetCalculation.none is excluded deliberately: a cell folds many rows,
         // so it has no single row to pass through, and validate() rejects it.
@@ -379,6 +383,29 @@ extension _CrosstabInspector on _PropertiesPanelState {
           style.headerRowHeight,
           (double v) => style.copyWith(headerRowHeight: v)),
     ];
+  }
+
+  /// Whether [expression] references a field the crosstab's current source does
+  /// not offer — the case a **rebind** creates, since rebinding preserves the
+  /// authored expressions rather than rewriting or resetting them.
+  ///
+  /// Preserving them is the deliberate rule: a rebind is often one step of
+  /// repointing a report at a renamed source, and silently reseeding the axes
+  /// would throw away authored names, sorts, totals and formats to save one
+  /// re-pick. The cost is that a stale binding is otherwise invisible, so it is
+  /// surfaced here, per field, where the author fixes it.
+  ///
+  /// With no schema attached [fields] is empty and nothing is flagged — the
+  /// binding still shows and resolution waits for a source (FR-019a), the rule
+  /// the element inspector's `_unresolved` follows.
+  bool _crosstabUnresolved(String expression, List<FieldDef> fields) {
+    if (fields.isEmpty) return false;
+    final Set<String> names = <String>{
+      for (final FieldDef f in fields) f.name,
+    };
+    return RegExp(r'\$F\{([^}]*)\}')
+        .allMatches(expression)
+        .any((RegExpMatch m) => !names.contains(m.group(1)));
   }
 
   /// Whether [ct] cannot fit the printable body even at its minimum width — the

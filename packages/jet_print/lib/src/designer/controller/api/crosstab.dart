@@ -19,13 +19,19 @@ extension CtrlCrosstab on JetReportDesignerController {
   /// first again, when there is only one) keys the column axis; the first
   /// numeric field becomes a `sum` measure, or — when the source has none —
   /// the first scalar becomes a `count` measure, which needs no numeric input.
-  /// A no-op for an unknown scope, or a source with no scalar field at all:
-  /// there would be nothing to bucket rows by.
+  /// A no-op for an unknown scope, a **non-root** scope, or a source with no
+  /// scalar field at all: there would be nothing to bucket rows by.
+  ///
+  /// Root-scope-only is a model rule, not a UI one — `validate()` rejects a
+  /// crosstab in any other scope (spec A decision 8) — so it is enforced here
+  /// as well as in the Outline menu. Gating only the affordance would leave
+  /// this public API able to mint a definition the validator rejects.
   void createCrosstab(
     String scopeId, {
     required List<FieldDef> fields,
     String? collectionField,
   }) {
+    if (scopeId != _document.definition.body.root.id) return;
     if (findScope(_document.definition, scopeId) == null) return;
     final List<FieldDef> scalars = <FieldDef>[
       for (final FieldDef f in fields)

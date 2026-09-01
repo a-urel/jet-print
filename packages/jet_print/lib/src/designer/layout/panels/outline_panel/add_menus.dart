@@ -36,8 +36,9 @@ extension _OutlineAddMenus on _OutlinePanelState {
     final bool many = scope.groups.length > 1;
     String groupLabel(String base, GroupLevel g) =>
         many ? '$base · ${g.name}' : base;
+    // The scalars in scope: what a new group keys on, and what a crosstab
+    // bound to the scope's own rows buckets by.
     final List<FieldDef> scopeScalars = _groupFields(controller, scope, schema);
-    final List<FieldDef> groupFields = scopeScalars;
     final List<FieldDef> listCollections =
         collectionFieldsForScope(schema, controller.definition, scope.id);
     final List<_MenuOption> options = <_MenuOption>[
@@ -69,7 +70,13 @@ extension _OutlineAddMenus on _OutlinePanelState {
         _MenuOption(
           optionKey: ValueKey<String>('$scopeBase.add.crosstab'),
           label: l10n.outlineAddCrosstab,
-          enabled: scopeScalars.isNotEmpty || listCollections.isNotEmpty,
+          // Each option is enabled only when ITS OWN source has at least one
+          // scalar field: that is what a crosstab buckets rows by, and
+          // createCrosstab refuses a source without one. Gating a collection on
+          // "has any children" would leave a live-looking, dead menu item for a
+          // collection whose children are all themselves collections.
+          enabled: scopeScalars.isNotEmpty ||
+              listCollections.any((FieldDef f) => _hasScalar(f.fields)),
           children: <_MenuOption>[
             _MenuOption(
               optionKey: ValueKey<String>('$scopeBase.add.crosstab.rows'),
@@ -83,7 +90,7 @@ extension _OutlineAddMenus on _OutlinePanelState {
                 optionKey:
                     ValueKey<String>('$scopeBase.add.crosstab.field.${f.name}'),
                 label: f.name,
-                enabled: f.fields.isNotEmpty,
+                enabled: _hasScalar(f.fields),
                 onPick: () => controller.createCrosstab(scope.id,
                     collectionField: f.name, fields: f.fields),
               ),
@@ -92,9 +99,9 @@ extension _OutlineAddMenus on _OutlinePanelState {
       _MenuOption(
         optionKey: ValueKey<String>('$scopeBase.add.group'),
         label: l10n.outlineAddGroup,
-        enabled: groupFields.isNotEmpty,
+        enabled: scopeScalars.isNotEmpty,
         children: <_MenuOption>[
-          for (final FieldDef f in groupFields)
+          for (final FieldDef f in scopeScalars)
             _MenuOption(
               optionKey:
                   ValueKey<String>('$scopeBase.add.group.field.${f.name}'),
@@ -127,6 +134,11 @@ extension _OutlineAddMenus on _OutlinePanelState {
       colors: theme.colorScheme,
     );
   }
+
+  /// Whether [fields] holds anything a crosstab could bucket rows by — a
+  /// non-collection field. A collection of collections holds none.
+  bool _hasScalar(List<FieldDef> fields) =>
+      fields.any((FieldDef f) => f.type != JetFieldType.collection);
 
   /// The scalar fields a new group on [scope] may key on — the choices behind
   /// the "Add group ▸" submenu (empty disables it).

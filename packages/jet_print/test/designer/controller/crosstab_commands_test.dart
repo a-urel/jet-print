@@ -80,6 +80,39 @@ void main() {
     expect(c.selection.crosstabId, isNull);
   });
 
+  // Root-scope-only is a MODEL rule (spec A decision 8 — validate() rejects a
+  // crosstab anywhere else), so the API enforces it too. Gating only the
+  // Outline menu would leave the public controller able to mint a definition
+  // the validator rejects.
+  test('creation is refused on a nested scope, not only hidden in the menu',
+      () {
+    final JetReportDesignerController c = JetReportDesignerController(
+      definition: const ReportDefinition(
+        name: 'R',
+        page: PageFormat.a4Portrait,
+        body: ReportBody(
+          root: DetailScope(
+            id: 'root',
+            children: <ScopeNode>[
+              NestedScope(DetailScope(
+                id: 'lines',
+                collectionField: 'lines',
+                children: <ScopeNode>[
+                  BandNode(Band(id: 'row', type: BandType.detail, height: 12)),
+                ],
+              )),
+            ],
+          ),
+        ),
+      ),
+    );
+    addTearDown(c.dispose);
+    final ReportDefinition before = c.definition;
+    c.createCrosstab('lines', fields: _fields);
+    expect(c.definition, before);
+    expect(c.selection.crosstabId, isNull);
+  });
+
   test('rename, bind and delete each undo in exactly one step', () {
     final JetReportDesignerController c = _controller();
     final String id = _create(c);
@@ -104,6 +137,22 @@ void main() {
     expect(c.selection.isEmpty, isTrue);
     c.undo();
     expect(c.definition, afterCreate);
+  });
+
+  // Delete/cut/copy act on ELEMENTS. With a crosstab selected they no-op, the
+  // same as with a band, group, scope or report selected — the crosstab is
+  // removed from the Outline's own action. Pinned so the silence stays a
+  // decision rather than drifting into an accident.
+  test('the element clipboard ignores a crosstab selection', () {
+    final JetReportDesignerController c = _controller();
+    final String id = _create(c);
+    final ReportDefinition after = c.definition;
+    expect(c.canCopy, isFalse);
+    c.delete();
+    c.copy();
+    c.cut();
+    expect(c.definition, after);
+    expect(c.selection.crosstabId, id);
   });
 
   test('style and visibility round-trip through the controller', () {

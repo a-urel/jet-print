@@ -48,9 +48,10 @@ void main() {
     expect(Selection.band('ph').hashCode, Selection.band('ph').hashCode);
   });
 
-  // Spec B: a crosstab is the fifth target. The invariant "exactly one of
-  // five" is enforced by hand in the factories, ==, and toString, so it is
-  // pinned here rather than trusted.
+  // Spec B: a crosstab is the SIXTH target (element ids, band, group, scope,
+  // report were the five). The invariant "exactly one of six" is enforced by
+  // hand in the factories, ==, hashCode and toString, so it is pinned here
+  // rather than trusted.
   test('every factory produces exactly one non-empty target', () {
     final List<Selection> all = <Selection>[
       Selection.of(<String>['e1']),

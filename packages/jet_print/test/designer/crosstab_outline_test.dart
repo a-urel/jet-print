@@ -4,6 +4,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'support/designer_harness.dart';
 
@@ -112,6 +113,37 @@ void main() {
     expect(find.byKey(_rowKey), findsNothing);
   });
 
+  // The stale-inline-editor guard in outline_panel's build discards _editingId
+  // whenever the edited object is not in the selection. It knew about band and
+  // element selections only, so a crosstab's editor was torn down on the very
+  // next build and the rename field never appeared.
+  testWidgets('double-tapping the row opens an editor that commits a rename',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c = await _designerWith(tester);
+    await _openOutline(tester);
+    final Offset centre = tester.getCenter(find.byKey(_rowKey));
+    await tester.tapAt(centre);
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tapAt(centre);
+    await tester.pumpAndSettle();
+
+    final Finder field = find.descendant(
+        of: find.byKey(_rowKey), matching: find.byType(EditableText));
+    expect(field, findsOneWidget,
+        reason: 'the inline rename editor must survive the next build');
+
+    await tester.enterText(field, 'Bölge pivotu');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    expect(
+        c.definition.body.root.children
+            .whereType<CrosstabNode>()
+            .single
+            .crosstab
+            .name,
+        'Bölge pivotu');
+  });
+
   testWidgets('the move actions are offered', (WidgetTester tester) async {
     await _designerWith(tester);
     await _openOutline(tester);
@@ -121,6 +153,56 @@ void main() {
               'jet_print.designer.outline.crosstab.ct1.$suffix')),
           findsOneWidget);
     }
+  });
+
+  // "Enabled when the source has at least one SCALAR field" — a collection whose
+  // children are all themselves collections can be bucketed by nothing, so its
+  // submenu entry must be disabled rather than silently no-opping in
+  // createCrosstab.
+  testWidgets('a collection with no scalar child is offered but disabled',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c = JetReportDesignerController(
+      definition: const ReportDefinition(
+        name: 'R',
+        page: PageFormat.a4Portrait,
+        body: ReportBody(root: DetailScope(id: 'root')),
+      ),
+    );
+    addTearDown(c.dispose);
+    await pumpDesigner(
+      tester,
+      designer: JetReportDesigner(
+        controller: c,
+        dataSchema: const JetDataSchema(
+          name: 'S',
+          fields: <FieldDef>[
+            FieldDef('region', type: JetFieldType.string),
+            // Only collection children — nothing to bucket by.
+            FieldDef('boxes', type: JetFieldType.collection, fields: <FieldDef>[
+              FieldDef('items', type: JetFieldType.collection),
+            ]),
+          ],
+        ),
+      ),
+    );
+    await _openOutline(tester);
+    await tester.tap(find.byKey(
+        const ValueKey<String>('jet_print.designer.outline.scope.root.add')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey<String>(
+        'jet_print.designer.outline.scope.root.add.crosstab')));
+    await tester.pumpAndSettle();
+    // Asserted on the option's own enabled flag, not merely on "nothing
+    // happened": createCrosstab already refuses a scalar-less source, so a
+    // tap-and-check would pass with a live-looking, dead menu item.
+    final ShadContextMenuItem boxes = tester.widget<ShadContextMenuItem>(
+        find.byKey(const ValueKey<String>(
+            'jet_print.designer.outline.scope.root.add.crosstab.field.boxes')));
+    expect(boxes.enabled, isFalse);
+    final ShadContextMenuItem rows = tester.widget<ShadContextMenuItem>(
+        find.byKey(const ValueKey<String>(
+            'jet_print.designer.outline.scope.root.add.crosstab.rows')));
+    expect(rows.enabled, isTrue, reason: 'the scope itself has a scalar');
   });
 
   // A crosstab is root-scope only (spec A decision 8) — validate() rejects one

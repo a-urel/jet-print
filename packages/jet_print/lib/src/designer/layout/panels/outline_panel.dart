@@ -127,8 +127,13 @@ class _OutlinePanelState extends State<OutlinePanel> {
     // time correction — same pattern as properties_panel._editingHeader).
     if (_editingId != null) {
       final bool presentInDef = allIds(def).contains(_editingId!);
-      final bool inSelection =
-          selection.bandId == _editingId || selection.contains(_editingId!);
+      // Every selection kind that can carry an inline-renamed row, not just the
+      // element/band pair: a crosstab row renames too, and its selection holds
+      // neither a band id nor any element id — so omitting it tore the editor
+      // down on the very next build and no rename field ever appeared.
+      final bool inSelection = selection.bandId == _editingId ||
+          selection.crosstabId == _editingId ||
+          selection.contains(_editingId!);
       if (!presentInDef || !inSelection) {
         _editingId = null;
       }
