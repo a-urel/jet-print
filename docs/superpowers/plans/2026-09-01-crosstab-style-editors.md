@@ -116,7 +116,7 @@ class _TextStyleEditor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final JetPrintLocalizations l10n = JetPrintLocalizations.of(context)!;
+    final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -294,7 +294,7 @@ class _BoxStyleEditor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final JetPrintLocalizations l10n = JetPrintLocalizations.of(context)!;
+    final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
     // Fill, outline and width share one label-less row. The two color boxes
     // are compact swatches distinguished by a leading glyph (bucket = fill,
     // square = outline). Width fills the remaining width.
@@ -689,6 +689,7 @@ List<Widget> _crosstabRoleSection({
   required ValueChanged<JetBoxStyle> onBox,
   required VoidCallback onReset,
   required JetPrintLocalizations l10n,
+  required ShadThemeData theme,
 }) {
   final bool authored = text != null || box != null;
   return <Widget>[
@@ -705,6 +706,7 @@ List<Widget> _crosstabRoleSection({
             icon: LucideIcons.rotateCcw,
             tooltip: l10n.crosstabStyleReset,
             onPressed: onReset,
+            theme: theme,
           ),
       ],
     ),
@@ -745,6 +747,7 @@ In `crosstab_inspector.dart`, add to `_crosstabInspector`'s returned list, after
       crosstabId,
       ct.style.copyWith(headerText: () => null, headerBox: () => null)),
   l10n: l10n,
+  theme: theme,
 ),
 ..._crosstabRoleSection(
   label: l10n.crosstabStyleCells,
@@ -760,6 +763,7 @@ In `crosstab_inspector.dart`, add to `_crosstabInspector`'s returned list, after
   onReset: () => controller.setCrosstabStyle(crosstabId,
       ct.style.copyWith(cellText: () => null, cellBox: () => null)),
   l10n: l10n,
+  theme: theme,
 ),
 ..._crosstabRoleSection(
   label: l10n.crosstabStyleTotals,
@@ -775,6 +779,7 @@ In `crosstab_inspector.dart`, add to `_crosstabInspector`'s returned list, after
   onReset: () => controller.setCrosstabStyle(crosstabId,
       ct.style.copyWith(totalText: () => null, totalBox: () => null)),
   l10n: l10n,
+  theme: theme,
 ),
 ```
 
