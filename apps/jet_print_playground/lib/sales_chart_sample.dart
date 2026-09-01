@@ -24,29 +24,33 @@ const JetDataSchema salesChartSchema = JetDataSchema(
   ],
 );
 
-/// The sales-chart report: title band + bar, line, and pie chart bands, all
-/// reading the same `months` collection from the single master row.
+/// The sales-chart report: a `body.title` band printed once at report start,
+/// above bar, line, and pie chart bands that all read the same `months`
+/// collection from the single master row.
 ReportDefinition salesChartDefinition() => const ReportDefinition(
       name: 'Sales Chart',
       page: PageFormat.a4Portrait,
       body: ReportBody(
+        // The report title: a once-per-report band, so it belongs in the
+        // `title:` slot. Placed under `root.children` it would be a per-row
+        // band (role comes from the slot, not the BandType tag) and reprint
+        // for every master row.
+        title: Band(
+          id: 'title',
+          type: BandType.title,
+          height: 30,
+          elements: <ReportElement>[
+            TextElement(
+              id: 'heading',
+              bounds: JetRect(x: 0, y: 4, width: 500, height: 22),
+              text: 'Monthly Sales',
+              style: JetTextStyle(fontSize: 16, weight: JetFontWeight.bold),
+            ),
+          ],
+        ),
         root: DetailScope(
           id: 'root',
           children: <ScopeNode>[
-            // Report title.
-            BandNode(Band(
-              id: 'title',
-              type: BandType.title,
-              height: 30,
-              elements: <ReportElement>[
-                TextElement(
-                  id: 'heading',
-                  bounds: JetRect(x: 0, y: 4, width: 500, height: 22),
-                  text: 'Monthly Sales',
-                  style: JetTextStyle(fontSize: 16, weight: JetFontWeight.bold),
-                ),
-              ],
-            )),
             // Bar chart — revenue per month.
             BandNode(Band(
               id: 'barBand',
