@@ -306,6 +306,12 @@
   "crosstabHeaderRowHeight": "Kopfzeilenhöhe",
 
   "crosstabTooWide": "Breiter als der Seitenkörper",
+  "crosstabStyleHeader": "Kopfzeilenzellen",
+  "crosstabStyleCells": "Datenzellen",
+  "crosstabStyleTotals": "Summenzellen",
+  "crosstabStyleReset": "Auf Standard zurücksetzen",
+  "crosstabStyleInherited": "Geerbt",
+  "crosstabMeasureStyle": "Zellen-Überschreibung",
   "exprEditorDeeperFieldHint": "Nachgeordnetes Feld – nur innerhalb eines Aggregats wie SUM(…) gültig",
 
   "propertiesColumnLayout": "Spaltenlayout",

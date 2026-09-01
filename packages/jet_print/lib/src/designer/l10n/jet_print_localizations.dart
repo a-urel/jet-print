@@ -1637,6 +1637,42 @@ abstract class JetPrintLocalizations {
   /// **'Wider than the page body'**
   String get crosstabTooWide;
 
+  /// Properties section label for the crosstab header-cell text and box style (spec C).
+  ///
+  /// In en, this message translates to:
+  /// **'Header cells'**
+  String get crosstabStyleHeader;
+
+  /// Properties section label for the crosstab data-cell text and box style (spec C).
+  ///
+  /// In en, this message translates to:
+  /// **'Data cells'**
+  String get crosstabStyleCells;
+
+  /// Properties section label for the crosstab subtotal and grand-total cell style (spec C).
+  ///
+  /// In en, this message translates to:
+  /// **'Total cells'**
+  String get crosstabStyleTotals;
+
+  /// Tooltip on the action clearing one crosstab style role back to inherited (spec C).
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to default'**
+  String get crosstabStyleReset;
+
+  /// Hint shown beside a crosstab style role whose slots are unset and therefore inherited (spec C).
+  ///
+  /// In en, this message translates to:
+  /// **'Inherited'**
+  String get crosstabStyleInherited;
+
+  /// Sub-label in a crosstab measure card for that measure's own cell text and box style (spec C).
+  ///
+  /// In en, this message translates to:
+  /// **'Cell override'**
+  String get crosstabMeasureStyle;
+
   /// Tooltip on a descendant (↳) field chip in the expression editor palette (spec 033). Explains that the field is from a child collection and is only valid inside an aggregate call.
   ///
   /// In en, this message translates to:

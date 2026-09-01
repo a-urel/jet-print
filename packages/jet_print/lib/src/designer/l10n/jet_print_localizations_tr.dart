@@ -796,6 +796,24 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get crosstabTooWide => 'Sayfa gövdesinden geniş';
 
   @override
+  String get crosstabStyleHeader => 'Başlık hücreleri';
+
+  @override
+  String get crosstabStyleCells => 'Veri hücreleri';
+
+  @override
+  String get crosstabStyleTotals => 'Toplam hücreleri';
+
+  @override
+  String get crosstabStyleReset => 'Varsayılana döndür';
+
+  @override
+  String get crosstabStyleInherited => 'Devralınan';
+
+  @override
+  String get crosstabMeasureStyle => 'Hücre geçersiz kılma';
+
+  @override
   String get exprEditorDeeperFieldHint =>
       'Alt alan – yalnızca SUM(…) gibi bir toplama içinde geçerlidir';
 

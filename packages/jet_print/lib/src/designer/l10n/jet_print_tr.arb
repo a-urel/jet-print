@@ -306,6 +306,12 @@
   "crosstabHeaderRowHeight": "Başlık satırı yüksekliği",
 
   "crosstabTooWide": "Sayfa gövdesinden geniş",
+  "crosstabStyleHeader": "Başlık hücreleri",
+  "crosstabStyleCells": "Veri hücreleri",
+  "crosstabStyleTotals": "Toplam hücreleri",
+  "crosstabStyleReset": "Varsayılana döndür",
+  "crosstabStyleInherited": "Devralınan",
+  "crosstabMeasureStyle": "Hücre geçersiz kılma",
   "exprEditorDeeperFieldHint": "Alt alan – yalnızca SUM(…) gibi bir toplama içinde geçerlidir",
 
   "propertiesColumnLayout": "Sütun düzeni",

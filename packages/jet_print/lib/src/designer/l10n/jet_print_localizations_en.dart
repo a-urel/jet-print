@@ -795,6 +795,24 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get crosstabTooWide => 'Wider than the page body';
 
   @override
+  String get crosstabStyleHeader => 'Header cells';
+
+  @override
+  String get crosstabStyleCells => 'Data cells';
+
+  @override
+  String get crosstabStyleTotals => 'Total cells';
+
+  @override
+  String get crosstabStyleReset => 'Reset to default';
+
+  @override
+  String get crosstabStyleInherited => 'Inherited';
+
+  @override
+  String get crosstabMeasureStyle => 'Cell override';
+
+  @override
   String get exprEditorDeeperFieldHint =>
       'Descendant field — valid inside an aggregate like SUM(…)';
 
