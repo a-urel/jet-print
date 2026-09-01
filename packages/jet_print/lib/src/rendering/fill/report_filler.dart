@@ -75,6 +75,16 @@ final class _RegisteredCrosstab {
   final int? reservedIndex;
 }
 
+/// The shape of `fillDefinition`'s local `contextFactory` closure — extracted
+/// so [_registerCrosstabs] can accept it as a parameter without duplicating
+/// its signature.
+typedef _EvalContextFactory = EvalContext Function({
+  DataRow? row,
+  Map<String, Object?> params,
+  Map<String, JetValue> variables,
+  required JetFunctionRegistry functions,
+});
+
 /// Runs the flat Fill data pass.
 class ReportFiller {
   /// Creates a filler; [functions] defaults to the built-in function registry.
@@ -580,61 +590,32 @@ class ReportFiller {
 
     emitOnce(definition.body.title, null);
 
+    // The per-master-row variable snapshot every registered crosstab's
+    // context reads while folding (Minor review fix): `calc.values` returns a
+    // fresh `Map.unmodifiable` copy on every access, so on the
+    // `collectionField` path (one fold per CHILD row) reading it directly
+    // inside `makeContext` would copy once per child row even though the
+    // snapshot cannot change until the NEXT master row. Read it once per
+    // master row instead (updated just below the row loop's `calc.advance`)
+    // and hand every aggregation's context a callback onto this variable, so
+    // every fold within one master row's children shares the same map.
+    Map<String, JetValue> crosstabRowVars = calc.values;
+
     // Spec A (Task 11): register every crosstab before the row loop — it
     // folds during the loop below and its bands are planned and spliced in
-    // afterwards (see `_RegisteredCrosstab`). Classification is exact from a
-    // single left-to-right walk: a crosstab is *before-loop* iff no
-    // row-producing sibling (`BandNode`/`NestedScope`) has been seen yet when
-    // it is reached, which — because `children` print in list order — is
-    // precisely "precedes every row-producing sibling". `visible` is resolved
-    // once here, with no row (params and report variables only, per
-    // `Crosstab.visible`'s contract); an invisible crosstab is never
-    // registered, so it folds nothing, emits no bands, and contributes no
-    // synthetic group.
-    final List<_RegisteredCrosstab> crosstabs = <_RegisteredCrosstab>[];
-    bool sawRowProducer = false;
-    for (final ScopeNode node in definition.body.root.children) {
-      switch (node) {
-        case BandNode():
-        case NestedScope():
-          sawRowProducer = true;
-        case CrosstabNode(crosstab: final Crosstab ct):
-          bool visible = true;
-          if (ct.visible != const BoolProperty()) {
-            final Set<String> pageRefs = <String>{};
-            final FillEvalContext visCtx = FillEvalContext(
-              row: null,
-              params: params,
-              variables: calc.values,
-              functions: _functions,
-              diagnostics: diagnostics,
-              warnedFields: warnedFields,
-              pageRefs: pageRefs,
-              elementId: ct.id,
-              budget: budget,
-            );
-            visible = resolveVisibility(ct.visible, visCtx, diagnostics,
-                id: ct.id, pageRefs: pageRefs);
-          }
-          if (visible) {
-            crosstabs.add(_RegisteredCrosstab(
-              ct,
-              CrosstabAggregation(
-                ct,
-                makeContext: (DataRow row) => contextFactory(
-                  row: row,
-                  params: params,
-                  variables: calc.values,
-                  functions: _functions,
-                ),
-              ),
-              sawRowProducer ? null : bands.length,
-            ));
-          }
-        case UnknownScopeNode():
-          break;
-      }
-    }
+    // afterwards. See `_registerCrosstabs` for the classification rule and
+    // the `visible` gate.
+    final List<_RegisteredCrosstab> crosstabs = _registerCrosstabs(
+      children: definition.body.root.children,
+      bandCountBeforeLoop: bands.length,
+      params: params,
+      rowVars: () => crosstabRowVars,
+      functions: _functions,
+      diagnostics: diagnostics,
+      warnedFields: warnedFields,
+      budget: budget,
+      contextFactory: contextFactory,
+    );
 
     // `ds` was opened early (above) to read its schema for the descendant-lift
     // pre-pass. The cursor is still positioned before the first row.
@@ -659,6 +640,9 @@ class ReportFiller {
               '$calcSkipDelta non-numeric value(s) were skipped from an '
                   'aggregate');
         }
+        // Refresh the crosstab variable snapshot once for this master row
+        // (see its declaration above) before folding any of its children.
+        crosstabRowVars = calc.values;
         // Spec A (Task 11): fold every registered crosstab over this row —
         // the master row itself when it has no `collectionField`, otherwise
         // each pooled row from its nested collection (via the shared
@@ -715,27 +699,25 @@ class ReportFiller {
       ds.close();
     }
 
-    if (!hadRows) {
-      diagnostics.info(
-          'Data source returned no rows; the noData band renders instead of '
-          'details');
-      emitOnce(definition.body.noData, null);
-    } else {
-      // End-of-data: emit final group footers with the last completed-group
-      // descendant snapshot, then the summary with the report-scoped totals.
-      emitGroupFooters(groupOrder.reversed.toList(), prevRow,
-          <String, JetValue>{...prevValues, ...descGroupSnapshot});
-
-      // Spec A (Task 11): plan and splice every registered crosstab, in
-      // registration order. An after-loop crosstab's bands are appended at
-      // the current end; a before-loop crosstab's bands are inserted at its
-      // `reservedIndex` — adjusted by how many bands earlier before-loop
-      // crosstabs already inserted, since each insertion shifts every later
-      // index. Both `planCrosstab`'s own diagnostics (packing pathologies,
-      // the synthetic-name collision) and the aggregated matrix's (notably
-      // the cell-count warning) are routed here — the planner deliberately
-      // does not fold the matrix's diagnostics into its own, so the filler is
-      // the only place both are seen.
+    // Spec A (Task 11): plan and splice every registered crosstab, in
+    // registration order. An after-loop crosstab's bands are appended at the
+    // current end; a before-loop crosstab's bands are inserted at its
+    // `reservedIndex` — adjusted by how many bands earlier before-loop
+    // crosstabs already inserted, since each insertion shifts every later
+    // index. Both `planCrosstab`'s own diagnostics (packing pathologies, the
+    // synthetic-name collision) and the aggregated matrix's (notably the
+    // cell-count warning) are routed here — the planner deliberately does not
+    // fold the matrix's diagnostics into its own, so the filler is the only
+    // place both are seen.
+    //
+    // Called on BOTH the empty-source and the has-rows path (below):
+    // `planCrosstab` raises its synthetic-group-name collision error, and
+    // populates `syntheticGroups`, unconditionally — before it ever looks at
+    // the matrix — so those are observable even when zero rows were folded.
+    // Only the *band* count happens to be zero for an empty matrix (no axis
+    // leaves to slice), and that is incidental to two unrelated guards
+    // elsewhere, not a rule this function may rely on.
+    void planAndSpliceCrosstabs() {
       final double availableWidth = definition.page.width -
           definition.page.margins.left -
           definition.page.margins.right;
@@ -765,6 +747,21 @@ class ReportFiller {
           insertedSoFar += plan.bands.length;
         }
       }
+    }
+
+    if (!hadRows) {
+      diagnostics.info(
+          'Data source returned no rows; the noData band renders instead of '
+          'details');
+      emitOnce(definition.body.noData, null);
+      planAndSpliceCrosstabs();
+    } else {
+      // End-of-data: emit final group footers with the last completed-group
+      // descendant snapshot, then the summary with the report-scoped totals.
+      emitGroupFooters(groupOrder.reversed.toList(), prevRow,
+          <String, JetValue>{...prevValues, ...descGroupSnapshot});
+
+      planAndSpliceCrosstabs();
 
       if (definition.body.summary != null) {
         addBand(definition.body.summary!, null,
@@ -785,6 +782,86 @@ class ReportFiller {
       ),
       diagnostics: diagnostics,
     );
+  }
+
+  /// Walks [children] once (spec A, Task 11), registering each `CrosstabNode`
+  /// found as a [_RegisteredCrosstab] before the row loop runs.
+  ///
+  /// A crosstab is *before-loop* iff no row-producing sibling
+  /// (`BandNode`/`NestedScope`) has been seen yet when it is reached — because
+  /// `children` print in list order, that is exactly "precedes every
+  /// row-producing sibling" — and its [_RegisteredCrosstab.reservedIndex] is
+  /// [bandCountBeforeLoop] (the caller's `bands.length` at this point, which
+  /// this walk itself never changes). Otherwise it registers as after-loop
+  /// (`reservedIndex: null`; its bands are appended once the loop ends).
+  ///
+  /// `visible` is resolved once here, with no row (params and report
+  /// variables only, per `Crosstab.visible`'s contract, evaluated as of
+  /// report start via [rowVars]'s value at this call): an invisible crosstab
+  /// is never registered, so it folds nothing, emits no bands, and
+  /// contributes no synthetic group.
+  ///
+  /// [rowVars] supplies the *live* per-master-row variable snapshot each
+  /// registered aggregation's context reads while folding — a callback
+  /// (rather than a fixed map) so a value read while folding row 500 is that
+  /// row's snapshot, not row 1's; the caller updates the value it returns
+  /// once per master row.
+  static List<_RegisteredCrosstab> _registerCrosstabs({
+    required List<ScopeNode> children,
+    required int bandCountBeforeLoop,
+    required Map<String, Object?> params,
+    required Map<String, JetValue> Function() rowVars,
+    required JetFunctionRegistry functions,
+    required ReportDiagnostics diagnostics,
+    required Set<String> warnedFields,
+    required DiagnosticBudget budget,
+    required _EvalContextFactory contextFactory,
+  }) {
+    final List<_RegisteredCrosstab> crosstabs = <_RegisteredCrosstab>[];
+    bool sawRowProducer = false;
+    for (final ScopeNode node in children) {
+      switch (node) {
+        case BandNode():
+        case NestedScope():
+          sawRowProducer = true;
+        case CrosstabNode(crosstab: final Crosstab ct):
+          bool visible = true;
+          if (ct.visible != const BoolProperty()) {
+            final Set<String> pageRefs = <String>{};
+            final FillEvalContext visCtx = FillEvalContext(
+              row: null,
+              params: params,
+              variables: rowVars(),
+              functions: functions,
+              diagnostics: diagnostics,
+              warnedFields: warnedFields,
+              pageRefs: pageRefs,
+              elementId: ct.id,
+              budget: budget,
+            );
+            visible = resolveVisibility(ct.visible, visCtx, diagnostics,
+                id: ct.id, pageRefs: pageRefs);
+          }
+          if (visible) {
+            crosstabs.add(_RegisteredCrosstab(
+              ct,
+              CrosstabAggregation(
+                ct,
+                makeContext: (DataRow row) => contextFactory(
+                  row: row,
+                  params: params,
+                  variables: rowVars(),
+                  functions: functions,
+                ),
+              ),
+              sawRowProducer ? null : bandCountBeforeLoop,
+            ));
+          }
+        case UnknownScopeNode():
+          break;
+      }
+    }
+    return crosstabs;
   }
 
   /// The total wrong-type skips across [accs] (spec E2). Monotonic per

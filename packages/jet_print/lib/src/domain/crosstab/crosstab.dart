@@ -53,7 +53,10 @@ class Crosstab with ValueEquality {
   final CrosstabStyle style;
 
   /// Whether the crosstab renders. Evaluated **without a row** (params and
-  /// report variables only), since a crosstab prints outside the row loop.
+  /// report variables only), since a crosstab prints outside the row loop —
+  /// and, because it is resolved once *before* that loop runs, a `$V{}`
+  /// reference sees report-start variable values, never values a later row
+  /// produces.
   final BoolProperty visible;
 
   /// Returns a copy with the given fields replaced.

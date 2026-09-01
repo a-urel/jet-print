@@ -103,6 +103,29 @@ ReportDefinition _defWithNestedCrosstab() {
   );
 }
 
+// A crosstab whose synthetic group name ("ct1#ct") collides with an
+// explicitly-authored report-level group of the same name.
+ReportDefinition _defWithNameCollision() => ReportDefinition(
+      name: 'ct-collide',
+      page: PageFormat.a4Portrait,
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          groups: const <GroupLevel>[
+            GroupLevel(id: 'g/collide', name: 'ct1#ct', key: "'x'"),
+          ],
+          children: <ScopeNode>[
+            CrosstabNode(baseCrosstab),
+            BandNode(_detailBand()),
+          ],
+        ),
+      ),
+    );
+
+bool _isGroupNameCollisionDiagnostic(Diagnostic d) =>
+    d.severity == DiagnosticSeverity.error &&
+    d.message.contains('needs the synthetic group name');
+
 JetInMemoryDataSource _rows4() => JetInMemoryDataSource(<Map<String, Object?>>[
       <String, Object?>{'region': 'North', 'quarter': 'Q1', 'amount': 10},
       <String, Object?>{'region': 'North', 'quarter': 'Q2', 'amount': 5},
@@ -235,30 +258,23 @@ void main() {
     test('a group-name collision routes the PLAN diagnostic to the sink', () {
       // planCrosstab raises an error when its synthetic group name
       // ("ct1#ct") is already taken by a report-level group.
-      final ReportDefinition def = ReportDefinition(
-        name: 'ct-collide',
-        page: PageFormat.a4Portrait,
-        body: ReportBody(
-          root: DetailScope(
-            id: 'root',
-            groups: const <GroupLevel>[
-              GroupLevel(id: 'g/collide', name: 'ct1#ct', key: "'x'"),
-            ],
-            children: <ScopeNode>[
-              CrosstabNode(baseCrosstab),
-              BandNode(_detailBand()),
-            ],
-          ),
-        ),
-      );
       final ReportDiagnostics diagnostics =
-          _fillResult(def, _rows4()).diagnostics;
-      expect(
-        diagnostics.entries.any((Diagnostic d) =>
-            d.severity == DiagnosticSeverity.error &&
-            d.message.contains('needs the synthetic group name')),
-        isTrue,
-      );
+          _fillResult(_defWithNameCollision(), _rows4()).diagnostics;
+      expect(diagnostics.entries.any(_isGroupNameCollisionDiagnostic), isTrue);
+    });
+
+    test(
+        'a group-name collision is reported even over an EMPTY source — '
+        'planCrosstab raises it before it ever looks at the matrix', () {
+      // planCrosstab's collision check (crosstab_planner.dart) runs before it
+      // touches the aggregated matrix at all, so it must fire whether or not
+      // any row was ever folded. A plan/splice step that only ran on the
+      // `hadRows` path would report this with 4 rows and silently drop it
+      // with 0 — an observable, data-dependent difference in diagnostics for
+      // the exact same authored report.
+      final ReportDiagnostics diagnostics = _fillResult(_defWithNameCollision(),
+          JetInMemoryDataSource(const <Map<String, Object?>>[])).diagnostics;
+      expect(diagnostics.entries.any(_isGroupNameCollisionDiagnostic), isTrue);
     });
 
     test('a 50k+ cell matrix routes the MATRIX diagnostic to the sink', () {
