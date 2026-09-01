@@ -6,10 +6,12 @@
 ///
 /// One flat row per (region, city, year, quarter) combination; the
 /// [CrosstabNode] folds the root scope's own rows directly (no nested
-/// collection). The column axis alone — two years x two quarters, each level
-/// totalled — already produces more leaves than fit in a narrow page body, so
-/// this sample also exercises the crosstab's horizontal-continuation path
-/// (see `rendered_pivot_example.dart` / `pivot_test.dart`).
+/// collection). This sample only ever renders at its default wide
+/// [_pivotPage] (see `rendered_pivot_example.dart`), so it does NOT exercise
+/// the crosstab's horizontal-continuation (multi-slice) path — that coverage
+/// lives in a separate, independently maintained golden fixture
+/// (`packages/jet_print/test/goldens/pivot_test.dart`), which builds its own
+/// definition rather than reusing this one.
 library;
 
 import 'package:jet_print/jet_print.dart';
@@ -37,9 +39,11 @@ const PageFormat _pivotPage =
 
 /// The pivot report: title band + one [CrosstabNode], reading the flat rows
 /// [pivotData] supplies directly (no `collectionField` — the crosstab folds
-/// the root scope's own rows). [page] defaults to [_pivotPage]; a narrower
-/// page format forces the column axis into more than one horizontal slice
-/// (see the golden's continuation-page expectation).
+/// the root scope's own rows). [page] defaults to [_pivotPage]; passing a
+/// narrower one would force the column axis into more than one horizontal
+/// slice, but nothing in this app exercises that — the continuation path is
+/// covered separately, against its own definition, in
+/// `packages/jet_print/test/goldens/pivot_test.dart`.
 ReportDefinition pivotDefinition({PageFormat page = _pivotPage}) =>
     ReportDefinition(
       name: 'Sales Pivot',
@@ -99,6 +103,7 @@ ReportDefinition pivotDefinition({PageFormat page = _pivotPage}) =>
                   name: 'Qty',
                   expression: r'$F{qty}',
                   aggregate: JetCalculation.sum,
+                  format: '#,##0',
                 ),
                 CrosstabMeasure(
                   id: 'm-amount',

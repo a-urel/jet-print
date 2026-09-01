@@ -149,25 +149,45 @@ const List<Map<String, Object?>> _pivotRows = <Map<String, Object?>>[
   },
 ];
 
+/// The default page: 7 leaf columns of 2 measures at 50pt, plus the 90pt
+/// row-label column — 790pt of content, fitting the whole crosstab in one
+/// horizontal slice. A narrower [page] forces the column axis into more than
+/// one slice (see the pagination test below). Wider than [_pump]'s surface on
+/// purpose — see [_pump]'s dartdoc for why that's fine here.
+const PageFormat _pivotPage =
+    PageFormat(width: 820, height: 260, margins: JetEdgeInsets.all(15));
+
+/// Mildly compact metrics — smaller than [CrosstabStyle]'s defaults, but each
+/// measure column (50pt) still comfortably clears the widest value this
+/// fixture prints ('858.00', ~40pt at the default 12pt font) with room to
+/// spare, and the row-label column (90pt) comfortably clears 'Total North' /
+/// 'Total South'. A tighter width (36pt was tried) let adjacent cells' text
+/// visually run together — column width must fit the *content*, independent
+/// of whatever zoom the preview later applies (a uniform canvas scale changes
+/// how large everything looks, never whether one cell's text overflows into
+/// its neighbor).
+const CrosstabStyle _style = CrosstabStyle(
+  rowLabelWidth: 90,
+  rowLabelIndent: 10,
+  measureColumnWidth: 50,
+  rowHeight: 13,
+  headerRowHeight: 13,
+);
+
 /// A crosstab: Region > City rows (both totalled), Year > Quarter columns
-/// (both totalled), Qty (sum) and Amount (sum of qty * price) measures. [page]
-/// defaults wide enough (7 leaf columns of 2 measures at 64pt, plus the 110pt
-/// row-label column) that everything fits in one horizontal slice; a narrower
-/// [page] forces the column axis into more than one.
-ReportDefinition _definition({
-  PageFormat page = const PageFormat(
-      width: 1100, height: 300, margins: JetEdgeInsets.all(20)),
-}) =>
+/// (both totalled), Qty (sum, formatted as an integer) and Amount (sum of qty
+/// * price) measures.
+ReportDefinition _definition({PageFormat page = _pivotPage}) =>
     ReportDefinition(
       name: 'Pivot',
       page: page,
-      body: const ReportBody(
+      body: ReportBody(
         root: DetailScope(
           id: 'root',
           children: <ScopeNode>[
             CrosstabNode(Crosstab(
               id: 'salesPivot',
-              rowGroups: <CrosstabGroup>[
+              rowGroups: const <CrosstabGroup>[
                 CrosstabGroup(
                   id: 'g-region',
                   name: 'Region',
@@ -181,7 +201,7 @@ ReportDefinition _definition({
                   showTotal: true,
                 ),
               ],
-              columnGroups: <CrosstabGroup>[
+              columnGroups: const <CrosstabGroup>[
                 CrosstabGroup(
                   id: 'g-year',
                   name: 'Year',
@@ -195,12 +215,13 @@ ReportDefinition _definition({
                   showTotal: true,
                 ),
               ],
-              measures: <CrosstabMeasure>[
+              measures: const <CrosstabMeasure>[
                 CrosstabMeasure(
                   id: 'm-qty',
                   name: 'Qty',
                   expression: r'$F{qty}',
                   aggregate: JetCalculation.sum,
+                  format: '#,##0',
                 ),
                 CrosstabMeasure(
                   id: 'm-amount',
@@ -210,6 +231,7 @@ ReportDefinition _definition({
                   format: '#,##0.00',
                 ),
               ],
+              style: _style,
             )),
           ],
         ),
@@ -218,15 +240,23 @@ ReportDefinition _definition({
 
 RenderedReport _report({PageFormat? page}) =>
     const JetReportEngine().renderDefinition(
-      _definition(
-          page: page ??
-              const PageFormat(
-                  width: 1100, height: 300, margins: JetEdgeInsets.all(20))),
+      _definition(page: page ?? _pivotPage),
       JetInMemoryDataSource(_pivotRows),
     );
 
+/// Deliberately narrower than [_pivotPage] (820pt): staying under 600px here
+/// clears TWO of [JetReportPreview]'s breakpoints at once — its 700px
+/// thumbnail-rail auto-hide (so this golden shows only the toolbar and
+/// canvas, matching `label_sheet_light.png` and its siblings) and its 600px
+/// desktop-vs-phone default-zoom split (`kDefaultZoomDesktopMinWidth`), which
+/// keeps the preview in fit-to-width mode. Fit-to-width uniformly rescales
+/// the whole page to the viewport, so it can never crop — a wider surface
+/// that instead landed in the ">=600 -> 100% actual size" branch would need
+/// the FULL 820pt-plus-margins page to already fit in the window, and did not
+/// (an earlier 1300px-wide attempt showed the whole crosstab but pulled in
+/// the thumbnail rail as a side effect — see Task 12's review history).
 Future<void> _pump(WidgetTester tester) async {
-  await tester.binding.setSurfaceSize(const Size(1300, 380));
+  await tester.binding.setSurfaceSize(const Size(560, 380));
   addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.pumpWidget(ShadApp(
     themeMode: ThemeMode.light,
