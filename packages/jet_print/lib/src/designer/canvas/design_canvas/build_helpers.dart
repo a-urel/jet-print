@@ -103,8 +103,8 @@ extension _CanvasBuild on _DesignCanvasState {
                   // draw, so its reserved space is stood in for here — a
                   // labeled, outlined rectangle, not part of the interactive
                   // hit-testing surface (no selection/drag/delete yet).
-                  ..._crosstabPlaceholders(displayLayout, scale, colors,
-                      JetPrintLocalizations.of(context)),
+                  ..._crosstabPlaceholders(
+                      displayLayout, scale, JetPrintLocalizations.of(context)),
                   // Per-element regions: accessibility + test hooks. They do not
                   // capture pointers (the canvas gesture detector handles hit-testing),
                   // so the canvas still owns select/move. Drawn from the display
@@ -195,7 +195,6 @@ extension _CanvasBuild on _DesignCanvasState {
   List<Widget> _crosstabPlaceholders(
     DesignTimeLayout layout,
     double scale,
-    ShadColorScheme colors,
     JetPrintLocalizations l10n,
   ) {
     final List<Widget> blocks = <Widget>[];

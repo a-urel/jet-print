@@ -167,6 +167,113 @@ void main() {
     });
   });
 
+  group('min/max subtotals (SC-002)', () {
+    // min and max are associative: the min (or max) of a subtotal's raw rows
+    // always equals the min (or max) of its children's own mins (or maxes).
+    // That means these two calculations, unlike average/first/last, CANNOT
+    // distinguish a correct raw fold from a wrong rollup-of-children
+    // implementation -- both produce the same number here. They are still
+    // worth asserting (a mis-wired accumulator, a dropped row, or a wrong
+    // cell key would still show up as a wrong number), but a pass here is not
+    // evidence that subtotals are folded from raw rows.
+    test('min is correct at a two-level subtotal and the grand total', () {
+      final CrosstabMatrix m = _run(
+        _ct(measures: <CrosstabMeasure>[
+          _sum.copyWith(aggregate: JetCalculation.min),
+        ]),
+        rows,
+      );
+      // North: Istanbul/Q1 120, Ankara/Q1 80, Istanbul/Q2 140 -> min 80.
+      expect(_cell(m, <String>['North'], <String>[]), 80);
+      // Grand total over all four rows (120, 80, 140, 50) -> min 50.
+      expect(_cell(m, <String>[], <String>[]), 50);
+    });
+
+    test('max is correct at a two-level subtotal and the grand total', () {
+      final CrosstabMatrix m = _run(
+        _ct(measures: <CrosstabMeasure>[
+          _sum.copyWith(aggregate: JetCalculation.max),
+        ]),
+        rows,
+      );
+      // North: 120, 80, 140 -> max 140.
+      expect(_cell(m, <String>['North'], <String>[]), 140);
+      // Grand total over all four rows -> max 140 too (still North's row).
+      expect(_cell(m, <String>[], <String>[]), 140);
+    });
+  });
+
+  group('first/last subtotals (SC-002)', () {
+    // Unlike min/max, `first`/`last` are order-sensitive: the first (or
+    // last) raw row folded into a subtotal is whichever row arrived
+    // first/last in STREAM order, regardless of which child group it belongs
+    // to. A wrong implementation that instead rolled up each child's own
+    // first/last -- combined in the axis's SORTED order (a natural mistake if
+    // subtotals were computed as a post-pass over the already-sorted display
+    // axis, rather than folded from raw rows as they stream) -- would
+    // silently disagree whenever the chronologically-first/last row of a
+    // group belongs to a child that does not also sort first/last
+    // alphabetically. This fixture is built so that is exactly the case, at
+    // both the region subtotal and the grand total, so a wrong
+    // sorted-order-rollup implementation fails every assertion below.
+    final List<DataRow> ordered = <DataRow>[
+      _row('South', 'Cairo', 'Q1', 5), // position 1: earliest overall
+      _row('North', 'Zurich', 'Q1', 10), // position 2: earliest within North
+      _row('North', 'Amsterdam', 'Q1', 20), // position 3
+      _row('North', 'Amsterdam', 'Q1', 30), // position 4: latest within North
+      // ... and latest overall.
+    ];
+
+    test(
+        'first is the chronologically-first row of the subtotal, not the '
+        "alphabetically-first child's first row", () {
+      final CrosstabMatrix m = _run(
+        _ct(measures: <CrosstabMeasure>[
+          _sum.copyWith(aggregate: JetCalculation.first),
+        ]),
+        ordered,
+      );
+      // Leaf sanity: each city's own first is unambiguous.
+      expect(_cell(m, <String>['North', 'Zurich'], <String>[]), 10);
+      expect(_cell(m, <String>['North', 'Amsterdam'], <String>[]), 20);
+      // North's subtotal must be Zurich's row (10) -- the first row folded
+      // into North in stream order -- even though "Amsterdam" sorts before
+      // "Zurich" on the (alphabetically-ascending) city axis. A sorted-order
+      // rollup combining {Amsterdam.first: 20, Zurich.first: 10} in that
+      // order would report the first child processed, Amsterdam's 20 --
+      // wrong.
+      expect(_cell(m, <String>['North'], <String>[]), 10);
+      // The grand total must be Cairo's row (5) -- the true first row of the
+      // whole stream -- even though "North" sorts before "South" on the
+      // region axis. A sorted-order rollup would fold North's own first
+      // (whatever that computes to) before ever reaching South's 5 -- wrong.
+      expect(_cell(m, <String>[], <String>[]), 5);
+    });
+
+    test(
+        'last is the chronologically-last row of the subtotal, not the '
+        "alphabetically-last child's last row", () {
+      final CrosstabMatrix m = _run(
+        _ct(measures: <CrosstabMeasure>[
+          _sum.copyWith(aggregate: JetCalculation.last),
+        ]),
+        ordered,
+      );
+      // Leaf sanity: each city's own last is unambiguous.
+      expect(_cell(m, <String>['North', 'Zurich'], <String>[]), 10);
+      expect(_cell(m, <String>['North', 'Amsterdam'], <String>[]), 30);
+      // North's subtotal must be Amsterdam's second row (30) -- the last row
+      // folded into North in stream order -- even though "Zurich" sorts after
+      // "Amsterdam" on the city axis. A sorted-order rollup combining
+      // {Amsterdam.last: 30, Zurich.last: 10} in that order would report
+      // whichever child is processed last, Zurich's 10 -- wrong.
+      expect(_cell(m, <String>['North'], <String>[]), 30);
+      // The grand total must be 30 (North/Amsterdam's second row, the true
+      // last row of the whole stream), not South's 5.
+      expect(_cell(m, <String>[], <String>[]), 30);
+    });
+  });
+
   group('sparse cells', () {
     test('an intersection with no rows has no entry at all', () {
       final CrosstabMatrix m = _run(_ct(), rows);
