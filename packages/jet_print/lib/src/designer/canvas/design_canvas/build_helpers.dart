@@ -186,9 +186,16 @@ extension _CanvasBuild on _DesignCanvasState {
     return badges;
   }
 
-  /// One outlined placeholder block per crosstab, sized and positioned by
-  /// [DesignTimeLayout]'s stand-in geometry and captioned with its display
-  /// label (name, or the localized fallback).
+  /// One outlined block per crosstab, sized and positioned by
+  /// [DesignTimeLayout]'s stand-in geometry and drawn as a **schematic**: the
+  /// row-label column at its real width, one header row per column-axis level
+  /// naming that level, the measure names when there is more than one, and one
+  /// stub row per row-axis level at its real height and indent.
+  ///
+  /// Only what the model alone determines is drawn. Row and column *counts* are
+  /// data-driven — the designer holds a schema, not rows — so they are stood in
+  /// for with an ellipsis rather than invented. Real output through
+  /// `planCrosstab` is render-time only.
   ///
   /// The block does not capture pointers — like the element regions below it,
   /// hit-testing belongs to the canvas's own gesture detector, which maps a tap
@@ -213,18 +220,118 @@ extension _CanvasBuild on _DesignCanvasState {
           child: DecoratedBox(
             decoration:
                 BoxDecoration(border: Border.all(color: _badgeBorderColor)),
-            child: Center(
-              child: Text(
-                crosstabDisplayLabel(placed.crosstab, l10n),
-                style:
-                    const TextStyle(fontSize: 11, color: _badgeForegroundColor),
-              ),
+            // Clipped: an over-wide crosstab must visibly overflow its reserved
+            // rect, not paint over the bands around it.
+            child: ClipRect(
+              child: _crosstabSchematic(placed.crosstab, scale, l10n),
             ),
           ),
         ),
       ));
     }
     return blocks;
+  }
+
+  /// The schematic's rows, top to bottom, summing to exactly the height
+  /// [DesignTimeLayout] reserved: one row per column-axis level, the
+  /// measure-name row only when there are 2+ measures (mirroring
+  /// `crosstab_planner.dart`'s `headerBands`), then three stub data rows.
+  Widget _crosstabSchematic(
+    Crosstab ct,
+    double scale,
+    JetPrintLocalizations l10n,
+  ) {
+    final CrosstabStyle style = ct.style;
+    final bool namedMeasures = ct.measures.length > 1;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        for (int i = 0; i < ct.columnGroups.length; i++)
+          _crosstabRow(
+            height: style.headerRowHeight * scale,
+            labelWidth: style.rowLabelWidth * scale,
+            // The top-left cell prints blank; the designer borrows it for the
+            // crosstab's own name, which is chrome, not report content.
+            label: i == 0 ? crosstabDisplayLabel(ct, l10n) : '',
+            cells: <String>[ct.columnGroups[i].name, '…'],
+            cellWidth: style.measureColumnWidth * scale,
+            emphasis: true,
+          ),
+        if (namedMeasures)
+          _crosstabRow(
+            height: style.headerRowHeight * scale,
+            labelWidth: style.rowLabelWidth * scale,
+            label: '',
+            cells: <String>[
+              for (final CrosstabMeasure m in ct.measures) m.name,
+              '…',
+            ],
+            cellWidth: style.measureColumnWidth * scale,
+            emphasis: true,
+          ),
+        for (int i = 0; i < 3; i++)
+          _crosstabRow(
+            height: style.rowHeight * scale,
+            labelWidth: style.rowLabelWidth * scale,
+            label: i < ct.rowGroups.length ? ct.rowGroups[i].name : '…',
+            indent:
+                i < ct.rowGroups.length ? i * style.rowLabelIndent * scale : 0,
+            cells: <String>['…', '…'],
+            cellWidth: style.measureColumnWidth * scale,
+            emphasis: false,
+          ),
+      ],
+    );
+  }
+
+  /// One schematic row: the row-label cell at [labelWidth], then [cells] at
+  /// [cellWidth] each, laid out left to right in already-scaled logical pixels.
+  ///
+  /// Positioned inside a [Stack], not a [Row]: an over-wide crosstab is exactly
+  /// the case the width warning is about, and a Row would assert a RenderFlex
+  /// overflow instead of letting the enclosing [ClipRect] show it clipped.
+  Widget _crosstabRow({
+    required double height,
+    required double labelWidth,
+    required String label,
+    required List<String> cells,
+    required double cellWidth,
+    required bool emphasis,
+    double indent = 0,
+  }) {
+    final TextStyle text = TextStyle(
+      fontSize: 9,
+      color: _badgeForegroundColor,
+      fontWeight: emphasis ? FontWeight.w600 : FontWeight.w400,
+    );
+    final List<Widget> children = <Widget>[
+      Positioned(
+        left: 2 + indent,
+        top: 0,
+        bottom: 0,
+        width: (labelWidth - 4 - indent).clamp(0, double.infinity),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Text(label,
+              maxLines: 1, overflow: TextOverflow.clip, style: text),
+        ),
+      ),
+    ];
+    double x = labelWidth;
+    for (final String cell in cells) {
+      children.add(Positioned(
+        left: x,
+        top: 0,
+        bottom: 0,
+        width: cellWidth,
+        child: Align(
+          child:
+              Text(cell, maxLines: 1, overflow: TextOverflow.clip, style: text),
+        ),
+      ));
+      x += cellWidth;
+    }
+    return SizedBox(height: height, child: Stack(children: children));
   }
 
   List<Widget> _elementRegions(

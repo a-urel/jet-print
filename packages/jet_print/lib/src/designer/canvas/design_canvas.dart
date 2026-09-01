@@ -21,6 +21,9 @@ import 'package:flutter/services.dart'
 import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../domain/crosstab/crosstab.dart';
+import '../../domain/crosstab/crosstab_measure.dart';
+import '../../domain/crosstab/crosstab_style.dart';
 import '../../domain/detail_scope.dart';
 import '../../domain/geometry.dart';
 import '../../domain/report_definition.dart';

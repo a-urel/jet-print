@@ -54,6 +54,37 @@ Finder get _block =>
     find.byKey(const ValueKey<String>('crosstab-placeholder-ct1'));
 
 void main() {
+  // The block draws what the model alone determines — axis level names and the
+  // real column widths. Row and column COUNTS are data-driven and unknowable at
+  // design time, so they are stood in for, never invented.
+  testWidgets('the block labels the crosstab and its axis levels',
+      (WidgetTester tester) async {
+    await _pump(tester);
+    for (final String label in <String>['Sales pivot', 'Region', 'Year']) {
+      expect(find.descendant(of: _block, matching: find.text(label)),
+          findsOneWidget,
+          reason: label);
+    }
+  });
+
+  // A single measure prints no measure-name row (crosstab_planner emits that
+  // band only when there are 2+, since one measure is already named by its leaf
+  // column header) — and the block must not show one either, or the designer
+  // would promise a row the report never prints.
+  testWidgets('measure names appear only when there is more than one',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c = await _pump(tester);
+    expect(find.descendant(of: _block, matching: find.text('Amount')),
+        findsNothing);
+
+    c.addCrosstabMeasure('ct1', fieldName: 'qty');
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: _block, matching: find.text('Amount')),
+        findsOneWidget);
+    expect(find.descendant(of: _block, matching: find.text('qty')),
+        findsOneWidget);
+  });
+
   testWidgets('a tap inside the block selects the crosstab',
       (WidgetTester tester) async {
     final JetReportDesignerController c = await _pump(tester);
