@@ -69,6 +69,7 @@ part 'properties/fields/pickers.dart';
 part 'properties/fields/value_field.dart';
 part 'properties/fields/previews.dart';
 part 'properties/fields/shape_gallery.dart';
+part 'properties/fields/style_section.dart';
 part 'properties/inspectors/crosstab_inspector.dart';
 part 'properties/inspectors/element_inspector.dart';
 

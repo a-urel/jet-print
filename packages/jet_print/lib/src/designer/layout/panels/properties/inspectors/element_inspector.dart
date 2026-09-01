@@ -130,68 +130,11 @@ extension _ElementInspector on _PropertiesPanelState {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               SectionLabel(l10n.propertiesFont),
-              // Family, size and color share one compact row — no left labels.
-              // The family picker takes the slack; size is a fixed-width field
-              // (its leading glyph stands in for the dropped "Size" label); the
-              // color trigger is a square swatch-only box.
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: _FontFamilyRow(
-                      fonts: DesignerFontScope.of(context),
-                      showBuiltIns: DesignerFontScope.showBuiltInsOf(context),
-                      style: element.style,
-                      onCommit: (JetTextStyle next) =>
-                          controller.setTextStyle(id, next),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  SizedBox(
-                    width: 84,
-                    child: _PresetDropdown(
-                      fieldKey: const ValueKey<String>('$_p.field.fontSize'),
-                      label: _format(element.style.fontSize),
-                      tooltip: l10n.fontSizeLabel,
-                      options: <_DropdownOption>[
-                        for (final double size in _fontSizePresets)
-                          _DropdownOption(
-                            optionKey: ValueKey<String>(
-                                '$_p.field.fontSize.option.${_format(size)}'),
-                            label: _format(size),
-                            selected: element.style.fontSize == size,
-                            onPick: () => controller.setTextStyle(
-                                id, element.style.copyWith(fontSize: size)),
-                          ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  _ColorField(
-                    keyBase: '$_p.field.textColor',
-                    value: element.style.color,
-                    compact: true,
-                    onCommit: (JetColor? c) => controller.setTextStyle(
-                        id, element.style.copyWith(color: c)),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: <Widget>[
-                  _StyleToggleGroup(
-                    style: element.style,
-                    onCommit: (JetTextStyle next) =>
-                        controller.setTextStyle(id, next),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _AlignSegments(
-                      align: element.style.align,
-                      onCommit: (JetTextAlign a) => controller.setTextStyle(
-                          id, element.style.copyWith(align: a)),
-                    ),
-                  ),
-                ],
+              _TextStyleEditor(
+                keyBase: '$_p.field',
+                style: element.style,
+                onCommit: (JetTextStyle next) =>
+                    controller.setTextStyle(id, next),
               ),
             ],
           ),
