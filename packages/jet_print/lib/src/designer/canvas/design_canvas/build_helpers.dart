@@ -98,11 +98,11 @@ extension _CanvasBuild on _DesignCanvasState {
                       ),
                     ),
                   ),
-                  // Crosstab placeholder blocks (spec A, Task 13): a crosstab
-                  // owns no elements for the shared render pipeline above to
-                  // draw, so its reserved space is stood in for here — a
-                  // labeled, outlined rectangle, not part of the interactive
-                  // hit-testing surface (no selection/drag/delete yet).
+                  // Crosstab blocks: a crosstab owns no elements for the
+                  // shared render pipeline above to draw, so its reserved space
+                  // is stood in for here — a labeled, outlined rectangle. The
+                  // canvas gesture detector maps a tap inside one to a crosstab
+                  // selection (spec B).
                   ..._crosstabPlaceholders(
                       displayLayout, scale, JetPrintLocalizations.of(context)),
                   // Per-element regions: accessibility + test hooks. They do not
@@ -186,12 +186,13 @@ extension _CanvasBuild on _DesignCanvasState {
     return badges;
   }
 
-  /// One outlined placeholder block per crosstab (spec A, Task 13), sized and
-  /// positioned by [DesignTimeLayout]'s stand-in geometry and captioned with
-  /// its display label (name, or the localized fallback). Wrapped in
-  /// [IgnorePointer]: a crosstab has no designer-authoring surface yet, so this
-  /// block must never intercept a click that would otherwise reach the canvas's
-  /// own band/report selection handling underneath.
+  /// One outlined placeholder block per crosstab, sized and positioned by
+  /// [DesignTimeLayout]'s stand-in geometry and captioned with its display
+  /// label (name, or the localized fallback).
+  ///
+  /// The block does not capture pointers — like the element regions below it,
+  /// hit-testing belongs to the canvas's own gesture detector, which maps a tap
+  /// inside the block to a crosstab selection (spec B).
   List<Widget> _crosstabPlaceholders(
     DesignTimeLayout layout,
     double scale,
@@ -207,6 +208,8 @@ extension _CanvasBuild on _DesignCanvasState {
         width: r.width * scale,
         height: r.height * scale,
         child: IgnorePointer(
+          // Ignores pointers so the canvas gesture detector underneath owns the
+          // hit test — the same arrangement the element regions use.
           child: DecoratedBox(
             decoration:
                 BoxDecoration(border: Border.all(color: _badgeBorderColor)),

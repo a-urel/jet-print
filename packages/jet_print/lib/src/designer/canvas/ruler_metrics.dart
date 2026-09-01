@@ -30,6 +30,7 @@ double mmToPoints(double mm) => mm * kPointsPerMm;
 /// * multiple elements → their **union** (min-left/top → max-right/bottom) as
 ///   one combined rect — order-independent;
 /// * a band → the band's rect;
+/// * a crosstab → its block's rect;
 /// * the report or an empty selection → `null`.
 ///
 /// Pure geometry over the already-built [layout], so it tracks moves/resizes for
@@ -37,6 +38,7 @@ double mmToPoints(double mm) => mm * kPointsPerMm;
 JetRect? selectionExtent(DesignTimeLayout layout, Selection selection) {
   if (selection.isReport) return null;
   if (selection.bandId case final String id) return layout.bandRect(id);
+  if (selection.crosstabId case final String id) return layout.crosstabRect(id);
 
   final List<JetRect> rects = <JetRect>[
     for (final String id in selection.ids)

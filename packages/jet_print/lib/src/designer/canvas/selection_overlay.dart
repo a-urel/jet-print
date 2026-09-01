@@ -125,6 +125,18 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
     if (selectedBand != null) {
       return _bandChrome(controller, selectedBand, colors, l10n);
     }
+    // A crosstab gets an outline and nothing else: its block is sized by the
+    // model (axis depth × row height), not dragged, so a resize handle would
+    // promise an edit that does not exist (spec B).
+    if (selection.crosstabId case final String id) {
+      final JetRect? rect = widget.layout.crosstabRect(id);
+      // Wrapped in a Stack: _outline returns a Positioned, and this build's
+      // result is itself placed in a Positioned.fill by the canvas — two
+      // ParentDataWidgets writing the same RenderObject's parent data.
+      return rect == null
+          ? const SizedBox.shrink()
+          : Stack(children: <Widget>[_outline(rect)]);
+    }
 
     final List<Widget> children = <Widget>[];
 

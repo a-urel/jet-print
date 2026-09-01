@@ -140,6 +140,14 @@ extension _CanvasGestures on _DesignCanvasState {
       controller.clearSelection();
       return false;
     }
+    // A crosstab's block is tried first: it is a flow node that no band
+    // overlaps, and bandIdAt SNAPS to the nearest band, so asking it first
+    // would swallow every tap on a crosstab.
+    final String? crosstab = layout.crosstabIdAt(page);
+    if (crosstab != null) {
+      controller.selectCrosstab(crosstab);
+      return true;
+    }
     final String? band = layout.bandIdAt(page);
     if (band != null) {
       controller.selectBand(band);

@@ -237,6 +237,32 @@ class DesignTimeLayout {
   /// The page-absolute rect of the element with [id], or null if absent.
   JetRect? elementRect(String id) => _elementRects[id];
 
+  /// The page-absolute rect of the crosstab with stable id [id], or null.
+  JetRect? crosstabRect(String id) {
+    for (final PlacedCrosstab c in crosstabs) {
+      if (c.id == id) return c.rect;
+    }
+    return null;
+  }
+
+  /// The stable id of the crosstab whose block contains [point], or null.
+  ///
+  /// Unlike [bandIdAt] this does NOT snap to the nearest block: a crosstab is
+  /// a flow node with no drop semantics, so a point outside every block simply
+  /// is not on one, and the caller falls back to the band underneath.
+  String? crosstabIdAt(JetOffset point) {
+    for (final PlacedCrosstab c in crosstabs) {
+      final JetRect r = c.rect;
+      if (point.dx >= r.x &&
+          point.dx <= r.x + r.width &&
+          point.dy >= r.y &&
+          point.dy <= r.y + r.height) {
+        return c.id;
+      }
+    }
+    return null;
+  }
+
   /// The stable id of the band owning the element with [id], or null if absent.
   String? bandOfElement(String id) => _bandOfElement[id];
 
