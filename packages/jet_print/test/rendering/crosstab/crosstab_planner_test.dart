@@ -471,7 +471,7 @@ void main() {
       expect(headers, hasLength(6)); // 2 levels x 3 slices
       final FilledBand yearLevelLastSlice = headers[4];
       final FilledBand quarterLevelLastSlice = headers[5];
-      expect(_labelsOf(yearLevelLastSlice), <String>['∑ Total']);
+      expect(_labelsOf(yearLevelLastSlice), <String>['Total']);
       expect(quarterLevelLastSlice.elements, isEmpty);
       expect(quarterLevelLastSlice.height, _style.headerRowHeight);
     });
@@ -630,12 +630,12 @@ void main() {
       expect(headers, hasLength(2));
       // Level 0: each year spans Q1, Q2 and its own subtotal (3 x 50pt); the
       // grand total is a depth-0 leaf with a single 50pt cell.
-      expect(_labelsOf(headers[0]), <String>['2025', '2026', '∑ Total']);
+      expect(_labelsOf(headers[0]), <String>['2025', '2026', 'Total']);
       expect(_textsOf(headers[0]).map((TextElement e) => e.bounds.width),
           <double>[150, 150, 50]);
       // Level 1: the grand-total column has no level-1 ancestor, so no cell.
       expect(_labelsOf(headers[1]),
-          <String>['Q1', 'Q2', '∑ 2025', 'Q1', 'Q2', '∑ 2026']);
+          <String>['Q1', 'Q2', 'Total 2025', 'Q1', 'Q2', 'Total 2026']);
     });
 
     test('total rows appear on leaving a node, then the grand total', () {
@@ -645,16 +645,16 @@ void main() {
         'North',
         'Ankara',
         'Istanbul',
-        '∑ North',
+        'Total North',
         'South',
         'Izmir',
-        '∑ South',
-        '∑ Total',
+        'Total South',
+        'Total',
       ]);
     });
 
     test('an innermost row level has no per-node total', () {
-      // rowGroups[1] (City) forbids totals, so no "∑ North" row; rowGroups[0]
+      // rowGroups[1] (City) forbids totals, so no "Total North" row; rowGroups[0]
       // (Region) still allows the grand total.
       final Crosstab spec = ctTotals.copyWith(rowGroups: <CrosstabGroup>[
         _gRegion.copyWith(showTotal: true),
@@ -668,7 +668,7 @@ void main() {
         'Istanbul',
         'South',
         'Izmir',
-        '∑ Total',
+        'Total',
       ]);
     });
 
@@ -682,11 +682,11 @@ void main() {
       );
       final CrosstabMatrix m = _aggregate(spec, _totalRows);
       final CrosstabPlan plan = planCrosstab(spec, m, availableWidth: 600);
-      expect(_details(plan).map(_rowLabel), isNot(contains('∑ Total')));
-      expect(_details(plan).map(_rowLabel), contains('∑ North'));
+      expect(_details(plan).map(_rowLabel), isNot(contains('Total')));
+      expect(_details(plan).map(_rowLabel), contains('Total North'));
       expect(_labelsOf(_headers(plan)[0]), <String>['2025', '2026']);
       expect(_labelsOf(_headers(plan)[1]),
-          <String>['Q1', 'Q2', '∑ 2025', 'Q1', 'Q2', '∑ 2026']);
+          <String>['Q1', 'Q2', 'Total 2025', 'Q1', 'Q2', 'Total 2026']);
     });
 
     test('totalLabel overrides the summation default', () {
@@ -764,9 +764,9 @@ void main() {
       // The reservation rule in sliceColumns only fires for a trailing depth-0
       // `isTotal` leaf. budget = 300 - 100 = 200 = four 50pt columns. With four
       // data leaves and the reservation honoured, the last data leaf moves down
-      // so the total joins it: [Q1 Q2 Q3] [Q4 ∑ Total]. An implementation that
+      // so the total joins it: [Q1 Q2 Q3] [Q4 Total]. An implementation that
       // synthesised the grand total as anything else (a deeper node, or not
-      // last) would pack [Q1 Q2 Q3 Q4] [∑ Total] instead.
+      // last) would pack [Q1 Q2 Q3 Q4] [Total] instead.
       final Crosstab spec = Crosstab(
         id: 'ct1',
         rowGroups: const <CrosstabGroup>[_gRegion],
@@ -786,7 +786,7 @@ void main() {
       final List<FilledBand> headers = _headers(plan);
       expect(headers, hasLength(2));
       expect(_labelsOf(headers[0]), <String>['Q1', 'Q2', 'Q3']);
-      expect(_labelsOf(headers[1]), <String>['Q4', '∑ Total']);
+      expect(_labelsOf(headers[1]), <String>['Q4', 'Total']);
       expect(plan.diagnostics, isEmpty);
     });
   });
@@ -810,19 +810,20 @@ void main() {
         () {
       final CrosstabMatrix m = _aggregate(ctTotals, _totalRows);
       final CrosstabPlan plan = planCrosstab(ctTotals, m, availableWidth: 600);
-      // Columns, in order: 2025/Q1, 2025/Q2, ∑2025, 2026/Q1, 2026/Q2, ∑2026,
-      // ∑Total. Amounts are 1<<i over the row order declared in _totalRows.
+      // Columns, in order: 2025/Q1, 2025/Q2, Total 2025, 2026/Q1, 2026/Q2,
+      // Total 2026, Total. Amounts are 1<<i over the row order declared in
+      // _totalRows.
       expect(_rowCells(_rowNamed(plan, 'Istanbul')), <String>[
         '1.0', '2.0', '3.0', // 1+2
         '4.0', '8.0', '12.0', // 4+8
         '15.0', // 1+2+4+8
       ]);
-      expect(_rowCells(_rowNamed(plan, '∑ North')), <String>[
+      expect(_rowCells(_rowNamed(plan, 'Total North')), <String>[
         '17.0', '34.0', '51.0', // 1+16, 2+32, 17+34
         '68.0', '136.0', '204.0', // 4+64, 8+128, 68+136
         '255.0', // 1..128
       ]);
-      expect(_rowCells(_rowNamed(plan, '∑ Total')).last, '4095.0'); // 1..2048
+      expect(_rowCells(_rowNamed(plan, 'Total')).last, '4095.0'); // 1..2048
 
       // And each of those is exactly what the aggregator holds at the prefix
       // the planner claims to be printing.

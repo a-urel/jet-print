@@ -48,11 +48,15 @@ class CrosstabGroup with ValueEquality {
 
   /// Overrides the total's printed label, or null for the default.
   ///
-  /// The default is `'∑ <parent label>'` — the label of the node the total
-  /// collapses this level within (`∑ North`), since a total addresses that
-  /// parent's path. The grand total has no parent, so its default is
-  /// `'∑ Total'`. (`planCrosstab` builds these; this level's own [name] is
-  /// not part of the default.)
+  /// The default is `'Total <parent label>'` — the label of the node the
+  /// total collapses this level within (`Total North`), since a total
+  /// addresses that parent's path. The grand total has no parent, so its
+  /// default is plain `'Total'`. (`planCrosstab` builds these; this level's
+  /// own [name] is not part of the default.) Plain ASCII, not a `∑` glyph:
+  /// the render engine's bundled default font has no glyph for U+2211, which
+  /// prints as a tofu box under that default. An author whose fonts DO cover
+  /// the glyph can still opt in explicitly by setting this field, e.g.
+  /// `'∑ North'`.
   final String? totalLabel;
 
   /// Returns a copy with the given fields replaced.

@@ -491,11 +491,15 @@ CrosstabAxisNode _totalNode(String label, int depth) => CrosstabAxisNode(
 
 /// The label of the total that collapses [group] away.
 ///
-/// `'∑ <parent label>'` (`∑ North`) by default, overridden by
-/// [CrosstabGroup.totalLabel]. The grand total has no parent, hence
-/// `'∑ Total'`.
+/// `'Total <parent label>'` (`Total North`) by default, overridden by
+/// [CrosstabGroup.totalLabel]. The grand total has no parent, hence plain
+/// `'Total'`. Plain ASCII rather than a `∑` glyph: the render engine's
+/// bundled default font has no glyph for U+2211, so a `∑`-prefixed default
+/// would print a tofu box in front of every total under the default font. An
+/// author whose fonts DO cover that glyph can still opt in explicitly via
+/// [CrosstabGroup.totalLabel].
 String _totalLabel(CrosstabGroup group, String? parentLabel) =>
-    group.totalLabel ?? '∑ ${parentLabel ?? 'Total'}';
+    group.totalLabel ?? (parentLabel == null ? 'Total' : 'Total $parentLabel');
 
 // ---------------------------------------------------------------------------
 // Band emission
