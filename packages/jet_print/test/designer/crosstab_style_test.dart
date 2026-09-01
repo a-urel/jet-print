@@ -259,10 +259,26 @@ void main() {
       (WidgetTester tester) async {
     final JetReportDesignerController c =
         await pumpDesignerWithCrosstab(tester);
+    // Merely selecting the crosstab and building its inspector must not write:
+    // decode-then-re-encode must reproduce the same JSON, not merely re-encode
+    // the same in-memory object (which a pure function trivially does whether
+    // or not the codec is correct).
     final String before = JetReportFormat.encodeDefinitionJson(c.definition);
-    // Merely selecting the crosstab and building its inspector must not write.
-    expect(JetReportFormat.encodeDefinitionJson(c.definition), before);
-    expect(before.contains('headerText'), isFalse);
+    final ReportDefinition decoded =
+        JetReportFormat.decodeDefinitionJson(before);
+    final String after = JetReportFormat.encodeDefinitionJson(decoded);
+    expect(after, before);
+    // None of the six style slots is written when none was authored.
+    for (final String key in <String>[
+      'headerText',
+      'headerBox',
+      'cellText',
+      'cellBox',
+      'totalText',
+      'totalBox',
+    ]) {
+      expect(before.contains(key), isFalse, reason: '$key must be omitted');
+    }
   });
 
   testWidgets('a measure override inherits from the crosstab, not the renderer',
@@ -300,5 +316,50 @@ void main() {
     expect(ct.measures.first.cellTextStyle?.fontSize, 24);
     expect(ct.style.cellText, isNull,
         reason: 'a measure override must not write the crosstab-level slot');
+  });
+
+  testWidgets('a measure style reset is absent until a slot is set',
+      (WidgetTester tester) async {
+    // Without this, a measure override is a one-way door: nothing in the UI
+    // can write cellTextStyle/cellBoxStyle back to null once set.
+    final JetReportDesignerController c =
+        await pumpDesignerWithCrosstab(tester);
+    final String mid = onlyCrosstab(c).measures.first.id;
+    expect(findPanelKey('crosstab.measure.$mid.style.reset'), findsNothing);
+
+    await _tapVisible(
+        tester, findPanelKey('crosstab.measure.$mid.cellText.fontSize'));
+    await _tapVisible(tester,
+        findPanelKey('crosstab.measure.$mid.cellText.fontSize.option.24'));
+
+    expect(findPanelKey('crosstab.measure.$mid.style.reset'), findsOneWidget);
+  });
+
+  testWidgets(
+      'a measure style reset clears only that measure, not the crosstab '
+      "level", (WidgetTester tester) async {
+    final JetReportDesignerController c =
+        await pumpDesignerWithCrosstab(tester);
+    final String mid = onlyCrosstab(c).measures.first.id;
+
+    await _tapVisible(
+        tester, findPanelKey('crosstab.measure.$mid.cellText.fontSize'));
+    await _tapVisible(tester,
+        findPanelKey('crosstab.measure.$mid.cellText.fontSize.option.24'));
+    await _tapVisible(
+        tester, findPanelKey('crosstab.measure.$mid.cellBox.strokeWidth'));
+    await _tapVisible(tester,
+        findPanelKey('crosstab.measure.$mid.cellBox.strokeWidth.option.3'));
+
+    await _tapVisible(
+        tester, findPanelKey('crosstab.measure.$mid.style.reset'));
+
+    final Crosstab ct = onlyCrosstab(c);
+    expect(ct.measures.first.cellTextStyle, isNull);
+    expect(ct.measures.first.cellBoxStyle, isNull);
+    expect(ct.style.cellText, isNull,
+        reason: 'the reset must clear only the measure, not the crosstab');
+    expect(ct.style.cellBox, isNull);
+    expect(findPanelKey('crosstab.measure.$mid.style.reset'), findsNothing);
   });
 }

@@ -186,8 +186,8 @@ imported from the planner, exactly as the width warning re-derives its geometry 
 §4): the render layer is not a designer dependency, and the panel must work with no data source
 attached.
 
-**Two roles have a dual fallback, and the section displays the dominant one.** `headerText` and
-`totalText` are each read at two sites with different defaults while unset:
+**Three slots have a dual fallback, and the section displays the dominant one.** `headerText`,
+`totalText` and `totalBox` are each read at two sites with different defaults while unset:
 
 | Slot | Site | Default while null |
 |---|---|---|
@@ -195,6 +195,8 @@ attached.
 | `headerText` | the row-label stub column (`_rowLabelText`) | `JetTextStyle.fallback` (left) |
 | `totalText` | total *values* (`_totalCellText`) | `cellText` if set, else `JetTextStyle(align: right)` — **displayed** |
 | `totalText` | total *labels* (`_totalLabelText`) | cascades to `_rowLabelText` (left) |
+| `totalBox` | total *values* (`_cellBoxStyle`'s caller, :653) | `cellBox` if set, else `JetBoxStyle.none` — **displayed** |
+| `totalBox` | total *labels* (:629) | `style.headerBox` — the HEADER box, not `cellBox` |
 
 **Totals inherits from Cells, not from the bare default.** `_totalCellText` is
 `style.totalText ?? _cellTextStyle(measure)`, and `_cellBoxStyle`'s caller is
@@ -204,6 +206,19 @@ only when Cells is *also* unset. The Totals section therefore displays
 listed only the terminal default in the table above, and the implementation plan copied the table
 rather than the planner; the result was a panel that showed a bare default while the report rendered
 the authored Cells style. The two-hop case now has its own test.
+
+**Cells and Totals both skip the measure layer, and this is an accepted approximation, not a bug.**
+The planner's real cascade for a value cell starts one layer *lower* than either section shows:
+`measure.cellTextStyle`/`cellBoxStyle` first, then the crosstab style, then the bare default. Both
+the Cells and Totals sections display only the crosstab-level cascade — `ct.style.cellText ??
+_kCrosstabCellDefault` and its box equivalent — because with N measures on one crosstab there is no
+single per-measure value that could be shown in a section that isn't scoped to one measure. This
+means a measure with its own `cellTextStyle`/`cellBoxStyle` override (authored in its own card, see
+§3) makes the Cells/Totals sections' displayed value diverge from what the renderer actually prints
+for that measure. Showing the crosstab-level value regardless is still the right choice — the
+alternative is no display, or an arbitrary pick among measures — but the code comments must say so
+rather than implying (as an earlier version did) that the displayed value is unconditionally what
+the planner will resolve.
 
 The section shows the first of each pair: column headers outnumber the single row-label column, and
 total values outnumber their labels. The approximation is confined to alignment, and it is

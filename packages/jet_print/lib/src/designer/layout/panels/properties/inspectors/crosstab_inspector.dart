@@ -111,6 +111,9 @@ extension _CrosstabInspector on _PropertiesPanelState {
               keyBase: '$_p.crosstab.cells',
               text: ct.style.cellText,
               box: ct.style.cellBox,
+              // Like Totals below, this displays the crosstab-level cascade
+              // only — see the comment there for why a per-measure override
+              // (`measure.cellTextStyle`/`cellBoxStyle`) is not reflected.
               effectiveText: _kCrosstabCellDefault,
               effectiveBox: JetBoxStyle.none,
               onText: (JetTextStyle s) => controller.setCrosstabStyle(
@@ -127,12 +130,33 @@ extension _CrosstabInspector on _PropertiesPanelState {
               keyBase: '$_p.crosstab.totals',
               text: ct.style.totalText,
               box: ct.style.totalBox,
-              // Totals cascades through Cells before the bare default
-              // (`_totalCellText`/`_cellBoxStyle` in crosstab_planner.dart):
-              // an unset totalText/totalBox falls to cellText/cellBox first,
-              // and only then to _kCrosstabCellDefault/JetBoxStyle.none. The
+              // Totals cascades through Cells before the bare default for
+              // total VALUES: an unset totalText falls to cellText first
+              // (`_totalCellText` in crosstab_planner.dart) and only then to
+              // _kCrosstabCellDefault, and an unset totalBox falls to cellBox
+              // first (:653) and only then to JetBoxStyle.none — so the
               // effective value shown here must be what the planner will
-              // actually resolve, not the bare default one hop early.
+              // actually resolve for a VALUE cell, not the bare default one
+              // hop early.
+              //
+              // totalBox has a SECOND, different cascade for total LABELS
+              // (:629): `style.totalBox ?? style.headerBox` — the header box,
+              // not cellBox. That is a dual fallback of the same shape
+              // headerText/totalText already have (see the dual-fallback
+              // table, spec 046 §2), not a mistake in the effectiveBox below;
+              // this section still shows the VALUE-cell cascade, the dominant
+              // case, exactly as headerText's section shows the column-header
+              // default over the row-label one.
+              //
+              // Also unlike the planner, this display stops at the crosstab
+              // level: the planner's real cascade for both totalText and
+              // totalBox starts one layer lower, at the measure's own
+              // cellTextStyle/cellBoxStyle override. With N measures there is
+              // no single correct effective value to show here, so the
+              // crosstab-level value is shown regardless (deliberate, spec
+              // 046 §2) — but a measure that overrides its own cell style
+              // makes the renderer print that measure's totals differently
+              // from what this section displays.
               effectiveText: ct.style.cellText ?? _kCrosstabCellDefault,
               effectiveBox: ct.style.cellBox ?? JetBoxStyle.none,
               onText: (JetTextStyle s) => controller.setCrosstabStyle(
@@ -402,8 +426,25 @@ extension _CrosstabInspector on _PropertiesPanelState {
         // cascade (measure → crosstab style → renderer default). Its displayed
         // inherited value is the crosstab's own cellText/cellBox, one layer up,
         // so the inheritance shown is truthful at this level rather than jumping
-        // straight to the renderer default.
-        SectionLabel(l10n.crosstabMeasureStyle),
+        // straight to the renderer default. Like every other nullable slot
+        // (spec 046 decision 1), an authored override is a one-way door
+        // without a reset, so this card gets the same conditional reset the
+        // crosstab-level roles have — keyed under its own `.style` namespace
+        // since the two editors below keep their own `cellText`/`cellBox`
+        // keyBases.
+        _crosstabStyleRoleHeader(
+          label: l10n.crosstabMeasureStyle,
+          resetKey: '$base.style.reset',
+          authored:
+              measure.cellTextStyle != null || measure.cellBoxStyle != null,
+          onReset: () => controller.updateCrosstabMeasure(
+              ct.id,
+              measure.id,
+              (CrosstabMeasure m) => m.copyWith(
+                  cellTextStyle: () => null, cellBoxStyle: () => null)),
+          l10n: l10n,
+          theme: theme,
+        ),
         _TextStyleEditor(
           keyBase: '$base.cellText',
           style: measure.cellTextStyle ??

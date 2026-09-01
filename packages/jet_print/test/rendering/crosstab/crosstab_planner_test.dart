@@ -403,6 +403,31 @@ void main() {
       expect(header.style.align, JetTextAlign.center);
     });
 
+    // Guards the dual-fallback design (spec 046): `_columnHeaderText` and
+    // `_rowLabelText` disagree only while `headerText` is unset (centre vs.
+    // `JetTextStyle.fallback`, left). The Properties panel previews only the
+    // centred default up to the first edit on the strength of this property —
+    // once authored, `headerText` is honoured as written at BOTH sites, so the
+    // approximation ends exactly there. `JetTextAlign.right` is deliberately
+    // neither default, so a resolved `right` at both sites can only mean the
+    // authored value made it through both, not a coincidence with one default.
+    test(
+        'authoring headerText collapses column headers and row labels to '
+        'the same style', () {
+      const JetTextStyle authored = JetTextStyle(align: JetTextAlign.right);
+      final Crosstab styled =
+          ct.copyWith(style: _style.copyWith(headerText: () => authored));
+      final CrosstabPlan plan =
+          planCrosstab(styled, matrix, availableWidth: 500);
+
+      final TextElement header = _textsOf(_headers(plan).first).first;
+      final TextElement rowLabel = _textsOf(_details(plan).first)
+          .firstWhere((TextElement e) => e.id.endsWith('/label'));
+
+      expect(header.style, authored);
+      expect(rowLabel.style, authored);
+    });
+
     test('a header cell spans the leaves beneath it', () {
       // Year 2025 over Q1 and Q2, one measure of 50pt -> a 100pt header cell,
       // starting after the 100pt row-label column.

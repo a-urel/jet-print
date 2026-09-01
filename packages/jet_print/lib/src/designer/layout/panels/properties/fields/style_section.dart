@@ -199,8 +199,13 @@ class _BoxStyleEditor extends StatelessWidget {
 /// sites, alignment included.
 ///
 /// Mirrored rather than imported: the render layer is not a designer
-/// dependency and the panel must work with no data source attached. A test
-/// asserts this equals the planner's value so the two copies cannot drift.
+/// dependency and the panel must work with no data source attached. No single
+/// test can assert the two copies are equal — they are private to different
+/// libraries — so each side is pinned separately: the panel's value here by
+/// `test/designer/crosstab_style_test.dart` ('the panel mirrors the planner
+/// dominant defaults'), the planner's by
+/// `test/rendering/crosstab/crosstab_planner_test.dart` ('an unstyled column
+/// header centres its text' and the right-aligned cell-default pin).
 const JetTextStyle _kCrosstabHeaderDefault =
     JetTextStyle(align: JetTextAlign.center);
 
@@ -217,16 +222,51 @@ const JetTextStyle _kCrosstabHeaderDefault =
 const JetTextStyle _kCrosstabCellDefault =
     JetTextStyle(align: JetTextAlign.right);
 
-/// One crosstab appearance role: its label, a text and a box editor, and a
-/// reset that clears both slots back to inherited.
+/// The label + inherited-hint/reset row shared by every crosstab appearance
+/// role: the crosstab-level Header/Cells/Totals sections ([_crosstabRoleSection])
+/// and the per-measure cell override (`_crosstabMeasureCard`).
 ///
-/// [text] and [box] are the authored slots — null means inherited, and the
-/// editors then display [effectiveText] / [effectiveBox] so the controls are
-/// never blank. Any edit commits a concrete style; [onReset] writes null back.
+/// Factored out on its own rather than forcing every caller through
+/// [_crosstabRoleSection] itself, because the measure card's two editors keep
+/// their own long-lived `cellText`/`cellBox` keyBases (predating this reset)
+/// rather than the single shared keyBase the crosstab-level roles pass to
+/// both editors — unifying that too would rename shipped, tested keys for no
+/// behavioural gain.
 ///
 /// The reset action appears only once at least one slot is set: an
 /// always-visible reset on an untouched role would suggest state that is not
 /// there.
+Widget _crosstabStyleRoleHeader({
+  required String label,
+  required String resetKey,
+  required bool authored,
+  required VoidCallback onReset,
+  required JetPrintLocalizations l10n,
+  required ShadThemeData theme,
+}) =>
+    Row(
+      children: <Widget>[
+        Expanded(child: SectionLabel(label)),
+        if (!authored)
+          Text(l10n.crosstabStyleInherited,
+              style: theme.textTheme.muted.copyWith(fontSize: 11))
+        else
+          _CardAction(
+            actionKey: ValueKey<String>(resetKey),
+            icon: LucideIcons.rotateCcw,
+            tooltip: l10n.crosstabStyleReset,
+            onPressed: onReset,
+            theme: theme,
+          ),
+      ],
+    );
+
+/// One crosstab-level appearance role: its label, a text and a box editor,
+/// and a reset that clears both slots back to inherited.
+///
+/// [text] and [box] are the authored slots — null means inherited, and the
+/// editors then display [effectiveText] / [effectiveBox] so the controls are
+/// never blank. Any edit commits a concrete style; [onReset] writes null back.
 List<Widget> _crosstabRoleSection({
   required String label,
   required String keyBase,
@@ -243,21 +283,13 @@ List<Widget> _crosstabRoleSection({
   final bool authored = text != null || box != null;
   return <Widget>[
     const SizedBox(height: 12),
-    Row(
-      children: <Widget>[
-        Expanded(child: SectionLabel(label)),
-        if (!authored)
-          Text(l10n.crosstabStyleInherited,
-              style: const TextStyle(fontSize: 11))
-        else
-          _CardAction(
-            actionKey: ValueKey<String>('$keyBase.reset'),
-            icon: LucideIcons.rotateCcw,
-            tooltip: l10n.crosstabStyleReset,
-            onPressed: onReset,
-            theme: theme,
-          ),
-      ],
+    _crosstabStyleRoleHeader(
+      label: label,
+      resetKey: '$keyBase.reset',
+      authored: authored,
+      onReset: onReset,
+      l10n: l10n,
+      theme: theme,
     ),
     _TextStyleEditor(
       keyBase: keyBase,

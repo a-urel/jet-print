@@ -51,7 +51,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   crosstab's eight text/box style slots are now authorable in the Properties
   panel — see spec 046-crosstab-style-editors, above.
 
-- **BREAKING — crosstab (pivot grid) support (spec 046-crosstab-engine).** A
+- **BREAKING — crosstab (pivot grid) support (spec 044-crosstab-engine).** A
   new `Crosstab` block — configurable row/column axis `CrosstabGroup`s (each
   with a sort order, an optional subtotal, and an overridable total label),
   `CrosstabMeasure`s (a per-row expression folded by an aggregate, with its
