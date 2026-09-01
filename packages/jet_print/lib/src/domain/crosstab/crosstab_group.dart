@@ -33,7 +33,7 @@ class CrosstabGroup with ValueEquality {
   /// Stable identity.
   final String id;
 
-  /// Display label — also the stem of the default total label.
+  /// Display label.
   final String name;
 
   /// Per-row group key, a canonical expression string (e.g. `$F{region}`).

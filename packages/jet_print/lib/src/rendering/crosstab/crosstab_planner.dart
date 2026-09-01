@@ -754,8 +754,12 @@ class _Emitter {
   JetTextStyle get _columnHeaderText =>
       style.headerText ?? const JetTextStyle(align: JetTextAlign.center);
 
-  /// Row labels share the header slot but read as a left-aligned stub column,
-  /// so their default alignment is the fallback's, not centred.
+  /// Row labels share the header slot but, when [CrosstabStyle.headerText] is
+  /// unset, fall back to [JetTextStyle.fallback] (left-aligned) rather than the
+  /// centred column-header default. An authored `headerText` is honoured as
+  /// written, alignment included — so a report that centres its column
+  /// headers also centres this stub column; only the unstyled case is
+  /// left-aligned.
   JetTextStyle get _rowLabelText => style.headerText ?? JetTextStyle.fallback;
 
   JetTextStyle get _totalLabelText => style.totalText ?? _rowLabelText;
