@@ -37,35 +37,37 @@ const JetDataSchema pivotSchema = JetDataSchema(
 const PageFormat _pivotPage =
     PageFormat(width: 1100, height: 300, margins: JetEdgeInsets.all(20));
 
-/// The pivot report: title band + one [CrosstabNode], reading the flat rows
-/// [pivotData] supplies directly (no `collectionField` — the crosstab folds
-/// the root scope's own rows). [page] defaults to [_pivotPage]; passing a
-/// narrower one would force the column axis into more than one horizontal
-/// slice, but nothing in this app exercises that — the continuation path is
-/// covered separately, against its own definition, in
-/// `packages/jet_print/test/goldens/pivot_test.dart`.
+/// The pivot report: a `body.title` band printed once at report start, above
+/// one [CrosstabNode] that is the root scope's only child. With no
+/// row-producing sibling (`BandNode`/`NestedScope`) in `root.children` at
+/// all, the crosstab folds the root scope's own rows (no `collectionField`)
+/// and registers *before-loop* — it prints once, right after the title.
+/// [page] defaults to [_pivotPage]; passing a narrower one would force the
+/// column axis into more than one horizontal slice, but nothing in this app
+/// exercises that — the continuation path is covered separately, against its
+/// own definition, in `packages/jet_print/test/goldens/pivot_test.dart`.
 ReportDefinition pivotDefinition({PageFormat page = _pivotPage}) =>
     ReportDefinition(
       name: 'Sales Pivot',
       page: page,
       body: ReportBody(
+        title: Band(
+          id: 'title',
+          type: BandType.title,
+          height: 24,
+          elements: <ReportElement>[
+            TextElement(
+              id: 'heading',
+              bounds: const JetRect(x: 0, y: 2, width: 400, height: 20),
+              text: 'Sales by Region and Quarter',
+              style:
+                  const JetTextStyle(fontSize: 14, weight: JetFontWeight.bold),
+            ),
+          ],
+        ),
         root: DetailScope(
           id: 'root',
           children: <ScopeNode>[
-            BandNode(Band(
-              id: 'title',
-              type: BandType.title,
-              height: 24,
-              elements: <ReportElement>[
-                TextElement(
-                  id: 'heading',
-                  bounds: const JetRect(x: 0, y: 2, width: 400, height: 20),
-                  text: 'Sales by Region and Quarter',
-                  style: const JetTextStyle(
-                      fontSize: 14, weight: JetFontWeight.bold),
-                ),
-              ],
-            )),
             const CrosstabNode(Crosstab(
               id: 'salesPivot',
               name: 'Sales Pivot',

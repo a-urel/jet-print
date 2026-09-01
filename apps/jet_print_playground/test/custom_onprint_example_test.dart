@@ -38,6 +38,10 @@ int _color(FramePrimitive p) => switch (p) {
 
 void main() {
   group('custom onElementPrint example', () {
+    test('is pristine under the library validator (no diagnostics)', () {
+      expect(validate(customOnPrintDefinition()), isEmpty);
+    });
+
     test('renders without error diagnostics', () {
       final RenderedReport r = renderCustomOnPrintDefinition();
       expect(

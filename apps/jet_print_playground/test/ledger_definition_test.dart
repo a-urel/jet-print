@@ -59,5 +59,9 @@ void main() {
       expect(exprById['txnCount'], r'COUNT($F{receiptNo})');
       expect(exprById['grandSum'], r'SUM($F{amount})');
     });
+
+    test('is pristine under the library validator (no diagnostics)', () {
+      expect(validate(ledgerSampleDefinition()), isEmpty);
+    });
   });
 }
