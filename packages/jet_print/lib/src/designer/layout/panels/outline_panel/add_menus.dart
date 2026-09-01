@@ -36,7 +36,8 @@ extension _OutlineAddMenus on _OutlinePanelState {
     final bool many = scope.groups.length > 1;
     String groupLabel(String base, GroupLevel g) =>
         many ? '$base · ${g.name}' : base;
-    final List<FieldDef> groupFields = _groupFields(controller, scope, schema);
+    final List<FieldDef> scopeScalars = _groupFields(controller, scope, schema);
+    final List<FieldDef> groupFields = scopeScalars;
     final List<FieldDef> listCollections =
         collectionFieldsForScope(schema, controller.definition, scope.id);
     final List<_MenuOption> options = <_MenuOption>[
@@ -60,6 +61,34 @@ extension _OutlineAddMenus on _OutlinePanelState {
             ),
         ],
       ),
+      // Crosstabs are root-scope only (spec A decision 8): `validate()` rejects
+      // one anywhere else, so no affordance mints one there. The data source is
+      // picked up front because a crosstab is born valid and bound (spec B) —
+      // it needs a field to bucket rows by from the moment it exists.
+      if (scope.id == controller.definition.body.root.id)
+        _MenuOption(
+          optionKey: ValueKey<String>('$scopeBase.add.crosstab'),
+          label: l10n.outlineAddCrosstab,
+          enabled: scopeScalars.isNotEmpty || listCollections.isNotEmpty,
+          children: <_MenuOption>[
+            _MenuOption(
+              optionKey: ValueKey<String>('$scopeBase.add.crosstab.rows'),
+              label: l10n.crosstabScopeRows,
+              enabled: scopeScalars.isNotEmpty,
+              onPick: () =>
+                  controller.createCrosstab(scope.id, fields: scopeScalars),
+            ),
+            for (final FieldDef f in listCollections)
+              _MenuOption(
+                optionKey:
+                    ValueKey<String>('$scopeBase.add.crosstab.field.${f.name}'),
+                label: f.name,
+                enabled: f.fields.isNotEmpty,
+                onPick: () => controller.createCrosstab(scope.id,
+                    collectionField: f.name, fields: f.fields),
+              ),
+          ],
+        ),
       _MenuOption(
         optionKey: ValueKey<String>('$scopeBase.add.group'),
         label: l10n.outlineAddGroup,

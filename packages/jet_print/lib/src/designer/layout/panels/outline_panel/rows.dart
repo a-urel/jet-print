@@ -67,9 +67,10 @@ extension _OutlineRows on _OutlinePanelState {
           _addScopeRows(rows, inner, depth + 1, controller, selection, theme,
               l10n, schema);
         case CrosstabNode(crosstab: final Crosstab ct):
-          // Read-only surface only (spec A, Task 13): a labeled row, no
-          // children, no context actions. Full authoring is a later spec.
-          _addCrosstabRow(rows, ct, depth + 1, theme, l10n);
+          // A leaf authoring row (spec B): its axes and measures are edited in
+          // the Properties inspector, not as Outline children.
+          _addCrosstabRow(
+              rows, ct, depth + 1, controller, selection, theme, l10n);
         case UnknownScopeNode():
           break; // nothing to author for a node this build doesn't recognize
       }
@@ -160,41 +161,54 @@ extension _OutlineRows on _OutlinePanelState {
     }
   }
 
-  /// A crosstab's read-only Outline row (spec A, Task 13): its display label
-  /// (name, or the localized fallback) next to a distinct glyph. Unlike every
-  /// other row it carries no tap handler, no selection highlight, and no
-  /// trailing actions — a crosstab has no designer-authoring surface yet, so
-  /// nothing here should look interactive.
+  /// A crosstab's Outline row (spec B): selectable, inline-renameable, and
+  /// carrying its lifecycle actions — move up, move down, remove.
+  ///
+  /// A leaf row, not a branch: a crosstab has no children to disclose (its axis
+  /// levels and measures are edited as lists in the Properties inspector), so a
+  /// disclosure chevron would open nothing.
   void _addCrosstabRow(
     List<Widget> rows,
     Crosstab crosstab,
     int depth,
+    JetReportDesignerController controller,
+    Selection selection,
     ShadThemeData theme,
     JetPrintLocalizations l10n,
   ) {
-    rows.add(KeyedSubtree(
-      key: ValueKey<String>(
-          'jet_print.designer.outline.crosstab.${crosstab.id}'),
-      child: Padding(
-        // +18 ≈ chevron width + gap, aligning the glyph under branches'.
-        padding: EdgeInsets.only(
-            left: treeRowInset(depth) + 18, top: 4, bottom: 4, right: 8),
-        child: Row(
-          children: <Widget>[
-            Icon(LucideIcons.table2,
-                size: 14, color: theme.colorScheme.mutedForeground),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                crosstabDisplayLabel(crosstab, l10n),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.small,
-              ),
-            ),
-          ],
-        ),
+    final String base = 'jet_print.designer.outline.crosstab.${crosstab.id}';
+    final ShadColorScheme colors = theme.colorScheme;
+    rows.add(_leafRow(
+      rowKey: ValueKey<String>(base),
+      depth: depth,
+      icon: LucideIcons.table2,
+      label: crosstabDisplayLabel(crosstab, l10n),
+      rawName: crosstab.name,
+      fallback: l10n.crosstabLabel,
+      editing: _editingId == crosstab.id,
+      onEditingEnd: () => _rebuild(() => _editingId = null),
+      onCommit: (String? name) {
+        controller.renameCrosstab(crosstab.id, name);
+        _rebuild(() => _editingId = null);
+      },
+      selected: selection.crosstabId == crosstab.id,
+      onSelect: () => _handleTap(
+        crosstab.id,
+        () => controller.selectCrosstab(crosstab.id),
+        () => _rebuild(() => _editingId = crosstab.id),
       ),
+      theme: theme,
+      actions: <Widget>[
+        // The tooltips carry the position rule (spec A decision 7): the
+        // Outline order is the ONLY expression of whether a crosstab prints
+        // before or after the row loop, so moving it is a semantic edit.
+        _act('$base.up', LucideIcons.arrowUp, l10n.crosstabMoveUpHint,
+            () => controller.moveCrosstab(crosstab.id, -1), colors),
+        _act('$base.down', LucideIcons.arrowDown, l10n.crosstabMoveDownHint,
+            () => controller.moveCrosstab(crosstab.id, 1), colors),
+        _act('$base.remove', LucideIcons.trash2, l10n.outlineRemove,
+            () => controller.deleteCrosstab(crosstab.id), colors),
+      ],
     ));
   }
 
@@ -333,6 +347,7 @@ extension _OutlineRows on _OutlinePanelState {
     required bool selected,
     required VoidCallback onSelect,
     required ShadThemeData theme,
+    List<Widget> actions = const <Widget>[],
   }) {
     final ShadColorScheme colors = theme.colorScheme;
     return KeyedSubtree(
@@ -379,6 +394,11 @@ extension _OutlineRows on _OutlinePanelState {
                               style: theme.textTheme.small,
                             ),
                     ),
+                    // Trailing lifecycle affordances. Empty for element rows,
+                    // which have none; a crosstab row (spec B) uses them for
+                    // move up/down and remove, rendered exactly as a branch
+                    // row's are so the two row kinds look identical.
+                    ...actions,
                   ],
                 ),
               ),

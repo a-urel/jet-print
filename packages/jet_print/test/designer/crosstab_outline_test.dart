@@ -1,8 +1,6 @@
-// Widget test: a crosstab (spec A / Task 13) gets a minimal, read-only
-// representation in the designer — an Outline row (its name, or the localized
-// fallback label when nameless) and a fixed-size placeholder block on the
-// canvas. No selection, no Properties, no drag, no delete: authoring a
-// crosstab is a later spec.
+// Widget test: a crosstab's Outline row. Spec A shipped it read-only; spec B
+// makes it a real authoring row — selectable, renameable, reorderable and
+// removable — and adds the root scope's "Add crosstab" menu entry.
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
@@ -70,8 +68,11 @@ Future<void> _openOutline(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+const ValueKey<String> _rowKey =
+    ValueKey<String>('jet_print.designer.outline.crosstab.ct1');
+
 void main() {
-  testWidgets('a crosstab appears as a read-only outline row',
+  testWidgets('a crosstab appears as an outline row',
       (WidgetTester tester) async {
     await _designerWith(tester);
     await _openOutline(tester);
@@ -90,5 +91,82 @@ void main() {
     await _designerWith(tester);
     expect(find.byKey(const ValueKey<String>('crosstab-placeholder-ct1')),
         findsOneWidget);
+  });
+
+  testWidgets('tapping the row selects the crosstab',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c = await _designerWith(tester);
+    await _openOutline(tester);
+    await tester.tap(find.byKey(_rowKey));
+    await tester.pumpAndSettle();
+    expect(c.selection.crosstabId, 'ct1');
+  });
+
+  testWidgets('the remove action deletes it', (WidgetTester tester) async {
+    final JetReportDesignerController c = await _designerWith(tester);
+    await _openOutline(tester);
+    await tester.tap(find.byKey(const ValueKey<String>(
+        'jet_print.designer.outline.crosstab.ct1.remove')));
+    await tester.pumpAndSettle();
+    expect(c.definition.body.root.children.whereType<CrosstabNode>(), isEmpty);
+    expect(find.byKey(_rowKey), findsNothing);
+  });
+
+  testWidgets('the move actions are offered', (WidgetTester tester) async {
+    await _designerWith(tester);
+    await _openOutline(tester);
+    for (final String suffix in <String>['up', 'down']) {
+      expect(
+          find.byKey(ValueKey<String>(
+              'jet_print.designer.outline.crosstab.ct1.$suffix')),
+          findsOneWidget);
+    }
+  });
+
+  // A crosstab is root-scope only (spec A decision 8) — validate() rejects one
+  // in a nested scope, so the affordance must not offer it there.
+  testWidgets('Add crosstab is offered on the root scope only',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c = JetReportDesignerController(
+      definition: const ReportDefinition(
+        name: 'R',
+        page: PageFormat.a4Portrait,
+        body: ReportBody(
+          root: DetailScope(
+            id: 'root',
+            children: <ScopeNode>[
+              NestedScope(DetailScope(
+                id: 'lines',
+                collectionField: 'lines',
+                children: <ScopeNode>[
+                  BandNode(Band(id: 'row', type: BandType.detail, height: 12)),
+                ],
+              )),
+            ],
+          ),
+        ),
+      ),
+    );
+    addTearDown(c.dispose);
+    await pumpDesigner(tester, designer: JetReportDesigner(controller: c));
+    await _openOutline(tester);
+
+    await tester.tap(find.byKey(
+        const ValueKey<String>('jet_print.designer.outline.scope.root.add')));
+    await tester.pumpAndSettle();
+    expect(
+        find.byKey(const ValueKey<String>(
+            'jet_print.designer.outline.scope.root.add.crosstab')),
+        findsOneWidget);
+    await tester.tapAt(Offset.zero);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(
+        const ValueKey<String>('jet_print.designer.outline.scope.lines.add')));
+    await tester.pumpAndSettle();
+    expect(
+        find.byKey(const ValueKey<String>(
+            'jet_print.designer.outline.scope.lines.add.crosstab')),
+        findsNothing);
   });
 }
