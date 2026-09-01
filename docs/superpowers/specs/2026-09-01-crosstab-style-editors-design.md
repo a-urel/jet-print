@@ -122,12 +122,10 @@ class _TextStyleEditor extends StatelessWidget {
     required this.keyBase,
     required this.style,
     required this.onCommit,
-    this.showAlign = true,
   });
   final String keyBase;
   final JetTextStyle style;
   final ValueChanged<JetTextStyle> onCommit;
-  final bool showAlign;
 }
 
 /// A composed JetBoxStyle editor: fill + outline swatches and a width preset.

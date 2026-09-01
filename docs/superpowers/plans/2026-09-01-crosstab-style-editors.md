@@ -51,7 +51,7 @@ Existing library-private helpers available to the new file (same library, no imp
 
 **Interfaces:**
 - Consumes: `_ColorField`, `_FontFamilyRow`, `_StyleToggleGroup`, `_AlignSegments`, `_PresetDropdown`, `_DropdownOption`, `_fontSizePresets`, `_format`, `DesignerFontScope`.
-- Produces: `_TextStyleEditor({required String keyBase, required JetTextStyle style, required ValueChanged<JetTextStyle> onCommit, bool showAlign = true})`.
+- Produces: `_TextStyleEditor({required String keyBase, required JetTextStyle style, required ValueChanged<JetTextStyle> onCommit})`.
 
 - [ ] **Step 1: Run the existing suite to record a green baseline**
 
@@ -90,15 +90,11 @@ part of '../../properties_panel.dart';
 /// a single undoable step (FR-013). The widget is stateless and holds no draft:
 /// callers wrap it in a `KeyedSubtree` keyed by the edited object's id when a
 /// selection switch should discard uncommitted input.
-///
-/// [showAlign] hides the alignment segments for slots where alignment is not
-/// author-controlled; it defaults to true.
 class _TextStyleEditor extends StatelessWidget {
   const _TextStyleEditor({
     required this.keyBase,
     required this.style,
     required this.onCommit,
-    this.showAlign = true,
   });
 
   /// Prefix for every child key; children append `.fontSize`, `.textColor`.
@@ -110,9 +106,6 @@ class _TextStyleEditor extends StatelessWidget {
 
   /// Receives the whole updated style on every committed change.
   final ValueChanged<JetTextStyle> onCommit;
-
-  /// Whether to show the alignment segments.
-  final bool showAlign;
 
   @override
   Widget build(BuildContext context) {
@@ -166,16 +159,13 @@ class _TextStyleEditor extends StatelessWidget {
         Row(
           children: <Widget>[
             _StyleToggleGroup(style: style, onCommit: onCommit),
-            if (showAlign) ...<Widget>[
-              const SizedBox(width: 8),
-              Expanded(
-                child: _AlignSegments(
-                  align: style.align,
-                  onCommit: (JetTextAlign a) =>
-                      onCommit(style.copyWith(align: a)),
-                ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _AlignSegments(
+                align: style.align,
+                onCommit: (JetTextAlign a) => onCommit(style.copyWith(align: a)),
               ),
-            ],
+            ),
           ],
         ),
       ],
