@@ -105,3 +105,84 @@ class _TextStyleEditor extends StatelessWidget {
     );
   }
 }
+
+/// A composed [JetBoxStyle] editor: fill and outline swatches plus an outline
+/// width preset, all on one label-less row.
+///
+/// [showFill] is false where the shape has no interior — the line shape drops
+/// its fill box, a shipped behaviour this flag exists to preserve. No crosstab
+/// slot uses it, so it would regress silently without a test.
+class _BoxStyleEditor extends StatelessWidget {
+  const _BoxStyleEditor({
+    required this.keyBase,
+    required this.style,
+    required this.onCommit,
+    this.showFill = true,
+  });
+
+  /// Prefix for every child key; children append `.fill`, `.stroke`,
+  /// `.strokeWidth`.
+  final String keyBase;
+
+  /// The box style the editors display.
+  final JetBoxStyle style;
+
+  /// Receives the whole updated style on every committed change.
+  final ValueChanged<JetBoxStyle> onCommit;
+
+  /// Whether to show the fill swatch.
+  final bool showFill;
+
+  @override
+  Widget build(BuildContext context) {
+    final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
+    // Fill, outline and width share one label-less row. The two color boxes
+    // are compact swatches distinguished by a leading glyph (bucket = fill,
+    // square = outline). Width fills the remaining width.
+    return Row(
+      children: <Widget>[
+        if (showFill) ...<Widget>[
+          _ColorField(
+            keyBase: '$keyBase.fill',
+            value: style.fill,
+            allowNone: true,
+            compact: true,
+            leadingIcon: LucideIcons.paintBucket,
+            semanticLabel: l10n.propertiesFill,
+            onCommit: (JetColor? c) => onCommit(style.copyWith(fill: c)),
+          ),
+          const SizedBox(width: 6),
+        ],
+        _ColorField(
+          keyBase: '$keyBase.stroke',
+          value: style.stroke,
+          allowNone: true,
+          compact: true,
+          leadingIcon: LucideIcons.pen,
+          semanticLabel: l10n.propertiesOutline,
+          onCommit: (JetColor? c) => onCommit(style.copyWith(stroke: c)),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: _PresetDropdown(
+            fieldKey: ValueKey<String>('$keyBase.strokeWidth'),
+            triggerPreview: _LineWidthPreview(width: style.strokeWidth),
+            label: _format(style.strokeWidth),
+            tooltip: l10n.propertiesOutlineWidth,
+            options: <_DropdownOption>[
+              for (final double w in _strokeWidthPresets)
+                _DropdownOption(
+                  optionKey: ValueKey<String>(
+                      '$keyBase.strokeWidth.option.${_format(w)}'),
+                  label: _format(w),
+                  preview: _LineWidthPreview(width: w),
+                  selected: style.strokeWidth == w,
+                  onPick: () => onCommit(style.copyWith(strokeWidth: w)),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}

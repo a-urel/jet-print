@@ -28,6 +28,7 @@ import '../../../domain/report_band.dart' show BandType;
 import '../../../domain/report_definition.dart';
 import '../../../domain/report_element.dart';
 import '../../../domain/report_variable.dart' show JetCalculation;
+import '../../../domain/styles/box_style.dart';
 import '../../../domain/styles/color.dart';
 import '../../../domain/styles/text_style.dart';
 import '../../../domain/watermark.dart';

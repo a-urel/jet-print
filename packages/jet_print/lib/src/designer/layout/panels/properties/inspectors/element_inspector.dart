@@ -461,58 +461,12 @@ extension _ElementInspector on _PropertiesPanelState {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               SectionLabel(l10n.propertiesAppearance),
-              // Fill, outline and width share one label-less row. The two color
-              // boxes are compact swatches distinguished by a leading glyph
-              // (bucket = fill, square = outline); a line has no interior, so it
-              // drops the fill box. Width fills the remaining width.
-              Row(
-                children: <Widget>[
-                  if (element.kind != ShapeKind.line) ...<Widget>[
-                    _ColorField(
-                      keyBase: '$_p.field.fill',
-                      value: element.style.fill,
-                      allowNone: true,
-                      compact: true,
-                      leadingIcon: LucideIcons.paintBucket,
-                      semanticLabel: l10n.propertiesFill,
-                      onCommit: (JetColor? c) => controller.setShapeStyle(
-                          id, element.style.copyWith(fill: c)),
-                    ),
-                    const SizedBox(width: 6),
-                  ],
-                  _ColorField(
-                    keyBase: '$_p.field.stroke',
-                    value: element.style.stroke,
-                    allowNone: true,
-                    compact: true,
-                    leadingIcon: LucideIcons.pen,
-                    semanticLabel: l10n.propertiesOutline,
-                    onCommit: (JetColor? c) => controller.setShapeStyle(
-                        id, element.style.copyWith(stroke: c)),
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: _PresetDropdown(
-                      fieldKey: const ValueKey<String>('$_p.field.strokeWidth'),
-                      triggerPreview:
-                          _LineWidthPreview(width: element.style.strokeWidth),
-                      label: _format(element.style.strokeWidth),
-                      tooltip: l10n.propertiesOutlineWidth,
-                      options: <_DropdownOption>[
-                        for (final double w in _strokeWidthPresets)
-                          _DropdownOption(
-                            optionKey: ValueKey<String>(
-                                '$_p.field.strokeWidth.option.${_format(w)}'),
-                            label: _format(w),
-                            preview: _LineWidthPreview(width: w),
-                            selected: element.style.strokeWidth == w,
-                            onPick: () => controller.setShapeStyle(
-                                id, element.style.copyWith(strokeWidth: w)),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
+              _BoxStyleEditor(
+                keyBase: '$_p.field',
+                style: element.style,
+                onCommit: (JetBoxStyle next) =>
+                    controller.setShapeStyle(id, next),
+                showFill: element.kind != ShapeKind.line,
               ),
             ],
           ),
