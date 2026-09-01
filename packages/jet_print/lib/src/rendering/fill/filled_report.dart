@@ -4,6 +4,7 @@
 /// — 007c extends the stream with group bands.
 library;
 
+import '../../domain/group_level.dart';
 import '../../domain/page_format.dart';
 import '../../domain/report_band.dart';
 import '../../domain/report_element.dart';
@@ -86,8 +87,10 @@ class FilledReport {
     required this.page,
     required List<FilledBand> bands,
     Map<String, JetValue> params = const <String, JetValue>{},
+    List<GroupLevel> syntheticGroups = const <GroupLevel>[],
   })  : bands = List<FilledBand>.unmodifiable(bands),
-        params = Map<String, JetValue>.unmodifiable(params);
+        params = Map<String, JetValue>.unmodifiable(params),
+        syntheticGroups = List<GroupLevel>.unmodifiable(syntheticGroups);
 
   /// The page the report lays out onto.
   final PageFormat page;
@@ -99,6 +102,13 @@ class FilledReport {
   /// (008c). Carried so Layout can resolve `$P{}` in page chrome. Not persisted —
   /// this is the internal IR.
   final Map<String, JetValue> params;
+
+  /// Group levels contributed by planner-built band runs (crosstabs), appended
+  /// to the definition's own groups when the layouter builds its group table.
+  /// Excluded from `==`/`hashCode` for the same reason as [FilledBand.fields]:
+  /// equal designs over equal data imply equal synthetic groups, so including
+  /// them would only churn fill-snapshot goldens.
+  final List<GroupLevel> syntheticGroups;
 
   @override
   bool operator ==(Object other) =>

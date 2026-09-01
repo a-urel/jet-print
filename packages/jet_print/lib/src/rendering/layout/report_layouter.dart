@@ -507,7 +507,13 @@ class ReportLayouter {
     }
 
     // Group lookup keyed by display name (FilledBand.group carries the name).
-    final List<GroupLevel> groups = def.body.root.groups;
+    // Synthetic groups (crosstabs) are appended last, so they become the
+    // innermost levels and nest inside any open master group.
+    final List<GroupLevel> definitionGroups = def.body.root.groups;
+    final List<GroupLevel> groups = <GroupLevel>[
+      ...definitionGroups,
+      ...filled.syntheticGroups,
+    ];
     final Map<String, int> levelOf = <String, int>{
       for (int i = 0; i < groups.length; i++) groups[i].name: i,
     };
@@ -519,7 +525,9 @@ class ReportLayouter {
       for (final GroupLevel g in groups)
         if (g.header != null) g.name,
     };
-    for (final GroupLevel g in groups) {
+    // Synthetic groups carry their header bands in the stream, not in the
+    // model.
+    for (final GroupLevel g in definitionGroups) {
       if ((g.keepTogether || g.reprintHeaderOnEachPage) &&
           !groupsWithHeader.contains(g.name)) {
         diagnostics.info(
