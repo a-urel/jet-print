@@ -431,6 +431,50 @@ void main() {
       // A leaf now spans both of its measure columns.
       expect(_textsOf(headers[0]).first.bounds.width, 100);
     });
+
+    test(
+        'a header level with no cells in a slice still emits a full-height, '
+        'empty band', () {
+      // A slice holding ONLY the grand-total column has no ancestor at the
+      // inner (Quarter) level for that leaf -- `_ancestorId` returns null --
+      // so that level's header band for this slice carries zero elements.
+      // `headerBands` still emits it at the usual `headerRowHeight` (see its
+      // dartdoc): keeping every header level's height uniform across slices
+      // is what lets a horizontal-continuation page's header block still line
+      // up level-for-level with every other slice's.
+      final Crosstab spec = Crosstab(
+        id: 'ct1',
+        rowGroups: const <CrosstabGroup>[_gRegion],
+        columnGroups: <CrosstabGroup>[
+          _gYear.copyWith(showTotal: true),
+          _gQuarter,
+        ],
+        measures: const <CrosstabMeasure>[_amount],
+        style: _style,
+      );
+      final CrosstabMatrix m = CrosstabMatrix(
+        rowAxis: <CrosstabAxisNode>[_n('North')],
+        columnAxis: <CrosstabAxisNode>[
+          _n('2025', children: <CrosstabAxisNode>[
+            _n('Q1', depth: 1),
+            _n('Q2', depth: 1),
+          ]),
+        ],
+        measures: const <CrosstabMeasure>[_amount],
+        cells: const <CrosstabCellKey, JetValue>{},
+      );
+      // budget = 170 - 100 = 70: one 50pt leaf per slice. Q1, Q2 and the
+      // grand total (reserved for Q2's slice but too big to join it) each end
+      // up alone: [Q1] [Q2] [grand total].
+      final CrosstabPlan plan = planCrosstab(spec, m, availableWidth: 170);
+      final List<FilledBand> headers = _headers(plan);
+      expect(headers, hasLength(6)); // 2 levels x 3 slices
+      final FilledBand yearLevelLastSlice = headers[4];
+      final FilledBand quarterLevelLastSlice = headers[5];
+      expect(_labelsOf(yearLevelLastSlice), <String>['∑ Total']);
+      expect(quarterLevelLastSlice.elements, isEmpty);
+      expect(quarterLevelLastSlice.height, _style.headerRowHeight);
+    });
   });
 
   group('row walk', () {
@@ -656,6 +700,63 @@ void main() {
       final CrosstabPlan plan = planCrosstab(spec, m, availableWidth: 600);
       expect(_details(plan).map(_rowLabel),
           containsAll(<String>['Region total', 'All regions']));
+    });
+
+    test(
+        'an explicit totalLabel on a column-axis group synthesises '
+        'value-identical subtotal nodes, each still addressed at its own '
+        "parent's path", () {
+      // With an explicit totalLabel, `_totalLabel` ignores the parent's own
+      // label, so EVERY subtotal `CrosstabAxisNode` this level synthesises
+      // shares the identical label/key/pathKey/depth/children/isTotal --
+      // i.e. two such nodes (one per parent, "2025" and "2026" here) are
+      // VALUE-EQUAL. `_augmentColumns`' leaf map is keyed by IDENTITY exactly
+      // so these don't collide and clobber each other's cell address; a
+      // value-keyed map would let the second overwrite the first, losing
+      // "2025"'s total. The row-axis totalLabel test above can't cover this:
+      // no nodes are synthesised on the row axis.
+      final CrosstabGroup namedQuarter =
+          _gQuarter.copyWith(showTotal: true, totalLabel: () => 'Subtotal');
+      final Crosstab spec = Crosstab(
+        id: 'ct1',
+        rowGroups: const <CrosstabGroup>[_gRegion],
+        columnGroups: <CrosstabGroup>[_gYear, namedQuarter],
+        measures: const <CrosstabMeasure>[_amount],
+        style: _style,
+      );
+      final CrosstabMatrix m = CrosstabMatrix(
+        rowAxis: <CrosstabAxisNode>[_n('North')],
+        columnAxis: <CrosstabAxisNode>[
+          _n('2025', children: <CrosstabAxisNode>[
+            _n('Q1', depth: 1),
+            _n('Q2', depth: 1),
+          ]),
+          _n('2026', children: <CrosstabAxisNode>[
+            _n('Q1', depth: 1),
+            _n('Q2', depth: 1),
+          ]),
+        ],
+        measures: const <CrosstabMeasure>[_amount],
+        cells: <CrosstabCellKey, JetValue>{
+          // Addressed at each PARENT's own path -- what a subtotal column
+          // reads. Distinct values so a clobbered/shared entry is visible.
+          const CrosstabCellKey(<String>['North'], <String>['2025'], 'm/a'):
+              const JetNumber(999),
+          const CrosstabCellKey(<String>['North'], <String>['2026'], 'm/a'):
+              const JetNumber(888),
+        },
+      );
+      final CrosstabPlan plan = planCrosstab(spec, m, availableWidth: 600);
+      final List<FilledBand> headers = _headers(plan);
+      expect(headers, hasLength(2));
+      // Both subtotal columns carry the SAME label -- the value-identity
+      // collision this test targets.
+      expect(_labelsOf(headers[1]),
+          <String>['Q1', 'Q2', 'Subtotal', 'Q1', 'Q2', 'Subtotal']);
+      // Yet each resolves to its OWN parent's aggregated value, not a
+      // shared/clobbered one -- proof the leaf map is identity-keyed.
+      expect(_rowCells(_details(plan).first),
+          <String>['', '', '999.0', '', '', '888.0']);
     });
 
     test('the grand-total column is a trailing depth-0 leaf sliceColumns sees',

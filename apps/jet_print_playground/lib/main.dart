@@ -24,6 +24,7 @@ import 'menu_sample.dart';
 import 'nested_list_sample.dart';
 import 'packing_slip_sample.dart';
 import 'payroll_sample.dart';
+import 'pivot_sample.dart';
 import 'rendered_barcode_example.dart';
 import 'rendered_barcode_gallery_example.dart';
 import 'rendered_invoice_example.dart';
@@ -33,6 +34,7 @@ import 'rendered_menu_example.dart';
 import 'rendered_nested_list_example.dart';
 import 'rendered_packing_slip_example.dart';
 import 'rendered_payroll_example.dart';
+import 'rendered_pivot_example.dart';
 import 'rendered_sales_chart_example.dart';
 import 'sales_chart_sample.dart';
 
@@ -286,6 +288,12 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
                 renderSalesChartDefinition(definition: d, fonts: widget.fonts)),
       ),
       (
+        value: 'pivot',
+        icon: LucideIcons.table,
+        body: tab(pivotDefinition(), pivotSchema,
+            (d) => renderPivotDefinition(definition: d, fonts: widget.fonts)),
+      ),
+      (
         value: 'bos',
         icon: LucideIcons.squareDashed,
         body: tab(emptyDesignDefinition(), null,
@@ -313,6 +321,7 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
       l10n.tabMenu,
       'Custom',
       'Sales Chart',
+      'Sales Pivot',
       l10n.tabEmpty,
     ];
 

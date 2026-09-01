@@ -126,6 +126,59 @@ void main() {
     expect(node, isA<BandNode>());
   });
 
+  test(
+      'the crosstab domain types build a Crosstab-bearing scope from the '
+      'public surface (046)', () {
+    const Crosstab ct = Crosstab(
+      id: 'ct1',
+      rowGroups: <CrosstabGroup>[
+        CrosstabGroup(
+          id: 'g-region',
+          name: 'Region',
+          expression: r'$F{region}',
+          sort: CrosstabSort.descending,
+        ),
+      ],
+      columnGroups: <CrosstabGroup>[
+        CrosstabGroup(id: 'g-year', name: 'Year', expression: r'$F{year}'),
+      ],
+      measures: <CrosstabMeasure>[
+        CrosstabMeasure(
+          id: 'm-amount',
+          name: 'Amount',
+          expression: r'$F{amount}',
+          aggregate: JetCalculation.sum,
+        ),
+      ],
+      style: CrosstabStyle(measureColumnWidth: 72),
+    );
+    final ReportDefinition def = ReportDefinition(
+      name: 'Pivot',
+      page: PageFormat.a4Portrait,
+      body: ReportBody(
+        root: DetailScope(id: 'root', children: <ScopeNode>[CrosstabNode(ct)]),
+      ),
+    );
+    final ScopeNode node = def.body.root.children.single;
+    expect(node, isA<CrosstabNode>());
+    expect((node as CrosstabNode).crosstab.rowGroups.single.sort,
+        CrosstabSort.descending);
+    expect(ct.style.measureColumnWidth, 72);
+    // A clean, root-scope crosstab validates without errors.
+    expect(
+      validate(def)
+          .where((Diagnostic d) => d.severity == DiagnosticSeverity.error),
+      isEmpty,
+    );
+  });
+
+  test('UnknownScopeNode preserves an unrecognized scope node kind (046)', () {
+    const UnknownScopeNode node =
+        UnknownScopeNode(rawJson: <String, Object?>{'kind': 'futureScope'});
+    expect(node, isA<ScopeNode>());
+    expect(node.kind, 'futureScope');
+  });
+
   test('validate() is public and returns Diagnostics for the reified model',
       () {
     // A clean definition yields no errors; a duplicate group name is flagged.

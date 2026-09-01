@@ -71,6 +71,7 @@ void main() {
         'Ledger',
         'Menu',
         'Custom',
+        'Sales Pivot',
       ]) {
         expect(navItem(label), findsOneWidget, reason: '"$label" nav entry');
       }
@@ -146,6 +147,7 @@ void main() {
         'Ledger',
         'Menu',
         'Custom',
+        'Sales Pivot',
         'Empty',
       ]) {
         expect(navItem(label), findsOneWidget, reason: '"$label" nav entry');

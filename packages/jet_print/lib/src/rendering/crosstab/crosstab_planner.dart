@@ -516,6 +516,14 @@ class _Emitter {
   /// The `groupHeader` bands for [slice]: one per column-group level,
   /// outermost first, plus a measure-name band when there are two or more
   /// measures (with one measure the leaf header already names the column).
+  ///
+  /// A level whose columns in this slice have no ancestor there (e.g. a slice
+  /// holding only the grand total under a multi-level axis) still emits its
+  /// header band at the usual [CrosstabStyle.headerRowHeight] with zero
+  /// elements, rather than being omitted or shrunk — that keeps every header
+  /// level's height uniform across slices, so a horizontal-continuation
+  /// page's header block still lines up level-for-level with every other
+  /// slice's.
   List<FilledBand> headerBands(CrosstabSlice slice) {
     final List<double> xs = _xOffsets(slice);
     final List<FilledBand> bands = <FilledBand>[];

@@ -85,6 +85,10 @@ export 'src/designer/preview/jet_report_preview.dart' show JetReportPreview;
 export 'src/domain/band.dart' show Band;
 export 'src/domain/bool_property.dart' show BoolProperty;
 export 'src/domain/column_layout.dart' show ColumnLayout;
+export 'src/domain/crosstab/crosstab.dart';
+export 'src/domain/crosstab/crosstab_group.dart';
+export 'src/domain/crosstab/crosstab_measure.dart';
+export 'src/domain/crosstab/crosstab_style.dart';
 export 'src/domain/detail_scope.dart'
     show
         BandNode,
