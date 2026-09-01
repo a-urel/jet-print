@@ -139,6 +139,29 @@ void main() {
     expect(onlyCrosstab(c).style.cellText?.align, JetTextAlign.right);
   });
 
+  testWidgets(
+      'each role has its own align control, not one shared by all three',
+      (WidgetTester tester) async {
+    // _StyleToggleGroup/_AlignSegments used to build their segment keys from
+    // a hardcoded '$_p.field...' prefix rather than the caller's keyBase —
+    // invisible while only one _TextStyleEditor was ever on screen at once,
+    // but the crosstab inspector shows three simultaneously (Header, Cells,
+    // Totals). Fixed to thread keyBase through; this pins that each role's
+    // align control is independently addressable and distinct from the
+    // others', not a single widget the finder happens to hit three times.
+    await pumpDesignerWithCrosstab(tester);
+
+    final Finder header = findPanelKey('crosstab.header.align.center');
+    final Finder cells = findPanelKey('crosstab.cells.align.center');
+    expect(header, findsOneWidget);
+    expect(cells, findsOneWidget);
+    expect(
+      tester.widget(header).key,
+      isNot(tester.widget(cells).key),
+      reason: 'each role must own a distinct align key, not collide on one',
+    );
+  });
+
   testWidgets('an unstyled crosstab shows inherited values, not blanks',
       (WidgetTester tester) async {
     await pumpDesignerWithCrosstab(tester);

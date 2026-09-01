@@ -481,7 +481,14 @@ class _FontFamilyRow extends StatelessWidget {
 /// until the toggle is operated (clarification #1). Italic and underline map
 /// 1:1 to their booleans. Every press is one whole-style commit.
 class _StyleToggleGroup extends StatelessWidget {
-  const _StyleToggleGroup({required this.style, required this.onCommit});
+  const _StyleToggleGroup(
+      {required this.keyBase, required this.style, required this.onCommit});
+
+  /// Prefix for the three segment keys: `'$keyBase.bold'`, `.italic`,
+  /// `.underline` — the same composition [_TextStyleEditor]'s other children
+  /// use, so multiple simultaneous instances (e.g. the crosstab style
+  /// sections) don't collide on one hardcoded key.
+  final String keyBase;
 
   final JetTextStyle style;
   final ValueChanged<JetTextStyle> onCommit;
@@ -494,7 +501,7 @@ class _StyleToggleGroup extends StatelessWidget {
     return _SegmentTray(
       children: <Widget>[
         _IconSegment(
-          segmentKey: const ValueKey<String>('$_p.field.bold'),
+          segmentKey: ValueKey<String>('$keyBase.bold'),
           icon: LucideIcons.bold,
           label: l10n.fontBoldTooltip,
           active: bold,
@@ -504,7 +511,7 @@ class _StyleToggleGroup extends StatelessWidget {
         ),
         const SizedBox(width: 2),
         _IconSegment(
-          segmentKey: const ValueKey<String>('$_p.field.italic'),
+          segmentKey: ValueKey<String>('$keyBase.italic'),
           icon: LucideIcons.italic,
           label: l10n.fontItalicTooltip,
           active: style.italic,
@@ -513,7 +520,7 @@ class _StyleToggleGroup extends StatelessWidget {
         ),
         const SizedBox(width: 2),
         _IconSegment(
-          segmentKey: const ValueKey<String>('$_p.field.underline'),
+          segmentKey: ValueKey<String>('$keyBase.underline'),
           icon: LucideIcons.underline,
           label: l10n.fontUnderlineTooltip,
           active: style.underline,
@@ -533,7 +540,13 @@ class _StyleToggleGroup extends StatelessWidget {
 /// 2026-06-13 — justified rendering is a follow-up). Selecting the active
 /// segment is a no-op, mirroring [_OrientationToggle].
 class _AlignSegments extends StatelessWidget {
-  const _AlignSegments({required this.align, required this.onCommit});
+  const _AlignSegments(
+      {required this.keyBase, required this.align, required this.onCommit});
+
+  /// Prefix for the three segment keys: `'$keyBase.align.left'`, `.center`,
+  /// `.right` — see [_StyleToggleGroup.keyBase] for why this must not be a
+  /// hardcoded literal.
+  final String keyBase;
 
   final JetTextAlign align;
   final ValueChanged<JetTextAlign> onCommit;
@@ -546,7 +559,7 @@ class _AlignSegments extends StatelessWidget {
         {required bool expanded}) {
       final bool active = align == value;
       final Widget child = _IconSegment(
-        segmentKey: ValueKey<String>('$_p.field.align.$name'),
+        segmentKey: ValueKey<String>('$keyBase.align.$name'),
         icon: icon,
         label: label,
         active: active,

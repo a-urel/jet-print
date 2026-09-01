@@ -90,10 +90,12 @@ class _TextStyleEditor extends StatelessWidget {
         const SizedBox(height: 4),
         Row(
           children: <Widget>[
-            _StyleToggleGroup(style: style, onCommit: onCommit),
+            _StyleToggleGroup(
+                keyBase: keyBase, style: style, onCommit: onCommit),
             const SizedBox(width: 8),
             Expanded(
               child: _AlignSegments(
+                keyBase: keyBase,
                 align: style.align,
                 onCommit: (JetTextAlign a) =>
                     onCommit(style.copyWith(align: a)),
