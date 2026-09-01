@@ -29,6 +29,13 @@ extension CtrlSelection on JetReportDesignerController {
     _setSelection(Selection.scope(scopeId));
   }
 
+  /// Selects the crosstab with stable id [crosstabId] (spec B). An unknown id
+  /// is ignored.
+  void selectCrosstab(String crosstabId) {
+    if (findCrosstab(_document.definition, crosstabId) == null) return;
+    _setSelection(Selection.crosstab(crosstabId));
+  }
+
   /// Selects the report/page itself (replacing any prior selection).
   void selectReport() => _setSelection(Selection.report());
 

@@ -48,6 +48,46 @@ void main() {
     expect(Selection.band('ph').hashCode, Selection.band('ph').hashCode);
   });
 
+  // Spec B: a crosstab is the fifth target. The invariant "exactly one of
+  // five" is enforced by hand in the factories, ==, and toString, so it is
+  // pinned here rather than trusted.
+  test('every factory produces exactly one non-empty target', () {
+    final List<Selection> all = <Selection>[
+      Selection.of(<String>['e1']),
+      Selection.band('b1'),
+      Selection.group('g1'),
+      Selection.scope('s1'),
+      Selection.crosstab('ct1'),
+      Selection.report(),
+    ];
+    for (final Selection s in all) {
+      final int targets = (s.ids.isNotEmpty ? 1 : 0) +
+          (s.bandId != null ? 1 : 0) +
+          (s.groupId != null ? 1 : 0) +
+          (s.scopeId != null ? 1 : 0) +
+          (s.crosstabId != null ? 1 : 0) +
+          (s.isReport ? 1 : 0);
+      expect(targets, 1, reason: '$s');
+      expect(s.isEmpty, isFalse, reason: '$s');
+    }
+    for (int i = 0; i < all.length; i++) {
+      for (int j = i + 1; j < all.length; j++) {
+        expect(all[i] == all[j], isFalse, reason: '${all[i]} vs ${all[j]}');
+      }
+    }
+  });
+
+  test('a crosstab selection carries its id and nothing else', () {
+    final Selection s = Selection.crosstab('ct1');
+    expect(s.crosstabId, 'ct1');
+    expect(s.toString(), contains('ct1'));
+    expect(Selection.crosstab('ct1'), equals(Selection.crosstab('ct1')));
+    expect(
+        Selection.crosstab('ct1').hashCode, Selection.crosstab('ct1').hashCode);
+    expect(Selection.empty.crosstabId, isNull);
+    expect(s.including('e1').crosstabId, isNull);
+  });
+
   test('extending a band selection with an element switches to elements', () {
     final Selection s = Selection.band('detail').including('e1');
     expect(s.bandId, isNull);

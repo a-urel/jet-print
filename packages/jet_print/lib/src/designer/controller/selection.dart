@@ -1,15 +1,16 @@
 /// The current designer selection: a set of elements, a single band, a single
-/// group, a single scope, or the whole report/page.
+/// group, a single scope, a single crosstab, or the whole report/page.
 library;
 
 /// An immutable selection target.
 ///
 /// A selection is exactly one of: a set of element `id`s (the common case), a
 /// single band (by stable [bandId]), a single group (by [groupId]), a single
-/// scope (by [scopeId]), or the report/page itself. They are mutually
-/// exclusive — the factories guarantee it — so a band/group/scope/report
-/// selection always carries an empty [ids], and an element selection carries
-/// null ids for the others and a false [isReport].
+/// scope (by [scopeId]), a single crosstab (by [crosstabId]), or the
+/// report/page itself. They are mutually exclusive — the factories guarantee
+/// it — so a band/group/scope/crosstab/report selection always carries an
+/// empty [ids], and an element selection carries null ids for the others and a
+/// false [isReport].
 ///
 /// Reification (spec 024): a band, group, and scope are now addressed by their
 /// **stable id**, not a flat list index — so a selection stays valid across
@@ -25,6 +26,7 @@ class Selection {
     this.bandId,
     this.groupId,
     this.scopeId,
+    this.crosstabId,
     this.isReport = false,
   });
 
@@ -50,6 +52,10 @@ class Selection {
   factory Selection.scope(String scopeId) =>
       Selection._(const <String>[], scopeId: scopeId);
 
+  /// Selects the crosstab with stable id [crosstabId] (and nothing else).
+  factory Selection.crosstab(String crosstabId) =>
+      Selection._(const <String>[], crosstabId: crosstabId);
+
   /// Selects the report/page itself (and nothing else).
   factory Selection.report() => const Selection._(<String>[], isReport: true);
 
@@ -69,6 +75,10 @@ class Selection {
   /// The selected scope's stable id, or null when a scope is not the target.
   final String? scopeId;
 
+  /// The selected crosstab's stable id, or null when a crosstab is not the
+  /// target (spec B).
+  final String? crosstabId;
+
   /// Whether the report/page itself is the selection target.
   final bool isReport;
 
@@ -78,12 +88,13 @@ class Selection {
       bandId == null &&
       groupId == null &&
       scopeId == null &&
+      crosstabId == null &&
       !isReport;
 
   /// Whether anything is selected.
   bool get isNotEmpty => !isEmpty;
 
-  /// The number of selected elements (0 for a band/group/scope/report target).
+  /// The number of selected elements (0 for a non-element target).
   int get length => ids.length;
 
   /// The lone selected element id when exactly one element is selected, else
@@ -111,6 +122,7 @@ class Selection {
         other.bandId != bandId ||
         other.groupId != groupId ||
         other.scopeId != scopeId ||
+        other.crosstabId != crosstabId ||
         other.isReport != isReport ||
         other.ids.length != ids.length) {
       return false;
@@ -122,8 +134,8 @@ class Selection {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(Object.hashAll(ids), bandId, groupId, scopeId, isReport);
+  int get hashCode => Object.hash(
+      Object.hashAll(ids), bandId, groupId, scopeId, crosstabId, isReport);
 
   @override
   String toString() {
@@ -131,6 +143,7 @@ class Selection {
     if (bandId != null) return 'Selection(band $bandId)';
     if (groupId != null) return 'Selection(group $groupId)';
     if (scopeId != null) return 'Selection(scope $scopeId)';
+    if (crosstabId != null) return 'Selection(crosstab $crosstabId)';
     return 'Selection($ids)';
   }
 }
