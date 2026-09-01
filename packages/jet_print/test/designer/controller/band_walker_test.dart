@@ -245,7 +245,7 @@ void main() {
       expect(findScope(removed, 'lines')?.totals.length, 1);
     });
 
-    test('reorderScopeChild preserves the footer + totals', () {
+    test('reorderScopeNode preserves the footer + totals', () {
       // Add a second per-row band so there is something to reorder.
       final ReportDefinition base = defWithFooter();
       final DetailScope lines = findScope(base, 'lines')!;
@@ -259,7 +259,7 @@ void main() {
             : s,
       );
       final ReportDefinition reordered =
-          reorderScopeChild(withTwo, 'lines', 'lineRow2', -1);
+          reorderScopeNode(withTwo, 'lines', 'lineRow2', -1);
       expect(findBand(reordered, 'lf'), isNotNull);
       expect(findScope(reordered, 'lines')?.footer?.id, 'lf');
       expect(findScope(reordered, 'lines')?.totals.length, 1);
@@ -419,6 +419,25 @@ void main() {
       expect(root.children.whereType<CrosstabNode>().length, 1);
       expect(root.children.whereType<CrosstabNode>().single.crosstab, ct);
       expect(root.children.whereType<BandNode>().length, 1);
+    });
+
+    // A crosstab's position among its siblings is semantic (spec A decision
+    // 7): above the first row-producing node it prints once BEFORE the row
+    // loop, below it once after. Reorder therefore has to move a crosstab,
+    // not only a band.
+    test('reorderScopeNode moves a crosstab among its siblings', () {
+      final ReportDefinition moved = reorderScopeNode(def, 'root', 'ct1', -1);
+      final List<ScopeNode> children = moved.body.root.children;
+      expect(children.first, isA<CrosstabNode>());
+      expect(children.last, isA<BandNode>());
+    });
+
+    test('reorderScopeNode still moves a band, and clamps to a no-op', () {
+      expect(reorderScopeNode(def, 'root', 'detail', 1).body.root.children.last,
+          isA<BandNode>());
+      expect(reorderScopeNode(def, 'root', 'detail', -1), def,
+          reason: 'a clamped move must leave the definition value-equal');
+      expect(reorderScopeNode(def, 'root', 'nope', 1), def);
     });
   });
 

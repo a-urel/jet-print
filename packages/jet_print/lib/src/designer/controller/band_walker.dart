@@ -607,18 +607,27 @@ ReportDefinition removeBandFromTree(ReportDefinition def, String bandId) {
   });
 }
 
-/// Moves the per-row band [bandId] by [delta] positions within scope [scopeId]'s
+/// Moves the child node [nodeId] by [delta] positions within scope [scopeId]'s
 /// ordered [DetailScope.children] (negative = toward the front), clamped to the
-/// list bounds. A no-op if the band isn't a [BandNode] of that scope, or the
-/// move clamps to its current position.
-ReportDefinition reorderScopeChild(
-        ReportDefinition def, String scopeId, String bandId, int delta) =>
+/// list bounds. A no-op if that scope has no such child, or the move clamps to
+/// its current position.
+///
+/// Every node kind moves, addressed by its own id: a [BandNode] by its band id,
+/// a [NestedScope] by its scope id, and a [CrosstabNode] by its crosstab id —
+/// whose position is semantic, since a crosstab above the first row-producing
+/// sibling prints once before the row loop and below it once after. An
+/// [UnknownScopeNode] carries no id this build can read, so it never matches
+/// (it still rides along in the list, keeping its relative position).
+ReportDefinition reorderScopeNode(
+        ReportDefinition def, String scopeId, String nodeId, int delta) =>
     mapScopes(def, (DetailScope s) {
       if (s.id != scopeId) return s;
-      // Predicate, not dispatch: any other node kind correctly fails this
-      // test.
-      final int idx = s.children
-          .indexWhere((ScopeNode n) => n is BandNode && n.band.id == bandId);
+      final int idx = s.children.indexWhere((ScopeNode n) => switch (n) {
+            BandNode(band: final Band b) => b.id == nodeId,
+            NestedScope(scope: final DetailScope inner) => inner.id == nodeId,
+            CrosstabNode(crosstab: final Crosstab ct) => ct.id == nodeId,
+            UnknownScopeNode() => false,
+          });
       if (idx < 0) return s;
       final int target = (idx + delta).clamp(0, s.children.length - 1);
       if (target == idx) return s;

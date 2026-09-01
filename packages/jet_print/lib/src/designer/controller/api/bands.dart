@@ -112,7 +112,7 @@ extension CtrlBands on JetReportDesignerController {
     _commit(DefinitionEditCommand(
       label: 'Reorder band',
       transform: (ReportDefinition d) =>
-          reorderScopeChild(d, scope.id, bandId, delta),
+          reorderScopeNode(d, scope.id, bandId, delta),
     ));
   }
 
