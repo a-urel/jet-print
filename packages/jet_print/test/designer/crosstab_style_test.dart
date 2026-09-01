@@ -162,6 +162,39 @@ void main() {
     );
   });
 
+  testWidgets(
+      'Totals cascades through Cells before the bare default, and the panel '
+      'shows what it would actually render', (WidgetTester tester) async {
+    // `_totalCellText`/`_cellBoxStyle` in crosstab_planner.dart resolve an
+    // unset totalText/totalBox through style.cellText/cellBox BEFORE the bare
+    // default — a two-hop cascade, not the one-hop "fall straight to the
+    // default" the Totals section's effectiveText/effectiveBox wrongly used
+    // to encode. Style Cells and leave Totals untouched: Totals must display
+    // the Cells value it will actually cascade to and render with, not
+    // _kCrosstabCellDefault.
+    await pumpDesignerWithCrosstab(tester);
+
+    await _tapVisible(tester, findPanelKey('crosstab.cells.fontSize'));
+    await _tapVisible(
+        tester, findPanelKey('crosstab.cells.fontSize.option.24'));
+    expect(
+      valueInPanelKey('crosstab.totals.fontSize', '24'),
+      isTrue,
+      reason: "Totals' text editor must mirror the Cells style it will "
+          'actually cascade to, not the bare default',
+    );
+
+    await _tapVisible(tester, findPanelKey('crosstab.cells.strokeWidth'));
+    await _tapVisible(
+        tester, findPanelKey('crosstab.cells.strokeWidth.option.3'));
+    expect(
+      valueInPanelKey('crosstab.totals.strokeWidth', '3'),
+      isTrue,
+      reason: "Totals' box editor must mirror the Cells box it will "
+          'actually cascade to, not the bare default',
+    );
+  });
+
   testWidgets('an unstyled crosstab shows inherited values, not blanks',
       (WidgetTester tester) async {
     await pumpDesignerWithCrosstab(tester);

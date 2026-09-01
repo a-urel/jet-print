@@ -127,8 +127,14 @@ extension _CrosstabInspector on _PropertiesPanelState {
               keyBase: '$_p.crosstab.totals',
               text: ct.style.totalText,
               box: ct.style.totalBox,
-              effectiveText: _kCrosstabCellDefault,
-              effectiveBox: JetBoxStyle.none,
+              // Totals cascades through Cells before the bare default
+              // (`_totalCellText`/`_cellBoxStyle` in crosstab_planner.dart):
+              // an unset totalText/totalBox falls to cellText/cellBox first,
+              // and only then to _kCrosstabCellDefault/JetBoxStyle.none. The
+              // effective value shown here must be what the planner will
+              // actually resolve, not the bare default one hop early.
+              effectiveText: ct.style.cellText ?? _kCrosstabCellDefault,
+              effectiveBox: ct.style.cellBox ?? JetBoxStyle.none,
               onText: (JetTextStyle s) => controller.setCrosstabStyle(
                   crosstabId, ct.style.copyWith(totalText: () => s)),
               onBox: (JetBoxStyle s) => controller.setCrosstabStyle(

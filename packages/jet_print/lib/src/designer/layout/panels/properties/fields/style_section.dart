@@ -204,10 +204,16 @@ class _BoxStyleEditor extends StatelessWidget {
 const JetTextStyle _kCrosstabHeaderDefault =
     JetTextStyle(align: JetTextAlign.center);
 
-/// The panel's mirror of the planner's default for value cells — right
-/// aligned, per spec A §3. Shared by the Cells and Totals roles: an unset
-/// `totalText` cascades to the cell style for total VALUES (total labels take
-/// the left-aligned row-label style, the same dual fallback headerText has).
+/// The panel's mirror of the planner's BARE default for value cells — right
+/// aligned, per spec A §3 — the value an unset slot falls back to only once
+/// there is no styled layer above it. The Cells role falls back to this
+/// directly. The Totals role does NOT: `_totalCellText`/`_cellBoxStyle` in
+/// crosstab_planner.dart resolve an unset total VALUE style through
+/// `style.cellText`/`cellBox` first, so the Totals role's effective value
+/// (wired in `crosstab_inspector.dart`) is `cellText ?? _kCrosstabCellDefault`
+/// — this constant only when Cells is unset too. (Total LABELS take the
+/// left-aligned row-label style instead, the same dual fallback headerText
+/// has.)
 const JetTextStyle _kCrosstabCellDefault =
     JetTextStyle(align: JetTextAlign.right);
 
