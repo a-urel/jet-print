@@ -146,10 +146,13 @@ List<CrosstabSlice> sliceColumns(
     if (currentWidth + leafWidth <= budget) {
       appendLeaf(grandTotalLeaf);
     } else {
-      // The reservation above could not secure room for the total after all
-      // (e.g. the last data leaf's own block, plus the total, exceeds the
-      // whole budget) — accepted pathology, not silent: it prints on its own
-      // continuation page and a diagnostic says so.
+      // The total does not fit in whatever room is left in `current` — either
+      // the reservation above could not secure enough of it (e.g. the last
+      // data leaf's own block, plus the total, exceeds the whole budget), or
+      // there were no data leaves at all and the total's own width alone
+      // exceeds the budget. Either way this is accepted pathology, not
+      // silent: it prints on its own continuation page and a diagnostic says
+      // so.
       if (current.isNotEmpty) {
         slices.add(CrosstabSlice(index: slices.length, columns: current));
         current = <CrosstabColumn>[];
@@ -158,8 +161,8 @@ List<CrosstabSlice> sliceColumns(
       appendLeaf(grandTotalLeaf);
       diagnostics.add(const Diagnostic(
         DiagnosticSeverity.warning,
-        'crosstab grand total does not fit alongside the last data column '
-        'group and was placed on its own continuation page',
+        'crosstab grand total does not fit in the available width and was '
+        'placed on its own continuation page',
       ));
     }
   }
