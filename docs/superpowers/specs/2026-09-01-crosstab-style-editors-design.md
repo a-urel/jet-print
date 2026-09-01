@@ -188,6 +188,27 @@ imported from the planner, exactly as the width warning re-derives its geometry 
 §4): the render layer is not a designer dependency, and the panel must work with no data source
 attached.
 
+**Two roles have a dual fallback, and the section displays the dominant one.** `headerText` and
+`totalText` are each read at two sites with different defaults while unset:
+
+| Slot | Site | Default while null |
+|---|---|---|
+| `headerText` | column headers (`_columnHeaderText`) | `JetTextStyle(align: center)` — **displayed** |
+| `headerText` | the row-label stub column (`_rowLabelText`) | `JetTextStyle.fallback` (left) |
+| `totalText` | total *values* (`_totalCellText`) | `JetTextStyle(align: right)` — **displayed** |
+| `totalText` | total *labels* (`_totalLabelText`) | cascades to `_rowLabelText` (left) |
+
+The section shows the first of each pair: column headers outnumber the single row-label column, and
+total values outnumber their labels. The approximation is confined to alignment, and it is
+self-correcting — the planner's own comment records that "an authored `headerText` is honoured as
+written, alignment included", so **both sites collapse to the authored value the moment the slot
+stops being null**. The preview is therefore inexact only while it is a preview; it becomes exact
+at the first edit.
+
+This is documented in the code, not merely here: the alternative (showing two alignments per role,
+or splitting Header into two sections) would expose a renderer-internal distinction that disappears
+as soon as the author touches it.
+
 **This mirroring is the one real risk in this spec** — the defaults are stated in two places and can
 drift. Mitigation: a test asserts the panel's fallbacks equal the planner's for all three roles, so
 a change to either side fails loudly rather than silently showing an author the wrong inherited
@@ -234,7 +255,8 @@ hand-edited):
 | First edit materializes | Editing header text on an untouched crosstab writes a concrete `headerText` and leaves the other five slots null |
 | Reset clears | Reset writes `null` back, and the section returns to showing inherited values |
 | Reset is conditional | The reset action is absent on an untouched role and present once either slot is set |
-| Panel/planner defaults agree | The panel's fallback for each of the three roles equals the planner's resolved default |
+| Panel/planner defaults agree | The panel's fallback for each of the three roles equals the planner's dominant default: `align: center` for Header, `align: right` for Cells and Totals |
+| Dual fallback collapses on edit | Authoring `headerText` makes `_columnHeaderText` and `_rowLabelText` resolve to the same style — the preview's approximation ends at the first edit |
 | Measure override cascades | A measure's inherited value is the crosstab's `cellText`, not the renderer default |
 | One undo step per change | Each committed edit is a single undoable step, as bands and elements already are |
 | Codec is untouched | A crosstab with no authored appearance round-trips byte-identically |
