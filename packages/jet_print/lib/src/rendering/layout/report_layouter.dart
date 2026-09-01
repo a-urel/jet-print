@@ -521,8 +521,12 @@ class ReportLayouter {
       for (final GroupLevel g in groups) g.name: g,
     };
 
+    // Scoped to definitionGroups, not the unioned groups: its only consumer
+    // is the exemption loop below, which is itself scoped to definitionGroups
+    // (a synthetic group's header lives in the band stream, never on
+    // GroupLevel.header, so it could never appear in this set anyway).
     final Set<String> groupsWithHeader = <String>{
-      for (final GroupLevel g in groups)
+      for (final GroupLevel g in definitionGroups)
         if (g.header != null) g.name,
     };
     // Synthetic groups carry their header bands in the stream, not in the

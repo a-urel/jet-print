@@ -31,29 +31,21 @@ import 'package:jet_print/src/rendering/crosstab/crosstab_matrix.dart';
 import 'package:jet_print/src/rendering/crosstab/crosstab_planner.dart';
 import 'package:jet_print/src/rendering/fill/filled_report.dart';
 
+import 'crosstab_fixtures.dart';
+
 // ---------------------------------------------------------------------------
 // Hand-built fixtures
 // ---------------------------------------------------------------------------
 
+/// [axisNode], scoped under this file's original helper name.
 CrosstabAxisNode _n(
   String k, {
   int depth = 0,
   List<CrosstabAxisNode> children = const <CrosstabAxisNode>[],
 }) =>
-    CrosstabAxisNode(
-      key: JetString(k),
-      pathKey: k,
-      label: k,
-      depth: depth,
-      children: children,
-    );
+    axisNode(k, depth: depth, children: children);
 
-const CrosstabMeasure _amount = CrosstabMeasure(
-  id: 'm/a',
-  name: 'Amount',
-  expression: r'$F{amount}',
-  aggregate: JetCalculation.sum,
-);
+const CrosstabMeasure _amount = amountMeasure;
 
 const CrosstabMeasure _units = CrosstabMeasure(
   id: 'm/u',
@@ -65,31 +57,17 @@ const CrosstabMeasure _units = CrosstabMeasure(
 // The base fixtures deliberately switch every total OFF, so the plain-shape
 // tests below pin the no-total shape exactly; the totals group switches them
 // back on.
-const CrosstabGroup _gRegion = CrosstabGroup(
-    id: 'g/r', name: 'Region', expression: r'$F{region}', showTotal: false);
+const CrosstabGroup _gRegion = regionGroup;
 const CrosstabGroup _gCity = CrosstabGroup(
     id: 'g/city', name: 'City', expression: r'$F{city}', showTotal: false);
-const CrosstabGroup _gQuarter = CrosstabGroup(
-    id: 'g/q', name: 'Quarter', expression: r'$F{quarter}', showTotal: false);
+const CrosstabGroup _gQuarter = quarterGroup;
 const CrosstabGroup _gYear = CrosstabGroup(
     id: 'g/y', name: 'Year', expression: r'$F{year}', showTotal: false);
 
-const CrosstabStyle _style = CrosstabStyle(
-  rowLabelWidth: 100,
-  rowLabelIndent: 12,
-  measureColumnWidth: 50,
-  rowHeight: 14,
-  headerRowHeight: 20,
-);
+const CrosstabStyle _style = crosstabStyle;
 
 /// A single-level crosstab, 50pt columns, 100pt row labels, no totals.
-const Crosstab ct = Crosstab(
-  id: 'ct1',
-  rowGroups: <CrosstabGroup>[_gRegion],
-  columnGroups: <CrosstabGroup>[_gQuarter],
-  measures: <CrosstabMeasure>[_amount],
-  style: _style,
-);
+const Crosstab ct = baseCrosstab;
 
 /// North/South x Q1/Q2, fully populated.
 final CrosstabMatrix matrix = CrosstabMatrix(

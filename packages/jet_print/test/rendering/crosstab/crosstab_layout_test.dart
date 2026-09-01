@@ -6,17 +6,13 @@
 // filler involved yet — so the layouter is exercised in isolation from the
 // aggregator/fill seam.
 import 'package:flutter_test/flutter_test.dart';
-import 'package:jet_print/src/domain/crosstab/crosstab.dart';
-import 'package:jet_print/src/domain/crosstab/crosstab_group.dart';
 import 'package:jet_print/src/domain/crosstab/crosstab_measure.dart';
-import 'package:jet_print/src/domain/crosstab/crosstab_style.dart';
 import 'package:jet_print/src/domain/detail_scope.dart';
 import 'package:jet_print/src/domain/diagnostic.dart';
 import 'package:jet_print/src/domain/page_format.dart';
 import 'package:jet_print/src/domain/report_band.dart';
 import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/domain/report_element.dart';
-import 'package:jet_print/src/domain/report_variable.dart' show JetCalculation;
 import 'package:jet_print/src/expression/value.dart';
 import 'package:jet_print/src/rendering/crosstab/crosstab_matrix.dart';
 import 'package:jet_print/src/rendering/crosstab/crosstab_planner.dart';
@@ -26,57 +22,28 @@ import 'package:jet_print/src/rendering/frame/primitive.dart';
 import 'package:jet_print/src/rendering/layout/report_layouter.dart';
 import 'package:jet_print/src/rendering/text/text_measurer.dart';
 
+import 'crosstab_fixtures.dart';
+
 // ---------------------------------------------------------------------------
-// Fixtures — a one-level-by-one-level crosstab, sized for pagination tests.
+// Plan builders — pagination-specific, over the shared base crosstab
+// (`baseCrosstab`/`axisNode`/`amountMeasure`, see crosstab_fixtures.dart).
 // ---------------------------------------------------------------------------
-
-CrosstabAxisNode _n(String key) =>
-    CrosstabAxisNode(key: JetString(key), pathKey: key, label: key, depth: 0);
-
-const CrosstabMeasure _amount = CrosstabMeasure(
-  id: 'm/a',
-  name: 'Amount',
-  expression: r'$F{amount}',
-  aggregate: JetCalculation.sum,
-);
-
-const CrosstabGroup _gRegion = CrosstabGroup(
-    id: 'g/r', name: 'Region', expression: r'$F{region}', showTotal: false);
-const CrosstabGroup _gQuarter = CrosstabGroup(
-    id: 'g/q', name: 'Quarter', expression: r'$F{quarter}', showTotal: false);
-
-/// 50pt measure columns, 100pt row labels, 20pt header row, 14pt data row.
-const CrosstabStyle _style = CrosstabStyle(
-  rowLabelWidth: 100,
-  rowLabelIndent: 12,
-  measureColumnWidth: 50,
-  rowHeight: 14,
-  headerRowHeight: 20,
-);
-
-const Crosstab _ct = Crosstab(
-  id: 'ct1',
-  rowGroups: <CrosstabGroup>[_gRegion],
-  columnGroups: <CrosstabGroup>[_gQuarter],
-  measures: <CrosstabMeasure>[_amount],
-  style: _style,
-);
 
 /// A crosstab with [n] row leaves and a single column leaf labelled 'Q1' —
 /// wide enough that `sliceColumns` never splits it, so only vertical
 /// pagination is exercised.
 CrosstabPlan _planWithRows(int n) {
   final CrosstabMatrix m = CrosstabMatrix(
-    rowAxis: <CrosstabAxisNode>[for (int i = 0; i < n; i++) _n('R$i')],
-    columnAxis: <CrosstabAxisNode>[_n('Q1')],
-    measures: const <CrosstabMeasure>[_amount],
+    rowAxis: <CrosstabAxisNode>[for (int i = 0; i < n; i++) axisNode('R$i')],
+    columnAxis: <CrosstabAxisNode>[axisNode('Q1')],
+    measures: const <CrosstabMeasure>[amountMeasure],
     cells: <CrosstabCellKey, JetValue>{
       for (int i = 0; i < n; i++)
         CrosstabCellKey(<String>['R$i'], const <String>['Q1'], 'm/a'):
             JetNumber(i.toDouble()),
     },
   );
-  return planCrosstab(_ct, m, availableWidth: 500);
+  return planCrosstab(baseCrosstab, m, availableWidth: 500);
 }
 
 /// A single-row crosstab with four column leaves, packed two-per-slice at
@@ -87,25 +54,31 @@ CrosstabPlan _planWithRows(int n) {
 /// the next page.
 CrosstabPlan _planWithSlices({required double availableWidth}) {
   final CrosstabMatrix m = CrosstabMatrix(
-    rowAxis: <CrosstabAxisNode>[_n('OnlyRow')],
-    columnAxis: <CrosstabAxisNode>[for (int i = 0; i < 4; i++) _n('C$i')],
-    measures: const <CrosstabMeasure>[_amount],
+    rowAxis: <CrosstabAxisNode>[axisNode('OnlyRow')],
+    columnAxis: <CrosstabAxisNode>[
+      for (int i = 0; i < 4; i++) axisNode('C$i'),
+    ],
+    measures: const <CrosstabMeasure>[amountMeasure],
     cells: <CrosstabCellKey, JetValue>{
       for (int i = 0; i < 4; i++)
         CrosstabCellKey(const <String>['OnlyRow'], <String>['C$i'], 'm/a'):
             JetNumber(i.toDouble()),
     },
   );
-  return planCrosstab(_ct, m, availableWidth: availableWidth);
+  return planCrosstab(baseCrosstab, m, availableWidth: availableWidth);
 }
 
-/// A small crosstab (2 rows, header 'Q1') followed by [n] plain, groupless
-/// detail bands — as if ordinary report content followed the crosstab in the
-/// same scope.
-CrosstabPlan _planThenDetailRun(int n) {
-  final CrosstabPlan base = _planWithRows(2);
+/// A crosstab with [rows] row leaves (header 'Q1') followed by [extraDetail]
+/// plain, groupless detail bands — as if ordinary report content followed the
+/// crosstab in the same scope. [rows] must be large enough that the crosstab
+/// itself spans multiple pages on its own (see [_planWithRows]): otherwise a
+/// test built on this fixture cannot tell "reprint never happened" apart from
+/// "reprint happened and then correctly stopped" — both leave the header
+/// printed nowhere but the crosstab's own first page.
+CrosstabPlan _planThenDetailRun({required int rows, required int extraDetail}) {
+  final CrosstabPlan base = _planWithRows(rows);
   final List<FilledBand> extra = <FilledBand>[
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < extraDetail; i++)
       FilledBand(
         type: BandType.detail,
         height: 14,
@@ -151,6 +124,12 @@ Iterable<String> _texts(PageFrame page) => page.primitives
 Iterable<String> _ids(PageFrame page) =>
     page.primitives.map((FramePrimitive p) => p.elementId).whereType<String>();
 
+/// Whether [page] carries any element the crosstab itself emitted (a header
+/// cell or a row/cell of `baseCrosstab`'s bands) — as opposed to only the
+/// plain, id-less detail bands appended after it.
+bool _hasCrosstabContent(PageFrame page) =>
+    _ids(page).any((String i) => i.startsWith('ct1/'));
+
 void main() {
   group('crosstab pagination', () {
     test('the column header reprints on every page of a long crosstab', () {
@@ -174,12 +153,42 @@ void main() {
       expect(firstPageWithSlice1, greaterThan(lastPageWithSlice0));
     });
 
-    test('the closing footer stops the reprint for later detail bands', () {
-      // crosstab, then 200 plain detail bands. The crosstab header must not
-      // appear on the pages those detail bands occupy.
-      final LayoutResult r = _layout(_planThenDetailRun(200));
-      final PageFrame last = r.pages.last;
-      expect(_texts(last), isNot(contains('Q1')));
+    test(
+        'the header reprints on every page the crosstab spans, and stops '
+        'once its footer closes the group', () {
+      // A crosstab with enough rows to span multiple pages on its own (as in
+      // the reprint test above — this is what makes "reprint never happens"
+      // and "reprint happens, then correctly stops" observably different),
+      // followed by a long run of plain detail bands.
+      final LayoutResult r =
+          _layout(_planThenDetailRun(rows: 120, extraDetail: 200));
+      final List<PageFrame> crosstabPages =
+          r.pages.where(_hasCrosstabContent).toList(growable: false);
+      final List<PageFrame> detailOnlyPages = r.pages
+          .where((PageFrame p) => !_hasCrosstabContent(p))
+          .toList(growable: false);
+
+      // Sanity on the fixture itself: it must actually exercise both halves,
+      // or the assertions below would pass vacuously.
+      expect(crosstabPages, hasLength(greaterThan(1)),
+          reason: 'the crosstab must span multiple pages for this test to '
+              'distinguish "never reprinted" from "reprinted, then stopped"');
+      expect(detailOnlyPages, isNotEmpty,
+          reason: 'the detail run must reach at least one page with no '
+              'crosstab content of its own — if every page still carries a '
+              'crosstab id, the closing footer never actually closed the '
+              'group and the reprint never stopped');
+
+      for (final PageFrame page in crosstabPages) {
+        expect(_texts(page), contains('Q1'),
+            reason: 'every page carrying crosstab content reprints the '
+                'column header');
+      }
+      for (final PageFrame page in detailOnlyPages) {
+        expect(_texts(page), isNot(contains('Q1')),
+            reason: 'the closing footer must stop the reprint once the '
+                'crosstab has finished');
+      }
     });
 
     test('a synthetic group raises no "reprint but no header" info', () {
