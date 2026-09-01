@@ -186,3 +186,81 @@ class _BoxStyleEditor extends StatelessWidget {
     );
   }
 }
+
+/// The panel's mirror of the planner's dominant default for the header role.
+///
+/// `CrosstabStyle.headerText` is read at two sites with different fallbacks
+/// while unset: column headers centre, the single row-label stub column falls
+/// back to [JetTextStyle.fallback] (left). The section displays the centred
+/// one — column headers outnumber the one stub column — and the approximation
+/// ends at the first edit, because an authored headerText is honoured at both
+/// sites, alignment included.
+///
+/// Mirrored rather than imported: the render layer is not a designer
+/// dependency and the panel must work with no data source attached. A test
+/// asserts this equals the planner's value so the two copies cannot drift.
+const JetTextStyle _kCrosstabHeaderDefault =
+    JetTextStyle(align: JetTextAlign.center);
+
+/// The panel's mirror of the planner's default for value cells — right
+/// aligned, per spec A §3. Shared by the Cells and Totals roles: an unset
+/// `totalText` cascades to the cell style for total VALUES (total labels take
+/// the left-aligned row-label style, the same dual fallback headerText has).
+const JetTextStyle _kCrosstabCellDefault =
+    JetTextStyle(align: JetTextAlign.right);
+
+/// One crosstab appearance role: its label, a text and a box editor, and a
+/// reset that clears both slots back to inherited.
+///
+/// [text] and [box] are the authored slots — null means inherited, and the
+/// editors then display [effectiveText] / [effectiveBox] so the controls are
+/// never blank. Any edit commits a concrete style; [onReset] writes null back.
+///
+/// The reset action appears only once at least one slot is set: an
+/// always-visible reset on an untouched role would suggest state that is not
+/// there.
+List<Widget> _crosstabRoleSection({
+  required String label,
+  required String keyBase,
+  required JetTextStyle? text,
+  required JetBoxStyle? box,
+  required JetTextStyle effectiveText,
+  required JetBoxStyle effectiveBox,
+  required ValueChanged<JetTextStyle> onText,
+  required ValueChanged<JetBoxStyle> onBox,
+  required VoidCallback onReset,
+  required JetPrintLocalizations l10n,
+  required ShadThemeData theme,
+}) {
+  final bool authored = text != null || box != null;
+  return <Widget>[
+    const SizedBox(height: 12),
+    Row(
+      children: <Widget>[
+        Expanded(child: SectionLabel(label)),
+        if (!authored)
+          Text(l10n.crosstabStyleInherited,
+              style: const TextStyle(fontSize: 11))
+        else
+          _CardAction(
+            actionKey: ValueKey<String>('$keyBase.reset'),
+            icon: LucideIcons.rotateCcw,
+            tooltip: l10n.crosstabStyleReset,
+            onPressed: onReset,
+            theme: theme,
+          ),
+      ],
+    ),
+    _TextStyleEditor(
+      keyBase: keyBase,
+      style: text ?? effectiveText,
+      onCommit: onText,
+    ),
+    const SizedBox(height: 4),
+    _BoxStyleEditor(
+      keyBase: keyBase,
+      style: box ?? effectiveBox,
+      onCommit: onBox,
+    ),
+  ];
+}

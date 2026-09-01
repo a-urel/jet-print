@@ -78,6 +78,72 @@ extension _CrosstabInspector on _PropertiesPanelState {
       const SizedBox(height: 18),
       ..._crosstabLayoutSection(controller, ct, theme, l10n),
       const SizedBox(height: 18),
+      // Appearance: three flat sections — Header, Cells, Totals — matching
+      // every other panel; the designer has no disclosure primitive and one
+      // slot's null-means-inherited behaviour is documented on
+      // _crosstabRoleSection. Keyed by crosstab id so selecting a different
+      // crosstab discards any uncommitted input the composed editors hold.
+      KeyedSubtree(
+        key: ValueKey<String>('$_p.crosstab.style.$crosstabId'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            ..._crosstabRoleSection(
+              label: l10n.crosstabStyleHeader,
+              keyBase: '$_p.crosstab.header',
+              text: ct.style.headerText,
+              box: ct.style.headerBox,
+              effectiveText: _kCrosstabHeaderDefault,
+              effectiveBox: JetBoxStyle.none,
+              onText: (JetTextStyle s) => controller.setCrosstabStyle(
+                  crosstabId, ct.style.copyWith(headerText: () => s)),
+              onBox: (JetBoxStyle s) => controller.setCrosstabStyle(
+                  crosstabId, ct.style.copyWith(headerBox: () => s)),
+              onReset: () => controller.setCrosstabStyle(
+                  crosstabId,
+                  ct.style
+                      .copyWith(headerText: () => null, headerBox: () => null)),
+              l10n: l10n,
+              theme: theme,
+            ),
+            ..._crosstabRoleSection(
+              label: l10n.crosstabStyleCells,
+              keyBase: '$_p.crosstab.cells',
+              text: ct.style.cellText,
+              box: ct.style.cellBox,
+              effectiveText: _kCrosstabCellDefault,
+              effectiveBox: JetBoxStyle.none,
+              onText: (JetTextStyle s) => controller.setCrosstabStyle(
+                  crosstabId, ct.style.copyWith(cellText: () => s)),
+              onBox: (JetBoxStyle s) => controller.setCrosstabStyle(
+                  crosstabId, ct.style.copyWith(cellBox: () => s)),
+              onReset: () => controller.setCrosstabStyle(crosstabId,
+                  ct.style.copyWith(cellText: () => null, cellBox: () => null)),
+              l10n: l10n,
+              theme: theme,
+            ),
+            ..._crosstabRoleSection(
+              label: l10n.crosstabStyleTotals,
+              keyBase: '$_p.crosstab.totals',
+              text: ct.style.totalText,
+              box: ct.style.totalBox,
+              effectiveText: _kCrosstabCellDefault,
+              effectiveBox: JetBoxStyle.none,
+              onText: (JetTextStyle s) => controller.setCrosstabStyle(
+                  crosstabId, ct.style.copyWith(totalText: () => s)),
+              onBox: (JetBoxStyle s) => controller.setCrosstabStyle(
+                  crosstabId, ct.style.copyWith(totalBox: () => s)),
+              onReset: () => controller.setCrosstabStyle(
+                  crosstabId,
+                  ct.style
+                      .copyWith(totalText: () => null, totalBox: () => null)),
+              l10n: l10n,
+              theme: theme,
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(height: 18),
       SectionLabel(l10n.propertiesVisible),
       _visibleSection(
         visible: ct.visible,
