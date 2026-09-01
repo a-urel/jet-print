@@ -1,15 +1,20 @@
 # Crosstab / Pivot Grid — Designer Authoring (Spec B)
 
 **Date:** 2026-09-01
-**Status:** Draft for review
+**Status:** Implemented — branch `045-crosstab-designer-authoring`, 14 commits. Reconciled with the
+shipped code after review; the corrections are marked **(revised)** where the design changed during
+implementation.
 **Depends on:** `2026-08-30-crosstab-engine-design.md` (Spec A — shipped, `origin/main` `63a46ee`)
 **Layer:** designer only. No domain-model field is added, no codec change, no engine change.
 
 ## Goal
 
 Make a crosstab a first-class **authorable** object in the designer: add one, select it, edit its
-axes, measures, metrics and style, reorder it among its siblings, and delete it — with undo/redo,
-localization and tests, exactly as bands, groups and nested lists already work.
+axes, measures, layout metrics and visibility, reorder it among its siblings, and delete it — with
+undo/redo, localization and tests, exactly as bands, groups and nested lists already work.
+
+The six cosmetic text/box style slots are **not** in scope (see §4); "style" here means the layout
+metrics.
 
 Spec A deliberately shipped a read-only designer surface: the Outline row has no tap handler and no
 actions, and the canvas placeholder is wrapped in `IgnorePointer`. The user-visible symptom is
@@ -61,16 +66,20 @@ is seeded from the schema of that source:
   the first scalar field with `JetCalculation.count` (count needs no numeric input);
 - names default to the field names; `showTotal` defaults to true, matching the model default.
 
-The submenu entry is disabled when the source has no scalar field at all — there is nothing to bucket
-by, and no seeding rule could produce a valid crosstab.
+**Each submenu option is independently disabled unless *its own* source offers at least one
+non-collection field** — there is nothing to bucket by otherwise, and no seeding rule could produce a
+valid crosstab. In particular a collection whose children are all themselves collections is offered
+disabled, not enabled-and-inert: gating on "has any children" leaves a live-looking, dead menu item
+whose only effect is `createCrosstab`'s own silent refusal.
 
 ### 3. Selection granularity is the whole crosstab
 
-`Selection` gains a fifth mutually-exclusive target, `crosstabId`. Axis levels and measures are **not**
-separately selectable.
+`Selection` gains a **sixth** mutually-exclusive target, `crosstabId` — element ids, `bandId`,
+`groupId`, `scopeId` and `isReport` were the five. Axis levels and measures are **not** separately
+selectable.
 
 Making a group or a measure its own selection target would add two more mutually-exclusive fields to
-`Selection` — a class whose invariant ("exactly one of five") is enforced by hand in its factories,
+`Selection` — a class whose invariant ("exactly one of six") is enforced by hand in its factories,
 its `==`, its `toString` and every consumer switch — and would need canvas chrome for objects that
 have no canvas rect of their own (a measure is a column that only exists once data is folded). The
 cost lands in the selection, clipboard, undo and hit-test surfaces; the benefit is a selection ring
@@ -107,9 +116,26 @@ factory Selection.crosstab(String crosstabId) =>
 ```
 
 plus the `crosstabId` field, its inclusion in `isEmpty`, `==`, `hashCode` and `toString`, and the
-documented invariant extended to five targets. Every existing consumer that reads `bandId ?? groupId
-?? scopeId` for its "inspected key" gains `?? crosstabId`, and `controller/api/selection.dart` gains
+documented invariant extended to six targets, and `controller/api/selection.dart` gains
 `void selectCrosstab(String crosstabId)` beside `selectBand` / `selectScope`.
+
+**(revised) The consumers, enumerated** — phrasing the sweep as the idiom "everything that reads
+`bandId ?? groupId ?? scopeId`" missed a consumer written in a different idiom, and that miss shipped
+a dead rename. Every place that special-cases a non-element selection:
+
+| Site | Crosstab arm |
+|---|---|
+| `properties_panel.dart` `inspectedKey` chain | `?? crosstabId` |
+| `properties_panel.dart` inspector dispatch | a `_crosstabInspector` arm |
+| `selection_overlay.dart:124` | outline chrome, no resize handle |
+| `ruler_metrics.dart:39` | `layout.crosstabRect(id)` |
+| `outline_panel.dart:131` stale-inline-editor guard | `selection.crosstabId == _editingId` — **this is the one the idiom missed**; it reads `bandId` alone, so a crosstab's rename editor was discarded on the next build |
+| `jet_report_designer_controller.dart` `_pasteTargetBand` | none — it asks for a paste-target *band*, and a crosstab correctly is not one |
+| `api/clipboard.dart` `delete` / `copy` / `cut`, `canCopy` | none — they act on `selection.ids`; see below |
+
+**Delete/cut/copy no-op on a crosstab selection**, exactly as on a band, group, scope or report
+selection: those commands act on elements, and a crosstab is removed from its Outline action. That
+is a decision, not an oversight, and a test pins it so it cannot drift into one.
 
 `canCopy` is unchanged: like a band, group or scope selection, a crosstab selection is not
 clipboard-copyable in this spec. Deleting one goes through the Outline action, as it does for a
@@ -159,7 +185,13 @@ thunk leaves the definition value-equal and therefore records no history — the
 
 ```dart
 extension CtrlCrosstab on JetReportDesignerController {
-  void createCrosstab(String scopeId, {String? collectionField});
+  // (revised) The controller holds no JetDataSchema — it arrives through
+  // DesignerSchemaScope at the UI seam — so the caller resolves the source's
+  // fields and only the seeding RULE lives here. It no-ops on a non-root scope:
+  // root-only is a model rule validate() enforces, so gating the Outline menu
+  // alone would leave this public API able to mint an invalid definition.
+  void createCrosstab(String scopeId,
+      {required List<FieldDef> fields, String? collectionField});
   void deleteCrosstab(String crosstabId);
   void moveCrosstab(String crosstabId, int delta);
   void renameCrosstab(String crosstabId, String? name);
@@ -211,8 +243,10 @@ when `scope.id == definition.body.root.id`.
 
 ## 4. Properties inspector
 
-New part file `layout/panels/properties/inspectors/crosstab_inspector.dart` — the panel is already
-split into `part` files by inspector, and this follows that structure. Dispatch in
+New part file `layout/panels/properties/inspectors/crosstab_inspector.dart`. **(revised)** Only the
+*element* inspector had been split out; the band, group and scope inspectors still live inside
+`properties_panel.dart`. That makes a new file more necessary, not less — the panel is already the
+largest file in the designer. Dispatch in
 `properties_panel.dart` gains an arm before the group/scope arms:
 
 ```dart
@@ -233,6 +267,14 @@ Sections, in order:
 | Measures | Ordered list, one card per measure |
 | Layout | `rowLabelWidth`, `rowLabelIndent`, `measureColumnWidth`, `rowHeight`, `headerRowHeight` |
 | Visibility | The existing `BoolProperty` editor, as bands and elements use |
+
+**(revised) Rebinding the data source preserves the authored expressions.** It never reseeds or
+resets the axes and measures. A rebind is usually one step of repointing a report at a renamed or
+restructured source, and silently reseeding would discard authored names, sorts, total labels and
+formats to save one re-pick. The cost is that a binding the new source cannot resolve is invisible in
+the model, so the inspector flags each one in place, under the field that carries it, using the
+element inspector's `_unresolved` rule (nothing is flagged with no schema attached — resolution waits
+for a source, FR-019a).
 
 **Deferred during implementation:** the six text/box style slots (`headerText`,
 `headerBox`, `cellText`, `cellBox`, `totalText`, `totalBox`). `style_editors.dart` exposes
@@ -266,10 +308,11 @@ localized.
 - `ruler_metrics.dart` reads the crosstab rect for the selected-object ruler highlight, matching the
   band arm one line above it.
 
-**Golden impact.** The schematic changes the pixels inside the placeholder rect, so the designer
-canvas goldens that contain a crosstab move. Those are regenerated deliberately, in the task that
-introduces the schematic, and reviewed as an intentional diff. No other golden should move — a
-diff anywhere else is a bug in that task.
+**Golden impact: none. (revised)** The prediction above was written without checking: no designer
+canvas golden contains a crosstab (`test/designer/goldens/` has none; the only crosstab golden is the
+render-layer `test/goldens/pivot_test.dart`, which the designer does not touch). The schematic
+therefore moved **zero** goldens, and no regeneration step was needed. Adding a crosstab to a
+designer golden is worth doing, but it is new coverage, not a consequence of this change — Spec C.
 
 ## 6. Localization
 
@@ -293,8 +336,13 @@ the inspector is checked against the German string.
 | Outline | Selecting a crosstab row selects it; rename commits; move up/down reorders among siblings; remove deletes; the add-menu entry is absent on a nested scope and disabled without scalar fields |
 | Properties | The inspector renders for a crosstab selection; editing each field commits exactly one history entry; the width warning appears exactly at the overflow threshold |
 | Canvas | A tap inside the block selects the crosstab; the selection outline is drawn; a tap outside it still selects the band or report as before |
-| Undo/redo | One end-to-end walk: create, edit an axis, add a measure, reorder, delete — then undo five times back to the original definition |
-| Goldens | Regenerated once, in the schematic task |
+| Undo/redo | One end-to-end walk: create, edit an axis, add a measure, reorder, delete — then undo back to the original definition |
+| Root-only | A direct `createCrosstab` call against a nested scope changes neither definition, history nor selection |
+| Rename | A double-tap on the Outline row opens the inline editor **and it survives the next build**, then commits — the guard this spec's first draft missed |
+| Menu gating | A collection with no scalar child is offered *disabled*; asserted on the option's `enabled` flag, not on "nothing happened" (`createCrosstab` refuses it anyway, so a tap-and-check would pass against a dead item) |
+| Rebind | Expressions survive a rebind, and each one the new source cannot resolve is flagged |
+| Clipboard | Delete/cut/copy no-op on a crosstab selection, and `canCopy` is false |
+| Goldens | None move — see §5 |
 
 ## Out of scope (Spec C)
 
@@ -305,13 +353,15 @@ the row-label or measure columns on the canvas · crosstab clipboard (copy/paste
 
 ## Risks
 
-- **`Selection`'s hand-enforced invariant.** A fifth target multiplies the mutual-exclusion surface.
+- **`Selection`'s hand-enforced invariant.** A sixth target multiplies the mutual-exclusion surface.
   Mitigation: one test asserting each factory produces exactly one non-empty target, and that the
   five are pairwise unequal.
 - **`reorderScopeChild` generalization.** It is used by `moveBand` today; the rename must be
   behaviour-preserving. Mitigation: the existing band-reorder tests run unchanged against the
   renamed function before any crosstab uses it.
-- **Inspector size.** The crosstab inspector is the largest single inspector in the panel. It goes
-  into its own `part` file from the first line; the god-file program's ceiling (~1,040 lines) applies.
+- **Inspector size.** The crosstab inspector is the largest single inspector in the panel, so it goes
+  into its own `part` file from the first line. There is no documented line limit in this repo;
+  ~1,040 lines is simply the current size of `properties_panel.dart` after the god-file split
+  program, and it is cited here as empirical pressure, not policy.
 - **Seeding rule surprise.** Field order in a schema decides which field lands on which axis. It is
   deterministic and immediately editable, and no other rule avoids guessing without a modal wizard.
