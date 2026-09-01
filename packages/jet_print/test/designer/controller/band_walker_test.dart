@@ -375,6 +375,12 @@ void main() {
       expect(allIds(def), contains('ct1'));
     });
 
+    test(
+        'allIds also collects the crosstab\'s group and measure ids '
+        '(seedFrom must not let designer authoring collide with them)', () {
+      expect(allIds(def), containsAll(<String>['g/r', 'g/c', 'm/a']));
+    });
+
     test('allBands ignores a crosstab (it owns no bands)', () {
       expect(allBands(def).map((Band b) => b.id), <String>['detail']);
     });

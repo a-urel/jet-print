@@ -377,6 +377,9 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
 /// measure expression that fails to parse · a non-root crosstab · a
 /// non-positive style metric. Then warnings: a `visible` expression that
 /// references a field (a crosstab prints outside the row loop, so it has none)
+/// · a `visible` expression that references a variable (resolved once before
+/// the row loop, so it sees report-start values rather than the values a
+/// later row produces — a trailing crosstab's `visible` can silently hide it)
 /// · a crosstab wider than the page body · and, when [scopeFields] is
 /// non-null (the caller has a schema), any group/measure expression
 /// referencing a field that does not resolve in scope.
@@ -453,6 +456,11 @@ void _validateCrosstab(
   final String? visibleExpr = ct.visible.expression;
   if (visibleExpr != null && fieldRefsIn(visibleExpr).isNotEmpty) {
     warn('crosstab "${ct.id}" visibility cannot use fields');
+  }
+  if (visibleExpr != null && variableRefsIn(visibleExpr).isNotEmpty) {
+    warn('crosstab "${ct.id}" visibility references a variable, which is '
+        'resolved before the row loop and so sees report-start values, not '
+        'final ones');
   }
 
   final double bodyWidth =

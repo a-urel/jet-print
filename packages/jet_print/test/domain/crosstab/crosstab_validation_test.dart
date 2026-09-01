@@ -142,6 +142,15 @@ void main() {
           anyElement(contains('visibility cannot use fields')));
     });
 
+    test(
+        'a variable reference in visible warns (resolved before the row loop, '
+        'not with final values)', () {
+      final Crosstab bad =
+          _ok.copyWith(visible: const BoolProperty(expression: r'$V{total}'));
+      expect(_messages(_def(bad), DiagnosticSeverity.warning),
+          anyElement(contains('visibility')));
+    });
+
     test('a crosstab id colliding with a band id is a duplicate-id error', () {
       final ReportDefinition def = ReportDefinition(
         name: 'R',

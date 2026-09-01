@@ -722,6 +722,9 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get outlineListUnbound => 'Liste (bağsız)';
 
   @override
+  String get crosstabLabel => 'Çapraz tablo';
+
+  @override
   String get exprEditorDeeperFieldHint =>
       'Alt alan – yalnızca SUM(…) gibi bir toplama içinde geçerlidir';
 

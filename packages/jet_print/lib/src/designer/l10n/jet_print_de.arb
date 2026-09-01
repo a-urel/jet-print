@@ -259,6 +259,8 @@
   "outlineListLabel": "Liste: {field}",
   "outlineListUnbound": "Liste (ungebunden)",
 
+  "crosstabLabel": "Kreuztabelle",
+
   "exprEditorDeeperFieldHint": "Nachgeordnetes Feld – nur innerhalb eines Aggregats wie SUM(…) gültig",
 
   "propertiesColumnLayout": "Spaltenlayout",

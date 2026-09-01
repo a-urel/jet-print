@@ -98,6 +98,13 @@ extension _CanvasBuild on _DesignCanvasState {
                       ),
                     ),
                   ),
+                  // Crosstab placeholder blocks (spec A, Task 13): a crosstab
+                  // owns no elements for the shared render pipeline above to
+                  // draw, so its reserved space is stood in for here — a
+                  // labeled, outlined rectangle, not part of the interactive
+                  // hit-testing surface (no selection/drag/delete yet).
+                  ..._crosstabPlaceholders(displayLayout, scale, colors,
+                      JetPrintLocalizations.of(context)),
                   // Per-element regions: accessibility + test hooks. They do not
                   // capture pointers (the canvas gesture detector handles hit-testing),
                   // so the canvas still owns select/move. Drawn from the display
@@ -177,6 +184,45 @@ extension _CanvasBuild on _DesignCanvasState {
       ));
     }
     return badges;
+  }
+
+  /// One outlined placeholder block per crosstab (spec A, Task 13), sized and
+  /// positioned by [DesignTimeLayout]'s stand-in geometry and captioned with
+  /// its display label (name, or the localized fallback). Wrapped in
+  /// [IgnorePointer]: a crosstab has no designer-authoring surface yet, so this
+  /// block must never intercept a click that would otherwise reach the canvas's
+  /// own band/report selection handling underneath.
+  List<Widget> _crosstabPlaceholders(
+    DesignTimeLayout layout,
+    double scale,
+    ShadColorScheme colors,
+    JetPrintLocalizations l10n,
+  ) {
+    final List<Widget> blocks = <Widget>[];
+    for (final PlacedCrosstab placed in layout.crosstabs) {
+      final JetRect r = placed.rect;
+      blocks.add(Positioned(
+        key: ValueKey<String>('crosstab-placeholder-${placed.id}'),
+        left: r.x * scale,
+        top: r.y * scale,
+        width: r.width * scale,
+        height: r.height * scale,
+        child: IgnorePointer(
+          child: DecoratedBox(
+            decoration:
+                BoxDecoration(border: Border.all(color: _badgeBorderColor)),
+            child: Center(
+              child: Text(
+                crosstabDisplayLabel(placed.crosstab, l10n),
+                style:
+                    const TextStyle(fontSize: 11, color: _badgeForegroundColor),
+              ),
+            ),
+          ),
+        ),
+      ));
+    }
+    return blocks;
   }
 
   List<Widget> _elementRegions(

@@ -17,6 +17,9 @@ import 'field_def.dart';
 /// Field references `$F{name}` anywhere in an expression.
 final RegExp _fieldRef = RegExp(r'\$F\{([^}]+)\}');
 
+/// Variable references `$V{name}` anywhere in an expression.
+final RegExp _variableRef = RegExp(r'\$V\{([^}]+)\}');
+
 /// The fields **in scope** after descending [schema] through the
 /// `collectionField` of each scope in [chain], outermost-first. The master/root
 /// scope's null `collectionField` descends nothing, so an element in the root
@@ -51,6 +54,10 @@ List<FieldDef> collectionChildren(List<FieldDef> fields, String name) {
 /// The `$F{...}` field names referenced in [expression].
 Set<String> fieldRefsIn(String expression) =>
     _fieldRef.allMatches(expression).map((Match m) => m.group(1)!).toSet();
+
+/// The `$V{...}` variable names referenced in [expression].
+Set<String> variableRefsIn(String expression) =>
+    _variableRef.allMatches(expression).map((Match m) => m.group(1)!).toSet();
 
 /// Whether every `$F{}` field reference in [expression] resolves to a field in
 /// [scopeFields]. An expression with no field references (a `$P{}`/`$V{}` or a

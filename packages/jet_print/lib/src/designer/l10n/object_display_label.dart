@@ -4,6 +4,7 @@
 library;
 
 import '../../domain/band.dart';
+import '../../domain/crosstab/crosstab.dart';
 import '../../domain/elements/text_element.dart';
 import '../../domain/report_element.dart';
 import 'band_type_label.dart';
@@ -25,4 +26,12 @@ String elementDisplayLabel(ReportElement element, JetPrintLocalizations l10n) {
 String bandDisplayLabel(Band band, JetPrintLocalizations l10n) {
   if (!_blank(band.name)) return band.name!.trim();
   return bandTypeLabel(band.type, l10n);
+}
+
+/// The label for [crosstab]: its display [Crosstab.name] when set; else the
+/// localized fallback label. Shared by the read-only Outline row and the
+/// canvas placeholder block (spec A, Task 13) so both surfaces agree.
+String crosstabDisplayLabel(Crosstab crosstab, JetPrintLocalizations l10n) {
+  if (!_blank(crosstab.name)) return crosstab.name!.trim();
+  return l10n.crosstabLabel;
 }

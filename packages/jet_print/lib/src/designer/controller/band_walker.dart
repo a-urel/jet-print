@@ -10,6 +10,8 @@ library;
 
 import '../../domain/band.dart';
 import '../../domain/crosstab/crosstab.dart';
+import '../../domain/crosstab/crosstab_group.dart';
+import '../../domain/crosstab/crosstab_measure.dart';
 import '../../domain/detail_scope.dart';
 import '../../domain/group_level.dart';
 import '../../domain/report_band.dart' show BandType;
@@ -102,7 +104,7 @@ ReportDefinition mapGroups(
               BandNode() => n,
               NestedScope(scope: final DetailScope inner) =>
                 NestedScope(scope(inner)),
-              CrosstabNode() => n, // group mapping touches no bands
+              CrosstabNode() => n, // not a scope; must survive the rebuild
               // Identity pass-through: this rebuilds DetailScope.children, so
               // a `break` would silently drop the node from the tree instead
               // of preserving it.
@@ -160,9 +162,11 @@ Iterable<Band> allBands(ReportDefinition def) sync* {
   yield* out;
 }
 
-/// Every stable id in [def] — band ids, element ids, scope ids, and group ids.
-/// Used to seed collision-free id minting (a new band/group/scope id must not
-/// clash with any existing one, FR-004).
+/// Every stable id in [def] — band ids, element ids, scope ids, group ids, and
+/// a crosstab's own id plus its row/column group and measure ids. Used to seed
+/// collision-free id minting (a new band/group/scope id — or, once designer
+/// authoring mints them, a crosstab group/measure id — must not clash with any
+/// existing one, FR-004).
 Iterable<String> allIds(ReportDefinition def) {
   final List<String> out = <String>[];
   for (final Band b in allBands(def)) {
@@ -184,6 +188,17 @@ Iterable<String> allIds(ReportDefinition def) {
           walk(inner);
         case CrosstabNode(crosstab: final Crosstab ct):
           out.add(ct.id); // minting must not reuse it
+          // Nor may it reuse a group/measure id minted from the same factory —
+          // designer authoring mints those from `ElementIdFactory` too.
+          for (final CrosstabGroup g in ct.rowGroups) {
+            out.add(g.id);
+          }
+          for (final CrosstabGroup g in ct.columnGroups) {
+            out.add(g.id);
+          }
+          for (final CrosstabMeasure m in ct.measures) {
+            out.add(m.id);
+          }
         case UnknownScopeNode():
           break; // an unknown node's ids are opaque; minting can't collide
       }
@@ -399,7 +414,7 @@ ReportDefinition mapScopes(
           BandNode() => n,
           NestedScope(scope: final DetailScope inner) =>
             NestedScope(visit(inner)),
-          CrosstabNode() => n, // scope mapping touches no bands
+          CrosstabNode() => n, // not a scope; must survive the rebuild
           // Identity pass-through: this rebuilds DetailScope.children, so a
           // `break` would silently drop the node from the tree instead of
           // preserving it.

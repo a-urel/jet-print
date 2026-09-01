@@ -1493,6 +1493,12 @@ abstract class JetPrintLocalizations {
   /// **'List (unbound)'**
   String get outlineListUnbound;
 
+  /// Fallback label for a crosstab (pivot grid) with no author-given name, shown in the Outline row and the canvas placeholder block.
+  ///
+  /// In en, this message translates to:
+  /// **'Crosstab'**
+  String get crosstabLabel;
+
   /// Tooltip on a descendant (↳) field chip in the expression editor palette (spec 033). Explains that the field is from a child collection and is only valid inside an aggregate call.
   ///
   /// In en, this message translates to:

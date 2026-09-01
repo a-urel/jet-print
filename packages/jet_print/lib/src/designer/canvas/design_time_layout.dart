@@ -4,6 +4,7 @@ library;
 import 'dart:math' as math;
 
 import '../../domain/band.dart';
+import '../../domain/crosstab/crosstab.dart';
 import '../../domain/detail_scope.dart';
 import '../../domain/geometry.dart';
 import '../../domain/report_band.dart' show BandType;
@@ -13,25 +14,35 @@ import '../../domain/report_definition.dart';
 /// itself, and its page-absolute [rect].
 typedef PlacedBand = ({String id, Band band, JetRect rect});
 
+/// A crosstab's read-only placeholder block on the design surface (spec A,
+/// Task 13): its stable [id], the [crosstab] itself, and its page-absolute
+/// [rect]. Unlike [PlacedBand], this block owns no elements and is not part of
+/// the interactive hit-testing surface — see [DesignTimeLayout]'s class doc.
+typedef PlacedCrosstab = ({String id, Crosstab crosstab, JetRect rect});
+
 /// Computes, once per definition revision, the page-absolute rectangles of every
-/// band and element for the **design** view.
+/// band, element, and crosstab placeholder for the **design** view.
 ///
 /// The reified tree (spec 024) is flattened into a single **visual document
 /// order** — page header, column header, title, then the scope tree (each
-/// scope's group headers, its ordered children recursively, then its group
+/// scope's group headers, its ordered children recursively — per-row bands and
+/// crosstab placeholders (spec A) interleaved as authored — then its group
 /// footers innermost-first), then no-data, summary, and the bottom-anchored
-/// column/page footers. Flow bands stack downward from the top margin; the
-/// column-/page-footer bands are *anchored to the bottom* of the sheet (stacked
-/// upward from the bottom margin, preserving order), leaving an empty "flow" gap
-/// in between — exactly how a rendered page looks (true WYSIWYG). If the authored
-/// bands are taller than the sheet, the surface grows so nothing is clipped.
-/// Element bounds are band-relative, so the page-absolute element rect is
-/// `(bandLeft + bounds.x, bandTop + bounds.y)` — the same mapping the render-time
-/// layouter uses.
+/// column/page footers. A crosstab is never bottom-anchored — it flows exactly
+/// like a per-row band, just with a fixed stand-in height rather than one drawn
+/// from its own elements (Task 13; it owns none in this build). Flow items
+/// stack downward from the top margin; the column-/page-footer bands are
+/// *anchored to the bottom* of the sheet (stacked upward from the bottom
+/// margin, preserving order), leaving an empty "flow" gap in between — exactly
+/// how a rendered page looks (true WYSIWYG). If the authored content is taller
+/// than the sheet, the surface grows so nothing is clipped. Element bounds are
+/// band-relative, so the page-absolute element rect is `(bandLeft + bounds.x,
+/// bandTop + bounds.y)` — the same mapping the render-time layouter uses.
 class DesignTimeLayout {
   DesignTimeLayout._({
     required this.size,
     required this.bands,
+    required this.crosstabs,
     required Map<String, JetRect> bandRects,
     required Map<String, JetRect> elementRects,
     required Map<String, String> bandOfElement,
@@ -47,15 +58,18 @@ class DesignTimeLayout {
     final double bottom = definition.page.margins.bottom;
     final double contentWidth = definition.page.width - left - right;
 
-    final List<Band> ordered = _orderedBands(definition);
+    final List<Object> ordered = _orderedFlowItems(definition);
 
     double topHeight = 0;
     double bottomHeight = 0;
-    for (final Band band in ordered) {
-      if (isBottomAnchored(band.type)) {
-        bottomHeight += band.height;
-      } else {
-        topHeight += band.height;
+    for (final Object item in ordered) {
+      switch (item) {
+        case Band b when isBottomAnchored(b.type):
+          bottomHeight += b.height;
+        case Band b:
+          topHeight += b.height;
+        case Crosstab c:
+          topHeight += _crosstabHeight(c); // never bottom-anchored
       }
     }
 
@@ -67,57 +81,86 @@ class DesignTimeLayout {
     );
 
     final Map<String, JetRect> bandRects = <String, JetRect>{};
+    final Map<String, JetRect> crosstabRects = <String, JetRect>{};
 
-    // Flow bands stack downward from the top margin.
+    // Flow items stack downward from the top margin.
     double topY = top;
-    for (final Band band in ordered) {
-      if (isBottomAnchored(band.type)) continue;
-      bandRects[band.id] =
-          JetRect(x: left, y: topY, width: contentWidth, height: band.height);
-      topY += band.height;
+    for (final Object item in ordered) {
+      switch (item) {
+        case Band b when isBottomAnchored(b.type):
+          continue; // placed in the bottom-anchored pass below
+        case Band b:
+          bandRects[b.id] =
+              JetRect(x: left, y: topY, width: contentWidth, height: b.height);
+          topY += b.height;
+        case Crosstab c:
+          final double h = _crosstabHeight(c);
+          crosstabRects[c.id] =
+              JetRect(x: left, y: topY, width: contentWidth, height: h);
+          topY += h;
+      }
     }
 
     // Footer bands stack upward from the bottom margin, preserving order (so a
     // column footer ends up above the page footer).
     double bottomY = surfaceHeight - bottom;
-    for (final Band band in ordered.reversed) {
-      if (!isBottomAnchored(band.type)) continue;
-      bottomY -= band.height;
-      bandRects[band.id] = JetRect(
-          x: left, y: bottomY, width: contentWidth, height: band.height);
+    for (final Object item in ordered.reversed) {
+      if (item is! Band || !isBottomAnchored(item.type)) continue;
+      bottomY -= item.height;
+      bandRects[item.id] = JetRect(
+          x: left, y: bottomY, width: contentWidth, height: item.height);
     }
 
     final List<PlacedBand> placed = <PlacedBand>[];
+    final List<PlacedCrosstab> placedCrosstabs = <PlacedCrosstab>[];
     final Map<String, JetRect> elementRects = <String, JetRect>{};
     final Map<String, String> bandOfElement = <String, String>{};
-    for (final Band band in ordered) {
-      final JetRect r = bandRects[band.id]!;
-      placed.add((id: band.id, band: band, rect: r));
-      for (final element in band.elements) {
-        elementRects[element.id] = JetRect(
-          x: r.x + element.bounds.x,
-          y: r.y + element.bounds.y,
-          width: element.bounds.width,
-          height: element.bounds.height,
-        );
-        bandOfElement[element.id] = band.id;
+    for (final Object item in ordered) {
+      switch (item) {
+        case Band band:
+          final JetRect r = bandRects[band.id]!;
+          placed.add((id: band.id, band: band, rect: r));
+          for (final element in band.elements) {
+            elementRects[element.id] = JetRect(
+              x: r.x + element.bounds.x,
+              y: r.y + element.bounds.y,
+              width: element.bounds.width,
+              height: element.bounds.height,
+            );
+            bandOfElement[element.id] = band.id;
+          }
+        case Crosstab crosstab:
+          placedCrosstabs.add((
+            id: crosstab.id,
+            crosstab: crosstab,
+            rect: crosstabRects[crosstab.id]!,
+          ));
       }
     }
 
     return DesignTimeLayout._(
       size: JetSize(definition.page.width, surfaceHeight),
       bands: List<PlacedBand>.unmodifiable(placed),
+      crosstabs: List<PlacedCrosstab>.unmodifiable(placedCrosstabs),
       bandRects: bandRects,
       elementRects: elementRects,
       bandOfElement: bandOfElement,
     );
   }
 
-  /// Flattens [def] into the visual top-to-bottom band order (see class doc).
-  /// The background slot is excluded — it is a reserved layer, not a stacked
-  /// band.
-  static List<Band> _orderedBands(ReportDefinition def) {
-    final List<Band> out = <Band>[];
+  /// The fixed stand-in height of a crosstab's canvas placeholder (Task 13): one
+  /// header row per column-axis level, plus room for three data/total rows. A
+  /// crosstab has no rendered elements to measure in the designer, so this is a
+  /// deliberately approximate block — real pagination-aware sizing is render-time
+  /// only (`crosstab_planner.dart`).
+  static double _crosstabHeight(Crosstab c) =>
+      c.style.headerRowHeight * c.columnGroups.length + c.style.rowHeight * 3;
+
+  /// Flattens [def] into the visual top-to-bottom flow order (see class doc):
+  /// each element is either a [Band] or a [Crosstab] placeholder. The
+  /// background slot is excluded — it is a reserved layer, not a stacked band.
+  static List<Object> _orderedFlowItems(ReportDefinition def) {
+    final List<Object> out = <Object>[];
     void add(Band? b) {
       if (b != null) out.add(b);
     }
@@ -136,8 +179,8 @@ class DesignTimeLayout {
             add(b);
           case NestedScope(scope: final DetailScope inner):
             scope(inner);
-          case CrosstabNode():
-            break; // a crosstab owns no bands to stack in the visual order
+          case CrosstabNode(crosstab: final Crosstab ct):
+            out.add(ct); // flows like a band, sized by _crosstabHeight
           case UnknownScopeNode():
             break; // an unknown node's bands, if any, are opaque
         }
@@ -168,6 +211,10 @@ class DesignTimeLayout {
   /// Every placed band in visual document order (the order they stack on the
   /// sheet, footers included at their anchored positions).
   final List<PlacedBand> bands;
+
+  /// Every crosstab's placeholder block, in visual document order (Task 13).
+  /// Empty for a definition with no crosstab.
+  final List<PlacedCrosstab> crosstabs;
 
   final Map<String, JetRect> _bandRects;
   final Map<String, JetRect> _elementRects;

@@ -66,8 +66,10 @@ extension _OutlineRows on _OutlinePanelState {
         case NestedScope(scope: final DetailScope inner):
           _addScopeRows(rows, inner, depth + 1, controller, selection, theme,
               l10n, schema);
-        case CrosstabNode():
-          break; // Outline authoring for crosstabs lands in a later task
+        case CrosstabNode(crosstab: final Crosstab ct):
+          // Read-only surface only (spec A, Task 13): a labeled row, no
+          // children, no context actions. Full authoring is a later spec.
+          _addCrosstabRow(rows, ct, depth + 1, theme, l10n);
         case UnknownScopeNode():
           break; // nothing to author for a node this build doesn't recognize
       }
@@ -156,6 +158,44 @@ extension _OutlineRows on _OutlinePanelState {
         theme: theme,
       ));
     }
+  }
+
+  /// A crosstab's read-only Outline row (spec A, Task 13): its display label
+  /// (name, or the localized fallback) next to a distinct glyph. Unlike every
+  /// other row it carries no tap handler, no selection highlight, and no
+  /// trailing actions — a crosstab has no designer-authoring surface yet, so
+  /// nothing here should look interactive.
+  void _addCrosstabRow(
+    List<Widget> rows,
+    Crosstab crosstab,
+    int depth,
+    ShadThemeData theme,
+    JetPrintLocalizations l10n,
+  ) {
+    rows.add(KeyedSubtree(
+      key: ValueKey<String>(
+          'jet_print.designer.outline.crosstab.${crosstab.id}'),
+      child: Padding(
+        // +18 ≈ chevron width + gap, aligning the glyph under branches'.
+        padding: EdgeInsets.only(
+            left: treeRowInset(depth) + 18, top: 4, bottom: 4, right: 8),
+        child: Row(
+          children: <Widget>[
+            Icon(LucideIcons.table2,
+                size: 14, color: theme.colorScheme.mutedForeground),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                crosstabDisplayLabel(crosstab, l10n),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.small,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ));
   }
 
   /// An expandable branch row (the report, a scope, a group, or a band): a

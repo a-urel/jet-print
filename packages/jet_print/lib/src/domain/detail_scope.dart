@@ -16,8 +16,10 @@ import 'value_equality.dart';
 
 part 'unknown_scope_node.dart';
 
-/// One entry in a [DetailScope]'s ordered contents: either a per-row [Band]
-/// (wrapped in [BandNode]) or a nested [DetailScope] (wrapped in [NestedScope]).
+/// One entry in a [DetailScope]'s ordered contents: a per-row [Band] (wrapped
+/// in [BandNode]), a nested [DetailScope] (wrapped in [NestedScope]), a
+/// crosstab block (wrapped in [CrosstabNode]), or a node whose `kind` this
+/// build does not recognize (wrapped in [UnknownScopeNode]).
 /// Sealed, so traversal pattern-matches exhaustively with no default arm.
 sealed class ScopeNode {
   /// Const base constructor.
@@ -98,8 +100,9 @@ class DetailScope with ValueEquality {
   /// in this feature; per-scope grouping is representable but deferred.)
   final List<GroupLevel> groups;
 
-  /// Ordered, heterogeneous contents — per-row bands and nested scopes,
-  /// preserving authored interleaving.
+  /// Ordered, heterogeneous contents — per-row bands, nested scopes, and
+  /// crosstab blocks (plus any node kind this build doesn't recognize,
+  /// preserved verbatim), preserving authored interleaving.
   final List<ScopeNode> children;
 
   /// Emitted once after this scope's rows — the structural home of a collection

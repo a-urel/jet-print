@@ -7,6 +7,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../data/data_schema.dart';
 import '../../../data/field_def.dart';
 import '../../../domain/band.dart';
+import '../../../domain/crosstab/crosstab.dart';
 import '../../../domain/detail_scope.dart';
 import '../../../domain/group_level.dart';
 import '../../../domain/report_band.dart';

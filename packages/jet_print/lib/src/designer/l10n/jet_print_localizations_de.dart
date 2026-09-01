@@ -723,6 +723,9 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   String get outlineListUnbound => 'Liste (ungebunden)';
 
   @override
+  String get crosstabLabel => 'Kreuztabelle';
+
+  @override
   String get exprEditorDeeperFieldHint =>
       'Nachgeordnetes Feld – nur innerhalb eines Aggregats wie SUM(…) gültig';
 

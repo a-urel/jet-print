@@ -33,6 +33,7 @@ import '../interaction/canvas_shortcuts.dart';
 import '../l10n/band_type_label.dart';
 import '../l10n/element_type_label.dart';
 import '../l10n/jet_print_localizations.dart';
+import '../l10n/object_display_label.dart';
 import '../platform_shortcut.dart';
 import 'canvas_view_transform.dart';
 import 'design_time_frame.dart';
