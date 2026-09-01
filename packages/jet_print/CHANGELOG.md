@@ -47,8 +47,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   On the canvas its block is selectable and draws a schematic of the model —
   real column widths and axis names, with data-driven row and column counts
   stood in for. New public controller extension: `CtrlCrosstab`. `Selection`
-  gains a fifth target, `crosstabId`, and its `Selection.crosstab` factory. The
-  crosstab's six text/box style slots remain JSON-authored for now.
+  gains a sixth target, `crosstabId`, and its `Selection.crosstab` factory. The
+  crosstab's eight text/box style slots are now authorable in the Properties
+  panel — see spec 046-crosstab-style-editors, above.
 
 - **BREAKING — crosstab (pivot grid) support (spec 046-crosstab-engine).** A
   new `Crosstab` block — configurable row/column axis `CrosstabGroup`s (each
