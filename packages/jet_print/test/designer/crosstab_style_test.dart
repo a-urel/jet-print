@@ -264,4 +264,41 @@ void main() {
     expect(JetReportFormat.encodeDefinitionJson(c.definition), before);
     expect(before.contains('headerText'), isFalse);
   });
+
+  testWidgets('a measure override inherits from the crosstab, not the renderer',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c =
+        await pumpDesignerWithCrosstab(tester);
+    final Crosstab ct = onlyCrosstab(c);
+    // Give the crosstab a cell style; the measure's override must show THAT,
+    // one cascade layer up — not the renderer's right-aligned default.
+    c.setCrosstabStyle(ct.id,
+        ct.style.copyWith(cellText: () => const JetTextStyle(fontSize: 20)));
+    await tester.pumpAndSettle();
+
+    final String mid = onlyCrosstab(c).measures.first.id;
+    expect(
+      valueInPanelKey('crosstab.measure.$mid.cellText.fontSize', '20'),
+      isTrue,
+      reason: "the measure card's text editor must mirror the crosstab's own "
+          'cellText, not the renderer default it would fall to next',
+    );
+  });
+
+  testWidgets('a measure override writes only that measure',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c =
+        await pumpDesignerWithCrosstab(tester);
+    final String mid = onlyCrosstab(c).measures.first.id;
+
+    await _tapVisible(
+        tester, findPanelKey('crosstab.measure.$mid.cellText.fontSize'));
+    await _tapVisible(tester,
+        findPanelKey('crosstab.measure.$mid.cellText.fontSize.option.24'));
+
+    final Crosstab ct = onlyCrosstab(c);
+    expect(ct.measures.first.cellTextStyle?.fontSize, 24);
+    expect(ct.style.cellText, isNull,
+        reason: 'a measure override must not write the crosstab-level slot');
+  });
 }

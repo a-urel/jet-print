@@ -396,6 +396,32 @@ extension _CrosstabInspector on _PropertiesPanelState {
               (CrosstabMeasure m) =>
                   m.copyWith(format: () => v.trim().isEmpty ? null : v)),
         ),
+        const SizedBox(height: 8),
+        // The measure's own cell override — the first layer of the planner's
+        // cascade (measure → crosstab style → renderer default). Its displayed
+        // inherited value is the crosstab's own cellText/cellBox, one layer up,
+        // so the inheritance shown is truthful at this level rather than jumping
+        // straight to the renderer default.
+        SectionLabel(l10n.crosstabMeasureStyle),
+        _TextStyleEditor(
+          keyBase: '$base.cellText',
+          style: measure.cellTextStyle ??
+              ct.style.cellText ??
+              _kCrosstabCellDefault,
+          onCommit: (JetTextStyle s) => controller.updateCrosstabMeasure(
+              ct.id,
+              measure.id,
+              (CrosstabMeasure m) => m.copyWith(cellTextStyle: () => s)),
+        ),
+        const SizedBox(height: 4),
+        _BoxStyleEditor(
+          keyBase: '$base.cellBox',
+          style: measure.cellBoxStyle ?? ct.style.cellBox ?? JetBoxStyle.none,
+          onCommit: (JetBoxStyle s) => controller.updateCrosstabMeasure(
+              ct.id,
+              measure.id,
+              (CrosstabMeasure m) => m.copyWith(cellBoxStyle: () => s)),
+        ),
       ],
     );
   }
