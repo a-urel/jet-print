@@ -215,16 +215,21 @@ void main() {
     });
 
     test(
-        'an unresolvable collectionField warns once and skips per-name '
-        'checks', () {
+        'an unresolvable collectionField is an error, reported once, and '
+        'skips per-name checks', () {
       final Crosstab ct = _ok.copyWith(collectionField: () => 'nope');
-      final Iterable<String> warnings =
-          _messages(_def(ct), DiagnosticSeverity.warning, schema: _schema);
+      final Iterable<String> errors =
+          _messages(_def(ct), DiagnosticSeverity.error, schema: _schema);
       expect(
-        warnings.where((String m) => m.contains('collection field "nope"')),
+        errors.where((String m) => m.contains('collection field "nope"')),
         hasLength(1),
       );
-      expect(warnings, isNot(anyElement(contains('references unknown field'))));
+      // Not also reported as a warning.
+      expect(
+        _messages(_def(ct), DiagnosticSeverity.warning, schema: _schema),
+        isNot(anyElement(contains('collection field "nope"'))),
+      );
+      expect(errors, isNot(anyElement(contains('references unknown field'))));
     });
 
     test('without a schema, no field-resolution warnings are produced', () {

@@ -247,9 +247,15 @@ class CrosstabPlan {
 /// key.
 ///
 /// When [takenGroupNames] already holds that name, an **error**
-/// [Diagnostic] is raised (a user-authored group of the same name would
-/// otherwise win the layouter's map) — but planning still completes, because
-/// the engine renders rather than crashes.
+/// [Diagnostic] is raised. Not because the user-authored group would lose —
+/// the opposite: `report_layouter.dart` builds its name-keyed lookup as
+/// `{...definitionGroups, ...syntheticGroups}`, and a Dart map literal's
+/// later entry wins a shared key, so the **synthetic** group would silently
+/// win instead, and the user-authored group's own header/footer bands would
+/// then run under the crosstab's `startNewPage`/`reprintHeaderOnEachPage`
+/// rather than their own. Planning still completes regardless — the engine
+/// renders rather than crashes — but the collision is flagged so the author
+/// renames one of the two.
 ///
 /// The trailing zero-height `groupFooter` is required, not decorative:
 /// nothing else would close the group. An open group pops only on a
@@ -777,14 +783,26 @@ class _Emitter {
   JetTextStyle get _totalLabelText => style.totalText ?? _rowLabelText;
 
   /// Cell appearance resolves in three layers: the measure's own override,
-  /// then the crosstab style, then the renderer's default.
+  /// then the crosstab style, then the renderer's default — which
+  /// right-aligns (spec A §3: measure cells right-aligned) rather than
+  /// falling back to [JetTextStyle.fallback]'s left alignment.
   JetTextStyle _cellTextStyle(CrosstabMeasure measure) =>
-      measure.cellTextStyle ?? style.cellText ?? JetTextStyle.fallback;
+      measure.cellTextStyle ?? style.cellText ?? _cellDefaultText;
 
   /// A total cell takes the total style when there is one; the measure's own
-  /// override is the next-best description of that column.
+  /// override is the next-best description of that column. Either way this is
+  /// a total VALUE, not its row's label — [_totalLabelText] is the left-aligned
+  /// one; this cascades to [_cellTextStyle]'s right-aligned default (spec A
+  /// §3: total values right-aligned, same as an ordinary measure cell).
   JetTextStyle _totalCellText(CrosstabMeasure measure) =>
       style.totalText ?? _cellTextStyle(measure);
+
+  /// The renderer's own default for a measure/total VALUE cell when neither
+  /// the measure nor the crosstab style supplies one: right-aligned, per spec
+  /// A §3's alignment rules. Row/total LABELS use [_rowLabelText] /
+  /// [_totalLabelText] instead, which stay left-aligned.
+  static const JetTextStyle _cellDefaultText =
+      JetTextStyle(align: JetTextAlign.right);
 
   /// Null when nothing resolved — the caller then emits no [ShapeElement].
   JetBoxStyle? _cellBoxStyle(CrosstabMeasure measure) =>

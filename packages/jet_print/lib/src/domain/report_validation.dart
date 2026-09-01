@@ -482,7 +482,7 @@ void _validateCrosstab(
     final List<FieldDef> children =
         collectionChildren(scopeFields, ct.collectionField!);
     if (children.isEmpty) {
-      warn('crosstab "${ct.id}" collection field "${ct.collectionField}" '
+      error('crosstab "${ct.id}" collection field "${ct.collectionField}" '
           'was not found in the schema');
       return; // the root cause is already reported; skip per-name noise.
     }

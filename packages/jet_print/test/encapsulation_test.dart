@@ -82,6 +82,13 @@ bool _isWhiteBoxSeamTest(File file) {
       // (Principle III). The canvas smoke case in the same file drives the
       // public designer, but the file imports `src/` for the geometry helper.
       path.endsWith('/test/designer/canvas/label_grid_geometry_test.dart') ||
+      // Crosstab placeholder height (Task 12 review fix): `DesignTimeLayout`
+      // (`design_time_layout.dart`) is the same unexported `src/` geometry
+      // helper `label_grid_geometry_test.dart` above already tests directly;
+      // this test exercises its crosstab-placeholder height math the same
+      // way — white-box (Principle III).
+      path.endsWith(
+          '/test/designer/canvas/crosstab_placeholder_height_test.dart') ||
       // Paper & margin presets (018): the standard-size / margin recognition
       // helpers are unexported `src/` pure functions (the `format_presets.dart`
       // precedent — preset identity is derived for display, never persisted);

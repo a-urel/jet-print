@@ -150,12 +150,20 @@ const List<Map<String, Object?>> _pivotRows = <Map<String, Object?>>[
 ];
 
 /// The default page: 7 leaf columns of 2 measures at 50pt, plus the 90pt
-/// row-label column — 790pt of content, fitting the whole crosstab in one
-/// horizontal slice. A narrower [page] forces the column axis into more than
-/// one slice (see the pagination test below). Wider than [_pump]'s surface on
-/// purpose — see [_pump]'s dartdoc for why that's fine here.
+/// row-label column — 790pt of content, needing a 700pt slice budget
+/// (790 - 90 rowLabelWidth). `sliceColumns` packs that content into ONE
+/// slice here only because its trailing-total reservation check is `<=`: 6
+/// data leaves at 100pt plus a 100pt grand-total reservation is *exactly*
+/// 700. A page sized to that boundary is one rounding error, one extra
+/// total, or one wider measure column away from silently becoming a
+/// two-slice pagination test instead of a one-slice layout test — so this
+/// page is 20pt wider than the content strictly needs, landing the real
+/// budget (720) comfortably clear of it. A narrower [page] forces the column
+/// axis into more than one slice regardless (see the pagination test below).
+/// Wider than [_pump]'s surface on purpose — see [_pump]'s dartdoc for why
+/// that's fine here.
 const PageFormat _pivotPage =
-    PageFormat(width: 820, height: 260, margins: JetEdgeInsets.all(15));
+    PageFormat(width: 840, height: 260, margins: JetEdgeInsets.all(15));
 
 /// Mildly compact metrics — smaller than [CrosstabStyle]'s defaults, but each
 /// measure column (50pt) still comfortably clears the widest value this
@@ -244,7 +252,7 @@ RenderedReport _report({PageFormat? page}) =>
       JetInMemoryDataSource(_pivotRows),
     );
 
-/// Deliberately narrower than [_pivotPage] (820pt): staying under 600px here
+/// Deliberately narrower than [_pivotPage] (840pt): staying under 600px here
 /// clears TWO of [JetReportPreview]'s breakpoints at once — its 700px
 /// thumbnail-rail auto-hide (so this golden shows only the toolbar and
 /// canvas, matching `label_sheet_light.png` and its siblings) and its 600px
@@ -252,7 +260,7 @@ RenderedReport _report({PageFormat? page}) =>
 /// keeps the preview in fit-to-width mode. Fit-to-width uniformly rescales
 /// the whole page to the viewport, so it can never crop — a wider surface
 /// that instead landed in the ">=600 -> 100% actual size" branch would need
-/// the FULL 820pt-plus-margins page to already fit in the window, and did not
+/// the FULL 840pt-plus-margins page to already fit in the window, and did not
 /// (an earlier 1300px-wide attempt showed the whole crosstab but pulled in
 /// the thumbnail rail as a side effect — see Task 12's review history).
 Future<void> _pump(WidgetTester tester) async {

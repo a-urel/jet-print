@@ -149,12 +149,18 @@ class DesignTimeLayout {
   }
 
   /// The fixed stand-in height of a crosstab's canvas placeholder (Task 13): one
-  /// header row per column-axis level, plus room for three data/total rows. A
-  /// crosstab has no rendered elements to measure in the designer, so this is a
-  /// deliberately approximate block — real pagination-aware sizing is render-time
-  /// only (`crosstab_planner.dart`).
+  /// header row per column-axis level, plus a further header row for the
+  /// measure names whenever there is more than one measure (mirroring
+  /// `crosstab_planner.dart`'s own `headerBands`, which emits that band only
+  /// when `measures.length > 1` — a single measure already names its column
+  /// on the leaf header, so no separate row prints), plus room for three
+  /// data/total rows. A crosstab has no rendered elements to measure in the
+  /// designer, so this is a deliberately approximate block — real
+  /// pagination-aware sizing is render-time only (`crosstab_planner.dart`).
   static double _crosstabHeight(Crosstab c) =>
-      c.style.headerRowHeight * c.columnGroups.length + c.style.rowHeight * 3;
+      c.style.headerRowHeight * c.columnGroups.length +
+      (c.measures.length > 1 ? c.style.headerRowHeight : 0) +
+      c.style.rowHeight * 3;
 
   /// Flattens [def] into the visual top-to-bottom flow order (see class doc):
   /// each element is either a [Band] or a [Crosstab] placeholder. The

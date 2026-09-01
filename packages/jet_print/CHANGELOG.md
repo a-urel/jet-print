@@ -28,6 +28,25 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **BREAKING — crosstab (pivot grid) support (spec 046-crosstab-engine).** A
+  new `Crosstab` block — configurable row/column axis `CrosstabGroup`s (each
+  with a sort order, an optional subtotal, and an overridable total label),
+  `CrosstabMeasure`s (a per-row expression folded by an aggregate, with its
+  own format/text/box overrides), and appearance via `CrosstabStyle` — prints
+  once within a `DetailScope` via a new `CrosstabNode`. It folds the scope's
+  own rows (or a nested collection, via `collectionField`) into a sparse
+  matrix, synthesises subtotal/grand-total rows and columns addressing
+  exactly the prefixes the aggregator folded, and paginates horizontally into
+  slices when the column axis is wider than the page body — all through the
+  existing band/group machinery (no new render-engine seam). New public
+  types: `Crosstab`, `CrosstabGroup`, `CrosstabMeasure`, `CrosstabStyle` (plus
+  the `CrosstabSort` enum); `CrosstabMatrix`/`CrosstabPlan`/the aggregator
+  stay internal. **Breaking:** the sealed `ScopeNode` gains two new
+  variants — `CrosstabNode` and `UnknownScopeNode` (losslessly round-trips a
+  scope node whose `kind` this build doesn't recognize, the crosstab's own
+  forward-migration seam) — so any downstream exhaustive `switch` over
+  `ScopeNode` must add cases for both.
+
 - **BREAKING — the report model is reified (spec 024-band-model-reification).**
   The flat `ReportTemplate` band list — where a band's role was *inferred* from
   `type` + group-name + `collectionField` + sibling position — is replaced by an

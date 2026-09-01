@@ -23,6 +23,7 @@ import 'package:jet_print/src/domain/report_element.dart';
 import 'package:jet_print/src/domain/report_variable.dart' show JetCalculation;
 import 'package:jet_print/src/domain/styles/box_style.dart';
 import 'package:jet_print/src/domain/styles/color.dart';
+import 'package:jet_print/src/domain/styles/text_style.dart';
 import 'package:jet_print/src/expression/eval_context.dart';
 import 'package:jet_print/src/expression/function_registry.dart';
 import 'package:jet_print/src/expression/value.dart';
@@ -589,6 +590,32 @@ void main() {
         _details(plan).first.elements.whereType<ShapeElement>().first.style,
         mine,
       );
+    });
+
+    test(
+        'measure cells and total values are right-aligned; total labels stay '
+        'left (spec A §3)', () {
+      final CrosstabMatrix m = _aggregate(ctTotals, _totalRows);
+      final CrosstabPlan plan = planCrosstab(ctTotals, m, availableWidth: 600);
+      TextElement valueOf(FilledBand b) =>
+          _textsOf(b).firstWhere((TextElement e) => !e.id.endsWith('/label'));
+      TextElement labelOf(FilledBand b) =>
+          _textsOf(b).firstWhere((TextElement e) => e.id.endsWith('/label'));
+
+      // An ordinary (non-total) measure cell.
+      final FilledBand istanbul = _rowNamed(plan, 'Istanbul');
+      expect(valueOf(istanbul).style.align, JetTextAlign.right);
+
+      // A total row's VALUE cells right-align, same as an ordinary cell...
+      final FilledBand totalNorth = _rowNamed(plan, 'Total North');
+      expect(valueOf(totalNorth).style.align, JetTextAlign.right);
+      // ...but its own LABEL stays left-aligned.
+      expect(labelOf(totalNorth).style.align, JetTextAlign.left);
+
+      // The grand total: same pattern.
+      final FilledBand grandTotal = _rowNamed(plan, 'Total');
+      expect(valueOf(grandTotal).style.align, JetTextAlign.right);
+      expect(labelOf(grandTotal).style.align, JetTextAlign.left);
     });
   });
 
