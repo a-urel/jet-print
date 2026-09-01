@@ -28,6 +28,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **Crosstab designer authoring (spec 045-crosstab-designer-authoring).** A
+  crosstab is now a first-class authorable object, not just a rendered one. The
+  root scope's Outline "+" menu adds one — born valid and bound, seeded from the
+  attached schema — and its row is selectable, inline-renameable, reorderable
+  (its position decides whether it prints before or after the row loop) and
+  removable. Selecting it opens a Properties inspector for its name, data
+  source, row and column axis levels, measures, size metrics and visibility,
+  with an inline warning when the crosstab cannot fit the printable body width.
+  On the canvas its block is selectable and draws a schematic of the model —
+  real column widths and axis names, with data-driven row and column counts
+  stood in for. New public controller extension: `CtrlCrosstab`. `Selection`
+  gains a fifth target, `crosstabId`, and its `Selection.crosstab` factory. The
+  crosstab's six text/box style slots remain JSON-authored for now.
+
 - **BREAKING — crosstab (pivot grid) support (spec 046-crosstab-engine).** A
   new `Crosstab` block — configurable row/column axis `CrosstabGroup`s (each
   with a sort order, an optional subtotal, and an overridable total label),

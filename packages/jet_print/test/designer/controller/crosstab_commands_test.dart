@@ -196,4 +196,27 @@ void main() {
     c.moveCrosstab(id, -1);
     expect(c.definition, atTop, reason: 'a clamped move records no history');
   });
+
+  // One end-to-end authoring walk: every step the Outline and Properties
+  // surfaces drive, then undo all the way back. Pins that each step is exactly
+  // one history entry and that the definition returns to the original value.
+  test('create, edit, add, reorder, delete — then undo back to the start', () {
+    final JetReportDesignerController c = _controller();
+    final ReportDefinition original = c.definition;
+
+    final String id = _create(c);
+    c.renameCrosstab(id, 'Sales pivot');
+    c.updateCrosstabGroup(id, _find(c.definition, id)!.rowGroups.single.id,
+        (CrosstabGroup g) => g.copyWith(sort: CrosstabSort.descending));
+    c.addCrosstabMeasure(id, fieldName: 'units');
+    c.moveCrosstab(id, -1);
+    c.deleteCrosstab(id);
+    expect(_find(c.definition, id), isNull);
+
+    for (int i = 0; i < 6; i++) {
+      c.undo();
+    }
+    expect(c.definition, original);
+    expect(_errors(c.definition), isEmpty);
+  });
 }
