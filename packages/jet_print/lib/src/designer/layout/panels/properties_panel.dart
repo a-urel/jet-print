@@ -10,6 +10,10 @@ import '../../../data/field_def.dart';
 import '../../../domain/band.dart';
 import '../../../domain/bool_property.dart';
 import '../../../domain/column_layout.dart';
+import '../../../domain/crosstab/crosstab.dart';
+import '../../../domain/crosstab/crosstab_group.dart';
+import '../../../domain/crosstab/crosstab_measure.dart';
+import '../../../domain/crosstab/crosstab_style.dart';
 import '../../../domain/detail_scope.dart';
 import '../../../domain/elements/barcode_element.dart';
 import '../../../domain/elements/chart_element.dart';
@@ -23,6 +27,7 @@ import '../../../domain/page_format.dart';
 import '../../../domain/report_band.dart' show BandType;
 import '../../../domain/report_definition.dart';
 import '../../../domain/report_element.dart';
+import '../../../domain/report_variable.dart' show JetCalculation;
 import '../../../domain/styles/color.dart';
 import '../../../domain/styles/text_style.dart';
 import '../../../domain/watermark.dart';
@@ -55,6 +60,7 @@ import '../region_chrome.dart';
 import '../widgets/editable_label.dart';
 import 'barcode_symbology_label.dart';
 import 'expression_editor_dialog.dart';
+import 'scope_field_choices.dart';
 
 part 'style_editors.dart';
 part 'properties/fields/layout_bits.dart';
@@ -63,6 +69,7 @@ part 'properties/fields/pickers.dart';
 part 'properties/fields/value_field.dart';
 part 'properties/fields/previews.dart';
 part 'properties/fields/shape_gallery.dart';
+part 'properties/inspectors/crosstab_inspector.dart';
 part 'properties/inspectors/element_inspector.dart';
 
 /// Stable test-seam key prefix for the inspector's fields and empty state.
@@ -233,6 +240,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     final String? inspectedKey = selection.bandId ??
         selection.groupId ??
         selection.scopeId ??
+        selection.crosstabId ??
         selection.singleOrNull;
     if (inspectedKey != _lastInspectedKey) {
       _lastInspectedKey = inspectedKey;
@@ -244,6 +252,10 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
       children = _reportInspector(controller, theme, l10n);
     } else if (selection.bandId case final String bandId) {
       children = _bandInspector(controller, bandId, theme, l10n, schema);
+    } else if (selection.crosstabId case final String crosstabId
+        when findCrosstab(controller.definition, crosstabId) != null) {
+      children =
+          _crosstabInspector(controller, crosstabId, theme, l10n, schema);
     } else if (selection.groupId case final String groupId
         when findGroup(controller.definition, groupId) != null) {
       children = _groupInspector(controller, groupId, theme, l10n);

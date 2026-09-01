@@ -62,3 +62,42 @@ List<FieldDef> collectionFieldsForScope(
         f,
   ];
 }
+
+/// The collection fields visible at [scopeId]'s level, with no exclusion — the
+/// choices a crosstab's data-source picker offers (spec B).
+///
+/// Unlike [collectionFieldsForScope] this does NOT drop collections an existing
+/// child list already iterates: a crosstab folds a collection into a matrix, it
+/// does not iterate it, so binding the same collection a nested list iterates is
+/// a legitimate report, not a redundant node.
+List<FieldDef> crosstabCollectionChoices(
+  JetDataSchema? schema,
+  ReportDefinition def,
+  String scopeId,
+) =>
+    <FieldDef>[
+      for (final FieldDef f in _inScopeFields(schema, def, scopeId))
+        if (f.type == JetFieldType.collection) f,
+    ];
+
+/// The scalar fields a crosstab's axis levels and measures may reference: the
+/// scalars of [collectionField]'s entries when it is bound, else the scalars in
+/// scope at [scopeId] (spec B). Empty when no schema is attached.
+List<FieldDef> crosstabSourceFields(
+  JetDataSchema? schema,
+  ReportDefinition def,
+  String scopeId,
+  String? collectionField,
+) {
+  final List<FieldDef> inScope = _inScopeFields(schema, def, scopeId);
+  final List<FieldDef> source = collectionField == null
+      ? inScope
+      : <FieldDef>[
+          for (final FieldDef f in inScope)
+            if (f.name == collectionField) ...f.fields,
+        ];
+  return <FieldDef>[
+    for (final FieldDef f in source)
+      if (f.type != JetFieldType.collection) f,
+  ];
+}

@@ -232,8 +232,15 @@ Sections, in order:
 | Column groups | Same, for the column axis |
 | Measures | Ordered list, one card per measure |
 | Layout | `rowLabelWidth`, `rowLabelIndent`, `measureColumnWidth`, `rowHeight`, `headerRowHeight` |
-| Style | Header / cell / total text and box styles, via the existing `style_editors.dart` widgets |
 | Visibility | The existing `BoolProperty` editor, as bands and elements use |
+
+**Deferred during implementation:** the six text/box style slots (`headerText`,
+`headerBox`, `cellText`, `cellBox`, `totalText`, `totalBox`). `style_editors.dart` exposes
+low-level pieces (colour field, family row, toggle group), not a composed text-style editor, so
+surfacing three text styles and three box styles means reproducing most of the element inspector's
+font section three times — against the god-file ceiling, for slots that are purely cosmetic, already
+round-trip through the codec, and that no report has asked for. The metrics ship because they are
+what makes the width warning actionable. Moved to Spec C.
 
 An axis card carries: name, key expression (field picker plus the existing `fx` expression-editor
 dialog), sort (`ascending` / `descending` / `dataOrder`), a show-total switch, and a total-label
@@ -291,7 +298,8 @@ the inspector is checked against the German string.
 
 ## Out of scope (Spec C)
 
-Across-first slice order · fit/scale column mode · derived measures · per-cell templates · crosstab
+Crosstab text/box style editors (see the Properties section) · across-first slice order · fit/scale
+column mode · derived measures · per-cell templates · crosstab
 inside a `NestedScope` · full WYSIWYG canvas rendering through `planCrosstab` · drag-to-resize of
 the row-label or measure columns on the canvas · crosstab clipboard (copy/paste/duplicate).
 
