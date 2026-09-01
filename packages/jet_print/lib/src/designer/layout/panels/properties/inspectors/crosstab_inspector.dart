@@ -312,7 +312,8 @@ extension _CrosstabInspector on _PropertiesPanelState {
         ),
       ];
 
-  /// One measure: name, per-row value expression, aggregate and format.
+  /// One measure: name, per-row value expression, aggregate, format, and the
+  /// measure's own cell text/box style override.
   Widget _crosstabMeasureCard(
     JetReportDesignerController controller,
     Crosstab ct,

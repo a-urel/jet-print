@@ -1,7 +1,7 @@
 # Crosstab Style Editors (Spec C)
 
 **Date:** 2026-09-01
-**Status:** Designed — not yet implemented.
+**Status:** Implemented.
 **Depends on:** `2026-08-30-crosstab-engine-design.md` (Spec A, shipped `63a46ee`) and
 `2026-09-01-crosstab-designer-authoring-design.md` (Spec B, shipped `06c4125`).
 **Layer:** designer view layer only. No domain field, no codec change, no controller method, no

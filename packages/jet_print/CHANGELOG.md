@@ -28,6 +28,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Crosstab style editors (spec 046-crosstab-style-editors): the eight crosstab
+  appearance slots — the six on `CrosstabStyle` plus `CrosstabMeasure`'s two
+  per-measure overrides — are now authorable in the Properties panel. They
+  already rendered; only the UI was missing. Unset slots display the value they
+  inherit rather than a blank, the first edit materializes only that slot, and a
+  reset clears it back, so a crosstab whose appearance is untouched still
+  serializes without any style keys.
+
 - **Crosstab designer authoring (spec 045-crosstab-designer-authoring).** A
   crosstab is now a first-class authorable object, not just a rendered one. The
   root scope's Outline "+" menu adds one — born valid and bound, seeded from the
