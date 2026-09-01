@@ -116,6 +116,75 @@ void main() {
     expect(_find(c.definition, id)!.visible.value, isFalse);
   });
 
+  test('the last row group, column group and measure cannot be removed', () {
+    final JetReportDesignerController c = _controller();
+    final String id = _create(c);
+    final Crosstab ct = _find(c.definition, id)!;
+    final ReportDefinition before = c.definition;
+    c.removeCrosstabGroup(id, ct.rowGroups.single.id);
+    c.removeCrosstabGroup(id, ct.columnGroups.single.id);
+    c.removeCrosstabMeasure(id, ct.measures.single.id);
+    expect(c.definition, before,
+        reason: 'a refusal must neither edit the model nor add history');
+    expect(_errors(c.definition), isEmpty);
+  });
+
+  test('a second measure can be added, edited, moved and removed', () {
+    final JetReportDesignerController c = _controller();
+    final String id = _create(c);
+    c.addCrosstabMeasure(id, fieldName: 'units');
+    expect(_find(c.definition, id)!.measures, hasLength(2));
+    final String m2 = _find(c.definition, id)!.measures.last.id;
+    expect(_find(c.definition, id)!.measures.last.expression, r'$F{units}');
+
+    c.updateCrosstabMeasure(id, m2,
+        (CrosstabMeasure m) => m.copyWith(aggregate: JetCalculation.average));
+    expect(_find(c.definition, id)!.measures.last.aggregate,
+        JetCalculation.average);
+
+    c.moveCrosstabMeasure(id, m2, -1);
+    expect(_find(c.definition, id)!.measures.first.id, m2);
+
+    c.removeCrosstabMeasure(id, m2);
+    expect(_find(c.definition, id)!.measures, hasLength(1));
+    expect(_errors(c.definition), isEmpty);
+  });
+
+  test('a second axis level can be added, edited, moved and removed', () {
+    final JetReportDesignerController c = _controller();
+    final String id = _create(c);
+    c.addCrosstabGroup(id, row: true, fieldName: 'city');
+    expect(_find(c.definition, id)!.rowGroups, hasLength(2));
+    expect(_find(c.definition, id)!.columnGroups, hasLength(1),
+        reason: 'row: true must not touch the column axis');
+    final String g2 = _find(c.definition, id)!.rowGroups.last.id;
+
+    c.updateCrosstabGroup(
+        id, g2, (CrosstabGroup g) => g.copyWith(sort: CrosstabSort.descending));
+    expect(
+        _find(c.definition, id)!.rowGroups.last.sort, CrosstabSort.descending);
+
+    c.moveCrosstabGroup(id, g2, -1);
+    expect(_find(c.definition, id)!.rowGroups.first.id, g2);
+
+    c.removeCrosstabGroup(id, g2);
+    expect(_find(c.definition, id)!.rowGroups, hasLength(1));
+
+    c.addCrosstabGroup(id, row: false, fieldName: 'year');
+    expect(_find(c.definition, id)!.columnGroups, hasLength(2));
+    expect(_find(c.definition, id)!.rowGroups, hasLength(1));
+    expect(_errors(c.definition), isEmpty);
+  });
+
+  test('a blank field name adds nothing', () {
+    final JetReportDesignerController c = _controller();
+    final String id = _create(c);
+    final ReportDefinition before = c.definition;
+    c.addCrosstabGroup(id, row: true, fieldName: '  ');
+    c.addCrosstabMeasure(id, fieldName: '');
+    expect(c.definition, before);
+  });
+
   test('moving a crosstab reorders it among its siblings', () {
     final JetReportDesignerController c = _controller();
     final String id = _create(c);
