@@ -110,8 +110,7 @@ void main() {
           equals(JetReportFormat.encodeDefinition(d)));
     });
 
-    test('preserves an unknown element type byte-for-byte (Constitution V)',
-        () {
+    test('preserves an unknown element type byte-for-byte', () {
       final Map<String, Object?> wire = <String, Object?>{
         'schemaVersion':
             JetReportFormat.encodeDefinition(_fixture())['schemaVersion'],

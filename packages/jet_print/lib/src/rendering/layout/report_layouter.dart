@@ -9,8 +9,7 @@
 /// logic as a cheap boundary-only pass (page breaks + page count, **no** paint
 /// primitives), and the returned [LazyLayout] constructs each page's frame on
 /// demand. The eager [ReportLayouter.layoutDefinition] is a thin wrapper over
-/// the seam, so the two paths are the same code and stay byte-identical
-/// (Constitution IV).
+/// the seam, so the two paths are the same code and stay byte-identical.
 library;
 
 import '../../domain/band.dart';

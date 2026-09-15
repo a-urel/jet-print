@@ -1,4 +1,4 @@
-// Data-aware invoice golden (US4 / FR-021; Constitution IV).
+// Data-aware invoice golden (US4 / FR-021; WYSIWYG).
 //
 // Pins the data-aware invoice **design surface**: a populated Data Source panel
 // (the invoice schema, incl. the nested `lines` collection) beside the canvas

@@ -8,7 +8,7 @@ import 'report_element.dart';
 /// A [ReportElement] standing in for a type-key this build does not recognize.
 ///
 /// It keeps the element's original JSON verbatim ([rawJson]) so the template
-/// round-trips **losslessly** (Constitution V) — a report authored in a newer
+/// round-trips **losslessly** — a report authored in a newer
 /// build, or by a plugin, is never silently dropped when opened here. It exposes
 /// best-effort [id]/[bounds] (if present in the JSON) so it can still render a
 /// visible placeholder.
@@ -32,19 +32,19 @@ class UnknownElement extends ReportElement {
       : JetRect.zero;
 
   /// A no-op: an unknown element's preserved JSON is never rewritten, so it
-  /// round-trips byte-for-byte (Constitution V). Moving/resizing an
+  /// round-trips byte-for-byte. Moving/resizing an
   /// unrecognized element is intentionally inert rather than lossy.
   @override
   UnknownElement withBounds(JetRect bounds) => this;
 
   /// A no-op: an unknown element's preserved JSON is never rewritten, so it
-  /// round-trips byte-for-byte (Constitution V). Renaming an unrecognized
+  /// round-trips byte-for-byte. Renaming an unrecognized
   /// element is intentionally inert rather than lossy.
   @override
   UnknownElement withName(String? name) => this;
 
   /// A no-op: an unknown element's preserved JSON is never rewritten, so it
-  /// round-trips byte-for-byte (Constitution V). Setting visibility on an
+  /// round-trips byte-for-byte. Setting visibility on an
   /// unrecognized element is intentionally inert rather than lossy.
   @override
   UnknownElement withVisible(BoolProperty visible) => this;

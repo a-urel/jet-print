@@ -3,7 +3,7 @@
 /// preview paint path — `paintFrame` -> [CanvasPainter] — into a scaled
 /// `dart:ui` picture and encodes it as PNG.
 ///
-/// Zero parallel paint code (Constitution IV): pixel parity with the preview
+/// Zero parallel paint code: pixel parity with the preview
 /// is by construction, because this IS the preview's painter. Joins
 /// `canvas_painter.dart` as the second (and only other) declared `dart:ui`
 /// file in the rendering seam — the architecture test pins that allowlist.

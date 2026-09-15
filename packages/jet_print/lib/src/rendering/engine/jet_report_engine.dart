@@ -66,7 +66,7 @@ class JetReportEngine {
     // One registry per render: the bundled defaults, then host families
     // (last-registration-wins). It drives layout MEASUREMENT and is carried on
     // the returned report so preview/export/print paint from the identical
-    // bytes — never a second default-only build (Principle IV / 022 C7/C8).
+    // bytes — never a second default-only build (022 C7/C8).
     final FontRegistry fonts = FontRegistry()
       ..registerDefault()
       ..registerHostFonts(options.fonts);

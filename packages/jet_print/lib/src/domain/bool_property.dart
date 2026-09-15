@@ -2,7 +2,7 @@
 /// non-null, a boolean expression that takes precedence over [value].
 ///
 /// Pure and serializable: it stores the expression as a string and never
-/// evaluates it itself (Constitution II — the domain layer must not depend on
+/// evaluates it itself (the domain layer must not depend on
 /// the expression engine). Evaluation is injected via [getValue].
 library;
 

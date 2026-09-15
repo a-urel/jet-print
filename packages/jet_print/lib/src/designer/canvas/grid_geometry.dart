@@ -2,7 +2,7 @@
 ///
 /// Like `RulerScale`, it is **Flutter-, domain-, and tunable-free** (the
 /// step/gap/cap are injected by the caller) — so the tricky adaptive-density
-/// math is unit-testable without a widget (Principle III) and the helper carries
+/// math is unit-testable without a widget, and the helper carries
 /// no view/render coupling.
 ///
 /// Given one band axis, it enumerates the line positions to draw as exact

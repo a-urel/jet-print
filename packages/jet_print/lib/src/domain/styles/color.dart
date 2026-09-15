@@ -4,7 +4,7 @@ library;
 import '../value_equality.dart';
 
 /// An immutable ARGB32 color. Serialized as a human-inspectable hex string
-/// `#AARRGGBB` (Constitution V); in memory it is a packed [argb] int.
+/// `#AARRGGBB`; in memory it is a packed [argb] int.
 class JetColor with ValueEquality {
   /// Creates a color from a packed 0xAARRGGBB value.
   const JetColor(this.argb);

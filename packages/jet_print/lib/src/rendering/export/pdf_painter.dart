@@ -5,7 +5,7 @@
 /// Draws the SAME pre-measured frame primitives the preview paints — text at
 /// exact baselines from the same measurer, fonts embedded from the same
 /// [FontRegistry] bytes, images placed via the shared [computeImageFit] —
-/// so WYSIWYG holds by construction (Constitution IV, FR-001/003).
+/// so WYSIWYG holds by construction (FR-001/003).
 ///
 /// Deterministic by construction (FR-007): the document ID is fixed (the only
 /// always-written nondeterministic output of dart_pdf), no `/Info` dictionary
@@ -153,7 +153,7 @@ class PdfPainter implements ReportPainter {
         );
         if (p.style.underline) {
           // The same explicit segment CanvasPainter strokes, from the same
-          // shared geometry helper (021 / research §2, Constitution IV).
+          // shared geometry helper (021 / research §2).
           final ({double offset, double thickness}) u =
               underlineFor(p.style.fontSize);
           final double y = _mapY(p.bounds.y + line.baseline + u.offset);

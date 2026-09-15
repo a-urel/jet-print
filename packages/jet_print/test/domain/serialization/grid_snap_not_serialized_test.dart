@@ -1,5 +1,5 @@
 // Grid/snap view-state is NOT serialized (spec 015, US4 / contract C5.3 /
-// FR-015, SC-005; Constitution V).
+// FR-015, SC-005).
 //
 // Black-box (public entry point only): grid visibility and snapping are
 // ephemeral per-session designer preferences, never part of the report

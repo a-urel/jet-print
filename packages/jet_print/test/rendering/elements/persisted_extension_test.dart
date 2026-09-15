@@ -1,5 +1,5 @@
 // FLAGSHIP: a custom element type round-trips through report_codec AND renders,
-// with zero edits to library src/ (Constitution II — persistence + rendering).
+// with zero edits to library src/ (persistence + rendering).
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/domain/band.dart';
 import 'package:jet_print/src/domain/bool_property.dart';

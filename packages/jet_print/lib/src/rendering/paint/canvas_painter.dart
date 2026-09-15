@@ -123,7 +123,7 @@ class CanvasPainter implements ReportPainter {
       if (p.style.underline) {
         // An explicit stroked segment from the shared geometry helper — NOT
         // ui.TextDecoration, whose placement the PDF backend cannot replicate
-        // (021 / research §2, Constitution IV).
+        // (021 / research §2).
         final ({double offset, double thickness}) u =
             underlineFor(p.style.fontSize);
         final double y = p.bounds.y + line.baseline + u.offset;

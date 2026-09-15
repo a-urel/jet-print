@@ -38,7 +38,7 @@ class JetReportExporter {
   Future<Uint8List> toPdf(RenderedReport report) async {
     // The registry the engine measured with, carried on the report (022) —
     // including any host fonts — so measure/draw/embed all share one byte
-    // source and the PDF matches the preview exactly (Principle IV).
+    // source and the PDF matches the preview exactly.
     final PdfPainter painter = PdfPainter(report.fonts);
     for (int i = 0; i < report.pageCount; i++) {
       await paintFrame(report.pageAt(i).frame, painter);

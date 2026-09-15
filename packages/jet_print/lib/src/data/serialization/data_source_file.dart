@@ -32,7 +32,7 @@ class JetDataSourceDocument {
 }
 
 /// Encodes and decodes a [JetDataSourceDocument] to/from the library's
-/// versioned JSON format (Constitution V). The library performs no filesystem
+/// versioned JSON format. The library performs no filesystem
 /// I/O: a host reads the text and [decodeJson]s it, or [encodeJson]s a document
 /// and writes it. The round-trip is lossless over the schema (including nested
 /// collection fields); sample rows pass through as plain JSON values.

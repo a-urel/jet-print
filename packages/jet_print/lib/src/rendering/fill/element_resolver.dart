@@ -62,7 +62,7 @@ class ElementResolver {
 
   /// The text rendered for a binding to a field absent from [knownFields].
   /// Defaults to the literal `#ERROR`; the designer/preview pass a localized
-  /// value so the render layer never imports l10n (Constitution II).
+  /// value so the render layer never imports l10n.
   final String unresolvedFieldToken;
 
   /// The per-row diagnostic budget (spec E2), or null when the caller does not

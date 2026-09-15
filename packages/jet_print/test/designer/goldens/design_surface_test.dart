@@ -1,4 +1,4 @@
-// T080 — design-surface fidelity goldens (Constitution IV / SC-003).
+// T080 — design-surface fidelity goldens (WYSIWYG / SC-003).
 //
 // Pins how the interactive canvas paints REPRESENTATIVE elements (text, shape,
 // image, barcode) with a selection shown — outline + resize handles — in both

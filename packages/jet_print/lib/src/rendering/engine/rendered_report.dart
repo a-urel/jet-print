@@ -12,8 +12,8 @@ import '../text/font_registry.dart';
 /// the page's positioned-primitive [frame].
 ///
 /// A thin wrapper over the shared `PageFrame` — the identical frame type the
-/// designer paints, so previewing a page is WYSIWYG by construction
-/// (Constitution IV) and an export backend can consume it unchanged.
+/// designer paints, so previewing a page is WYSIWYG by construction and an
+/// export backend can consume it unchanged.
 class RenderedPage {
   /// Creates a rendered page.
   const RenderedPage({required this.index, required this.frame});
@@ -62,7 +62,7 @@ class RenderedReport {
   /// any `RenderOptions.fonts`) and attaches it here, so the preview, the
   /// PDF/PNG exporter, and the printer paint and embed from the **same** bytes
   /// layout was measured with — they read this instead of building a parallel
-  /// default-only registry (Principle IV). [FontRegistry] is unexported, so
+  /// default-only registry. [FontRegistry] is unexported, so
   /// this is not part of the public API; constructed directly it defaults to a
   /// bundled-default-only registry (today's behavior).
   final FontRegistry fonts;

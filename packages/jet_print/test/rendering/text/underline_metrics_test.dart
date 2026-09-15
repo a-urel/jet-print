@@ -1,5 +1,5 @@
 // underlineFor() — the ONE underline geometry source both painters consume
-// (021 / US1 / research §2, Constitution IV). Em-fraction constants: offset
+// (021 / US1 / research §2). Em-fraction constants: offset
 // ≈ 0.11 × fontSize below the baseline, thickness ≈ 0.06 × fontSize.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/rendering/text/underline_metrics.dart';

@@ -1,5 +1,4 @@
-/// A keep-alive designer↔preview workspace (see
-/// docs/superpowers/specs/2026-06-12-workspace-keep-alive-design.md).
+/// A keep-alive designer↔preview workspace.
 ///
 /// Composes [JetReportDesigner] and [JetReportPreview] in an [IndexedStack] so
 /// both stay mounted: switching modes is a pure visibility toggle (instant in

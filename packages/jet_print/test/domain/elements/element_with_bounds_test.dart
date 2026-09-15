@@ -105,7 +105,7 @@ void main() {
       );
       final ReportElement result = original.withBounds(_b);
       expect(result, isA<UnknownElement>());
-      // The raw JSON is never rewritten (lossless, Constitution V).
+      // The raw JSON is never rewritten (lossless).
       expect((result as UnknownElement).rawJson, original.rawJson);
     });
   });

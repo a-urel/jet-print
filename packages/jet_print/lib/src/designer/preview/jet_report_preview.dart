@@ -1,7 +1,7 @@
 /// The on-screen report preview (spec 011 — FR-008/FR-009): a read-only,
 /// paginated viewer over a `RenderedReport`.
 ///
-/// Constitution IV (NON-NEGOTIABLE): each page is painted by recording its
+/// WYSIWYG, non-negotiable: each page is painted by recording its
 /// `RenderedPage.frame` through the **shared** `paintFrame` → `CanvasPainter`
 /// pipeline — the identical path the designer's `DesignTimeFrameBuilder`
 /// uses — and blitting the recorded picture via the designer's
@@ -173,7 +173,7 @@ class _JetReportPreviewState extends State<JetReportPreview> {
   /// here) and the measurement already baked into the frame, so a glyph is
   /// drawn with the same variant it was measured with. Read off the carried
   /// `RenderedReport` (022) — the registry the engine measured with, including
-  /// any host fonts — never a freshly default-only build (Principle IV).
+  /// any host fonts — never a freshly default-only build.
   FontRegistry get _fonts => widget.report.fonts;
 
   late int _index;

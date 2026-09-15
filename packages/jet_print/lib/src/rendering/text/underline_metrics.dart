@@ -5,7 +5,7 @@
 /// `dart:ui`'s `TextDecoration`, whose placement comes from font tables the
 /// PDF backend does not read. Computing offset and thickness here, and only
 /// here, makes canvas, PNG preview, and PDF export identical by construction
-/// (Constitution IV — the `shapePath` pattern applied to text).
+/// (the `shapePath` pattern applied to text).
 library;
 
 /// Em-fraction underline placement below the baseline. Conventional values

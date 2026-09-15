@@ -11,7 +11,7 @@
 /// to a canonical **expression string** the existing parser already accepts, and
 /// [reverseCompile] turns a stored expression back into its display token so the
 /// value field and canvas show the same thing. This is a presentation layer; it
-/// adds no evaluation code and no parallel render path (Constitution IV).
+/// adds no evaluation code and no parallel render path.
 library;
 
 import '../../expression/aggregate/aggregate_functions.dart';

@@ -2,7 +2,7 @@
 //
 // The engine builds ONE registry and RenderedReport carries it, so canvas,
 // preview, PNG, and PDF all paint the identical measured frame — host fonts
-// render the same everywhere by construction (Principle IV / SC-002). This
+// render the same everywhere by construction (SC-002). This
 // test pins the two observable ends of that guarantee:
 //   * the PDF text geometry matches the carried frame's measured baselines
 //     (the same frame the canvas/preview/PNG paths consume), and

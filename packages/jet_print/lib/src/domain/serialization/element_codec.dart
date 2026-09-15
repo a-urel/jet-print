@@ -6,7 +6,7 @@ import '../unknown_element.dart';
 import 'report_format_exception.dart';
 
 /// Serializes a single element type [E] to/from JSON. Register one per element
-/// type so custom types persist with zero core edits (Constitution II/V).
+/// type so custom types persist with zero core edits.
 ///
 /// `toJson` takes a `covariant ReportElement` (not `E`) so that
 /// `ElementCodec<E>` stays a subtype of `ElementCodec<ReportElement>` and can be

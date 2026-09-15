@@ -1,4 +1,4 @@
-/// Forward migration of older report JSON to the current schema (Constitution V).
+/// Forward migration of older report JSON to the current schema.
 library;
 
 import 'report_format_exception.dart';

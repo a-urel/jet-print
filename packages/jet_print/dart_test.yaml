@@ -1,7 +1,6 @@
 # Declares the `golden` tag used to gate visual/byte-pinned goldens to the
 # canonical (macOS) CI host. Off-canonical jobs run `flutter test
-# --exclude-tags golden`; macOS runs the full suite. See
-# docs/superpowers/specs/2026-06-20-e3-desktop-matrix-design.md §5.
+# --exclude-tags golden`; macOS runs the full suite. See docs/testing.md.
 tags:
   golden:
     description: >-

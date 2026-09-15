@@ -1,6 +1,6 @@
 /// Builds the design-time [PageFrame] by reusing the shared render pipeline.
 ///
-/// Constitution IV (NON-NEGOTIABLE): element appearance is produced by the
+/// WYSIWYG, non-negotiable: element appearance is produced by the
 /// **unchanged** `ElementRenderer.emit` + `CanvasPainter` path — there is no
 /// parallel element-drawing code in the designer. The only design-specific part
 /// is *where* bands sit (the non-paginated [DesignTimeLayout]); each element is
@@ -77,7 +77,7 @@ class DesignTimeFrameBuilder {
   /// Maps an element to what is *shown* at design time. A data-bound text
   /// element renders its binding **token** (FR-010, FR-014: tokens, not values),
   /// fed through the unchanged text renderer as ordinary text so the shared
-  /// pipeline stays single-sourced (Constitution IV). Every other element —
+  /// pipeline stays single-sourced. Every other element —
   /// including a field-bound image, which the shared renderer already draws as a
   /// placeholder — renders as-is.
   ReportElement _designTimeDisplay(ReportElement element) {

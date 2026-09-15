@@ -6,8 +6,7 @@
 // punctuation), licensed under the SIL Open Font License 1.1 — see OFL.txt.
 // Embedding keeps every face available to the headless TextMeasurer and to
 // paint backends from one source, with no asset/rootBundle dependency — so a
-// Bold/Italic edit renders identically on canvas, preview, and export
-// (Constitution IV).
+// Bold/Italic edit renders identically on canvas, preview, and export.
 library;
 
 import 'dart:convert';

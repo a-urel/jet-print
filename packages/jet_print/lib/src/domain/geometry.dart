@@ -2,7 +2,7 @@
 ///
 /// These deliberately mirror the *shape* of `dart:ui`'s geometry types but carry
 /// **no Flutter dependency**, so the domain seam stays headless and
-/// platform-agnostic (Constitution II; enforced by the layer-boundary test). All
+/// platform-agnostic (enforced by the layer-boundary test). All
 /// types are immutable, use value equality, and round-trip through JSON.
 library;
 

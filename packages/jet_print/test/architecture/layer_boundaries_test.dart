@@ -91,9 +91,8 @@ void main() {
       );
     });
 
-    test('the reified tree types (spec 024) stay pure domain (Principle II)',
-        () {
-      // FR-001 / Principle II: ReportDefinition and the band/scope/group tree
+    test('the reified tree types (spec 024) stay pure domain', () {
+      // FR-001: ReportDefinition and the band/scope/group tree
       // are the public report model — they may use package:flutter/foundation
       // (listEquals) but MUST import no rendering/designer seam and no Flutter
       // UI library. Asserted explicitly (not just via the recursive domain
@@ -366,7 +365,7 @@ void main() {
           // measures with a MetricsTextMeasurer over it, carrying that registry
           // on RenderedReport — the same pure-Dart text sublayer layout/ already
           // depends on. It is inward (text → domain only), Flutter-free, and
-          // keeps export/preview WYSIWYG by construction (Principle IV).
+          // keeps export/preview WYSIWYG by construction.
           final bool outward = uri.contains('designer') ||
               uri.contains('../paint/') ||
               uri.contains('../elements/') ||

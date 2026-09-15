@@ -15,7 +15,7 @@ part of 'detail_scope.dart';
 /// A [ScopeNode] standing in for a `kind` this build does not recognize.
 ///
 /// It keeps the node's original JSON verbatim ([rawJson]) so a definition
-/// authored by a newer build round-trips **losslessly** (Constitution V) rather
+/// authored by a newer build round-trips **losslessly** rather
 /// than failing the whole file. It renders nothing.
 final class UnknownScopeNode extends ScopeNode with ValueEquality {
   /// Wraps [rawJson] for an unrecognized node kind.

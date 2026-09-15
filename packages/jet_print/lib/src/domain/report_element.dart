@@ -48,7 +48,7 @@ abstract class ReportElement {
   /// This is the polymorphic move/resize primitive the designer edits through
   /// (FR-008/FR-009/FR-025): editing one element never disturbs another. An
   /// [UnknownElement] is intentionally a no-op passthrough — its preserved JSON
-  /// is never rewritten (Constitution V).
+  /// is never rewritten.
   ReportElement withBounds(JetRect bounds);
 
   /// Returns a copy of this element of the **same concrete type** with its

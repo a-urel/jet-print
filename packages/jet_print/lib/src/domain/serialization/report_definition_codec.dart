@@ -1,5 +1,5 @@
 /// Versioned JSON (de)serialization for [ReportDefinition] — the reified report
-/// model (spec 024, schema v2). Constitution V.
+/// model (spec 024, schema v2).
 ///
 /// Mirrors the legacy [encodeTemplate]/[decodeTemplate] codec but walks the
 /// section tree (furniture + body + scopes) and routes every band's elements

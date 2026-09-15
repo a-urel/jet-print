@@ -12,7 +12,7 @@ import 'report_definition_codec.dart' as defcodec;
 import 'report_format_exception.dart';
 
 /// Encodes and decodes a [ReportDefinition] to/from the library's versioned
-/// JSON file format (Constitution V), with the built-in element codecs and
+/// JSON file format, with the built-in element codecs and
 /// schema migrations **pre-wired** — a consumer never assembles a codec
 /// registry.
 ///

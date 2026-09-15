@@ -2,7 +2,7 @@
 //
 // A report naming a host family NOT registered in the current session stays
 // fully portable: it round-trips byte-identically through the codecs (name
-// preserved, schemaVersion unchanged — no schema change, Principle V), renders
+// preserved, schemaVersion unchanged — no schema change), renders
 // via the fallback font, and exports without blocking on the missing font.
 // This is the existing 021 unavailable-family path, now exercised for a
 // host-contributed name (data-model §8 — no new code). White-box.
@@ -69,7 +69,7 @@ void main() {
         JetReportFormat.decodeDefinitionJson(json);
     expect(JetReportFormat.encodeDefinitionJson(reopened), json,
         reason: 'no silent rewrite — byte-identical round-trip (SC-003)');
-    // No schema change within the reified format (Principle V).
+    // No schema change within the reified format.
     expect(JetReportFormat.encodeDefinition(_definition())['schemaVersion'], 2);
     expect(json, contains('"schemaVersion":2'));
   });

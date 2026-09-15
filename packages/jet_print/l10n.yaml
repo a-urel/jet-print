@@ -3,7 +3,7 @@
 # ARB sources live inside the designer seam. Modern gen-l10n always writes the
 # output as real source (the old `synthetic-package` flag is gone), so the
 # generated JetPrintLocalizations lands next to the ARB files and can be
-# re-exported through the single public entry point (Constitution §I, research D6).
+# re-exported through the single public entry point (research D6).
 arb-dir: lib/src/designer/l10n
 output-dir: lib/src/designer/l10n
 template-arb-file: jet_print_en.arb

@@ -4,7 +4,7 @@
 // registry proves the boundary-only pass emits no paint primitives, and that
 // building one page emits exactly that page's primitives. Lazy/eager
 // equivalence (`buildPage(i)` byte-identical to `layout().pages[i]`) is the
-// guard that the seam reuses the existing pagination logic (Constitution IV).
+// guard that the seam reuses the existing pagination logic.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/in_memory_data_source.dart';
 import 'package:jet_print/src/domain/band.dart';

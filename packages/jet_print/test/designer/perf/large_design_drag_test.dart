@@ -2,7 +2,7 @@
 //
 // Seeds 200 elements, selects 20, and live-drags them across several frames.
 // The design-time canvas paints element appearance from a cached `ui.Picture`
-// (Constitution IV) and the selection overlay only redraws ghosts/handles, so a
+// and the selection overlay only redraws ghosts/handles, so a
 // large design must not throw and must not regress into per-frame O(n²) work.
 //
 // This is a SMOKE test, not a micro-benchmark: it asserts no exceptions and a

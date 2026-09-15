@@ -1,6 +1,6 @@
 # Shared, strict static-analysis configuration for the entire jet_print workspace.
 #
-# Goal (Constitution §VI / FR-009 / SC-003): a clean checkout reports ZERO
+# Goal (FR-009 / SC-003): a clean checkout reports ZERO
 # analyzer warnings — not merely zero errors. We therefore promote a set of
 # hygiene/correctness lints to `error` so they fail `flutter analyze` and CI
 # instead of silently accumulating.

@@ -68,87 +68,87 @@ bool _isWhiteBoxSeamTest(File file) {
       // Canvas-rulers (014): the pure measurement helpers (RulerScale/RulerTick
       // and the points↔mm + selection-extent metrics) are unexported `src/`
       // modules deliberately isolated from Flutter so the tricky math is
-      // unit-testable; their unit tests are white-box (Principle III).
+      // unit-testable; their unit tests are white-box.
       path.endsWith('/test/designer/canvas/ruler_scale_test.dart') ||
       path.endsWith('/test/designer/canvas/ruler_metrics_test.dart') ||
       // Grid & snap (015): `gridLineOffsets` (and the grid/snap tunables it
       // shares with the snap geometry) is an unexported `src/` helper kept
       // Flutter-free so the adaptive-density math is unit-testable; its unit
-      // test is white-box (Principle III).
+      // test is white-box.
       path.endsWith('/test/designer/canvas/grid_geometry_test.dart') ||
       // Label-grid cue (035): `labelGridCue` (`label_grid_geometry.dart`) is an
       // unexported `src/` pure helper computing the multi-column design-time
       // cell/ghost rects from a `DesignTimeLayout`; its unit test is white-box
-      // (Principle III). The canvas smoke case in the same file drives the
+      //. The canvas smoke case in the same file drives the
       // public designer, but the file imports `src/` for the geometry helper.
       path.endsWith('/test/designer/canvas/label_grid_geometry_test.dart') ||
       // Crosstab placeholder height (Task 12 review fix): `DesignTimeLayout`
       // (`design_time_layout.dart`) is the same unexported `src/` geometry
       // helper `label_grid_geometry_test.dart` above already tests directly;
       // this test exercises its crosstab-placeholder height math the same
-      // way — white-box (Principle III).
+      // way — white-box.
       path.endsWith(
           '/test/designer/canvas/crosstab_placeholder_height_test.dart') ||
       // Paper & margin presets (018): the standard-size / margin recognition
       // helpers are unexported `src/` pure functions (the `format_presets.dart`
       // precedent — preset identity is derived for display, never persisted);
-      // their unit tests are white-box (Principle III).
+      // their unit tests are white-box.
       path.endsWith('/test/designer/paper_presets_test.dart') ||
       path.endsWith('/test/designer/margin_presets_test.dart') ||
       // Bundled-font preload (021 follow-up): the designer-mount engine
       // preload is an unexported `src/` helper with an injectable loader so
       // the family/byte wiring is unit-testable without dart:ui; its unit
-      // test is white-box (Principle III).
+      // test is white-box.
       path.endsWith('/test/designer/font_preload_test.dart') ||
       // Band-walker (024): the reified-model tree navigation/transform helper
       // (`band_walker.dart`) is an unexported `src/` module the designer
-      // migration is built on; its unit test is white-box (Principle III).
+      // migration is built on; its unit test is white-box.
       path.endsWith('/test/designer/controller/band_walker_test.dart') ||
       // Binding-resolution (031): the author-time resolvable-names helper
       // (`binding_resolution.dart`) composes the band-walk with the data seam
       // to account for spec-030 published totals; it is an unexported `src/`
-      // module and its unit test is white-box (Principle III).
+      // module and its unit test is white-box.
       path.endsWith('/test/designer/controller/binding_resolution_test.dart') ||
       // Descendant operand names (033): the two new helpers on the same
       // `binding_resolution.dart` module exercise `resolveAggregatePath`
-      // (`aggregate_path.dart`), also unexported `src/`; white-box (Principle III).
+      // (`aggregate_path.dart`), also unexported `src/`; white-box.
       path.endsWith(
           '/test/designer/controller/binding_resolution_descendant_test.dart') ||
       // fx expression editor status (033): the descendant-scope status test
       // exercises the editor dialog directly (same seam as
-      // expression_editor_dialog_test.dart); white-box (Principle III).
+      // expression_editor_dialog_test.dart); white-box.
       path.endsWith(
           '/test/designer/expression_editor_status_descendant_test.dart') ||
       // ZoomControl widget (037): the control is an unexported `src/` designer
       // widget (it is not part of the library's public surface); its widget
-      // test is white-box (Principle III / the binding_token precedent).
+      // test is white-box (see the binding_token precedent).
       path.endsWith('/test/designer/layout/zoom_control_test.dart') ||
       // PageNavControl widget (preview page-jump dropdown): an unexported `src/`
       // designer widget (not part of the public surface); its widget test is
-      // white-box (Principle III / the zoom_control_test precedent).
+      // white-box (see the zoom_control_test precedent).
       path.endsWith('/test/designer/layout/page_nav_control_test.dart') ||
       // PopoverGroup (toolbar popover mutual-exclusion coordinator): an
-      // unexported `src/` helper; its unit test is white-box (Principle III).
+      // unexported `src/` helper; its unit test is white-box.
       path.endsWith('/test/designer/layout/popover_group_test.dart') ||
       // Zoom math (037): `fitWidthScale`/`fitPageScale` and the clamp/step
       // helpers in `zoom_math.dart` are unexported `src/` pure functions; their
       // unit test is white-box so the adaptive-scale math can be tested without
-      // the full designer (Principle III / the grid_geometry precedent).
+      // the full designer (see the grid_geometry precedent).
       path.endsWith('/test/designer/canvas/zoom_math_test.dart') ||
       // Touch targets (E5 task 6): `DesignerSelectionOverlay` and the touch
       // tunables (`kHandleHitSizeTouch`) are unexported `src/` canvas internals;
       // the widget test exercises them directly as a white-box seam test
-      // (Principle III / the zoom_math_test precedent).
+      // (see the zoom_math_test precedent).
       path.endsWith('/test/designer/canvas/touch_targets_test.dart') ||
       // SelectDataSource plumbing (task 2 fix): `DesignerSchemaScope` is an
       // unexported `src/` InheritedWidget; the test walks the element tree via
       // its internal type to assert the guarded callback is correctly plumbed
       // through the designer subtree — this is a white-box seam test
-      // (Principle III / the binding_token_test precedent).
+      // (see the binding_token_test precedent).
       path.endsWith('/test/designer/select_data_source_test.dart') ||
       // Rename feature (Task 8): the rename `EditCommand`s and `band_walker`
       // are unexported `src/` modules; the command unit test and the controller
-      // rename test exercise them as white-box seam tests (Principle III /
+      // rename test exercise them as white-box seam tests (see
       // the band_walker_test precedent).
       path.endsWith('/test/designer/controller/rename_command_test.dart') ||
       path.endsWith('/test/designer/controller/rename_controller_test.dart') ||
@@ -158,22 +158,22 @@ bool _isWhiteBoxSeamTest(File file) {
       path.endsWith(
           '/test/designer/controller/rename_preservation_test.dart') ||
       // object_display_label resolver (Task 8 l10n): an unexported `src/`
-      // designer l10n helper; its unit test is white-box (Principle III).
+      // designer l10n helper; its unit test is white-box.
       path.endsWith('/test/designer/l10n/object_display_label_test.dart') ||
       // EditableLabel widget (Task 8 inline-rename widget): an unexported
-      // `src/` designer widget; its widget test is white-box (Principle III /
+      // `src/` designer widget; its widget test is white-box (see
       // the zoom_control_test precedent).
       path.endsWith('/test/designer/widgets/editable_label_test.dart') ||
       // Barcode symbology label (barcode hardening): `barcodeSymbologyLabel`
       // is an unexported `src/` designer presentation helper mapping the
       // symbology enum to friendly dropdown text; its unit test is white-box
-      // (Principle III / the object_display_label_test precedent).
+      // (see the object_display_label_test precedent).
       path.endsWith(
           '/test/designer/layout/panels/barcode_symbology_label_test.dart') ||
       // Preview thumbnails (044): the bounded LRU cache behind the thumbnail
       // rail's `ui.Picture` budget is an unexported `src/` pure helper kept
       // Flutter-free so the eviction math is unit-testable; its unit test is
-      // white-box (Principle III).
+      // white-box.
       path.endsWith('/test/designer/preview/lru_cache_test.dart') ||
       path.endsWith('/test/designer/preview/preview_sheet_test.dart') ||
       path.endsWith('/test/designer/preview/page_thumbnail_rail_test.dart');

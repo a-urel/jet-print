@@ -1,6 +1,6 @@
 /// A bounded least-recently-used map with an eviction hook.
 ///
-/// Kept deliberately Flutter-free (Principle III) so the eviction math is
+/// Kept deliberately Flutter-free so the eviction math is
 /// unit-testable in isolation from the widget that owns it. The preview's
 /// thumbnail rail uses it to bound how many recorded `ui.Picture`s it holds,
 /// disposing whatever falls out.

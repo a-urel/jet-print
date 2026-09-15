@@ -94,7 +94,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     and faithful migration (and validated consistent with its slot).
   - The engine, serialization, and designer consume `ReportDefinition`
     directly. Rendering is **byte-identical** to the previous engine for every
-    existing report (golden-locked, Constitution IV).
+    existing report (golden-locked).
   - New author-time `validate(ReportDefinition)` returns `Diagnostic`s for the
     semantic invariants — unique ids/group-names, record-blind furniture
     rejecting `$F{}` field bindings, parseable group keys — surfaced in the
@@ -527,7 +527,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     resize handles; drag-to-move; fit-to-width zoom transform; per-element
     accessibility regions. Element appearance is painted through the **unchanged**
     shared render pipeline (`ElementRenderer.emit` + `CanvasPainter`), cached as a
-    `ui.Picture` (Constitution IV — no parallel draw code).
+    `ui.Picture` (no parallel draw code).
   - Undo/redo wired to the top bar (disabled at the history ends) and to
     canvas-focus-scoped ⌘Z / ⇧⌘Z (Ctrl on non-macOS).
   - Per-handle **resize** with a 4×4 pt minimum floor, plus **snapping** to the

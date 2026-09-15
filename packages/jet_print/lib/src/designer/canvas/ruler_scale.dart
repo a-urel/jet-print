@@ -8,7 +8,7 @@
 /// never crowd or vanish (SC-002/SC-004/FR-010), and a subdivision floor.
 ///
 /// It imports **only `dart:math`** — no Flutter, no domain, no tunables — so it
-/// is unit-testable without a widget (Principle III) and carries no view/render
+/// is unit-testable without a widget, and carries no view/render
 /// coupling (the ladder/divisions/floor are injected by the caller, FR-016).
 library;
 

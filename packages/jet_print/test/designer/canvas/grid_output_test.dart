@@ -1,5 +1,5 @@
 // Grid is absent from preview/export output (spec 015, US4 / contract C6.1 /
-// FR-016, SC-005; Constitution IV — WYSIWYG).
+// FR-016, SC-005; WYSIWYG).
 //
 // Black-box: imports only the public entry point. The preview/export path
 // renders the report MODEL through JetReportEngine → JetReportExporter; the grid

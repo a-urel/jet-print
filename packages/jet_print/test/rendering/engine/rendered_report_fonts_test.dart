@@ -3,7 +3,7 @@
 // `JetReportEngine.render` builds a single `FontRegistry`
 // (registerDefault + registerHostFonts) and ATTACHES it to the returned
 // `RenderedReport`, so preview/export/print read the very bytes layout was
-// measured with — WYSIWYG by construction (Principle IV). White-box: reaches
+// measured with — WYSIWYG by construction. White-box: reaches
 // the internal `RenderedReport.fonts`.
 import 'dart:typed_data';
 

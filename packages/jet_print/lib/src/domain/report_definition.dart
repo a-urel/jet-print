@@ -154,7 +154,7 @@ class ReportBody with ValueEquality {
 
 /// An immutable, reified report definition: a named [page] layout with declared
 /// [parameters] and [variables], record-blind [furniture], and a data-driven
-/// [body]. Serializes to versioned JSON (Constitution V).
+/// [body]. Serializes to versioned JSON.
 class ReportDefinition with ValueEquality {
   /// Creates a report definition.
   const ReportDefinition({

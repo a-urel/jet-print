@@ -1,4 +1,4 @@
-// Bound-token render golden (US2 / FR-010, FR-013, FR-014; Constitution IV).
+// Bound-token render golden (US2 / FR-010, FR-013, FR-014; WYSIWYG).
 //
 // Pins how the canvas paints data-bound elements at design time: a bound text
 // element shows its field TOKEN (e.g. `[customerName]`) — not a resolved value —

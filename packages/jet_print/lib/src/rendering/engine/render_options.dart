@@ -76,7 +76,7 @@ class RenderOptions {
   /// `FontRegistry` (the bundled defaults, then these families
   /// last-registration-wins) and attaches it to the returned `RenderedReport`,
   /// so the preview, PDF/PNG export, and print paths all measure and paint from
-  /// the identical bytes — WYSIWYG by construction (Principle IV). Register
+  /// the identical bytes — WYSIWYG by construction. Register
   /// **before** rendering; the empty default reproduces today's behavior
   /// exactly (SC-005).
   ///

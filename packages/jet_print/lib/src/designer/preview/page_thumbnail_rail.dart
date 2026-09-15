@@ -1,7 +1,7 @@
 /// The report preview's page-thumbnail rail (044): a lazily-painted, scrollable
 /// list of page thumbnails that selects the previewed page.
 ///
-/// Constitution IV (NON-NEGOTIABLE): a thumbnail is the *same* picture the main
+/// WYSIWYG, non-negotiable: a thumbnail is the *same* picture the main
 /// preview would record — recorded through the shared `paintFrame` →
 /// `CanvasPainter` pipeline and blitted through `FrameCustomPainter` at a
 /// smaller scale, since a `ui.Picture` is a resolution-independent display
