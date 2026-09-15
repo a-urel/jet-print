@@ -2,7 +2,7 @@
 /// entirely through the library's public API (`package:jet_print/jet_print.dart`),
 /// the way an external consumer would.
 ///
-/// Built on the same engine pieces as the address-label sheet (spec 034 native
+/// Built on the same engine pieces as the address-label sheet (native
 /// multi-column layout) plus the barcode element: the detail band
 /// carries a [ColumnLayout], so a single label cell is authored once — in
 /// cell-local coordinates — and the engine repeats it across the grid in

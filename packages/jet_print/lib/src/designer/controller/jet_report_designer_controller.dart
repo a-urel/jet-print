@@ -130,8 +130,8 @@ class JetReportDesignerController extends ChangeNotifier {
   /// The currently-selected element ids / band / group / scope / report.
   Selection get selection => _document.selection;
 
-  /// Author-time semantic diagnostics for the current [definition] (spec 024 /
-  /// C12): duplicate ids/names, a `$F{}` field binding on record-blind
+  /// Author-time semantic diagnostics for the current [definition]:
+  /// duplicate ids/names, a `$F{}` field binding on record-blind
   /// furniture, an unparseable group key, and the like. Recomputed on read and
   /// never throws, so the designer can surface problems live while still holding
   /// a transient invalid state (e.g. a half-typed duplicate name).
@@ -152,8 +152,7 @@ class JetReportDesignerController extends ChangeNotifier {
 
   /// Whether there is clipboard content to paste — true once the session's first
   /// [copy] or [cut] has filled the in-memory clipboard, and true thereafter
-  /// (the clipboard never re-empties). Gates Paste on both UI surfaces (016 /
-  /// FR-005, FR-012).
+  /// (the clipboard never re-empties). Gates Paste on both UI surfaces.
   bool get canPaste => !_clipboard.isEmpty;
 
   /// A monotonically increasing model-revision counter; the canvas painter uses
@@ -271,14 +270,14 @@ class JetReportDesignerController extends ChangeNotifier {
   JetRect? _resizePreview;
 
   /// Whether the alignment grid is **drawn** on the canvas (top-bar toggle;
-  /// default on, FR-014). Visibility only — since 015 this no longer gates
+  /// default on). Visibility only — this no longer gates
   /// snapping (the magnet does). All four grid/snap combinations are valid, and
   /// elements snap to the grid even when it is hidden. Never serialized.
   bool get gridEnabled => _gridEnabled;
 
   /// Whether snapping is active — the **sole** gate for all snapping (grid +
   /// sibling + band) during move/resize (default **off**; the magnet must be
-  /// switched on to snap, FR-008/FR-010).
+  /// switched on to snap).
   bool get snapEnabled => _snapEnabled;
 
   /// Whether the measurement rulers are shown along the canvas's top and left

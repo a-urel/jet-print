@@ -1,4 +1,4 @@
-// Rendered-invoice example (011 — US2). The example is an
+// Rendered-invoice example. The example is an
 // EXTERNAL consumer: data source + render + preview through
 // `package:jet_print/jet_print.dart` only (the encapsulation test enforces
 // "no src/"). Value-level rendering assertions (line totals, sums) live in
@@ -64,9 +64,7 @@ void main() {
     ds.close();
   });
 
-  test(
-      'in-memory, JSON, and object-backed variants render identically '
-      '(SC-006)', () {
+  test('in-memory, JSON, and object-backed variants render identically', () {
     final RenderedReport inMemory = renderInvoiceDefinition();
     final RenderedReport json =
         renderInvoiceDefinition(source: invoiceJsonDataSource());
@@ -141,8 +139,8 @@ void main() {
   });
 
   testWidgets(
-      'export and print feed from the same single render as the preview '
-      '(012 — FR-001)', (WidgetTester tester) async {
+      'export and print feed from the same single render as the preview',
+      (WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(900, 700));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(const JetPrintPlaygroundApp());

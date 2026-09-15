@@ -1,5 +1,4 @@
-/// Author-time validation of a [ReportDefinition]'s semantic invariants
-/// (spec 024; research §2).
+/// Author-time validation of a [ReportDefinition]'s semantic invariants.
 ///
 /// Structural invariants are unrepresentable by construction (the typed tree);
 /// the **semantic** ones are returned here as non-throwing [Diagnostic]s so the
@@ -45,7 +44,7 @@ import 'scope_total.dart';
 /// * I7 representable-but-not-yet-rendered shapes (per-scope grouping; multiple
 ///   per-row bands) — reported as **info**.
 /// * I8 inline aggregates (`SUM`/`AVG`/… top-level calls) appear only in the
-///   summary band, a root group footer, or a nested-scope footer (spec 029, a
+///   summary band, a root group footer, or a nested-scope footer (a
 ///   collection total); anywhere else is an error, because only those bands are
 ///   expanded by the aggregate synthesizer. A scope `footer` is slot-checked
 ///   (`groupFooter`) and is forbidden on the root (which has no collection).
@@ -53,7 +52,7 @@ import 'scope_total.dart';
 /// When [schema] is provided, an additional operand check is applied to each
 /// aggregate in a sink band: same-scope or unique-descend → no diagnostic;
 /// `Ambiguous` → error; `NotFound` → error UNLESS the operand is a
-/// published-total name (spec 030 `ScopeTotal`) — those are legitimately not
+/// published-total name (a `ScopeTotal`) — those are legitimately not
 /// in the schema. When [schema] is null, behavior is unchanged (backward
 /// compatible with all existing callers).
 List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {

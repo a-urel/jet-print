@@ -11,7 +11,7 @@ import '../region_chrome.dart';
 
 /// Body of the **Data Source** tab: the host-attached [JetDataSchema] rendered
 /// as an expandable explorer tree — dataset → fields — that report elements bind
-/// against (FR-005.FR-007). A field of type [JetFieldType.collection] is a
+/// against. A field of type [JetFieldType.collection] is a
 /// branch whose children are its own fields, so a master/detail structure
 /// (e.g. an invoice with a nested `lines` collection) nests to arbitrary depth.
 ///
@@ -168,8 +168,8 @@ class _FieldRow extends StatelessWidget {
         ],
       ),
     );
-    // Leaf fields are draggable onto the canvas to create a bound element
-    // (FR-011). Collection (branch) nodes use TreeBranch and are never wrapped
+    // Leaf fields are draggable onto the canvas to create a bound element.
+    // Collection (branch) nodes use TreeBranch and are never wrapped
     // here, so dropping one is a no-op by construction.
     return Draggable<FieldDragData>(
       data: FieldDragData(fieldName: field.name),

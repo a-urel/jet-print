@@ -1,4 +1,4 @@
-// US6 zoom / pan / fit: the canvas renders at the
+// Zoom / pan / fit: the canvas renders at the
 // controller's view scale (so placement/hit-testing stay pointer-accurate),
 // zoom clamps, and fit-to-width recenters.
 import 'package:flutter/widgets.dart';

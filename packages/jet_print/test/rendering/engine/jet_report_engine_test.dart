@@ -732,9 +732,7 @@ void main() {
           reason: 'the inline SUM folds over all master rows at report scope');
     });
 
-    test(
-        'a nested footer aggregate over a non-collection field warns '
-        '(FR-007 boundary)', () {
+    test('a nested footer aggregate over a non-collection field warns', () {
       // 'customerName' is a MASTER field, absent from the 'lines' child rows.
       // A SUM($F{customerName}) in the lines footer must warn rather than
       // silently produce a plausible-but-wrong value.
@@ -784,7 +782,7 @@ void main() {
       ]);
       final report = const JetReportEngine().renderDefinition(def, source);
       // (a) a warning diagnostic names the unresolved field — the non-silent
-      //     signal required by FR-007 / SC-004.
+      //     signal required here.
       expect(
         report.diagnostics.entries.where((Diagnostic d) =>
             d.severity == DiagnosticSeverity.warning &&
@@ -1308,9 +1306,8 @@ void main() {
           reason: 'empty collection → no footer, no published total');
     });
 
-    test(
-        'a published total over an unresolvable field warns and folds to 0 '
-        '(FR-009)', () {
+    test('a published total over an unresolvable field warns and folds to 0',
+        () {
       // The `lines` collection has only `lineTotal`, but the published total
       // aggregates over `doesNotExist` — a field that is neither in the child
       // schema nor a published total. The fold context surfaces the standard

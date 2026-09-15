@@ -1,10 +1,10 @@
-// SC-001 parity proof: the now-inline-authored shipped sample
+// Parity proof: the now-inline-authored shipped sample
 // (`nestedListsDefinition()`) renders byte-identical totals to the
 // published-total design (`_publishedTotalDefinition()`) when both are filled
 // over the same declared-schema source.
 //
-// After the spec-033 migration, `nestedListsDefinition()` IS the inline
-// variant. This test is repurposed to keep proving SC-001 equivalence by
+// After the multi-level inline-aggregate migration, `nestedListsDefinition()`
+// IS the inline variant. This test is repurposed to keep proving equivalence by
 // comparing it against a hand-kept published-total reference built in-test —
 // the same role the original parity test served, with the sides swapped.
 //
@@ -24,7 +24,7 @@ import 'package:jet_print_playground/nested_list_sample.dart';
 import 'package:jet_print_playground/rendered_nested_list_example.dart';
 
 void main() {
-  group('SC-001 parity: inline (shipped sample) vs published-total', () {
+  group('parity: inline (shipped sample) vs published-total', () {
     test('validate(nestedListsDefinition()) is empty', () {
       expect(validate(nestedListsDefinition()), isEmpty);
     });
@@ -71,8 +71,8 @@ JetDataSource _declaredSource() =>
 // Published-total reference variant (the legacy design, kept for)
 // ---------------------------------------------------------------------------
 
-/// The published-total design that predates the spec-033 migration — kept
-/// in-test as the SC-001 reference. Identical structure to
+/// The published-total design that predates the inline-aggregate migration —
+/// kept in-test as the reference. Identical structure to
 /// [nestedListsDefinition], but total expressions use the published-field
 /// pattern (`$F{orderTotal}` / `$F{customerTotal}`) and both scopes carry
 /// their [ScopeTotal] declarations.

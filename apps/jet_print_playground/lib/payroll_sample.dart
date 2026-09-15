@@ -12,10 +12,10 @@
 ///
 /// Line-item amounts and the authoritative employee totals (`grossPay`,
 /// `totalDeductions`, `netPay`) are both stored: the section footers show the
-/// LIVE folds (`SUM($F{earnAmount})` / `SUM($F{dedAmount})`, spec 029) which
+/// LIVE folds (`SUM($F{earnAmount})` / `SUM($F{dedAmount})`) which
 /// reconcile to the stored gross/deductions, Net is derived live as
 /// `$F{grossPay} - $F{totalDeductions}`, and the department/company totals fold
-/// the stored master fields (`SUM($F{grossPay})` …, spec 028). One structural
+/// the stored master fields (`SUM($F{grossPay})` …). One structural
 /// concession to the current engine (a scope renders only one per-row band): the
 /// "DEDUCTIONS" heading + its column titles ride at the bottom of the Earnings
 /// footer band.

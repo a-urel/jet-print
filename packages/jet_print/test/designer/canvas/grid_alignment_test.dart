@@ -1,5 +1,5 @@
-// Grid alignment under zoom & pan (spec 015, US3 / contract C3 / FR-005,
-// FR-006, SC-002, SC-006). Mirrors ruler_alignment_test.dart / zoom_pan_test.dart
+// Grid alignment under zoom & pan.
+// Mirrors ruler_alignment_test.dart / zoom_pan_test.dart
 // but for the on-page grid: because the grid is a Positioned.fill child of the
 // page Stack, it inherits the page's scale and scroll transform, so a page point
 // maps to the same grid pixel at every zoom/scroll — verified here by asserting

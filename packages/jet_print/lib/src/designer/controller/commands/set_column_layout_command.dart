@@ -1,5 +1,4 @@
-/// The command that sets (or replaces) a band's multi-column label layout
-/// (spec 035).
+/// The command that sets (or replaces) a band's multi-column label layout.
 library;
 
 import '../../../domain/band.dart';

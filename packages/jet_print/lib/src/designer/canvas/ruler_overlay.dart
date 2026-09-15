@@ -239,7 +239,7 @@ class RulerOverlay extends StatelessWidget {
 }
 
 /// A blank box filling the rulers' intersection corner — deliberately empty (no
-/// measurement is meaningful there, FR-013).
+/// measurement is meaningful there).
 class RulerCorner extends StatelessWidget {
   /// Creates the corner box with [colors].
   const RulerCorner({required this.colors, super.key});

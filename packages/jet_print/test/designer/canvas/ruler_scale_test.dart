@@ -1,5 +1,5 @@
-// RulerScale tick-layout contract (spec 014, C1 / FR-002, FR-008, FR-010,
-// SC-002, SC-004). White-box unit test of the pure measurement seam — no widget,
+// RulerScale tick-layout contract. White-box unit test of the pure measurement
+// seam — no widget,
 // no Flutter — so the regression-prone math (alignment, adaptive density, "labels
 // never overlap") is pinned directly.
 import 'package:flutter_test/flutter_test.dart';

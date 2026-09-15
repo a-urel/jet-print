@@ -1,5 +1,5 @@
 // Canvas context menu: a right-click menu (Cut, Copy, Paste,
-// Duplicate, Delete) that resolves selection per FR-010 BEFORE it opens, reads
+// Duplicate, Delete) that resolves selection BEFORE it opens, reads
 // the same canCopy/canPaste predicates as the toolbar, and acts through
 // the existing controller ops.
 //
@@ -122,7 +122,7 @@ void main() {
     await tester.tap(find.byKey(_pasteKey));
     await tester.pumpAndSettle();
 
-    expect(_elementCount(c), 3); // SC-002
+    expect(_elementCount(c), 3);
     expect(c.selection.singleOrNull, isNotNull);
     expect(c.selection.singleOrNull, isNot('a'));
   });

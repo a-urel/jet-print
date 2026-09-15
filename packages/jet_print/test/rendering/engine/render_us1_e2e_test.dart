@@ -1,4 +1,4 @@
-// US1 end-to-end (acceptance scenarios 1–5).
+// End-to-end (acceptance scenarios 1–5).
 //
 // The integration flow uses ONLY `package:jet_print/jet_print.dart`: build a
 // data source, render a flat one-band template with a parameter, and preview
@@ -18,7 +18,7 @@ const PageFormat _page =
     PageFormat(width: 200, height: 100, margins: JetEdgeInsets.all(10));
 
 ReportDefinition _template() => const ReportDefinition(
-      name: 'US1',
+      name: 'E2E',
       page: _page,
       parameters: <ReportParameter>[
         ReportParameter(name: 'printedBy', type: JetFieldType.string),

@@ -1,4 +1,4 @@
-// Grid-on surface golden (spec 015-grid-snap-tools WYSIWYG).
+// Grid-on surface golden (WYSIWYG).
 //
 // Locks the appearance of the visible 5 mm alignment grid drawn as backmost
 // design-time chrome: same representative elements as design_surface_test, but

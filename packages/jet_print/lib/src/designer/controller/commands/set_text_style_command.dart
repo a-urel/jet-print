@@ -9,7 +9,7 @@ import '../element_edit_command.dart';
 /// step, preserving its text, bounds, binding, and format.
 ///
 /// **No-op** when the element already carries an equal style (value-equal
-/// definition → no history, FR-013). Also a no-op for a non-text or absent
+/// definition → no history). Also a no-op for a non-text or absent
 /// [id].
 class SetTextStyleCommand extends ElementEditCommand<TextElement> {
   /// Creates a restyle of the text element [id] to [style].

@@ -120,9 +120,8 @@ int _firstPageEmits(int records) {
 }
 
 void main() {
-  test(
-      'first-page frame construction is independent of total record count '
-      '(structural SC-009 binding)', () {
+  test('first-page frame construction is independent of total record count',
+      () {
     final int smallRun = _firstPageEmits(100);
     final int largeRun = _firstPageEmits(1000);
     expect(smallRun, greaterThan(0));
@@ -138,9 +137,9 @@ void main() {
     final int pageCount = report.pageCount;
     report.pageAt(0);
     watch.stop();
-    // Advisory measurement against SC-009's reference-desktop 2 s budget.
+    // Advisory measurement against the reference-desktop 2 s budget.
     // ignore: avoid_print
-    print('[advisory][SC-009] 1,000 records: first page viewable in'
+    print('[advisory] 1,000 records: first page viewable in'
         '${watch.elapsedMilliseconds} ms across $pageCount pages');
     expect(report.pageAt(0).frame.primitives, isNotEmpty);
   });

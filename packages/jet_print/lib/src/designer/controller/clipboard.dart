@@ -4,7 +4,7 @@ library;
 import '../../domain/report_element.dart';
 
 /// One clipboard entry: an [element] and the stable [bandId] it came from, so
-/// paste re-inserts it into the same band (FR-002 — bands are addressed by id,
+/// paste re-inserts it into the same band (bands are addressed by id,
 /// not list position).
 typedef ClipboardEntry = ({String bandId, ReportElement element});
 

@@ -1,4 +1,4 @@
-// US1 interaction widget tests (acceptance):
+// Interaction widget tests (acceptance):
 // drop-create, click-select + 8 handles, empty-click clear, and drag-move.
 //
 // Drives the public designer through a supplied controller; finds elements and

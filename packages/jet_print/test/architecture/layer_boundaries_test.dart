@@ -184,8 +184,8 @@ void main() {
 
   group('layer boundaries — designer ruler helpers (014)', () {
     // The pure measurement seam: RulerScale/RulerTick + the points↔mm and
-    // selection-extent metrics. They must stay Flutter-/rendering-free (C7.2,
-    // FR-016) and carry NO coupling to selection-drag or guide state, so
+    // selection-extent metrics. They must stay Flutter-/rendering-free and
+    // carry NO coupling to selection-drag or guide state, so
     // draggable alignment guides can be layered on later without touching the
     // measurement model. They depend only on dart:math + view/geometry inputs.
     final File rulerScale = File(
@@ -246,7 +246,7 @@ void main() {
     // The pure grid-line geometry (`gridLineOffsets`): the adaptive-density math
     // for the visible alignment grid. Like the ruler helpers it must stay
     // Flutter-/rendering-/domain-free (the step/gap/cap are injected by the
-    // painter, contract C6.2), so it is unit-testable without a widget.
+    // painter), so it is unit-testable without a widget.
     final File gridGeometry = File(
         '${root.path}/packages/jet_print/lib/src/designer/canvas/grid_geometry.dart');
 
@@ -578,9 +578,8 @@ void main() {
       });
     });
 
-    test(
-        'the render path is read-only over definitions: schemaVersion stays 2 '
-        '(FR-016)', () {
+    test('the render path is read-only over definitions: schemaVersion stays 2',
+        () {
       // No schema change, no migration: the existing format round-trips
       // unchanged. The dedicated round-trip / UnknownElement passthrough
       // tests cover fidelity; this pins the version constant itself.

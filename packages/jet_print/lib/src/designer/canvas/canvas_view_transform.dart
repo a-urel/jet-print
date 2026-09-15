@@ -8,8 +8,7 @@ import '../../domain/geometry.dart';
 /// the canvas widget's local pixels.
 ///
 /// `screen = page * scale + pan`. Keeping this invertible and in one place is
-/// what makes placement and hit-testing pointer-accurate at every zoom level
-/// (FR-020 / SC-006).
+/// what makes placement and hit-testing pointer-accurate at every zoom level.
 class CanvasViewTransform {
   /// Creates a transform; identity by default.
   const CanvasViewTransform(

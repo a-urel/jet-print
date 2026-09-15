@@ -166,7 +166,7 @@ Iterable<Band> allBands(ReportDefinition def) sync* {
 /// a crosstab's own id plus its row/column group and measure ids. Used to seed
 /// collision-free id minting (a new band/group/scope id — or, once designer
 /// authoring mints them, a crosstab group/measure id — must not clash with any
-/// existing one, FR-004).
+/// existing one).
 Iterable<String> allIds(ReportDefinition def) {
   final List<String> out = <String>[];
   for (final Band b in allBands(def)) {

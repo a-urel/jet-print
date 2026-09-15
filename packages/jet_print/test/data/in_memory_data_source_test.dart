@@ -27,7 +27,7 @@ void main() {
 
     test('infers a top-level List<Map> column as a nested collection schema',
         () {
-      // SC-006 / spec 033: a column whose values are lists of row maps is a
+      // A column whose values are lists of row maps is a
       // nested collection, typed with its recursively-inferred child schema —
       // so a root-scope descendant aggregate can descend it without an
       // explicit `fields:` declaration.

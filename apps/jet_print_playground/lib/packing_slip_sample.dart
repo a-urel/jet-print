@@ -10,7 +10,7 @@
 ///
 /// Only `qtyShipped` and `lineWeight` are stored; every subtotal/total is a
 /// live inline aggregate: the box-subtotal footer folds its own items
-/// (`SUM($F{qtyShipped})`, spec 029), and the shipment footer descends
+/// (`SUM($F{qtyShipped})`), and the shipment footer descends
 /// [boxes, items] for units/weight and [boxes] for the box `COUNT`.
 ///
 /// Field/label names are illustrative sample data and intentionally not

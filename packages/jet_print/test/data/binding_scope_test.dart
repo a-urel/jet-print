@@ -1,5 +1,5 @@
-// Binding scope resolution across arbitrary master/detail nesting (US3 /
-// FR-016, FR-017, FR-018). Pure logic — white-box (data seam) test.
+// Binding scope resolution across arbitrary master/detail nesting.
+// Pure logic — white-box (data seam) test.
 //
 // Reification: a band's data scope is the chain of [DetailScope]s
 // enclosing it. The designer computes that chain with [scopePathToBand] (and

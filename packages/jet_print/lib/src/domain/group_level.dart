@@ -28,8 +28,7 @@ class GroupLevel with ValueEquality {
     this.startNewPage = false,
   });
 
-  /// Stable identity — **the reference target for `ReportVariable.resetGroup`**
-  /// (FR-003a).
+  /// Stable identity — **the reference target for `ReportVariable.resetGroup`**.
   final String id;
 
   /// Display label only (no longer the reference key).

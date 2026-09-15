@@ -39,7 +39,7 @@ void main() {
     });
   });
 
-  group('B2/FR-008 — MediaBox equals the template PageFormat in points', () {
+  group('MediaBox equals the template PageFormat in points', () {
     test('A4 exports as 595.28 x 841.89 pt', () async {
       final PdfInspector pdf = PdfInspector(
           await exporter.toPdf(textOnlyReport(PageFormat.a4Portrait)));
@@ -67,7 +67,7 @@ void main() {
     });
   });
 
-  group('B2/FR-004/005 — real text with embedded fonts', () {
+  group('real text with embedded fonts', () {
     test('text is drawn as text objects, not rasterized', () async {
       final PdfInspector pdf =
           PdfInspector(await exporter.toPdf(invoiceReport()));
@@ -75,7 +75,7 @@ void main() {
       expect(pdf.hasTextObjectsOn(1), isTrue);
       expect(pdf.imageDrawsOn(0), isEmpty,
           reason: 'a text-only page must contain no image XObjects '
-              '(text rasterized to images would violate FR-004)');
+              '(text rasterized to images would break selectable text)');
     });
 
     test('the TTF font program is embedded, once per distinct byte source',

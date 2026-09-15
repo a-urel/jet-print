@@ -1,5 +1,5 @@
-// Diagnostics instead of crashes (011 — contracts C9/C10 / SC-007; FR-013/
-// FR-014). The full malformed-input matrix: unknown field, missing parameter,
+// Diagnostics instead of crashes.
+// The full malformed-input matrix: unknown field, missing parameter,
 // expression-evaluation errors (type mismatch, divide-by-zero), empty
 // dataset, and URL-only image. Each produces a SPECIFIC diagnostic (with
 // elementId where applicable) and a non-crashing, best-effort render: the
@@ -230,8 +230,8 @@ void main() {
   });
 
   test(
-      'the whole matrix at once still renders — 0 unhandled crashes '
-      '(SC-007), diagnostics merged fill-then-layout in order (FR-013)', () {
+      'the whole matrix at once still renders — 0 unhandled crashes, '
+      'diagnostics merged fill-then-layout in order', () {
     final RenderedReport report = const JetReportEngine().renderDefinition(
       _template(
         <ReportElement>[

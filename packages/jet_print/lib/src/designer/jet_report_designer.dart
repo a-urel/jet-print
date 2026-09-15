@@ -216,8 +216,8 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
     super.dispose();
   }
 
-  /// Below this logical width the right panel collapses to an icon rail
-  /// (FR-011). The left toolbox is already a compact icon strip and stays put.
+  /// Below this logical width the right panel collapses to an icon rail.
+  /// The left toolbox is already a compact icon strip and stays put.
   static const double _breakpoint = 1024;
 
   /// The shell's minimum usable width. Below it the whole shell is laid out at
@@ -411,8 +411,7 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
 
   /// Narrow main area (< [_breakpoint]): the surface stays visible with the right
   /// panel collapsed to an icon rail; tapping the rail expands it as an overlay
-  /// over the surface, and a collapse control returns it to a rail
-  /// (FR-011/FR-014).
+  /// over the surface, and a collapse control returns it to a rail.
   Widget _buildNarrowMain() {
     return Stack(
       children: <Widget>[

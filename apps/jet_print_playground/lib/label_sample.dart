@@ -7,7 +7,7 @@
 /// once — in cell-local coordinates — and the engine repeats it across the grid
 /// in horizontal print order (left-to-right, wrapping down, then to the next
 /// page). The data is a **flat** address list (one address per master row); the
-/// grid placement does the columns. (Before spec 034 this sheet faked columns
+/// grid placement does the columns. (This sheet once faked columns
 /// by pre-chunking the data into `c0*`/`c1*`/`c2*` rows and hand-placing three
 /// blocks in one band — no longer needed.)
 ///

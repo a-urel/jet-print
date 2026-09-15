@@ -4,7 +4,7 @@
 // simultaneously, the design surface owns the largest horizontal share, and the
 // full layout fits the default desktop width with no horizontal overflow.
 //
-// US3 representative-placeholder-content assertions are appended here.
+// Representative-placeholder-content assertions are appended here.
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
@@ -99,7 +99,7 @@ void main() {
     });
   });
 
-  // --- US3: representative placeholder content ---
+  // --- representative placeholder content ---
   group('JetReportDesigner placeholder content', () {
     testWidgets('toolbox offers multiple element entries as icon buttons', (
       WidgetTester tester,

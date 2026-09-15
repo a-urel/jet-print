@@ -393,7 +393,7 @@ void main() {
     // leaves `headerText` unset, so `ct`/`matrix` exercise the *default* here.
     // The designer's Properties panel mirrors this exact default rather than
     // importing the render layer (`_kCrosstabHeaderDefault` in
-    // style_section.dart, spec 046); this assertion is the planner-side half
+    // style_section.dart); this assertion is the planner-side half
     // of the pair that keeps that mirror from drifting silently — the
     // cell/total `right` default is pinned the same way further down this
     // file ('measure cells and total values are right-aligned...').

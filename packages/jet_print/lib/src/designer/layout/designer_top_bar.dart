@@ -242,7 +242,7 @@ class _Divider extends StatelessWidget {
 /// further require two or more (a lone element has nothing to align against),
 /// while the z-order items act on a single element too. Labels are English this
 /// iteration, matching the still-unlocalized panels; their localization is
-/// folded into T078 with the other new affordance strings.
+/// folded in with the other new affordance strings.
 class _ArrangeMenu extends StatefulWidget {
   const _ArrangeMenu({required this.controller});
 
@@ -409,7 +409,7 @@ class _IconButton extends StatelessWidget {
       child: ShadTooltip(
         builder: (BuildContext context) => Text(tooltip),
         // The tooltip is hover-only; expose it as the button's accessible name
-        // too (the glyph alone is not announced) — FR-024 / SC-008.
+        // too (the glyph alone is not announced).
         child: MergeSemantics(
           child: Semantics(
             label: tooltip,
@@ -507,7 +507,7 @@ class _ActionButton extends StatelessWidget {
       child: ShadTooltip(
         builder: (BuildContext context) => Text(tooltip),
         // Expose the tooltip as the accessible name (the glyph alone is not
-        // announced, and the compact variant has no visible label) — FR-024.
+        // announced, and the compact variant has no visible label).
         child: MergeSemantics(
           child: Semantics(
             label: tooltip,

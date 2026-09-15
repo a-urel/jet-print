@@ -38,7 +38,7 @@ class MeasuredBand {
   /// layouter does not re-measure an element's geometry at emit time).
   final List<({ReportElement element, JetRect bounds})> elements;
 
-  /// The filled band this was measured from (spec 2026-06-27 — gives the emit
+  /// The filled band this was measured from (gives the emit
   /// hook the band's type/group/fields/variables).
   final FilledBand source;
 }

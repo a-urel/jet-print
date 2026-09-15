@@ -1,5 +1,4 @@
-// Right-panel tab-switching test plus the US3
-// panel-content shape assertions.
+// Right-panel tab-switching test plus the panel-content shape assertions.
 //
 // Asserts Data Source is active by default, that switching tabs swaps exactly
 // one visible body while hiding the others, and that each body shows content
@@ -72,7 +71,7 @@ void main() {
     });
   });
 
-  // --- US3: each panel body shows representative placeholder content ---
+  // --- each panel body shows representative placeholder content ---
   group('right panel placeholder content', () {
     testWidgets('Data Source shows the attached schema as a field tree', (
       WidgetTester tester,

@@ -64,8 +64,8 @@ class RenderOptions {
   /// headless renders never change.
   final Set<String>? knownFields;
 
-  /// The text rendered for a binding to a field absent from [knownFields]
-  /// (013 / FR-007); ignored when [knownFields] is null. Defaults to the literal
+  /// The text rendered for a binding to a field absent from [knownFields];
+  /// ignored when [knownFields] is null. Defaults to the literal
   /// `#ERROR`; a host with a `BuildContext` passes a localized value (e.g.
   /// `JetPrintLocalizations.of(context).errorUnresolvedToken`).
   final String unresolvedFieldToken;
@@ -86,7 +86,7 @@ class RenderOptions {
   final List<JetFontFamily> fonts;
 
   /// Host hook invoked once per element at emit time, on preview/export/print
-  /// alike (spec 2026-06-27). Null (default) means no hook and byte-identical
+  /// alike. Null (default) means no hook and byte-identical
   /// output to today. See [JetElementPrintCallback] for the contract.
   final JetElementPrintCallback? onElementPrint;
 }

@@ -1,4 +1,4 @@
-// US4 multi-select: shift-click and marquee (rubber-band) drag.
+// Multi-select: shift-click and marquee (rubber-band) drag.
 import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';

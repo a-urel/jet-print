@@ -1,6 +1,5 @@
-// Ruler metrics — points↔mm conversion contract (spec 014, C2.1–2 / FR-003,
-// FR-005). White-box unit test of the pure display-only projection over the
-// model's point geometry; `selectionExtent` is added in US4.
+// Ruler metrics — points↔mm conversion contract. White-box unit test of the
+// pure display-only projection over the model's point geometry.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 import 'package:jet_print/src/designer/canvas/design_time_layout.dart';

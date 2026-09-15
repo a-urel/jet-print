@@ -1,5 +1,5 @@
-/// Resolving which schema fields a band/element binds against (US3 / FR-016,
-/// FR-017, FR-018). Pure logic over a scope **chain** through the report model
+/// Resolving which schema fields a band/element binds against. Pure logic over
+/// a scope **chain** through the report model
 /// (domain) and a [JetDataSchema] (data) — no Flutter, no designer.
 ///
 /// Reification: a band's data scope is the chain of [DetailScope]s
@@ -75,7 +75,7 @@ bool fieldResolves(List<FieldDef> scopeFields, String name) =>
     scopeFields.any((FieldDef f) => f.name == name);
 
 /// The published-total names injected onto [scope]'s rows: the names published
-/// by [scope]'s DIRECT child scopes (spec 030 — a child scope's `totals` land on
+/// by [scope]'s DIRECT child scopes (a child scope's `totals` land on
 /// its parent's rows). NOT recursive (a grandchild's totals land on the child's
 /// rows, not here).
 Set<String> publishedTotalsForScope(DetailScope scope) {

@@ -1,6 +1,6 @@
 // Tests that an inline aggregate whose operand is AMBIGUOUS (appears in ≥2
 // sibling descendant collections) renders the fallback token (#ERROR) rather
-// than a number — spec 033 / FR-010.
+// than a number.
 //
 // Also covers additional aggregation functions (COUNT at summary, AVG at a
 // group footer) to close gaps flagged during the Task 5 review.
@@ -360,7 +360,7 @@ String _textOf(FilledBand band, String elementId) =>
 
 void main() {
   // -------------------------------------------------------------------------
-  // FR-010 ambiguous-operand fallback tests
+  // ambiguous-operand fallback tests
   // -------------------------------------------------------------------------
 
   group('ambiguous operand renders fallback token, never a number', () {

@@ -1,5 +1,5 @@
-// Properties "Column Layout" section: add / edit / remove + gating (spec 035 /
-// Task 2 + Task 3). Drives the public JetReportDesigner via the shared harness.
+// Properties "Column Layout" section: add / edit / remove + gating.
+// Drives the public JetReportDesigner via the shared harness.
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';

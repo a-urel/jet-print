@@ -1,5 +1,4 @@
-/// Non-fatal issues collected while rendering (spec 007b; public since 011
-/// FR-013). The engine never throws on a content problem — it records a
+/// Non-fatal issues collected while rendering. The engine never throws on a content problem — it records a
 /// [Diagnostic] and continues (render-don't-crash), so a report always
 /// produces a paintable result. Hosts read the merged collection from
 /// `RenderedReport.diagnostics`: an unknown field, a missing parameter, an

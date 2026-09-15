@@ -1,4 +1,4 @@
-// Phase 4 / T026: author-time `validate()` diagnostics
+// Author-time `validate()` diagnostics
 // surface in the designer via `controller.diagnostics`, so the editor can flag
 // semantic problems (a `$F{}` on record-blind furniture; a duplicate group
 // name) without throwing. Consumer-style: public API only.

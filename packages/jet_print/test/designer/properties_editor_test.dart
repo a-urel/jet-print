@@ -548,7 +548,7 @@ void main() {
     });
   });
 
-  group('properties — page (US1 paper type)', () {
+  group('properties — page (paper type)', () {
     testWidgets(
         'PAGE names the paper type and shows the preview, no selection '
         '(C1.1/C9.1/C9.4)', (WidgetTester tester) async {
@@ -617,7 +617,7 @@ void main() {
     });
   });
 
-  group('properties — page (US2 margins)', () {
+  group('properties — page (margins)', () {
     testWidgets('choosing Narrow sets all four sides and updates fields',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
@@ -691,7 +691,7 @@ void main() {
     });
   });
 
-  group('properties — page (US3 orientation & custom)', () {
+  group('properties — page (orientation & custom)', () {
     testWidgets('toggling Landscape swaps W/H and flips the preview',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
@@ -952,8 +952,8 @@ void main() {
     });
 
     testWidgets(
-        'an unregistered family survives a save (never silently swapped) '
-        '(C11 / US2)', (WidgetTester tester) async {
+        'an unregistered family survives a save (never silently swapped)',
+        (WidgetTester tester) async {
       final JetReportDesignerController c = await _pumpStyledText(
           tester, const JetTextStyle(fontFamily: 'Unknown Family'));
 

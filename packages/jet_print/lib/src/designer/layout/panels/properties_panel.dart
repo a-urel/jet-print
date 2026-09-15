@@ -80,8 +80,8 @@ const String _p = 'jet_print.designer.properties';
 /// One friendly, localized column-layout diagnostic for display.
 typedef _ColumnDiagnostic = ({bool isError, String message});
 
-/// Friendly, localized column-layout diagnostics for the active label band
-/// (spec 035 UX). Derived from the SAME geometry the engine's `validate()`
+/// Friendly, localized column-layout diagnostics for the active label band.
+/// Derived from the SAME geometry the engine's `validate()`
 /// checks (`_validateColumns`) — the conditions and the bodyWidth/bodyCapacity
 /// formulas mirror it exactly — but presented in plain language, localized, and
 /// **de-duplicated**: one row for ALL clipped elements rather than the engine's
@@ -125,7 +125,7 @@ List<_ColumnDiagnostic> _columnDiagnostics(ReportDefinition def, Band band,
 }
 
 /// The [layout] with [count] columns, refitting `columnWidth` so the grid fills
-/// the page body exactly (spec 035 UX: changing the column count always refits
+/// the page body exactly (changing the column count always refits
 /// the width, so adding a column never overflows the page). A `count < 1` —
 /// which the validator flags — commits as-is, guarding the divide-by-zero.
 ColumnLayout _withColumnCount(
@@ -418,8 +418,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
 
   /// The group's editable name + key (with field picker) + the three pagination
   /// flags, surfaced on the group's carrier band by [_bandInspector]. Each edit
-  /// writes through to the one [GroupLevel] — the single source of truth
-  /// (spec 024 / C11).
+  /// writes through to the one [GroupLevel] — the single source of truth.
   List<Widget> _groupSection(
     JetReportDesignerController controller,
     String groupId,
@@ -667,7 +666,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
 
     // When the report shape no longer activates the grid, the geometry checks
     // are moot — show only the inactive notice. Otherwise surface the
-    // friendly, localized column diagnostics (spec 035 UX): derived from the
+    // friendly, localized column diagnostics: derived from the
     // same geometry the engine validates, but rounded, plain-language, and with
     // the per-element overflows collapsed into one row.
     if (!eligible) {

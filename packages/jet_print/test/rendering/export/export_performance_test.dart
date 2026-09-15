@@ -2,7 +2,7 @@
 //
 // The 011 1,000-record performance dataset exports to a COMPLETE PDF in under
 // 10 seconds without memory exhaustion. Unlike the first-page render budget
-// (advisory), SC-005 is a stated success criterion with a hard bound, so the
+// (advisory), export has a hard bound, so the
 // wall-clock gate is binding here; completeness is verified structurally.
 @TestOn('vm')
 library;
@@ -27,7 +27,7 @@ void main() {
     watch.stop();
 
     // ignore: avoid_print
-    print('[SC-005] 1,000 records -> ${report.pageCount} pages,'
+    print('1,000 records -> ${report.pageCount} pages,'
         '${bytes.length} bytes in ${watch.elapsedMilliseconds} ms');
     expect(watch.elapsed, lessThan(const Duration(seconds: 10)));
 

@@ -132,7 +132,7 @@ void main() {
     });
   });
 
-  // --- US2: undo / redo -------------------------------
+  // --- undo / redo ------------------------------------
   group('setShapeKind — undo / redo', () {
     test('one undo restores the prior form; one redo reapplies the new form',
         () {

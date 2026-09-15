@@ -9,8 +9,7 @@ import '../styles/text_style.dart';
 import '../value_equality.dart';
 
 /// Renders [text] within its [bounds] using [style]. For this iteration [text]
-/// is a literal string; expression binding arrives with the expression engine
-/// (spec 005).
+/// is a literal string; expression binding arrives with the expression engine.
 class TextElement extends ReportElement with ValueEquality {
   /// Creates a text element. [expression] (005a syntax), when non-null, is
   /// evaluated per row by Fill (007b) and replaces [text]; when null the literal
@@ -43,8 +42,7 @@ class TextElement extends ReportElement with ValueEquality {
   @override
   String get typeKey => 'text';
 
-  /// Returns a copy with the given fields replaced; all others are preserved
-  /// (FR-019 / FR-025 / 013).
+  /// Returns a copy with the given fields replaced; all others are preserved.
   ///
   /// The nullable fields ([expression], [format], [name]) take a thunk: omit
   /// to preserve, pass `() => value` to replace (`() => null` clears).

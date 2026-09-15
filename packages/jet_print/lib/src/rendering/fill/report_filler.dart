@@ -177,7 +177,7 @@ class ReportFiller {
 
     // Groups are first-class here; the calculator stays name-keyed, so build its
     // ReportGroups from the levels and translate each variable's resetGroup id
-    // back to the level's name (FR-003a is a model concern; the IR is unchanged).
+    // back to the level's name (a model concern; the IR is unchanged).
     final List<GroupLevel> groups = definition.body.root.groups;
     final Map<String, String> nameOfGroupId = <String, String>{
       for (final GroupLevel g in groups) g.id: g.name,
@@ -437,7 +437,7 @@ class ReportFiller {
                     'from published total "${a.name}"');
           }
           // A published total can collide either with a real data field on the
-          // parent row (FR-010 shadow) or with a sibling scope's total already
+          // parent row (shadowing it) or with a sibling scope's total already
           // published into `extras` this invocation — validation enforces
           // name-uniqueness only WITHIN one scope, not across siblings. Warn in
           // both cases; the computed value is still injected (last-wins).
@@ -499,7 +499,7 @@ class ReportFiller {
             }
             if (footer != null) {
               for (int k = 0; k < footer.aggs.length; k++) {
-                // Same-scope: fold over the immediate child rows, as spec 029.
+                // Same-scope: fold over the immediate child rows.
                 if (descPaths[k] == null && !ambiguousAgg[k]) {
                   accs![k].fold(footer.aggs[k].argument.evaluate(contextFactory(
                     row: childRow,

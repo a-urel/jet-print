@@ -1,4 +1,4 @@
-// Phase 5 / T035: the Outline panel's band-lifecycle
+// The Outline panel's band-lifecycle
 // affordances — add a per-row band / a group header, remove, reorder (up/down),
 // and retype — drive the controller's undoable lifecycle ops. Consumer-style:
 // public API + the shared widget harness only.

@@ -1,5 +1,5 @@
-// Ruler alignment under zoom + pan (spec 014, C4 / FR-004, FR-008, FR-009,
-// SC-002). Mirrors zoom_pan_test.dart / page_scroll_test.dart: drives the public
+// Ruler alignment under zoom + pan.
+// Mirrors zoom_pan_test.dart / page_scroll_test.dart: drives the public
 // designer, then asserts the ruler marks stay locked to true page positions as
 // the view scales and scrolls. The core invariant — a tick labelled M mm sits at
 // the page's left/top edge plus M·(72/25.4)·scale pixels — is checked directly

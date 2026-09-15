@@ -7,8 +7,8 @@
 ///
 /// 012 adds export and print: the report renders ONCE and that single
 /// `RenderedReport` feeds the preview, the PDF bytes (saved via
-/// `file_selector` — host-owned I/O), and the system print dialog (SC-001:
-/// under 10 integration lines beyond the 011 example).
+/// `file_selector` — host-owned I/O), and the system print dialog (under ten
+/// integration lines beyond the example).
 library;
 
 import 'dart:typed_data';

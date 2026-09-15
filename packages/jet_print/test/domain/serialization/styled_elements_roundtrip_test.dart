@@ -1,8 +1,8 @@
-// T052 closure: a report carrying all three styled element kinds
+// A report carrying all three styled element kinds
 // text (underline + translucent color), shape (fill/stroke/none states), and
 // barcode (custom color) — survives an encode→decode round-trip byte-for-byte
 // (quickstart §4.3). This is the automatable half of the format-properties
-// acceptance; the visual GUI steps are recorded in acceptance-T052.md.
+// acceptance; the visual GUI steps are checked by hand.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 

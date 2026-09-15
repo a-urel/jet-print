@@ -3,8 +3,8 @@
 // JetFontFace is a plain descriptor (bytes + weight + italic, value-equal by
 // bytes identity). JetFontFamily validates its faces EAGERLY and SYNCHRONOUSLY
 // at construction: a host assembling a bad font is rejected at the natural
-// point, so neither widget build() nor render() can throw later (FR-010 /
-// SC-006). White-box: imports the bundled byte fixtures via the support helper.
+// point, so neither widget build() nor render() can throw later.
+// White-box: imports the bundled byte fixtures via the support helper.
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';

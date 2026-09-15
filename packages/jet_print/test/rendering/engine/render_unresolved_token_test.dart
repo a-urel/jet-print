@@ -1,4 +1,4 @@
-// T016 / FR-007: RenderOptions.knownFields makes an unresolved binding render
+// RenderOptions.knownFields makes an unresolved binding render
 // the (host-localizable) unresolvedFieldToken end-to-end through the engine;
 // omitting knownFields renders empty (no regression).
 import 'package:flutter_test/flutter_test.dart';

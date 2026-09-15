@@ -1,4 +1,4 @@
-// Phase 5 / T034: band lifecycle through the controller
+// Band lifecycle through the controller
 // add / remove / reorder / retype a band, each a single undoable step, with
 // stable ids across reorder and retype. Consumer-style:
 // public API only.

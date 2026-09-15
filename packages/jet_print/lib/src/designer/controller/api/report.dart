@@ -15,8 +15,8 @@ extension CtrlReport on JetReportDesignerController {
   /// [clampPageFormat]s it first so every produced page keeps a positive content
   /// area, then commits it. Routed through `_commit`, so a page equal
   /// to the current one records no history and notifies no listener,
-  /// undo restores the exact prior page, and elements are never repositioned
-  /// (FR-013). Canvas, preview, and export all read `definition.page`, so the one
+  /// undo restores the exact prior page, and elements are never repositioned.
+  /// Canvas, preview, and export all read `definition.page`, so the one
   /// notification propagates the change everywhere (WYSIWYG).
   void setPageFormat(PageFormat format) {
     _commit(SetPageFormatCommand(clampPageFormat(format)));
@@ -33,8 +33,8 @@ extension CtrlReport on JetReportDesignerController {
   /// Renames the report to [name] as a single undoable step.
   ///
   /// The name is stored verbatim: an empty or whitespace-only name is kept as
-  /// `''`, and the UI shows the localized placeholder for an empty name
-  /// (FR-010). Renaming to the current name is a no-op — it records no history
+  /// `''`, and the UI shows the localized placeholder for an empty name.
+  /// Renaming to the current name is a no-op — it records no history
   /// entry and notifies no listeners. The new name appears on [definition],
   /// which is the value a host persists on save.
   void rename(String name) => _commit(SetDefinitionNameCommand(name));

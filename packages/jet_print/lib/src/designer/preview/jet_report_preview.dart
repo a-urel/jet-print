@@ -102,16 +102,16 @@ class JetReportPreview extends StatefulWidget {
   /// to the designer). Null ⇒ no back button is shown.
   final VoidCallback? onBack;
 
-  /// Invoked when the user triggers the toolbar's export action (012,
-  /// FR-015). Null ⇒ no export action is shown (the 011 toolbar, unchanged).
+  /// Invoked when the user triggers the toolbar's export action.
+  /// Null ⇒ no export action is shown (the toolbar is otherwise unchanged).
   ///
   /// The library only invokes the callback — what "export" means (a save
   /// dialog, a share sheet, an upload) and any busy UI are host concerns;
   /// hosts typically call `JetReportExporter.toPdf` with the same [report].
   final VoidCallback? onExportPdf;
 
-  /// Invoked when the user triggers the toolbar's print action (012,
-  /// FR-015). Null ⇒ no print action is shown.
+  /// Invoked when the user triggers the toolbar's print action.
+  /// Null ⇒ no print action is shown.
   ///
   /// Hosts typically delegate to `JetReportPrinter.printReport` with the
   /// same [report]; the library itself performs no I/O here.
@@ -660,7 +660,7 @@ class _ToolbarButton extends StatelessWidget {
       // fires [onPressed] also flips this tooltip open, so its floating copy
       // of the label can be on-screen at the same time as the button's own
       // accessible name. Excluded from semantics: the wrapping [Semantics]
-      // below is the button's one authoritative accessible name — FR-018
+      // below is the button's one authoritative accessible name,
       // so the hover-only popup text must not register a second, duplicate
       // node under the same label.
       builder: (BuildContext context) => ExcludeSemantics(child: Text(label)),

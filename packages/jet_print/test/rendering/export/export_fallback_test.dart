@@ -1,5 +1,4 @@
-// Faithful fallbacks, never diverging from the preview (012 — contract B5;
-// FR-010, SC-007; T006 PDF cases, T016 adds the PNG cases).
+// Faithful fallbacks, never diverging from the preview (PDF and PNG cases).
 //
 // Recoverable content problems (empty dataset, unresolved image, failed
 // expression) are already materialized in the frame as the preview's

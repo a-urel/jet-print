@@ -16,7 +16,7 @@ import 'value_equality.dart';
 
 /// An ordered, fixed-height band holding absolutely-positioned [elements],
 /// addressable by a stable [id] (enabling add/remove/reorder/retype and
-/// id-based selection — FR-002).
+/// id-based selection).
 class Band with ValueEquality {
   /// Creates a band identified by [id], of [type] and [height] points,
   /// containing [elements].

@@ -6,7 +6,7 @@
 // iteration, run-to-run bytes are identical in-process, and invalid requests
 // throw the structured errors the render IR already uses. The golden pin
 // goes through the standard golden comparator (decoded pixels — the engine
-// PNG encoder is not cross-machine byte-stable, research §4).
+// PNG encoder is not cross-machine byte-stable).
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -27,7 +27,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const JetReportExporter exporter = JetReportExporter();
 
-  group('B4/SC-006 — pixel dimensions are exactly round(page x scale)', () {
+  group('pixel dimensions are exactly round(page x scale)', () {
     test('1x / 2x / 3x of the 400x300 invoice page', () async {
       final RenderedReport report = invoiceReport();
       for (final double scale in <double>[1, 2, 3]) {

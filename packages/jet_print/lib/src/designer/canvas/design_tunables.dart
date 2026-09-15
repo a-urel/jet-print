@@ -81,7 +81,7 @@ const double kMinZoom = 0.25;
 const double kMaxZoom = 4.0;
 
 /// Additive zoom step for the in/out controls (0.1 == 10 percentage points),
-/// matching the increment the static top bar used in spec 002.
+/// matching the increment the original static top bar used.
 const double kZoomStep = 0.1;
 
 /// Side length, in screen pixels, of a drawn resize handle.

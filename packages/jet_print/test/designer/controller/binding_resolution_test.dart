@@ -166,7 +166,7 @@ void main() {
           isTrue);
     });
 
-    test('lines footer picker excludes customerTotal (SC-004 mirror)', () {
+    test('lines footer picker excludes customerTotal', () {
       // The picker must offer exactly what the band can resolve: 'lf' sees the
       // lines + orders scopes, NOT the root, so customerTotal (published onto
       // root rows) must never appear as a value choice for the lines footer.

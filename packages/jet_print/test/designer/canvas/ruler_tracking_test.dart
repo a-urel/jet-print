@@ -1,5 +1,5 @@
-// Cursor tracking + selection-extent highlight on the rulers (spec 014, C5 /
-// FR-011, FR-012, US4). Drives the public designer; locates the hover marker and
+// Cursor tracking + selection-extent highlight on the rulers.
+// Drives the public designer; locates the hover marker and
 // the highlight band by their stable keys within each ruler strip.
 import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/widgets.dart';

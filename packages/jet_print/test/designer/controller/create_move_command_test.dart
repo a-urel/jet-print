@@ -1,5 +1,5 @@
-// Create + Move semantics through the controller's public API (US1 / T035 /
-// FR-001/002/004/008/010/025). The command classes are private; their behavior
+// Create + Move semantics through the controller's public API.
+// The command classes are private; their behavior
 // is contracted here via the controller a consumer actually uses.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';

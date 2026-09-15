@@ -9,7 +9,7 @@ import '../element_edit_command.dart';
 /// undoable step, preserving its kind, bounds, and flip state.
 ///
 /// **No-op** when the element already carries an equal style (value-equal
-/// definition → no history, FR-013). Also a no-op for a non-shape or absent
+/// definition → no history). Also a no-op for a non-shape or absent
 /// [id].
 class SetShapeStyleCommand extends ElementEditCommand<ShapeElement> {
   /// Creates a restyle of the shape element [id] to [style].

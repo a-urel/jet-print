@@ -143,7 +143,7 @@ extension _CrosstabInspector on _PropertiesPanelState {
               // (:629): `style.totalBox ?? style.headerBox` — the header box,
               // not cellBox. That is a dual fallback of the same shape
               // headerText/totalText already have (see the dual-fallback
-              // table, spec 046 §2), not a mistake in the effectiveBox below;
+              // table), not a mistake in the effectiveBox below;
               // this section still shows the VALUE-cell cascade, the dominant
               // case, exactly as headerText's section shows the column-header
               // default over the row-label one.

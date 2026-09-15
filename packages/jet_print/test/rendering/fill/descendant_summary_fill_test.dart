@@ -1,5 +1,5 @@
 // Integration tests for descendant-leaf folding at the summary (report-reset)
-// and root group footer (group-reset) bands — spec 033. The authoring form
+// and root group footer (group-reset) bands. The authoring form
 // `SUM($F{lineTotal})` in those bands folds over every lineTotal leaf
 // reachable from the master scope via the path [orders, lines].
 library;
@@ -235,7 +235,7 @@ void main() {
 
     test(
         'descendant SUM works over an INFERRED schema too (no explicit '
-        'fields:) — SC-006', () {
+        'fields:)', () {
       // Same report, but the source carries NO explicit schema: the nested
       // orders/lines collections are inferred. The root-scope descend must
       // still resolve [orders, lines] and fold identically to the declared

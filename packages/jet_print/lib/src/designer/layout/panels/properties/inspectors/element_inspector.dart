@@ -140,7 +140,7 @@ extension _ElementInspector on _PropertiesPanelState {
           ),
         ),
       ],
-      // Image binding: a field picker only (no expression) — FR-013 / U1.
+      // Image binding: a field picker only (no expression).
       if (element is ImageElement) ...<Widget>[
         const SizedBox(height: 12),
         SectionLabel(l10n.propertiesBinding),
@@ -569,8 +569,7 @@ extension _ElementInspector on _PropertiesPanelState {
 
   /// Whether [elementId]'s binding fails to resolve against the attached
   /// [schema] in its band scope. With no schema attached, nothing is
-  /// flagged — the token still shows, and resolution waits for a source
-  /// (FR-019a).
+  /// flagged — the token still shows, and resolution waits for a source.
   bool _unresolved(
     JetDataSchema? schema,
     JetReportDesignerController controller,
@@ -642,8 +641,8 @@ extension _ElementInspector on _PropertiesPanelState {
     return resolvableNamesForBand(controller.definition, schema, band.id);
   }
 
-  /// Descendant leaf names valid as aggregate operands for [elementId]'s band
-  /// (spec 033): leaves of nested collections below the band's scope. Empty
+  /// Descendant leaf names valid as aggregate operands for [elementId]'s band:
+  /// leaves of nested collections below the band's scope. Empty
   /// when no schema/band, so behavior is unchanged where no source is attached.
   Set<String> _descendantOperands(
     JetDataSchema? schema,
@@ -676,5 +675,5 @@ extension _ElementInspector on _PropertiesPanelState {
   // A band inspector edits only what belongs to the band itself: its height.
   // The group's key + pagination flags live in the Group inspector, and a
   // scope's collection in the Scope inspector — so a flag is never shown on both
-  // a group header and footer band (the 023 two-bands smell, fixed by spec 024).
+  // a group header and footer band (the old two-bands smell).
 }

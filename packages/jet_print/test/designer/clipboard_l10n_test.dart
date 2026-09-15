@@ -166,7 +166,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Toolbar: each button's accessible name carries the localized label (the
-      // shortcut glyph is appended after it) — FR-015, SC-004. A missing key
+      // shortcut glyph is appended after it). A missing key
       // would fall back to English and fail the per-locale `contains`.
       expect(tester.getSemantics(find.byKey(_tbCut)).label,
           allOf(isNotEmpty, contains(labels[0])),
@@ -179,7 +179,7 @@ void main() {
           reason: 'toolbar Paste tooltip in $code');
 
       // Context menu: each item renders its locale-correct label and exposes it
-      // as an accessible name (find by semantics, scoped to the item) — FR-015.
+      // as an accessible name (find by semantics, scoped to the item).
       await _openMenu(tester);
       for (int i = 0; i < labels.length; i++) {
         expect(

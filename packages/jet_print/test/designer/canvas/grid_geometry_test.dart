@@ -1,8 +1,8 @@
 // Pure grid-line geometry. `gridLineOffsets` enumerates
 // the snap-coincident lines to draw along one axis of one band, from the band
 // origin, as exact multiples of the step — so a drawn line always lands on a
-// snap target (true WYSIWYG). This file pins the ENUMERATION contract (C1.1,
-// C1.4, C1.5); the adaptive-density cases are added in US3.
+// snap target (true WYSIWYG). This file pins the ENUMERATION
+// contract; the adaptive-density cases are covered separately.
 //
 // Imports the pure helper directly (it carries no Flutter/domain import), the
 // same way the ruler-scale tests exercise their measurement core.

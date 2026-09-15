@@ -9,7 +9,7 @@ import '../element_edit_command.dart';
 /// step, preserving its symbology, data, and bounds.
 ///
 /// **No-op** when the element already carries an equal color (value-equal
-/// definition → no history, FR-013). Also a no-op for a non-barcode or
+/// definition → no history). Also a no-op for a non-barcode or
 /// absent [id].
 class SetBarcodeColorCommand extends ElementEditCommand<BarcodeElement> {
   /// Creates a recolor of the barcode element [id] to [color].

@@ -1,4 +1,4 @@
-// US2 resize + snap-guide widget test (acceptance):
+// Resize + snap-guide widget test (acceptance):
 // dragging a handle resizes with live feedback; a snap guide appears; Alt
 // bypasses snapping.
 import 'package:flutter/widgets.dart';

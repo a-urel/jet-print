@@ -1,4 +1,4 @@
-// Phase 4 / T024: the designer controller authors a
+// The designer controller authors a
 // `ReportDefinition` directly — groups and scopes are first-class, selectable,
 // addressable entities, and create/delete/edit of a group or scope is a single
 // undoable step. Consumer-style: through `package:jet_print/jet_print.dart`.

@@ -30,7 +30,7 @@ void main() {
 
     // Simulate a live move that pushes the element far past the band's RIGHT edge.
     // The model clamps the display position while the raw delta grows — which is
-    // the exact scenario that used to cause chrome drift before spec 038.
+    // the exact scenario that used to cause chrome drift.
     c.beginMove();
     // 600 pt rightward: enough to exceed any reasonable band width from x=60.
     c.updateMove(const JetOffset(600, 0));

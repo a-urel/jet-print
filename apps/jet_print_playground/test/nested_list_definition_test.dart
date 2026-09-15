@@ -72,7 +72,7 @@ void main() {
           reason: 'lines footer folds the same-scope lines inline');
 
       // The `orders` scope carries no ScopeTotal: the customer footer + summary
-      // descend [orders, lines] via spec 033 inline folding.
+      // descend [orders, lines] via inline folding.
       final DetailScope orders = _findScope(root, 'orders');
       expect(orders.totals, isEmpty,
           reason: 'no ScopeTotal on orders scope: inline fold replaces it');
@@ -166,7 +166,7 @@ void main() {
       expect(_textRuns(inlineReport), _textRuns(legacyReport),
           reason: 'inline SUM(\$F{lineTotal}) at every footer level renders '
               'byte-identical output to the legacy published-total chain '
-              '(SC-001 equivalence — migration correctness proof)');
+              '(equivalence — migration correctness proof)');
     });
 
     test('is pristine under the library validator (no diagnostics)', () {

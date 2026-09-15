@@ -44,8 +44,8 @@ class _ValueField extends StatefulWidget {
   /// — has its own stable test seam). Defaults to the value field's namespace.
   final String pickerKeyPrefix;
 
-  /// The band's resolvable name set (schema fields in scope ∪ published totals,
-  /// spec 031), passed to the fx editor so its unresolved check matches the
+  /// The band's resolvable name set (schema fields in scope ∪ published
+  /// totals), passed to the fx editor so its unresolved check matches the
   /// inline field's. Empty ⇒ the editor stays silent (no schema/band).
   final Set<String> resolvableNames;
   final ValueChanged<String> onCommit;

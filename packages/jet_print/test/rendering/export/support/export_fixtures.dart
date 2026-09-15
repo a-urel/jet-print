@@ -26,7 +26,7 @@ import 'package:jet_print/src/rendering/engine/rendered_report.dart';
 const PageFormat letterPage =
     PageFormat(width: 612, height: 792, margins: JetEdgeInsets.all(36));
 
-/// An odd custom sheet, to prove FR-008 is not format-table lookup.
+/// An odd custom sheet, to prove the MediaBox is not a format-table lookup.
 const PageFormat customPage =
     PageFormat(width: 200, height: 100, margins: JetEdgeInsets.all(8));
 
@@ -243,7 +243,7 @@ RenderedReport imageReport({
 }
 
 /// An empty dataset over a definition with static chrome: the preview shows the
-/// static pages, so the artifact must too (never zero-page) — SC-007.
+/// static pages, so the artifact must too (never zero-page).
 RenderedReport emptyDatasetReport() {
   const ReportDefinition definition = ReportDefinition(
     name: 'empty',

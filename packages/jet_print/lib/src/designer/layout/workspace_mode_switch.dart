@@ -6,8 +6,7 @@
 /// performs the swap itself — it is *told* which mode is active and calls back
 /// when the user asks to change it. The composing bars bind that callback to the
 /// already-public switch events (`onPreviewRequested` from the designer,
-/// `onBack` from the preview), so no new mode API is introduced (FR-002–FR-004,
-/// research D2).
+/// `onBack` from the preview), so no new mode API is introduced.
 library;
 
 import 'package:flutter/widgets.dart';

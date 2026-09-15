@@ -120,7 +120,7 @@ class ElementResolver {
       return _resolveImage(element, row);
     }
     if (element is ImageElement && element.source is UrlImageSource) {
-      // FR-012b/FR-015 (011): the library performs no I/O — a URL-only source
+      // The library performs no I/O — a URL-only source
       // cannot resolve to bytes here, so the shared renderer draws a
       // placeholder and the host is told why.
       if (_warnedUrlImages.add(element.id)) {

@@ -125,9 +125,7 @@ RenderedReport _render(JetDataSource source) =>
     );
 
 void main() {
-  test(
-      'in-memory == JSON == object-backed, incl. a nested collection '
-      '(SC-006)', () {
+  test('in-memory == JSON == object-backed, incl. a nested collection', () {
     final RenderedReport inMemory =
         _render(JetInMemoryDataSource(_rows, fields: _schema));
 

@@ -29,8 +29,8 @@ class JetReportExporter {
   /// The returned bytes are an in-memory PDF with one page per
   /// [RenderedReport.pageCount] at the template's true physical size in
   /// PostScript points, real selectable/searchable text placed at
-  /// the pre-measured baselines, and the measuring fonts embedded (FR-004/
-  /// 005). All pages are materialized via [RenderedReport.pageAt] regardless
+  /// the pre-measured baselines, and the measuring fonts embedded.
+  /// All pages are materialized via [RenderedReport.pageAt] regardless
   /// of what the preview has lazily viewed.
   ///
   /// Identical rendered inputs produce byte-identical output: the

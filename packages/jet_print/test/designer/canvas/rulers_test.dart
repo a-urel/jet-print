@@ -1,5 +1,5 @@
-// Ruler presence / visibility widget tests (spec 014, C3 / FR-001, FR-006,
-// FR-007, FR-013, FR-017). Drives the public `JetReportDesigner` only and locates
+// Ruler presence / visibility widget tests.
+// Drives the public `JetReportDesigner` only and locates
 // the rulers by their stable widget keys (never reaching into `src/`), exactly as
 // the other canvas widget tests locate the page and scrollbars.
 import 'package:flutter/widgets.dart';
@@ -40,7 +40,7 @@ bool _hasNumberedMarks(WidgetTester tester, Finder ruler) {
 }
 
 void main() {
-  group('rulers — US1 presence', () {
+  group('rulers — presence', () {
     testWidgets(
         'a horizontal ruler is present at the top and a vertical at left',
         (WidgetTester tester) async {
@@ -84,7 +84,7 @@ void main() {
     });
   });
 
-  group('rulers — US2 toggle visibility', () {
+  group('rulers — toggle visibility', () {
     testWidgets(
         'hiding rulers removes both strips and the canvas reclaims them',
         (WidgetTester tester) async {
