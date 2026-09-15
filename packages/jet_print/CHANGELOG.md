@@ -28,7 +28,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
-- Crosstab style editors (spec 046-crosstab-style-editors): the eight crosstab
+- Crosstab style editors: the eight crosstab
   appearance slots — the six on `CrosstabStyle` plus `CrosstabMeasure`'s two
   per-measure overrides — are now authorable in the Properties panel. They
   already rendered; only the UI was missing. Unset slots display the value they
@@ -36,7 +36,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   reset clears it back, so a crosstab whose appearance is untouched still
   serializes without any style keys.
 
-- **Crosstab designer authoring (spec 045-crosstab-designer-authoring).** A
+- **Crosstab designer authoring.** A
   crosstab is now a first-class authorable object, not just a rendered one. The
   root scope's Outline "+" menu adds one — born valid and bound, seeded from the
   attached schema — and its row is selectable, inline-renameable, reorderable
@@ -49,9 +49,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   stood in for. New public controller extension: `CtrlCrosstab`. `Selection`
   gains a sixth target, `crosstabId`, and its `Selection.crosstab` factory. The
   crosstab's eight text/box style slots are now authorable in the Properties
-  panel — see spec 046-crosstab-style-editors, above.
+  panel — see Crosstab style editors, above.
 
-- **BREAKING — crosstab (pivot grid) support (spec 044-crosstab-engine).** A
+- **BREAKING — crosstab (pivot grid) support.** A
   new `Crosstab` block — configurable row/column axis `CrosstabGroup`s (each
   with a sort order, an optional subtotal, and an overridable total label),
   `CrosstabMeasure`s (a per-row expression folded by an aggregate, with its
@@ -70,7 +70,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   forward-migration seam) — so any downstream exhaustive `switch` over
   `ScopeNode` must add cases for both.
 
-- **BREAKING — the report model is reified (spec 024-band-model-reification).**
+- **BREAKING — the report model is reified.**
   The flat `ReportTemplate` band list — where a band's role was *inferred* from
   `type` + group-name + `collectionField` + sibling position — is replaced by an
   explicit, id'd section tree, `ReportDefinition`:
@@ -87,7 +87,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - Groups are first-class `GroupLevel`s that **own** their key expression,
     header/footer bands, and pagination flags (keep-together, reprint-header,
     start-new-page) — one editing home, fixing the "same flag on both the group
-    header and footer band" smell. `ReportGroup.startNewPage` (spec 023) is now
+    header and footer band" smell. `ReportGroup.startNewPage` is now
     `GroupLevel.startNewPage`.
   - Every `Band` carries a stable `id`; its rendering role is **stated** by its
     position in the tree, with `BandType` retained for labels, glyphs, identity,
@@ -139,7 +139,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   selecting the group's header band, which surfaces the group's key + a
   *start on new page* toggle in the Properties panel
   (`controller.setGroupStartNewPage(groupId, value)`), as one undoable step.
-- **Host & system fonts in font pickers (spec 022-host-fonts).** A host can now
+- **Host & system fonts in font pickers.** A host can now
   contribute its own fonts, selectable in every designer picker and rendered
   byte-identically across canvas, preview, PDF, and PNG:
   - **Two bytes-in value types:** `JetFontFace` (`{bytes, weight, italic}`,
@@ -165,7 +165,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     (`schemaVersion` unchanged). A report naming a font absent in the session
     opens without error, renders in a fallback, shows the name marked
     unavailable in the picker, preserves it on save, and still exports.
-- **Format properties — font & color editors (spec 021-format-properties).** The
+- **Format properties — font & color editors.** The
   Properties panel now edits the style the model already carries, per element
   type:
   - **Text — a new Font section:** family picker (enumerates the designer's
@@ -205,7 +205,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     Regular, **Bold, Italic, and Bold Italic** subsets covering one codepoint
     set, so B/I/U edits are visible on canvas, preview, and export alike.
     Intermediate weights (`medium`/`semiBold`) resolve to Regular via the
-    fallback chain. `Default` is the always-resolvable render fallback (FR-006):
+    fallback chain. `Default` is the always-resolvable render fallback:
     text with no/unknown family always renders. The designer preloads its
     Regular face into the engine at mount so picker options preview in their own
     typeface before the canvas has painted them. Every other family is
@@ -222,7 +222,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     and pre-feature reports load and re-save **byte-identically** (pinned by a
     frozen fixture test). ~35 new localized strings ship in en/de/tr.
 
-- **Visual shape gallery in the Properties pane (spec 020-shape-gallery).** When a
+- **Visual shape gallery in the Properties pane.** When a
   single shape element is selected, the Properties panel now shows a **Shape**
   section with eight thumbnails — line, rectangle, **ellipse, triangle, diamond,
   pentagon, hexagon, star** — drawn through the same geometry the renderer uses,
@@ -257,7 +257,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   reverts, so the report always keeps a name. No new public surface or schema
   change; the label is localized in en/de/tr.
 
-- **Editable paper type & margins in Report properties (spec 018-paper-margin-properties).**
+- **Editable paper type & margins in Report properties.**
   The Properties panel's **PAGE** section is now an editable, Microsoft
   Office–style page setup: a live page-sample thumbnail (a proportional sheet
   with margin guides), a **paper-type** picker (A4 / A3 / A5 / Letter / Legal /
@@ -285,7 +285,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `FlutterError.reportError` and clears the indicator. Export/print receive the
   current `RenderedReport`.
 
-- **Unified context-switching toolbar (spec 017-unified-toolbar).** The designer
+- **Unified context-switching toolbar.** The designer
   and the report preview now read as *one toolbar that changes by context*: a
   single shared shell renders the report name (left) and a two-segment
   **Designer | Preview** mode switch (center), identical in both modes, while
@@ -310,7 +310,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     render-path or serialization change: `kReportSchemaVersion` stays `1` and
     report goldens are byte-identical.
 
-- **Clipboard operations in the designer UI (spec 016-clipboard-operations).**
+- **Clipboard operations in the designer UI.**
   The designer's cut/copy/paste — until now keyboard-only — become
   mouse-reachable through two new surfaces, both built into `JetReportDesigner`
   with zero host wiring:
@@ -331,7 +331,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     change, so saved files and preview/export/print output stay byte-identical
     and the keyboard shortcuts keep working unchanged.
 
-- **Grid & snap helper tools (spec 015-grid-snap-tools).** The two remaining
+- **Grid & snap helper tools.** The two remaining
   design-canvas helper tools now behave as their top-bar icons promise:
   - A light **5 mm alignment grid** is drawn as backmost design-time chrome on
     each band, registered to the band's content origin so every drawn line lands
@@ -343,7 +343,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     the render pipeline, so preview, export, print, and saved templates are
     completely unaffected (no model, codec, or `schemaVersion` change).
 
-- **Canvas rulers (spec 014-canvas-rulers).** The design canvas now shows a
+- **Canvas rulers.** The design canvas now shows a
   horizontal ruler along the top and a vertical ruler down the left, calibrated
   in **millimetres** from the page's physical top-left corner (0,0):
   - Marks stay locked to true page positions across the full zoom range and while
@@ -425,7 +425,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     and print end-to-end from the preview toolbar; sandboxed macOS hosts
     need the `com.apple.security.print` entitlement to print.
 
-- **Render engine — data-filled paginated preview (spec 011-render-export).**
+- **Render engine — data-filled paginated preview.**
   A host hands a designed template plus actual data to a public engine facade
   and gets a lazily-paginated, WYSIWYG, on-screen preview. New public surface
   from the single entry point:
@@ -473,7 +473,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - The playground gains a runnable **rendered-invoice** example (in-memory,
     JSON, and object-backed variants) and a Preview path that opens it.
 
-- **Data-aware designer — Invoice MVP (spec 009-data-aware-designer).** The
+- **Data-aware designer — Invoice MVP.** The
   designer can now describe, display, and bind to a data source's structure
   (tokens only this iteration — values are not yet filled/rendered). New/changed
   public surface from the single entry point:
@@ -504,7 +504,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - *Deferred:* filling/rendering real data values, exposing the fill/expression
     engine, barcode binding, and design-canvas rendering of *nested* child bands
     (the model/codec/scope support arbitrary nesting today).
-- **Designer edit surface (spec 003-designer-edit-surface).** The center surface
+- **Designer edit surface.** The center surface
   is now a fully interactive WYSIWYG canvas — create, select, move, resize,
   multi-select, snap, align/distribute/z-order, undo/redo, zoom/pan, inline text
   edit, model-driven panels, accessibility, localization, and a host save/open
@@ -542,7 +542,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     (Enter commits, Escape cancels), undoable.
   - **Zoom / pan / fit**: top-bar zoom in/out, click the zoom % to fit-to-width,
     ⌘±/⌘0 shortcuts, and trackpad/wheel pan (Ctrl/⌘+scroll zooms), clamped
-    25 %–400 %; placement stays pointer-accurate at every zoom (SC-006).
+    25 %–400 %; placement stays pointer-accurate at every zoom.
   - **Band-type badges**: each band on the canvas carries a small localized
     caption (Page Header / Detail / Page Footer / …, all eleven `BandType`s) at
     its top-left corner, so authors always know which band they are editing. The
@@ -614,7 +614,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - **Open / Save are wired to the host.** The top bar gains an **Open** action
     beside **Save**; both call the new `JetReportDesigner.onOpenRequested` /
     `onSaveRequested` callbacks and render disabled when the host wired none. The
-    library still performs **no** file I/O itself (FR-022) — the playground app
+    library still performs **no** file I/O itself — the playground app
     implements the host side with `file_selector` + `JetReportFormat`.
   - **Accessibility.** Every interactive affordance now exposes a localized
     accessible name and a button role: each canvas element ("Text element …"),
@@ -623,15 +623,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     semantics nodes so a screen reader announces one element per stop.
   - **Localization (en / de / tr).** The Arrange menu, the Properties inspector
     labels, the Outline root, the Open action, and all the new accessible names
-    are fully localized with English fallback — no raw keys or blank labels
-    (SC-008).
+    are fully localized with English fallback — no raw keys or blank labels.
   - **Fidelity + performance coverage.** Added design-surface goldens
     (representative elements with a selection shown, light + dark, via the shared
-    render pipeline) and a 200-element multi-select drag performance smoke
-    (SC-007).
-  - This completes the spec-003 designer edit surface; only the merge-gate
+    render pipeline) and a 200-element multi-select drag performance smoke.
+  - This completes the designer edit surface; only the merge-gate
     house-keeping remains.
-- Report model foundation (spec 003 Part 1): pure-Dart geometry value types
+- Report model foundation (Part 1): pure-Dart geometry value types
   (`JetSize`/`JetOffset`/`JetEdgeInsets`/`JetRect`), `PageFormat`, the element
   model (`ReportElement`, `TextElement`, `UnknownElement`), `ReportBand`/
   `BandType`/`ReportTemplate`, an `ElementCodecRegistry` extension point, and
@@ -649,20 +647,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   covering the designer chrome in English (default/fallback), German, and Turkish,
   exported with its `delegate` and `supportedLocales` so consumers can wire it
   into their app shell. Unsupported locales and missing keys fall back to English.
-- Visual model completion (spec 003 Part 2): style value types (`JetColor`
+- Visual model completion (Part 2): style value types (`JetColor`
   with hex serialization, `JetTextStyle`, `JetBoxStyle`); text styling on
   `TextElement` (sparse-serialized); new element types `ShapeElement`
   (line/rectangle), `ImageElement` (url/field/base64-bytes sources, `JetBoxFit`),
   and `BarcodeElement` (QR / Code128 / EAN-13 / Data Matrix); and
   `registerBuiltInElementCodecs` to wire all four built-in element codecs.
-- Data layer (spec 004): the headless data-access seam — `JetDataSource`
+- Data layer: the headless data-access seam — `JetDataSource`
   (factory) → `DataSet` (forward-only cursor) → immutable `DataRow` snapshots,
   with typed `FieldDef`/`JetFieldType` metadata (best-effort column-type
   inference). Three in-memory implementations: `JetInMemoryDataSource`
   (`List<Map>`), `JetJsonDataSource` (JSON array string), and
   `JetObjectDataSource<T>` (typed object list). The architecture test now also
   enforces the `data → domain` boundary.
-- Expression engine core (spec 005a): the headless expression language —
+- Expression engine core: the headless expression language —
   a sealed `JetValue` model (null/bool/number/string/date/error; numbers are
   `double`), a lexer/parser/AST/evaluator pipeline compiling expressions like
   `$F{qty} * $F{price}` and `FORMAT(ROUND($F{total}, 2), '#,##0.00')`, and a
@@ -673,7 +671,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `DataRow` and `$P{}` from a parameter map. The architecture test now enforces
   the `expression -> domain/data` boundary. (Aggregates, variables, groups, and
   `$V{}` references follow in 005b.)
-- Aggregates & variables (spec 005b): `ReportVariable` (with `JetCalculation`
+- Aggregates & variables: `ReportVariable` (with `JetCalculation`
   SUM/COUNT/AVG/MIN/MAX/FIRST/LAST or a plain expression, and report/group reset
   scopes), `ReportGroup`, and typed `ReportParameter` declarations join
   `ReportTemplate` and serialize sparsely (still schema v1 — additive). The
@@ -683,7 +681,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   inner groups). `JetFieldType` moved to the `domain` seam (re-exported from
   `data`) so parameters and fields share one value-type taxonomy. Page/column
   reset scopes are deferred to 008 (pagination).
-- Frame, text-metrics & paint backends (spec 006): the rendering display-list
+- Frame, text-metrics & paint backends: the rendering display-list
   and first paint backend. `PageFrame` + `FrameBuilder` build a flat list of
   positioned `FramePrimitive`s (text run / image / line / rect / path, each
   tagged with its originating element id). A headless text seam — an in-house
@@ -696,35 +694,35 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `CanvasPainter` may import `dart:ui`; `frame/` and `text/` stay headless.
   Cross-backend pixel parity arrives with the PDF/PNG backends in 009. Replaces
   the `ReportDocument`/`ReportLayout` scaffold placeholders.
-- **Element renderers (spec 007a).** `ElementRenderer<E>` (measure + emit) paired with
+- **Element renderers.** `ElementRenderer<E>` (measure + emit) paired with
   `ElementCodec<E>` via `ElementTypeRegistry.register`; built-in renderers for text, shape, image,
   and barcode/unknown placeholders; `RenderContext`; `JetConstraints`. `MeasuredText` gains a
   resolved `fontFamily` (006 amendment). Custom element types round-trip through JSON *and* render
   with zero core edits.
-- **Fill data pass (spec 007b).** `ReportFiller` turns a `ReportTemplate` + `JetDataSource` into a
+- **Fill data pass.** `ReportFiller` turns a `ReportTemplate` + `JetDataSource` into a
   resolved band-instance stream (`FilledReport`) — title/detail/summary/noData — with per-row text
   `expression` and image `FieldImageSource` resolution, report-scoped running/grand totals, frozen
   variable snapshots, and a `ReportDiagnostics` (missing-field warnings; `!ERR` on bad expressions;
   rejection of illegal page-scoped variable use). Adds `TextElement.expression`.
-- **Grouping in Fill (spec 007c).** `ReportFiller` now emits `groupHeader`/`groupFooter` band
+- **Grouping in Fill.** `ReportFiller` now emits `groupHeader`/`groupFooter` band
   instances with group-scoped subtotals at each group break — headers resolve the group's first row,
   footers the last row with the pre-reset subtotal. Adds an optional `ReportBand.group` link and a
   `GroupBandIndex` (fail-fast on duplicate group names; error diagnostics for null/unknown group
   references). Nesting order is derived from the authored group list.
-- **Layout engine (spec 008a).** `ReportLayouter` lays a `FilledReport` band stream onto pages:
+- **Layout engine.** `ReportLayouter` lays a `FilledReport` band stream onto pages:
   it measures body bands (grow-only, via the element renderers), stacks and paginates them in the
   per-page body region, and repeats `pageHeader`/`pageFooter` chrome on every page, emitting one
   `PageFrame` per page plus diagnostics. A pure `BandMeasurer` computes grown band heights. Chrome is
   emitted as authored (no expression evaluation yet — page-scoped substitution arrives in 008c);
   unresolved chrome bindings, chrome that overcommits the page, and not-yet-supported
   column/background bands are reported as diagnostics.
-- **Group-aware pagination (spec 008b).** Two opt-in `ReportGroup` flags: `reprintHeaderOnEachPage`
+- **Group-aware pagination.** Two opt-in `ReportGroup` flags: `reprintHeaderOnEachPage`
   repeats a group's header band(s) at the top of each continuation page it spans, and `keepTogether`
   moves a whole group instance to a fresh page rather than splitting it (when it fits a fresh page,
   accounting for any repeated outer headers). Group identity is carried into the internal Fill→Layout
   IR via `FilledBand.group`; the schema is unchanged (the codec contract comment now codifies the
   pre-1.0 additive-optional-fields carve-out). A flag on a header-less group is a no-op + info.
-- **Page-scoped substitution (spec 008c).** `pageHeader`/`pageFooter` text expressions are evaluated
+- **Page-scoped substitution.** `pageHeader`/`pageFooter` text expressions are evaluated
   at layout time and substituted at their authored bounds: `$V{PAGE_NUMBER}`/`$V{PAGE_COUNT}` (as
   integer strings, e.g. `Page 1 of 3`) and report `$P{params}` (threaded through the IR as the
   normalized `FilledReport.params`). A new read-only `Expression.references` gives complete,
@@ -735,11 +733,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
-- **Grid snap step is now 5 mm (was 8 pt)** (spec 015-grid-snap-tools) so the
+- **Grid snap step is now 5 mm (was 8 pt)** so the
   snap grid coincides with the new visible grid and the millimetre rulers. This
   affects **new** interactive placements only; stored report coordinates are
   untouched.
-- **Grid visibility is decoupled from grid snapping** (spec 015-grid-snap-tools).
+- **Grid visibility is decoupled from grid snapping.**
   The grid button now controls only whether the grid is **drawn**; snapping
   (grid + sibling + band) is governed solely by the magnet/snap toggle. Elements
   snap to the 5 mm grid even when the grid is hidden, and all four grid/snap
