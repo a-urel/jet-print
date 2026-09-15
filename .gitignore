@@ -1,8 +1,9 @@
-# Auto Claude data directory
-.auto-claude/
-
-# Superpowers brainstorming visual-companion scratch files
+# AI-agent working files. Designs, implementation plans and task notes are
+# scaffolding for work in progress, not repository history — see docs/workflow.md
+# ("Plans and specs") for where durable knowledge goes instead.
+docs/superpowers/
 .superpowers/
+.auto-claude/
 
 # Miscellaneous
 *.class

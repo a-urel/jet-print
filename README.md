@@ -71,6 +71,14 @@ flutter test packages/jet_print apps/jet_print_playground          # all tests p
 A clean checkout MUST show: formatting clean, analyzer zero warnings, all tests
 green.
 
+## Working on this repo
+
+[`AGENTS.md`](AGENTS.md) is the guide for contributors and AI coding agents: the
+rules that hold the design together, which test enforces each one, a map of the
+layers, and the traps worth knowing before your first edit. It links deeper
+notes in [`docs/`](docs/) — [architecture](docs/architecture.md),
+[testing](docs/testing.md), [workflow](docs/workflow.md).
+
 ## Consuming the library
 
 ```dart
