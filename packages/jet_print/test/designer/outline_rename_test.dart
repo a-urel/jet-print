@@ -1,4 +1,4 @@
-// Outline rename test (Task 8 — T071 follow-up).
+// Outline rename test (Task 8 — follow-up).
 //
 // Verifies that double-tapping a band row or an element row in the Outline tree
 // starts an inline rename, and that the committed name is reflected in the model

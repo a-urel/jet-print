@@ -1,7 +1,7 @@
 /// The playground's sales-ledger sample — a flat, multi-page transaction list
 /// authored entirely through the library's public API
-/// (`package:jet_print/jet_print.dart`). It is the demo for [JetPagedDataSource]
-/// (spec 040): the data is generated on demand, one page at a time, never held
+/// (`package:jet_print/jet_print.dart`). It is the demo for [JetPagedDataSource]:
+/// the data is generated on demand, one page at a time, never held
 /// whole in memory (see `rendered_ledger_example.dart`).
 ///
 /// Field/label names are illustrative sample data and intentionally not

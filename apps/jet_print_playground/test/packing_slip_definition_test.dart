@@ -69,13 +69,13 @@ void main() {
       expect(boxes.totals, isEmpty);
       expect(items.totals, isEmpty);
 
-      // Box-subtotal footer folds the box's own items (spec 029 same-scope).
+      // Box-subtotal footer folds the box's own items (same-scope).
       final TextElement boxUnits = items.footer!.elements
           .firstWhere((ReportElement e) => e.id == 'boxUnits') as TextElement;
       expect(boxUnits.expression, r'SUM($F{qtyShipped})');
 
       // Grand-total footer descends [boxes, items] for units/weight and
-      // [boxes] for the box count (spec 033 inline fold).
+      // [boxes] for the box count (inline fold).
       final GroupLevel shipment = root.groups.single;
       final TextElement totalBoxes = shipment.footer!.elements
           .firstWhere((ReportElement e) => e.id == 'totalBoxes') as TextElement;

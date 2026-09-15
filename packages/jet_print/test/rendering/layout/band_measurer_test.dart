@@ -1,4 +1,4 @@
-// BandMeasurer: grow-only, height-only band measurement (spec 008a §5).
+// BandMeasurer: grow-only, height-only band measurement.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/domain/elements/text_element.dart';
 import 'package:jet_print/src/domain/geometry.dart';

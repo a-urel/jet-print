@@ -132,7 +132,7 @@ class _BandBadge extends StatelessWidget {
 }
 
 /// A centered hint shown while the design has no elements, so an empty surface
-/// reads as "drop something here" rather than a blank void (FR-023 edge case).
+/// reads as "drop something here" rather than a blank void (edge case).
 /// It sits over the white page, so it uses the fixed paper-chrome foreground
 /// (not the theme) to stay legible on paper in every theme.
 class _EmptyHint extends StatelessWidget {

@@ -38,7 +38,7 @@ class FilledBand {
   /// The calculator's frozen variable values at this instance (unmodifiable).
   final Map<String, JetValue> variables;
 
-  /// The originating row's field values (spec 2026-06-27), keyed by field name;
+  /// The originating row's field values, keyed by field name;
   /// `{}` for rowless bands (chrome/static). Carry-through for the
   /// `onElementPrint` hook — intentionally excluded from `==`/`hashCode`/
   /// `toString`: a band's identity is its type/height/elements/variables/group,

@@ -269,7 +269,7 @@ abstract class JetPrintLocalizations {
   /// **'Properties'**
   String get tabProperties;
 
-  /// Data Source panel empty state shown when no data-source structure is attached to the designer (009).
+  /// Data Source panel empty state shown when no data-source structure is attached to the designer.
   ///
   /// In en, this message translates to:
   /// **'No data source attached.'**
@@ -509,13 +509,13 @@ abstract class JetPrintLocalizations {
   /// **'Text'**
   String get propertiesText;
 
-  /// Properties panel section label for a text element's unified value (literal text or a [field]/{ … } binding) (013).
+  /// Properties panel section label for a text element's unified value (literal text or a [field]/{ … } binding).
   ///
   /// In en, this message translates to:
   /// **'Value'**
   String get propertiesValue;
 
-  /// Placeholder for the unified value input — a [field] token, a { … } template, or literal text (013).
+  /// Placeholder for the unified value input — a [field] token, a { … } template, or literal text.
   ///
   /// In en, this message translates to:
   /// **'[field] or text'**
@@ -527,157 +527,157 @@ abstract class JetPrintLocalizations {
   /// **'Insert a data field'**
   String get valueFieldPickerTooltip;
 
-  /// Tooltip for the value field's fx button that opens the expression editor (032).
+  /// Tooltip for the value field's fx button that opens the expression editor.
   ///
   /// In en, this message translates to:
   /// **'Build an expression'**
   String get valueFieldFxTooltip;
 
-  /// Title of the expression editor dialog (032).
+  /// Title of the expression editor dialog.
   ///
   /// In en, this message translates to:
   /// **'Expression'**
   String get exprEditorTitle;
 
-  /// Label for the fields palette in the expression editor (032).
+  /// Label for the fields palette in the expression editor.
   ///
   /// In en, this message translates to:
   /// **'Fields'**
   String get exprEditorFieldsLabel;
 
-  /// Label for the functions palette in the expression editor (032).
+  /// Label for the functions palette in the expression editor.
   ///
   /// In en, this message translates to:
   /// **'Functions'**
   String get exprEditorFunctionsLabel;
 
-  /// Label for the string-functions group in the expression editor (032).
+  /// Label for the string-functions group in the expression editor.
   ///
   /// In en, this message translates to:
   /// **'String'**
   String get exprGroupString;
 
-  /// Label for the math-functions group in the expression editor (032).
+  /// Label for the math-functions group in the expression editor.
   ///
   /// In en, this message translates to:
   /// **'Math'**
   String get exprGroupMath;
 
-  /// Label for the logic-functions group in the expression editor (032).
+  /// Label for the logic-functions group in the expression editor.
   ///
   /// In en, this message translates to:
   /// **'Logic'**
   String get exprGroupLogic;
 
-  /// Label for the aggregate-functions group in the expression editor (032).
+  /// Label for the aggregate-functions group in the expression editor.
   ///
   /// In en, this message translates to:
   /// **'Aggregate'**
   String get exprGroupAggregate;
 
-  /// Status shown when the expression is valid (032).
+  /// Status shown when the expression is valid.
   ///
   /// In en, this message translates to:
   /// **'Valid'**
   String get exprStatusValid;
 
-  /// Status shown when the expression has a syntax error (032).
+  /// Status shown when the expression has a syntax error.
   ///
   /// In en, this message translates to:
   /// **'Incomplete or invalid expression'**
   String get exprStatusSyntaxError;
 
-  /// Status shown when the expression references an out-of-scope field (032).
+  /// Status shown when the expression references an out-of-scope field.
   ///
   /// In en, this message translates to:
   /// **'Field not in the data source: {name}'**
   String exprStatusUnresolved(String name);
 
-  /// Cancel button in the expression editor (032).
+  /// Cancel button in the expression editor.
   ///
   /// In en, this message translates to:
   /// **'Cancel'**
   String get exprEditorCancel;
 
-  /// Insert button in the expression editor that commits the expression (032).
+  /// Insert button in the expression editor that commits the expression.
   ///
   /// In en, this message translates to:
   /// **'Insert'**
   String get exprEditorInsert;
 
-  /// Properties panel section label for a text element's number/date display format (013).
+  /// Properties panel section label for a text element's number/date display format.
   ///
   /// In en, this message translates to:
   /// **'Format'**
   String get propertiesFormat;
 
-  /// Placeholder for the format input (an ICU number/date pattern) (013).
+  /// Placeholder for the format input (an ICU number/date pattern).
   ///
   /// In en, this message translates to:
   /// **'e.g. #,##0.00'**
   String get formatHint;
 
-  /// Accessible label/tooltip for the Format field's preset-picker suffix button (013).
+  /// Accessible label/tooltip for the Format field's preset-picker suffix button.
   ///
   /// In en, this message translates to:
   /// **'Choose a format preset'**
   String get formatPresetPickerTooltip;
 
-  /// Format preset that clears the format (unformatted) (013).
+  /// Format preset that clears the format (unformatted).
   ///
   /// In en, this message translates to:
   /// **'None'**
   String get formatPresetNone;
 
-  /// Format preset for a grouped integer, e.g. 1,234 (013).
+  /// Format preset for a grouped integer, e.g. 1,234.
   ///
   /// In en, this message translates to:
   /// **'Integer'**
   String get formatPresetInteger;
 
-  /// Format preset for a grouped number with two decimals, e.g. 1,234.50 (013).
+  /// Format preset for a grouped number with two decimals, e.g. 1,234.50.
   ///
   /// In en, this message translates to:
   /// **'Decimal'**
   String get formatPresetDecimal;
 
-  /// Format preset for a currency amount (013).
+  /// Format preset for a currency amount.
   ///
   /// In en, this message translates to:
   /// **'Currency'**
   String get formatPresetCurrency;
 
-  /// Format preset for a percentage (013).
+  /// Format preset for a percentage.
   ///
   /// In en, this message translates to:
   /// **'Percent'**
   String get formatPresetPercent;
 
-  /// Format preset for a date, e.g. 2026-06-11 (013).
+  /// Format preset for a date, e.g. 2026-06-11.
   ///
   /// In en, this message translates to:
   /// **'Date'**
   String get formatPresetDate;
 
-  /// Format preset for a date and time, e.g. 2026-06-11 14:30 (013).
+  /// Format preset for a date and time, e.g. 2026-06-11 14:30.
   ///
   /// In en, this message translates to:
   /// **'Date & time'**
   String get formatPresetDateTime;
 
-  /// Rendered in place of a binding whose field is not in the data source (013 / FR-007).
+  /// Rendered in place of a binding whose field is not in the data source.
   ///
   /// In en, this message translates to:
   /// **'#ERROR'**
   String get errorUnresolvedToken;
 
-  /// Properties panel section label for an element's data binding (009).
+  /// Properties panel section label for an element's data binding.
   ///
   /// In en, this message translates to:
   /// **'Binding'**
   String get propertiesBinding;
 
-  /// Properties panel section label for the selected group band's group settings (023).
+  /// Properties panel section label for the selected group band's group settings.
   ///
   /// In en, this message translates to:
   /// **'Group'**
@@ -689,25 +689,25 @@ abstract class JetPrintLocalizations {
   /// **'Group name'**
   String get propertiesGroupName;
 
-  /// Properties panel toggle label: start each group instance on a new page (023).
+  /// Properties panel toggle label: start each group instance on a new page.
   ///
   /// In en, this message translates to:
   /// **'Start on new page'**
   String get propertiesGroupNewPage;
 
-  /// Properties panel label for a group's grouping-key expression (spec 024).
+  /// Properties panel label for a group's grouping-key expression.
   ///
   /// In en, this message translates to:
   /// **'Group key'**
   String get propertiesGroupKey;
 
-  /// Properties panel toggle label: keep a group's whole instance on one page (spec 024).
+  /// Properties panel toggle label: keep a group's whole instance on one page.
   ///
   /// In en, this message translates to:
   /// **'Keep together'**
   String get propertiesGroupKeepTogether;
 
-  /// Properties panel toggle label: reprint a group header atop each continuation page (spec 024).
+  /// Properties panel toggle label: reprint a group header atop each continuation page.
   ///
   /// In en, this message translates to:
   /// **'Reprint header on each page'**
@@ -719,37 +719,37 @@ abstract class JetPrintLocalizations {
   /// **'Edit page & group settings on the group header band.'**
   String get propertiesGroupOnHeaderHint;
 
-  /// Properties panel header label for a selected detail scope (spec 024).
+  /// Properties panel header label for a selected detail scope.
   ///
   /// In en, this message translates to:
   /// **'Scope'**
   String get propertiesScope;
 
-  /// Outline row action: move a per-row band up within its scope (spec 024).
+  /// Outline row action: move a per-row band up within its scope.
   ///
   /// In en, this message translates to:
   /// **'Move up'**
   String get outlineMoveUp;
 
-  /// Outline row action: move a per-row band down within its scope (spec 024).
+  /// Outline row action: move a per-row band down within its scope.
   ///
   /// In en, this message translates to:
   /// **'Move down'**
   String get outlineMoveDown;
 
-  /// Outline row action: remove a band (spec 024).
+  /// Outline row action: remove a band.
   ///
   /// In en, this message translates to:
   /// **'Remove band'**
   String get outlineRemove;
 
-  /// Outline row action: relocate a band to a different slot, changing its type (spec 024).
+  /// Outline row action: relocate a band to a different slot, changing its type.
   ///
   /// In en, this message translates to:
   /// **'Change band type'**
   String get outlineRetype;
 
-  /// Outline row action: add a per-row band to a scope (spec 024).
+  /// Outline row action: add a per-row band to a scope.
   ///
   /// In en, this message translates to:
   /// **'Add band'**
@@ -767,13 +767,13 @@ abstract class JetPrintLocalizations {
   /// **'Add group'**
   String get outlineAddGroup;
 
-  /// Outline row action: add a group header band (spec 024).
+  /// Outline row action: add a group header band.
   ///
   /// In en, this message translates to:
   /// **'Add header'**
   String get outlineAddHeader;
 
-  /// Outline row action: add a group footer band (spec 024).
+  /// Outline row action: add a group footer band.
   ///
   /// In en, this message translates to:
   /// **'Add footer'**
@@ -809,7 +809,7 @@ abstract class JetPrintLocalizations {
   /// **'Select a field'**
   String get bindingFieldPickerTooltip;
 
-  /// Shown under a binding whose field is missing from, or out of scope in, the attached data source (009).
+  /// Shown under a binding whose field is missing from, or out of scope in, the attached data source.
   ///
   /// In en, this message translates to:
   /// **'Field not found in the data source'**
@@ -833,91 +833,91 @@ abstract class JetPrintLocalizations {
   /// **'Margins'**
   String get propertiesMargins;
 
-  /// Properties panel label for the paper-size picker in the PAGE section (018).
+  /// Properties panel label for the paper-size picker in the PAGE section.
   ///
   /// In en, this message translates to:
   /// **'Paper'**
   String get propertiesPaper;
 
-  /// Paper-size / margin value shown when the page matches no standard preset (018).
+  /// Paper-size / margin value shown when the page matches no standard preset.
   ///
   /// In en, this message translates to:
   /// **'Custom'**
   String get propertiesCustom;
 
-  /// Properties panel field label for a custom page width (018).
+  /// Properties panel field label for a custom page width.
   ///
   /// In en, this message translates to:
   /// **'Width'**
   String get propertiesWidth;
 
-  /// Accessible label for the paper-size picker button (018).
+  /// Accessible label for the paper-size picker button.
   ///
   /// In en, this message translates to:
   /// **'Choose a paper size'**
   String get paperPickerTooltip;
 
-  /// Page orientation: taller than wide (018).
+  /// Page orientation: taller than wide.
   ///
   /// In en, this message translates to:
   /// **'Portrait'**
   String get orientationPortrait;
 
-  /// Page orientation: wider than tall (018).
+  /// Page orientation: wider than tall.
   ///
   /// In en, this message translates to:
   /// **'Landscape'**
   String get orientationLandscape;
 
-  /// Margin preset name: the ~1 cm default on all four sides (018).
+  /// Margin preset name: the ~1 cm default on all four sides.
   ///
   /// In en, this message translates to:
   /// **'Normal'**
   String get marginPresetNormal;
 
-  /// Margin preset name: ~0.5 cm on all four sides (018).
+  /// Margin preset name: ~0.5 cm on all four sides.
   ///
   /// In en, this message translates to:
   /// **'Narrow'**
   String get marginPresetNarrow;
 
-  /// Margin preset name: ~2 cm on all four sides (018).
+  /// Margin preset name: ~2 cm on all four sides.
   ///
   /// In en, this message translates to:
   /// **'Wide'**
   String get marginPresetWide;
 
-  /// Margin preset name: zero margins, flush to the page edge (018).
+  /// Margin preset name: zero margins, flush to the page edge.
   ///
   /// In en, this message translates to:
   /// **'None'**
   String get marginPresetNone;
 
-  /// Accessible label for the margin-preset picker button (018).
+  /// Accessible label for the margin-preset picker button.
   ///
   /// In en, this message translates to:
   /// **'Choose margins'**
   String get marginPickerTooltip;
 
-  /// Properties panel field label for the left page margin (018).
+  /// Properties panel field label for the left page margin.
   ///
   /// In en, this message translates to:
   /// **'Left'**
   String get propertiesMarginLeft;
 
-  /// Properties panel field label for the top page margin (018).
+  /// Properties panel field label for the top page margin.
   ///
   /// In en, this message translates to:
   /// **'Top'**
   String get propertiesMarginTop;
 
-  /// Properties panel field label for the right page margin (018).
+  /// Properties panel field label for the right page margin.
   ///
   /// In en, this message translates to:
   /// **'Right'**
   String get propertiesMarginRight;
 
-  /// Properties panel field label for the bottom page margin (018).
+  /// Properties panel field label for the bottom page margin.
   ///
   /// In en, this message translates to:
   /// **'Bottom'**
@@ -1115,79 +1115,79 @@ abstract class JetPrintLocalizations {
   /// **'Hide page thumbnails'**
   String get previewHideThumbnails;
 
-  /// Label + accessible name for the Designer segment of the unified toolbar's two-segment Designer|Preview workspace-mode switch (017).
+  /// Label + accessible name for the Designer segment of the unified toolbar's two-segment Designer|Preview workspace-mode switch.
   ///
   /// In en, this message translates to:
   /// **'Designer'**
   String get modeDesigner;
 
-  /// Label + accessible name for the Preview segment of the unified toolbar's two-segment Designer|Preview workspace-mode switch (017).
+  /// Label + accessible name for the Preview segment of the unified toolbar's two-segment Designer|Preview workspace-mode switch.
   ///
   /// In en, this message translates to:
   /// **'Preview'**
   String get modePreview;
 
-  /// Tooltip + accessible name for the inline-rename affordance beside the report name in the unified toolbar (017).
+  /// Tooltip + accessible name for the inline-rename affordance beside the report name in the unified toolbar.
   ///
   /// In en, this message translates to:
   /// **'Rename report'**
   String get actionRenameTooltip;
 
-  /// Accessible label for the inline report-name edit field opened by the rename affordance in the unified toolbar (017).
+  /// Accessible label for the inline report-name edit field opened by the rename affordance in the unified toolbar.
   ///
   /// In en, this message translates to:
   /// **'Report name'**
   String get renameFieldLabel;
 
-  /// Properties panel section label for the shape form gallery shown when a shape element is selected (020).
+  /// Properties panel section label for the shape form gallery shown when a shape element is selected.
   ///
   /// In en, this message translates to:
   /// **'Shape'**
   String get propertiesShape;
 
-  /// Shape gallery thumbnail name: a straight line across the element's box (020).
+  /// Shape gallery thumbnail name: a straight line across the element's box.
   ///
   /// In en, this message translates to:
   /// **'Line'**
   String get shapeFormLine;
 
-  /// Shape gallery thumbnail name: a rectangle filling the element's box (020).
+  /// Shape gallery thumbnail name: a rectangle filling the element's box.
   ///
   /// In en, this message translates to:
   /// **'Rectangle'**
   String get shapeFormRectangle;
 
-  /// Shape gallery thumbnail name: an ellipse inscribed in the element's box (020).
+  /// Shape gallery thumbnail name: an ellipse inscribed in the element's box.
   ///
   /// In en, this message translates to:
   /// **'Ellipse'**
   String get shapeFormEllipse;
 
-  /// Shape gallery thumbnail name: a triangle, apex at top-centre (020).
+  /// Shape gallery thumbnail name: a triangle, apex at top-centre.
   ///
   /// In en, this message translates to:
   /// **'Triangle'**
   String get shapeFormTriangle;
 
-  /// Shape gallery thumbnail name: a diamond touching the four edge midpoints (020).
+  /// Shape gallery thumbnail name: a diamond touching the four edge midpoints.
   ///
   /// In en, this message translates to:
   /// **'Diamond'**
   String get shapeFormDiamond;
 
-  /// Shape gallery thumbnail name: a regular, point-up pentagon (020).
+  /// Shape gallery thumbnail name: a regular, point-up pentagon.
   ///
   /// In en, this message translates to:
   /// **'Pentagon'**
   String get shapeFormPentagon;
 
-  /// Shape gallery thumbnail name: a regular, point-up hexagon (020).
+  /// Shape gallery thumbnail name: a regular, point-up hexagon.
   ///
   /// In en, this message translates to:
   /// **'Hexagon'**
   String get shapeFormHexagon;
 
-  /// Shape gallery thumbnail name: a five-point, point-up star (020).
+  /// Shape gallery thumbnail name: a five-point, point-up star.
   ///
   /// In en, this message translates to:
   /// **'Star'**
@@ -1235,217 +1235,217 @@ abstract class JetPrintLocalizations {
   /// **'Rounded rectangle'**
   String get shapeFormRoundRect;
 
-  /// Properties panel section label for the text styling controls shown when a text element is selected (021).
+  /// Properties panel section label for the text styling controls shown when a text element is selected.
   ///
   /// In en, this message translates to:
   /// **'Font'**
   String get propertiesFont;
 
-  /// Row label for the font-family picker in the Font section (021).
+  /// Row label for the font-family picker in the Font section.
   ///
   /// In en, this message translates to:
   /// **'Family'**
   String get fontFamilyLabel;
 
-  /// Accessible name for the font-family picker trigger (021).
+  /// Accessible name for the font-family picker trigger.
   ///
   /// In en, this message translates to:
   /// **'Choose font family'**
   String get fontFamilyPickerTooltip;
 
-  /// Picker label shown when an element uses the renderer default font and the built-in families are hidden from the picker (022).
+  /// Picker label shown when an element uses the renderer default font and the built-in families are hidden from the picker.
   ///
   /// In en, this message translates to:
   /// **'Default'**
   String get fontFamilyDefault;
 
-  /// Picker entry for a stored font family that is not registered with the designer: the name is preserved but renders with the default font until repicked (021).
+  /// Picker entry for a stored font family that is not registered with the designer: the name is preserved but renders with the default font until repicked.
   ///
   /// In en, this message translates to:
   /// **'{family} (unavailable)'**
   String fontFamilyUnavailable(String family);
 
-  /// Row label for the font-size field in the Font section (021).
+  /// Row label for the font-size field in the Font section.
   ///
   /// In en, this message translates to:
   /// **'Size'**
   String get fontSizeLabel;
 
-  /// Accessible name for the Bold style toggle (021).
+  /// Accessible name for the Bold style toggle.
   ///
   /// In en, this message translates to:
   /// **'Bold'**
   String get fontBoldTooltip;
 
-  /// Accessible name for the Italic style toggle (021).
+  /// Accessible name for the Italic style toggle.
   ///
   /// In en, this message translates to:
   /// **'Italic'**
   String get fontItalicTooltip;
 
-  /// Accessible name for the Underline style toggle (021).
+  /// Accessible name for the Underline style toggle.
   ///
   /// In en, this message translates to:
   /// **'Underline'**
   String get fontUnderlineTooltip;
 
-  /// Accessible name for the left horizontal-alignment segment (021).
+  /// Accessible name for the left horizontal-alignment segment.
   ///
   /// In en, this message translates to:
   /// **'Align left'**
   String get alignLeftTooltip;
 
-  /// Accessible name for the center horizontal-alignment segment (021).
+  /// Accessible name for the center horizontal-alignment segment.
   ///
   /// In en, this message translates to:
   /// **'Align center'**
   String get alignCenterTooltip;
 
-  /// Accessible name for the right horizontal-alignment segment (021).
+  /// Accessible name for the right horizontal-alignment segment.
   ///
   /// In en, this message translates to:
   /// **'Align right'**
   String get alignRightTooltip;
 
-  /// Row label for a color editor (text color, barcode color) in the Properties panel (021).
+  /// Row label for a color editor (text color, barcode color) in the Properties panel.
   ///
   /// In en, this message translates to:
   /// **'Color'**
   String get propertiesColor;
 
-  /// Accessible name for a color-editor trigger that opens the swatch/hex popover (021).
+  /// Accessible name for a color-editor trigger that opens the swatch/hex popover.
   ///
   /// In en, this message translates to:
   /// **'Choose color'**
   String get colorPickerTooltip;
 
-  /// Label for the hex color input inside the color popover (021).
+  /// Label for the hex color input inside the color popover.
   ///
   /// In en, this message translates to:
   /// **'Hex'**
   String get colorHexLabel;
 
-  /// Color popover entry that clears an optional color (no fill / no outline) (021).
+  /// Color popover entry that clears an optional color (no fill / no outline).
   ///
   /// In en, this message translates to:
   /// **'None'**
   String get colorNone;
 
-  /// Accessible name of the black palette swatch (021).
+  /// Accessible name of the black palette swatch.
   ///
   /// In en, this message translates to:
   /// **'Black'**
   String get swatchBlack;
 
-  /// Accessible name of the white palette swatch (021).
+  /// Accessible name of the white palette swatch.
   ///
   /// In en, this message translates to:
   /// **'White'**
   String get swatchWhite;
 
-  /// Accessible name of the gray palette swatch (021).
+  /// Accessible name of the gray palette swatch.
   ///
   /// In en, this message translates to:
   /// **'Gray'**
   String get swatchGray;
 
-  /// Accessible name of the light-gray palette swatch (021).
+  /// Accessible name of the light-gray palette swatch.
   ///
   /// In en, this message translates to:
   /// **'Silver'**
   String get swatchSilver;
 
-  /// Accessible name of the red palette swatch (021).
+  /// Accessible name of the red palette swatch.
   ///
   /// In en, this message translates to:
   /// **'Red'**
   String get swatchRed;
 
-  /// Accessible name of the orange palette swatch (021).
+  /// Accessible name of the orange palette swatch.
   ///
   /// In en, this message translates to:
   /// **'Orange'**
   String get swatchOrange;
 
-  /// Accessible name of the amber palette swatch (021).
+  /// Accessible name of the amber palette swatch.
   ///
   /// In en, this message translates to:
   /// **'Amber'**
   String get swatchAmber;
 
-  /// Accessible name of the yellow palette swatch (021).
+  /// Accessible name of the yellow palette swatch.
   ///
   /// In en, this message translates to:
   /// **'Yellow'**
   String get swatchYellow;
 
-  /// Accessible name of the green palette swatch (021).
+  /// Accessible name of the green palette swatch.
   ///
   /// In en, this message translates to:
   /// **'Green'**
   String get swatchGreen;
 
-  /// Accessible name of the emerald palette swatch (021).
+  /// Accessible name of the emerald palette swatch.
   ///
   /// In en, this message translates to:
   /// **'Emerald'**
   String get swatchEmerald;
 
-  /// Accessible name of the teal palette swatch (021).
+  /// Accessible name of the teal palette swatch.
   ///
   /// In en, this message translates to:
   /// **'Teal'**
   String get swatchTeal;
 
-  /// Accessible name of the cyan palette swatch (021).
+  /// Accessible name of the cyan palette swatch.
   ///
   /// In en, this message translates to:
   /// **'Cyan'**
   String get swatchCyan;
 
-  /// Accessible name of the blue palette swatch (021).
+  /// Accessible name of the blue palette swatch.
   ///
   /// In en, this message translates to:
   /// **'Blue'**
   String get swatchBlue;
 
-  /// Accessible name of the indigo palette swatch (021).
+  /// Accessible name of the indigo palette swatch.
   ///
   /// In en, this message translates to:
   /// **'Indigo'**
   String get swatchIndigo;
 
-  /// Accessible name of the violet palette swatch (021).
+  /// Accessible name of the violet palette swatch.
   ///
   /// In en, this message translates to:
   /// **'Violet'**
   String get swatchViolet;
 
-  /// Accessible name of the pink palette swatch (021).
+  /// Accessible name of the pink palette swatch.
   ///
   /// In en, this message translates to:
   /// **'Pink'**
   String get swatchPink;
 
-  /// Properties panel section label for the fill/outline controls shown when a shape element is selected (021).
+  /// Properties panel section label for the fill/outline controls shown when a shape element is selected.
   ///
   /// In en, this message translates to:
   /// **'Appearance'**
   String get propertiesAppearance;
 
-  /// Row label for a shape's fill-color editor in the Appearance section (021).
+  /// Row label for a shape's fill-color editor in the Appearance section.
   ///
   /// In en, this message translates to:
   /// **'Fill'**
   String get propertiesFill;
 
-  /// Row label for a shape's outline-color editor in the Appearance section (021).
+  /// Row label for a shape's outline-color editor in the Appearance section.
   ///
   /// In en, this message translates to:
   /// **'Outline'**
   String get propertiesOutline;
 
-  /// Row label for a shape's outline-width field in the Appearance section (021).
+  /// Row label for a shape's outline-width field in the Appearance section.
   ///
   /// In en, this message translates to:
   /// **'Width'**
@@ -1673,13 +1673,13 @@ abstract class JetPrintLocalizations {
   /// **'Cell override'**
   String get crosstabMeasureStyle;
 
-  /// Tooltip on a descendant (↳) field chip in the expression editor palette (spec 033). Explains that the field is from a child collection and is only valid inside an aggregate call.
+  /// Tooltip on a descendant (↳) field chip in the expression editor palette. Explains that the field is from a child collection and is only valid inside an aggregate call.
   ///
   /// In en, this message translates to:
   /// **'Descendant field — valid inside an aggregate like SUM(…)'**
   String get exprEditorDeeperFieldHint;
 
-  /// Properties section heading for a detail band's multi-column label grid (spec 035).
+  /// Properties section heading for a detail band's multi-column label grid.
   ///
   /// In en, this message translates to:
   /// **'Column Layout'**
@@ -1727,7 +1727,7 @@ abstract class JetPrintLocalizations {
   /// **'Row spacing'**
   String get propertiesRowSpacing;
 
-  /// Notice shown when a band carries a column layout but the report shape no longer satisfies the activation gate (spec 035 / FR-009).
+  /// Notice shown when a band carries a column layout but the report shape no longer satisfies the activation gate.
   ///
   /// In en, this message translates to:
   /// **'Column layout is inactive: the report isn\'t a single detail band.'**

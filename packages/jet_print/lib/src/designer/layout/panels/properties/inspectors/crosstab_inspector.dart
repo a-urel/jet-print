@@ -427,7 +427,7 @@ extension _CrosstabInspector on _PropertiesPanelState {
         // inherited value is the crosstab's own cellText/cellBox, one layer up,
         // so the inheritance shown is truthful at this level rather than jumping
         // straight to the renderer default. Like every other nullable slot
-        // (spec 046 decision 1), an authored override is a one-way door
+        // (decision 1), an authored override is a one-way door
         // without a reset, so this card gets the same conditional reset the
         // crosstab-level roles have — keyed under its own `.style` namespace
         // since the two editors below keep their own `cellText`/`cellBox`

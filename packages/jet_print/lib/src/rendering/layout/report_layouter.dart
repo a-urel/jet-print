@@ -78,7 +78,7 @@ class LayoutResult {
   final ReportDiagnostics diagnostics;
 }
 
-/// The lazy page-production seam (011 — FR-021): page boundaries and
+/// The lazy page-production seam (011): page boundaries and
 /// [pageCount] are already resolved (boundary-only pass, no paint
 /// primitives); [buildPage] constructs one page's [PageFrame] on demand by
 /// replaying that page's recorded placements through the unchanged renderer

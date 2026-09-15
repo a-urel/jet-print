@@ -1,5 +1,5 @@
-/// Pure symbology inference for [BarcodeSymbology.auto] and 1D/2D classification
-/// (spec 036, FR-004). No Flutter, no third-party dependency.
+/// Pure symbology inference for [BarcodeSymbology.auto] and 1D/2D classification.
+/// No Flutter, no third-party dependency.
 library;
 
 import '../../../domain/elements/barcode_element.dart';
@@ -7,8 +7,8 @@ import '../../../domain/elements/barcode_element.dart';
 /// The longest value still inferred as a 1D code; longer → QR.
 const int _maxLinearLength = 40;
 
-/// Infers a concrete symbology from [value] by the documented priority
-/// (FR-004). Never returns [BarcodeSymbology.auto].
+/// Infers a concrete symbology from [value] by the documented priority.
+/// Never returns [BarcodeSymbology.auto].
 ///
 /// `auto` deliberately resolves only to the common retail/QR set —
 /// [BarcodeSymbology.ean13], [BarcodeSymbology.upcA], [BarcodeSymbology.ean8],

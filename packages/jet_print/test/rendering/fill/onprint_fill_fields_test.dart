@@ -1,4 +1,4 @@
-// FilledBand.fields carries the originating row's field values (spec 2026-06-27).
+// FilledBand.fields carries the originating row's field values.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/field_def.dart';
 import 'package:jet_print/src/data/in_memory_data_source.dart';

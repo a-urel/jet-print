@@ -88,7 +88,7 @@ extension CtrlMove on JetReportDesignerController {
   }
 
   // --- Resize ----------------------------------------------------------------
-  /// Moves the selection by a precise nudge (no snapping), one undoable step
-  /// (FR-016). Arrow keys pass ±1 pt; Shift+arrow ±10 pt.
+  /// Moves the selection by a precise nudge (no snapping), one undoable step.
+  /// Arrow keys pass ±1 pt; Shift+arrow ±10 pt.
   void nudge(double dx, double dy) => moveBy(JetOffset(dx, dy));
 }

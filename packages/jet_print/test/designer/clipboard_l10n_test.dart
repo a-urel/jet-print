@@ -1,9 +1,9 @@
 // Clipboard discoverability / localization / accessibility.
 //
 // Across en/de/tr: the three toolbar tooltips and five context-menu labels
-// resolve to non-empty, locale-correct strings with no missing-key fallback
-// (SC-004); every toolbar button and menu item exposes a Semantics label
-// (FR-015); and the platform shortcut glyph is correct (⌘ on Apple, Ctrl+
+// resolve to non-empty, locale-correct strings with no missing-key fallback;
+// every toolbar button and menu item exposes a Semantics label;
+// and the platform shortcut glyph is correct (⌘ on Apple, Ctrl+
 // otherwise) in both the toolbar tooltips and the menu trailing.
 //
 // Locales are exercised in the order en → tr → de: the SDK's Global*
@@ -114,8 +114,8 @@ void main() {
         find.text('⌘D').evaluate().isNotEmpty;
     debugDefaultTargetPlatformOverride = null;
 
-    expect(tbCut, contains('⌘X')); // toolbar tooltip (FR-014)
-    expect(menuHasCmd, isTrue); // menu trailing (FR-014a)
+    expect(tbCut, contains('⌘X')); // toolbar tooltip
+    expect(menuHasCmd, isTrue); // menu trailing
     expect(find.text('Ctrl+X'), findsNothing);
   });
 

@@ -496,8 +496,8 @@ class _DesignCanvasState extends State<DesignCanvas> {
               // wins the primary-tap/pan arena — select, marquee and drag keep
               // working — while secondary-click (which the canvas detector
               // ignores) falls through to the region to open the menu. Selection
-              // is resolved first by the Listener's secondary onPointerDown
-              // (FR-010); the region then opens the menu at the pointer.
+              // is resolved first by the Listener's secondary onPointerDown;
+              // the region then opens the menu at the pointer.
               child: ShadContextMenuRegion(
                 key: const ValueKey<String>(
                     'jet_print.designer.canvas.contextMenu'),

@@ -30,7 +30,7 @@ enum DesignerToolType {
 }
 
 /// Grid/snap spacing, in **millimetres** — the unit of record for this decision
-/// (spec 015 / D2). Drives both the visible alignment grid and the snap step, so
+/// (D2). Drives both the visible alignment grid and the snap step, so
 /// they share one source of truth and align with the mm rulers.
 const double kGridStepMm = 5;
 
@@ -88,7 +88,7 @@ const double kZoomStep = 0.1;
 const double kHandleVisualSize = 8;
 
 /// Side length, in screen pixels, of a resize handle's *hit* area. It is larger
-/// than [kHandleVisualSize] so tiny elements stay grabbable (FR-009 edge case).
+/// than [kHandleVisualSize] so tiny elements stay grabbable (edge case).
 const double kHandleHitSize = 16;
 
 /// Side length, in screen pixels, of a resize handle's *hit* area under TOUCH
@@ -98,8 +98,8 @@ const double kHandleHitSize = 16;
 /// unchanged.
 const double kHandleHitSizeTouch = 44;
 
-/// Default size, in points, for a newly created element of each tool type
-/// (FR-002). Chosen to be immediately visible and editable at 100% zoom.
+/// Default size, in points, for a newly created element of each tool type.
+/// Chosen to be immediately visible and editable at 100% zoom.
 const Map<DesignerToolType, JetSize> kDefaultElementSize =
     <DesignerToolType, JetSize>{
   DesignerToolType.text: JetSize(144, 18),
@@ -127,8 +127,7 @@ const double kRulerMinLabelGapPx = 56;
 
 /// The ascending "nice number" ladder, in millimetres, of candidate **labelled**
 /// step intervals. The scale picks the smallest entry whose `step·pxPerMm`
-/// clears [kRulerMinLabelGapPx]; the top entry clamps an extreme zoom-out
-/// (research D3).
+/// clears [kRulerMinLabelGapPx]; the top entry clamps an extreme zoom-out.
 const List<int> kRulerStepLadderMm = <int>[
   1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, //
 ];
@@ -140,5 +139,5 @@ const int kRulerMinorDivisions = 5;
 
 /// Minimum gap, in screen pixels, between **minor** subdivision ticks. At max
 /// zoom this floors subdivision near ~1 mm so minor ticks never smear together
-/// (research D3 extreme-zoom clamp).
+/// (extreme-zoom clamp).
 const double kRulerMinMinorGapPx = 6;

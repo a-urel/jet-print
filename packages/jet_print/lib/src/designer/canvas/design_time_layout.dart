@@ -269,7 +269,7 @@ class DesignTimeLayout {
   /// The stable id of the band whose vertical range contains [point]'s `dy`.
   /// When the point lands outside every band — the empty flow gap, or above/below
   /// the sheet — it snaps to the vertically nearest band so a drop always lands
-  /// somewhere valid (FR-023 nearest-valid-band). Null only when there are no
+  /// somewhere valid (nearest-valid-band). Null only when there are no
   /// bands.
   String? bandIdNear(JetOffset point) {
     if (bands.isEmpty) return null;

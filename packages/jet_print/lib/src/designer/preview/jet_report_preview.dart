@@ -1,4 +1,4 @@
-/// The on-screen report preview (spec 011 — FR-008): a read-only,
+/// The on-screen report preview: a read-only,
 /// paginated viewer over a `RenderedReport`.
 ///
 /// WYSIWYG, non-negotiable: each page is painted by recording its

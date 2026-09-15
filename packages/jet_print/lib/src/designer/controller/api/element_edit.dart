@@ -8,8 +8,8 @@ part of '../jet_report_designer_controller.dart';
 extension CtrlElementEdit on JetReportDesignerController {
   /// Creates a default element of [type] at the band-relative point [at] within
   /// the band with stable id [bandId], selecting it. The new element gets a fresh
-  /// unique id and the per-type default size; its bounds are clamped to the band
-  /// (FR-001/002/004/010). An unknown [bandId] is ignored.
+  /// unique id and the per-type default size; its bounds are clamped to the band.
+  /// An unknown [bandId] is ignored.
   void createElement(
     DesignerToolType type, {
     required String bandId,
@@ -92,8 +92,8 @@ extension CtrlElementEdit on JetReportDesignerController {
     _commit(SetTextBindingCommand(id: id, expression: expression));
   }
 
-  /// Clears the [TextElement] [id]'s binding, reverting it to its static text
-  /// (US2 / FR-012). No-op for a non-text or absent id, or when already static.
+  /// Clears the [TextElement] [id]'s binding, reverting it to its static text.
+  /// No-op for a non-text or absent id, or when already static.
   void clearBinding(String id) {
     _commit(SetTextBindingCommand(id: id, expression: null));
   }
@@ -128,12 +128,12 @@ extension CtrlElementEdit on JetReportDesignerController {
   }
 
   /// Changes the form of the [ShapeElement] [id] to [kind] as one undoable step
-  /// (020 / FR-004), preserving the element's bounds and fill/stroke.
+  /// (020), preserving the element's bounds and fill/stroke.
   void setShapeKind(String id, ShapeKind kind) =>
       _commit(SetShapeKindCommand(id: id, kind: kind));
 
   /// Replaces the [TextElement] [id]'s whole style with [style] as one
-  /// undoable step (021 / FR-001…FR-005), preserving its text, bounds,
+  /// undoable step (021), preserving its text, bounds,
   /// binding, and format.
   void setTextStyle(String id, JetTextStyle style) =>
       _commit(SetTextStyleCommand(id: id, style: style));
@@ -172,8 +172,8 @@ extension CtrlElementEdit on JetReportDesignerController {
         seriesColor: seriesColor,
       ));
 
-  /// Binds the [ImageElement] [id] to read its picture from the data [field]
-  /// (US2 / FR-013). No-op for a non-image or absent id, or when already bound
+  /// Binds the [ImageElement] [id] to read its picture from the data [field].
+  /// No-op for a non-image or absent id, or when already bound
   /// to the same field.
   void setImageField(String id, String field) {
     _commit(SetImageBindingCommand(id: id, field: field));

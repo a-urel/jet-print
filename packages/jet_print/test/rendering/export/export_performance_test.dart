@@ -34,7 +34,7 @@ void main() {
     final PdfInspector pdf = PdfInspector(bytes);
     expect(pdf.pageCount, report.pageCount,
         reason: 'the artifact must be COMPLETE — every page materialized '
-            '(FR-011), not just the lazily viewed ones');
+            ', not just the lazily viewed ones');
     expect(pdf.textOnPage(report.pageCount - 1), contains('record 999'),
         reason: 'the last record lands on the last page');
   });

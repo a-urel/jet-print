@@ -117,7 +117,7 @@ ReportDefinition expandAggregates(ReportDefinition def) {
 /// other syntax pass through unchanged. Because only the aggregate call itself is
 /// replaced, an aggregate inside a larger expression (`SUM($F{t}) + 500`) or
 /// nested in a scalar call (`ROUND(SUM($F{x}), 2)`) lifts the aggregate while
-/// keeping the surrounding arithmetic/call intact (spec 032 amendment #2).
+/// keeping the surrounding arithmetic/call intact (amendment #2).
 ///
 /// When [register] returns `null` for a call, that call is left in place
 /// verbatim (allows callers to selectively skip aggregates they don't own).

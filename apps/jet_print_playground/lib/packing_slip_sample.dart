@@ -4,8 +4,8 @@
 ///
 /// Structurally it reuses the reified band model's nesting the way
 /// the nested-list sample does, but dresses it as a real packing slip: a
-/// two-column Ship-To / Bill-To header with a scannable **QR tracking code**
-/// (spec 036), items grouped into **boxes** with per-box subtotals, grand
+/// two-column Ship-To / Bill-To header with a scannable **QR tracking code**,
+/// items grouped into **boxes** with per-box subtotals, grand
 /// totals, and a once-at-end signature footer.
 ///
 /// Only `qtyShipped` and `lineWeight` are stored; every subtotal/total is a

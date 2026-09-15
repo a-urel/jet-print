@@ -2,7 +2,7 @@
 // pinned to a mobile target, so it guards platform-CONDITIONAL Dart code on
 // the export path (the class of bug E4's `_d()` number helper fixed). It does
 // NOT exercise the real iOS/Android Impeller renderer — that is the manual
-// sim/emulator smoke (E5 SC-002). No dart:io.
+// sim/emulator smoke (E5). No dart:io.
 library;
 
 import 'dart:typed_data';

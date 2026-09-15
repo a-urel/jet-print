@@ -1,5 +1,5 @@
-/// The expression lexer: turns a source string into a list of [Token]s
-/// (spec 005a). Internal to the expression seam.
+/// The expression lexer: turns a source string into a list of [Token]s.
+/// Internal to the expression seam.
 library;
 
 import 'expression_exception.dart';

@@ -57,7 +57,7 @@ const List<_OneDEntry> _oneD = <_OneDEntry>[
   (symbology: BarcodeSymbology.rm4scc, label: 'RM4SCC', value: 'LE28HE'),
 ];
 
-/// The three exotic 2D matrix symbologies (all supported since spec 036): two
+/// The three exotic 2D matrix symbologies (all supported since): two
 /// square matrices and one stacked-linear PDF417.
 const List<_TwoDEntry> _twoD = <_TwoDEntry>[
   (

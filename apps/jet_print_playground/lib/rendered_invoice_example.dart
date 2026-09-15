@@ -1,4 +1,4 @@
-/// The playground's rendered-invoice example (011 — FR-019): supply
+/// The playground's rendered-invoice example (011): supply
 /// real data for the bound invoice template, render it through the public
 /// engine, and show the paginated preview. The whole integration — data
 /// source + render + preview — is the < 30 lines inside [invoiceDataSource],

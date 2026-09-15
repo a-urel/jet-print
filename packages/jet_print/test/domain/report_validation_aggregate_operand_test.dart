@@ -3,7 +3,7 @@
 /// Validates that `validate(def, schema: s)` flags ambiguous and not-found
 /// aggregate operands in sink bands, while:
 ///   - passing same-scope and unique-descend operands;
-///   - skipping the not-found error for published-total names (spec 030);
+///   - skipping the not-found error for published-total names;
 ///   - `validate(def)` (no schema) leaves all structural checks intact but
 ///     adds NO operand diagnostics (backward compatible).
 library;

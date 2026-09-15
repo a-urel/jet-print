@@ -18,8 +18,8 @@ import 'zoom_control.dart';
 ///
 /// The zoom level and the view toggles are genuinely interactive (local-only
 /// this iteration); the history and primary actions are non-functional
-/// placeholders that render as enabled so the bar reads as a real toolbar
-/// (FR-015). Every caption and tooltip is sourced from [JetPrintLocalizations]
+/// placeholders that render as enabled so the bar reads as a real toolbar.
+/// Every caption and tooltip is sourced from [JetPrintLocalizations]
 /// and every color/text style from [ShadTheme]. The title
 /// ellipsizes so a longer translation never pushes the actions off-screen
 /// (longer-text edge case).

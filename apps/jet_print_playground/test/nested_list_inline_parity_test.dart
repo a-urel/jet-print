@@ -68,7 +68,7 @@ JetDataSource _declaredSource() =>
     JetInMemoryDataSource(kSampleCustomers, fields: customersSchema.fields);
 
 // ---------------------------------------------------------------------------
-// Published-total reference variant (the legacy design, kept for SC-001)
+// Published-total reference variant (the legacy design, kept for)
 // ---------------------------------------------------------------------------
 
 /// The published-total design that predates the spec-033 migration — kept

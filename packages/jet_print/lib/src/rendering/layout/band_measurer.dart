@@ -1,5 +1,5 @@
 /// Measures a body band to its grown height with each element's grown, band-local
-/// box (spec 008a §5). Pure and position-independent, so the layouter measures
+/// box. Pure and position-independent, so the layouter measures
 /// each element only once and reuses the result for both the page-break decision
 /// and placement (the renderer's `emit` re-derives its own line content — the
 /// 007a seam — which this pass does not change).

@@ -16,7 +16,7 @@ import '../rendering/engine/rendered_report.dart';
 import '../rendering/export/jet_report_exporter.dart';
 
 /// Presents the system print dialog for [pdfBytes] — the swappable print
-/// seam (contract B6).
+/// seam.
 ///
 /// [jobName] is the title the OS shows for the job; [pageWidthPt] and
 /// [pageHeightPt] are the document's true page size in PostScript points.
@@ -86,8 +86,8 @@ class JetReportPrinter {
 /// The default presenter: `package:printing`'s system dialog.
 ///
 /// `Printing.info()` never throws — unsupported platforms report
-/// `canPrint: false`, which becomes a clean [PrintUnavailableException]
-/// (research §3). `onLayout` returns the same deterministic bytes whatever
+/// `canPrint: false`, which becomes a clean [PrintUnavailableException].
+/// `onLayout` returns the same deterministic bytes whatever
 /// paper the user picks: reflowing to the dialog's paper would break WYSIWYG.
 ///
 /// On web, `printing` renders the PDF with pdf.js and opens the browser's
@@ -122,8 +122,8 @@ Future<bool> _systemPrintDialog(
     // on a semaphore inside the print operation while waiting for a Dart
     // reply that can only be delivered on that same thread — the app
     // freezes before the dialog opens. We have nothing to re-layout anyway:
-    // the exported bytes ARE the artifact whatever paper the dialog picks
-    // (contract B6); pinned by default_presenter_channel_test.dart.
+    // the exported bytes ARE the artifact whatever paper the dialog picks;
+    // pinned by default_presenter_channel_test.dart.
     dynamicLayout: false,
   );
 }

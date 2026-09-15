@@ -18,7 +18,7 @@ extension _RectHit on JetRect {
 /// band; the element drawn **last** is on top, so we scan in reverse and return
 /// the first hit. [slop] (in points) enlarges each element's hit area beyond its
 /// visual bounds so very thin or tiny elements (e.g. a zero-height line) remain
-/// grabbable (FR-009 edge case).
+/// grabbable (edge case).
 String? hitTestElement(
   DesignTimeLayout layout,
   JetOffset pagePoint, {

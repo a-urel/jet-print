@@ -1,4 +1,4 @@
-/// The design-time binding token (013 T005) mirrors the value-field projection,
+/// The design-time binding token (013) mirrors the value-field projection,
 /// so the canvas and Properties panel always show the same thing.
 library;
 

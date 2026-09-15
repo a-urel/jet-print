@@ -6,7 +6,7 @@
 // semaphore inside `knowsPageRange`, waiting for a Dart reply that can only
 // be delivered on that same blocked main thread — a deadlock: the dialog
 // never opens and the app freezes. Our document never reflows to the
-// dialog's paper anyway (contract B6: the bytes ARE the artifact), so the
+// dialog's paper anyway (the bytes ARE the artifact), so the
 // default presenter MUST pass `dynamicLayout: false`. This test mocks the
 // `net.nfet.printing` method channel and pins the flag plus the
 // availability-check-then-print order.
@@ -66,7 +66,7 @@ void main() {
             'dynamic re-layout by blocking the main thread on a semaphore '
             'whose signal can only arrive on that same thread — the app '
             'freezes. The exported bytes never reflow to the dialog paper '
-            'anyway (contract B6).');
+            'anyway.');
     expect(captured['width'], closeTo(595.28, 0.01),
         reason: 'the dialog opens at the template\'s true page size');
     expect(captured['height'], closeTo(841.89, 0.01));

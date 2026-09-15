@@ -123,7 +123,7 @@
 
   "dataSourceEmpty": "No data source attached.",
   "@dataSourceEmpty": {
-    "description": "Data Source panel empty state shown when no data-source structure is attached to the designer (009)."
+    "description": "Data Source panel empty state shown when no data-source structure is attached to the designer."
   },
 
   "dataSourceSelect": "Select data source",
@@ -290,11 +290,11 @@
   },
   "propertiesValue": "Value",
   "@propertiesValue": {
-    "description": "Properties panel section label for a text element's unified value (literal text or a [field]/{ … } binding) (013)."
+    "description": "Properties panel section label for a text element's unified value (literal text or a [field]/{ … } binding)."
   },
   "valueFieldHint": "[field] or text",
   "@valueFieldHint": {
-    "description": "Placeholder for the unified value input — a [field] token, a { … } template, or literal text (013)."
+    "description": "Placeholder for the unified value input — a [field] token, a { … } template, or literal text."
   },
   "valueFieldPickerTooltip": "Insert a data field",
   "@valueFieldPickerTooltip": {
@@ -302,108 +302,108 @@
   },
   "valueFieldFxTooltip": "Build an expression",
   "@valueFieldFxTooltip": {
-    "description": "Tooltip for the value field's fx button that opens the expression editor (032)."
+    "description": "Tooltip for the value field's fx button that opens the expression editor."
   },
   "exprEditorTitle": "Expression",
   "@exprEditorTitle": {
-    "description": "Title of the expression editor dialog (032)."
+    "description": "Title of the expression editor dialog."
   },
   "exprEditorFieldsLabel": "Fields",
   "@exprEditorFieldsLabel": {
-    "description": "Label for the fields palette in the expression editor (032)."
+    "description": "Label for the fields palette in the expression editor."
   },
   "exprEditorFunctionsLabel": "Functions",
   "@exprEditorFunctionsLabel": {
-    "description": "Label for the functions palette in the expression editor (032)."
+    "description": "Label for the functions palette in the expression editor."
   },
   "exprGroupString": "String",
   "@exprGroupString": {
-    "description": "Label for the string-functions group in the expression editor (032)."
+    "description": "Label for the string-functions group in the expression editor."
   },
   "exprGroupMath": "Math",
   "@exprGroupMath": {
-    "description": "Label for the math-functions group in the expression editor (032)."
+    "description": "Label for the math-functions group in the expression editor."
   },
   "exprGroupLogic": "Logic",
   "@exprGroupLogic": {
-    "description": "Label for the logic-functions group in the expression editor (032)."
+    "description": "Label for the logic-functions group in the expression editor."
   },
   "exprGroupAggregate": "Aggregate",
   "@exprGroupAggregate": {
-    "description": "Label for the aggregate-functions group in the expression editor (032)."
+    "description": "Label for the aggregate-functions group in the expression editor."
   },
   "exprStatusValid": "Valid",
   "@exprStatusValid": {
-    "description": "Status shown when the expression is valid (032)."
+    "description": "Status shown when the expression is valid."
   },
   "exprStatusSyntaxError": "Incomplete or invalid expression",
   "@exprStatusSyntaxError": {
-    "description": "Status shown when the expression has a syntax error (032)."
+    "description": "Status shown when the expression has a syntax error."
   },
   "exprStatusUnresolved": "Field not in the data source: {name}",
   "@exprStatusUnresolved": {
-    "description": "Status shown when the expression references an out-of-scope field (032).",
+    "description": "Status shown when the expression references an out-of-scope field.",
     "placeholders": { "name": { "type": "String" } }
   },
   "exprEditorCancel": "Cancel",
   "@exprEditorCancel": {
-    "description": "Cancel button in the expression editor (032)."
+    "description": "Cancel button in the expression editor."
   },
   "exprEditorInsert": "Insert",
   "@exprEditorInsert": {
-    "description": "Insert button in the expression editor that commits the expression (032)."
+    "description": "Insert button in the expression editor that commits the expression."
   },
   "propertiesFormat": "Format",
   "@propertiesFormat": {
-    "description": "Properties panel section label for a text element's number/date display format (013)."
+    "description": "Properties panel section label for a text element's number/date display format."
   },
   "formatHint": "e.g. #,##0.00",
   "@formatHint": {
-    "description": "Placeholder for the format input (an ICU number/date pattern) (013)."
+    "description": "Placeholder for the format input (an ICU number/date pattern)."
   },
   "formatPresetPickerTooltip": "Choose a format preset",
   "@formatPresetPickerTooltip": {
-    "description": "Accessible label/tooltip for the Format field's preset-picker suffix button (013)."
+    "description": "Accessible label/tooltip for the Format field's preset-picker suffix button."
   },
   "formatPresetNone": "None",
   "@formatPresetNone": {
-    "description": "Format preset that clears the format (unformatted) (013)."
+    "description": "Format preset that clears the format (unformatted)."
   },
   "formatPresetInteger": "Integer",
   "@formatPresetInteger": {
-    "description": "Format preset for a grouped integer, e.g. 1,234 (013)."
+    "description": "Format preset for a grouped integer, e.g. 1,234."
   },
   "formatPresetDecimal": "Decimal",
   "@formatPresetDecimal": {
-    "description": "Format preset for a grouped number with two decimals, e.g. 1,234.50 (013)."
+    "description": "Format preset for a grouped number with two decimals, e.g. 1,234.50."
   },
   "formatPresetCurrency": "Currency",
   "@formatPresetCurrency": {
-    "description": "Format preset for a currency amount (013)."
+    "description": "Format preset for a currency amount."
   },
   "formatPresetPercent": "Percent",
   "@formatPresetPercent": {
-    "description": "Format preset for a percentage (013)."
+    "description": "Format preset for a percentage."
   },
   "formatPresetDate": "Date",
   "@formatPresetDate": {
-    "description": "Format preset for a date, e.g. 2026-06-11 (013)."
+    "description": "Format preset for a date, e.g. 2026-06-11."
   },
   "formatPresetDateTime": "Date & time",
   "@formatPresetDateTime": {
-    "description": "Format preset for a date and time, e.g. 2026-06-11 14:30 (013)."
+    "description": "Format preset for a date and time, e.g. 2026-06-11 14:30."
   },
   "errorUnresolvedToken": "#ERROR",
   "@errorUnresolvedToken": {
-    "description": "Rendered in place of a binding whose field is not in the data source (013 / FR-007)."
+    "description": "Rendered in place of a binding whose field is not in the data source."
   },
   "propertiesBinding": "Binding",
   "@propertiesBinding": {
-    "description": "Properties panel section label for an element's data binding (009)."
+    "description": "Properties panel section label for an element's data binding."
   },
   "propertiesGroup": "Group",
   "@propertiesGroup": {
-    "description": "Properties panel section label for the selected group band's group settings (023)."
+    "description": "Properties panel section label for the selected group band's group settings."
   },
   "propertiesGroupName": "Group name",
   "@propertiesGroupName": {
@@ -411,19 +411,19 @@
   },
   "propertiesGroupNewPage": "Start on new page",
   "@propertiesGroupNewPage": {
-    "description": "Properties panel toggle label: start each group instance on a new page (023)."
+    "description": "Properties panel toggle label: start each group instance on a new page."
   },
   "propertiesGroupKey": "Group key",
   "@propertiesGroupKey": {
-    "description": "Properties panel label for a group's grouping-key expression (spec 024)."
+    "description": "Properties panel label for a group's grouping-key expression."
   },
   "propertiesGroupKeepTogether": "Keep together",
   "@propertiesGroupKeepTogether": {
-    "description": "Properties panel toggle label: keep a group's whole instance on one page (spec 024)."
+    "description": "Properties panel toggle label: keep a group's whole instance on one page."
   },
   "propertiesGroupReprintHeader": "Reprint header on each page",
   "@propertiesGroupReprintHeader": {
-    "description": "Properties panel toggle label: reprint a group header atop each continuation page (spec 024)."
+    "description": "Properties panel toggle label: reprint a group header atop each continuation page."
   },
   "propertiesGroupOnHeaderHint": "Edit page & group settings on the group header band.",
   "@propertiesGroupOnHeaderHint": {
@@ -431,27 +431,27 @@
   },
   "propertiesScope": "Scope",
   "@propertiesScope": {
-    "description": "Properties panel header label for a selected detail scope (spec 024)."
+    "description": "Properties panel header label for a selected detail scope."
   },
   "outlineMoveUp": "Move up",
   "@outlineMoveUp": {
-    "description": "Outline row action: move a per-row band up within its scope (spec 024)."
+    "description": "Outline row action: move a per-row band up within its scope."
   },
   "outlineMoveDown": "Move down",
   "@outlineMoveDown": {
-    "description": "Outline row action: move a per-row band down within its scope (spec 024)."
+    "description": "Outline row action: move a per-row band down within its scope."
   },
   "outlineRemove": "Remove band",
   "@outlineRemove": {
-    "description": "Outline row action: remove a band (spec 024)."
+    "description": "Outline row action: remove a band."
   },
   "outlineRetype": "Change band type",
   "@outlineRetype": {
-    "description": "Outline row action: relocate a band to a different slot, changing its type (spec 024)."
+    "description": "Outline row action: relocate a band to a different slot, changing its type."
   },
   "outlineAddBand": "Add band",
   "@outlineAddBand": {
-    "description": "Outline row action: add a per-row band to a scope (spec 024)."
+    "description": "Outline row action: add a per-row band to a scope."
   },
   "outlineAddList": "Add list",
   "@outlineAddList": {
@@ -463,11 +463,11 @@
   },
   "outlineAddHeader": "Add header",
   "@outlineAddHeader": {
-    "description": "Outline row action: add a group header band (spec 024)."
+    "description": "Outline row action: add a group header band."
   },
   "outlineAddFooter": "Add footer",
   "@outlineAddFooter": {
-    "description": "Outline row action: add a group footer band (spec 024)."
+    "description": "Outline row action: add a group footer band."
   },
   "bindingExpressionHint": "Field or expression",
   "@bindingExpressionHint": {
@@ -491,7 +491,7 @@
   },
   "bindingUnresolved": "Field not found in the data source",
   "@bindingUnresolved": {
-    "description": "Shown under a binding whose field is missing from, or out of scope in, the attached data source (009)."
+    "description": "Shown under a binding whose field is missing from, or out of scope in, the attached data source."
   },
   "propertiesHeight": "Height",
   "@propertiesHeight": {
@@ -507,63 +507,63 @@
   },
   "propertiesPaper": "Paper",
   "@propertiesPaper": {
-    "description": "Properties panel label for the paper-size picker in the PAGE section (018)."
+    "description": "Properties panel label for the paper-size picker in the PAGE section."
   },
   "propertiesCustom": "Custom",
   "@propertiesCustom": {
-    "description": "Paper-size / margin value shown when the page matches no standard preset (018)."
+    "description": "Paper-size / margin value shown when the page matches no standard preset."
   },
   "propertiesWidth": "Width",
   "@propertiesWidth": {
-    "description": "Properties panel field label for a custom page width (018)."
+    "description": "Properties panel field label for a custom page width."
   },
   "paperPickerTooltip": "Choose a paper size",
   "@paperPickerTooltip": {
-    "description": "Accessible label for the paper-size picker button (018)."
+    "description": "Accessible label for the paper-size picker button."
   },
   "orientationPortrait": "Portrait",
   "@orientationPortrait": {
-    "description": "Page orientation: taller than wide (018)."
+    "description": "Page orientation: taller than wide."
   },
   "orientationLandscape": "Landscape",
   "@orientationLandscape": {
-    "description": "Page orientation: wider than tall (018)."
+    "description": "Page orientation: wider than tall."
   },
   "marginPresetNormal": "Normal",
   "@marginPresetNormal": {
-    "description": "Margin preset name: the ~1 cm default on all four sides (018)."
+    "description": "Margin preset name: the ~1 cm default on all four sides."
   },
   "marginPresetNarrow": "Narrow",
   "@marginPresetNarrow": {
-    "description": "Margin preset name: ~0.5 cm on all four sides (018)."
+    "description": "Margin preset name: ~0.5 cm on all four sides."
   },
   "marginPresetWide": "Wide",
   "@marginPresetWide": {
-    "description": "Margin preset name: ~2 cm on all four sides (018)."
+    "description": "Margin preset name: ~2 cm on all four sides."
   },
   "marginPresetNone": "None",
   "@marginPresetNone": {
-    "description": "Margin preset name: zero margins, flush to the page edge (018)."
+    "description": "Margin preset name: zero margins, flush to the page edge."
   },
   "marginPickerTooltip": "Choose margins",
   "@marginPickerTooltip": {
-    "description": "Accessible label for the margin-preset picker button (018)."
+    "description": "Accessible label for the margin-preset picker button."
   },
   "propertiesMarginLeft": "Left",
   "@propertiesMarginLeft": {
-    "description": "Properties panel field label for the left page margin (018)."
+    "description": "Properties panel field label for the left page margin."
   },
   "propertiesMarginTop": "Top",
   "@propertiesMarginTop": {
-    "description": "Properties panel field label for the top page margin (018)."
+    "description": "Properties panel field label for the top page margin."
   },
   "propertiesMarginRight": "Right",
   "@propertiesMarginRight": {
-    "description": "Properties panel field label for the right page margin (018)."
+    "description": "Properties panel field label for the right page margin."
   },
   "propertiesMarginBottom": "Bottom",
   "@propertiesMarginBottom": {
-    "description": "Properties panel field label for the bottom page margin (018)."
+    "description": "Properties panel field label for the bottom page margin."
   },
   "reportLabel": "Report",
   "@reportLabel": {
@@ -711,56 +711,56 @@
 
   "modeDesigner": "Designer",
   "@modeDesigner": {
-    "description": "Label + accessible name for the Designer segment of the unified toolbar's two-segment Designer|Preview workspace-mode switch (017)."
+    "description": "Label + accessible name for the Designer segment of the unified toolbar's two-segment Designer|Preview workspace-mode switch."
   },
   "modePreview": "Preview",
   "@modePreview": {
-    "description": "Label + accessible name for the Preview segment of the unified toolbar's two-segment Designer|Preview workspace-mode switch (017)."
+    "description": "Label + accessible name for the Preview segment of the unified toolbar's two-segment Designer|Preview workspace-mode switch."
   },
   "actionRenameTooltip": "Rename report",
   "@actionRenameTooltip": {
-    "description": "Tooltip + accessible name for the inline-rename affordance beside the report name in the unified toolbar (017)."
+    "description": "Tooltip + accessible name for the inline-rename affordance beside the report name in the unified toolbar."
   },
   "renameFieldLabel": "Report name",
   "@renameFieldLabel": {
-    "description": "Accessible label for the inline report-name edit field opened by the rename affordance in the unified toolbar (017)."
+    "description": "Accessible label for the inline report-name edit field opened by the rename affordance in the unified toolbar."
   },
 
   "propertiesShape": "Shape",
   "@propertiesShape": {
-    "description": "Properties panel section label for the shape form gallery shown when a shape element is selected (020)."
+    "description": "Properties panel section label for the shape form gallery shown when a shape element is selected."
   },
   "shapeFormLine": "Line",
   "@shapeFormLine": {
-    "description": "Shape gallery thumbnail name: a straight line across the element's box (020)."
+    "description": "Shape gallery thumbnail name: a straight line across the element's box."
   },
   "shapeFormRectangle": "Rectangle",
   "@shapeFormRectangle": {
-    "description": "Shape gallery thumbnail name: a rectangle filling the element's box (020)."
+    "description": "Shape gallery thumbnail name: a rectangle filling the element's box."
   },
   "shapeFormEllipse": "Ellipse",
   "@shapeFormEllipse": {
-    "description": "Shape gallery thumbnail name: an ellipse inscribed in the element's box (020)."
+    "description": "Shape gallery thumbnail name: an ellipse inscribed in the element's box."
   },
   "shapeFormTriangle": "Triangle",
   "@shapeFormTriangle": {
-    "description": "Shape gallery thumbnail name: a triangle, apex at top-centre (020)."
+    "description": "Shape gallery thumbnail name: a triangle, apex at top-centre."
   },
   "shapeFormDiamond": "Diamond",
   "@shapeFormDiamond": {
-    "description": "Shape gallery thumbnail name: a diamond touching the four edge midpoints (020)."
+    "description": "Shape gallery thumbnail name: a diamond touching the four edge midpoints."
   },
   "shapeFormPentagon": "Pentagon",
   "@shapeFormPentagon": {
-    "description": "Shape gallery thumbnail name: a regular, point-up pentagon (020)."
+    "description": "Shape gallery thumbnail name: a regular, point-up pentagon."
   },
   "shapeFormHexagon": "Hexagon",
   "@shapeFormHexagon": {
-    "description": "Shape gallery thumbnail name: a regular, point-up hexagon (020)."
+    "description": "Shape gallery thumbnail name: a regular, point-up hexagon."
   },
   "shapeFormStar": "Star",
   "@shapeFormStar": {
-    "description": "Shape gallery thumbnail name: a five-point, point-up star (020)."
+    "description": "Shape gallery thumbnail name: a five-point, point-up star."
   },
   "shapeFormArrowRight": "Arrow right",
   "@shapeFormArrowRight": { "description": "Shape gallery thumbnail name: a right-pointing block arrow." },
@@ -779,23 +779,23 @@
 
   "propertiesFont": "Font",
   "@propertiesFont": {
-    "description": "Properties panel section label for the text styling controls shown when a text element is selected (021)."
+    "description": "Properties panel section label for the text styling controls shown when a text element is selected."
   },
   "fontFamilyLabel": "Family",
   "@fontFamilyLabel": {
-    "description": "Row label for the font-family picker in the Font section (021)."
+    "description": "Row label for the font-family picker in the Font section."
   },
   "fontFamilyPickerTooltip": "Choose font family",
   "@fontFamilyPickerTooltip": {
-    "description": "Accessible name for the font-family picker trigger (021)."
+    "description": "Accessible name for the font-family picker trigger."
   },
   "fontFamilyDefault": "Default",
   "@fontFamilyDefault": {
-    "description": "Picker label shown when an element uses the renderer default font and the built-in families are hidden from the picker (022)."
+    "description": "Picker label shown when an element uses the renderer default font and the built-in families are hidden from the picker."
   },
   "fontFamilyUnavailable": "{family} (unavailable)",
   "@fontFamilyUnavailable": {
-    "description": "Picker entry for a stored font family that is not registered with the designer: the name is preserved but renders with the default font until repicked (021).",
+    "description": "Picker entry for a stored font family that is not registered with the designer: the name is preserved but renders with the default font until repicked.",
     "placeholders": {
       "family": {
         "type": "String",
@@ -805,127 +805,127 @@
   },
   "fontSizeLabel": "Size",
   "@fontSizeLabel": {
-    "description": "Row label for the font-size field in the Font section (021)."
+    "description": "Row label for the font-size field in the Font section."
   },
   "fontBoldTooltip": "Bold",
   "@fontBoldTooltip": {
-    "description": "Accessible name for the Bold style toggle (021)."
+    "description": "Accessible name for the Bold style toggle."
   },
   "fontItalicTooltip": "Italic",
   "@fontItalicTooltip": {
-    "description": "Accessible name for the Italic style toggle (021)."
+    "description": "Accessible name for the Italic style toggle."
   },
   "fontUnderlineTooltip": "Underline",
   "@fontUnderlineTooltip": {
-    "description": "Accessible name for the Underline style toggle (021)."
+    "description": "Accessible name for the Underline style toggle."
   },
   "alignLeftTooltip": "Align left",
   "@alignLeftTooltip": {
-    "description": "Accessible name for the left horizontal-alignment segment (021)."
+    "description": "Accessible name for the left horizontal-alignment segment."
   },
   "alignCenterTooltip": "Align center",
   "@alignCenterTooltip": {
-    "description": "Accessible name for the center horizontal-alignment segment (021)."
+    "description": "Accessible name for the center horizontal-alignment segment."
   },
   "alignRightTooltip": "Align right",
   "@alignRightTooltip": {
-    "description": "Accessible name for the right horizontal-alignment segment (021)."
+    "description": "Accessible name for the right horizontal-alignment segment."
   },
   "propertiesColor": "Color",
   "@propertiesColor": {
-    "description": "Row label for a color editor (text color, barcode color) in the Properties panel (021)."
+    "description": "Row label for a color editor (text color, barcode color) in the Properties panel."
   },
   "colorPickerTooltip": "Choose color",
   "@colorPickerTooltip": {
-    "description": "Accessible name for a color-editor trigger that opens the swatch/hex popover (021)."
+    "description": "Accessible name for a color-editor trigger that opens the swatch/hex popover."
   },
   "colorHexLabel": "Hex",
   "@colorHexLabel": {
-    "description": "Label for the hex color input inside the color popover (021)."
+    "description": "Label for the hex color input inside the color popover."
   },
   "colorNone": "None",
   "@colorNone": {
-    "description": "Color popover entry that clears an optional color (no fill / no outline) (021)."
+    "description": "Color popover entry that clears an optional color (no fill / no outline)."
   },
   "swatchBlack": "Black",
   "@swatchBlack": {
-    "description": "Accessible name of the black palette swatch (021)."
+    "description": "Accessible name of the black palette swatch."
   },
   "swatchWhite": "White",
   "@swatchWhite": {
-    "description": "Accessible name of the white palette swatch (021)."
+    "description": "Accessible name of the white palette swatch."
   },
   "swatchGray": "Gray",
   "@swatchGray": {
-    "description": "Accessible name of the gray palette swatch (021)."
+    "description": "Accessible name of the gray palette swatch."
   },
   "swatchSilver": "Silver",
   "@swatchSilver": {
-    "description": "Accessible name of the light-gray palette swatch (021)."
+    "description": "Accessible name of the light-gray palette swatch."
   },
   "swatchRed": "Red",
   "@swatchRed": {
-    "description": "Accessible name of the red palette swatch (021)."
+    "description": "Accessible name of the red palette swatch."
   },
   "swatchOrange": "Orange",
   "@swatchOrange": {
-    "description": "Accessible name of the orange palette swatch (021)."
+    "description": "Accessible name of the orange palette swatch."
   },
   "swatchAmber": "Amber",
   "@swatchAmber": {
-    "description": "Accessible name of the amber palette swatch (021)."
+    "description": "Accessible name of the amber palette swatch."
   },
   "swatchYellow": "Yellow",
   "@swatchYellow": {
-    "description": "Accessible name of the yellow palette swatch (021)."
+    "description": "Accessible name of the yellow palette swatch."
   },
   "swatchGreen": "Green",
   "@swatchGreen": {
-    "description": "Accessible name of the green palette swatch (021)."
+    "description": "Accessible name of the green palette swatch."
   },
   "swatchEmerald": "Emerald",
   "@swatchEmerald": {
-    "description": "Accessible name of the emerald palette swatch (021)."
+    "description": "Accessible name of the emerald palette swatch."
   },
   "swatchTeal": "Teal",
   "@swatchTeal": {
-    "description": "Accessible name of the teal palette swatch (021)."
+    "description": "Accessible name of the teal palette swatch."
   },
   "swatchCyan": "Cyan",
   "@swatchCyan": {
-    "description": "Accessible name of the cyan palette swatch (021)."
+    "description": "Accessible name of the cyan palette swatch."
   },
   "swatchBlue": "Blue",
   "@swatchBlue": {
-    "description": "Accessible name of the blue palette swatch (021)."
+    "description": "Accessible name of the blue palette swatch."
   },
   "swatchIndigo": "Indigo",
   "@swatchIndigo": {
-    "description": "Accessible name of the indigo palette swatch (021)."
+    "description": "Accessible name of the indigo palette swatch."
   },
   "swatchViolet": "Violet",
   "@swatchViolet": {
-    "description": "Accessible name of the violet palette swatch (021)."
+    "description": "Accessible name of the violet palette swatch."
   },
   "swatchPink": "Pink",
   "@swatchPink": {
-    "description": "Accessible name of the pink palette swatch (021)."
+    "description": "Accessible name of the pink palette swatch."
   },
   "propertiesAppearance": "Appearance",
   "@propertiesAppearance": {
-    "description": "Properties panel section label for the fill/outline controls shown when a shape element is selected (021)."
+    "description": "Properties panel section label for the fill/outline controls shown when a shape element is selected."
   },
   "propertiesFill": "Fill",
   "@propertiesFill": {
-    "description": "Row label for a shape's fill-color editor in the Appearance section (021)."
+    "description": "Row label for a shape's fill-color editor in the Appearance section."
   },
   "propertiesOutline": "Outline",
   "@propertiesOutline": {
-    "description": "Row label for a shape's outline-color editor in the Appearance section (021)."
+    "description": "Row label for a shape's outline-color editor in the Appearance section."
   },
   "propertiesOutlineWidth": "Width",
   "@propertiesOutlineWidth": {
-    "description": "Row label for a shape's outline-width field in the Appearance section (021)."
+    "description": "Row label for a shape's outline-width field in the Appearance section."
   },
   "propertiesList": "List",
   "@propertiesList": {
@@ -1104,12 +1104,12 @@
   },
   "exprEditorDeeperFieldHint": "Descendant field — valid inside an aggregate like SUM(…)",
   "@exprEditorDeeperFieldHint": {
-    "description": "Tooltip on a descendant (↳) field chip in the expression editor palette (spec 033). Explains that the field is from a child collection and is only valid inside an aggregate call."
+    "description": "Tooltip on a descendant (↳) field chip in the expression editor palette. Explains that the field is from a child collection and is only valid inside an aggregate call."
   },
 
   "propertiesColumnLayout": "Column Layout",
   "@propertiesColumnLayout": {
-    "description": "Properties section heading for a detail band's multi-column label grid (spec 035)."
+    "description": "Properties section heading for a detail band's multi-column label grid."
   },
   "propertiesColumnLayoutAdd": "Add column layout",
   "@propertiesColumnLayoutAdd": {
@@ -1141,7 +1141,7 @@
   },
   "propertiesColumnLayoutInactive": "Column layout is inactive: the report isn't a single detail band.",
   "@propertiesColumnLayoutInactive": {
-    "description": "Notice shown when a band carries a column layout but the report shape no longer satisfies the activation gate (spec 035 / FR-009)."
+    "description": "Notice shown when a band carries a column layout but the report shape no longer satisfies the activation gate."
   },
   "propertiesColumnErrTooFew": "Add at least one column.",
   "@propertiesColumnErrTooFew": {

@@ -106,8 +106,7 @@ void main() {
     expect(find.text('POSITION'), findsNothing);
     expect(find.text('SIZE'), findsNothing);
     expect(find.text('TEXT'), findsNothing);
-    expect(
-        find.text('BINDING'), findsNothing); // Binding section translated (US2)
+    expect(find.text('BINDING'), findsNothing); // Binding section translated
 
     // (2) Report inspector — header + page section + margins row (verbatim).
     c.selectReport();

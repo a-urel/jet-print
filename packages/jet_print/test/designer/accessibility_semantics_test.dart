@@ -1,5 +1,5 @@
-// T079a — accessibility / semantics for the interactive editing affordances
-// (FR-024 / SC-008). Asserts localized accessible NAMES and ROLES on:
+// T079a — accessibility / semantics for the interactive editing affordances.
+// Asserts localized accessible NAMES and ROLES on:
 //   * each canvas element hit region (e.g. "Text element text1"), button role,
 //     reflecting selection;
 //   * the eight element resize handles (directional names, button role);

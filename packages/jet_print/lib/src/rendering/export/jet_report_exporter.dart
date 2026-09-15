@@ -18,8 +18,8 @@ import 'pdf_painter.dart';
 /// [RenderedReport] the preview shows: no re-fill, no re-layout, no second
 /// render pass. Content problems (unresolved images, failed expressions,
 /// empty datasets) never throw — they are already materialized in the frames
-/// as the preview's fallback primitives, so the artifact matches the preview
-/// (FR-010); only invalid requests throw.
+/// as the preview's fallback primitives, so the artifact matches the preview;
+/// only invalid requests throw.
 class JetReportExporter {
   /// Creates the stateless exporter.
   const JetReportExporter();

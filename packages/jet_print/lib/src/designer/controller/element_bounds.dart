@@ -2,8 +2,8 @@
 ///
 /// Element bounds are **band-relative** (origin at the band's content top-left),
 /// so every geometry command — create / move / resize / set-geometry — clamps
-/// through the one [clampToBand] function here to guarantee containment
-/// (FR-010): no element is ever committed off its band or off the page.
+/// through the one [clampToBand] function here to guarantee containment:
+/// no element is ever committed off its band or off the page.
 library;
 
 import '../../domain/band.dart';

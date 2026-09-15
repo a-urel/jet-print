@@ -91,7 +91,7 @@ void main() {
     });
   });
 
-  // --- Default is the only bundled family (spec 022: hosts add the rest).
+  // --- Default is the only bundled family (hosts add the rest).
   group('registerDefault — bundles only the Default family', () {
     test('enumerates exactly the Default family', () {
       final FontRegistry reg = FontRegistry()..registerDefault();

@@ -1,6 +1,6 @@
 // Each resize handle must show the directional mouse cursor that matches the
 // edge(s) it drags, so hovering the selection chrome communicates what a drag
-// will do (FR-009 affordance). Drives the public designer only; locates handles
+// will do (affordance). Drives the public designer only; locates handles
 // by their stable `jet_print.designer.handle.<pos>` keys.
 //
 // The cursor is platform-dependent for the four CORNERS: Windows/Linux/web have

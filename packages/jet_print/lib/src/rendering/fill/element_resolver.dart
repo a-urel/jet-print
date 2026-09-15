@@ -1,4 +1,4 @@
-/// Resolves a single authored element into its resolved copy (spec 007b §4),
+/// Resolves a single authored element into its resolved copy,
 /// honoring the 007a §3 field-partition contract: same concrete type, same
 /// id/bounds/style; only the data-bearing field changes. Text `expression`s are
 /// evaluated; image `FieldImageSource`s become `BytesImageSource`; every other
@@ -256,7 +256,7 @@ class ElementResolver {
     }
     // Apply the label's display format: a non-empty pattern that
     // does not fit the value's type, or is malformed, leaves the value unchanged
-    // (FR-012) — never an error token.
+    // — never an error token.
     final String? format = el.format;
     final JetValue formatted = (format != null && format.isNotEmpty)
         ? applyJetFormat(value, format)

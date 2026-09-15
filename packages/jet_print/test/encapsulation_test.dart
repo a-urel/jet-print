@@ -6,8 +6,8 @@
 //   (a) No consumer file — the library's own tests (which stand in for an
 //       external consumer) or the playground app — reaches into
 //       `package:jet_print/src/...`. The public entry point is the only door.
-//   (b) No library file under `lib/` depends on the playground or any host app
-//       (FR-011): the product must stand alone.
+//   (b) No library file under `lib/` depends on the playground or any host app:
+// the product must stand alone.
 @TestOn('vm')
 library;
 
@@ -42,7 +42,7 @@ Iterable<String> _directiveUris(File file) => _directive
 /// exercise the un-exported `domain`/`data`/`expression`/`rendering` types in
 /// isolation.
 /// They are the package's OWN tests, not external consumers, so the `src` ban
-/// (which protects external consumers per SC-007) does not apply to them. The
+/// (which protects external consumers) does not apply to them. The
 /// allowlist is intentionally narrow: every other test stays default-deny.
 bool _isWhiteBoxSeamTest(File file) {
   final String path = file.path.replaceAll(r'\', '/');
@@ -78,8 +78,8 @@ bool _isWhiteBoxSeamTest(File file) {
       path.endsWith('/test/designer/canvas/grid_geometry_test.dart') ||
       // Label-grid cue (035): `labelGridCue` (`label_grid_geometry.dart`) is an
       // unexported `src/` pure helper computing the multi-column design-time
-      // cell/ghost rects from a `DesignTimeLayout`; its unit test is white-box
-      //. The canvas smoke case in the same file drives the
+      // cell/ghost rects from a `DesignTimeLayout`; its unit test is white-box.
+      // The canvas smoke case in the same file drives the
       // public designer, but the file imports `src/` for the geometry helper.
       path.endsWith('/test/designer/canvas/label_grid_geometry_test.dart') ||
       // Crosstab placeholder height (Task 12 review fix): `DesignTimeLayout`

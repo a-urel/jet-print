@@ -1,5 +1,5 @@
-// FieldDef + JetFieldType value type and best-effort column-type inference
-// (spec 004). No Flutter UI import — the data seam stays headless.
+// FieldDef + JetFieldType value type and best-effort column-type inference.
+// No Flutter UI import — the data seam stays headless.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/field_def.dart';
 

@@ -1,4 +1,4 @@
-/// A chart element (spec 2026-06-27): a bar, line, or pie chart bound to a
+/// A chart element: a bar, line, or pie chart bound to a
 /// collection field, resolved to a concrete [points] series at fill time and
 /// drawn as frame primitives so canvas, preview, and export agree.
 library;

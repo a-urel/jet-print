@@ -1,5 +1,5 @@
-// Snapping behavior through the controller's resize/move interaction
-// (US2 / FR-009 / SC-003). Grid step = 5 mm (kGridStep ≈ 14.173 pt, spec 015);
+// Snapping behavior through the controller's resize/move interaction.
+// Grid step = 5 mm (kGridStep ≈ 14.173 pt);
 // threshold here = 6 pt. Expected snapped coordinates are expressed as multiples
 // of kGridStep so they track the constant rather than a hardcoded literal.
 import 'package:flutter_test/flutter_test.dart';

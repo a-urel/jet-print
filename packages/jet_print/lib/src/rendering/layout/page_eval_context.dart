@@ -39,7 +39,7 @@ class PageEvalContext implements EvalContext {
 
   @override
   JetValue resolveVariable(String name) {
-    // The two page-scoped variable names (kPageScopedVariables, spec 007b §2).
+    // The two page-scoped variable names (kPageScopedVariables, §2).
     // Resolved as strings: the engine is all-double, so a JetNumber would render
     // "1.0", and `+` will not concatenate a string literal with a number (008c §4).
     if (name == 'PAGE_NUMBER') return JetString('$_pageNumber');

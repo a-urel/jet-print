@@ -14,8 +14,8 @@ extension CtrlBands on JetReportDesignerController {
     _applyBandHeight(bandId, height);
   }
 
-  /// Sets band [bandId]'s multi-column label [layout] as one undoable step
-  /// (spec 035). An unknown id is ignored; a value-equal layout records no
+  /// Sets band [bandId]'s multi-column label [layout] as one undoable step.
+  /// An unknown id is ignored; a value-equal layout records no
   /// history (routed through `_commit`).
   void setColumnLayout(String bandId, ColumnLayout layout) {
     if (findBand(_document.definition, bandId) == null) return;

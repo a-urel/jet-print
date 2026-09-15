@@ -1,4 +1,4 @@
-/// The reserved page-scoped variable names (spec 007b §2) — the single authority.
+/// The reserved page-scoped variable names — the single authority.
 /// Their *values* are resolvable only by Layout (008), which imports this set;
 /// 007b rejects their use in the bands and expressions it processes.
 library;

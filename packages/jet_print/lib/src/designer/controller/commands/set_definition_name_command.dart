@@ -9,8 +9,8 @@ import '../edit_command.dart';
 /// unchanged, so the controller's commit records no history entry (a no-op).
 ///
 /// The name is stored verbatim — an empty or whitespace-only name is kept as-is;
-/// rendering the localized placeholder for an empty name is a UI concern
-/// (FR-010), not a model constraint, which keeps serialization lossless.
+/// rendering the localized placeholder for an empty name is a UI concern,
+/// not a model constraint, which keeps serialization lossless.
 class SetDefinitionNameCommand extends EditCommand {
   /// Creates a rename to [newName].
   const SetDefinitionNameCommand(this.newName);

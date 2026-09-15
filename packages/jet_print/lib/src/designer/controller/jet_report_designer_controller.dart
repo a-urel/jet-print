@@ -147,7 +147,7 @@ class JetReportDesignerController extends ChangeNotifier {
   /// true iff one or more elements are selected (a band/group/scope/report
   /// selection holds no element ids). Both clipboard UI surfaces gate
   /// Cut/Copy/Duplicate/Delete on this single predicate so they cannot diverge
-  /// (016 / FR-004, FR-005a, FR-012).
+  /// (016).
   bool get canCopy => _document.selection.ids.isNotEmpty;
 
   /// Whether there is clipboard content to paste — true once the session's first

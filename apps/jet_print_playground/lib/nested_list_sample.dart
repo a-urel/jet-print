@@ -92,12 +92,12 @@ const double _contentWidth = 540;
 /// 033) — no figure above `lineTotal` is data, and no [ScopeTotal]
 /// declarations are needed:
 /// * the `lines` scope footer folds its own rows with `SUM($F{lineTotal})`
-///   (same-scope fold — spec 029 path), giving the per-order total;
+///   (same-scope fold — path), giving the per-order total;
 /// * the customer group footer uses the identical expression
 ///   `SUM($F{lineTotal})`, and the engine descends [orders, lines] to fold
-///   all descendant leaf rows within that customer (spec 033 path);
+///   all descendant leaf rows within that customer (path);
 /// * [ReportBody.summary] does the same descent over all customers, authoring
-///   the grand total as `SUM($F{lineTotal})` (spec 033 path).
+///   the grand total as `SUM($F{lineTotal})` (path).
 ReportDefinition nestedListsDefinition() => const ReportDefinition(
       name: 'Nested Lists',
       page: PageFormat.a4Portrait,
@@ -367,7 +367,7 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
                     )),
                   ],
                   // No ScopeTotal: the footer folds the same-scope child rows
-                  // inline (spec 029 path). No published field needed.
+                  // inline (path). No published field needed.
                   footer: Band(
                     id: 'linesFooter',
                     type: BandType.groupFooter,

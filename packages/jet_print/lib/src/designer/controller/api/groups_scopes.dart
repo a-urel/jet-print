@@ -19,8 +19,8 @@ extension CtrlGroupsScopes on JetReportDesignerController {
   /// Creates a group level on scope [scopeId] keyed to scalar field [fieldName]
   /// (`$F{fieldName}`) and named after it, together with its header band, and
   /// selects the header band — as ONE undoable step. The data-bound creation
-  /// path: every authored group is born resolvable against the data source
-  /// (spec 026), replacing the placeholder-key path. A no-op for an unknown
+  /// path: every authored group is born resolvable against the data source,
+  /// replacing the placeholder-key path. A no-op for an unknown
   /// scope or a blank [fieldName].
   void createGroupBoundToField(String scopeId, String fieldName) {
     if (fieldName.trim().isEmpty) return;
