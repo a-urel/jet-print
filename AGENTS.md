@@ -160,10 +160,12 @@ Real ones, each of which has cost time before.
   the file relative to the package (the library's tests use
   `findWorkspaceRoot()` from `test/support/workspace.dart`). Golden paths are
   exempt: `matchesGoldenFile` resolves relative to the test file.
-- **Your local Dart may format differently from CI.** CI pins Flutter 3.44.0.
-  A newer local SDK's formatter reformats files CI considers clean, so a blanket
-  `dart format .` can produce a large diff that has nothing to do with your
-  change. Format the files you touched, check the rest, and don't sweep.
+- **`main` currently fails the format gate**, on seven files that predate any
+  recent change. CI's macOS leg runs `dart format --set-exit-if-changed` and
+  stops there, so the rest of that leg — including the goldens, which only run
+  on macOS — never executes. Your local `dart format` will report the same seven.
+  Don't mistake them for your own: compare against `main` before reformatting,
+  and format the files you touched rather than sweeping the tree.
 - **Per-package lockfiles are not committed** — only the root `pubspec.lock`.
 - **Run `git` from the repo root.** `flutter` commands leave the shell inside a
   package directory.
