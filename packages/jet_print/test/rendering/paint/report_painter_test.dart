@@ -8,6 +8,13 @@ import 'package:jet_print/src/rendering/frame/page_frame.dart';
 import 'package:jet_print/src/rendering/frame/primitive.dart';
 import 'package:jet_print/src/rendering/paint/report_painter.dart';
 
+/// Formats a double the same way on the VM and in a browser.
+///
+/// `30.0.toString()` is `30.0` on the VM but `30` in JavaScript, where every
+/// number is a double and a whole value prints without its fraction. Pinning
+/// one decimal keeps the recorded calls comparable on both platforms.
+String _n(double v) => v.toStringAsFixed(1);
+
 class _RecordingPainter implements ReportPainter {
   final List<String> calls = <String>[];
   @override
@@ -18,7 +25,7 @@ class _RecordingPainter implements ReportPainter {
   void endPage() => calls.add('end');
   @override
   void pushTransform(JetOffset center, double radians) =>
-      calls.add('push(${center.dx},${center.dy},$radians)');
+      calls.add('push(${_n(center.dx)},${_n(center.dy)},${_n(radians)})');
   @override
   void popTransform() => calls.add('pop');
   @override

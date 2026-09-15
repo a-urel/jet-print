@@ -39,7 +39,10 @@ void main() {
             <String, Object?>{
               'orderId': '1',
               'lines': <Map<String, Object?>>[
-                <String, Object?>{'lineTotal': 10.0},
+                // Fractional on purpose: in JavaScript `10.0 is int` is
+                // true, so a whole-valued double infers as `integer` there and
+                // this assertion could not hold on both platforms.
+                <String, Object?>{'lineTotal': 10.5},
               ],
             },
           ],

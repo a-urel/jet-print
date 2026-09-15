@@ -50,6 +50,13 @@ class FieldDef with ValueEquality {
   /// `int` and `double` widens to [JetFieldType.double]. Any other mixture, an
   /// unsupported runtime type, an empty sequence, or an all-null sequence yields
   /// [JetFieldType.unknown].
+  ///
+  /// **On the web this cannot distinguish a whole-valued `double` from an
+  /// `int`.** JavaScript has one number type, so `10.0 is int` is `true` there
+  /// and such a column infers as [JetFieldType.integer] rather than
+  /// [JetFieldType.double]. The information is absent at runtime, so no check
+  /// order recovers it — declare `fields:` explicitly when the distinction
+  /// matters to a web host.
   static JetFieldType inferType(Iterable<Object?> values) {
     JetFieldType? result;
     for (final Object? value in values) {
