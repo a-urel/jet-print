@@ -1,3 +1,10 @@
+// Reads the bundled sample off disk, so there is nothing for it to do in a
+// browser: `dart:io` has no filesystem there and `File.existsSync()` throws
+// `Unsupported operation: _Namespace`. The library's own filesystem-scanning
+// tests carry the same annotation.
+@TestOn('vm')
+library;
+
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
