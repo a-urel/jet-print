@@ -145,8 +145,7 @@ final class RectPrimitive extends FramePrimitive {
   final double strokeWidth;
 
   @override
-  List<Object?> get props =>
-      <Object?>[...baseProps, fill, stroke, strokeWidth];
+  List<Object?> get props => <Object?>[...baseProps, fill, stroke, strokeWidth];
 
   @override
   String toString() => 'RectPrimitive($bounds, fill: $fill, stroke: $stroke)';

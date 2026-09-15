@@ -15,7 +15,8 @@ const PageFormat _page =
 const Key _toggleKey = ValueKey<String>('jet_print.preview.thumbnails');
 const Key _listKey = ValueKey<String>('jet_print.preview.thumbnails.list');
 const Key _nextKey = ValueKey<String>('jet_print.preview.next');
-Key _tileKey(int index) => ValueKey<String>('jet_print.preview.thumbnail.$index');
+Key _tileKey(int index) =>
+    ValueKey<String>('jet_print.preview.thumbnail.$index');
 
 ReportDefinition _definition() => const ReportDefinition(
       name: 'Quarterly Report',

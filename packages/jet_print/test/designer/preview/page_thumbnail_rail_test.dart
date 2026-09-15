@@ -129,7 +129,8 @@ Uint8List _validPngBytes() {
   return img.encodePng(image);
 }
 
-Key _tileKey(int index) => ValueKey<String>('jet_print.preview.thumbnail.$index');
+Key _tileKey(int index) =>
+    ValueKey<String>('jet_print.preview.thumbnail.$index');
 
 Future<void> _pumpRail(
   WidgetTester tester, {
@@ -448,8 +449,7 @@ void main() {
       (WidgetTester tester) async {
     await _pumpRail(tester, report: _report());
 
-    final double railTop =
-        tester.getTopLeft(find.byType(PageThumbnailRail)).dy;
+    final double railTop = tester.getTopLeft(find.byType(PageThumbnailRail)).dy;
     final double tileTop = tester.getTopLeft(find.byKey(_tileKey(0))).dy;
 
     expect(tileTop - railTop, 10,

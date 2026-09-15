@@ -25,7 +25,7 @@ abstract class ElementEditCommand<E extends ReportElement> extends EditCommand {
 
   @override
   DesignerDocument apply(DesignerDocument before) => before.withDefinition(
-        updateElement(before.definition, id,
-            (ReportElement e) => e is E ? edit(e) : e),
+        updateElement(
+            before.definition, id, (ReportElement e) => e is E ? edit(e) : e),
       );
 }

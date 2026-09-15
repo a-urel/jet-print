@@ -48,8 +48,7 @@ void main() {
   testWidgets('the thumbnail-toggle strings resolve in en/de/tr', (
     WidgetTester tester,
   ) async {
-    for (final MapEntry<String, (String, String)> entry
-        in _expected.entries) {
+    for (final MapEntry<String, (String, String)> entry in _expected.entries) {
       final Locale locale = Locale(entry.key);
       final (String expectedShow, String expectedHide) = entry.value;
       final JetPrintLocalizations l10n = await _load(tester, locale);

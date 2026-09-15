@@ -92,8 +92,7 @@ void main() {
     });
     test('copyWith sets watermark', () {
       const wm = Watermark(text: 'DRAFT');
-      expect(
-          const PageFurniture().copyWith(watermark: () => wm).watermark, wm);
+      expect(const PageFurniture().copyWith(watermark: () => wm).watermark, wm);
     });
   });
 
