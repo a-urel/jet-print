@@ -139,6 +139,15 @@ Real ones, each of which has cost time before.
   run discards it. English must stay the first supported locale so a missing key
   falls back to English. Note German strings are the widest; they are what makes
   toolbars overflow.
+- **On the web, numbers behave differently — this has caused three bugs here.**
+  JavaScript has one number type, so a whole-valued `double` is indistinguishable
+  from an `int`: `10.0 is int` is `true`, and `30.0.toString()` is `"30"`, not
+  `"30.0"`. Never assert on a stringified double or on int-vs-double typing
+  without pinning the representation (`toStringAsFixed`) or choosing a fractional
+  value. Two of the three bugs were tests asserting a distinction the platform
+  cannot make; the third was real output. The chrome CI leg is what catches
+  these, so run `flutter test --platform chrome` from the package directory
+  before trusting anything numeric.
 - **`copyWith` uses thunks, so it *can* clear nullable fields.** See
   `domain/copy_support.dart`: omit a parameter to keep the current value, pass
   `field: () => null` to clear it, `field: () => v` to set it. Any older comment
