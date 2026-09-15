@@ -1,4 +1,4 @@
-/// The geometry of a multi-column label grid (spec 034) — an optional property
+/// The geometry of a multi-column label grid — an optional property
 /// of the detail [Band] that serves as the label template.
 ///
 /// Pure domain layer (no rendering/designer/Flutter UI). `columnWidth` is, in

@@ -1,4 +1,4 @@
-/// The expression function registry — engine extension point #4 (spec 005a).
+/// The expression function registry — engine extension point #4.
 library;
 
 import 'eval_context.dart';

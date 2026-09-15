@@ -3,7 +3,7 @@
 ///
 /// Headless and band-relative. The canvas converts the screen-pixel snap
 /// threshold to points (via the live zoom) and passes it in, so this stays
-/// scale-agnostic (FR-011 / SC-004).
+/// scale-agnostic.
 library;
 
 import '../../domain/geometry.dart';

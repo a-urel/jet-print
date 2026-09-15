@@ -8,7 +8,7 @@ library;
 
 import '../../domain/geometry.dart';
 
-/// The element kinds a user can create from the toolbox (FR-001 / FR-002).
+/// The element kinds a user can create from the toolbox.
 ///
 /// This is the toolbox→canvas drag payload; each value maps to a default
 /// element factory via [kDefaultElementSize].
@@ -43,26 +43,26 @@ const double kGridStep = kGridStepMm * 72 / 25.4;
 
 /// Minimum on-screen gap, in device pixels, between two drawn grid lines. Below
 /// it, `gridLineOffsets` coarsens the step (then hides the grid) so the grid
-/// never smears into a solid fill when zoomed out (spec 015 / FR-006 / D4).
+/// never smears into a solid fill when zoomed out.
 const double kGridMinLineGapPx = 4;
 
 /// Maximum coarsening multiplier for the visible grid. Past it (an effective
 /// step beyond `kGridMaxCoarsenFactor · kGridStepMm = 20 mm`), the grid HIDES
-/// rather than drawing ever-coarser lines (spec 015 / FR-006 / D4).
+/// rather than drawing ever-coarser lines.
 const int kGridMaxCoarsenFactor = 4;
 
 /// Snap activation distance, expressed in **screen pixels**. The canvas
 /// converts it to points using the live zoom so the "magnetism" feels the same
-/// at every zoom level (FR-011 / SC-004).
+/// at every zoom level.
 const double kSnapThresholdPx = 6;
 
-/// Fine nudge step (arrow keys), in points (FR-016).
+/// Fine nudge step (arrow keys), in points.
 const double kNudgeStep = 1;
 
-/// Coarse nudge step (Shift+arrow), in points (FR-016).
+/// Coarse nudge step (Shift+arrow), in points.
 const double kCoarseNudgeStep = 10;
 
-/// Minimum element width/height, in points, enforced on resize (FR-009). A
+/// Minimum element width/height, in points, enforced on resize. A
 /// [ShapeKind.line] may collapse the cross-axis below this; see `ResizeCommand`.
 const double kMinElementSize = 4;
 
@@ -71,7 +71,7 @@ const double kMinElementSize = 4;
 const double kMinBandHeight = 8;
 
 /// Translation applied to each pasted/duplicated copy so it does not land
-/// exactly on its source (FR-015 / D7).
+/// exactly on its source.
 const JetOffset kPasteOffset = JetOffset(8, 8);
 
 /// Smallest allowed zoom factor (1.0 == 100%).
@@ -84,7 +84,7 @@ const double kMaxZoom = 4.0;
 /// matching the increment the static top bar used in spec 002.
 const double kZoomStep = 0.1;
 
-/// Side length, in screen pixels, of a drawn resize handle (FR-009).
+/// Side length, in screen pixels, of a drawn resize handle.
 const double kHandleVisualSize = 8;
 
 /// Side length, in screen pixels, of a resize handle's *hit* area. It is larger
@@ -109,20 +109,20 @@ const Map<DesignerToolType, JetSize> kDefaultElementSize =
   DesignerToolType.chart: JetSize(200, 130),
 };
 
-// --- Rulers (spec 014) -------------------------------------------------------
+// --- Rulers -------------------------------------------------------
 // Fixed chrome along the canvas's top + left edges, calibrated in millimetres
 // from the page's physical corner (0,0). Like the grid/snap tunables above,
 // these are concrete single values (not ranges) so the pure `RulerScale`'s tick
-// thresholds are deterministic and unit-testable (research D3/D8).
+// thresholds are deterministic and unit-testable.
 
 /// Strip thickness, in screen pixels, of each ruler (and the blank corner box).
 /// Fixed UI chrome (like the scrollbars), so it never scales with zoom; drives
-/// the canvas viewport inset when rulers are enabled (research D8).
+/// the canvas viewport inset when rulers are enabled.
 const double kRulerThickness = 20;
 
 /// Minimum gap, in screen pixels, between two **labelled** ticks. The nice-step
 /// ladder picks the smallest step whose on-screen spacing clears this, so labels
-/// never crowd or overlap at any zoom (research D3 / SC-004).
+/// never crowd or overlap at any zoom.
 const double kRulerMinLabelGapPx = 56;
 
 /// The ascending "nice number" ladder, in millimetres, of candidate **labelled**
@@ -135,7 +135,7 @@ const List<int> kRulerStepLadderMm = <int>[
 
 /// How many minor subdivisions a labelled step is divided into (so a 10 mm step
 /// shows ticks every 2 mm). Subdivision stops refining once the minor spacing
-/// would fall below [kRulerMinMinorGapPx] (research D3).
+/// would fall below [kRulerMinMinorGapPx].
 const int kRulerMinorDivisions = 5;
 
 /// Minimum gap, in screen pixels, between **minor** subdivision ticks. At max

@@ -37,7 +37,7 @@ class _ValueField extends StatefulWidget {
   final String fxTooltip;
 
   /// Whether to show the fx (expression editor) affordance. Off for the barcode
-  /// Data input, which is field-or-literal — no expressions (spec 036).
+  /// Data input, which is field-or-literal — no expressions.
   final bool showFx;
 
   /// Key namespace for the field picker (so each reuse — value vs. barcode data
@@ -50,7 +50,7 @@ class _ValueField extends StatefulWidget {
   final Set<String> resolvableNames;
   final ValueChanged<String> onCommit;
 
-  /// Descendant leaf names valid as aggregate operands (spec 033), forwarded to
+  /// Descendant leaf names valid as aggregate operands, forwarded to
   /// the fx editor so its status check accepts a deep aggregate. Empty ⇒ no
   /// schema/band, behavior unchanged.
   final Set<String> descendantOperands;
@@ -187,7 +187,7 @@ class _ValueFieldState extends State<_ValueField> {
 /// its `[field]`/`{ … }` binding, shown exactly as the canvas token. It commits
 /// the raw text on Enter/blur — the controller parses the three forms. A binding
 /// that is outside the template grammar (legacy/exotic) is shown read-only via
-/// [ValueDisplay.editable] so it is never silently lost (013 / FR-006a).
+/// [ValueDisplay.editable] so it is never silently lost.
 /// The Visible section control. Two states share one section:
 ///
 /// * **static** (no expression) — a bare [ShadSwitch] on the left and an fx
@@ -197,7 +197,7 @@ class _ValueFieldState extends State<_ValueField> {
 ///   read-only field shows the expression, with an fx button (re-edit) and a
 ///   clear button that drops the expression back to the static switch.
 ///
-/// Mirrors the Value field's fx affordance (spec 032). The field is read-only
+/// Mirrors the Value field's fx affordance. The field is read-only
 /// because a visibility expression is only ever authored through the editor.
 class _VisibleField extends StatefulWidget {
   const _VisibleField({

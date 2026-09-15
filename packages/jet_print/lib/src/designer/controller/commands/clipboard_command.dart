@@ -1,4 +1,4 @@
-/// The command that inserts pasted/duplicated element copies (FR-015).
+/// The command that inserts pasted/duplicated element copies.
 library;
 
 import '../../../domain/band.dart';

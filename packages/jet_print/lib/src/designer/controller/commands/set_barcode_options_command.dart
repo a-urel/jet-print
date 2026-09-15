@@ -1,4 +1,4 @@
-/// Command: toggle a barcode element's rendering options (spec 036).
+/// Command: toggle a barcode element's rendering options.
 library;
 
 import '../../../domain/elements/barcode_element.dart';

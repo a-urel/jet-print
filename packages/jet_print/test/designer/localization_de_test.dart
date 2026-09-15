@@ -1,4 +1,4 @@
-// German localization widget test (US4 / FR-016, SC-007).
+// German localization widget test.
 //
 // In its own file (isolate) by design — see the note in localization_test.dart:
 // switching between two non-English CLDR locales in one isolate leaves the later
@@ -11,7 +11,7 @@ import 'package:jet_print/jet_print.dart';
 import 'support/designer_harness.dart';
 
 void main() {
-  // C6 (spec 014): German groups thousands with a dot (1.000) and the ruler
+  // German groups thousands with a dot (1.000) and the ruler
   // toggle tooltip is localized.
   testWidgets(
       'ruler labels group thousands in German; toggle tooltip localized',
@@ -36,7 +36,7 @@ void main() {
     expect(find.text('Unbenannter Bericht'), findsOneWidget);
     expect(find.text('Vorschau'), findsOneWidget); // Preview (top-bar action)
     expect(find.text('Datenquelle'), findsWidgets); // tab + panel header
-    // Data Source panel empty state (no schema attached) is localized (US1).
+    // Data Source panel empty state (no schema attached) is localized.
     expect(find.text('Keine Datenquelle verbunden.'), findsOneWidget);
     // Real translation applied — the English captions are gone, not merely
     // falling back everywhere.
@@ -55,7 +55,7 @@ void main() {
 
     // German has the longest chrome captions; the layout must accommodate them
     // (wrap/ellipsize) without clipping adjacent controls — no overflow recorded
-    // (longer-text edge case / T037).
+    // (longer-text edge case).
     expect(tester.takeException(), isNull);
   });
 
@@ -107,7 +107,7 @@ void main() {
     expect(find.text('Report'), findsNothing);
 
     // (3) Band inspector — the height row is now label-less (its glyph stands
-    // in for the dropped label). Under the reified model (spec 024) the band
+    // in for the dropped label). Under the reified model the band
     // inspector shows ONLY the height; the collection field moved to the Scope
     // inspector (checked next).
     c.selectBand(firstDetailBandId(c));

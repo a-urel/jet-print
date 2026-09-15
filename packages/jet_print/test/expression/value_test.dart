@@ -1,4 +1,4 @@
-// JetValue sealed model: lift, equality, stringify (spec 005a). No Flutter UI.
+// JetValue sealed model: lift, equality, stringify. No Flutter UI.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/expression/value.dart';
 

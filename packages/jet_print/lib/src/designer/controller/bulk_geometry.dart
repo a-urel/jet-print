@@ -1,4 +1,4 @@
-/// Pure align/distribute geometry over a multi-selection (FR-012).
+/// Pure align/distribute geometry over a multi-selection.
 ///
 /// Works in band-relative coordinates. Horizontal alignment/distribution uses
 /// `x` (comparable across bands — all share the left-margin origin); vertical

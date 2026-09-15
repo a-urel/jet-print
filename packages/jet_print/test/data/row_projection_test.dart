@@ -1,4 +1,4 @@
-// projectRowOntoFields projects a raw map onto a declared schema (spec 040).
+// projectRowOntoFields projects a raw map onto a declared schema.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/field_def.dart';
 import 'package:jet_print/src/data/row_projection.dart';

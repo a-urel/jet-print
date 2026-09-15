@@ -1,4 +1,4 @@
-// Formatted-value golden (013 / T032; WYSIWYG).
+// Formatted-value golden (WYSIWYG).
 //
 // A label bound to a numeric / date field with the new `format` property renders
 // the formatted value through the SAME engine -> paintFrame -> CanvasPainter

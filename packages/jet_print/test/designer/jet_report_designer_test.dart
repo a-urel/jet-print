@@ -1,10 +1,10 @@
-// Region-presence widget test (US1 / FR-001/002/003, SC-004).
+// Region-presence widget test.
 //
 // Pumps JetReportDesigner at desktop width and proves all four regions render
 // simultaneously, the design surface owns the largest horizontal share, and the
 // full layout fits the default desktop width with no horizontal overflow.
 //
-// US3 representative-placeholder-content assertions are appended here (T026).
+// US3 representative-placeholder-content assertions are appended here.
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
@@ -60,7 +60,7 @@ void main() {
       await pumpDesigner(tester);
 
       // A RenderFlex/overflow during layout records an exception the framework
-      // surfaces here; a clean layout leaves none (SC-004).
+      // surfaces here; a clean layout leaves none.
       expect(tester.takeException(), isNull);
 
       // No region extends past the right edge of the window.
@@ -99,8 +99,8 @@ void main() {
     });
   });
 
-  // --- US3: representative placeholder content (T026) ---
-  group('JetReportDesigner placeholder content (US3 / FR-007)', () {
+  // --- US3: representative placeholder content ---
+  group('JetReportDesigner placeholder content', () {
     testWidgets('toolbox offers multiple element entries as icon buttons', (
       WidgetTester tester,
     ) async {
@@ -129,7 +129,7 @@ void main() {
     });
   });
 
-  // --- 003: backward-compat construction + default-template structure (T034). ---
+  // --- 003: backward-compat construction + default-template structure. ---
   group('JetReportDesigner 003 contract', () {
     testWidgets('const JetReportDesigner() still constructs and hosts a canvas',
         (WidgetTester tester) async {
@@ -145,7 +145,7 @@ void main() {
           JetReportDesignerController();
       final ReportDefinition def = controller.definition;
       // A page header + footer in the record-blind furniture, and a single
-      // detail band in the master scope (FR-002).
+      // detail band in the master scope.
       expect(def.furniture.pageHeader?.type, BandType.pageHeader);
       expect(def.furniture.pageFooter?.type, BandType.pageFooter);
       final List<Band> detailBands = def.body.root.children

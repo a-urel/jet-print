@@ -1,4 +1,4 @@
-// $V{} variable-reference lexing (spec 005b). No Flutter UI.
+// $V{} variable-reference lexing. No Flutter UI.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/expression/lexer.dart';
 import 'package:jet_print/src/expression/token.dart';

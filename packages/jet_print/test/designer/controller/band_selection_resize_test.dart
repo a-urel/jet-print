@@ -11,7 +11,7 @@ void main() {
     return c;
   }
 
-  // Default definition bands (addressed by stable id, spec 024):
+  // Default definition bands (addressed by stable id):
   //   'pageHeader' (furniture), 'detail' (per-row, h=200), 'pageFooter'.
   double bandHeight(JetReportDesignerController c, String id) {
     if (id == 'pageHeader') return c.definition.furniture.pageHeader!.height;

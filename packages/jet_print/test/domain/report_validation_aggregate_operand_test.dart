@@ -1,4 +1,4 @@
-/// Schema-aware I8 operand resolution tests (spec 033, Task 7).
+/// Schema-aware I8 operand resolution tests (Task 7).
 ///
 /// Validates that `validate(def, schema: s)` flags ambiguous and not-found
 /// aggregate operands in sink bands, while:

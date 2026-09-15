@@ -76,7 +76,7 @@ void main() {
     await expectLater(image, matchesGoldenFile('goldens/canvas_fixture.png'));
   });
 
-  // --- 021 format properties: styled text (US1 / C11 / SC-002) -------------
+  // --- 021 format properties: styled text -------------
   test(
       'paints a styled-text page (family, size, B/I/U, translucent color, '
       'alignments) to a golden', () async {
@@ -134,7 +134,7 @@ void main() {
         image, matchesGoldenFile('goldens/canvas_styled_text.png'));
   });
 
-  // --- 021 format properties: shape styles (US2 / C7 / C11) ----------------
+  // --- 021 format properties: shape styles ----------------
   test(
       'paints a shape-style page (filled+stroked, fill-only, stroke-only, '
       'none+none, width-0) to a golden', () async {

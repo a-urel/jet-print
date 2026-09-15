@@ -1,6 +1,6 @@
 // Ruler metrics — points↔mm conversion contract (spec 014, C2.1–2 / FR-003,
 // FR-005). White-box unit test of the pure display-only projection over the
-// model's point geometry; `selectionExtent` (C2.3–7) is added in US4.
+// model's point geometry; `selectionExtent` is added in US4.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 import 'package:jet_print/src/designer/canvas/design_time_layout.dart';
@@ -44,7 +44,7 @@ ReportDefinition _template() => const ReportDefinition(
     );
 
 void main() {
-  group('ruler metrics — conversion (C2.1, FR-005)', () {
+  group('ruler metrics — conversion', () {
     test('kPointsPerMm is exactly 72/25.4', () {
       expect(kPointsPerMm, 72 / 25.4);
     });
@@ -57,7 +57,7 @@ void main() {
     });
   });
 
-  group('ruler metrics — origin (C2.2, FR-003)', () {
+  group('ruler metrics — origin', () {
     test('page point 0 converts to 0 mm', () {
       expect(pointsToMm(0), 0);
     });
@@ -68,17 +68,17 @@ void main() {
     });
   });
 
-  group('selectionExtent (C2.3–7, FR-012)', () {
+  group('selectionExtent', () {
     final ReportDefinition template = _template();
     final DesignTimeLayout layout = DesignTimeLayout.of(template);
 
-    test('a single element returns its page-absolute rect (C2.3)', () {
+    test('a single element returns its page-absolute rect', () {
       final JetRect? extent =
           selectionExtent(layout, Selection.of(const <String>['a']));
       expect(extent, layout.elementRect('a'));
     });
 
-    test('multiple elements return one combined union rect (C2.4)', () {
+    test('multiple elements return one combined union rect', () {
       final JetRect? extent =
           selectionExtent(layout, Selection.of(const <String>['a', 'b']));
       final JetRect a = layout.elementRect('a')!;
@@ -90,19 +90,19 @@ void main() {
       expect(extent.y + extent.height, b.y + b.height); // b is bottom-most
     });
 
-    test('the union is independent of selection order (C2.7)', () {
+    test('the union is independent of selection order', () {
       expect(
         selectionExtent(layout, Selection.of(const <String>['a', 'b'])),
         selectionExtent(layout, Selection.of(const <String>['b', 'a'])),
       );
     });
 
-    test('a band selection returns the band rect (C2.5)', () {
+    test('a band selection returns the band rect', () {
       expect(selectionExtent(layout, Selection.band('detail')),
           layout.bandRect('detail'));
     });
 
-    test('a report or empty selection returns null (C2.6)', () {
+    test('a report or empty selection returns null', () {
       expect(selectionExtent(layout, Selection.report()), isNull);
       expect(selectionExtent(layout, Selection.empty), isNull);
     });

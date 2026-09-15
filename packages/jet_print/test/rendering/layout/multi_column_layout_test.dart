@@ -1,4 +1,4 @@
-// Multi-column label grid placement (spec 034).
+// Multi-column label grid placement.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/domain/band.dart';
 import 'package:jet_print/src/domain/column_layout.dart';

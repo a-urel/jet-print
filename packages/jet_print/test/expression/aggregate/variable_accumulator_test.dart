@@ -1,4 +1,4 @@
-// VariableAccumulator: per-calculation folding (spec 005b). No Flutter UI.
+// VariableAccumulator: per-calculation folding. No Flutter UI.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/domain/report_variable.dart';
 import 'package:jet_print/src/expression/aggregate/variable_accumulator.dart';

@@ -1,6 +1,6 @@
 /// A reified band: an addressable, typed, fixed-height container of elements.
 ///
-/// Part of the reified report model (spec 024). Unlike the legacy
+/// Part of the reified report model. Unlike the legacy
 /// [ReportBand], a [Band] is a pure leaf: it carries a stable [id] and its
 /// structural role is given by *where it sits* in the tree (a furniture slot, a
 /// group header/footer, or a per-row [BandNode]). Its [type] is retained for
@@ -44,7 +44,7 @@ class Band with ValueEquality {
   final List<ReportElement> elements;
 
   /// When non-null on the lone detail band of a pure single-detail body, lays
-  /// the band out as a multi-column label grid (spec 034). Null elsewhere.
+  /// the band out as a multi-column label grid. Null elsewhere.
   final ColumnLayout? columnLayout;
 
   /// Optional human-facing display name; when null/blank the Outline and

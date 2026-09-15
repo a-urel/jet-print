@@ -6,14 +6,14 @@
 part of '../jet_report_designer_controller.dart';
 
 extension CtrlClipboard on JetReportDesignerController {
-  /// Deletes the selected elements as one undoable step (FR-014). No-op when the
+  /// Deletes the selected elements as one undoable step. No-op when the
   /// selection holds no elements (e.g. a band/group/scope or the report).
   void delete() {
     if (_document.selection.ids.isEmpty) return;
     _commit(DeleteCommand(_document.selection.ids.toSet()));
   }
 
-  /// Brings the selection one step toward the front (FR-013).
+  /// Brings the selection one step toward the front.
   void bringForward() => _reorder(ReorderMode.forward);
 
   /// Sends the selection one step toward the back.
@@ -25,10 +25,10 @@ extension CtrlClipboard on JetReportDesignerController {
   /// Sends the selection to the very back.
   void sendToBack() => _reorder(ReorderMode.toBack);
 
-  /// Copies the selection to the in-memory clipboard (FR-015).
+  /// Copies the selection to the in-memory clipboard.
   ///
   /// A Copy changes derived UI-enablement state ([canPaste] flips `false→true`)
-  /// but is **not** a history entry (FR-009) — so it [notifyListeners] to rebuild
+  /// but is **not** a history entry — so it [notifyListeners] to rebuild
   /// the clipboard controls WITHOUT routing through [_commit]. No-op (no notify)
   /// when the selection holds no elements.
   void copy() {
@@ -59,11 +59,11 @@ extension CtrlClipboard on JetReportDesignerController {
     if (copies.isNotEmpty) _commit(ClipboardCommand(copies));
   }
 
-  /// Aligns the (multi-)selection per [kind], one undoable step (FR-012).
+  /// Aligns the (multi-)selection per [kind], one undoable step.
   void align(AlignKind kind) =>
       _commitBounds(computeAlign(_collectPositioned(), kind));
 
-  /// Distributes the (multi-)selection evenly along [axis] (FR-012).
+  /// Distributes the (multi-)selection evenly along [axis].
   void distribute(DistributeAxis axis) =>
       _commitBounds(computeDistribute(_collectPositioned(), axis));
 }

@@ -1,4 +1,4 @@
-// Barcode-symbologies golden (036 / FR-001 / SC-001 / SC-006).
+// Barcode-symbologies golden.
 //
 // Renders a small one-band report with four representative symbologies:
 //   • Code 128 (alphanumeric, showText: true)  — 1D with HRI digits

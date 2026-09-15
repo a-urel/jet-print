@@ -1,4 +1,4 @@
-/// Data source decoded from a JSON array-of-objects string (spec 004).
+/// Data source decoded from a JSON array-of-objects string.
 library;
 
 import 'dart:convert';
@@ -14,7 +14,7 @@ import 'jet_data_source.dart';
 /// element becomes a row, and a nested JSON array of objects under a key is a
 /// nested collection (master/detail) — bind a detail band's `collectionField`
 /// to it. The same logical dataset renders identically through every public
-/// source (SC-006). The JSON must be an array whose elements are all
+/// source. The JSON must be an array whose elements are all
 /// objects — anything else throws [ArgumentError] (structural input is verified
 /// up front rather than failing later during iteration). `int`/`double`
 /// distinctions produced by `jsonDecode` flow straight into schema inference.

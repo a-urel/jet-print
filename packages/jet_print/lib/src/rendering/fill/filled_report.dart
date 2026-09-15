@@ -1,4 +1,4 @@
-/// The Fill output IR (spec 007b): an ordered stream of resolved band instances,
+/// The Fill output IR: an ordered stream of resolved band instances,
 /// each carrying a frozen variable snapshot. Pure data with value equality, so a
 /// fill is a snapshot-testable data golden. INTERNAL and intentionally incomplete
 /// — 007c extends the stream with group bands.

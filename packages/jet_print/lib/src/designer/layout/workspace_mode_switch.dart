@@ -1,6 +1,6 @@
 /// The unified toolbar's center region: a two-segment **Designer | Preview**
 /// control that reflects the active workspace mode and emits a host
-/// switch-request when the inactive segment is selected (017 / US1).
+/// switch-request when the inactive segment is selected.
 ///
 /// Mode ownership stays with the host (the clarification): the switch never
 /// performs the swap itself — it is *told* which mode is active and calls back
@@ -101,7 +101,7 @@ class WorkspaceModeSwitch extends StatelessWidget {
   /// One segment. The active segment reads as a **raised tile** — a
   /// background-colored fill with a subtle shadow and foreground text, so the
   /// current mode clearly stands out against the muted tray (iOS-style
-  /// segmented control); actuating it is a no-op (C2.5). The inactive segment is
+  /// segmented control); actuating it is a no-op. The inactive segment is
   /// a transparent ghost button wired to [onSwitchRequested] (disabled when that
   /// is null), with muted-foreground text.
   Widget _segment({

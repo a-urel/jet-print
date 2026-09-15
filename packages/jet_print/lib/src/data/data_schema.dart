@@ -1,4 +1,4 @@
-/// The structure of a data source attached to the designer (spec 009).
+/// The structure of a data source attached to the designer.
 library;
 
 import '../domain/value_equality.dart';

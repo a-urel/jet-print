@@ -1,5 +1,5 @@
 // lib/src/print/jet_report_printer.dart
-/// The print seam (spec 012): the ONLY library code touching a platform
+/// The print seam: the ONLY library code touching a platform
 /// channel, isolated here behind the swappable [PrintDialogPresenter]
 /// abstraction so the rendering core stays platform-agnostic and printing is
 /// testable without channels. Nothing in the library may import this seam —
@@ -30,7 +30,7 @@ typedef PrintDialogPresenter = Future<bool> Function(
   required double pageHeightPt,
 });
 
-/// Printing is not available on this platform (FR-009a).
+/// Printing is not available on this platform.
 ///
 /// Specific and identifiable — never a crash, never a silent no-op. User
 /// cancellation is NOT this exception; it is a `false` return from
@@ -47,7 +47,7 @@ class PrintUnavailableException implements Exception {
 }
 
 /// Prints a rendered report via the operating system's print dialog — the
-/// one sanctioned exception to the library's headlessness (FR-009a).
+/// one sanctioned exception to the library's headlessness.
 ///
 /// The job content is exactly the deterministic PDF [JetReportExporter.toPdf]
 /// exports: the document is the artifact, so what prints matches the preview

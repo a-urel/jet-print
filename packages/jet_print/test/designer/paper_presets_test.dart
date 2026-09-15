@@ -1,4 +1,4 @@
-// Paper-size preset recognition unit tests (018 / US1 / contracts §C1).
+// Paper-size preset recognition unit tests.
 //
 // White-box: recognizePaper/applyPaper are pure, un-exported designer helpers
 // (the `format_presets.dart` precedent), so their unit test reaches into `src/`
@@ -15,7 +15,7 @@ PageFormat _page(double w, double h) =>
 
 void main() {
   group('recognizePaper', () {
-    test('names each standard size in both orientations (C1.5)', () {
+    test('names each standard size in both orientations', () {
       for (final PaperPreset preset in kPaperPresets) {
         final PaperMatch portrait =
             recognizePaper(_page(preset.portraitWidth, preset.portraitHeight));
@@ -33,11 +33,11 @@ void main() {
       expect(m.name, 'A4');
     });
 
-    test('a whole-point-rounded A4 (595 × 842) still names A4 (C1.4)', () {
+    test('a whole-point-rounded A4 (595 × 842) still names A4', () {
       expect(recognizePaper(_page(595, 842)).name, 'A4');
     });
 
-    test('a size matching no preset reports Custom, unaltered (C1.3)', () {
+    test('a size matching no preset reports Custom, unaltered', () {
       final PageFormat custom = _page(500, 700);
       final PaperMatch m = recognizePaper(custom);
       expect(m.isCustom, isTrue);

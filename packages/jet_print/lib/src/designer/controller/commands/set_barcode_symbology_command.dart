@@ -1,4 +1,4 @@
-/// Command: change a barcode element's symbology (spec 036).
+/// Command: change a barcode element's symbology.
 library;
 
 import '../../../domain/elements/barcode_element.dart';

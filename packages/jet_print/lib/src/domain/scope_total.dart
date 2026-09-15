@@ -1,4 +1,4 @@
-/// A named roll-up total published by a nested [DetailScope] (spec 030, B2).
+/// A named roll-up total published by a nested [DetailScope].
 ///
 /// [expression] is a top-level inline aggregate (Phase A grammar, e.g.
 /// `SUM($F{lineTotal})`) folded over the scope's child rows; the result is

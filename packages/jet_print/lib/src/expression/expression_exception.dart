@@ -1,4 +1,4 @@
-/// Thrown when an expression string cannot be lexed or parsed (spec 005a).
+/// Thrown when an expression string cannot be lexed or parsed.
 ///
 /// A *structural* fault (malformed syntax), thrown at compile time — distinct
 /// from a runtime evaluation failure, which is a [JetError] value rather than an

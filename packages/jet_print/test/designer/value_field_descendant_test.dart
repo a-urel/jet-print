@@ -1,5 +1,5 @@
 /// Widget tests: the Properties panel (and its embedded fx editor) surfaces
-/// descendant-collection operands correctly (spec 033).
+/// descendant-collection operands correctly.
 ///
 /// Pump setup: Customer ▸ Order ▸ Line schema; a summary band whose element
 /// value is `{SUM([lineTotal])}` (which compiles to SUM($F{lineTotal})). The
@@ -8,7 +8,7 @@
 ///
 /// Three assertions:
 ///   (a) Unresolved hint is NOT shown for `{SUM([lineTotal])}`.
-///   (b) Unresolved hint IS shown for bare `[lineTotal]` (FR-006).
+///   (b) Unresolved hint IS shown for bare `[lineTotal]`.
 ///   (c) Fx editor shows a deepField button for `lineTotal` and status = Valid
 ///       for `{SUM([lineTotal])}`.
 library;
@@ -127,7 +127,7 @@ void main() {
         reason: 'SUM([lineTotal]) is a valid descendant aggregate — no flag');
   });
 
-  // (b) Bare [lineTotal] (not inside an aggregate) DOES show the hint (FR-006).
+  // (b) Bare [lineTotal] (not inside an aggregate) DOES show the hint.
   testWidgets('bare [lineTotal] on summary IS flagged as unresolved',
       (WidgetTester tester) async {
     final JetReportDesignerController c = await _pump(tester);

@@ -1,4 +1,4 @@
-/// The command that resizes a single element (FR-009).
+/// The command that resizes a single element.
 library;
 
 import '../../../domain/geometry.dart';

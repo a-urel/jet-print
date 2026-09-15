@@ -1,4 +1,4 @@
-/// Published-total preparation for nested collection scopes (spec 030, B2).
+/// Published-total preparation for nested collection scopes.
 ///
 /// A nested `DetailScope.totals` holds named top-level aggregates (Phase A
 /// grammar) summing over the scope's OWN child rows. This pure helper parses

@@ -95,7 +95,7 @@ void main() {
   testWidgets('the order detail band does NOT resolve customerTotal',
       (WidgetTester tester) async {
     // customerTotal is published onto the ROOT rows, not the orders rows — an
-    // order-scope binding to it must still flag (SC-004).
+    // order-scope binding to it must still flag.
     final JetReportDesignerController c = await _pump(tester);
     c.createBoundElement(
         bandId: 'orderRow',

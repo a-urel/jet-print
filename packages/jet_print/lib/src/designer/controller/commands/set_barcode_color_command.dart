@@ -1,4 +1,4 @@
-/// The command that recolors a barcode element (021 / US3 / FR-011).
+/// The command that recolors a barcode element.
 library;
 
 import '../../../domain/elements/barcode_element.dart';

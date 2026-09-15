@@ -1,4 +1,4 @@
-// Public-API import test (US1 / SC-001 / SC-007; spec 024 / C13).
+// Public-API import test.
 //
 // Acts as an external consumer: it imports ONLY the single public entry point
 // and proves the documented surface is reachable and sufficient to build,
@@ -69,7 +69,7 @@ void main() {
 
   // --- 024: the reified model graph is the public surface. The tree types are
   // reachable and, together with the controller + format + validate, sufficient
-  // to build, mutate, validate, and serialize a design (contracts §7.1 / C13). ---
+  // to build, mutate, validate, and serialize a design. ---
 
   test(
       'the reified tree types build a ReportDefinition from the public surface',

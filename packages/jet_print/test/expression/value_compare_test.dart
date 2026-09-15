@@ -1,4 +1,4 @@
-// jetCompare: same-type orderable comparison (spec 005b). No Flutter UI.
+// jetCompare: same-type orderable comparison. No Flutter UI.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/expression/value.dart';
 

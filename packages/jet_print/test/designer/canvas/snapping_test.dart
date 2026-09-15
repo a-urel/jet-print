@@ -85,7 +85,7 @@ void main() {
     });
 
     test('C4.4 snap on with the grid HIDDEN still snaps to the grid', () {
-      // Decoupling (FR-010 / D3): `gridEnabled` is visibility-only, so hiding
+      // Decoupling: `gridEnabled` is visibility-only, so hiding
       // the grid must NOT suppress snapping — the magnet alone governs it. This
       // INVERTS the pre-015 assertion that grid-off disabled grid snapping.
       final JetReportDesignerController c = JetReportDesignerController()

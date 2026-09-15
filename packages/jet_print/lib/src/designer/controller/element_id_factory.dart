@@ -1,4 +1,4 @@
-/// Assigns collision-free element ids within a definition (FR-004).
+/// Assigns collision-free element ids within a definition.
 library;
 
 import '../../domain/report_definition.dart';
@@ -19,7 +19,7 @@ class ElementIdFactory {
   /// Resets the counter to one past the largest numeric id suffix among **all**
   /// ids in [definition] — element, band, scope, and group ids (or 0 when none
   /// carries a numeric suffix). Scanning every id (not just element ids) keeps
-  /// minted band/group/scope ids collision-free too (FR-004).
+  /// minted band/group/scope ids collision-free too.
   void seedFrom(ReportDefinition definition) {
     int max = 0;
     for (final String id in allIds(definition)) {

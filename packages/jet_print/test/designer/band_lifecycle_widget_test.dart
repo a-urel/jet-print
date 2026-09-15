@@ -1,4 +1,4 @@
-// Phase 5 / T035 (spec 024 / US3): the Outline panel's band-lifecycle
+// Phase 5 / T035: the Outline panel's band-lifecycle
 // affordances — add a per-row band / a group header, remove, reorder (up/down),
 // and retype — drive the controller's undoable lifecycle ops. Consumer-style:
 // public API + the shared widget harness only.
@@ -54,7 +54,7 @@ Future<void> _tapKey(WidgetTester tester, String key) async {
 }
 
 void main() {
-  testWidgets('the scope add menu appends a detail band (T035)',
+  testWidgets('the scope add menu appends a detail band',
       (WidgetTester tester) async {
     final JetReportDesignerController c =
         JetReportDesignerController(definition: _seed());
@@ -68,7 +68,7 @@ void main() {
         reason: 'the scope "+" menu adds a per-row band');
   });
 
-  testWidgets('the scope add menu adds a group header (T035)',
+  testWidgets('the scope add menu adds a group header',
       (WidgetTester tester) async {
     final JetReportDesignerController c =
         JetReportDesignerController(definition: _seed());
@@ -129,7 +129,7 @@ void main() {
         findsOneWidget);
   });
 
-  testWidgets('the band remove affordance deletes the band (T035)',
+  testWidgets('the band remove affordance deletes the band',
       (WidgetTester tester) async {
     final JetReportDesignerController c =
         JetReportDesignerController(definition: _seed());
@@ -140,7 +140,7 @@ void main() {
     expect(_detailIds(c), <String>['d2']);
   });
 
-  testWidgets('the band move-up affordance reorders within the scope (T035)',
+  testWidgets('the band move-up affordance reorders within the scope',
       (WidgetTester tester) async {
     final JetReportDesignerController c =
         JetReportDesignerController(definition: _seed());
@@ -152,8 +152,7 @@ void main() {
         reason: 'order changes, ids preserved');
   });
 
-  testWidgets(
-      'the band retype menu relocates the band to the chosen slot (T035)',
+  testWidgets('the band retype menu relocates the band to the chosen slot',
       (WidgetTester tester) async {
     final JetReportDesignerController c =
         JetReportDesignerController(definition: _seed());

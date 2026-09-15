@@ -19,9 +19,9 @@ const String _k = 'jet_print.designer.exprEditor';
 
 /// Opens the expression editor seeded with [initialText]; returns the committed
 /// text on Insert, or null on Cancel/dismiss. [resolvableNames] is the band's
-/// resolvable name set (spec 031); [fields] is the in-scope field palette.
+/// resolvable name set; [fields] is the in-scope field palette.
 /// [descendantOperands] is the set of descendant leaf names valid as aggregate
-/// operands (spec 033); [descendantFields] is the palette of marked deeper
+/// operands; [descendantFields] is the palette of marked deeper
 /// field buttons.
 Future<String?> showExpressionEditor(
   BuildContext context, {
@@ -70,8 +70,8 @@ class StatusUnresolved extends EditorStatus {
 /// Pure status computation, unit-testable independent of the widget.
 /// - A binding (`{…}` / `[field]`): every `$F{}` ref must resolve — it is
 ///   resolvable when it is in [names], or when it is an aggregate operand and a
-///   [descendantOperands] leaf (spec 033). A bare descendant ref (not an
-///   aggregate operand) stays unresolved (FR-006). First out-of-scope ref →
+///   [descendantOperands] leaf. A bare descendant ref (not an
+///   aggregate operand) stays unresolved. First out-of-scope ref →
 ///   unresolved(that name).
 /// - A `{…}`-wrapped value that does NOT parse to a binding → syntax error.
 /// - Plain literal text → valid.
@@ -114,12 +114,12 @@ class _ExpressionEditorDialog extends StatefulWidget {
   final Set<String> resolvableNames;
   final List<FieldDef> fields;
 
-  /// Descendant leaf names valid as aggregate operands (spec 033). Empty when
+  /// Descendant leaf names valid as aggregate operands. Empty when
   /// no schema or the band has no nested collections.
   final Set<String> descendantOperands;
 
   /// Fx palette choices for descendant operands — rendered marked as deeper
-  /// fields (FR-007). Empty when [descendantOperands] is empty.
+  /// fields. Empty when [descendantOperands] is empty.
   final List<FieldDef> descendantFields;
 
   @override
@@ -234,7 +234,7 @@ class _ExpressionEditorDialogState extends State<_ExpressionEditorDialog> {
                               '[${f.name}]', '[${f.name}]'.length),
                           child: Text(f.name),
                         ),
-                      // Descendant leaves (spec 033) — valid only inside an
+                      // Descendant leaves — valid only inside an
                       // aggregate. Rendered marked (↳, italic) and tooltip'd as
                       // "deeper" so they read distinctly from in-scope fields.
                       for (final FieldDef f in widget.descendantFields)

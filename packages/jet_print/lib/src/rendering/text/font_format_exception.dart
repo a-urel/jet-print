@@ -1,5 +1,5 @@
 // lib/src/rendering/text/font_format_exception.dart
-/// Thrown when font bytes cannot be parsed (spec 006). Structural — fail fast.
+/// Thrown when font bytes cannot be parsed. Structural — fail fast.
 library;
 
 /// A malformed or unsupported font file.

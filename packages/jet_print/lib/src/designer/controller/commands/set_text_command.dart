@@ -1,4 +1,4 @@
-/// The command that sets a text element's literal text (FR-019).
+/// The command that sets a text element's literal text.
 library;
 
 import '../../../domain/elements/text_element.dart';

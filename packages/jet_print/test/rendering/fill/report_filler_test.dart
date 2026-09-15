@@ -1,5 +1,5 @@
 // ReportFiller: the Fill data pass — flat bands (007b) + grouping (007c),
-// migrated to the reified model + native fillDefinition API (spec 024).
+// migrated to the reified model + native fillDefinition API.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/in_memory_data_source.dart';
 import 'package:jet_print/src/domain/band.dart';

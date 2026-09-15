@@ -95,13 +95,13 @@ int _labelStep(WidgetTester tester) {
 }
 
 void main() {
-  testWidgets('at default zoom an element edge aligns with its mm mark (C4.1)',
+  testWidgets('at default zoom an element edge aligns with its mm mark',
       (WidgetTester tester) async {
     final JetReportDesignerController c = await pumpDesignerWith(tester);
     _assertHorizontalAligned(tester, c.viewScale);
   });
 
-  testWidgets('zoom in/out keeps alignment and re-steps the labels (C4.2)',
+  testWidgets('zoom in/out keeps alignment and re-steps the labels',
       (WidgetTester tester) async {
     final JetReportDesignerController c = await pumpDesignerWith(tester);
     final int stepDefault = _labelStep(tester);
@@ -124,7 +124,7 @@ void main() {
         reason: 'zooming back out shows the same or a coarser labelled step');
   });
 
-  testWidgets('vertical pan shifts the left ruler with the page (C4.3)',
+  testWidgets('vertical pan shifts the left ruler with the page',
       (WidgetTester tester) async {
     final JetReportDesignerController c = await pumpDesignerWith(tester);
     final ScrollableState v = _scrollable(tester, Axis.vertical);
@@ -154,7 +154,7 @@ void main() {
     }
   });
 
-  testWidgets('horizontal pan shifts the top ruler with the page (C4.3)',
+  testWidgets('horizontal pan shifts the top ruler with the page',
       (WidgetTester tester) async {
     final JetReportDesignerController c = await pumpDesignerWith(tester);
     // Zoom in so the page overflows the width and can be panned horizontally.

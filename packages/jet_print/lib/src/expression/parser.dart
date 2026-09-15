@@ -1,5 +1,5 @@
 /// The expression parser: recursive descent over [Token]s producing an [Expr]
-/// AST (spec 005a). Internal to the expression seam.
+/// AST. Internal to the expression seam.
 library;
 
 import 'ast.dart';

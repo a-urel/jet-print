@@ -1,7 +1,7 @@
 // Scope collection designation, scope resolution, and the unresolved indicator,
-// exercised through the UI (US3 / FR-015, FR-016, FR-017, FR-018). Public API.
+// exercised through the UI. Public API.
 //
-// Reification (spec 024): the iterated collection is a SCOPE property now, not a
+// Reification: the iterated collection is a SCOPE property now, not a
 // band flag. The old per-band `bandCollection` field is gone; a nested
 // `DetailScope` carries the `collectionField`, edited in the Scope inspector
 // ('scopeCollection'). These tests therefore select a scope (not a band) to bind

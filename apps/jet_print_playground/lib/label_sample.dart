@@ -2,7 +2,7 @@
 /// entirely through the library's public API (`package:jet_print/jet_print.dart`),
 /// the way an external consumer would.
 ///
-/// Built on the engine's **native multi-column label support** (spec 034): the
+/// Built on the engine's **native multi-column label support**: the
 /// detail band carries a [ColumnLayout], so a single label cell is authored
 /// once — in cell-local coordinates — and the engine repeats it across the grid
 /// in horizontal print order (left-to-right, wrapping down, then to the next

@@ -1,4 +1,4 @@
-// Architecture (layer-boundary) test (FR-007 / SC-005).
+// Architecture (layer-boundary) test.
 //
 // Makes the inward-dependency rule executable rather than aspirational: the
 // domain seam is the innermost layer, so no file under lib/src/domain may import
@@ -91,8 +91,8 @@ void main() {
       );
     });
 
-    test('the reified tree types (spec 024) stay pure domain', () {
-      // FR-001: ReportDefinition and the band/scope/group tree
+    test('the reified tree types stay pure domain', () {
+      // ReportDefinition and the band/scope/group tree
       // are the public report model — they may use package:flutter/foundation
       // (listEquals) but MUST import no rendering/designer seam and no Flutter
       // UI library. Asserted explicitly (not just via the recursive domain
@@ -219,8 +219,7 @@ void main() {
               'only):\n${violations.join('\n')}');
     });
 
-    test('they carry no coupling to selection-drag or guide state (FR-016)',
-        () {
+    test('they carry no coupling to selection-drag or guide state', () {
       final List<String> violations = <String>[];
       for (final File file in <File>[rulerScale, rulerMetrics]) {
         for (final String uri in _directive

@@ -2,7 +2,7 @@
 ///
 /// The localized action *label* ("Cut") comes from the ARB files; the modifier
 /// glyph is a runtime *platform* fact, not a locale fact, so it is composed here
-/// rather than duplicated across every locale (research D6). Apple platforms use
+/// rather than duplicated across every locale. Apple platforms use
 /// the `⌘` glyph; everything else uses the `Ctrl+` prefix.
 library;
 

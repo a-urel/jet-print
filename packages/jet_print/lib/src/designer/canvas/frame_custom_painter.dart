@@ -9,7 +9,7 @@ import 'package:flutter/widgets.dart';
 /// [scale]. The picture is recorded once per *model* change (tracked by
 /// [revision]); zoom/pan only re-blit it — so dragging an element or zooming
 /// never re-runs the element renderers, which is what keeps the 200-element /
-/// 60 fps budget (research D5). Pan is applied by the host widget's layout, so
+/// 60 fps budget. Pan is applied by the host widget's layout, so
 /// this painter only needs the scale.
 class FrameCustomPainter extends CustomPainter {
   /// Creates a painter for [picture] at [scale]; [revision] gates repaints.

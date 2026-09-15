@@ -1,4 +1,4 @@
-// US2 resize + snap-guide widget test (T044 / SC-004 / acceptance US2.1–US2.4):
+// US2 resize + snap-guide widget test (acceptance US2.1–US2.4):
 // dragging a handle resizes with live feedback; a snap guide appears; Alt
 // bypasses snapping.
 import 'package:flutter/widgets.dart';
@@ -75,7 +75,7 @@ void main() {
     await tester.pumpAndSettle();
     final String id = controller.selection.singleOrNull!;
     // Both tools are on; the bypass must suspend snapping for THIS drag only,
-    // leaving the persistent toggle state untouched (FR-013).
+    // leaving the persistent toggle state untouched.
     expect(controller.snapEnabled, isTrue);
     expect(controller.gridEnabled, isTrue);
 

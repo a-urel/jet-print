@@ -1,4 +1,4 @@
-/// A report group — a reset boundary keyed by an expression (spec 005b).
+/// A report group — a reset boundary keyed by an expression.
 library;
 
 import 'value_equality.dart';

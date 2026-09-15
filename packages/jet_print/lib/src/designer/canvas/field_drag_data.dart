@@ -1,4 +1,4 @@
-/// The payload dragged from the Data Source panel onto the canvas (US2 / FR-011).
+/// The payload dragged from the Data Source panel onto the canvas.
 library;
 
 /// Identifies the data field being dragged so the canvas can create (or target)

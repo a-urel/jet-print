@@ -1,4 +1,4 @@
-/// The expression evaluation environment (spec 005a).
+/// The expression evaluation environment.
 library;
 
 import '../data/data_row.dart';

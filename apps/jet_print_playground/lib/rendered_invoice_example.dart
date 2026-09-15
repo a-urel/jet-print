@@ -1,4 +1,4 @@
-/// The playground's rendered-invoice example (011 — FR-019 / SC-008): supply
+/// The playground's rendered-invoice example (011 — FR-019): supply
 /// real data for the bound invoice template, render it through the public
 /// engine, and show the paginated preview. The whole integration — data
 /// source + render + preview — is the < 30 lines inside [invoiceDataSource],
@@ -22,7 +22,7 @@ import 'invoice_sample.dart';
 /// Three invoice records, each with a nested `lines` collection
 /// (master/detail), matching [invoiceSchema]. Use `JetJsonDataSource` for a
 /// JSON payload or `JetObjectDataSource<T>` for domain objects — identical
-/// output (SC-006).
+/// output.
 ///
 /// Monetary invariants every record honors (the example's tests pin them):
 /// `total` (the subtotal) equals the sum of its line totals, and
@@ -98,7 +98,7 @@ JetDataSource invoiceDataSource() =>
     ]);
 
 /// The same logical invoices as [invoiceDataSource], supplied as a JSON
-/// payload — renders byte-identically (SC-006). The `\\n` sequences are
+/// payload — renders byte-identically. The `\\n` sequences are
 /// JSON-escaped newlines (one Dart backslash-n reaches the parser as a literal
 /// newline inside the multi-line billing addresses).
 JetDataSource invoiceJsonDataSource() => JetJsonDataSource.parse(
@@ -157,7 +157,7 @@ JetDataSource invoiceJsonDataSource() => JetJsonDataSource.parse(
     );
 
 /// The same logical invoices again, supplied as domain objects with a field
-/// extractor — renders byte-identically (SC-006). The line-item lists are
+/// extractor — renders byte-identically. The line-item lists are
 /// shared with [invoiceDataSource] via top-level constants so the two variants
 /// can never drift.
 JetDataSource invoiceObjectDataSource() => JetObjectDataSource<Invoice>(
@@ -443,7 +443,7 @@ class Invoice {
 }
 
 /// Renders the invoice **authored in the reified band model** ([invoiceSampleDefinition])
-/// through the native [JetReportEngine.renderDefinition] path (spec 024). This
+/// through the native [JetReportEngine.renderDefinition] path. This
 /// is the end-to-end confirmation of the new architecture: a hand-built
 /// `ReportDefinition` (page furniture + a master `DetailScope` with a
 /// first-class `GroupLevel` and a nested `lines` scope) renders the same
@@ -525,7 +525,7 @@ class RenderedInvoiceExample extends StatefulWidget {
 
 class _RenderedInvoiceExampleState extends State<RenderedInvoiceExample> {
   /// Rendered ONCE: this single report feeds the preview, the PDF export,
-  /// and the print job (FR-001) — no re-render per artifact.
+  /// and the print job — no re-render per artifact.
   late final RenderedReport _report =
       renderInvoiceDefinition(definition: widget.definition);
 

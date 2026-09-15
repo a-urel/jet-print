@@ -1,4 +1,4 @@
-// Token vocabulary + ExpressionException (spec 005a). No Flutter UI.
+// Token vocabulary + ExpressionException. No Flutter UI.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/expression/expression_exception.dart';
 import 'package:jet_print/src/expression/token.dart';

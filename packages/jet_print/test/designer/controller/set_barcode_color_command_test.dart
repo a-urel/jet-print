@@ -1,4 +1,4 @@
-// Controller setBarcodeColor() unit tests (021 / US3 / contracts C8, C9).
+// Controller setBarcodeColor() unit tests.
 //
 // Black-box: drives only the public controller surface. setBarcodeColor() is
 // the single undoable mutator behind the barcode color row. Same matrix as
@@ -20,7 +20,7 @@ const BarcodeElement _element = BarcodeElement(
 );
 
 void main() {
-  group('setBarcodeColor — replaces the color (C8)', () {
+  group('setBarcodeColor — replaces the color', () {
     test('a commit replaces the color, preserving symbology/data/bounds', () {
       final JetReportDesignerController c = JetReportDesignerController(
           definition: oneBandReport(elements: const <ReportElement>[_element]));
@@ -48,7 +48,7 @@ void main() {
     });
   });
 
-  group('setBarcodeColor — no-ops (C9 / FR-013)', () {
+  group('setBarcodeColor — no-ops', () {
     test('an equal color records no history and notifies no one', () {
       final JetReportDesignerController c = JetReportDesignerController(
           definition: oneBandReport(elements: const <ReportElement>[_element]));
@@ -93,7 +93,7 @@ void main() {
     });
   });
 
-  group('setBarcodeColor — undo / redo (C9)', () {
+  group('setBarcodeColor — undo / redo', () {
     test('one undo restores black; one redo reapplies the pick', () {
       final JetReportDesignerController c = JetReportDesignerController(
           definition: oneBandReport(elements: const <ReportElement>[_element]));

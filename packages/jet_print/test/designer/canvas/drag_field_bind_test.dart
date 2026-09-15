@@ -1,4 +1,4 @@
-// Drag-a-field-to-bind (US2 / FR-011).
+// Drag-a-field-to-bind.
 //
 // Leaf fields in the Data Source panel are draggable; a collection (branch)
 // node is not. Dropping a field on a band creates a text element bound to

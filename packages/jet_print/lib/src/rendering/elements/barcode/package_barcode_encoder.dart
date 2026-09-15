@@ -1,4 +1,4 @@
-/// The sole adapter onto the third-party `barcode` package (spec 036, FR-011).
+/// The sole adapter onto the third-party `barcode` package.
 /// THIS IS THE ONLY FILE IN THE LIBRARY THAT MAY IMPORT `package:barcode`.
 /// `BarcodeException` is caught here and never escapes the seam.
 library;

@@ -1,4 +1,4 @@
-// US4 keyboard + clipboard shortcuts (T055 / FR-013/014/015/016), scoped to the
+// US4 keyboard + clipboard shortcuts, scoped to the
 // canvas focus.
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';

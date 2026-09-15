@@ -8,7 +8,7 @@ import '../rendering/text/font_registry.dart';
 /// An [InheritedWidget] sharing the designer's single hoisted [FontRegistry]
 /// with the canvas frame builder and the Properties panel's family picker, so
 /// the family set the picker enumerates is provably the set the canvas
-/// measures and paints with (021 / research §1 — WYSIWYG by construction).
+/// measures and paints with (WYSIWYG by construction).
 ///
 /// The registry itself stays **internal**; host fonts reach it via
 /// `JetReportDesigner.fonts` (022), which the designer layers on top of the

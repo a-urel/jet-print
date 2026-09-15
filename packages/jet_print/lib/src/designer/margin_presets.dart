@@ -34,7 +34,7 @@ class MarginPreset {
   final double value;
 }
 
-/// The margin presets offered by the picker, in display order (research D2).
+/// The margin presets offered by the picker, in display order.
 /// `Normal` equals the existing default, so pre-feature templates read as Normal
 /// rather than Custom.
 const List<MarginPreset> kMarginPresets = <MarginPreset>[

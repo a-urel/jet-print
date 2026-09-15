@@ -122,7 +122,7 @@ ValueParse parseValueField(String raw) {
 ///
 /// Unlike [parseValueField], this recognizes ONLY the simple `[field]` form — no
 /// `{ … }` templates, no expressions. It backs the barcode Data input, whose
-/// value is field-or-literal (spec 036), through the same single-input UX and
+/// value is field-or-literal, through the same single-input UX and
 /// `[field]` token the value field uses.
 String? parseFieldToken(String raw) {
   return _simpleField.firstMatch(raw)?.group(1)?.trim();

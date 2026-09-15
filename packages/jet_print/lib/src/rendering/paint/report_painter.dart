@@ -1,4 +1,4 @@
-/// The paint-backend abstraction (spec 006): backends implement these calls over
+/// The paint-backend abstraction: backends implement these calls over
 /// the frame's primitives. [prepare] does async asset resolution (font load,
 /// image decode) so the synchronous draw walk stays backend-agnostic.
 library;

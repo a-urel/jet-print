@@ -1,5 +1,5 @@
 // lib/src/rendering/text/font_registry.dart
-/// Holds registered font bytes keyed by family/weight/italic (spec 006). The
+/// Holds registered font bytes keyed by family/weight/italic. The
 /// bundled default is just a pre-registered entry; the SAME bytes drive
 /// measurement (parsed to [FontMetrics]) and painting (loaded by backends).
 library;
@@ -19,7 +19,7 @@ class FontRegistry {
   /// The family the bundled default registers under. Surfaced in the designer
   /// as the neutral "Default" entry — the always-resolvable render fallback,
   /// and the only font bundled with the library. Hosts contribute every other
-  /// family at runtime (spec 022).
+  /// family at runtime.
   static const String defaultFamily = 'Default';
 
   /// Registers [bytes] for [family]/[weight]/[italic], parsing its metrics now.
@@ -39,7 +39,7 @@ class FontRegistry {
   /// feeds: canvas, preview, and export alike. Intermediate weights
   /// (`medium`/`semiBold`) have no bundled face and resolve to Regular via the
   /// fallback chain. It is the only font shipped with the library; hosts add
-  /// every other family with [registerHostFonts] (spec 022).
+  /// every other family with [registerHostFonts].
   ///
   /// Pass [bytes] to override with a single Regular face under
   /// [defaultFamily] (the test seam); no other face is then registered and
@@ -56,7 +56,7 @@ class FontRegistry {
         weight: JetFontWeight.bold, italic: true);
   }
 
-  /// Ingests host-contributed [families] (spec 022 / FR-006/FR-008/FR-009).
+  /// Ingests host-contributed [families].
   ///
   /// Iterates [families] in list order and each family's faces in order,
   /// registering every face under its `family|weight|italic` key. Intended to
@@ -84,7 +84,7 @@ class FontRegistry {
 
   /// Registered family names: [defaultFamily] first (when registered), then
   /// the rest in insertion order, deduped across weight/italic variants — the
-  /// designer's family picker enumerates exactly this list (021 / FR-001).
+  /// designer's family picker enumerates exactly this list.
   List<String> get families {
     final List<String> result = <String>[];
     for (final String key in _entries.keys) {

@@ -1,4 +1,4 @@
-// Consumption widget test (US2 / FR-002 / FR-005 / FR-022).
+// Consumption widget test.
 //
 // Proves the playground app really consumes the library through its public API:
 //  * pumping the app's root yields exactly one JetReportDesigner in a ShadApp;
@@ -162,7 +162,7 @@ void main() {
   );
 
   testWidgets(
-    'only the Empty demo wires the Save/Open callbacks (FR-022)',
+    'only the Empty demo wires the Save/Open callbacks',
     (WidgetTester tester) async {
       await tester.binding.setSurfaceSize(const Size(1850, 700));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -269,7 +269,7 @@ void main() {
   );
 
   test(
-    'edit → save → reopen through the public API preserves the edit (SC-002)',
+    'edit → save → reopen through the public API preserves the edit',
     () {
       // Edit: create a text element and rename it.
       final JetReportDesignerController editor = JetReportDesignerController();

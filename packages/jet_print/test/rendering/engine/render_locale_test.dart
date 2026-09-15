@@ -1,4 +1,4 @@
-// Explicit per-render locale (011 — contract C7 / FR-012a).
+// Explicit per-render locale.
 //
 // Number/date formatting follows `RenderOptions.locale` — never the ambient
 // `Intl.defaultLocale` — so the same template + data rendered under two

@@ -19,7 +19,7 @@ part of '../../properties_panel.dart';
 /// the B/I/U toggles and alignment segments on the next.
 ///
 /// Every control commits one whole style through [onCommit], so each change is
-/// a single undoable step (FR-013). The widget is stateless and holds no draft:
+/// a single undoable step. The widget is stateless and holds no draft:
 /// callers wrap it in a `KeyedSubtree` keyed by the edited object's id when a
 /// selection switch should discard uncommitted input.
 class _TextStyleEditor extends StatelessWidget {

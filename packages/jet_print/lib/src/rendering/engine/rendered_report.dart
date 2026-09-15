@@ -1,7 +1,7 @@
-/// The render output IR (spec 011): a lazily-paginated [RenderedReport] of
+/// The render output IR: a lazily-paginated [RenderedReport] of
 /// [RenderedPage]s over the existing backend-agnostic `PageFrame` primitives,
 /// plus the merged render diagnostics. The input to the on-screen preview and,
-/// later, to an export backend (FR-020) — no rework needed there.
+/// later, to an export backend — no rework needed there.
 library;
 
 import '../fill/report_diagnostics.dart';
@@ -27,11 +27,11 @@ class RenderedPage {
 }
 
 /// The result of `JetReportEngine.render`: an exact [pageCount], lazily-built
-/// pages via [pageAt], and the merged render [diagnostics] (FR-013).
+/// pages via [pageAt], and the merged render [diagnostics].
 ///
-/// Pages are built **on demand** and cached (FR-021): requesting the first
+/// Pages are built **on demand** and cached: requesting the first
 /// page never constructs frames for the others, and re-requesting a page
-/// returns the identical cached instance (determinism, SC-004). [pageCount]
+/// returns the identical cached instance (determinism). [pageCount]
 /// is exact up front — it is resolved by a cheap boundary-only pagination
 /// pass that finds page breaks without building paint primitives.
 class RenderedReport {
@@ -72,11 +72,11 @@ class RenderedReport {
   final Map<int, RenderedPage> _cache = <int, RenderedPage>{};
 
   /// The non-fatal issues collected while rendering, merged across the fill
-  /// and layout passes in pass order (FR-013).
+  /// and layout passes in pass order.
   ///
   /// Rendering never throws on malformed data — an unknown field, a missing
   /// parameter, an unresolvable image, or an empty dataset each best-effort
-  /// renders and records a [Diagnostic] here instead (FR-014).
+  /// renders and records a [Diagnostic] here instead.
   ReportDiagnostics get diagnostics {
     final ReportDiagnostics merged = ReportDiagnostics();
     for (final ReportDiagnostics source in _sources) {
@@ -88,7 +88,7 @@ class RenderedReport {
   }
 
   /// The page at [index] (in `[0, pageCount)`), building its frame on first
-  /// access and returning the identical cached page thereafter (FR-021).
+  /// access and returning the identical cached page thereafter.
   RenderedPage pageAt(int index) {
     if (index < 0 || index >= pageCount) {
       throw RangeError.range(index, 0, pageCount - 1, 'index');

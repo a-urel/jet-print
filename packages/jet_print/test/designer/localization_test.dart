@@ -1,4 +1,4 @@
-// Localization widget test — English + fallback (US4 / FR-016/017, SC-007).
+// Localization widget test — English + fallback.
 //
 // Asserts the default English chrome and the fallback behavior for an
 // unsupported locale. German and Turkish each get their OWN test file
@@ -15,7 +15,7 @@ import 'package:jet_print/jet_print.dart';
 import 'support/designer_harness.dart';
 
 void main() {
-  // C6 (spec 014): ruler mm labels follow the active locale's number grouping,
+  // ruler mm labels follow the active locale's number grouping,
   // and the ruler toggle tooltip resolves via the existing key.
   testWidgets(
       'ruler labels group thousands in English; toggle tooltip localized',
@@ -50,7 +50,7 @@ void main() {
     expect(find.text('Data Source'), findsWidgets); // tab + panel header
   });
 
-  testWidgets('an unsupported locale falls back to English (FR-017)', (
+  testWidgets('an unsupported locale falls back to English', (
     WidgetTester tester,
   ) async {
     // French is not shipped; Flutter resolves it to the first supported locale,
@@ -64,7 +64,7 @@ void main() {
     expect(find.text('tabDataSource'), findsNothing);
   });
 
-  testWidgets('the Arrange menu actions are localized in English (SC-008)', (
+  testWidgets('the Arrange menu actions are localized in English', (
     WidgetTester tester,
   ) async {
     final JetReportDesignerController c =
@@ -117,7 +117,7 @@ void main() {
 
     // (3) Band inspector — the height row is label-less (its glyph stands in
     // for the dropped label, like the element SIZE row). Under the reified model
-    // (spec 024) the band inspector shows ONLY the height; the collection field
+    // the band inspector shows ONLY the height; the collection field
     // moved to the Scope inspector (checked next).
     c.selectBand(firstDetailBandId(c));
     await tester.pumpAndSettle();

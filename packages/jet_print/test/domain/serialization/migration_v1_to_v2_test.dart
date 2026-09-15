@@ -83,7 +83,7 @@ void main() {
       expect(lines.collectionField, 'lines');
       expect(_bandOf(lines.children.first).type, BandType.detail);
 
-      // resetGroup name → group id (FR-003a).
+      // resetGroup name → group id.
       final ReportVariable v = def.variables.single;
       expect(v.resetGroup, 'root/g0');
     });

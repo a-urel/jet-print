@@ -1,4 +1,4 @@
-/// Built-in logic functions for the expression engine (spec 005a).
+/// Built-in logic functions for the expression engine.
 library;
 
 import '../eval_context.dart';

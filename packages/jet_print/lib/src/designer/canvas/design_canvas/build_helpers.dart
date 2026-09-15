@@ -47,7 +47,7 @@ extension _CanvasBuild on _DesignCanvasState {
                   // per band at the snap step so a drawn line lands on a snap
                   // target). Constructed only when visible; sits behind band
                   // chrome, elements, and all overlays so it never obscures
-                  // content (FR-003 / D5). Absent from preview/export by
+                  // content. Absent from preview/export by
                   // construction — it is not in the shared render pipeline.
                   if (controller.gridEnabled)
                     Positioned.fill(
@@ -70,7 +70,7 @@ extension _CanvasBuild on _DesignCanvasState {
                       ),
                     ),
                   ),
-                  // Multi-column label cue (spec 035): the editable cell
+                  // Multi-column label cue: the editable cell
                   // boundary + read-only ghost columns. Drawn above band chrome,
                   // below element appearance; absent unless a grid is active.
                   if (labelGridCue(controller.definition, displayLayout)
@@ -113,7 +113,7 @@ extension _CanvasBuild on _DesignCanvasState {
                       JetPrintLocalizations.of(context)),
                   // Selection chrome (outline + handles), on top. Fed the DISPLAY
                   // layout so the outline + handles ride the same clamped geometry
-                  // as the element picture during a live move/resize (spec 038).
+                  // as the element picture during a live move/resize.
                   Positioned.fill(
                     child: DesignerSelectionOverlay(
                         layout: displayLayout,

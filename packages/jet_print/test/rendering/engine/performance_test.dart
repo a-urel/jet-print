@@ -1,4 +1,4 @@
-// First-page rendering budget (011 — contract C4 / SC-009 / FR-021).
+// First-page rendering budget.
 //
 // The BINDING assertion is structural: for a large dataset, building the first
 // page constructs exactly one page's worth of paint primitives, and that count
@@ -140,7 +140,7 @@ void main() {
     watch.stop();
     // Advisory measurement against SC-009's reference-desktop 2 s budget.
     // ignore: avoid_print
-    print('[advisory][SC-009] 1,000 records: first page viewable in '
+    print('[advisory][SC-009] 1,000 records: first page viewable in'
         '${watch.elapsedMilliseconds} ms across $pageCount pages');
     expect(report.pageAt(0).frame.primitives, isNotEmpty);
   });

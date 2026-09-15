@@ -1,4 +1,4 @@
-/// Commands that bind report elements to data (US2 / FR-009, FR-012, FR-013).
+/// Commands that bind report elements to data.
 ///
 /// Bindings live in the element model: a [TextElement]'s [TextElement.expression]
 /// (a `$F{}`/`$P{}`/`$V{}` string; null = static) and an [ImageElement]'s

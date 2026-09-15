@@ -84,7 +84,7 @@ extension _OutlineRows on _OutlinePanelState {
   }
 
   /// Appends a band branch (selectable → Properties) and, when expanded, a leaf
-  /// per element it contains. Trailing lifecycle affordances (FR-012): move
+  /// per element it contains. Trailing lifecycle affordances: move
   /// up/down for a [reorderable] scope per-row band, retype, and remove.
   void _addBandRows(
     List<Widget> rows,

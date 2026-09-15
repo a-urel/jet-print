@@ -1,4 +1,4 @@
-// PDF byte-determinism (012 — contract B3; FR-007/FR-011, SC-004; T004/T014).
+// PDF byte-determinism.
 //
 // Identical rendered inputs + options -> byte-identical artifacts. All
 // normally-varying PDF metadata (creation timestamp, document ID) is
@@ -28,7 +28,7 @@ void main() {
     final Uint8List second = await exporter.toPdf(invoiceReport());
     expect(second, first,
         reason: 'two renders of identical inputs must export to identical '
-            'bytes (FR-007) — a timestamp, random ID, or unstable ordering '
+            'bytes — a timestamp, random ID, or unstable ordering'
             'has leaked into the artifact');
   });
 
@@ -41,7 +41,7 @@ void main() {
         reason: 'repeat export over the cached frames must be stable');
   });
 
-  test('a partially viewed lazy report exports identically (FR-011)', () async {
+  test('a partially viewed lazy report exports identically', () async {
     final Uint8List fresh = await exporter.toPdf(invoiceReport());
     final RenderedReport viewed = invoiceReport();
     viewed.pageAt(1); // the preview looked at page 2 first
@@ -62,7 +62,7 @@ void main() {
     }
     expect(golden.existsSync(), isTrue,
         reason: 'missing golden pin — generate it once with '
-            '`flutter test --update-goldens` and commit it (T014)');
+            '`flutter test --update-goldens` and commit it');
     expect(bytes, golden.readAsBytesSync(),
         reason: 'the exported invoice changed. If deliberate (SDK/dart_pdf '
             'upgrade or a real visual change), regenerate with '

@@ -1,4 +1,4 @@
-// PagedCursorDataSet: forward cursor over an unknown-total paged feed (spec 040).
+// PagedCursorDataSet: forward cursor over an unknown-total paged feed.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/data_set.dart';
 import 'package:jet_print/src/data/field_def.dart';

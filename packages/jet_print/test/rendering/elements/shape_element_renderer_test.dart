@@ -70,7 +70,7 @@ void main() {
   // 021 / C7 — stroke width 0 removes the outline at the ONE renderer seam
   // (`stroke: strokeWidth > 0 ? style.stroke : null`), zero painter changes;
   // the stored stroke color stays on the style so width > 0 restores it.
-  group('stroke width 0 hides the outline (021 / C7)', () {
+  group('stroke width 0 hides the outline', () {
     const JetBoxStyle zeroWidth = JetBoxStyle(
       fill: JetColor(0x2200FF00),
       stroke: JetColor(0xFF112233),

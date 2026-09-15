@@ -7,7 +7,7 @@ part of '../jet_report_designer_controller.dart';
 
 extension CtrlMove on JetReportDesignerController {
   /// Translates every selected element by [delta] points (band-relative),
-  /// clamping each to its band ∩ page, as one undoable step (FR-008/010/017).
+  /// clamping each to its band ∩ page, as one undoable step.
   /// No-op when nothing is selected or the delta is zero.
   void moveBy(JetOffset delta) {
     if (delta.dx == 0 && delta.dy == 0) return;
@@ -58,7 +58,7 @@ extension CtrlMove on JetReportDesignerController {
     _notify();
   }
 
-  /// Commits the in-progress move as a single history entry (FR-017), or clears
+  /// Commits the in-progress move as a single history entry, or clears
   /// the transient state when nothing moved.
   void commitMove() {
     final JetOffset? delta = _moveDelta;

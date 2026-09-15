@@ -1,4 +1,4 @@
-/// Group-level lifecycle + property commands (spec 024 / T031 / FR-015).
+/// Group-level lifecycle + property commands.
 ///
 /// A [GroupLevel] is now a first-class, addressable entity that *owns* its key,
 /// header/footer bands, and pagination flags — so creating, deleting, or editing
@@ -54,7 +54,7 @@ class DeleteGroupCommand extends EditCommand {
 /// Edits group [groupId]'s key or one flag via [update] as one undoable step —
 /// the single command behind every per-group inspector edit (key +
 /// keepTogether + reprintHeaderOnEachPage + startNewPage), so each is exactly
-/// one history entry (FR-015). A no-op for an unknown group, or when [update]
+/// one history entry. A no-op for an unknown group, or when [update]
 /// leaves the group value-equal. The selection is left as-is (the group is
 /// already selected when its inspector is shown).
 class UpdateGroupCommand extends EditCommand {

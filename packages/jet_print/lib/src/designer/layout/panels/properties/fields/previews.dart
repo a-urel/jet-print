@@ -38,7 +38,7 @@ class _PagePreview extends StatelessWidget {
     final double pw = page.width <= 0 ? 1.0 : page.width;
     final double ph = page.height <= 0 ? 1.0 : page.height;
     // Scale points→px so the preview's *size* tracks the page — a larger page
-    // reads larger, a smaller one smaller — not just its proportions (US3).
+    // reads larger, a smaller one smaller — not just its proportions.
     const double scale = _frame / _referenceSide;
     double w = pw * scale;
     double h = ph * scale;

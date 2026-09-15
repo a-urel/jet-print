@@ -1,4 +1,4 @@
-// Pure-Dart geometry value types (spec 003). No Flutter UI import — proving the
+// Pure-Dart geometry value types. No Flutter UI import — proving the
 // domain seam stays headless.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/domain/geometry.dart';

@@ -1,4 +1,4 @@
-/// The runtime value model of the expression engine (spec 005a).
+/// The runtime value model of the expression engine.
 ///
 /// [JetValue] is a sealed type with one variant per supported value kind, plus
 /// a [JetError] variant. Errors are values: a failed operation yields a

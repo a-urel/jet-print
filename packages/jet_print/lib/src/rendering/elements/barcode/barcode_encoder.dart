@@ -1,4 +1,4 @@
-/// The first-party barcode encoder seam (spec 036, FR-011). Implementations map
+/// The first-party barcode encoder seam. Implementations map
 /// a symbology + value to [BarcodeSymbol] geometry or a [BarcodeInvalid] reason;
 /// only the package adapter imports the third-party encoder.
 library;

@@ -1,4 +1,4 @@
-// Numeric geometry + text editing through the controller (US5 / T066 / FR-019).
+// Numeric geometry + text editing through the controller.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 

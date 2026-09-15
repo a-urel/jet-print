@@ -1,4 +1,4 @@
-/// The Layout engine (spec 008a/008c): places a resolved [FilledReport] band
+/// The Layout engine: places a resolved [FilledReport] band
 /// stream onto pages with repeating page chrome, producing one [PageFrame] per
 /// page. Geometry plus page-scoped chrome substitution (008c — `PAGE_NUMBER`/
 /// `PAGE_COUNT`/params); no image byte-resolution. INTERNAL; the public surface
@@ -346,7 +346,7 @@ class LazyLayout {
   }
 }
 
-/// Lays a [FilledReport] out onto pages (spec 008a).
+/// Lays a [FilledReport] out onto pages.
 class ReportLayouter {
   /// Creates a layouter; [renderers], [measurer], and [functions] default to the
   /// built-ins.
@@ -377,7 +377,7 @@ class ReportLayouter {
     return r;
   }
 
-  /// Lays a reified [ReportDefinition] out eagerly (spec 024): build-all over
+  /// Lays a reified [ReportDefinition] out eagerly: build-all over
   /// [layoutLazyDefinition], identical frames — only the driving loop differs
   /// (build-all here, on-demand there).
   LayoutResult layoutDefinition(ReportDefinition def, FilledReport filled,
@@ -392,7 +392,7 @@ class ReportLayouter {
     );
   }
 
-  /// Runs the boundary-only pass over a reified [ReportDefinition] (spec 024):
+  /// Runs the boundary-only pass over a reified [ReportDefinition]:
   /// page chrome comes from [ReportDefinition.furniture] and group pagination
   /// flags from the master [GroupLevel]s. Measures bands, decides every page
   /// break, and records per-page placements **without** constructing paint

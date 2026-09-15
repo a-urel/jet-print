@@ -81,7 +81,7 @@ const JetColor _accent = JetColor(0xFF2F5C8A);
 /// The content width the bands span, in points (matches the element columns).
 const double _contentWidth = 540;
 
-/// The **same invoice, authored in the reified band model** (spec 024) instead
+/// The **same invoice, authored in the reified band model** instead
 /// of the flat [ReportTemplate] above — built entirely through the public API.
 ///
 /// This is what the new architecture looks like end to end: roles are *stated

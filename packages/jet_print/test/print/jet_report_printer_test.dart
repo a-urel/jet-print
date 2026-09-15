@@ -1,4 +1,4 @@
-// JetReportPrinter (012 — contract B6; FR-009a; T021).
+// JetReportPrinter.
 //
 // The print capability behind an injected fake PrintDialogPresenter — no
 // platform channels in tests: the presenter receives the SAME deterministic

@@ -1,4 +1,4 @@
-/// Resolving an inline-aggregate operand against a scope's fields (spec 033).
+/// Resolving an inline-aggregate operand against a scope's fields.
 ///
 /// Given the fields in scope at an aggregate-sink band and a leaf operand name,
 /// this pure resolver answers where that operand lives: a non-collection field
@@ -9,7 +9,7 @@
 /// Same-scope wins: a non-collection field at this scope short-circuits, even
 /// if the name also appears deeper. The descend search never crosses a
 /// same-name match into ambiguity — that is the "the engine does not guess"
-/// rule (FR-001). Pure Dart, no Flutter; data layer (operates on [FieldDef]).
+/// rule. Pure Dart, no Flutter; data layer (operates on [FieldDef]).
 library;
 
 import 'field_def.dart';
@@ -20,7 +20,7 @@ sealed class AggregatePath {
 }
 
 /// The operand is a non-collection field at the band's own scope; the existing
-/// same-scope mechanisms (spec 028 / 029) compute it unchanged.
+/// same-scope mechanisms compute it unchanged.
 class SameScope extends AggregatePath {
   const SameScope();
 }

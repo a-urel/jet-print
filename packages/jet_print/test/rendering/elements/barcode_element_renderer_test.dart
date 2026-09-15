@@ -232,7 +232,7 @@ void main() {
   });
 
   // -------------------------------------------------------------------------
-  // Design-time bound-field preview (FR-004)
+  // Design-time bound-field preview
   // -------------------------------------------------------------------------
 
   test('bound field with empty data previews as a 2D symbol (not placeholder)',

@@ -42,7 +42,7 @@ bool _infoFlagged(ReportDefinition def) => validate(def).any((Diagnostic d) =>
     d.message.toLowerCase().contains('not yet rendered'));
 
 void main() {
-  group('deferred capabilities render inert (C9)', () {
+  group('deferred capabilities render inert', () {
     test('per-scope grouping is ignored at render but flagged by validate()',
         () {
       // A nested scope carrying groups — the engine renders its rows as today

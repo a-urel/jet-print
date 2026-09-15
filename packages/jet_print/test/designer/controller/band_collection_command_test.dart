@@ -1,5 +1,5 @@
 // Scope collection-binding command + scope addressing (US3 / FR-015,
-// FR-015a). In the reified model (spec 024) the collection a region iterates is
+// FR-015a). In the reified model the collection a region iterates is
 // a property of its *scope*, not of a band: a nested master/detail is a
 // `NestedScope` under the root scope. Public-API controller tests (no `src/`).
 import 'package:flutter_test/flutter_test.dart';

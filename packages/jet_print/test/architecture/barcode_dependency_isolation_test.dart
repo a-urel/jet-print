@@ -1,4 +1,4 @@
-// Architecture test: barcode package isolation (FR-011 / SC-009).
+// Architecture test: barcode package isolation.
 //
 // Asserts that `package:barcode/` is used ONLY through the single adapter seam
 // (`package_barcode_encoder.dart`) and never leaks into other rendering files

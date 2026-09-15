@@ -1,5 +1,5 @@
-// FR-008: compound/embedded aggregates and multiple operands at different depths
-// each resolve and fold independently (spec 033).
+// compound/embedded aggregates and multiple operands at different depths
+// each resolve and fold independently.
 //
 // Verifies that `liftDescendantAggregates` correctly reuses the spec-032
 // `_expandInlineAggregates` scanner so that aggregate SUB-TERMS are lifted
@@ -162,7 +162,7 @@ ReportDefinition _makeDefinition() => ReportDefinition(
     );
 
 void main() {
-  group('descendant aggregate composition (FR-008)', () {
+  group('descendant aggregate composition', () {
     late FillResult res;
     late List<FilledBand> footers;
 

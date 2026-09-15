@@ -1,7 +1,7 @@
-// Canvas context menu (016 / US2 / C3): a right-click menu (Cut, Copy, Paste,
+// Canvas context menu: a right-click menu (Cut, Copy, Paste,
 // Duplicate, Delete) that resolves selection per FR-010 BEFORE it opens, reads
-// the same canCopy/canPaste predicates as the toolbar (FR-012), and acts through
-// the existing controller ops (FR-003).
+// the same canCopy/canPaste predicates as the toolbar, and acts through
+// the existing controller ops.
 //
 // Drives the public designer through a supplied controller; finds elements and
 // menu items by their stable widget keys (the canvas gesture detector owns
@@ -100,7 +100,7 @@ void main() {
     expect(find.byKey(_menuRegionKey), findsOneWidget);
     await _secondaryTapElement(tester, 'a');
 
-    // Selection resolved BEFORE the menu opened (FR-010), and the menu is up.
+    // Selection resolved BEFORE the menu opened, and the menu is up.
     expect(c.selection.singleOrNull, 'a');
     expect(find.byKey(_cutKey), findsOneWidget);
     expect(find.byKey(_copyKey), findsOneWidget);
@@ -160,7 +160,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await _secondaryTapEmpty(tester);
-    // Right-click on empty canvas must NOT deselect (FR-010, clarified).
+    // Right-click on empty canvas must NOT deselect (clarified).
     expect(c.selection.ids.toSet(), <String>{'a', 'b'});
 
     // Cut acts on both elements.
@@ -180,7 +180,7 @@ void main() {
     expect(c.selection.singleOrNull, 'b');
   });
 
-  testWidgets('dismissing the menu makes no document change (2.4 / FR-011)',
+  testWidgets('dismissing the menu makes no document change (2.4)',
       (WidgetTester tester) async {
     final JetReportDesignerController c = await _pump(tester);
     final int before = _elementCount(c);
@@ -196,7 +196,7 @@ void main() {
     expect(_elementCount(c), before, reason: 'no document change on dismiss');
   });
 
-  testWidgets('primary-click on empty CANVAS dismisses the menu (FR-011)',
+  testWidgets('primary-click on empty CANVAS dismisses the menu',
       (WidgetTester tester) async {
     // Regression: shadcn's region hides itself in its own onTapDown, but the
     // canvas GestureDetector (deliberately deeper) wins the primary-tap arena,

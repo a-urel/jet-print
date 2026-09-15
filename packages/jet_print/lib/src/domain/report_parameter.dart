@@ -1,4 +1,4 @@
-/// A declared report parameter — a named external input (spec 005b).
+/// A declared report parameter — a named external input.
 library;
 
 import 'value_equality.dart';

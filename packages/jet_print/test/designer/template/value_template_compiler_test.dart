@@ -1,4 +1,4 @@
-/// Tests for the value-field template compiler (013, T003) — the bidirectional
+/// Tests for the value-field template compiler — the bidirectional
 /// projection between the single value field and `TextElement.expression`.
 library;
 

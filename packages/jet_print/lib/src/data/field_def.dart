@@ -1,4 +1,4 @@
-/// Typed field metadata for the data layer (spec 004).
+/// Typed field metadata for the data layer.
 ///
 /// A [FieldDef] names a column and tags it with a best-effort [JetFieldType]
 /// (re-exported from the domain seam). The type is additive metadata — a slot
@@ -14,7 +14,7 @@ export '../domain/value_type.dart' show JetFieldType;
 
 /// An immutable description of one field of a [DataSet]'s schema: a [name], a
 /// coarse [type], and — for a [JetFieldType.collection] field — its own child
-/// [fields] (spec 009). The recursion lets a schema model master/detail to
+/// [fields]. The recursion lets a schema model master/detail to
 /// arbitrary depth (e.g. invoice → lines → sub-lines).
 class FieldDef with ValueEquality {
   /// Creates a field named [name] with the given [type] (default
@@ -97,7 +97,7 @@ class FieldDef with ValueEquality {
 /// row keys in first-seen order, each typed by [inferColumn] over its column's
 /// values. A column whose values are themselves lists of row maps is typed as a
 /// nested [JetFieldType.collection] carrying its own recursively-inferred child
-/// schema (spec 033 / SC-006), so a root-scope descendant-leaf aggregate can
+/// schema, so a root-scope descendant-leaf aggregate can
 /// resolve its operand by descending the typed collection chain even when the
 /// caller did not declare an explicit schema.
 ///

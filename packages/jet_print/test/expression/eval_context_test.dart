@@ -1,4 +1,4 @@
-// EvalContext + function registry + RowEvalContext (spec 005a). No Flutter UI.
+// EvalContext + function registry + RowEvalContext. No Flutter UI.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/data_row.dart';
 import 'package:jet_print/src/data/field_def.dart';

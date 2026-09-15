@@ -1,4 +1,4 @@
-// Evaluating $V{} against context variables (spec 005b). No Flutter UI.
+// Evaluating $V{} against context variables. No Flutter UI.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/expression/eval_context.dart';
 import 'package:jet_print/src/expression/expression.dart';

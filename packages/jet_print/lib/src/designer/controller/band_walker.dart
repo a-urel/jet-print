@@ -1,4 +1,4 @@
-/// Tree navigation + transformation over a [ReportDefinition] (spec 024).
+/// Tree navigation + transformation over a [ReportDefinition].
 ///
 /// The reified model replaces the flat `template.bands` list, so the designer
 /// can no longer address a band by integer index or scan one list. These pure
@@ -45,7 +45,7 @@ ReportDefinition mapBands(ReportDefinition def, Band Function(Band) transform) {
   scope = (DetailScope s) => s.copyWith(
         groups: <GroupLevel>[for (final GroupLevel g in s.groups) group(g)],
         children: <ScopeNode>[for (final ScopeNode n in s.children) node(n)],
-        // A nested scope's footer is a band too (spec 029) — map it through
+        // A nested scope's footer is a band too — map it through
         // [transform].
         footer: () => slot(s.footer),
       );
@@ -553,7 +553,7 @@ ReportDefinition removeScope(ReportDefinition def, String scopeId) => mapScopes(
           ],
         ));
 
-// --- Band lifecycle slot helpers (spec 024 / US3 / FR-012) -----------------
+// --- Band lifecycle slot helpers -----------------
 
 /// Whether [type] names a record-blind furniture slot (a page-level singleton).
 bool isFurnitureType(BandType type) =>
@@ -665,7 +665,7 @@ ReportDefinition removeBandFromTree(ReportDefinition def, String bandId) {
     );
   }
   // A group header/footer or a scope per-row band: rebuild each scope.
-  // Removal may target the scope's own footer band (spec 029).
+  // Removal may target the scope's own footer band.
   return mapScopes(def, (DetailScope s) {
     return s.copyWith(
       groups: <GroupLevel>[

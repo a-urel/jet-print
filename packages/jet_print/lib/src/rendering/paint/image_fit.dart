@@ -1,5 +1,5 @@
 // lib/src/rendering/paint/image_fit.dart
-/// Pure image-fit math (spec 006): source (image px) and destination (page pt)
+/// Pure image-fit math: source (image px) and destination (page pt)
 /// rects for drawing an image under a [JetBoxFit]. No `dart:ui`.
 library;
 

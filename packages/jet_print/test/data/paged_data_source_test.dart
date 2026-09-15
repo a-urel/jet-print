@@ -1,4 +1,4 @@
-// JetPagedDataSource: public lazily-paged source (spec 040). No Flutter UI import.
+// JetPagedDataSource: public lazily-paged source. No Flutter UI import.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart'
     show JetDataSource, JetPagedDataSource;

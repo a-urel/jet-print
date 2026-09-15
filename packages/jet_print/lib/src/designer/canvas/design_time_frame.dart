@@ -75,7 +75,7 @@ class DesignTimeFrameBuilder {
   }
 
   /// Maps an element to what is *shown* at design time. A data-bound text
-  /// element renders its binding **token** (FR-010, FR-014: tokens, not values),
+  /// element renders its binding **token** (FR-014: tokens, not values),
   /// fed through the unchanged text renderer as ordinary text so the shared
   /// pipeline stays single-sourced. Every other element —
   /// including a field-bound image, which the shared renderer already draws as a

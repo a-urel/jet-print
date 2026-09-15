@@ -1,4 +1,4 @@
-/// A generic, pure definition transform as one undoable edit (spec 024 / US3).
+/// A generic, pure definition transform as one undoable edit.
 ///
 /// The band/group/scope lifecycle operations (add / remove / reorder / retype)
 /// are each a single `ReportDefinition → ReportDefinition` transform plus a

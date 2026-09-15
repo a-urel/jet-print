@@ -67,7 +67,7 @@ Future<void> main() async {
 ///
 /// Wraps everything in a [ShadApp], owning the [ThemeMode] and the active
 /// [Locale] so the in-app toggles can flip the whole tree's theme and language
-/// live (FR-018). It consumes the library through its public entry point only,
+/// live. It consumes the library through its public entry point only,
 /// rendering [JetReportDesigner] and wiring [JetPrintLocalizations] exactly as
 /// an external consumer would.
 class JetPrintPlaygroundApp extends StatefulWidget {
@@ -77,7 +77,7 @@ class JetPrintPlaygroundApp extends StatefulWidget {
 
   /// The host-contributed fonts, passed to BOTH the workspace (picker + canvas)
   /// and the render callback (preview + export) — the single shared list that
-  /// makes the designer and the rendered output agree (FR-012).
+  /// makes the designer and the rendered output agree.
   final List<JetFontFamily> fonts;
 
   @override
@@ -514,7 +514,7 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
 /// share the same data source, so the same fields are bindable on either.
 ///
 /// Owns the [JetReportDesignerController] and implements the host side of the
-/// persistence seam (FR-022): Save encodes the live definition to a file picked
+/// persistence seam: Save encodes the live definition to a file picked
 /// with `file_selector`, Open decodes a picked file back into the controller.
 /// The library itself performs no file I/O — this is the consumer's job.
 class _DesignerTab extends StatefulWidget {
@@ -533,7 +533,7 @@ class _DesignerTab extends StatefulWidget {
 
   /// The initial design the controller opens with (the invoice sample, the
   /// nested-list sample, or a blank canvas) — authored in the reified band
-  /// model (spec 024).
+  /// model.
   final ReportDefinition seed;
 
   /// The data structure bound in this tab, or null when the tab starts with no
@@ -561,7 +561,7 @@ class _DesignerTab extends StatefulWidget {
 
 class _DesignerTabState extends State<_DesignerTab> {
   // Seed the designer with the tab's starting design so it's editable on first
-  // run (FR-021). `late` so the field initializer can read `widget.seed`.
+  // run. `late` so the field initializer can read `widget.seed`.
   late final JetReportDesignerController _controller =
       JetReportDesignerController(definition: widget.seed);
 
@@ -695,13 +695,13 @@ class _DesignerTabState extends State<_DesignerTab> {
       // The Empty tab starts null and gets its schema via _selectDataSource.
       dataSchema: _schema,
       // The SAME host-font list reaches the designer picker/canvas here and the
-      // engine via renderReport below (FR-012).
+      // engine via renderReport below.
       fonts: widget.fonts,
       // Offer only the Google-Fonts catalog; the built-in Default stays as the
       // silent render fallback but is hidden from the picker (022).
       showBuiltInFonts: false,
       // Preview renders the LIVE definition the designer hands over, through the
-      // native `renderDefinition` path (spec 024) — so every edit on the reified
+      // native `renderDefinition` path — so every edit on the reified
       // canvas shows up in the preview. When the Empty tab has a data source
       // attached via "Select", render against ITS sample rows + schema so the
       // preview resolves the selected source's fields; otherwise the sample's

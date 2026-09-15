@@ -1,11 +1,11 @@
-// Shape-forms WYSIWYG goldens (020 / US3 / C7.2–C7.3, SC-003).
+// Shape-forms WYSIWYG goldens.
 //
 // A page containing each new closed form (ellipse, triangle, diamond, pentagon,
 // hexagon, star) — filled and stroked — must render identically on the design
 // canvas and in PDF/PNG export, because both replay the SAME PathPrimitive from
 // the one `shapePath`. Preview shares the export's RenderedReport + painter, so
 // the export golden covers it too. The pre-existing line/rectangle report
-// goldens are untouched, so they stay byte-identical (C7.3). Black-box: public
+// goldens are untouched, so they stay byte-identical. Black-box: public
 // API only.
 @Tags(['golden'])
 library;
@@ -43,7 +43,7 @@ ShapeElement _form(String id, ShapeKind kind, double x) => ShapeElement(
 // The reified equivalent of the legacy single detail-band report, authored
 // directly with the SAME path-based id the template→definition adapter assigns
 // (a master-level detail band → a root BandNode 'root/c0'), so the canvas and
-// the export stay byte-identical (spec 024).
+// the export stay byte-identical.
 ReportDefinition _definition() => ReportDefinition(
       name: 'Shape Forms',
       page: _page,

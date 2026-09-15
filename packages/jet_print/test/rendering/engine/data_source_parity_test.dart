@@ -1,4 +1,4 @@
-// Data-source parity (011 — contract C8 / SC-006 / FR-011): the same logical
+// Data-source parity: the same logical
 // dataset — including a nested collection — supplied via the in-memory, JSON,
 // and object-backed sources yields BYTE-IDENTICAL rendered output, and
 // host-supplied parameter values resolve in expressions.

@@ -5,7 +5,7 @@
 /// The data mirrors the `customersSchema` shape: customers, each with an
 /// `orders` collection, each order with a `lines` collection. The only stored
 /// money figure is each line's `lineTotal`; every total above it is computed
-/// live via inline multi-level aggregates (spec 033) — each footer authors
+/// live via inline multi-level aggregates — each footer authors
 /// `SUM($F{lineTotal})` and the engine descends the [orders, lines] path at
 /// fill time. The declared schema (`customersSchema.fields`) is passed to the
 /// data source so nested `List<Map>` columns are typed as collections and
@@ -138,7 +138,7 @@ const List<Map<String, Object?>> kSampleCustomers = <Map<String, Object?>>[
 /// The declared schema (`fields: customersSchema.fields`) is required: source-
 /// level inference does NOT type nested `List<Map>` columns as collections, so
 /// without it the root-scope descend paths for inline multi-level aggregates
-/// (spec 033) would silently render 0.
+/// would silently render 0.
 JetDataSource customersDataSource() =>
     JetInMemoryDataSource(kSampleCustomers, fields: customersSchema.fields);
 

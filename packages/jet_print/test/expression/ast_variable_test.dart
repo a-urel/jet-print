@@ -1,4 +1,4 @@
-// VariableRefExpr canonical toString (spec 005b). No Flutter UI.
+// VariableRefExpr canonical toString. No Flutter UI.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/expression/ast.dart';
 

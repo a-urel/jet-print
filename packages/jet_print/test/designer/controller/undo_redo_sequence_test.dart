@@ -1,4 +1,4 @@
-// Undo/redo at scale (US3 / T049 / contracts §7.5 / SC-003): a ≥50-step edit
+// Undo/redo at scale: a ≥50-step edit
 // sequence undoes in reverse and redoes in order, with model size and selection
 // exact at every step; a new edit after undo discards redo; past-the-end is a
 // no-op.

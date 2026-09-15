@@ -23,7 +23,7 @@ FilledReport _fill(ReportDefinition def, List<Map<String, Object?>> rows) =>
     ReportFiller().fillDefinition(def, JetInMemoryDataSource(rows)).report;
 
 void main() {
-  group('native engine semantics (C8)', () {
+  group('native engine semantics', () {
     test(
         'master-level multi-level grouping cascades (outer→inner open, '
         'inner→outer close)', () {

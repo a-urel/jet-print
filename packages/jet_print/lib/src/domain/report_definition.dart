@@ -1,4 +1,4 @@
-/// The reified root of a report definition (spec 024) — replaces
+/// The reified root of a report definition — replaces
 /// [ReportTemplate].
 ///
 /// A [ReportDefinition] states every band's role structurally instead of
@@ -176,7 +176,7 @@ class ReportDefinition with ValueEquality {
   final List<ReportParameter> parameters;
 
   /// Declared variables (accumulated/derived values resolved by `$V{}`);
-  /// a group-scoped variable's `resetGroup` holds a [GroupLevel] id (FR-003a).
+  /// a group-scoped variable's `resetGroup` holds a [GroupLevel] id.
   final List<ReportVariable> variables;
 
   /// Record-blind, per-page chrome.
@@ -186,7 +186,7 @@ class ReportDefinition with ValueEquality {
   final ReportBody body;
 
   /// Whether [body] is a pure single-detail flow — the gate for the multi-column
-  /// label grid (spec 034): no once-bands, and a root scope with no groups, no
+  /// label grid: no once-bands, and a root scope with no groups, no
   /// footer, and exactly one [BandNode] child (the label template).
   bool get isPureSingleDetailBody {
     if (body.title != null || body.summary != null || body.noData != null) {

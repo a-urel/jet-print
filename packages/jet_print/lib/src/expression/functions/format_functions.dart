@@ -1,4 +1,4 @@
-/// Built-in FORMAT function for the expression engine (spec 005a).
+/// Built-in FORMAT function for the expression engine.
 library;
 
 import '../eval_context.dart';
@@ -13,7 +13,7 @@ import '../value.dart';
 /// pattern, an unsupported value type, or an unparseable pattern.
 ///
 /// Locale: grouping/decimal symbols follow `Intl.getCurrentLocale()`. At
-/// render time (011 — FR-012a) the JetReportEngine scopes every fill/layout
+/// render time the JetReportEngine scopes every fill/layout
 /// pass with `Intl.withLocale(options.locale, ...)`, so FORMAT always sees the
 /// explicit per-render locale — never the app's ambient `Intl.defaultLocale`.
 /// Only outside a render (e.g. evaluating an expression directly in a test)

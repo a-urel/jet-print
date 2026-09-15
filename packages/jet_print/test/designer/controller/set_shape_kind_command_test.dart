@@ -1,4 +1,4 @@
-// Controller setShapeKind() unit tests (020 / US1 / contracts C3.4, C5.2, C8.4).
+// Controller setShapeKind() unit tests.
 //
 // Black-box: drives only the public controller surface. setShapeKind() is the
 // single undoable mutator behind the shape gallery. It must change the form
@@ -19,7 +19,7 @@ void main() {
   const JetRect bounds = JetRect(x: 12, y: 8, width: 60, height: 40);
   const JetBoxStyle style = JetBoxStyle(stroke: JetColor.black, strokeWidth: 2);
 
-  group('setShapeKind — changes the form, preserves the box (C3.1–C3.3)', () {
+  group('setShapeKind — changes the form, preserves the box', () {
     test('a pick changes kind while preserving bounds and style', () {
       final JetReportDesignerController c = JetReportDesignerController(
         definition: _report(const ShapeElement(
@@ -33,7 +33,7 @@ void main() {
     });
   });
 
-  group('setShapeKind — no-op on the already-active form (C3.4 / FR-005)', () {
+  group('setShapeKind — no-op on the already-active form', () {
     test('picking the current form records no history and notifies no one', () {
       final JetReportDesignerController c = JetReportDesignerController(
         definition: _report(
@@ -68,7 +68,7 @@ void main() {
     });
   });
 
-  group('setShapeKind — line/flip coherence (C5.2)', () {
+  group('setShapeKind — line/flip coherence', () {
     test('switching off a line resets the line-only flipDiagonal', () {
       final JetReportDesignerController c = JetReportDesignerController(
         definition: _report(const ShapeElement(
@@ -94,7 +94,7 @@ void main() {
     });
   });
 
-  group('setShapeKind — clears a preserved unknownForm (C8.4 / FR-009)', () {
+  group('setShapeKind — clears a preserved unknownForm', () {
     test('a deliberate pick clears unknownForm', () {
       final JetReportDesignerController c = JetReportDesignerController(
         definition: _report(const ShapeElement(
@@ -132,8 +132,8 @@ void main() {
     });
   });
 
-  // --- US2: undo / redo (C4.1–C4.3 / SC-005) -------------------------------
-  group('setShapeKind — undo / redo (C4.1–C4.2)', () {
+  // --- US2: undo / redo -------------------------------
+  group('setShapeKind — undo / redo', () {
     test('one undo restores the prior form; one redo reapplies the new form',
         () {
       final JetReportDesignerController c = JetReportDesignerController(
@@ -154,7 +154,7 @@ void main() {
     });
   });
 
-  group('setShapeKind — one step per pick, no orphans (C4.3 / SC-005)', () {
+  group('setShapeKind — one step per pick, no orphans', () {
     test('rectangle→hexagon→star is exactly two undoable steps', () {
       final JetReportDesignerController c = JetReportDesignerController(
         definition: _report(const ShapeElement(

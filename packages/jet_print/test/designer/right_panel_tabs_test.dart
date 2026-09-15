@@ -1,5 +1,5 @@
-// Right-panel tab-switching test (US2 / FR-004/005/006, FR-010) plus the US3
-// panel-content shape assertions (T026).
+// Right-panel tab-switching test plus the US3
+// panel-content shape assertions.
 //
 // Asserts Data Source is active by default, that switching tabs swaps exactly
 // one visible body while hiding the others, and that each body shows content
@@ -72,8 +72,8 @@ void main() {
     });
   });
 
-  // --- US3: each panel body shows representative placeholder content (T026) ---
-  group('right panel placeholder content (US3 / FR-007)', () {
+  // --- US3: each panel body shows representative placeholder content ---
+  group('right panel placeholder content', () {
     testWidgets('Data Source shows the attached schema as a field tree', (
       WidgetTester tester,
     ) async {

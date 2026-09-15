@@ -5,7 +5,7 @@ part of '../design_canvas.dart';
 /// visible on the design surface. This is design-time chrome (band boundaries),
 /// not element appearance, so it is drawn directly rather than through the
 /// shared element pipeline.
-/// Paints the 5 mm alignment grid as backmost design-time chrome (spec 015).
+/// Paints the 5 mm alignment grid as backmost design-time chrome.
 ///
 /// Per band, it draws vertical lines at [gridLineOffsets] of the band width and
 /// horizontal lines at [gridLineOffsets] of the band height — each offset
@@ -15,7 +15,7 @@ part of '../design_canvas.dart';
 /// helper coarsens then hides the grid at low zoom so it never smears into a
 /// solid fill. Like [_BandChromePainter] this draws directly on the page's
 /// scaled surface, outside the shared render pipeline — so it is never present
-/// in preview/export (FR-016).
+/// in preview/export.
 class _GridPainter extends CustomPainter {
   const _GridPainter({
     required this.layout,
@@ -99,7 +99,7 @@ class _BandChromePainter extends CustomPainter {
       oldDelegate.separatorColor != separatorColor;
 }
 
-/// Draws the multi-column label cue (spec 035): the editable cell's boundary
+/// Draws the multi-column label cue: the editable cell's boundary
 /// plus faint read-only ghost outlines for the remaining columns. Design-only
 /// chrome — non-interactive, never part of the shared render pipeline.
 class _LabelGridPainter extends CustomPainter {

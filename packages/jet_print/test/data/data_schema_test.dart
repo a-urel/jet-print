@@ -1,5 +1,5 @@
 // JetDataSchema — the host-supplied data-source structure attached to the
-// designer (spec 009). No Flutter UI import — the data seam stays headless.
+// designer. No Flutter UI import — the data seam stays headless.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/data_schema.dart';
 import 'package:jet_print/src/data/field_def.dart';

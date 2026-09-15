@@ -3,7 +3,7 @@
 // A part of `outline_panel.dart` (extension), library-private.
 part of '../outline_panel.dart';
 
-/// The singleton slots a band can be retyped into (FR-012 / FR-001a).
+/// The singleton slots a band can be retyped into.
 ///
 /// The reserved furniture types (columnHeader, columnFooter, background) are
 /// deliberately omitted: they are modelled and round-trip through
@@ -150,7 +150,7 @@ extension _OutlineAddMenus on _OutlinePanelState {
       scalarFieldsForScope(schema, controller.definition, scope.id);
 
   /// The "change band type" affordance: a menu of the empty singleton slots
-  /// this band could move into (FR-012). Inert when no target slot is free.
+  /// this band could move into. Inert when no target slot is free.
   Widget _retypeMenu(
     JetReportDesignerController controller,
     Band band,

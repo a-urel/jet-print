@@ -536,7 +536,7 @@ extension _CrosstabInspector on _PropertiesPanelState {
   /// surfaced here, per field, where the author fixes it.
   ///
   /// With no schema attached [fields] is empty and nothing is flagged — the
-  /// binding still shows and resolution waits for a source (FR-019a), the rule
+  /// binding still shows and resolution waits for a source, the rule
   /// the element inspector's `_unresolved` follows.
   bool _crosstabUnresolved(String expression, List<FieldDef> fields) {
     if (fields.isEmpty) return false;
@@ -553,7 +553,7 @@ extension _CrosstabInspector on _PropertiesPanelState {
   ///
   /// Derived here rather than read from the engine's `Diagnostic`, because
   /// engine diagnostics are not localized: the same split `_columnDiagnostics`
-  /// (spec 035) already makes.
+  /// already makes.
   bool _crosstabTooWide(ReportDefinition def, Crosstab ct) {
     final double body =
         def.page.width - def.page.margins.left - def.page.margins.right;

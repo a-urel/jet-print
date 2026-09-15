@@ -1,4 +1,4 @@
-// Cross-panel sync (T067 / contracts §7.7 / SC-005 / US5.1–US5.3).
+// Cross-panel sync.
 //
 // The canvas, Outline and Properties panels share one controller, so a change in
 // any of them is reflected in the others:

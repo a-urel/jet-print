@@ -91,10 +91,10 @@ void main() {
     });
   });
 
-  group('PNG — the same content problems produce valid images (T016)', () {
+  group('PNG — the same content problems produce valid images', () {
     /// Decodes [png], asserting validity, the exact page dimensions, and that
     /// SOMETHING was painted (the preview's fallback content) — never a
-    /// corrupt or empty artifact (SC-007).
+    /// corrupt or empty artifact.
     void expectValidNonBlankPage(Uint8List png) {
       final img.Image? decoded = img.decodePng(png);
       expect(decoded, isNotNull, reason: 'corrupt PNG');

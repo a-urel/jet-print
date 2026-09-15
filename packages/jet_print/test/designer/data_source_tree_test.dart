@@ -1,4 +1,4 @@
-// Data Source panel tree test (US1 / FR-005..FR-008).
+// Data Source panel tree test (FR-005.FR-008).
 //
 // The Data Source tab renders the *attached* `JetDataSchema` as an expandable
 // tree — dataset → fields, with a nested `collection` field expanding to its

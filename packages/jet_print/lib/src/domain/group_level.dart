@@ -1,11 +1,11 @@
 /// A first-class group level: a master-level reset boundary that *owns* its
 /// header/footer bands and pagination flags.
 ///
-/// Part of the reified report model (spec 024). Replaces [ReportGroup] +
+/// Part of the reified report model. Replaces [ReportGroup] +
 /// loose `groupHeader`/`groupFooter` bands: the group is a single addressable
 /// entity, so its flags have exactly one home (fixing the 023 "same flag on
 /// both header and footer band" smell). Variables reference a group by its
-/// stable [id] (FR-003a), not its [name].
+/// stable [id], not its [name].
 library;
 
 import 'band.dart';

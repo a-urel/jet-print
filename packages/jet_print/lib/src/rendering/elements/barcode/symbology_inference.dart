@@ -47,7 +47,7 @@ BarcodeSymbology inferSymbology(String value) {
 }
 
 /// Resolves [symbology] to a concrete value: [inferSymbology] for `auto`, the
-/// value itself otherwise. An empty value with `auto` previews as QR (FR-004).
+/// value itself otherwise. An empty value with `auto` previews as QR.
 BarcodeSymbology resolveConcreteSymbology(
     BarcodeSymbology symbology, String value) {
   if (symbology != BarcodeSymbology.auto) return symbology;

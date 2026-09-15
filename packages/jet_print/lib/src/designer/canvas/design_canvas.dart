@@ -78,7 +78,7 @@ const Color _paperBorderColor = Color(0xFFE2E8F0); // slate-200
 const Color _paperShadowColor = Color(0x1A000000); // black 10%
 const Color _bandSeparatorColor = Color(0x14000000); // black 8%
 // The alignment grid is paper chrome, lighter than the band separators so it
-// recedes behind content (FR-003 / research D7).
+// recedes behind content.
 const Color _gridColor = Color(0x0D000000); // black ~5%
 // Band-type badges use a cool indigo tint so they read as designer annotations,
 // distinct from element content. Fixed (not theme-derived) like the rest of the
@@ -197,7 +197,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
 
   /// The pointer's current page position (points) while hovering the canvas, or
   /// null on exit. Only the ruler strips listen to it, so a hover repaints two
-  /// thin overlays — never the cached page picture (research D5).
+  /// thin overlays — never the cached page picture.
   final ValueNotifier<JetOffset?> _hoverPage = ValueNotifier<JetOffset?>(null);
 
   /// The device kind of the most recent pointer-down over the canvas. Drives
@@ -247,7 +247,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
 
   /// When the single-element selection changes (typically from an Outline row or
   /// Properties field), scroll that element into the viewport so the user sees
-  /// what they selected (FR-007 / SC-005). A no-op when it is already visible.
+  /// what they selected. A no-op when it is already visible.
   void _handleSelectionForScroll() {
     final JetReportDesignerController? controller = _boundController;
     if (controller == null) return;
@@ -476,7 +476,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
               onPointerMove: (PointerMoveEvent e) =>
                   trackPointer(e.localPosition),
               // Resolve selection on a secondary (right) button press, before the
-              // ShadContextMenuRegion opens the menu (FR-010). A raw Listener sees
+              // ShadContextMenuRegion opens the menu. A raw Listener sees
               // the down event ahead of the gesture arena, so the selection (and
               // its notify) is in place by the time the menu paints its items.
               onPointerDown: (PointerDownEvent e) {

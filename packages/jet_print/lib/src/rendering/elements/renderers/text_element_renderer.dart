@@ -1,4 +1,4 @@
-/// Renders a [TextElement] as one pre-broken [TextRunPrimitive] (spec 007a).
+/// Renders a [TextElement] as one pre-broken [TextRunPrimitive].
 ///
 /// Wraps at the element's own authored width (`el.bounds.width`) in BOTH measure
 /// and emit — a local determinism invariant that does not depend on the caller

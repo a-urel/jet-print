@@ -11,7 +11,7 @@ import '../designer_scope.dart';
 import '../l10n/jet_print_localizations.dart';
 
 /// The left element toolbox: a compact, fixed-width icon toolbar of the report
-/// elements an author can add (text, shape, image, barcode — FR-002).
+/// elements an author can add (text, shape, image, barcode).
 ///
 /// Each entry is both **draggable** onto the canvas (drag to place at the drop
 /// point) and **clickable** (click to place into the first detail band) —

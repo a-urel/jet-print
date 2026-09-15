@@ -36,10 +36,10 @@ part 'outline_panel/add_menus.dart';
 const Color _selectedRowColor = Color(0x142563EB);
 
 /// Body of the **Outline** tab: the live report as an indented, collapsible tree
-/// reflecting the reified structure (spec 024) — a Report root, the record-blind
+/// reflecting the reified structure — a Report root, the record-blind
 /// furniture and once-bands, then the master scope with its first-class groups
 /// (each owning its header/footer bands) and nested detail scopes, and a leaf per
-/// element (FR-007). The tree is driven entirely by the controller's
+/// element. The tree is driven entirely by the controller's
 /// `definition`/`selection`:
 ///
 /// * the row whose object is selected is highlighted (and marked selected for

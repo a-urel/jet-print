@@ -1,4 +1,4 @@
-/// Data source over a typed list of objects (spec 004).
+/// Data source over a typed list of objects.
 library;
 
 import 'data_set.dart';
@@ -13,7 +13,7 @@ import 'row_cursor_data_set.dart';
 /// For master/detail, the extractor returns the child rows as a `List` of
 /// maps under the collection field's name (declared as a
 /// [JetFieldType.collection] `FieldDef` with child fields). The same logical
-/// dataset renders identically through every public source (SC-006).
+/// dataset renders identically through every public source.
 /// Mapping is lazy: [row] runs per object during iteration, not eagerly at
 /// construction. [open] ignores its `params`.
 class JetObjectDataSource<T> implements JetDataSource {

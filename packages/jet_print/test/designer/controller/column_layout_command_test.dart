@@ -1,4 +1,4 @@
-// Column-layout set/remove commands + controller methods (spec 035 / Task 1).
+// Column-layout set/remove commands + controller methods (Task 1).
 // Public-API controller tests (no `src/` imports), mirroring
 // band_collection_command_test.dart and controller_history_test.dart.
 import 'package:flutter_test/flutter_test.dart';

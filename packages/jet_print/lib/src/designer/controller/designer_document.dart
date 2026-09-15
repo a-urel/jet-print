@@ -9,9 +9,9 @@ import 'selection.dart';
 ///
 /// Because both members are immutable, capturing a snapshot is O(1) and
 /// restoring one is exact — undoing a model edit also restores the selection
-/// that existed before it (FR-017, the coherent-selection guarantee).
+/// that existed before it (the coherent-selection guarantee).
 ///
-/// Reification (spec 024): the model is now a [ReportDefinition] section tree,
+/// Reification: the model is now a [ReportDefinition] section tree,
 /// not a flat `ReportTemplate`.
 class DesignerDocument {
   /// Creates a snapshot pairing [definition] with [selection].

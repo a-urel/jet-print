@@ -20,7 +20,7 @@ import 'layout/designer_toolbox.dart';
 import 'layout/designer_top_bar.dart';
 
 /// Invoked when the user triggers Save; receives the current [ReportDefinition]
-/// to persist. The library performs no file I/O itself (FR-022) — a host encodes
+/// to persist. The library performs no file I/O itself — a host encodes
 /// it (e.g. via `JetReportFormat.encodeDefinitionJson`) and writes it. May be
 /// async; a thrown error or rejected Future is routed to [JetReportDesigner.onError].
 typedef ReportSaveRequestedCallback = FutureOr<void> Function(
@@ -40,7 +40,7 @@ typedef ReportPreviewRequestedCallback = FutureOr<void> Function(
 
 /// Invoked when a host Save/Open/Preview/SelectDataSchema callback throws —
 /// synchronously or via a rejected Future. Receives the [error] and its
-/// [stackTrace]. The library performs no file I/O itself (FR-022), so this
+/// [stackTrace]. The library performs no file I/O itself, so this
 /// surfaces failures the host raised inside the `*Requested` callbacks. Null ⇒
 /// errors propagate as before (never silently swallowed).
 typedef ReportErrorCallback = void Function(
@@ -69,7 +69,7 @@ typedef ReportSelectDataSourceCallback = FutureOr<void> Function();
 /// Stays drop-in: with no arguments it owns an internal controller over a blank
 /// default design, reading only the ambient [ShadTheme] and
 /// [JetPrintLocalizations]. Supply a [controller] to own the model and drive
-/// save/open (the library performs **no** file I/O itself — FR-022):
+/// save/open (the library performs **no** file I/O itself):
 ///
 /// ```dart
 /// final controller = JetReportDesignerController();
@@ -134,14 +134,14 @@ class JetReportDesigner extends StatefulWidget {
   /// sync throw or rejected Future. Null ⇒ such errors propagate unchanged.
   final ReportErrorCallback? onError;
 
-  /// Host-contributed font families the designer makes selectable (022 / FR-002).
+  /// Host-contributed font families the designer makes selectable.
   ///
   /// Each face is the bytes the host hands in. They are added to the designer's
   /// one hoisted registry **after** the bundled defaults
   /// (last-registration-wins), so the family picker lists them after the
   /// built-ins (previewed in their own typeface) and the canvas measures and
   /// paints with them. Register **before** building the designer; the empty
-  /// default keeps the designer built-ins-only (SC-005).
+  /// default keeps the designer built-ins-only.
   ///
   /// Pass the **same** `List<JetFontFamily>` here and to `RenderOptions.fonts`
   /// (the render the preview/export consume) so design == preview == export.
@@ -161,7 +161,7 @@ class JetReportDesigner extends StatefulWidget {
 class _JetReportDesignerState extends State<JetReportDesigner> {
   late JetReportDesignerController _controller;
 
-  /// The designer's ONE font registry, hoisted here (021 / research §1) so the
+  /// The designer's ONE font registry, hoisted here so the
   /// canvas frame builder and the Properties panel's family picker share the
   /// same family set — what the picker offers is exactly what the canvas
   /// measures and paints with. The bundled defaults first, then the host
@@ -175,7 +175,7 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
   @override
   void initState() {
     super.initState();
-    // Layer the host families on top of the bundled defaults (022 / FR-002),
+    // Layer the host families on top of the bundled defaults,
     // last-registration-wins — before any build, so the picker and canvas see
     // them and `preloadUiFontFamilies` below previews them in their own type.
     _fonts.registerHostFonts(widget.fonts);
@@ -228,7 +228,7 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
 
   // Right-panel sizing in logical pixels; converted to the panel group's
   // fractional sizes against the live width so the minimum holds as the window
-  // grows or shrinks (research D3).
+  // grows or shrinks.
   static const double _rightMinWidth = 280;
   static const double _rightDefaultWidth = 360;
   static const double _surfaceMinWidth = 360;
@@ -289,7 +289,7 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
   @override
   Widget build(BuildContext context) {
     // Share the controller with the canvas and panels so a change in any one
-    // rebuilds the others (FR-018), and the attached data-source structure (009)
+    // rebuilds the others, and the attached data-source structure (009)
     // so the panels can display it and resolve bindings.
     return DesignerSchemaScope(
       dataSchema: widget.dataSchema,
@@ -337,7 +337,7 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
               key: _topBarKey,
               // Bridge the host callbacks to the top bar, each funnelled through
               // _guard so a thrown error or rejected Future reaches onError instead
-              // of escaping (FR-022 — the library does no file I/O itself).
+              // of escaping (the library does no file I/O itself).
               onSave: widget.onSaveRequested == null
                   ? null
                   : () => _guard(
@@ -378,7 +378,7 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
 
   /// Desktop main area (≥ [_breakpoint]): a resizable surface and right panel,
   /// the surface absorbing the remaining width and the right panel honoring its
-  /// minimum (FR-013).
+  /// minimum.
   Widget _buildWideMain() {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
@@ -443,7 +443,7 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
 }
 
 /// A narrow vertical strip standing in for the collapsed right panel, with a
-/// single ghost icon button that expands it (FR-014).
+/// single ghost icon button that expands it.
 class _CollapsedRail extends StatelessWidget {
   const _CollapsedRail({
     required this.icon,

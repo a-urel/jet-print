@@ -1,4 +1,4 @@
-/// Design-time token labels for data-bound elements (US2 / FR-010; 013).
+/// Design-time token labels for data-bound elements.
 library;
 
 import '../template/value_template_compiler.dart';

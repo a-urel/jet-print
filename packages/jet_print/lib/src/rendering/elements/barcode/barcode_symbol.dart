@@ -1,4 +1,4 @@
-/// First-party, package-agnostic barcode geometry (spec 036). The encoder seam
+/// First-party, package-agnostic barcode geometry. The encoder seam
 /// returns these; the renderer translates them into frame primitives. Pure Dart.
 library;
 

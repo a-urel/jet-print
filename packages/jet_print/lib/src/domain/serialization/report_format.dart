@@ -16,7 +16,7 @@ import 'report_format_exception.dart';
 /// schema migrations **pre-wired** — a consumer never assembles a codec
 /// registry.
 ///
-/// This is the save/open contract a host owns (FR-022): the library itself
+/// This is the save/open contract a host owns: the library itself
 /// performs no filesystem I/O. Encode a definition to text with
 /// [encodeDefinitionJson], write it however the host prefers; read text back
 /// and [decodeDefinitionJson] it.
@@ -25,14 +25,14 @@ import 'report_format_exception.dart';
 /// re-encodes identically), including element types this build does not
 /// recognize (preserved as [UnknownElement]) and the full
 /// parameter/variable/group payload — there is no attribute loss and no
-/// reordering (SC-002). A legacy v1 (flat-band) document is walked forward by
+/// reordering. A legacy v1 (flat-band) document is walked forward by
 /// the 1→2 migration on [decodeDefinition].
 abstract final class JetReportFormat {
   /// The pre-wired registry of built-in element codecs (`text`, `shape`,
   /// `image`, `barcode`). Built once and reused; never mutated.
   static final ElementCodecRegistry _registry = _buildRegistry();
 
-  /// Forward migrations for the reified [ReportDefinition] format (spec 024):
+  /// Forward migrations for the reified [ReportDefinition] format:
   /// the 1→2 flat-bands → tree migration walks legacy v1 documents forward.
   static final List<SchemaMigration> _definitionMigrations = <SchemaMigration>[
     V1ToV2Migration()
@@ -44,7 +44,7 @@ abstract final class JetReportFormat {
     return registry;
   }
 
-  // --- Reified model (spec 024, schema v2) -------------------------------
+  // --- Reified model (schema v2) -------------------------------
   // The same pre-wired element registry serves both formats. A v1 document
   // (schemaVersion 1) is walked forward by the 1→2 migration into a
   // [ReportDefinition]; a v2 document decodes the section tree directly.

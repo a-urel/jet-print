@@ -167,7 +167,7 @@ void main() {
     });
   });
 
-  group('min/max subtotals (SC-002)', () {
+  group('min/max subtotals', () {
     // min and max are associative: the min (or max) of a subtotal's raw rows
     // always equals the min (or max) of its children's own mins (or maxes).
     // That means these two calculations, unlike average/first/last, CANNOT
@@ -203,7 +203,7 @@ void main() {
     });
   });
 
-  group('first/last subtotals (SC-002)', () {
+  group('first/last subtotals', () {
     // Unlike min/max, `first`/`last` are order-sensitive: the first (or
     // last) raw row folded into a subtotal is whichever row arrived
     // first/last in STREAM order, regardless of which child group it belongs

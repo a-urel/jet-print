@@ -1,4 +1,4 @@
-// PdfPainter <-> CanvasPainter parity (012 — contract B2; research §6; T005).
+// PdfPainter <-> CanvasPainter parity.
 //
 // Pins the per-primitive semantics of the PDF backend against the canvas
 // backend's documented behavior, on hand-built frames:
@@ -163,7 +163,7 @@ void main() {
     });
   });
 
-  group('text — underline parity (021 / US1 / C11)', () {
+  group('text — underline parity', () {
     test(
         'an underlined run strokes one line segment per text line at the '
         'shared underlineFor geometry', () async {
@@ -350,7 +350,7 @@ void main() {
     });
   });
 
-  group('shapes — stroke width 0 (021 / C7)', () {
+  group('shapes — stroke width 0', () {
     test('a shape with strokeWidth 0 emits no stroke operators', () async {
       // Through the REAL renderer: the seam emits stroke: null at width 0, so
       // the PDF backend writes a fill pass only.
@@ -398,7 +398,7 @@ void main() {
         ),
       ], fonts: fonts);
       expect(content, isNot(contains('1 0 0 -1')),
-          reason: 'the mapping is per draw call (research §6), never a '
+          reason: 'the mapping is per draw call, never a'
               'negative-y CTM');
     });
 
@@ -425,8 +425,8 @@ void main() {
     });
   });
 
-  // --- Export reads the carried registry (022 — contracts C8 & C12) --------
-  group('export — carried host registry (C8/C12)', () {
+  // --- Export reads the carried registry --------
+  group('export — carried host registry', () {
     // Two text elements, BOTH in the host family, so a correct byte-keyed
     // embed produces exactly one font program for the family.
     ReportDefinition hostDefinition() => const ReportDefinition(
@@ -486,7 +486,7 @@ void main() {
 
       final PdfInspector host = PdfInspector(hostBytes);
       expect(host.allText, containsAll(<String>['Acme heading', 'Acme body']),
-          reason: 'PDF text stays real/selectable (FR-004)');
+          reason: 'PDF text stays real/selectable');
       expect(host.hasTextObjectsOn(0), isTrue);
       // The host font flows to export: the embedded program differs from the
       // default-only export of the same template/data.
@@ -494,16 +494,14 @@ void main() {
           reason: 'export read report.fonts, not a default-only registry');
     });
 
-    test('a host face used twice embeds exactly one font program (C12)',
-        () async {
+    test('a host face used twice embeds exactly one font program', () async {
       final PdfInspector pdf = PdfInspector(
           await const JetReportExporter().toPdf(renderHost(fonts: brand())));
       expect(pdf.embeddedFontProgramCount, 1,
           reason: 'byte-keyed cache embeds the host face once per document');
     });
 
-    test('a default-only report is unchanged (deterministic, SC-005)',
-        () async {
+    test('a default-only report is unchanged (deterministic)', () async {
       final Uint8List a = await const JetReportExporter().toPdf(renderHost());
       final Uint8List b = await const JetReportExporter().toPdf(renderHost());
       expect(a, orderedEquals(b));

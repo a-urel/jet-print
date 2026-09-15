@@ -5,7 +5,7 @@
 // `_LabeledRow`, `_NumberField`) without exposing anything.
 part of '../../properties_panel.dart';
 
-/// The shape form gallery (020 / US1): a wrap of the [_galleryForms] thumbnails,
+/// The shape form gallery: a wrap of the [_galleryForms] thumbnails,
 /// each drawing its form through the **same** `shapePath` geometry the renderer
 /// uses, so the picker icon is exactly what the canvas, preview, and export
 /// produce. The thumbnail matching the element's current [ShapeElement.kind] is
@@ -43,7 +43,7 @@ class _ShapeGallery extends StatelessWidget {
 
 /// One gallery thumbnail: a focusable, keyboard-activatable button drawing the
 /// [kind]'s geometry. It carries a localized [label] and `selected`/button
-/// semantics (FR-012), highlights when [active] or focused, and runs [onPick]
+/// semantics, highlights when [active] or focused, and runs [onPick]
 /// on tap or keyboard activate (Enter/Space).
 class _ShapeThumbnail extends StatefulWidget {
   const _ShapeThumbnail({
@@ -119,7 +119,7 @@ class _ShapeThumbnailState extends State<_ShapeThumbnail> {
 /// Strokes a single shape form into the thumbnail. Line and rectangle draw their
 /// dedicated geometry (mirroring the renderer's special cases); every other form
 /// is stroked from the shared `shapePath`, so the thumbnail can never diverge
-/// from the rendered shape (C7.4).
+/// from the rendered shape.
 class _ShapeThumbPainter extends CustomPainter {
   const _ShapeThumbPainter({required this.kind, required this.color});
 
@@ -183,7 +183,7 @@ class _ShapeThumbPainter extends CustomPainter {
       old.kind != kind || old.color != color;
 }
 
-/// The localized accessible name for a shape [kind] (020 / FR-012).
+/// The localized accessible name for a shape [kind].
 String _shapeFormLabel(ShapeKind kind, JetPrintLocalizations l10n) =>
     switch (kind) {
       ShapeKind.line => l10n.shapeFormLine,

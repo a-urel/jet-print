@@ -1,4 +1,4 @@
-/// Pure check-digit / length auto-fix for retail symbologies (spec 036, FR-005).
+/// Pure check-digit / length auto-fix for retail symbologies.
 /// Repairs what the spec allows; the encoder still validates the result.
 library;
 

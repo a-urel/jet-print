@@ -1,4 +1,4 @@
-/// The text-measurement seam (spec 006): a headless interface that turns text +
+/// The text-measurement seam: a headless interface that turns text +
 /// style into laid-out **lines**. Backends draw each line as one native run
 /// without re-wrapping, so line breaks are identical across backends.
 library;

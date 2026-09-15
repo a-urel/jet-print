@@ -40,7 +40,7 @@ const JetColor _brand = JetColor(0xFFC9762B);
 
 const String _money = '#,##0.00';
 
-/// The restaurant-menu report authored in the reified band model (spec 024).
+/// The restaurant-menu report authored in the reified band model.
 ReportDefinition menuSampleDefinition() => ReportDefinition(
       name: 'Menu',
       page: PageFormat.a4Portrait,

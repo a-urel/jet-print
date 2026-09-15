@@ -1,4 +1,4 @@
-// JetInMemoryDataSource over List<Map> (spec 004). No Flutter UI import.
+// JetInMemoryDataSource over List<Map>. No Flutter UI import.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/data_set.dart';
 import 'package:jet_print/src/data/field_def.dart';

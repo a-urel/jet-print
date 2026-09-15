@@ -11,11 +11,11 @@ import '../region_chrome.dart';
 
 /// Body of the **Data Source** tab: the host-attached [JetDataSchema] rendered
 /// as an expandable explorer tree — dataset → fields — that report elements bind
-/// against (FR-005..FR-007). A field of type [JetFieldType.collection] is a
+/// against (FR-005.FR-007). A field of type [JetFieldType.collection] is a
 /// branch whose children are its own fields, so a master/detail structure
 /// (e.g. an invoice with a nested `lines` collection) nests to arbitrary depth.
 ///
-/// When no schema is attached the panel shows a clear empty state (FR-008) — no
+/// When no schema is attached the panel shows a clear empty state — no
 /// stale or placeholder field names. Field names come from the host's schema and
 /// are intentionally NOT translated; only the empty-state message is localized.
 class DataSourcePanel extends StatelessWidget {

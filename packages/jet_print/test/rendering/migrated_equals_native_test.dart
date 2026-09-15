@@ -78,8 +78,7 @@ List<PageFrame> _frames(ReportDefinition def) {
 }
 
 void main() {
-  test('a migrated v1 report equals the same report authored directly (C7)',
-      () {
+  test('a migrated v1 report equals the same report authored directly', () {
     final String json = File(
             '${findWorkspaceRoot().path}/packages/jet_print/test/fixtures/v1/default.json')
         .readAsStringSync();

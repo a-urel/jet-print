@@ -1,5 +1,5 @@
-// T065 — arrange affordances (align / distribute / z-order) in the top bar,
-// wired to the controller's bulk ops (FR-012 / FR-013 / US4.5–US4.6).
+// arrange affordances (align / distribute / z-order) in the top bar,
+// wired to the controller's bulk ops.
 //
 // The geometry of each op is already covered by the controller unit tests; this
 // drives the public `JetReportDesigner` only — open the top-bar "Arrange" menu

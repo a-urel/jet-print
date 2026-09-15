@@ -1,4 +1,4 @@
-// Properties panel editor test (model-driven, T072).
+// Properties panel editor test (model-driven).
 //
 // The Properties tab is a context-aware inspector bound to the controller:
 //  * a single selected element → editable X/Y/W/H (setGeometry) and, for a text
@@ -47,7 +47,7 @@ Finder _marginOption(String kind) =>
 Finder _shapeThumb(String name) =>
     find.byKey(ValueKey<String>('$_p.shape.$name'));
 
-/// The seven forms the gallery offers, in roster order (C1.4). `line` is a valid
+/// The seven forms the gallery offers, in roster order. `line` is a valid
 /// ShapeKind but is intentionally NOT offered — a diagonal is not a useful
 /// authoring primitive (a rule is a thin rectangle).
 const List<String> _shapeForms = <String>[
@@ -239,7 +239,7 @@ JetTextStyle _textStyleOf(JetReportDesignerController c, String id) =>
 int _undoDepth(JetReportDesignerController c) => c.revision;
 
 /// A one-band report holding a single text element `t` styled with [style], so
-/// the Font editors can be asserted against known values (021 / C2). The detail
+/// the Font editors can be asserted against known values. The detail
 /// band lives in the master scope (the reified equivalent of a flat band).
 JetReportDesignerController _styledTextController(JetTextStyle style) =>
     JetReportDesignerController(
@@ -281,7 +281,7 @@ Future<JetReportDesignerController> _pumpStyledText(
   return c;
 }
 
-/// Like [_pumpStyledText] but builds the designer with host [fonts] (022 / US1),
+/// Like [_pumpStyledText] but builds the designer with host [fonts],
 /// so the family picker enumerates them. The external controller is disposed on
 /// tear-down (the designer never disposes a host-owned controller).
 Future<JetReportDesignerController> _pumpStyledTextWithFonts(
@@ -381,7 +381,7 @@ void main() {
       final String id = await _addText(tester, c);
 
       expect(_field('value'), findsOneWidget);
-      // The two-field Text + Binding pair is gone (013 / FR-001, SC-001).
+      // The two-field Text + Binding pair is gone.
       expect(_field('text'), findsNothing);
       expect(_field('binding'), findsNothing);
       await tester.enterText(_editable('value'), 'Hello');
@@ -432,7 +432,7 @@ void main() {
 
     testWidgets('the group header band exposes a Start-on-new-page toggle',
         (WidgetTester tester) async {
-      // The page-break flag is a GROUP property (spec 024) written through the
+      // The page-break flag is a GROUP property written through the
       // one GroupLevel, but it is edited from the band the author sees — the
       // group's header band (2026-06-14 design note), not an abstract node.
       final JetReportDesignerController c = JetReportDesignerController(
@@ -557,20 +557,20 @@ void main() {
       c.selectReport();
       await tester.pumpAndSettle();
 
-      // The default A4 page is named (with its size), not raw points (C1.1).
+      // The default A4 page is named (with its size), not raw points.
       expect(
           find.descendant(
               of: _field('paper'), matching: find.textContaining('A4')),
           findsOneWidget);
-      // The Office-style page-sample preview is present (C9.1) ...
+      // The Office-style page-sample preview is present..
       expect(_preview, findsOneWidget);
       // ... rendered at the page's aspect ratio (A4 portrait → taller, < 1).
       expect(_previewAspect(tester), lessThan(1));
-      // The PAGE controls are present/editable with nothing selected (C9.4).
+      // The PAGE controls are present/editable with nothing selected.
       expect(_field('paper'), findsOneWidget);
     });
 
-    testWidgets('selecting Letter resizes the page, margins unchanged (C1.2)',
+    testWidgets('selecting Letter resizes the page, margins unchanged',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openProperties(tester);
@@ -599,7 +599,7 @@ void main() {
           findsOneWidget);
     });
 
-    testWidgets('a page matching no preset reads Custom (C1.3)',
+    testWidgets('a page matching no preset reads Custom',
         (WidgetTester tester) async {
       final JetReportDesignerController c =
           JetReportDesignerController(definition: _pageDefinition(500, 700));
@@ -618,7 +618,7 @@ void main() {
   });
 
   group('properties — page (US2 margins)', () {
-    testWidgets('choosing Narrow sets all four sides and updates fields (C2.1)',
+    testWidgets('choosing Narrow sets all four sides and updates fields',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openProperties(tester);
@@ -635,7 +635,7 @@ void main() {
       expect(_valueIn('marginBottom', '14.2'), findsOneWidget);
     });
 
-    testWidgets('editing Left changes only Left and flips to Custom (C2.2)',
+    testWidgets('editing Left changes only Left and flips to Custom',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openProperties(tester);
@@ -656,7 +656,7 @@ void main() {
           findsOneWidget);
     });
 
-    testWidgets('a non-numeric margin entry reverts on blur (C2.4)',
+    testWidgets('a non-numeric margin entry reverts on blur',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openProperties(tester);
@@ -675,8 +675,7 @@ void main() {
           reason: 'the field reverts to the last valid value');
     });
 
-    testWidgets(
-        'changing a margin moves the preview guide proportionally (C9.3)',
+    testWidgets('changing a margin moves the preview guide proportionally',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openProperties(tester);
@@ -693,8 +692,7 @@ void main() {
   });
 
   group('properties — page (US3 orientation & custom)', () {
-    testWidgets(
-        'toggling Landscape swaps W/H and flips the preview (C3.1/C9.2)',
+    testWidgets('toggling Landscape swaps W/H and flips the preview',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openProperties(tester);
@@ -733,7 +731,7 @@ void main() {
       expect(_previewAspect(tester), closeTo(1.5, 0.001)); // 900 / 600
     });
 
-    testWidgets('a standard paper hides the custom W/H fields (C3.3)',
+    testWidgets('a standard paper hides the custom W/H fields',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openProperties(tester);
@@ -744,7 +742,7 @@ void main() {
       expect(_field('pageHeight'), findsNothing);
     });
 
-    testWidgets('Custom paper reveals W/H and adopts exact dims (C3.2/C3.3)',
+    testWidgets('Custom paper reveals W/H and adopts exact dims',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openProperties(tester);
@@ -769,7 +767,7 @@ void main() {
       expect(c.definition.page.height, 500);
     });
 
-    testWidgets('a custom dimension field reverts invalid input (C3.5)',
+    testWidgets('a custom dimension field reverts invalid input',
         (WidgetTester tester) async {
       final JetReportDesignerController c =
           JetReportDesignerController(definition: _pageDefinition(300, 500));
@@ -820,8 +818,8 @@ void main() {
     });
   });
 
-  // --- Font section (021 / US1) --------------------------------------------
-  group('properties — font section gating (C1)', () {
+  // --- Font section --------------------------------------------
+  group('properties — font section gating', () {
     testWidgets('a text element shows the full Font section',
         (WidgetTester tester) async {
       await _pumpStyledText(tester, JetTextStyle.fallback);
@@ -865,7 +863,7 @@ void main() {
     });
   });
 
-  group('properties — font binding (C2)', () {
+  group('properties — font binding', () {
     testWidgets('the editors display a styled element\'s effective values',
         (WidgetTester tester) async {
       final SemanticsHandle sem = tester.ensureSemantics();
@@ -908,7 +906,7 @@ void main() {
     });
   });
 
-  group('properties — family picker (C3)', () {
+  group('properties — family picker', () {
     testWidgets(
         'lists the registry families, previewed in their own typeface, '
         'and a pick is one undoable commit', (WidgetTester tester) async {
@@ -964,7 +962,7 @@ void main() {
       await tester.pumpAndSettle();
       final String json = JetReportFormat.encodeDefinitionJson(c.definition);
       expect(json, contains('Unknown Family'),
-          reason: 'the stored family name is preserved on save (SC-003)');
+          reason: 'the stored family name is preserved on save');
       // And decoding brings it back unchanged.
       final ReportDefinition decoded =
           JetReportFormat.decodeDefinitionJson(json);
@@ -979,7 +977,7 @@ void main() {
     });
   });
 
-  group('properties — host family in the picker (C10 / US1)', () {
+  group('properties — host family in the picker', () {
     testWidgets(
         'lists the host family after the built-ins, previewed in its own '
         'typeface, and applying it is one undoable commit',
@@ -992,7 +990,7 @@ void main() {
 
       final Finder acme = _field('fontFamily.option.Acme Brand');
       expect(acme, findsOneWidget);
-      // Built-ins precede the host family (the families order; C5).
+      // Built-ins precede the host family (the families order).
       expect(
           tester.getTopLeft(acme).dy,
           greaterThan(
@@ -1075,7 +1073,7 @@ void main() {
     });
   });
 
-  group('properties — B/I/U toggles (C5)', () {
+  group('properties — B/I/U toggles', () {
     testWidgets('Bold is active iff the weight is bold',
         (WidgetTester tester) async {
       final SemanticsHandle sem = tester.ensureSemantics();
@@ -1139,7 +1137,7 @@ void main() {
     });
   });
 
-  group('properties — text color editor (C6)', () {
+  group('properties — text color editor', () {
     testWidgets('the hex input shows #RRGGBB for opaque, #AARRGGBB translucent',
         (WidgetTester tester) async {
       await _pumpStyledText(
@@ -1218,7 +1216,7 @@ void main() {
     });
   });
 
-  group('properties — alignment segments (C2/C9)', () {
+  group('properties — alignment segments', () {
     testWidgets('clicking center then right re-aligns, one undo step each',
         (WidgetTester tester) async {
       final JetReportDesignerController c =
@@ -1276,7 +1274,7 @@ void main() {
     });
   });
 
-  group('properties — font undo & selection switching (C9)', () {
+  group('properties — font undo & selection switching', () {
     testWidgets('the keyed font editors re-bind when selection switches',
         (WidgetTester tester) async {
       final JetReportDesignerController c =
@@ -1329,8 +1327,8 @@ void main() {
   // localization_tr_test.dart — one non-English locale per isolate (the CLDR
   // locale-switch leak documented in localization_test.dart).
 
-  // --- Appearance section (021 / US2) ---------------------------------------
-  group('properties — appearance gating (C1)', () {
+  // --- Appearance section ---------------------------------------
+  group('properties — appearance gating', () {
     testWidgets('a closed shape shows fill, outline, and width controls',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
@@ -1367,7 +1365,7 @@ void main() {
     });
   });
 
-  group('properties — shape fill & outline none states (C7)', () {
+  group('properties — shape fill & outline none states', () {
     testWidgets('None commits fill: null and the editor shows the none state',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
@@ -1422,7 +1420,7 @@ void main() {
     });
   });
 
-  group('properties — outline width picker (C7)', () {
+  group('properties — outline width picker', () {
     testWidgets('picking a preset commits that width in one undo step',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
@@ -1469,7 +1467,7 @@ void main() {
     });
   });
 
-  group('properties — shape editor undo & selection switch (C9)', () {
+  group('properties — shape editor undo & selection switch', () {
     testWidgets('a swatch pick on fill is one undoable step',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
@@ -1517,8 +1515,8 @@ void main() {
     });
   });
 
-  // --- Barcode color (021 / US3) --------------------------------------------
-  group('properties — barcode color (C1/C8)', () {
+  // --- Barcode color --------------------------------------------
+  group('properties — barcode color', () {
     Future<String> addBarcode(
         WidgetTester tester, JetReportDesignerController c) async {
       c.createElement(DesignerToolType.barcode,
@@ -1568,7 +1566,7 @@ void main() {
           reason: 'one-step undo restores black');
     });
 
-    testWidgets('the barcode color editor offers no None entry (C8)',
+    testWidgets('the barcode color editor offers no None entry',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openProperties(tester);
@@ -1754,9 +1752,9 @@ void main() {
     });
   });
 
-  // --- Shape gallery (020 / US1) -------------------------------------------
+  // --- Shape gallery -------------------------------------------
   group('properties — shape gallery', () {
-    testWidgets('shows the Shape section with the seven closed forms (C1.1)',
+    testWidgets('shows the Shape section with the seven closed forms',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openProperties(tester);
@@ -1769,8 +1767,7 @@ void main() {
       expect(_shapeThumb('line'), findsNothing);
     });
 
-    testWidgets('no gallery for a text element (C1.2 / FR-010)',
-        (WidgetTester tester) async {
+    testWidgets('no gallery for a text element', (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openProperties(tester);
       await _addText(tester, c);
@@ -1779,7 +1776,7 @@ void main() {
       expect(_shapeThumb('hexagon'), findsNothing);
     });
 
-    testWidgets('no gallery with nothing or several selected (C1.3 / FR-010)',
+    testWidgets('no gallery with nothing or several selected',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openProperties(tester);
@@ -1793,7 +1790,7 @@ void main() {
       expect(_shapeThumb('rectangle'), findsNothing);
     });
 
-    testWidgets('the active form is the only highlighted thumbnail (C2.1)',
+    testWidgets('the active form is the only highlighted thumbnail',
         (WidgetTester tester) async {
       final SemanticsHandle sem = tester.ensureSemantics();
       final JetReportDesignerController c = await pumpDesignerWith(tester);
@@ -1810,7 +1807,7 @@ void main() {
       sem.dispose();
     });
 
-    testWidgets('an unknown-form shape highlights nothing (C2.2 / FR-009)',
+    testWidgets('an unknown-form shape highlights nothing',
         (WidgetTester tester) async {
       final SemanticsHandle sem = tester.ensureSemantics();
       // A shape loaded with an unrecognized form renders as rectangle but must
@@ -1872,7 +1869,7 @@ void main() {
       expect(_shapeOf(c, id).style, style, reason: 'style preserved');
     });
 
-    testWidgets('a shape can switch between forms and back via the UI (C5.3)',
+    testWidgets('a shape can switch between forms and back via the UI',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openProperties(tester);

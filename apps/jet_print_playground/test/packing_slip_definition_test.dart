@@ -1,5 +1,5 @@
 // Confirms the packing-slip sample (Shipment ▸ Box ▸ Item) is authored as a
-// genuinely nested tree in the reified band model (spec 024): boxes nested
+// genuinely nested tree in the reified band model: boxes nested
 // under a shipment GroupLevel, items nested under each box, with per-box and
 // grand totals expressed as inline aggregates — pristine under the validator.
 // All through `package:jet_print/jet_print.dart` only.

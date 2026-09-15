@@ -1,4 +1,4 @@
-// US1 end-to-end (011 — acceptance scenarios 1–5, SC-001/SC-002/SC-004/SC-005).
+// US1 end-to-end (acceptance scenarios 1–5).
 //
 // The integration flow uses ONLY `package:jet_print/jet_print.dart`: build a
 // data source, render a flat one-band template with a parameter, and preview

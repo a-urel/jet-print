@@ -1,4 +1,4 @@
-/// Wires all built-in expression function families (spec 005a).
+/// Wires all built-in expression function families.
 library;
 
 import '../function_registry.dart';

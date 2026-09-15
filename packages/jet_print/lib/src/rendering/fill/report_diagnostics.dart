@@ -1,11 +1,11 @@
-/// Non-fatal issues collected while rendering (spec 007b; public since 011 —
+/// Non-fatal issues collected while rendering (spec 007b; public since 011
 /// FR-013). The engine never throws on a content problem — it records a
 /// [Diagnostic] and continues (render-don't-crash), so a report always
 /// produces a paintable result. Hosts read the merged collection from
 /// `RenderedReport.diagnostics`: an unknown field, a missing parameter, an
 /// expression-evaluation error, an empty dataset, or an unresolvable image
 /// each yields a specific entry identifying the problem (and the offending
-/// element, where applicable) next to a best-effort render (FR-014/SC-007).
+/// element, where applicable) next to a best-effort render.
 ///
 /// [Diagnostic] and [DiagnosticSeverity] are pure value types and now live in
 /// the domain layer ([Diagnostic] is also produced by author-time

@@ -129,11 +129,11 @@ extension CtrlGroupsScopes on JetReportDesignerController {
   void deleteScope(String scopeId) => _commit(DeleteScopeCommand(scopeId));
 
   /// Sets (or clears, when null) the nested [collectionField] scope [scopeId]
-  /// iterates, as one undoable step (US3 / FR-015, FR-015a).
+  /// iterates, as one undoable step.
   void setScopeCollection(String scopeId, String? collectionField) => _commit(
         SetScopeCollectionCommand(
             scopeId: scopeId, collectionField: collectionField),
       );
 
-  // --- Band lifecycle (add / remove / reorder / retype — spec 024 / US3) ------
+  // --- Band lifecycle (add / remove / reorder / retype) ------
 }

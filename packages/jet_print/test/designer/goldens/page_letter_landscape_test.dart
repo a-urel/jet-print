@@ -1,4 +1,4 @@
-// Letter / landscape page propagation golden (018 / US3 / contract C7.1; IV).
+// Letter / landscape page propagation golden (IV).
 //
 // Proves a non-default page (Letter, landscape, Narrow margins) reaches all
 // three surfaces identically: the export rasterizer sizes the page to exactly
@@ -24,7 +24,7 @@ const PageFormat _letterLandscape = PageFormat(
 // The reified equivalent of the legacy title + master-detail report, authored
 // directly with the SAME path-based ids the template→definition adapter assigns
 // (title → body slot, the master-level detail band → a root BandNode), so all
-// three surfaces stay byte-identical (spec 024).
+// three surfaces stay byte-identical.
 ReportDefinition _definition() => const ReportDefinition(
       name: 'Letter Landscape',
       page: _letterLandscape,
@@ -80,7 +80,7 @@ void main() {
     const JetReportExporter exporter = JetReportExporter();
     final Uint8List png = await exporter.pageToPng(_rendered(), 0);
     final ui.Image image = await _decode(png);
-    // The export adopts the page exactly — the WYSIWYG size guarantee (C7.1).
+    // The export adopts the page exactly — the WYSIWYG size guarantee.
     expect(image.width, 792);
     expect(image.height, 612);
   });

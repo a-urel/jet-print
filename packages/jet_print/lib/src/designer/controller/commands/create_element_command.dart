@@ -1,4 +1,4 @@
-/// The command that inserts a newly-created element into a band (FR-001/002/004).
+/// The command that inserts a newly-created element into a band.
 library;
 
 import '../../../domain/band.dart';

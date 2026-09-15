@@ -1,4 +1,4 @@
-/// Lazily-paged data source: pulls rows one page at a time (spec 040).
+/// Lazily-paged data source: pulls rows one page at a time.
 library;
 
 import 'data_set.dart';

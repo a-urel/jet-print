@@ -77,7 +77,7 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
     }
   }
 
-  // Collect ALL published-total names from the scope tree once (spec 030).
+  // Collect ALL published-total names from the scope tree once.
   // These names are legitimately not in the schema — they are injected at fill
   // time — so a NotFound result for them must not produce a diagnostic.
   final Set<String> publishedTotalNames = <String>{};
@@ -534,7 +534,7 @@ Set<String> _recordFieldRefs(ReportElement el) {
 }
 
 /// Every [Band] in [def], in document order (furniture, body once-bands, then
-/// the scope tree). Used to find stray `columnLayout`s (spec 034).
+/// the scope tree). Used to find stray `columnLayout`s.
 List<Band> _allBands(ReportDefinition def) {
   final List<Band> bands = <Band>[];
   void add(Band? b) {
@@ -573,9 +573,9 @@ List<Band> _allBands(ReportDefinition def) {
   return bands;
 }
 
-/// Validates the spec-034 label grid: the active band's geometry (FR-007/008)
+/// Validates the spec-034 label grid: the active band's geometry
 /// and a fallback warning for any `columnLayout` carried by a band that is not
-/// the active label band (FR-009).
+/// the active label band.
 void _validateColumns(ReportDefinition def, List<Diagnostic> out) {
   final Band? active =
       def.soleDetailBand?.columnLayout != null ? def.soleDetailBand : null;

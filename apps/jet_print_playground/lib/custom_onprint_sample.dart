@@ -56,7 +56,7 @@ const JetColor _down = JetColor(0xFFD32F2F);
 /// Two-decimal money mask.
 const String _money = '#,##0.00';
 
-/// The watchlist report, authored in the reified band model (spec 024). The
+/// The watchlist report, authored in the reified band model. The
 /// `changeArrow` cell ships as a neutral grey line placeholder — the
 /// [onElementPrint] hook is what turns it into a coloured up/down block arrow
 /// at emit time.

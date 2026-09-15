@@ -30,7 +30,7 @@ JetString? tryJetFormat(JetValue value, String pattern) {
   }
 }
 
-/// Applies the label `format` property semantics (013 / FR-010–FR-012): an empty
+/// Applies the label `format` property semantics: an empty
 /// [pattern], a type the pattern does not fit, or a malformed pattern all leave
 /// [value] unchanged (never an error token); a number/date with a valid pattern
 /// becomes the formatted [JetString].

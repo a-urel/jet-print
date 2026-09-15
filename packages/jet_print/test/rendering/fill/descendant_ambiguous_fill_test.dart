@@ -255,7 +255,7 @@ const List<FieldDef> _unambiguousSchema = <FieldDef>[
 
 /// Two-customer fixture:
 ///   C1: lines [10, 20, 30] — 3 lines, sum = 60, avg = 20
-///   C2: lines [100]        — 1 line, sum = 100, avg = 100
+///   C2: lines [100] — 1 line, sum = 100, avg = 100
 /// Grand totals: COUNT = 4, AVG = 160/4 = 40
 List<Map<String, Object?>> _unambiguousRows() => <Map<String, Object?>>[
       <String, Object?>{
@@ -382,7 +382,7 @@ void main() {
 
       // Fill-time diagnostics contract: ambiguous-operand fallback is silent —
       // the filler substitutes the #ERROR token directly without emitting a
-      // diagnostic. Validation is an author-time concern (Task 7 / FR-011).
+      // diagnostic. Validation is an author-time concern (Task 7).
       expect(res.diagnostics.hasErrors, isFalse,
           reason: 'ambiguous fill is a silent graceful fallback, not an error: '
               '${res.diagnostics.entries}');
@@ -416,7 +416,7 @@ void main() {
 
       // Fill-time diagnostics contract: ambiguous-operand fallback is silent —
       // the filler substitutes the #ERROR token directly without emitting a
-      // diagnostic. Validation is an author-time concern (Task 7 / FR-011).
+      // diagnostic. Validation is an author-time concern (Task 7).
       expect(res.diagnostics.hasErrors, isFalse,
           reason: 'ambiguous fill is a silent graceful fallback, not an error: '
               '${res.diagnostics.entries}');
@@ -457,7 +457,7 @@ void main() {
 
       // Fill-time diagnostics contract: ambiguous-operand fallback is silent —
       // the filler substitutes the #ERROR token directly without emitting a
-      // diagnostic. Validation is an author-time concern (Task 7 / FR-011).
+      // diagnostic. Validation is an author-time concern (Task 7).
       expect(res.diagnostics.hasErrors, isFalse,
           reason: 'ambiguous fill is a silent graceful fallback, not an error: '
               '${res.diagnostics.entries}');
@@ -505,10 +505,10 @@ void main() {
       // Two customers → two group footers.
       expect(footers, hasLength(2), reason: 'one footer per customer');
 
-      // C1: AVG(10, 20, 30) = 60/3 = 20.0
+      // AVG(10, 20, 30) = 60/3 = 20.0
       expect(_textOf(footers[0], 'customerAvg'), equals('20.0'),
           reason: 'C1 average = 20.0');
-      // C2: AVG(100) = 100.0
+      // AVG(100) = 100.0
       expect(_textOf(footers[1], 'customerAvg'), equals('100.0'),
           reason: 'C2 average = 100.0');
 

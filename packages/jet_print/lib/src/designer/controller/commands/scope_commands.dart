@@ -1,4 +1,4 @@
-/// Detail-scope lifecycle + property commands (spec 024 / T031 / FR-015).
+/// Detail-scope lifecycle + property commands.
 ///
 /// A [DetailScope] is a first-class, addressable iteration scope. Master/detail
 /// nesting is expressed by adding a [NestedScope] child; the collection a scope
@@ -52,7 +52,7 @@ class DeleteScopeCommand extends EditCommand {
 
 /// Sets (or, when [collectionField] is null, clears) the nested collection a
 /// scope iterates — the reified replacement for the old per-band collection
-/// binding (US3 / FR-015, FR-015a). A no-op for an unknown scope or unchanged
+/// binding. A no-op for an unknown scope or unchanged
 /// value.
 class SetScopeCollectionCommand extends EditCommand {
   /// Binds scope [scopeId] to [collectionField] (null clears it).
@@ -83,7 +83,7 @@ class SetScopeCollectionCommand extends EditCommand {
                   groups: s.groups,
                   children: s.children,
                   // Rebinding (or clearing) the collection must not drop the
-                  // scope's footer (spec 029) or published totals (spec 030).
+                  // scope's footer or published totals.
                   footer: s.footer,
                   totals: s.totals,
                 )

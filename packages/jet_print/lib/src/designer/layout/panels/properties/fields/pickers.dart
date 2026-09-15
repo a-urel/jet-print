@@ -24,7 +24,7 @@ class _DropdownOption {
   final VoidCallback onPick;
 
   /// An optional style for the option's label — the family picker previews
-  /// each font family in its own typeface (021 / C3). Null inherits the
+  /// each font family in its own typeface. Null inherits the
   /// menu's default item style.
   final TextStyle? labelStyle;
 
@@ -486,7 +486,7 @@ class _FormatPicker extends StatelessWidget {
   }
 }
 
-/// A data-binding inspector field (US2 / FR-009, FR-012, FR-013): an input
+/// A data-binding inspector field: an input
 /// holding the current binding ([value] — a text element's expression or an
 /// image element's field), with a trailing clear affordance. Committing a
 /// non-empty value calls [onSet]; committing empty, or tapping clear, calls

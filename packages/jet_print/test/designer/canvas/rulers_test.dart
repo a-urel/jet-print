@@ -40,7 +40,7 @@ bool _hasNumberedMarks(WidgetTester tester, Finder ruler) {
 }
 
 void main() {
-  group('rulers — US1 presence (C3.1, C3.5)', () {
+  group('rulers — US1 presence', () {
     testWidgets(
         'a horizontal ruler is present at the top and a vertical at left',
         (WidgetTester tester) async {
@@ -60,7 +60,7 @@ void main() {
       expect(v.height, greaterThan(v.width));
     });
 
-    testWidgets('both rulers show numbered millimetre marks (C3.1)',
+    testWidgets('both rulers show numbered millimetre marks',
         (WidgetTester tester) async {
       await pumpDesignerWith(tester);
 
@@ -70,7 +70,7 @@ void main() {
           reason: 'the left ruler must show numbered mm marks');
     });
 
-    testWidgets('the top-left corner box renders no measurement (C3.5, FR-013)',
+    testWidgets('the top-left corner box renders no measurement',
         (WidgetTester tester) async {
       await pumpDesignerWith(tester);
 
@@ -84,7 +84,7 @@ void main() {
     });
   });
 
-  group('rulers — US2 toggle visibility (C3.2, C3.3)', () {
+  group('rulers — US2 toggle visibility', () {
     testWidgets(
         'hiding rulers removes both strips and the canvas reclaims them',
         (WidgetTester tester) async {

@@ -7,7 +7,7 @@ part of '../jet_report_designer_controller.dart';
 
 extension CtrlBarcode on JetReportDesignerController {
   /// Replaces the barcode element [id]'s foreground color with [color] as
-  /// one undoable step (021 / FR-011), preserving its symbology, data, and
+  /// one undoable step, preserving its symbology, data, and
   /// bounds.
   void setBarcodeColor(String id, JetColor color) =>
       _commit(SetBarcodeColorCommand(id: id, color: color));
@@ -28,7 +28,7 @@ extension CtrlBarcode on JetReportDesignerController {
   /// `[field]` token binds the value to that field (keeping the prior literal as
   /// a fallback); any other text is a literal (and clears the binding). Mirrors
   /// [setValue]'s single-input UX, but barcode is field-or-literal — no
-  /// expressions (spec 036). One undoable step.
+  /// expressions. One undoable step.
   void setBarcodeValue(String id, String raw) {
     final String? field = parseFieldToken(raw);
     if (field != null) {

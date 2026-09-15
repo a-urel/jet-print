@@ -1,6 +1,6 @@
-// Phase 5 / T034 (spec 024 / US3 / C10): band lifecycle through the controller —
+// Phase 5 / T034: band lifecycle through the controller
 // add / remove / reorder / retype a band, each a single undoable step, with
-// stable ids across reorder and retype (FR-002, FR-012, FR-015). Consumer-style:
+// stable ids across reorder and retype. Consumer-style:
 // public API only.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
@@ -33,7 +33,7 @@ List<String> _detailIds(JetReportDesignerController c) => <String>[
     ];
 
 void main() {
-  group('add band (T034)', () {
+  group('add band', () {
     test('addBand fills an empty singleton slot, selects it, undoably', () {
       final JetReportDesignerController c =
           JetReportDesignerController(definition: _seed());
@@ -85,7 +85,7 @@ void main() {
     });
   });
 
-  group('remove band (T034)', () {
+  group('remove band', () {
     test('removeBand drops a scope per-row band, undoably', () {
       final JetReportDesignerController c =
           JetReportDesignerController(definition: _seed());
@@ -107,7 +107,7 @@ void main() {
     });
   });
 
-  group('reorder band (T034 / C10 — ids stable)', () {
+  group('reorder band (ids stable)', () {
     test('moveBand reorders within the scope, preserving ids, undoably', () {
       final JetReportDesignerController c =
           JetReportDesignerController(definition: _seed());
@@ -129,7 +129,7 @@ void main() {
     });
   });
 
-  group('retype band (T034 / FR-012 — moves to the matching slot)', () {
+  group('retype band (moves to the matching slot)', () {
     test(
         'retypeBand relocates a band to the slot for the new type, keeping its '
         'id, undoably', () {

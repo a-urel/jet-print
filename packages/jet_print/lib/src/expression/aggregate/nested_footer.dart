@@ -1,4 +1,4 @@
-/// Footer-aggregate preparation for nested collection scopes (spec 029, B1).
+/// Footer-aggregate preparation for nested collection scopes.
 ///
 /// A nested `DetailScope.footer` may hold inline aggregates (Phase A grammar)
 /// that sum over the scope's OWN collection. Unlike master-scope aggregates

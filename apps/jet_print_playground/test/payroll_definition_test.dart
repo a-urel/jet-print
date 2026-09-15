@@ -91,7 +91,7 @@ void main() {
       TextElement el(Band b, String id) =>
           b.elements.firstWhere((ReportElement e) => e.id == id) as TextElement;
 
-      // Section folds (same-scope, spec 029).
+      // Section folds (same-scope).
       expect(el(earnings.footer!, 'grossValue').expression,
           r'SUM($F{earnAmount})');
       expect(el(deductions.footer!, 'totalDedValue').expression,
@@ -101,7 +101,7 @@ void main() {
       expect(el(root.groups[1].footer!, 'netValue').expression,
           r'$F{grossPay} - $F{totalDeductions}');
 
-      // Department subtotals (master-scope, spec 028) and grand totals (summary).
+      // Department subtotals (master-scope) and grand totals (summary).
       expect(
           el(root.groups[0].footer!, 'deptNet').expression, r'SUM($F{netPay})');
       expect(

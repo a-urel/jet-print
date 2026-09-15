@@ -1,10 +1,10 @@
-// Clipboard discoverability / localization / accessibility (016 / US3 / C4).
+// Clipboard discoverability / localization / accessibility.
 //
 // Across en/de/tr: the three toolbar tooltips and five context-menu labels
 // resolve to non-empty, locale-correct strings with no missing-key fallback
 // (SC-004); every toolbar button and menu item exposes a Semantics label
 // (FR-015); and the platform shortcut glyph is correct (⌘ on Apple, Ctrl+
-// otherwise) in both the toolbar tooltips and the menu trailing (FR-014/014a).
+// otherwise) in both the toolbar tooltips and the menu trailing.
 //
 // Locales are exercised in the order en → tr → de: the SDK's Global*
 // localizations (pulled in by ShadApp) leak CLDR state across a `de`-then-`tr`

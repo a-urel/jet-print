@@ -1,4 +1,4 @@
-// Evaluator semantics via the Expression facade (spec 005a). No Flutter UI.
+// Evaluator semantics via the Expression facade. No Flutter UI.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/data_row.dart';
 import 'package:jet_print/src/data/field_def.dart';

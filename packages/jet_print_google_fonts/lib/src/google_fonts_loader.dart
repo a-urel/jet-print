@@ -1,5 +1,5 @@
 /// Loads bundled catalog families into the `List<JetFontFamily>` jet_print's
-/// font seam (spec 022) consumes.
+/// font seam consumes.
 library;
 
 import 'dart:developer' as developer;

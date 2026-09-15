@@ -1,4 +1,4 @@
-// The unified value field (013 / T004, replacing the old binding editor): one
+// The unified value field (replacing the old binding editor): one
 // field parses literal text, [field] bindings, and { … } templates, each a
 // single undoable edit, and shows a stored binding as its canvas token.
 import 'package:flutter/widgets.dart';

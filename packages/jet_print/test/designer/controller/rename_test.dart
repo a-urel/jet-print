@@ -1,4 +1,4 @@
-// Controller rename() unit tests (017 / US2 / C4).
+// Controller rename() unit tests.
 //
 // Black-box: drives only the public controller + serialization surface. rename()
 // is the single undoable mutator behind the unified toolbar's inline rename; it
@@ -33,7 +33,7 @@ ReportDefinition _named(String name) => ReportDefinition(
     );
 
 void main() {
-  test('rename(x) sets the definition name (C4.1)', () {
+  test('rename(x) sets the definition name', () {
     final JetReportDesignerController c =
         JetReportDesignerController(definition: _named('Alpha'));
     c.rename('Beta');
@@ -41,7 +41,7 @@ void main() {
     c.dispose();
   });
 
-  test('rename is a single undoable step restoring the prior name (C4.2)', () {
+  test('rename is a single undoable step restoring the prior name', () {
     final JetReportDesignerController c =
         JetReportDesignerController(definition: _named('Alpha'));
     c.rename('Beta');
@@ -64,7 +64,7 @@ void main() {
     c.dispose();
   });
 
-  test('rename notifies listeners exactly once (C4.3)', () {
+  test('rename notifies listeners exactly once', () {
     final JetReportDesignerController c =
         JetReportDesignerController(definition: _named('Alpha'));
     int notifications = 0;
@@ -74,8 +74,7 @@ void main() {
     c.dispose();
   });
 
-  test('rename to the current name is a no-op — no history, no notify (C4.4)',
-      () {
+  test('rename to the current name is a no-op — no history, no notify', () {
     final JetReportDesignerController c =
         JetReportDesignerController(definition: _named('Alpha'));
     int notifications = 0;
@@ -86,8 +85,7 @@ void main() {
     c.dispose();
   });
 
-  test('an empty or whitespace-only name is stored verbatim as empty (FR-010)',
-      () {
+  test('an empty or whitespace-only name is stored verbatim as empty', () {
     final JetReportDesignerController c =
         JetReportDesignerController(definition: _named('Alpha'));
     c.rename('   ');
@@ -95,8 +93,7 @@ void main() {
     c.dispose();
   });
 
-  test('a renamed definition round-trips losslessly through the codec (C4.5)',
-      () {
+  test('a renamed definition round-trips losslessly through the codec', () {
     final JetReportDesignerController c =
         JetReportDesignerController(definition: _named('Alpha'));
     c.rename('Renamed report');

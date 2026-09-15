@@ -1,4 +1,4 @@
-// Per-handle resize through the controller (US2 / T045 / FR-009/010).
+// Per-handle resize through the controller.
 // Uses threshold 0 so snapping never interferes with the pure resize geometry.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';

@@ -92,7 +92,7 @@ const Key kArrangeButtonKey =
 
 /// The stable id of the first per-row band in the master scope of [c]'s
 /// definition — the reified replacement for the old "detail band index". Tests
-/// address bands by id now (spec 024); for the blank default that is `'detail'`.
+/// address bands by id now; for the blank default that is `'detail'`.
 String firstDetailBandId(JetReportDesignerController c) =>
     c.definition.body.root.children.whereType<BandNode>().first.band.id;
 

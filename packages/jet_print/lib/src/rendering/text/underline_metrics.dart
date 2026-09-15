@@ -1,5 +1,5 @@
 // lib/src/rendering/text/underline_metrics.dart
-/// The ONE underline geometry source (021 / US1 / research §2).
+/// The ONE underline geometry source.
 ///
 /// Both paint backends draw the underline as an explicit stroked line — never
 /// `dart:ui`'s `TextDecoration`, whose placement comes from font tables the

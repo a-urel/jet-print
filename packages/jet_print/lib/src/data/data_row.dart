@@ -1,4 +1,4 @@
-/// Immutable snapshot of one data-source row (spec 004).
+/// Immutable snapshot of one data-source row.
 library;
 
 import 'field_def.dart';

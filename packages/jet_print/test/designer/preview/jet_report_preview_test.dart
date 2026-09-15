@@ -1,4 +1,4 @@
-// JetReportPreview widget (011 — contracts C6/C11; FR-008/FR-018).
+// JetReportPreview widget.
 //
 // Black-box: this test stands in for an external consumer and imports only the
 // public entry point (enforced by encapsulation_test.dart). It covers bounded
@@ -53,7 +53,7 @@ RenderedReport _report() => const JetReportEngine().renderDefinition(
       ]),
     );
 
-// --- Unified-toolbar mode switch (017 / US1 / C2). In the preview shell the
+// --- Unified-toolbar mode switch. In the preview shell the
 // Designer segment replaces the old standalone back button; selecting it emits
 // the existing onBack switch request. ---
 const Key _modeDesignerKey =
@@ -312,7 +312,7 @@ void main() {
     expect(pageSize.width, greaterThan(500));
   });
 
-  testWidgets('arrow keys navigate (keyboard-operable, FR-018)',
+  testWidgets('arrow keys navigate (keyboard-operable)',
       (WidgetTester tester) async {
     await _pumpPreview(tester);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
@@ -327,7 +327,7 @@ void main() {
     expect(find.text('Page 1 of 3'), findsOneWidget);
   });
 
-  testWidgets('nav controls carry accessible names (FR-018)',
+  testWidgets('nav controls carry accessible names',
       (WidgetTester tester) async {
     await _pumpPreview(tester);
     expect(find.bySemanticsLabel('Next page'), findsOneWidget);
@@ -353,7 +353,7 @@ void main() {
   testWidgets(
       'an unnamed report shows the shared "Untitled report" placeholder (017)',
       (WidgetTester tester) async {
-    // The unified shell renders one placeholder in both modes (FR-006, parity)
+    // The unified shell renders one placeholder in both modes (parity)
     // — the designer's reportTitlePlaceholder, not the old preview-only label.
     final RenderedReport report = const JetReportEngine().renderDefinition(
       const ReportDefinition(
@@ -376,10 +376,10 @@ void main() {
     expect(nameText.data, 'Untitled report');
   });
 
-  // 017 (US1 / C2): the preview hosts the same two-segment mode switch. Preview
+  // the preview hosts the same two-segment mode switch. Preview
   // is the active segment; selecting Designer emits the existing onBack switch
   // request (the standalone back button is gone, folded into the switch).
-  group('mode switch (017 / US1)', () {
+  group('mode switch', () {
     testWidgets('renders the two-segment switch with Preview active', (
       WidgetTester tester,
     ) async {
@@ -399,7 +399,7 @@ void main() {
       expect(_segmentDisabled(tester, _modeDesignerKey), isTrue);
     });
 
-    testWidgets('selecting Designer fires onBack once (C2.3)', (
+    testWidgets('selecting Designer fires onBack once', (
       WidgetTester tester,
     ) async {
       int taps = 0;
@@ -569,7 +569,7 @@ void main() {
     });
   });
 
-  group('export/print toolbar actions (012 — contract B8; FR-014/FR-015)', () {
+  group('export/print toolbar actions', () {
     testWidgets(
         'absent (no buttons, no reserved space, no semantics) when both '
         'callbacks are null — 011 behavior bit-preserved',
@@ -590,7 +590,7 @@ void main() {
       expect(find.byKey(_printKey), findsNothing,
           reason: 'each action appears only with its own callback');
       expect(find.bySemanticsLabel('Export as PDF'), findsOneWidget,
-          reason: 'localized accessible name (FR-014)');
+          reason: 'localized accessible name');
       // Page-nav leads the toolbar, so on this narrow surface the bar scrolls
       // horizontally — surface the action before tapping.
       await tester.ensureVisible(find.byKey(_exportKey));
@@ -628,7 +628,7 @@ void main() {
       expect(prints, 1);
     });
 
-    testWidgets('keyboard activation invokes the callbacks (FR-014)',
+    testWidgets('keyboard activation invokes the callbacks',
         (WidgetTester tester) async {
       int exports = 0;
       int prints = 0;
@@ -641,10 +641,10 @@ void main() {
     });
   });
 
-  // 017 (US3 / C5.2 / SC-005): the preview's right slot carries the viewing
+  // the preview's right slot carries the viewing
   // actions exclusively — none of the designer's editing-only actions appear.
-  group('preview — mode-specific actions (017 / US3)', () {
-    testWidgets('the right slot shows the viewing actions (C5.2)', (
+  group('preview — mode-specific actions', () {
+    testWidgets('the right slot shows the viewing actions', (
       WidgetTester tester,
     ) async {
       await _pumpPreview(tester, onExportPdf: () {}, onPrint: () {});
@@ -656,7 +656,7 @@ void main() {
       expect(find.byKey(_nextKey), findsOneWidget);
     });
 
-    testWidgets('no designer-only signature action is present (SC-005)', (
+    testWidgets('no designer-only signature action is present', (
       WidgetTester tester,
     ) async {
       await _pumpPreview(tester, onExportPdf: () {}, onPrint: () {});

@@ -1,5 +1,5 @@
 // Integration tests for multi-level descendant-leaf folding in nested-scope
-// footers (spec 033). The footer aggregate `SUM($F{lineTotal})` sits on the
+// footers. The footer aggregate `SUM($F{lineTotal})` sits on the
 // `orders` scope (which does not own `lineTotal` directly) and folds over all
 // `lineTotal` leaves in the descendant `lines` collection.
 library;

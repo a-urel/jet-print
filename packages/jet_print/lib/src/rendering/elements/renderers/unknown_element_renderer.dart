@@ -1,4 +1,4 @@
-/// Renders any element whose type-key is not registered (spec 007a): a visible
+/// Renders any element whose type-key is not registered: a visible
 /// placeholder labeled with the preserved type-key. The registry returns this
 /// for every unregistered type, including a round-tripped `UnknownElement`.
 library;

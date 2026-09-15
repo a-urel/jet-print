@@ -1,10 +1,10 @@
-// SC-001 parity proof (spec 033): the now-inline-authored shipped sample
+// SC-001 parity proof: the now-inline-authored shipped sample
 // (`nestedListsDefinition()`) renders byte-identical totals to the
 // published-total design (`_publishedTotalDefinition()`) when both are filled
 // over the same declared-schema source.
 //
 // After the spec-033 migration, `nestedListsDefinition()` IS the inline
-// variant.  This test is repurposed to keep proving SC-001 equivalence by
+// variant. This test is repurposed to keep proving SC-001 equivalence by
 // comparing it against a hand-kept published-total reference built in-test —
 // the same role the original parity test served, with the sides swapped.
 //
@@ -25,7 +25,7 @@ import 'package:jet_print_playground/rendered_nested_list_example.dart';
 
 void main() {
   group('SC-001 parity: inline (shipped sample) vs published-total', () {
-    test('validate(nestedListsDefinition()) is empty (SC-003)', () {
+    test('validate(nestedListsDefinition()) is empty', () {
       expect(validate(nestedListsDefinition()), isEmpty);
     });
 
@@ -41,8 +41,7 @@ void main() {
       );
     });
 
-    test('inline sample renders byte-identical to published-total (SC-001)',
-        () {
+    test('inline sample renders byte-identical to published-total', () {
       final RenderedReport inlineReport = const JetReportEngine()
           .renderDefinition(nestedListsDefinition(), _declaredSource());
       final RenderedReport publishedReport = const JetReportEngine()
@@ -52,7 +51,7 @@ void main() {
         _textRuns(inlineReport),
         _textRuns(publishedReport),
         reason: 'inline SUM(\$F{lineTotal}) at every footer level renders '
-            'byte-identical totals to the published-total chain (SC-001)',
+            'byte-identical totals to the published-total chain',
       );
     });
   });
@@ -73,14 +72,14 @@ JetDataSource _declaredSource() =>
 // ---------------------------------------------------------------------------
 
 /// The published-total design that predates the spec-033 migration — kept
-/// in-test as the SC-001 reference.  Identical structure to
+/// in-test as the SC-001 reference. Identical structure to
 /// [nestedListsDefinition], but total expressions use the published-field
 /// pattern (`$F{orderTotal}` / `$F{customerTotal}`) and both scopes carry
 /// their [ScopeTotal] declarations.
 ///
 /// This is the counterpart to what [nestedListsDefinition] used to look like
 /// before the migration; keeping it here lets the parity test prove that the
-/// now-inline shipped sample renders byte-identical output (SC-001).
+/// now-inline shipped sample renders byte-identical output.
 ReportDefinition _publishedTotalDefinition() => const ReportDefinition(
       name: 'Nested Lists',
       page: PageFormat.a4Portrait,

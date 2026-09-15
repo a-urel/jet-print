@@ -1,4 +1,4 @@
-// T080 — design-surface fidelity goldens (WYSIWYG / SC-003).
+// design-surface fidelity goldens (WYSIWYG).
 //
 // Pins how the interactive canvas paints REPRESENTATIVE elements (text, shape,
 // image, barcode) with a selection shown — outline + resize handles — in both

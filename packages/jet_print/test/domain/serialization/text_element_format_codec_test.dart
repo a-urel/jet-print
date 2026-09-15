@@ -1,4 +1,4 @@
-// TextElement.format serialization (013 / T019): additive, optional, no schema
+// TextElement.format serialization: additive, optional, no schema
 // bump. Absent ⇒ null; written only when set; round-trips exactly.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/domain/elements/text_element.dart';

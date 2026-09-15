@@ -1,5 +1,5 @@
 /// The design-time binding token (013 T005) mirrors the value-field projection,
-/// so the canvas and Properties panel always show the same thing (SC-002).
+/// so the canvas and Properties panel always show the same thing.
 library;
 
 import 'package:flutter_test/flutter_test.dart';

@@ -1,4 +1,4 @@
-/// The coarse value-type taxonomy shared across the model (spec 005b).
+/// The coarse value-type taxonomy shared across the model.
 ///
 /// A small, deliberately coarse tag used by data-field metadata
 /// (`FieldDef.type`) and report-parameter declarations (`ReportParameter.type`)
@@ -21,7 +21,7 @@ enum JetFieldType {
   /// Timestamps (`DateTime`).
   dateTime,
 
-  /// A nested collection of child records (spec 009). The field's value is a
+  /// A nested collection of child records. The field's value is a
   /// collection (e.g. an invoice's line items); its child field schema lives in
   /// `FieldDef.fields`. This type is always **declared**, never inferred from
   /// values (inference only ever yields scalar types or [unknown]).

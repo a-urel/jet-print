@@ -32,7 +32,7 @@ Future<TestGesture> _hoverAt(WidgetTester tester, Offset position) async {
 }
 
 void main() {
-  group('rulers — hover marker (C5.1, C5.2)', () {
+  group('rulers — hover marker', () {
     testWidgets('hovering places a marker at the pointer X (top) and Y (left)',
         (WidgetTester tester) async {
       await pumpDesignerWith(tester);
@@ -87,8 +87,8 @@ void main() {
     });
   });
 
-  group('rulers — selection extent highlight (C5.3–6)', () {
-    testWidgets('a single selection highlights its span on both rulers (C5.3)',
+  group('rulers — selection extent highlight', () {
+    testWidgets('a single selection highlights its span on both rulers',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       c.createElement(DesignerToolType.barcode,
@@ -107,7 +107,7 @@ void main() {
       expect(v.bottom, closeTo(el.bottom, 1.5));
     });
 
-    testWidgets('a multi-selection highlights one combined union span (C5.4)',
+    testWidgets('a multi-selection highlights one combined union span',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       c.createElement(DesignerToolType.text,
@@ -128,7 +128,7 @@ void main() {
       expect(h.right, closeTo(rb.right, 1.5)); // b is right-most
     });
 
-    testWidgets('moving the selection updates the highlight span (C5.5)',
+    testWidgets('moving the selection updates the highlight span',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       c.createElement(DesignerToolType.shape,
@@ -204,7 +204,7 @@ void main() {
           reason: 'the band span reflows live, before mouse-up');
     });
 
-    testWidgets('clearing the selection removes the highlight (C5.6)',
+    testWidgets('clearing the selection removes the highlight',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       c.createElement(DesignerToolType.image,
@@ -220,7 +220,7 @@ void main() {
     });
   });
 
-  group('rulers — highlight clamp (C5.7)', () {
+  group('rulers — highlight clamp', () {
     testWidgets('a selection extending past the strip is clamped to it',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);

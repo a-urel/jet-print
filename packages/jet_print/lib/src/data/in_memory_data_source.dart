@@ -1,4 +1,4 @@
-/// In-memory data source over a list of row maps (spec 004).
+/// In-memory data source over a list of row maps.
 library;
 
 import 'data_set.dart';
@@ -8,7 +8,7 @@ import 'row_cursor_data_set.dart';
 
 /// A [JetDataSource] backed by an in-memory `List<Map<String, Object?>>`.
 ///
-/// The simplest way to feed `JetReportEngine.render` (FR-011). A nested
+/// The simplest way to feed `JetReportEngine.render`. A nested
 /// collection (master/detail) is just a `List` of child maps under one key:
 ///
 /// ```dart

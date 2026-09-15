@@ -1,6 +1,6 @@
 /// A curated, offline catalog of open-source (Google Fonts) families for
 /// jet_print. Bundles subset faces as assets and builds the
-/// `List<JetFontFamily>` jet_print's font seam consumes (spec 022).
+/// `List<JetFontFamily>` jet_print's font seam consumes.
 ///
 /// ```dart
 /// final fonts = await loadGoogleFonts();

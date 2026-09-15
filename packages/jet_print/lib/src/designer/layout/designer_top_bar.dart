@@ -20,16 +20,16 @@ import 'zoom_control.dart';
 /// this iteration); the history and primary actions are non-functional
 /// placeholders that render as enabled so the bar reads as a real toolbar
 /// (FR-015). Every caption and tooltip is sourced from [JetPrintLocalizations]
-/// (FR-016) and every color/text style from [ShadTheme] (FR-008/009). The title
+/// and every color/text style from [ShadTheme]. The title
 /// ellipsizes so a longer translation never pushes the actions off-screen
-/// (longer-text edge case / T037).
+/// (longer-text edge case).
 class DesignerTopBar extends StatefulWidget {
   /// Creates the designer top bar. Private to the library; composed by
   /// `JetReportDesigner`.
   ///
   /// [onOpen]/[onSave]/[onPreview] back the Open/Save/Preview actions; each is
   /// null when the host wired no corresponding callback, and the action then
-  /// renders disabled (the library performs no file I/O itself — FR-022).
+  /// renders disabled (the library performs no file I/O itself).
   const DesignerTopBar({super.key, this.onOpen, this.onSave, this.onPreview});
 
   /// Invoked when the user triggers Open (the host reads a template and calls
@@ -66,14 +66,14 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
 
     // Compose the shared shell: the report name (leading) + the mode switch
     // (center) are the shell's own regions — positionally identical to the
-    // preview (FR-001) — and the designer's command groups fill the right slot.
+    // preview — and the designer's command groups fill the right slot.
     return UnifiedTopBar(
       leadingIcon: LucideIcons.fileText,
       name: controller.definition.name,
       compactWidth: _compactWidth,
       scrollWidth: _scrollWidth,
       // The Preview segment of the switch IS the old Preview action: selecting
-      // it emits the host's `onPreview` switch request (FR-002, research D2).
+      // it emits the host's `onPreview` switch request.
       centerBuilder: (BuildContext context, bool veryNarrow) =>
           WorkspaceModeSwitch(
         mode: WorkspaceMode.designer,
@@ -85,7 +85,7 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
     );
   }
 
-  /// The designer's right-slot command groups (FR-011): the Open / Save file
+  /// The designer's right-slot command groups: the Open / Save file
   /// actions first (like a File menu, ahead of the editing commands), then
   /// history, clipboard, zoom, view toggles and arrange. Each group is fenced by
   /// a [_Divider]; the file actions render icon-only when [compact].
@@ -122,7 +122,7 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
       // with a leading rule.
       if (widget.onOpen != null || widget.onSave != null) const _Divider(),
 
-      // History group — wired to the controller, disabled at the ends (US3.4).
+      // History group — wired to the controller, disabled at the ends.
 
       _IconButton(
         buttonKey: const ValueKey<String>('jet_print.designer.action.undo'),
@@ -141,8 +141,8 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
 
       // Clipboard group — Cut/Copy/Paste, the conventional editing cluster beside
       // History. Enablement is bound to the same canCopy/canPaste predicates the
-      // context menu reads (FR-012), so the two surfaces cannot diverge; tooltips
-      // carry the platform shortcut hint (FR-001, FR-004, FR-005, FR-014).
+      // context menu reads, so the two surfaces cannot diverge; tooltips
+      // carry the platform shortcut hint.
       const _Divider(),
       _IconButton(
         buttonKey: const ValueKey<String>('jet_print.designer.action.cut'),
@@ -211,7 +211,7 @@ class _DesignerTopBarState extends State<DesignerTopBar> {
         onPressed: () => controller.setSnapEnabled(!controller.snapEnabled),
       ),
 
-      // Arrange group — align / distribute / z-order over the selection (US4).
+      // Arrange group — align / distribute / z-order over the selection.
       const _Divider(),
       _ArrangeMenu(controller: controller),
     ];
@@ -236,7 +236,7 @@ class _Divider extends StatelessWidget {
 }
 
 /// The "Arrange" dropdown: align / distribute / z-order actions over the current
-/// selection, wired to the controller's bulk ops (FR-012/FR-013, US4.5–US4.6).
+/// selection, wired to the controller's bulk ops.
 ///
 /// The trigger enables once any element is selected; the align/distribute items
 /// further require two or more (a lone element has nothing to align against),
@@ -395,7 +395,7 @@ class _IconButton extends StatelessWidget {
   final VoidCallback onPressed;
 
   /// When false the button renders disabled (a null `onPressed`), e.g. an Undo
-  /// button at the start of history (US3.4).
+  /// button at the start of history.
   final bool enabled;
 
   /// Optional stable key on the inner button (test seam).

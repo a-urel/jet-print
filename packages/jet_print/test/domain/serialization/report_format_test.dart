@@ -1,8 +1,8 @@
 // Lossless round-trip contract for the public `JetReportFormat` facade
-// (Phase 2 / T005 / contracts §7.4 / SC-002).
+// (Phase 2).
 //
 // Imports ONLY the public entry point: this test doubles as proof that the
-// surfaced format API is sufficient to serialize a full design (FR-003/FR-022).
+// surfaced format API is sufficient to serialize a full design.
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';

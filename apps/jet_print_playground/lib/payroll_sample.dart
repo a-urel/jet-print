@@ -6,7 +6,7 @@
 /// It is the first sample to use **two parallel nested collections** (earnings
 /// AND deductions) under one master row. Employees are grouped by an outer
 /// `department` level and an inner `employee` level; each employee renders a
-/// full US-style pay stub: an identity card with a verification QR (spec 036),
+/// full US-style pay stub: an identity card with a verification QR,
 /// an Earnings table and a Deductions table (each with a year-to-date column), a
 /// highlighted Net Pay box, department subtotals and a company grand total.
 ///
@@ -75,7 +75,7 @@ const JetColor _accentFill = JetColor(0xFFEAF3EC);
 
 const String _money = '#,##0.00';
 
-/// The payroll report authored in the reified band model (spec 024).
+/// The payroll report authored in the reified band model.
 ReportDefinition payrollDefinition() => const ReportDefinition(
       name: 'Payroll',
       page: PageFormat.a4Portrait,
@@ -498,7 +498,7 @@ ReportDefinition payrollDefinition() => const ReportDefinition(
                   ],
                 )),
               ],
-              // Same-scope fold over the employee's earnings (spec 029): gross
+              // Same-scope fold over the employee's earnings: gross
               // pay. The "DEDUCTIONS" heading + column titles ride here because a
               // scope renders only one per-row band.
               footer: Band(
@@ -599,7 +599,7 @@ ReportDefinition payrollDefinition() => const ReportDefinition(
                   ],
                 )),
               ],
-              // Same-scope fold over the employee's deductions (spec 029).
+              // Same-scope fold over the employee's deductions.
               footer: Band(
                 id: 'deductionsFooter',
                 type: BandType.groupFooter,

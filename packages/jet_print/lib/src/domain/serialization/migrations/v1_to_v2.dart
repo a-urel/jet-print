@@ -1,10 +1,10 @@
 /// Schema migration 1 → 2: the flat [ReportTemplate] band list becomes the
-/// reified [ReportDefinition] section tree (spec 024).
+/// reified [ReportDefinition] section tree.
 ///
 /// A pure map→map transform (no domain types, no element decoding — element
 /// maps are carried verbatim into their new band positions). Every v1 construct
 /// has exactly one v2 home and master-level band order is preserved, so a
-/// migrated report renders byte-identically (FR-008). Ids are deterministic and
+/// migrated report renders byte-identically. Ids are deterministic and
 /// path-based (data-model "Stable id scheme"), so migration output is
 /// reproducible and golden-stable.
 library;
@@ -98,7 +98,7 @@ class V1ToV2Migration extends SchemaMigration {
       if (children.isNotEmpty) 'children': children,
     };
 
-    // Variables: rewrite each group-reset name to the new group id (FR-003a).
+    // Variables: rewrite each group-reset name to the new group id.
     final List<Object?>? rawVars = json['variables'] as List<Object?>?;
     final List<Object?>? variables = rawVars == null
         ? null

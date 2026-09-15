@@ -1,4 +1,4 @@
-// Lazy pagination seam (011 — contracts C4/C5; FR-021).
+// Lazy pagination seam.
 //
 // The binding assertions are STRUCTURAL, not wall-clock: a counting renderer
 // registry proves the boundary-only pass emits no paint primitives, and that
@@ -124,7 +124,7 @@ class _SpyRegistry extends ElementRendererRegistry {
 }
 
 void main() {
-  group('boundary-only pass (C4)', () {
+  group('boundary-only pass', () {
     test('layoutLazy resolves pageCount without emitting any primitive', () {
       final _EmitCounter counter = _EmitCounter();
       final ReportLayouter layouter =
@@ -153,7 +153,7 @@ void main() {
     });
   });
 
-  group('lazy == eager (C5)', () {
+  group('lazy == eager', () {
     test('each lazily built frame is byte-identical to the eager layout()', () {
       // Chrome bands exercise the per-page substitution path too.
       final ReportDefinition template = _tpl(
@@ -195,7 +195,7 @@ void main() {
     });
   });
 
-  group('RenderedReport page-on-demand + cache (C4)', () {
+  group('RenderedReport page-on-demand + cache', () {
     PageFrame frameFor(int index) =>
         PageFrame(page: _smallPage, primitives: <FramePrimitive>[
           RectPrimitive(

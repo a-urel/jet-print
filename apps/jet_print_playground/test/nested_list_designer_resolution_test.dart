@@ -1,6 +1,6 @@
 // Designer regression on the REAL spec-033 nested-list sample: the playground's
 // `nestedListsDefinition()` references `SUM($F{lineTotal})` at every footer
-// level (inline multi-level aggregates, spec 033). The Properties panel must
+// level (inline multi-level aggregates). The Properties panel must
 // resolve the descendant field `lineTotal` WITHOUT the "Field not found" flag,
 // while a genuine typo must still flag. This is the exact shape the shipped
 // sample uses after the spec-033 migration.
@@ -74,7 +74,7 @@ Future<void> _selectAndInspect(WidgetTester tester,
 }
 
 void main() {
-  // SC-001: the three inline aggregate references no longer false-flag.
+  // the three inline aggregate references no longer false-flag.
 
   testWidgets(
       'summary grandTotal SUM(\$F{lineTotal}) shows no unresolved hint '
@@ -101,7 +101,7 @@ void main() {
     expect(find.text(_unresolvedMsg), findsNothing);
   });
 
-  // SC-002: a genuine typo still flags (no false negative).
+  // a genuine typo still flags (no false negative).
   testWidgets('a genuine typo \$F{bogus} in the summary total still flags',
       (WidgetTester tester) async {
     final JetReportDesignerController c = await _pump(tester);
@@ -110,7 +110,7 @@ void main() {
     expect(find.text(_unresolvedMsg), findsOneWidget);
   });
 
-  // SC-005 (P2): the summary value picker lists in-scope schema fields (the
+  // the summary value picker lists in-scope schema fields (the
   // published-total `customerTotal` no longer exists; descendant fields like
   // `lineTotal` are surfaced via the fx palette, not the value picker).
   testWidgets('the summary value picker offers in-scope schema fields',

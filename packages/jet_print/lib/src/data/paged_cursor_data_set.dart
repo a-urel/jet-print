@@ -1,5 +1,5 @@
 /// Internal: the cursor backing [JetPagedDataSource] — a forward-only walk over
-/// a lazily-paged feed of unknown total length (spec 040).
+/// a lazily-paged feed of unknown total length.
 library;
 
 import 'data_row.dart';

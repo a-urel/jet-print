@@ -1,4 +1,4 @@
-/// Positioned display-list primitives (spec 006): the WYSIWYG contract between
+/// Positioned display-list primitives: the WYSIWYG contract between
 /// layout and paint. Pure-Dart geometry; each primitive carries its originating
 /// element id for designer hit-testing.
 library;

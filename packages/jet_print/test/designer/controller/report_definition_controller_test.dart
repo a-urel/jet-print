@@ -1,4 +1,4 @@
-// Phase 4 / T024 (spec 024): the designer controller authors a
+// Phase 4 / T024: the designer controller authors a
 // `ReportDefinition` directly — groups and scopes are first-class, selectable,
 // addressable entities, and create/delete/edit of a group or scope is a single
 // undoable step. Consumer-style: through `package:jet_print/jet_print.dart`.
@@ -43,7 +43,7 @@ ReportDefinition _grouped() => const ReportDefinition(
     );
 
 void main() {
-  group('controller authors a ReportDefinition (T024)', () {
+  group('controller authors a ReportDefinition', () {
     test('holds the definition it is constructed with', () {
       final JetReportDesignerController c =
           JetReportDesignerController(definition: _flat());
@@ -91,7 +91,7 @@ void main() {
     });
   });
 
-  group('group lifecycle is undoable (T024 / FR-015)', () {
+  group('group lifecycle is undoable', () {
     test('createGroup appends a level to the scope and undoes', () {
       final JetReportDesignerController c =
           JetReportDesignerController(definition: _flat());
@@ -143,7 +143,7 @@ void main() {
     });
   });
 
-  group('scope lifecycle is undoable (T024 / FR-015)', () {
+  group('scope lifecycle is undoable', () {
     test('createScope adds a nested scope child and undoes', () {
       final JetReportDesignerController c =
           JetReportDesignerController(definition: _flat());

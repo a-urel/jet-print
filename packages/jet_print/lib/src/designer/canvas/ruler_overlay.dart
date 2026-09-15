@@ -3,7 +3,7 @@
 ///
 /// Design-time chrome only (like the band separators / badges) — drawn directly,
 /// never through the shared render pipeline, so it never appears in preview or
-/// export (FR-014). All measurement is delegated to the pure [RulerScale]; this
+/// export. All measurement is delegated to the pure [RulerScale]; this
 /// file only turns ticks into pixels. Tick *lines* are painted (cheap); the
 /// number *labels* are real positioned [Text] widgets, so they pick up the
 /// active locale's number formatting and stay findable by widget tests.

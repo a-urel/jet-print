@@ -100,15 +100,15 @@ part 'api/history.dart';
 /// snapshots ([DesignerDocument]). Every state-changing edit funnels through a
 /// single [EditCommand] commit path, so:
 ///
-/// * undo/redo restore **both** model and selection exactly (FR-017), and
+/// * undo/redo restore **both** model and selection exactly, and
 /// * each operation is a pure, independently-testable transform.
 ///
-/// Reification (spec 024): the model is a [ReportDefinition] section tree, and a
+/// Reification: the model is a [ReportDefinition] section tree, and a
 /// band, group, or scope is addressed by its **stable id** (not a flat list
 /// index), so selection and edits survive add/remove/reorder. The controller is
 /// headless — it performs no filesystem or platform I/O; a host drives save/open
 /// via `JetReportFormat` and the designer's `onSaveRequested`/`onOpenRequested`
-/// hooks (FR-022).
+/// hooks.
 class JetReportDesignerController extends ChangeNotifier {
   /// Creates a controller over [definition], or a blank default design when none
   /// is supplied (so `JetReportDesignerController()` is drop-in).
@@ -124,7 +124,7 @@ class JetReportDesignerController extends ChangeNotifier {
   final EditHistory _history = EditHistory();
   final ElementIdFactory _ids = ElementIdFactory();
 
-  /// The current report model — the value a host saves (FR-022).
+  /// The current report model — the value a host saves.
   ReportDefinition get definition => _document.definition;
 
   /// The currently-selected element ids / band / group / scope / report.
@@ -137,10 +137,10 @@ class JetReportDesignerController extends ChangeNotifier {
   /// a transient invalid state (e.g. a half-typed duplicate name).
   List<Diagnostic> get diagnostics => validate(_document.definition);
 
-  /// Whether an [undo] is available (drives top-bar enablement, US3.4).
+  /// Whether an [undo] is available (drives top-bar enablement).
   bool get canUndo => _history.canUndo;
 
-  /// Whether a [redo] is available (drives top-bar enablement, US3.4).
+  /// Whether a [redo] is available (drives top-bar enablement).
   bool get canRedo => _history.canRedo;
 
   /// Whether the current selection can be cut, copied, duplicated or deleted —
@@ -211,7 +211,7 @@ class JetReportDesignerController extends ChangeNotifier {
   }
 
   /// Replaces the whole design with [definition], clearing history and re-seeding
-  /// id assignment past the largest existing suffix (FR-004).
+  /// id assignment past the largest existing suffix.
   void open(ReportDefinition definition) {
     _pendingPropertiesFocus = false; // stale intent from the prior document
     _document =
@@ -224,7 +224,7 @@ class JetReportDesignerController extends ChangeNotifier {
   // --- Selection -------------------------------------------------------------
   // Selection changes are not history entries, but because every snapshot
   // includes the selection, undoing a model edit still restores the prior
-  // selection (FR-017).
+  // selection.
 
   void _setSelection(Selection selection) {
     if (selection == _document.selection) return;
@@ -254,7 +254,7 @@ class JetReportDesignerController extends ChangeNotifier {
   JetOffset? get moveDelta => _moveDelta;
 
   /// Guides (band-relative) currently firing during a live move/resize, for the
-  /// overlay to draw (FR-023 / SC-004). Empty when no guide is active.
+  /// overlay to draw. Empty when no guide is active.
   List<SnapGuide> get activeGuides => _guides;
 
   /// The stable id of the band whose element is being moved/resized, so the
@@ -273,7 +273,7 @@ class JetReportDesignerController extends ChangeNotifier {
   /// Whether the alignment grid is **drawn** on the canvas (top-bar toggle;
   /// default on, FR-014). Visibility only — since 015 this no longer gates
   /// snapping (the magnet does). All four grid/snap combinations are valid, and
-  /// elements snap to the grid even when it is hidden (FR-010). Never serialized.
+  /// elements snap to the grid even when it is hidden. Never serialized.
   bool get gridEnabled => _gridEnabled;
 
   /// Whether snapping is active — the **sole** gate for all snapping (grid +
@@ -282,7 +282,7 @@ class JetReportDesignerController extends ChangeNotifier {
   bool get snapEnabled => _snapEnabled;
 
   /// Whether the measurement rulers are shown along the canvas's top and left
-  /// edges (top-bar toggle; default on, FR-017). A per-session view preference —
+  /// edges (top-bar toggle; default on). A per-session view preference
   /// like [gridEnabled]/[snapEnabled], it is never serialized into the report.
   /// The canvas reads it to inset its viewport and draw the strips; the top bar
   /// reads it for the ruler toggle's active state.
@@ -453,7 +453,7 @@ class JetReportDesignerController extends ChangeNotifier {
 
   // --- View (zoom / pan) -----------------------------------------------------
   // View state is not part of the model or history; the canvas reads it and the
-  // top bar drives it (FR-020).
+  // top bar drives it.
 
   double _viewScale = 1.0;
   JetOffset _viewPan = const JetOffset(0, 0);

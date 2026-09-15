@@ -1,4 +1,4 @@
-// Controller setShapeStyle() unit tests (021 / US2 / contracts C7, C9).
+// Controller setShapeStyle() unit tests.
 //
 // Black-box: drives only the public controller surface. setShapeStyle() is the
 // single undoable mutator behind the Appearance editors. Same matrix as
@@ -26,7 +26,7 @@ const JetBoxStyle _next = JetBoxStyle(
 );
 
 void main() {
-  group('setShapeStyle — replaces the style (C7)', () {
+  group('setShapeStyle — replaces the style', () {
     test('a commit replaces the whole style, preserving kind and bounds', () {
       final JetReportDesignerController c = JetReportDesignerController(
           definition: oneBandReport(elements: const <ReportElement>[_element]));
@@ -61,7 +61,7 @@ void main() {
     });
   });
 
-  group('setShapeStyle — no-ops (C9 / FR-013)', () {
+  group('setShapeStyle — no-ops', () {
     test('an equal style records no history and notifies no one', () {
       final JetReportDesignerController c = JetReportDesignerController(
           definition: oneBandReport(elements: const <ReportElement>[_element]));
@@ -107,7 +107,7 @@ void main() {
     });
   });
 
-  group('setShapeStyle — undo / redo (C9)', () {
+  group('setShapeStyle — undo / redo', () {
     test('one undo restores the prior style; one redo reapplies', () {
       final JetReportDesignerController c = JetReportDesignerController(
           definition: oneBandReport(elements: const <ReportElement>[_element]));
@@ -125,7 +125,7 @@ void main() {
     test('width-0 then width-back keeps the remembered stroke color', () {
       final JetReportDesignerController c = JetReportDesignerController(
           definition: oneBandReport(elements: const <ReportElement>[_element]));
-      // Width to 0 — the color must stay on the style (C7, research §6).
+      // Width to 0 — the color must stay on the style.
       c.setShapeStyle('s',
           elementById<ShapeElement>(c, 's').style.copyWith(strokeWidth: 0));
       expect(elementById<ShapeElement>(c, 's').style.stroke, JetColor.black);

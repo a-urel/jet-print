@@ -1,4 +1,4 @@
-// JetJsonDataSource over a JSON array string (spec 004). No Flutter UI import.
+// JetJsonDataSource over a JSON array string. No Flutter UI import.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/data_set.dart';
 import 'package:jet_print/src/data/field_def.dart';

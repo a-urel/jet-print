@@ -1,4 +1,4 @@
-// Bulk operations through the controller (US4 / T054 / FR-012/013/014/015/016).
+// Bulk operations through the controller.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 

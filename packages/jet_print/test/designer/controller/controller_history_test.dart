@@ -1,4 +1,4 @@
-// Controller-core unit test (Phase 2 / T007 / contracts §7.5 / SC-003).
+// Controller-core unit test (Phase 2).
 //
 // Under test/designer/, so it stands in for an external consumer: it imports
 // ONLY the public entry point. This proves the controller's id-assignment and

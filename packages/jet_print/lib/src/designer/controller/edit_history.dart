@@ -3,10 +3,10 @@ library;
 
 import 'designer_document.dart';
 
-/// Two snapshot stacks implementing unlimited session undo/redo (FR-017).
+/// Two snapshot stacks implementing unlimited session undo/redo.
 ///
 /// On each committed edit the controller [push]es the *prior* document; that
-/// clears the redo stack (a new edit invalidates any undone future, US3.3).
+/// clears the redo stack (a new edit invalidates any undone future).
 /// [undo]/[redo] move the current document across the two stacks. [revision]
 /// increments on every change so the canvas painter's `shouldRepaint` can cheaply
 /// detect that the committed model changed and rebuild its cached picture (D5).

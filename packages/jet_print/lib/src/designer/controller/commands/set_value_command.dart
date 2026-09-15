@@ -1,6 +1,6 @@
 /// The command behind the unified value field (013): it sets a text element's
 /// literal [text] and binding [expression] together, as one undoable step, so
-/// switching a label between literal and bound is a single edit (FR-005).
+/// switching a label between literal and bound is a single edit.
 library;
 
 import '../../../domain/elements/text_element.dart';

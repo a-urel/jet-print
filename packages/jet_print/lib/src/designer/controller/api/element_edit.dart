@@ -28,7 +28,7 @@ extension CtrlElementEdit on JetReportDesignerController {
 
   /// Creates a **data-bound** text element at the band-relative point [at]
   /// within the band with stable id [bandId], bound to [expression] (a
-  /// `$F{}`/`$P{}`/`$V{}` string), and selects it (US2 / FR-009, FR-011). Used by
+  /// `$F{}`/`$P{}`/`$V{}` string), and selects it. Used by
   /// drag-a-field from the Data Source panel. An unknown [bandId] is ignored.
   void createBoundElement({
     required String bandId,
@@ -53,7 +53,7 @@ extension CtrlElementEdit on JetReportDesignerController {
 
   // --- Move ------------------------------------------------------------------
   /// Sets any of [id]'s band-relative x/y/width/height numerically (Properties
-  /// panel), clamped to its band, as one undoable step (FR-019).
+  /// panel), clamped to its band, as one undoable step.
   void setGeometry(String id,
       {double? x, double? y, double? width, double? height}) {
     final ({Band band, ReportElement element})? loc = _locate(id);
@@ -72,7 +72,7 @@ extension CtrlElementEdit on JetReportDesignerController {
   }
 
   /// Sets the text of the [TextElement] [id] (inline or Properties), one
-  /// undoable step (FR-019). No-op for a non-text or absent id.
+  /// undoable step. No-op for a non-text or absent id.
   void setText(String id, String text) {
     _commit(SetTextCommand(id: id, text: text));
   }
@@ -86,7 +86,7 @@ extension CtrlElementEdit on JetReportDesignerController {
       _commit(RenameElementCommand(id: id, name: _normalizeName(name)));
 
   /// Binds the [TextElement] [id] to [expression] (a `$F{}`/`$P{}`/`$V{}`
-  /// string), as one undoable step (US2 / FR-009). No-op for a non-text or
+  /// string), as one undoable step. No-op for a non-text or
   /// absent id, or when already bound to the same expression.
   void setBinding(String id, String expression) {
     _commit(SetTextBindingCommand(id: id, expression: expression));
@@ -106,7 +106,7 @@ extension CtrlElementEdit on JetReportDesignerController {
   ///
   /// Parses the three forms — a `[field]` simple binding, a `{ … }` template, or
   /// literal text (with `\` escapes) — and applies the result as a single
-  /// undoable edit (FR-001/002/003/005). No-op for a non-text or absent id.
+  /// undoable edit. No-op for a non-text or absent id.
   void setValue(String id, String raw) {
     final ({Band band, ReportElement element})? loc = _locate(id);
     if (loc == null || loc.element is! TextElement) return;
@@ -139,7 +139,7 @@ extension CtrlElementEdit on JetReportDesignerController {
       _commit(SetTextStyleCommand(id: id, style: style));
 
   /// Replaces the [ShapeElement] [id]'s whole style with [style] as one
-  /// undoable step (021 / FR-007, FR-008), preserving its kind, bounds, and
+  /// undoable step, preserving its kind, bounds, and
   /// flip state.
   void setShapeStyle(String id, JetBoxStyle style) =>
       _commit(SetShapeStyleCommand(id: id, style: style));
@@ -179,5 +179,5 @@ extension CtrlElementEdit on JetReportDesignerController {
     _commit(SetImageBindingCommand(id: id, field: field));
   }
 
-  // --- Groups & scopes (first-class entities, spec 024 / FR-015) -------------
+  // --- Groups & scopes (first-class entities) -------------
 }

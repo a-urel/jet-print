@@ -1,4 +1,4 @@
-// Controller setTextStyle() unit tests (021 / US1 / contracts C5, C9).
+// Controller setTextStyle() unit tests.
 //
 // Black-box: drives only the public controller surface. setTextStyle() is the
 // single undoable mutator behind every Font-section editor. It must replace
@@ -30,7 +30,7 @@ const JetTextStyle _next = JetTextStyle(
 );
 
 void main() {
-  group('setTextStyle — replaces the style (C2/C5)', () {
+  group('setTextStyle — replaces the style', () {
     test('a commit replaces the whole style, preserving text and bounds', () {
       final JetReportDesignerController c = JetReportDesignerController(
           definition: oneBandReport(elements: const <ReportElement>[_element]));
@@ -55,7 +55,7 @@ void main() {
     });
   });
 
-  group('setTextStyle — no-ops (C5 / FR-013)', () {
+  group('setTextStyle — no-ops', () {
     test('an equal style records no history and notifies no one', () {
       final JetReportDesignerController c = JetReportDesignerController(
           definition: oneBandReport(elements: const <ReportElement>[_element]));
@@ -101,7 +101,7 @@ void main() {
     });
   });
 
-  group('setTextStyle — undo / redo (C9)', () {
+  group('setTextStyle — undo / redo', () {
     test('one undo restores the prior style; one redo reapplies the new one',
         () {
       final JetReportDesignerController c = JetReportDesignerController(

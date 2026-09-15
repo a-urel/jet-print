@@ -1,4 +1,4 @@
-// Rendered-invoice example (011 — US2; FR-019 / SC-008). The example is an
+// Rendered-invoice example (011 — US2). The example is an
 // EXTERNAL consumer: data source + render + preview through
 // `package:jet_print/jet_print.dart` only (the encapsulation test enforces
 // "no src/"). Value-level rendering assertions (line totals, sums) live in
@@ -101,7 +101,7 @@ void main() {
     // without pinning N.
     expect(find.textContaining('Page 1 of '), findsOneWidget);
 
-    // 012 (SC-008): the example wires export and print through the PUBLIC
+    // the example wires export and print through the PUBLIC
     // preview callbacks — both toolbar actions are present. The example
     // renders ONCE: the preview, the PDF export, and the print job all
     // consume that one RenderedReport (asserted structurally below).
@@ -142,7 +142,7 @@ void main() {
 
   testWidgets(
       'export and print feed from the same single render as the preview '
-      '(012 — FR-001, SC-008)', (WidgetTester tester) async {
+      '(012 — FR-001)', (WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(900, 700));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(const JetPrintPlaygroundApp());

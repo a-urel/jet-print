@@ -120,7 +120,7 @@ void main() {
       // 'lf' is the lines-scope footer: it renders at its PARENT (orders) row but
       // aggregates over its own (lines) collection — so it sees the union of the
       // lines scope (lineTotal) and the orders scope (orderTotal, published by
-      // lines onto orders rows). It must NOT see customerTotal (SC-004).
+      // lines onto orders rows). It must NOT see customerTotal.
       final Set<String> names = resolvableNamesForBand(def, _schema, 'lf');
       expect(names, contains('lineTotal'));
       expect(names, contains('orderTotal'));

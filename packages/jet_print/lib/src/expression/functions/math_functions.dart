@@ -1,4 +1,4 @@
-/// Built-in math functions for the expression engine (spec 005a).
+/// Built-in math functions for the expression engine.
 library;
 
 import 'dart:math' as math;

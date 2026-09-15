@@ -12,7 +12,7 @@ library;
 /// empty [ids], and an element selection carries null ids for the others and a
 /// false [isReport].
 ///
-/// Reification (spec 024): a band, group, and scope are now addressed by their
+/// Reification: a band, group, and scope are now addressed by their
 /// **stable id**, not a flat list index — so a selection stays valid across
 /// add/remove/reorder, and resolves against the current [ReportDefinition] on
 /// demand. It never holds model references, so it survives edit-to-edit

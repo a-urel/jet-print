@@ -45,7 +45,7 @@ void main() {
   final double pxPerMmMax = kMaxZoom * kPointsPerMm;
   const double pxPerMm100 = kPointsPerMm;
 
-  group('RulerScale — monotonic & in-bounds (C1.1)', () {
+  group('RulerScale — monotonic & in-bounds', () {
     test(
         'ticks strictly increase and stay within [0, lengthPx] at any zoom/pan',
         () {
@@ -71,7 +71,7 @@ void main() {
     });
   });
 
-  group('RulerScale — labelled-gap guarantee (C1.2, SC-004)', () {
+  group('RulerScale — labelled-gap guarantee', () {
     test('consecutive labelled ticks are ≥ minLabelGapPx across the zoom range',
         () {
       for (final double pxPerMm in <double>[
@@ -90,7 +90,7 @@ void main() {
     });
   });
 
-  group('RulerScale — at least one label (C1.3, SC-004)', () {
+  group('RulerScale — at least one label', () {
     test('a non-empty strip always carries ≥ 1 major tick', () {
       for (final double pxPerMm in <double>[
         pxPerMmMin,
@@ -103,7 +103,7 @@ void main() {
     });
   });
 
-  group('RulerScale — nice-step selection (C1.4, FR-010)', () {
+  group('RulerScale — nice-step selection', () {
     test('the labelled step is the smallest ladder value clearing the gap', () {
       for (final double pxPerMm in <double>[
         pxPerMmMin,
@@ -132,7 +132,7 @@ void main() {
     });
   });
 
-  group('RulerScale — alignment exactness (C1.5, SC-002)', () {
+  group('RulerScale — alignment exactness', () {
     test('a major labelled k mm sits at originPx + k·pxPerMm', () {
       const double origin = 64;
       const double pxPerMm = pxPerMm100;
@@ -144,7 +144,7 @@ void main() {
     });
   });
 
-  group('RulerScale — subdivisions (C1.6)', () {
+  group('RulerScale — subdivisions', () {
     test('minor ticks subdivide the step, carry no label, and clear the floor',
         () {
       final RulerScale s =
@@ -163,7 +163,7 @@ void main() {
     });
   });
 
-  group('RulerScale — origin off-strip (C1.7, FR-009)', () {
+  group('RulerScale — origin off-strip', () {
     test(
         'a scrolled-left origin emits only in-bounds ticks with correct labels',
         () {
@@ -185,7 +185,7 @@ void main() {
     });
   });
 
-  group('RulerScale — extreme clamp (C1.8, FR-010)', () {
+  group('RulerScale — extreme clamp', () {
     test('at max zoom the minor subdivision never refines below ~1 mm', () {
       final RulerScale s =
           _scale(originPx: 0, pxPerMm: pxPerMmMax, lengthPx: 600);

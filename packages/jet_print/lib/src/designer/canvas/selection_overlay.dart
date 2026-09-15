@@ -31,7 +31,7 @@ const Color _accent = Color(0xFF2563EB);
 ///
 /// Positioned inside the page widget (local coords = `page-points × scale`).
 /// Handles are interactive: dragging one drives the controller's resize
-/// interaction (FR-009). They are drawn at a fixed screen size so they stay
+/// interaction. They are drawn at a fixed screen size so they stay
 /// grabbable at any zoom.
 class DesignerSelectionOverlay extends StatefulWidget {
   /// Creates the overlay for [layout] at [scale].
@@ -154,7 +154,7 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
 
     // Geometry comes straight from the (display) layout, which already bakes any
     // in-progress move / resize / band-resize through the single `clampToBand`
-    // authority — so the chrome can never exceed the band (spec 038, FR-002).
+    // authority — so the chrome can never exceed the band.
     JetRect? rectFor(String id) => widget.layout.elementRect(id);
 
     for (final String id in selection.ids) {
@@ -241,7 +241,7 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
       top: edgeY * widget.scale - hit / 2,
       width: barWidth,
       height: hit,
-      // One merged semantics node: a named, button-role handle (FR-024).
+      // One merged semantics node: a named, button-role handle.
       child: MergeSemantics(
         child: Semantics(
           label: l10n.resizeBandHandle,
@@ -370,13 +370,13 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
     // band edge the small square may overlap the border by half its size — the
     // selection BOX itself stays in-band (the element is clamped), only the grab
     // square overflows, matching the convention in mainstream design tools
-    // (spec 038, 2026-06-20 clarification).
+    // (2026-06-20 clarification).
     return Positioned(
       left: center.x * widget.scale - hit / 2,
       top: center.y * widget.scale - hit / 2,
       width: hit,
       height: hit,
-      // One merged semantics node: a directional, button-role handle (FR-024).
+      // One merged semantics node: a directional, button-role handle.
       child: MergeSemantics(
         child: Semantics(
           label: _handleLabel(position, l10n),

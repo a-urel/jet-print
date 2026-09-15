@@ -1,4 +1,4 @@
-// Turkish localization widget test (US4 / FR-016, SC-007).
+// Turkish localization widget test.
 //
 // In its own file (isolate) by design — see the note in localization_test.dart:
 // switching between two non-English CLDR locales in one isolate leaves the later
@@ -13,7 +13,7 @@ void _noOpOpen() {}
 void _noOpSave(ReportDefinition _) {}
 
 void main() {
-  // C6 (spec 014): Turkish groups thousands with a dot (1.000) and the ruler
+  // Turkish groups thousands with a dot (1.000) and the ruler
   // toggle tooltip is localized.
   testWidgets(
       'ruler labels group thousands in Turkish; toggle tooltip localized',
@@ -52,7 +52,7 @@ void main() {
     expect(find.text('Untitled report'), findsNothing);
     expect(find.text('Save'), findsNothing);
     expect(find.text('Data Source'), findsNothing);
-    // The Data Source empty state is translated (US1) — the English string is
+    // The Data Source empty state is translated — the English string is
     // gone. (Asserting the negative keeps this file's ASCII-only convention;
     // the German test asserts the positive translation.)
     expect(find.text('No data source attached.'), findsNothing);
@@ -124,7 +124,7 @@ void main() {
     expect(find.text('PAGE'), findsNothing);
 
     // (3) Band inspector — the height row is now label-less (its glyph stands
-    // in for the dropped label). Under the reified model (spec 024) the band
+    // in for the dropped label). Under the reified model the band
     // inspector shows ONLY the height; the collection field moved to the Scope
     // inspector (checked next).
     c.selectBand(firstDetailBandId(c));
@@ -133,7 +133,7 @@ void main() {
         find.text('Yükseklik'), findsNothing); // height row dropped its label
 
     // (3b) Scope inspector — a nested detail scope carries the collection-binding
-    // placeholder that used to live on the band, still translated (US3) — English
+    // placeholder that used to live on the band, still translated — English
     // gone (createScope selects the new scope, opening its inspector).
     c.createScope('root');
     await tester.pumpAndSettle();

@@ -14,7 +14,7 @@ class PaperPreset {
   const PaperPreset(this.name, this.portraitWidth, this.portraitHeight);
 
   /// The universal size name (e.g. `'A4'`, `'Letter'`) — **not** localized: it
-  /// is an international standard, like a unit symbol (research D1).
+  /// is an international standard, like a unit symbol.
   final String name;
 
   /// Portrait width, in points (the shorter side).
@@ -25,7 +25,7 @@ class PaperPreset {
 }
 
 /// The standard sizes offered by the paper-type picker, in display order, stored
-/// portrait (research D1). A4 matches [PageFormat.a4Portrait] exactly; A3/A5 are
+/// portrait. A4 matches [PageFormat.a4Portrait] exactly; A3/A5 are
 /// ISO 216; Letter/Legal are ANSI at 72 pt/inch.
 const List<PaperPreset> kPaperPresets = <PaperPreset>[
   PaperPreset('A4', 595.28, 841.89),
@@ -75,7 +75,7 @@ const double _kPaperTolerance = 0.5;
 
 /// Names [page] by the standard size it matches in **either** orientation, or
 /// reports [PaperMatch.isCustom] when none does. Pure and display-only — it
-/// never alters [page] (FR-003). The page's two sides are sorted to {short,
+/// never alters [page]. The page's two sides are sorted to {short,
 /// long} before comparing, so portrait and landscape of the same size match.
 PaperMatch recognizePaper(PageFormat page) {
   final double shortSide = page.width <= page.height ? page.width : page.height;
@@ -91,7 +91,7 @@ PaperMatch recognizePaper(PageFormat page) {
 
 /// Builds a [PageFormat] at [preset]'s size — swapped to landscape when
 /// [landscape] is true — carrying the supplied [margins] unchanged, so applying
-/// a paper size never disturbs the current margins (FR-002). The controller
+/// a paper size never disturbs the current margins. The controller
 /// clamps the result before committing.
 PageFormat applyPaper(
   PaperPreset preset, {

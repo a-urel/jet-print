@@ -1,4 +1,4 @@
-// Rename-element and rename-band command unit tests (spec 017 / Task 4).
+// Rename-element and rename-band command unit tests (Task 4).
 //
 // Low-level: drives DesignerDocument + command classes directly, no controller.
 // Mirrors the fixture construction pattern from band_walker_test.dart.

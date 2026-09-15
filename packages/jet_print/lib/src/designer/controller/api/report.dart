@@ -7,14 +7,14 @@ part of '../jet_report_designer_controller.dart';
 
 extension CtrlReport on JetReportDesignerController {
   /// Sets the report's page [format] — size and/or margins — as one undoable,
-  /// notifying step (018 / FR-006/FR-007).
+  /// notifying step.
   ///
   /// The Properties panel composes the next [PageFormat] from the live one
   /// (apply a paper preset, swap width/height for orientation, set one margin
   /// side via `copyWith`) and hands the whole value over; this method
   /// [clampPageFormat]s it first so every produced page keeps a positive content
-  /// area (FR-009), then commits it. Routed through `_commit`, so a page equal
-  /// to the current one records no history and notifies no listener (FR-007),
+  /// area, then commits it. Routed through `_commit`, so a page equal
+  /// to the current one records no history and notifies no listener,
   /// undo restores the exact prior page, and elements are never repositioned
   /// (FR-013). Canvas, preview, and export all read `definition.page`, so the one
   /// notification propagates the change everywhere (WYSIWYG).
@@ -30,7 +30,7 @@ extension CtrlReport on JetReportDesignerController {
       _commit(SetWatermarkCommand(watermark));
 
   // --- Numeric geometry + text (Properties / inline) -------------------------
-  /// Renames the report to [name] as a single undoable step (017 / FR-008).
+  /// Renames the report to [name] as a single undoable step.
   ///
   /// The name is stored verbatim: an empty or whitespace-only name is kept as
   /// `''`, and the UI shows the localized placeholder for an empty name

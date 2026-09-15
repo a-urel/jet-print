@@ -1,4 +1,4 @@
-// AST nodes + canonical toString (spec 005a). No Flutter UI.
+// AST nodes + canonical toString. No Flutter UI.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/expression/ast.dart';
 import 'package:jet_print/src/expression/value.dart';

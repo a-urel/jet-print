@@ -1,4 +1,4 @@
-// Registry host-font ingest (022 — contracts C4–C6; T003).
+// Registry host-font ingest.
 //
 // `registerHostFonts`, always called AFTER `registerDefault()`, layers host
 // families on top of the built-ins: additive, last-registration-wins per
@@ -19,7 +19,7 @@ JetFontFamily _family(String name, {required Uint8List regular}) =>
         name: name, faces: <JetFontFace>[JetFontFace(bytes: regular)]);
 
 void main() {
-  group('registerHostFonts — last-wins & additive (C4)', () {
+  group('registerHostFonts — last-wins & additive', () {
     test('resolves a host family\'s bytes and metrics', () {
       final Uint8List bytes = validRegularFontBytes();
       final FontRegistry registry = FontRegistry()
@@ -70,14 +70,14 @@ void main() {
           _family(FontRegistry.defaultFamily, regular: shadow)
         ]);
       // The default family's regular bytes are now the host's, but the family
-      // still exists and hasDefault stays true (FR-006).
+      // still exists and hasDefault stays true.
       expect(registry.bytesFor(FontRegistry.defaultFamily), same(shadow));
       expect(registry.hasDefault, isTrue);
       expect(registry.families.first, FontRegistry.defaultFamily);
     });
   });
 
-  group('families — stable, predictable order (C5)', () {
+  group('families — stable, predictable order', () {
     test('order is built-ins then host insertion order, stable on re-read', () {
       final FontRegistry registry = FontRegistry()
         ..registerDefault()
@@ -96,7 +96,7 @@ void main() {
     });
   });
 
-  group('missing variant falls back without error (C6)', () {
+  group('missing variant falls back without error', () {
     test('a regular-only host family resolves bold/italic to its regular face',
         () {
       final Uint8List regular = validRegularFontBytes();

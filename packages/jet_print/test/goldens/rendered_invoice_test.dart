@@ -1,4 +1,4 @@
-// Data-filled invoice golden (011 — contracts C2/C6 / SC-003; WYSIWYG).
+// Data-filled invoice golden (WYSIWYG).
 //
 // Closes the golden the 009 plan deferred to "the render slice": the invoice
 // with REAL VALUES (master fields + iterated line items + total), paginated,

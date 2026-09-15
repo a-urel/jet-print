@@ -125,7 +125,7 @@ void main() {
   });
 
   // --- 021 format properties: family enumeration for the picker -------------
-  group('families (021 / US1 / FR-001)', () {
+  group('families', () {
     test('lists the bundled family for a default-only registry', () {
       final FontRegistry reg = FontRegistry()..registerDefault();
       expect(reg.families, <String>[FontRegistry.defaultFamily]);

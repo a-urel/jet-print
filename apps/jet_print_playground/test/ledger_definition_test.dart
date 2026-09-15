@@ -1,4 +1,4 @@
-// The ledger sample definition + schema (spec 040). Authored through the public
+// The ledger sample definition + schema. Authored through the public
 // API only; this pins the schema and the summary aggregates.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';

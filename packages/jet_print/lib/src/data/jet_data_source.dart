@@ -1,11 +1,11 @@
-/// The data-source factory contract (spec 004).
+/// The data-source factory contract.
 library;
 
 import 'data_set.dart';
 
 /// A factory that opens forward-only [DataSet] cursors over a row collection.
 ///
-/// The host's side of the render contract (FR-011): build one of the public
+/// The host's side of the render contract: build one of the public
 /// implementations — `JetInMemoryDataSource` (rows as maps),
 /// `JetJsonDataSource` (a JSON array of objects), or `JetObjectDataSource<T>`
 /// (domain objects + extractor) — and hand it to `JetReportEngine.render`.

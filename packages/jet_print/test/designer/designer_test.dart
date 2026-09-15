@@ -1,4 +1,4 @@
-// Designer seam test (SC-004).
+// Designer seam test.
 //
 // Proves the designer seam is exercisable independently of the playground app:
 // it consumes the public report-designer shell through the single public entry

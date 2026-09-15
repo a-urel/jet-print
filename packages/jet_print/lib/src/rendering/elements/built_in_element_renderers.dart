@@ -1,6 +1,6 @@
 /// Registers the built-in element types (codec + renderer) shipped with the
 /// library, through the single paired `ElementTypeRegistry.register` call so each
-/// built-in flows the same path a custom type does (spec 007a). Consumers add
+/// built-in flows the same path a custom type does. Consumers add
 /// their own types with further `register(...)` calls.
 library;
 

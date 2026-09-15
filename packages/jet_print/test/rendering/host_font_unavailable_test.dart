@@ -1,4 +1,4 @@
-// Unavailable host family — codec & export portability (022 — C11 / US2; T023).
+// Unavailable host family — codec & export portability (022 — C11).
 //
 // A report naming a host family NOT registered in the current session stays
 // fully portable: it round-trips byte-identically through the codecs (name
@@ -68,7 +68,7 @@ void main() {
     final ReportDefinition reopened =
         JetReportFormat.decodeDefinitionJson(json);
     expect(JetReportFormat.encodeDefinitionJson(reopened), json,
-        reason: 'no silent rewrite — byte-identical round-trip (SC-003)');
+        reason: 'no silent rewrite — byte-identical round-trip');
     // No schema change within the reified format.
     expect(JetReportFormat.encodeDefinition(_definition())['schemaVersion'], 2);
     expect(json, contains('"schemaVersion":2'));

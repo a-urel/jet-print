@@ -1,4 +1,4 @@
-// Parser: tokens -> Expr, tested via canonical toString (spec 005a).
+// Parser: tokens -> Expr, tested via canonical toString.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/expression/expression_exception.dart';
 import 'package:jet_print/src/expression/lexer.dart';

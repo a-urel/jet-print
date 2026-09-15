@@ -1,5 +1,5 @@
 // lib/src/rendering/paint/page_rasterizer.dart
-/// PNG rasterization of a page frame (spec 012): records the UNCHANGED
+/// PNG rasterization of a page frame: records the UNCHANGED
 /// preview paint path — `paintFrame` -> [CanvasPainter] — into a scaled
 /// `dart:ui` picture and encodes it as PNG.
 ///
@@ -26,7 +26,7 @@ class PageRasterizer {
   /// [fonts]) with a `scale` canvas transform and encodes the result as PNG.
   ///
   /// The output pixel dimensions are exactly
-  /// `round(page.width x scale)` by `round(page.height x scale)` (SC-006).
+  /// `round(page.width x scale)` by `round(page.height x scale)`.
   Future<Uint8List> rasterize(
     PageFrame frame,
     FontRegistry fonts, {

@@ -1,4 +1,4 @@
-/// The public render facade (spec 011): one call from a reified
+/// The public render facade: one call from a reified
 /// [ReportDefinition] plus host data to a lazily-paginated, locale-aware
 /// [RenderedReport]. A thin orchestrator over the existing `ReportFiller` and
 /// `ReportLayouter` — it owns **no** rendering logic of its own.
@@ -39,15 +39,15 @@ import 'rendered_report.dart';
 ///
 /// Guarantees:
 ///
-/// * **Never throws on malformed data** (FR-013/FR-014): unknown fields,
+/// * **Never throws on malformed data**: unknown fields,
 ///   missing parameters, unresolvable images, and empty datasets best-effort
 ///   render and surface on [RenderedReport.diagnostics].
-/// * **Deterministic** (FR-010): identical (definition, data, parameters,
+/// * **Deterministic**: identical (definition, data, parameters,
 ///   locale) produce byte-identical pages — no clock, no randomness, no
 ///   ambient-locale reads.
-/// * **Lazy first page** (FR-021): the returned report resolves its exact
+/// * **Lazy first page**: the returned report resolves its exact
 ///   page count up front, but builds each page's frame only when requested.
-/// * **Read-only over definitions** (FR-016): rendering never mutates or
+/// * **Read-only over definitions**: rendering never mutates or
 ///   re-serializes the definition.
 class JetReportEngine {
   /// Creates the stateless render engine.
@@ -55,7 +55,7 @@ class JetReportEngine {
 
   /// Fills [definition] with [source]'s records (and [options]), paginates, and
   /// returns a lazily-paginated [RenderedReport] — the native render path over
-  /// the reified model (spec 024).
+  /// the reified model.
   RenderedReport renderDefinition(
     ReportDefinition definition,
     JetDataSource source, {
@@ -66,7 +66,7 @@ class JetReportEngine {
     // One registry per render: the bundled defaults, then host families
     // (last-registration-wins). It drives layout MEASUREMENT and is carried on
     // the returned report so preview/export/print paint from the identical
-    // bytes — never a second default-only build (022 C7/C8).
+    // bytes — never a second default-only build (022 C7).
     final FontRegistry fonts = FontRegistry()
       ..registerDefault()
       ..registerHostFonts(options.fonts);
@@ -105,7 +105,7 @@ class JetReportEngine {
     );
   }
 
-  /// Runs [body] with [localeTag] as the current Intl locale (FR-012a), typed
+  /// Runs [body] with [localeTag] as the current Intl locale, typed
   /// (`Intl.withLocale` is declared `dynamic`).
   static T _withLocale<T>(String localeTag, T Function() body) =>
       Intl.withLocale<T>(localeTag, body) as T;
@@ -113,7 +113,7 @@ class JetReportEngine {
   /// The parameter values the render actually uses: the host-supplied map,
   /// backfilled with declared defaults. A parameter the definition declares
   /// with neither a supplied value nor a default gets a diagnostic and
-  /// resolves as empty (FR-012 / FR-013 / SC-007).
+  /// resolves as empty.
   static Map<String, Object?> _effectiveParameters(
     ReportDefinition definition,
     RenderOptions options,

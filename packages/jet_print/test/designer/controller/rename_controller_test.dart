@@ -1,4 +1,4 @@
-// Controller renameElement / renameBand unit tests (spec 017 / Task 5).
+// Controller renameElement / renameBand unit tests (Task 5).
 //
 // Black-box: drives only the public controller surface. Mirrors the fixture
 // construction pattern from rename_test.dart / band_lifecycle_test.dart.

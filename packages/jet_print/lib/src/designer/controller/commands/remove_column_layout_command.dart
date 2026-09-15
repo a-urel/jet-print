@@ -1,4 +1,4 @@
-/// The command that clears a band's multi-column label layout (spec 035).
+/// The command that clears a band's multi-column label layout.
 library;
 
 import '../../../domain/band.dart';

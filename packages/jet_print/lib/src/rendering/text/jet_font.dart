@@ -1,11 +1,11 @@
 // lib/src/rendering/text/jet_font.dart
-/// Public host-font value types (spec 022): the bytes-in descriptors a host
+/// Public host-font value types: the bytes-in descriptors a host
 /// hands the library to make its own fonts selectable in every picker and
 /// rendered identically across canvas, preview, PDF, and PNG.
 ///
 /// A face is a plain descriptor; a [JetFontFamily] is the unit a host
 /// registers and the point where bad bytes are caught — it validates its faces
-/// **eagerly and synchronously** at construction (FR-010 / SC-006), so a host
+/// **eagerly and synchronously** at construction, so a host
 /// detects a malformed/empty/regular-less font at the natural point (assembling
 /// it) and nothing can throw later inside a widget `build()` or a `render()`.
 library;
@@ -61,7 +61,7 @@ class JetFontFace {
 /// * [name] must be non-empty (else [ArgumentError]).
 /// * the family must include at least one **regular** face
 ///   (`weight == JetFontWeight.normal && !italic`) — bold/italic are optional
-///   and fall back to regular when absent (FR-001 / FR-005); otherwise a
+///   and fall back to regular when absent; otherwise a
 ///   [FontFormatException] naming the family is thrown.
 /// * every face's [JetFontFace.bytes] must parse as font metrics; a malformed
 ///   or empty face throws a [FontFormatException] naming the family and the

@@ -1,4 +1,4 @@
-// Built-in math functions (spec 005a). No Flutter UI.
+// Built-in math functions. No Flutter UI.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/expression/eval_context.dart';
 import 'package:jet_print/src/expression/expression.dart';

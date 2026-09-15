@@ -1,4 +1,4 @@
-/// The environment passed to an [ElementRenderer]'s measure/emit (spec 007a).
+/// The environment passed to an [ElementRenderer]'s measure/emit.
 ///
 /// In 007a it carries only the [TextMeasurer]; a diagnostics sink is added here
 /// in 007b without changing renderer signatures. It deliberately exposes neither

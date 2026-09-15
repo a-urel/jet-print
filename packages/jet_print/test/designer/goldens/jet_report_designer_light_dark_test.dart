@@ -1,4 +1,4 @@
-// Light/dark golden test for the designer shell (US1 / SC-003).
+// Light/dark golden test for the designer shell.
 //
 // Extends the WYSIWYG golden harness seeded in feature 001
 // (jet_print_placeholder_test.dart): it pins the whole shell's appearance in

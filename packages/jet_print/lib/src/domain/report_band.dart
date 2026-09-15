@@ -1,7 +1,7 @@
 /// Horizontal bands — the vertical structure of a banded report.
 library;
 
-/// The role a band plays in the report's vertical flow. The renderer (spec 008)
+/// The role a band plays in the report's vertical flow. The renderer
 /// decides repetition/placement per type; here it is pure structure.
 enum BandType {
   /// Printed once at the very start of the report.

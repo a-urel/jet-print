@@ -3,7 +3,7 @@
 /// the way an external consumer would.
 ///
 /// Built on the same engine pieces as the address-label sheet (spec 034 native
-/// multi-column layout) plus the barcode element (spec 036): the detail band
+/// multi-column layout) plus the barcode element: the detail band
 /// carries a [ColumnLayout], so a single label cell is authored once — in
 /// cell-local coordinates — and the engine repeats it across the grid in
 /// horizontal print order (left-to-right, wrapping down, then to the next page).

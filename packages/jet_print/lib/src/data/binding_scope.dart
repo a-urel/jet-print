@@ -2,7 +2,7 @@
 /// FR-017, FR-018). Pure logic over a scope **chain** through the report model
 /// (domain) and a [JetDataSchema] (data) — no Flutter, no designer.
 ///
-/// Reification (spec 024): a band's data scope is the chain of [DetailScope]s
+/// Reification: a band's data scope is the chain of [DetailScope]s
 /// enclosing it (each with an optional `collectionField`). The designer computes
 /// that chain (and the band owning an element) via the tree-walk helpers; these
 /// helpers do the schema-side resolution, so the data seam depends only on the

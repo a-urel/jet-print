@@ -1,7 +1,7 @@
 /// Pure measurement helpers shared by the rulers.
 ///
 /// A **display-only** projection of the model's point-based geometry into
-/// millimetres (FR-005): the report model is untouched — these convert numbers
+/// millimetres: the report model is untouched — these convert numbers
 /// for the rulers' labels and extent highlight only. Pure Dart (plus the domain
 /// geometry value types); no Flutter, no rendering, no serialization — so the
 /// projection is unit-testable and carries no view coupling.
@@ -17,14 +17,14 @@ import 'design_time_layout.dart';
 /// conversion constant the rulers calibrate against.
 const double kPointsPerMm = 72 / 25.4;
 
-/// Converts a length in PDF points to millimetres (display-only, FR-005).
+/// Converts a length in PDF points to millimetres (display-only).
 double pointsToMm(double points) => points / kPointsPerMm;
 
 /// Converts a length in millimetres to PDF points.
 double mmToPoints(double mm) => mm * kPointsPerMm;
 
 /// The page-absolute bounding rect the rulers highlight for [selection], or
-/// `null` when there is nothing to span (FR-012, research D6):
+/// `null` when there is nothing to span:
 ///
 /// * a single element → that element's rect;
 /// * multiple elements → their **union** (min-left/top → max-right/bottom) as

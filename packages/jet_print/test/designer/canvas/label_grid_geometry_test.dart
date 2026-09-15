@@ -1,4 +1,4 @@
-// Pure label-grid cue geometry (spec 035 / Task 4). Tests the data the canvas
+// Pure label-grid cue geometry (Task 4). Tests the data the canvas
 // overlay draws — no widget pump. Uses src/ imports (internal canvas helper),
 // like the other canvas-geometry tests.
 import 'package:flutter_test/flutter_test.dart';

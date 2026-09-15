@@ -1,4 +1,4 @@
-/// Write-side builder for a [PageFrame] (spec 006): renderers append primitives,
+/// Write-side builder for a [PageFrame]: renderers append primitives,
 /// then [build] snapshots them into an immutable frame.
 library;
 

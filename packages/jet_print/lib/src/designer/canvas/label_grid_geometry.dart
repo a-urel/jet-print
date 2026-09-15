@@ -1,9 +1,9 @@
-/// Design-time geometry of a label grid's cells, for the canvas cue (spec 035).
+/// Design-time geometry of a label grid's cells, for the canvas cue.
 ///
 /// Pure data: given a definition and its [DesignTimeLayout], it produces the
 /// first editable cell rect plus the read-only ghost cell rects that cue the
 /// repeated grid. The active band's design rect spans the full content width
-/// (the canvas does NOT narrow it — element drag/resize stay unchanged, FR-013);
+/// (the canvas does NOT narrow it — element drag/resize stay unchanged);
 /// this overlay draws a cell at `columnWidth` and `columnCount - 1` ghosts at
 /// pitch, clipped to the content's right edge. Nothing here changes layout.
 library;

@@ -1,7 +1,7 @@
-// RenderOptions.fonts default (022 — contract C7; T007).
+// RenderOptions.fonts default.
 //
 // The host-fonts field defaults to an empty const list, so every pre-feature
-// `render(template, source)` call behaves exactly as before (SC-005).
+// `render(template, source)` call behaves exactly as before.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/rendering/engine/render_options.dart';
 import 'package:jet_print/src/rendering/text/jet_font.dart';

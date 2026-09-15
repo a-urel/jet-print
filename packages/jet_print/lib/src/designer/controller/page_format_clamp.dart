@@ -1,5 +1,5 @@
 /// Input-conditioning for page edits: corrects a [PageFormat] to a usable page
-/// rather than rejecting it (FR-009 / SC-006).
+/// rather than rejecting it.
 library;
 
 import '../../domain/geometry.dart';

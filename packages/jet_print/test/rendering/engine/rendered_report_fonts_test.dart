@@ -1,4 +1,4 @@
-// Engine builds + carries one font registry (022 — contract C7; T007).
+// Engine builds + carries one font registry.
 //
 // `JetReportEngine.render` builds a single `FontRegistry`
 // (registerDefault + registerHostFonts) and ATTACHES it to the returned

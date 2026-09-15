@@ -1,4 +1,4 @@
-// Format property applied at resolve time (013 / T020): a bound value is
+// Format property applied at resolve time: a bound value is
 // formatted before stringify; literals are unaffected; bad patterns fall back.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/data_row.dart';

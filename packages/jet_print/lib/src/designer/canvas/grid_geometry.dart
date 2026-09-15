@@ -23,7 +23,7 @@ library;
 /// - [minGapPx] — the minimum on-screen gap, in device pixels, between lines.
 /// - [maxCoarsenFactor] — the largest step multiplier before the grid hides.
 ///
-/// **Adaptive density** (FR-006): with `f = max(1, ⌈minGapPx / (step·scale)⌉)`,
+/// **Adaptive density**: with `f = max(1, ⌈minGapPx / (step·scale)⌉)`,
 /// the grid coarsens to multiples of `step·f` so the on-screen gap always clears
 /// [minGapPx]; once `f > maxCoarsenFactor` it returns `[]` (the grid hides rather
 /// than drawing lines coarser than `maxCoarsenFactor·step`), so the page never

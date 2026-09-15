@@ -170,7 +170,7 @@ void main() {
           equals(def));
     });
 
-    test('round-trips a nested scope footer (spec 029)', () {
+    test('round-trips a nested scope footer', () {
       const ReportDefinition def = ReportDefinition(
         name: 'Footer',
         page: PageFormat.a4Portrait,
@@ -242,7 +242,7 @@ void main() {
       expect(root.containsKey('footer'), isFalse);
     });
 
-    test('round-trips nested scope totals (spec 030, B2)', () {
+    test('round-trips nested scope totals', () {
       const ReportDefinition def = ReportDefinition(
         name: 'Totals',
         page: PageFormat.a4Portrait,
@@ -382,7 +382,7 @@ void main() {
       );
     });
 
-    test('round-trips a text watermark with no schema bump (spec 043)', () {
+    test('round-trips a text watermark with no schema bump', () {
       final ReportDefinition def = const ReportDefinition(
         name: 'WM',
         page: PageFormat.a4Portrait,
@@ -410,8 +410,7 @@ void main() {
           JetReportFormat.decodeDefinition(json).furniture.watermark, isNull);
     });
 
-    test('Band.columnLayout round-trips and is omitted when null (spec 034)',
-        () {
+    test('Band.columnLayout round-trips and is omitted when null', () {
       const ColumnLayout grid = ColumnLayout(
           columnCount: 3, columnWidth: 180, columnSpacing: 12, rowSpacing: 8);
       final ReportDefinition def = ReportDefinition(

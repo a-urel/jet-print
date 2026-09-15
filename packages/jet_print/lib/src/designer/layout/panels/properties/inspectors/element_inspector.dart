@@ -119,11 +119,11 @@ extension _ElementInspector on _PropertiesPanelState {
           onCommit: (String v) => controller.setFormat(id, v),
         ),
         const SizedBox(height: 12),
-        // Font section (021 / US1): every editor reads the element's effective
+        // Font section: every editor reads the element's effective
         // style and commits one whole-style copyWith through setTextStyle —
-        // one undoable step per committed change (FR-013). Keyed by element id
+        // one undoable step per committed change. Keyed by element id
         // so a selection switch rebuilds the editors, discarding uncommitted
-        // input (C9).
+        // input.
         KeyedSubtree(
           key: ValueKey<String>('$_p.font.$id'),
           child: Column(
@@ -221,7 +221,7 @@ extension _ElementInspector on _PropertiesPanelState {
                   _unresolved(schema, controller, id,
                       barcodeField: element.dataField))
                 _UnresolvedHint(message: l10n.bindingUnresolved),
-              // Literal-value validity hint (FR-005/FR-015): a non-empty literal
+              // Literal-value validity hint: a non-empty literal
               // that cannot be encoded for its resolved symbology. A bound
               // field's value is unknown at design time, so no validity hint
               // there — only the unresolved-field hint above.
@@ -442,7 +442,7 @@ extension _ElementInspector on _PropertiesPanelState {
           ),
         ),
       ],
-      // Shape gallery: pick the form from a visual roster (020 / FR-001/002).
+      // Shape gallery: pick the form from a visual roster.
       // Shape-gated, so it is absent for text/image/barcode and for no/multi
       // selection (the latter fall through to the empty state before this runs).
       if (element is ShapeElement) ...<Widget>[
@@ -450,11 +450,11 @@ extension _ElementInspector on _PropertiesPanelState {
         SectionLabel(l10n.propertiesShape),
         _ShapeGallery(controller: controller, element: element),
         const SizedBox(height: 12),
-        // Appearance section (021 / US2): fill (closed forms only — a line has
+        // Appearance section: fill (closed forms only — a line has
         // no interior), outline color with None, and outline width 0–20 (0
         // hides the outline, the color stays remembered). Each commit is one
-        // copyWith + one setShapeStyle = one undo step (FR-013). Keyed by
-        // element id so a selection switch discards uncommitted input (C9).
+        // copyWith + one setShapeStyle = one undo step. Keyed by
+        // element id so a selection switch discards uncommitted input.
         KeyedSubtree(
           key: ValueKey<String>('$_p.appearance.$id'),
           child: Column(
@@ -568,7 +568,7 @@ extension _ElementInspector on _PropertiesPanelState {
   }
 
   /// Whether [elementId]'s binding fails to resolve against the attached
-  /// [schema] in its band scope (FR-018). With no schema attached, nothing is
+  /// [schema] in its band scope. With no schema attached, nothing is
   /// flagged — the token still shows, and resolution waits for a source
   /// (FR-019a).
   bool _unresolved(
@@ -595,7 +595,7 @@ extension _ElementInspector on _PropertiesPanelState {
   }
 
   /// True when [element]'s literal value cannot be encoded for its resolved
-  /// symbology (FR-005/FR-015). Drives the design-time validity hint. Only
+  /// symbology. Drives the design-time validity hint. Only
   /// meaningful for a literal (a bound field's value is unknown at design time).
   bool _barcodeLiteralInvalid(BarcodeElement element) {
     final BarcodeEncodeResult result = const PackageBarcodeEncoder().encode(
@@ -610,7 +610,7 @@ extension _ElementInspector on _PropertiesPanelState {
   }
 
   /// True when every `$F{}` ref in [expression] is in [names], or is an
-  /// aggregate operand and a descendant operand (spec 033). Mirrors the fx
+  /// aggregate operand and a descendant operand. Mirrors the fx
   /// editor's statusFor resolution for the inline Unresolved hint.
   bool _resolvesAggregateAware(
       Set<String> names, Set<String> deep, String expression) {
@@ -629,7 +629,7 @@ extension _ElementInspector on _PropertiesPanelState {
   }
 
   /// The resolvable name set for [elementId]'s band — schema fields in scope plus
-  /// published totals (spec 031). Empty when no schema/band, so the fx editor's
+  /// published totals. Empty when no schema/band, so the fx editor's
   /// unresolved check stays silent exactly like the inline field.
   Set<String> _resolvableNames(
     JetDataSchema? schema,

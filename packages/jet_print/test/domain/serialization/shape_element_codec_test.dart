@@ -1,9 +1,9 @@
-// ShapeElementCodec round-trip + forward-compat tests (020 / US3 / C8.1–C8.4).
+// ShapeElementCodec round-trip + forward-compat tests.
 //
 // Known forms must be wire-identical to today (serialized by `.name`, no schema
 // bump). An unrecognized form must load as a rectangle while preserving the
 // original name in `unknownForm`, and re-serialize that original name — a
-// lossless forward-compatible round-trip (FR-009). A deliberate pick clears the
+// lossless forward-compatible round-trip. A deliberate pick clears the
 // preserved name and serializes the chosen form.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/domain/elements/shape_element.dart';
@@ -17,7 +17,7 @@ void main() {
   const ShapeElementCodec codec = ShapeElementCodec();
   const JetRect bounds = JetRect(x: 4, y: 6, width: 50, height: 30);
 
-  group('C8.1 — every known form round-trips wire-identically', () {
+  group('every known form round-trips wire-identically', () {
     for (final ShapeKind kind in ShapeKind.values) {
       test('${kind.name} serializes by name and decodes back equal', () {
         final ShapeElement s = ShapeElement(
@@ -37,7 +37,7 @@ void main() {
 
   // 021 / C10 — the UI can now reach the none states and translucent colors;
   // the wire rules they ride are pinned here.
-  group('fill/stroke none + alpha wire rules (021 / C10)', () {
+  group('fill/stroke none + alpha wire rules', () {
     test('null fill/stroke are omitted on write and null on read', () {
       const ShapeElement s = ShapeElement(
         id: 's',
@@ -80,7 +80,7 @@ void main() {
     });
   });
 
-  group('C8.2 — pre-feature reports are unchanged; schema not bumped', () {
+  group('pre-feature reports are unchanged; schema not bumped', () {
     test('a line/rectangle serialize exactly as before (no new keys)', () {
       const ShapeElement line = ShapeElement(
         id: 'l',
@@ -100,7 +100,7 @@ void main() {
     });
   });
 
-  group('C8.3 — an unrecognized form round-trips losslessly', () {
+  group('an unrecognized form round-trips losslessly', () {
     test('octagon loads as rectangle + unknownForm, re-serializes octagon', () {
       final Map<String, Object?> wire = <String, Object?>{
         'id': 's',
@@ -119,7 +119,7 @@ void main() {
     });
   });
 
-  group('C8.4 — a deliberate pick clears the preserved unknown form', () {
+  group('a deliberate pick clears the preserved unknown form', () {
     test('after picking a known form, unknownForm is gone and serialized', () {
       final ShapeElement loaded = codec.fromJson(<String, Object?>{
         'id': 's',

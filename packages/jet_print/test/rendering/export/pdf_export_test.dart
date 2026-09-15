@@ -1,4 +1,4 @@
-// PDF structure (012 — contract B1/B2; FR-002/003/004/005/008; T003).
+// PDF structure.
 //
 // The exported document is a REAL document: every page in order, MediaBox
 // equal to the template's PageFormat in PostScript points, text emitted as
@@ -87,7 +87,7 @@ void main() {
       // sources — each embedded exactly once, however many runs use them.
       expect(pdf.embeddedFontProgramCount, 2,
           reason: 'embed each resolved font byte source exactly once per '
-              'document (FR-005), never once per run');
+              'document, never once per run');
     });
 
     test('a known line-item string is extractable (selectable/searchable)',

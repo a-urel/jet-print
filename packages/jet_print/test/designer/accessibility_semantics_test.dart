@@ -105,7 +105,7 @@ void main() {
     sem.dispose();
   });
 
-  // --- Shape gallery thumbnails (020 / C9.1–C9.2 / FR-012) ------------------
+  // --- Shape gallery thumbnails ------------------
   testWidgets(
       'each gallery thumbnail is a named, role-tagged, activatable button',
       (WidgetTester tester) async {
@@ -146,7 +146,7 @@ void main() {
     sem.dispose();
   });
 
-  // --- Font section controls (021 / C12 / FR-016) ---------------------------
+  // --- Font section controls ---------------------------
   group('Font section a11y (021)', () {
     Finder field(String name) => find
         .byKey(ValueKey<String>('jet_print.designer.properties.field.$name'));
@@ -269,7 +269,7 @@ void main() {
     });
   });
 
-  // --- Appearance section controls (021 / US2 / C12) ------------------------
+  // --- Appearance section controls ------------------------
   group('Appearance section a11y (021)', () {
     Finder field(String name) => find
         .byKey(ValueKey<String>('jet_print.designer.properties.field.$name'));

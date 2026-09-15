@@ -1,4 +1,4 @@
-/// The rendering-side element extension point (spec 007a): measures an element
+/// The rendering-side element extension point: measures an element
 /// and emits frame primitives for it. Paired with the domain-side `ElementCodec`
 /// through `ElementTypeRegistry.register`.
 library;

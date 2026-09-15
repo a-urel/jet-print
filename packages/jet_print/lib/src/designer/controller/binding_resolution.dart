@@ -94,7 +94,7 @@ _Roles _rolesForBand(ReportDefinition def, String bandId) {
 /// descending the collection subtree of the band's OWN scope. Excludes
 /// same-scope names (already offered as normal fields) and ambiguous names (an
 /// author-time error). The author writes these only inside an aggregate;
-/// referenced bare they remain unresolved (FR-006).
+/// referenced bare they remain unresolved.
 Set<String> descendantOperandNamesForBand(
     ReportDefinition def, JetDataSchema schema, String bandId) {
   final List<DetailScope> chain = scopePathToBand(def, bandId);
@@ -124,7 +124,7 @@ Set<String> descendantOperandNamesForBand(
 /// synthetic [FieldDef] per name from [descendantOperandNamesForBand], typed
 /// [JetFieldType.unknown] (the palette inserts the plain `[name]` token). These
 /// are rendered marked as deeper-collection fields, distinct from in-scope
-/// fields (FR-007).
+/// fields.
 List<FieldDef> descendantFieldChoicesForBand(
     ReportDefinition def, JetDataSchema schema, String bandId) {
   return <FieldDef>[

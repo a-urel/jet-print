@@ -1,4 +1,4 @@
-// JetReportEngine facade (011 — contracts C1/C3): fill resolves tokens to
+// JetReportEngine facade: fill resolves tokens to
 // values, parameters thread through, pagination repeats chrome with a correct
 // page count, and rendering is deterministic.
 import 'dart:ui' show Locale;
@@ -55,7 +55,7 @@ List<String> _allRuns(RenderedReport report) => <String>[
     ];
 
 void main() {
-  group('C1 — fill resolves tokens to values', () {
+  group('fill resolves tokens to values', () {
     final ReportDefinition template = ReportDefinition(
       name: 'flat',
       page: _smallPage,
@@ -116,7 +116,7 @@ void main() {
     });
   });
 
-  group('C3 — pagination with repeated chrome', () {
+  group('pagination with repeated chrome', () {
     final ReportDefinition template = ReportDefinition(
       name: 'paged',
       page: _smallPage,
@@ -176,7 +176,7 @@ void main() {
     });
   });
 
-  group('C2 — master/detail + aggregates (US2)', () {
+  group('master/detail + aggregates', () {
     // A tall page so the whole invoice fits one page (pagination is C3's job).
     const PageFormat tallPage =
         PageFormat(width: 400, height: 800, margins: JetEdgeInsets.all(10));
@@ -282,7 +282,7 @@ void main() {
           reason: 'the line-total expression computes per child row');
     });
 
-    test('the invoice total equals the exact sum of line amounts (SC-002)', () {
+    test('the invoice total equals the exact sum of line amounts', () {
       final RenderedReport report = const JetReportEngine()
           .renderDefinition(invoiceTemplate(), invoiceSource());
       final double linesSum = runsFor(report, 'lineTotal')
@@ -983,7 +983,7 @@ void main() {
       // only the real data fields (lineTotal + the collections), NOT the
       // computed custTotal/ordTotal. The injected published totals must still
       // resolve — a field-namespace injection that consumers reference as
-      // $F{...} cannot be rejected by the unresolved-binding gate (spec 030).
+      // $F{..} cannot be rejected by the unresolved-binding gate.
       final def = ReportDefinition(
         name: 'recursive-schema-aware',
         page: tallPage,
@@ -1388,7 +1388,7 @@ void main() {
 
     test(
         'a published total whose name shadows a real parent-row field warns '
-        'and the computed total wins (FR-010)', () {
+        'and the computed total wins', () {
       // The master row carries a real `amount` field (value 999). A nested
       // `lines` scope publishes a total ALSO named `amount` (SUM of lineTotal),
       // injected onto that same master (parent) row — so `row.hasField('amount')`
@@ -1462,7 +1462,7 @@ void main() {
     });
   });
 
-  group('determinism (FR-010 / SC-004)', () {
+  group('determinism', () {
     test('identical inputs render byte-identical pages', () {
       final ReportDefinition template = ReportDefinition(
         name: 'det',

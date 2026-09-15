@@ -8,7 +8,7 @@ import '../../domain/report_element.dart';
 /// not list position).
 typedef ClipboardEntry = ({String bandId, ReportElement element});
 
-/// Holds the last cut/copied elements (FR-015). Immutable elements are stored
+/// Holds the last cut/copied elements. Immutable elements are stored
 /// directly; paste produces fresh-id, offset copies (the controller assigns
 /// ids). This is **not** the OS clipboard.
 class Clipboard {

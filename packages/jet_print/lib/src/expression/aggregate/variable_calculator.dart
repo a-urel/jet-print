@@ -1,4 +1,4 @@
-/// One-pass variable & aggregate calculator (spec 005b).
+/// One-pass variable & aggregate calculator.
 library;
 
 import '../../data/data_row.dart';

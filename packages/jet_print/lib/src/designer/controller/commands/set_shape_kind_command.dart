@@ -1,4 +1,4 @@
-/// The command that changes a shape element's form (020 / US1 / FR-004).
+/// The command that changes a shape element's form.
 library;
 
 import '../../../domain/elements/shape_element.dart';
@@ -9,13 +9,13 @@ import '../element_edit_command.dart';
 ///
 /// * **No-op** when the element is already that form *and* carries no preserved
 ///   [ShapeElement.unknownForm]: the rebuilt element is value-equal, so the
-///   controller's commit records no history and notifies no listener (FR-005). A
+///   controller's commit records no history and notifies no listener. A
 ///   shape rendered as a rectangle only because its serialized form was
 ///   unrecognized is therefore *not* a no-op when rectangle is picked — the pick
 ///   clears the preserved form, changing the element.
 /// * Switching **away from** [ShapeKind.line] resets the line-only
 ///   [ShapeElement.flipDiagonal] to false; staying on/returning to a line keeps it.
-/// * Any deliberate pick clears [ShapeElement.unknownForm] (FR-009).
+/// * Any deliberate pick clears [ShapeElement.unknownForm].
 ///
 /// A no-op for a non-shape or absent [id].
 class SetShapeKindCommand extends ElementEditCommand<ShapeElement> {

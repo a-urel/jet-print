@@ -1,4 +1,4 @@
-// Shared font-byte fixtures for the host-font tests (022 / T001).
+// Shared font-byte fixtures for the host-font tests.
 //
 // Real, parseable TTF bytes (so `JetFontFamily` validation and the registry's
 // metrics parse succeed) plus deliberately-bad samples for the rejection

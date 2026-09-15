@@ -5,11 +5,11 @@
 /// list of [RulerTick]s — labelled "major" ticks at round millimetre values plus
 /// finer unlabelled subdivisions. The hard, regression-prone behaviour lives
 /// here: alignment exactness, an adaptive "nice-step" labelled interval so labels
-/// never crowd or vanish (SC-002/SC-004/FR-010), and a subdivision floor.
+/// never crowd or vanish, and a subdivision floor.
 ///
 /// It imports **only `dart:math`** — no Flutter, no domain, no tunables — so it
 /// is unit-testable without a widget, and carries no view/render
-/// coupling (the ladder/divisions/floor are injected by the caller, FR-016).
+/// coupling (the ladder/divisions/floor are injected by the caller).
 library;
 
 /// One tick on a ruler strip.

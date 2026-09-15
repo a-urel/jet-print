@@ -1,4 +1,4 @@
-// PNG page export (012 — contract B4/B3; FR-006/007, SC-006; T015/T020).
+// PNG page export.
 //
 // One page as in-memory PNG bytes through the UNCHANGED preview paint path
 // (paintFrame -> CanvasPainter), rasterized at a host-chosen scale: pixel
@@ -97,7 +97,7 @@ void main() {
     });
   });
 
-  group('golden pin (T020) — decoded-pixel comparison', () {
+  group('golden pin — decoded-pixel comparison', () {
     test('invoice page 1 at 2x matches its golden', () async {
       final Uint8List png =
           await exporter.pageToPng(invoiceReport(), 0, scale: 2);

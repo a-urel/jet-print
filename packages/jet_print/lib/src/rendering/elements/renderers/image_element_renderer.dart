@@ -1,4 +1,4 @@
-/// Renders an [ImageElement] (spec 007a). Embedded [BytesImageSource] becomes an
+/// Renders an [ImageElement]. Embedded [BytesImageSource] becomes an
 /// [ImagePrimitive]; a not-yet-resolved url/field source renders a placeholder
 /// (byte resolution for those sources is a 007b / paint-prep concern).
 library;

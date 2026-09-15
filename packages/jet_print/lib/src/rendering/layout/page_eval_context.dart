@@ -1,4 +1,4 @@
-/// The page-scoped [EvalContext] (spec 008c): resolves `PAGE_NUMBER`/`PAGE_COUNT`
+/// The page-scoped [EvalContext]: resolves `PAGE_NUMBER`/`PAGE_COUNT`
 /// and report `$P{}` parameters for page-chrome text substitution. Pure value
 /// resolution — diagnostics are surfaced by the layouter's static pre-pass.
 library;

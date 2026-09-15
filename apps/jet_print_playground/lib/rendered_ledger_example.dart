@@ -1,4 +1,4 @@
-/// The playground's rendered sales-ledger example (spec 040): a
+/// The playground's rendered sales-ledger example: a
 /// [JetPagedDataSource] generates ~20k transactions on demand, one page at a
 /// time, and the public engine renders them into a multi-page report. The whole
 /// integration — paged source + render — goes through

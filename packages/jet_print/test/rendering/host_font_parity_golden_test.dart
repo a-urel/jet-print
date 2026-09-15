@@ -1,14 +1,14 @@
-// Cross-path host-font parity (022 — contract C9, the headline; T009).
+// Cross-path host-font parity (the headline).
 //
 // The engine builds ONE registry and RenderedReport carries it, so canvas,
 // preview, PNG, and PDF all paint the identical measured frame — host fonts
-// render the same everywhere by construction (SC-002). This
+// render the same everywhere by construction. This
 // test pins the two observable ends of that guarantee:
 //   * the PDF text geometry matches the carried frame's measured baselines
 //     (the same frame the canvas/preview/PNG paths consume), and
 //   * the host font actually flows into measurement+paint — a host-font page
 //     differs from the default-only render of the same design, while the
-//     default-only render stays deterministic/unchanged (SC-005).
+//     default-only render stays deterministic/unchanged.
 @TestOn('vm')
 library;
 
@@ -111,8 +111,7 @@ void main() {
         reason: 'the host font flows through measurement+paint into the PNG');
   });
 
-  test('the default-only render is deterministic / unchanged (SC-005)',
-      () async {
+  test('the default-only render is deterministic / unchanged', () async {
     final Uint8List a = await const JetReportExporter().pageToPng(_render(), 0);
     final Uint8List b = await const JetReportExporter().pageToPng(_render(), 0);
     expect(a, orderedEquals(b));

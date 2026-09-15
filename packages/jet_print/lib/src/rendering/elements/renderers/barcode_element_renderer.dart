@@ -1,4 +1,4 @@
-/// Renders a [BarcodeElement] as real symbology (spec 036): filled module rects
+/// Renders a [BarcodeElement] as real symbology: filled module rects
 /// plus HRI text, or the shared placeholder when the data cannot be encoded.
 library;
 
@@ -44,7 +44,7 @@ class BarcodeElementRenderer extends ElementRenderer<BarcodeElement> {
       return;
     }
 
-    // Quiet-zone inset (FR-007).
+    // Quiet-zone inset.
     final double margin = el.quietZone
         ? (0.1 * (bounds.width < bounds.height ? bounds.width : bounds.height))
             .clamp(

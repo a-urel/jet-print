@@ -23,7 +23,7 @@ typedef PlacedCrosstab = ({String id, Crosstab crosstab, JetRect rect});
 /// Computes, once per definition revision, the page-absolute rectangles of every
 /// band, element, and crosstab placeholder for the **design** view.
 ///
-/// The reified tree (spec 024) is flattened into a single **visual document
+/// The reified tree is flattened into a single **visual document
 /// order** — page header, column header, title, then the scope tree (each
 /// scope's group headers, its ordered children recursively — per-row bands and
 /// crosstab placeholders (spec A) interleaved as authored — then its group

@@ -2,7 +2,7 @@
 /// **Shipment ▸ Box ▸ Item** — authored entirely through the library's public
 /// API (`package:jet_print/jet_print.dart`), the way an external consumer would.
 ///
-/// Structurally it reuses the reified band model's nesting (spec 024) the way
+/// Structurally it reuses the reified band model's nesting the way
 /// the nested-list sample does, but dresses it as a real packing slip: a
 /// two-column Ship-To / Bill-To header with a scannable **QR tracking code**
 /// (spec 036), items grouped into **boxes** with per-box subtotals, grand
@@ -11,7 +11,7 @@
 /// Only `qtyShipped` and `lineWeight` are stored; every subtotal/total is a
 /// live inline aggregate: the box-subtotal footer folds its own items
 /// (`SUM($F{qtyShipped})`, spec 029), and the shipment footer descends
-/// [boxes, items] for units/weight and [boxes] for the box `COUNT` (spec 033).
+/// [boxes, items] for units/weight and [boxes] for the box `COUNT`.
 ///
 /// Field/label names are illustrative sample data and intentionally not
 /// localized; only the designer's own chrome is.
@@ -60,7 +60,7 @@ const JetDataSchema shipmentSchema = JetDataSchema(
 /// A muted grey used for captions and secondary text.
 const JetColor _grey = JetColor(0xFF888888);
 
-/// The packing-slip report authored in the reified band model (spec 024).
+/// The packing-slip report authored in the reified band model.
 ReportDefinition packingSlipDefinition() => const ReportDefinition(
       name: 'Packing Slip',
       page: PageFormat.a4Portrait,
@@ -425,7 +425,7 @@ ReportDefinition packingSlipDefinition() => const ReportDefinition(
                       ],
                     )),
                   ],
-                  // Same-scope fold over the box's items (spec 029): per-box
+                  // Same-scope fold over the box's items: per-box
                   // unit count + weight. No ScopeTotal needed.
                   footer: Band(
                     id: 'itemsFooter',

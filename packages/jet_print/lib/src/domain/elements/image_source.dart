@@ -10,7 +10,7 @@ import '../value_equality.dart';
 enum JetBoxFit { contain, cover, fill, none }
 
 /// The source of an image: a network [UrlImageSource], a data-bound
-/// [FieldImageSource] (resolved at fill time, spec 005), or embedded
+/// [FieldImageSource] (resolved at fill time), or embedded
 /// [BytesImageSource] (base64 in JSON, fully portable). Tagged by a `kind` key.
 sealed class JetImageSource {
   /// Const base constructor.

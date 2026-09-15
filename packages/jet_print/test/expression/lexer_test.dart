@@ -1,4 +1,4 @@
-// Lexer: String -> List<Token> (spec 005a). No Flutter UI.
+// Lexer: String -> List<Token>. No Flutter UI.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/expression/expression_exception.dart';
 import 'package:jet_print/src/expression/lexer.dart';

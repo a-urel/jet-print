@@ -1,5 +1,5 @@
 // Unit tests for the additive move/resize primitive `ReportElement.withBounds`
-// and `TextElement.copyWith` (Phase 2 / T006 / FR-025).
+// and `TextElement.copyWith` (Phase 2).
 //
 // White-box seam test: it exercises the un-exported domain types directly
 // (allowed under test/domain/ by encapsulation_test.dart).

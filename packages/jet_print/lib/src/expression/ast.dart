@@ -1,4 +1,4 @@
-/// The expression abstract syntax tree (spec 005a). Internal to the expression
+/// The expression abstract syntax tree. Internal to the expression
 /// seam: the parser builds these nodes and the evaluator walks them.
 library;
 

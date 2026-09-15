@@ -1,4 +1,4 @@
-/// Flat descendant leaf folding for multi-level inline aggregates (spec 033).
+/// Flat descendant leaf folding for multi-level inline aggregates.
 ///
 /// A sink-band aggregate (`{SUM([lineTotal])}` at a summary, root group footer,
 /// or nested-scope footer) folds its operand over **every descendant leaf row**
@@ -6,7 +6,7 @@
 /// fields (the [DescendPath] from `resolveAggregatePath`). The fold is FLAT —
 /// each leaf is folded directly into the accumulator, never via per-level
 /// subtotals — so SUM/COUNT/MIN/MAX equal the hierarchical roll-up and AVG is a
-/// true average over all leaves (FR-002, FR-004).
+/// true average over all leaves.
 ///
 /// Pure: it knows nothing of `EvalContext` or diagnostics. The caller supplies
 /// [eval] (operand value for one leaf row) and [childRowsOf] (a row's named

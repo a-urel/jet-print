@@ -1,4 +1,4 @@
-/// The command that changes selected elements' z-order within their band (FR-013).
+/// The command that changes selected elements' z-order within their band.
 library;
 
 import '../../../domain/band.dart';

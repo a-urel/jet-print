@@ -403,7 +403,7 @@ void main() {
       expect(header.style.align, JetTextAlign.center);
     });
 
-    // Guards the dual-fallback design (spec 046): `_columnHeaderText` and
+    // Guards the dual-fallback design: `_columnHeaderText` and
     // `_rowLabelText` disagree only while `headerText` is unset (centre vs.
     // `JetTextStyle.fallback`, left). The Properties panel previews only the
     // centred default up to the first edit on the strength of this property —

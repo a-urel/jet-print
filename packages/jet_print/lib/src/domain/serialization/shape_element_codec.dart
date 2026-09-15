@@ -14,7 +14,7 @@ class ShapeElementCodec extends ElementCodec<ShapeElement> {
 
   @override
   ShapeElement fromJson(Map<String, Object?> json) {
-    // Tolerant parse (020 / FR-009): an unrecognized form — e.g. one a NEWER
+    // Tolerant parse: an unrecognized form — e.g. one a NEWER
     // version added — loads as a rectangle (a safe render default) while the
     // original name is preserved in `unknownForm`, so re-saving does not lose
     // it. Known forms resolve exactly as before.

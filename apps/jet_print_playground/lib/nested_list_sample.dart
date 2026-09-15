@@ -4,7 +4,7 @@
 ///
 /// Where the invoice sample nests one collection (`lines`) under a grouped
 /// master, this one nests *two* (`orders`, then `lines` inside each order) to
-/// show off the reified band model's arbitrary-depth nesting (spec 024):
+/// show off the reified band model's arbitrary-depth nesting:
 /// `DetailScope.children` is an ordered list of [ScopeNode]s, and a
 /// [NestedScope] simply wraps another [DetailScope] — so a list inside a list
 /// is just recursion.
@@ -22,7 +22,7 @@ import 'package:jet_print/jet_print.dart';
 /// The only stored money figure is `lineTotal` (the real per-line data the
 /// roll-up sums). Order totals, customer totals, and the grand total are
 /// **not** data fields — they are computed live as inline multi-level
-/// aggregates (spec 033): each footer element authors `SUM($F{lineTotal})`
+/// aggregates: each footer element authors `SUM($F{lineTotal})`
 /// directly, and the engine descends the [orders, lines] path at fill time
 /// to fold over all descendant leaf rows. No `ScopeTotal` declarations are
 /// needed; the whole Customer ▸ Order ▸ Line chain is live with a single
@@ -74,7 +74,7 @@ const JetColor _rule = JetColor(0xFF333333);
 /// The content width all bands span, in points (matches the element columns).
 const double _contentWidth = 540;
 
-/// The nested-list report authored in the reified band model (spec 024).
+/// The nested-list report authored in the reified band model.
 ///
 /// Shape, top to bottom:
 /// * [PageFurniture] holds the record-blind chrome (a `Customers` running title
@@ -247,7 +247,7 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
               id: 'orders',
               collectionField: 'orders',
               // No ScopeTotal: the inline SUM($F{lineTotal}) at the customer
-              // footer + summary descend [orders, lines] at fill time (spec 033).
+              // footer + summary descend [orders, lines] at fill time.
 
               children: <ScopeNode>[
                 BandNode(Band(
@@ -387,7 +387,7 @@ ReportDefinition nestedListsDefinition() => const ReportDefinition(
                         style: JetTextStyle(
                             align: JetTextAlign.right,
                             weight: JetFontWeight.bold),
-                        // Same-scope fold over the order's lines (spec 029).
+                        // Same-scope fold over the order's lines.
                         expression: r'SUM($F{lineTotal})',
                         format: '#,##0.00',
                       ),

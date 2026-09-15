@@ -1,6 +1,6 @@
 /// A data-iteration scope and its ordered, heterogeneous contents.
 ///
-/// Part of the reified report model (spec 024). A [DetailScope] is either the
+/// Part of the reified report model. A [DetailScope] is either the
 /// master/root scope (`collectionField == null`) or a nested scope iterating a
 /// child collection. Its [children] are an **ordered** list of [ScopeNode]s, so
 /// the authored interleaving of per-row bands and sub-scopes (e.g. "meta band →
@@ -106,10 +106,10 @@ class DetailScope with ValueEquality {
   final List<ScopeNode> children;
 
   /// Emitted once after this scope's rows — the structural home of a collection
-  /// total (spec 029). Null on the root scope.
+  /// total. Null on the root scope.
   final Band? footer;
 
-  /// Named roll-up totals this scope publishes onto its parent row (spec 030);
+  /// Named roll-up totals this scope publishes onto its parent row;
   /// empty on the root.
   final List<ScopeTotal> totals;
 

@@ -1,4 +1,4 @@
-// The thumbnail-toggle strings exist in every supported locale (FR-016/FR-017).
+// The thumbnail-toggle strings exist in every supported locale.
 // Black-box: reads the strings through the public localization delegate.
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';

@@ -5,7 +5,7 @@
 // maps to the same grid pixel at every zoom/scroll — verified here by asserting
 // the grid layer stays registered to (exactly overlays) the page surface. The
 // per-line thinning/hiding at low zoom is pinned at the unit level by
-// grid_geometry_test (C1.2/C1.3); this file pins the registration invariant.
+// grid_geometry_test; this file pins the registration invariant.
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
@@ -91,7 +91,7 @@ void main() {
 
     // The grid is still drawn and clipped to the page (it never spills into a
     // solid fill); at this zoom the pure helper has coarsened the lines, which
-    // grid_geometry_test pins at the unit level (C1.2/C1.3).
+    // grid_geometry_test pins at the unit level.
     expect(find.byKey(_kGrid), findsOneWidget);
     _expectRegistered(tester);
   });

@@ -13,7 +13,7 @@ import '../edit_command.dart';
 /// [apply] returns the document unchanged when the page already equals [format]
 /// (no-op), else swaps in `definition.copyWith(page:)`. It does **not** clamp
 /// (the controller clamps the input) and does **not** touch bands/elements, so
-/// element top-left anchors are preserved across a resize (FR-013). The
+/// element top-left anchors are preserved across a resize. The
 /// selection is left as-is, so undo restores the exact prior page and selection.
 class SetPageFormatCommand extends EditCommand {
   /// Creates a page-format change to [format].

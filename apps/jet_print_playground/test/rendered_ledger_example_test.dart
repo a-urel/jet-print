@@ -1,4 +1,4 @@
-// Rendered sales-ledger example (spec 040): a JetPagedDataSource drives a
+// Rendered sales-ledger example: a JetPagedDataSource drives a
 // multi-page render whose grand totals equal the deterministic feed's sums, and
 // the paged source renders identically to an in-memory source over the same rows.
 import 'package:flutter_test/flutter_test.dart';

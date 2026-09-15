@@ -1,5 +1,5 @@
 /// A non-fatal issue — the shared value type for both render-time diagnostics
-/// (spec 007b/011) and author-time validation (spec 024 `validate()`).
+/// and author-time validation (spec 024 `validate()`).
 ///
 /// Pure domain value type (no rendering/Flutter deps), so it can be produced by
 /// the innermost layer (`validate(ReportDefinition)`) and by the render chain

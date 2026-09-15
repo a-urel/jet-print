@@ -1,4 +1,4 @@
-/// Per-calculation accumulator for a report variable (spec 005b). Internal to
+/// Per-calculation accumulator for a report variable. Internal to
 /// the expression seam.
 library;
 

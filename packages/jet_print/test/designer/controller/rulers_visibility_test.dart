@@ -1,4 +1,4 @@
-// Controller ruler-visibility flag (spec 014, Phase 2 / FR-017, C3.1).
+// Controller ruler-visibility flag (Phase 2).
 //
 // `rulersEnabled` is the single source of truth both the canvas (viewport inset)
 // and the top bar (toggle `active`) read. It mirrors the existing
@@ -10,7 +10,7 @@ import 'package:jet_print/jet_print.dart';
 
 void main() {
   group('controller ruler visibility', () {
-    test('defaults to on (FR-017)', () {
+    test('defaults to on', () {
       final JetReportDesignerController c = JetReportDesignerController();
       addTearDown(c.dispose);
       expect(c.rulersEnabled, isTrue);

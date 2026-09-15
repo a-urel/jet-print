@@ -1,4 +1,4 @@
-/// The command that restyles a text element (021 / US1 / FR-001…FR-005).
+/// The command that restyles a text element (FR-001…FR-005).
 library;
 
 import '../../../domain/elements/text_element.dart';

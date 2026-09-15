@@ -1,5 +1,5 @@
 // lib/src/rendering/text/ttf/ttf_metrics.dart
-/// In-house TTF/OTF **metrics** parser (spec 006): reads head/hhea/maxp/hmtx/cmap
+/// In-house TTF/OTF **metrics** parser: reads head/hhea/maxp/hmtx/cmap
 /// only (no glyf/outlines). Pure Dart via [ByteData]. Deterministic.
 library;
 

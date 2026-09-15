@@ -202,7 +202,7 @@ void main() {
 
   test(
       'URL-only image -> diagnostic with elementId + placeholder render, '
-      'no I/O (FR-012b/FR-015)', () {
+      'no I/O', () {
     final RenderedReport report = const JetReportEngine().renderDefinition(
       _template(<ReportElement>[
         const ImageElement(
@@ -274,7 +274,7 @@ void main() {
     expect(indexOf('missing'), greaterThanOrEqualTo(0));
     expect(indexOf('nope'), greaterThanOrEqualTo(0));
     expect(indexOf('chrome text'), greaterThanOrEqualTo(0));
-    // Merged in pass order: parameter (pre-fill) -> fill -> layout (FR-013).
+    // Merged in pass order: parameter (pre-fill) -> fill -> layout.
     expect(indexOf('missing'), lessThan(indexOf('nope')));
     expect(indexOf('nope'), lessThan(indexOf('chrome text')));
   });

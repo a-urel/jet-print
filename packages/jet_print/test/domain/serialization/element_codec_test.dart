@@ -124,7 +124,7 @@ void main() {
   });
 
   // --- 021 format properties: underline + unknown family wire rules ---------
-  group('TextElementCodec — underline (021 / C3, C10)', () {
+  group('TextElementCodec — underline', () {
     test('underline: true serializes and round-trips', () {
       final ElementCodecRegistry registry = _registryWithText();
       final TextElement element =
@@ -235,8 +235,8 @@ void main() {
     });
   });
 
-  // --- 021 format properties: barcode color wire rules (US3 / C8, C10) ------
-  group('BarcodeElementCodec — color (021 / US3)', () {
+  // --- 021 format properties: barcode color wire rules ------
+  group('BarcodeElementCodec — color', () {
     const BarcodeElementCodec codec = BarcodeElementCodec();
     const JetRect bounds = JetRect(x: 1, y: 2, width: 40, height: 40);
 

@@ -1,5 +1,5 @@
 /// Internal: the shared raw-row → [DataRow] projection used by both built-in
-/// cursors (spec 040).
+/// cursors.
 library;
 
 import 'data_row.dart';

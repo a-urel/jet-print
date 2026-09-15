@@ -1,10 +1,10 @@
-// Controller clipboard reactivity (016 / C1 / FR-004/005/007/009).
+// Controller clipboard reactivity.
 //
 // The two UI surfaces (toolbar group + canvas context menu) both bind their
 // enablement to `canCopy` / `canPaste` and rebuild through DesignerScope's
 // InheritedNotifier — so this pins, at the controller seam:
 //   * copy() notifies exactly once (so Paste re-enables after a mouse Copy) but
-//     creates NO undo entry (Copy is not undoable, FR-009);
+//     creates NO undo entry (Copy is not undoable);
 //   * canCopy / canPaste track the data-model truth table; and
 //   * after cut() the selection is empty (canCopy false) while the clipboard
 //     holds the cut element (canPaste true) — the "selection lost after Cut" edge.

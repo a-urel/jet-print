@@ -1,5 +1,5 @@
 // lib/src/rendering/paint/canvas_painter.dart
-/// The on-screen paint backend (spec 006): the ONLY rendering file that imports
+/// The on-screen paint backend: the ONLY rendering file that imports
 /// Flutter / `dart:ui`. Draws the same line-level runs the measurer produced,
 /// using the SAME font variant the measurer measured.
 library;

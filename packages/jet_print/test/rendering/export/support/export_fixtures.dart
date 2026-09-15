@@ -352,7 +352,7 @@ RenderedReport failedExpressionReport() {
   );
 }
 
-/// The 011 1,000-record performance dataset shape (SC-005).
+/// The 011 1,000-record performance dataset shape.
 RenderedReport performanceReport({int records = 1000}) {
   const ReportDefinition definition = ReportDefinition(
     name: 'big',

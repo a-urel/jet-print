@@ -1,4 +1,4 @@
-// JetObjectDataSource<T> over a typed object list (spec 004). No Flutter UI.
+// JetObjectDataSource<T> over a typed object list. No Flutter UI.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/data_set.dart';
 import 'package:jet_print/src/data/field_def.dart';

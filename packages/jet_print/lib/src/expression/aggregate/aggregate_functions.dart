@@ -1,4 +1,4 @@
-/// The inline-aggregate vocabulary (spec 028): the five aggregate function
+/// The inline-aggregate vocabulary: the five aggregate function
 /// names an author may write inline (`SUM`/`AVG`/`COUNT`/`MIN`/`MAX`) and the
 /// rule that recognizes a *top-level* aggregate call. Shared by the value
 /// template compiler, the aggregate synthesizer, and validation so the surface
@@ -52,7 +52,7 @@ class AggregateCall {
 /// an aggregate function with exactly one argument. Returns null otherwise (a
 /// multi-arg `MIN`/`MAX` is the scalar function; an aggregate nested inside other
 /// syntax is not top-level). The single-arg + band rule is the disambiguation
-/// from the scalar `MIN`/`MAX` math functions (FR-005).
+/// from the scalar `MIN`/`MAX` math functions.
 AggregateCall? topLevelAggregate(Expr expr) {
   if (expr is! CallExpr || expr.arguments.length != 1) return null;
   final JetCalculation? calc = aggregateCalculationFor(expr.name);

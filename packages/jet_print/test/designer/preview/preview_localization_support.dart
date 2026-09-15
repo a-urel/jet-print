@@ -1,4 +1,4 @@
-// Shared pump for the preview localization tests (011 — C11 / FR-017).
+// Shared pump for the preview localization tests (011 — C11).
 //
 // German and Turkish each get their OWN test file (the designer localization
 // precedent): switching between two non-English locales within a single test

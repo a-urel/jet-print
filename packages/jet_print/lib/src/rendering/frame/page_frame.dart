@@ -1,4 +1,4 @@
-/// A painted page's display list (spec 006): a flat, immutable list of
+/// A painted page's display list: a flat, immutable list of
 /// positioned primitives plus the page geometry. The WYSIWYG hand-off to paint.
 library;
 

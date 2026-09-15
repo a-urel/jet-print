@@ -1,5 +1,5 @@
 // Confirms the label sample is authored as a single label cell on a detail band
-// carrying a native ColumnLayout (spec 034) over a flat address schema, that the
+// carrying a native ColumnLayout over a flat address schema, that the
 // body is a pure single-detail body so the grid activates, and that it is
 // pristine under the library validator — all through
 // `package:jet_print/jet_print.dart` only.

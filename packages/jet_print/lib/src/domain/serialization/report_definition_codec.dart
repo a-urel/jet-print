@@ -1,5 +1,5 @@
 /// Versioned JSON (de)serialization for [ReportDefinition] — the reified report
-/// model (spec 024, schema v2).
+/// model (schema v2).
 ///
 /// Mirrors the legacy [encodeTemplate]/[decodeTemplate] codec but walks the
 /// section tree (furniture + body + scopes) and routes every band's elements
@@ -27,7 +27,7 @@ import 'element_codec.dart';
 import 'migration.dart';
 import 'report_format_exception.dart';
 
-/// The reified-report schema version this build writes (spec 024).
+/// The reified-report schema version this build writes.
 const int kReportDefinitionSchemaVersion = 2;
 
 /// Encodes [def] to a JSON-safe map, stamping [kReportDefinitionSchemaVersion]

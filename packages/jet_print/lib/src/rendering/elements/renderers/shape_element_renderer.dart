@@ -1,4 +1,4 @@
-/// Renders a [ShapeElement] (spec 007a, extended in 020): a rectangle fills its
+/// Renders a [ShapeElement] (extended in 020): a rectangle fills its
 /// box as a [RectPrimitive]; a line draws across the box diagonal as a
 /// [LinePrimitive]; every other form draws as a single [PathPrimitive] built
 /// from the shared `shapePath` geometry, so canvas, preview, and export agree.
@@ -26,7 +26,7 @@ class ShapeElementRenderer extends ElementRenderer<ShapeElement> {
   @override
   void emit(
       ShapeElement el, RenderContext ctx, JetRect bounds, FrameBuilder out) {
-    // The ONE stroke-width-0 seam (021 / C7, research §6): at width 0 the
+    // The ONE stroke-width-0 seam: at width 0 the
     // outline is not emitted on any path, while the stored stroke color stays
     // on the style so stepping the width back restores it. Handled here once —
     // zero painter changes, parity across canvas/preview/export.

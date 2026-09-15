@@ -1,4 +1,4 @@
-// Built-in FORMAT function via intl (spec 005a). No Flutter UI.
+// Built-in FORMAT function via intl. No Flutter UI.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/expression/eval_context.dart';
 import 'package:jet_print/src/expression/expression.dart';

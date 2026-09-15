@@ -1,4 +1,4 @@
-// JetFieldType lives in the domain seam (spec 005b). No Flutter UI.
+// JetFieldType lives in the domain seam. No Flutter UI.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/domain/value_type.dart';
 

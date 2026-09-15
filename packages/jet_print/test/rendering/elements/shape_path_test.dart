@@ -1,4 +1,4 @@
-// Geometry unit tests for `shapePath` (020 / contract C6.1–C6.4).
+// Geometry unit tests for `shapePath`.
 //
 // `shapePath(kind, bounds)` is the ONE source of geometry for the six new closed
 // forms — consumed by both the renderer (canvas/preview/export) and the gallery
@@ -50,7 +50,7 @@ void main() {
   const double cx = 50, cy = 50; // centre
   const double eps = 1e-9;
 
-  group('C6.1 — closed inscribed polygon shape', () {
+  group('closed inscribed polygon shape', () {
     for (final MapEntry<ShapeKind, int> form in _vertexCount.entries) {
       test(
           '${form.key.name} starts with MoveTo, ends with ClosePath, '
@@ -69,7 +69,7 @@ void main() {
     }
   });
 
-  group('C6.2 — every vertex lies within (or on) the bounds box', () {
+  group('every vertex lies within (or on) the bounds box', () {
     for (final ShapeKind kind in _vertexCount.keys) {
       test('${kind.name} vertices are inside the box', () {
         for (final JetOffset v in _points(shapePath(kind, bounds))) {
@@ -80,7 +80,7 @@ void main() {
     }
   });
 
-  group('C6.3 — point-up, equilateral regular polygons on square bounds', () {
+  group('point-up, equilateral regular polygons on square bounds', () {
     const JetRect square = JetRect(x: 0, y: 0, width: 100, height: 100);
 
     test('triangle apex is top-centre, base on the bottom edge', () {
@@ -135,7 +135,7 @@ void main() {
     });
   });
 
-  group('C6.4 — degenerate bounds never throw', () {
+  group('degenerate bounds never throw', () {
     for (final ShapeKind kind in _vertexCount.keys) {
       test('${kind.name} on a 1×1 box yields a valid path', () {
         const JetRect dot = JetRect(x: 5, y: 5, width: 1, height: 1);

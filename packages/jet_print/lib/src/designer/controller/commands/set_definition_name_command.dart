@@ -1,4 +1,4 @@
-/// The command that sets the report definition's name (017 / US2 / FR-008).
+/// The command that sets the report definition's name.
 library;
 
 import '../designer_document.dart';

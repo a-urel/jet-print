@@ -1,4 +1,4 @@
-// Encapsulation test (SC-007 / FR-011).
+// Encapsulation test.
 //
 // Two invariants, both enforced by scanning *import/export directives only*
 // (so the literal strings used as patterns below never match themselves):
@@ -40,7 +40,7 @@ Iterable<String> _directiveUris(File file) => _directive
 
 /// White-box seam tests legitimately import the library's own internals to
 /// exercise the un-exported `domain`/`data`/`expression`/`rendering` types in
-/// isolation (SC-004).
+/// isolation.
 /// They are the package's OWN tests, not external consumers, so the `src` ban
 /// (which protects external consumers per SC-007) does not apply to them. The
 /// allowlist is intentionally narrow: every other test stays default-deny.
@@ -225,7 +225,7 @@ void main() {
       );
     });
 
-    test('no library file depends on playground/host app code (FR-011)', () {
+    test('no library file depends on playground/host app code', () {
       final List<String> violations = <String>[];
       for (final File file in _dartFiles(libraryLib)) {
         for (final String uri in _directiveUris(file)) {

@@ -1,4 +1,4 @@
-// T052 closure (spec 021): a report carrying all three styled element kinds —
+// T052 closure: a report carrying all three styled element kinds
 // text (underline + translucent color), shape (fill/stroke/none states), and
 // barcode (custom color) — survives an encode→decode round-trip byte-for-byte
 // (quickstart §4.3). This is the automatable half of the format-properties
@@ -54,7 +54,7 @@ ReportDefinition _styledDef() => const ReportDefinition(
     );
 
 void main() {
-  test('all three styled element kinds round-trip losslessly (T052)', () {
+  test('all three styled element kinds round-trip losslessly', () {
     final ReportDefinition original = _styledDef();
     final String json = JetReportFormat.encodeDefinitionJson(original);
     final ReportDefinition reopened =

@@ -1,4 +1,4 @@
-/// Lexical tokens for the expression language (spec 005a). Internal to the
+/// Lexical tokens for the expression language. Internal to the
 /// expression seam — not part of the public API.
 library;
 

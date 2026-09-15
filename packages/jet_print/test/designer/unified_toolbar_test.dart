@@ -1,4 +1,4 @@
-// Unified toolbar — shared-shell region parity (017 / US1 / C1 / SC-003).
+// Unified toolbar — shared-shell region parity.
 //
 // Black-box: stands in for an external consumer and imports ONLY the public
 // entry point. The designer top bar and the preview toolbar are now both
@@ -93,7 +93,7 @@ Future<void> _pumpPreviewShell(
 }
 
 void main() {
-  group('unified toolbar — shared-shell region parity (C1 / SC-003)', () {
+  group('unified toolbar — shared-shell region parity', () {
     testWidgets('the name + mode switch sit at the same place in both modes',
         (WidgetTester tester) async {
       await _pumpDesignerShell(tester, name: 'Parity');
@@ -117,7 +117,7 @@ void main() {
       expect(pSwitch.height, moreOrLessEquals(dSwitch.height, epsilon: 0.5));
     });
 
-    testWidgets('the toolbar height is the shared 52px in both modes (C1.3)',
+    testWidgets('the toolbar height is the shared 52px in both modes',
         (WidgetTester tester) async {
       await _pumpDesignerShell(tester, name: 'H');
       final double designerSwitchTop =
@@ -150,16 +150,16 @@ void main() {
     });
   });
 
-  // 017 (US3 / C6): when narrow, the action region collapses/scrolls but the
+  // when narrow, the action region collapses/scrolls but the
   // name region and the mode switch are never the regions that disappear.
-  group('unified toolbar — responsive degradation (C6)', () {
+  group('unified toolbar — responsive degradation', () {
     testWidgets('the name + switch stay present and on-screen when narrow', (
       WidgetTester tester,
     ) async {
       await _pumpDesignerShell(tester,
           name: 'Narrow', size: const Size(560, 760));
 
-      // Name + switch remain present and within the viewport (C6.2).
+      // Name + switch remain present and within the viewport.
       expect(find.byKey(_nameKey), findsOneWidget);
       expect(find.byKey(_switchKey), findsOneWidget);
       final Rect name = tester.getRect(find.byKey(_nameKey));
@@ -168,15 +168,15 @@ void main() {
       expect(sw.left, greaterThanOrEqualTo(0));
       expect(sw.left, lessThan(560),
           reason: 'switch reachable at scroll origin');
-      // The actions still exist (scrolled), so nothing was dropped (C6.1).
+      // The actions still exist (scrolled), so nothing was dropped.
       expect(find.byIcon(LucideIcons.undo2), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });
 
-  // 017 (US3 / C7): the four new chrome strings resolve in every shipped locale,
+  // the four new chrome strings resolve in every shipped locale,
   // and the switch + rename affordance carry accessible names and are operable.
-  group('unified toolbar — localization & accessibility (C7)', () {
+  group('unified toolbar — localization & accessibility', () {
     testWidgets('the four new keys resolve in en/de/tr with real translations',
         (WidgetTester tester) async {
       final JetPrintLocalizations en =
@@ -196,13 +196,13 @@ void main() {
         expect(l.actionRenameTooltip, isNotEmpty);
         expect(l.renameFieldLabel, isNotEmpty);
       }
-      // Real translations, not English everywhere (C7.1).
+      // Real translations, not English everywhere.
       expect(de.modePreview, isNot(en.modePreview)); // Vorschau ≠ Preview
       expect(tr.modePreview, isNot(en.modePreview)); // Önizleme ≠ Preview
       expect(de.actionRenameTooltip, isNot(en.actionRenameTooltip));
     });
 
-    testWidgets('the switch segments carry accessible names (C7.2)',
+    testWidgets('the switch segments carry accessible names',
         (WidgetTester tester) async {
       final JetReportDesignerController c =
           JetReportDesignerController(definition: _definition('A11y'));
@@ -217,7 +217,7 @@ void main() {
       expect(find.text('Preview'), findsOneWidget);
     });
 
-    testWidgets('the mode switch is keyboard-operable (C7.2)', (
+    testWidgets('the mode switch is keyboard-operable', (
       WidgetTester tester,
     ) async {
       final JetReportDesignerController c = JetReportDesignerController();

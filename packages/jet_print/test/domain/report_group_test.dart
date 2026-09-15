@@ -1,4 +1,4 @@
-// ReportGroup value type + serialization (spec 005b; flags 008b). No Flutter UI.
+// ReportGroup value type + serialization (flags 008b). No Flutter UI.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/domain/report_group.dart';
 

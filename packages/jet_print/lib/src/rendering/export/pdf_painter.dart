@@ -1,13 +1,13 @@
 // lib/src/rendering/export/pdf_painter.dart
-/// The PDF paint backend (spec 012): a pure-Dart [ReportPainter] over
+/// The PDF paint backend: a pure-Dart [ReportPainter] over
 /// `package:pdf`'s low-level `PdfDocument`/`PdfPage`/`PdfGraphics` API.
 ///
 /// Draws the SAME pre-measured frame primitives the preview paints — text at
 /// exact baselines from the same measurer, fonts embedded from the same
 /// [FontRegistry] bytes, images placed via the shared [computeImageFit] —
-/// so WYSIWYG holds by construction (FR-001/003).
+/// so WYSIWYG holds by construction.
 ///
-/// Deterministic by construction (FR-007): the document ID is fixed (the only
+/// Deterministic by construction: the document ID is fixed (the only
 /// always-written nondeterministic output of dart_pdf), no `/Info` dictionary
 /// is ever constructed (its `/CreationDate` would read the wall clock), and
 /// `verbose` stays false. No clock, randomness, or ambient-locale read exists
@@ -37,7 +37,7 @@ import '../text/underline_metrics.dart';
 /// per distinct registry byte source, images embed once per distinct byte
 /// buffer. The top-left frame coordinates are mapped to PDF's bottom-left
 /// origin PER DRAW CALL (`y' = pageHeight - y`) — never via a global negative
-/// CTM, which would mirror glyph outlines (research §6).
+/// CTM, which would mirror glyph outlines.
 class PdfPainter implements ReportPainter {
   /// Creates a painter resolving font bytes via [fonts].
   PdfPainter(FontRegistry fonts)
@@ -153,7 +153,7 @@ class PdfPainter implements ReportPainter {
         );
         if (p.style.underline) {
           // The same explicit segment CanvasPainter strokes, from the same
-          // shared geometry helper (021 / research §2).
+          // shared geometry helper.
           final ({double offset, double thickness}) u =
               underlineFor(p.style.fontSize);
           final double y = _mapY(p.bounds.y + line.baseline + u.offset);
@@ -343,7 +343,7 @@ class _DecodedImage {
 
   /// Decodes [bytes]; returns null when undecodable (drawn as nothing).
   static _DecodedImage? decode(Uint8List bytes) {
-    // JPEG passthrough: no re-encode, no lossy-on-lossy (research §5).
+    // JPEG passthrough: no re-encode, no lossy-on-lossy.
     if (bytes.length > 2 && bytes[0] == 0xff && bytes[1] == 0xd8) {
       final img.Image? info = img.decodeJpg(bytes);
       if (info == null) return null;
@@ -373,7 +373,7 @@ class _DecodedImage {
 /// A [PdfDocument] whose `/ID` is a constant: the ID is otherwise derived
 /// from the wall clock + a secure random source, is ALWAYS written, and has
 /// no constructor parameter — the virtual getter is the sanctioned override
-/// point (research §2). Everything else inherits dart_pdf defaults
+/// point. Everything else inherits dart_pdf defaults
 /// (`verbose: false`, deflate compression).
 class _FixedIdPdfDocument extends PdfDocument {
   _FixedIdPdfDocument();

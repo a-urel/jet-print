@@ -1,4 +1,4 @@
-// DataRow immutable row snapshot (spec 004). No Flutter UI import.
+// DataRow immutable row snapshot. No Flutter UI import.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/data_row.dart';
 import 'package:jet_print/src/data/field_def.dart';

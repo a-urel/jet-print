@@ -1,4 +1,4 @@
-/// The on-screen report preview (spec 011 — FR-008/FR-009): a read-only,
+/// The on-screen report preview (spec 011 — FR-008): a read-only,
 /// paginated viewer over a `RenderedReport`.
 ///
 /// WYSIWYG, non-negotiable: each page is painted by recording its
@@ -35,7 +35,7 @@ import '../layout/zoom_control.dart';
 import 'page_thumbnail_rail.dart';
 import 'preview_sheet.dart';
 
-/// A read-only paginated viewer for a [RenderedReport] (FR-008), with a top
+/// A read-only paginated viewer for a [RenderedReport], with a top
 /// toolbar styled to match the designer.
 ///
 /// ```dart
@@ -47,11 +47,11 @@ import 'preview_sheet.dart';
 /// * **Toolbar** — the report's name titles the bar; an optional back button
 ///   ([onBack]) sits on the leading edge, with the zoom and page-navigation
 ///   groups on the trailing edge. Chrome is localized (en/de/tr with English
-///   fallback) and keyboard/accessible-name operable (FR-017/FR-018).
+///   fallback) and keyboard/accessible-name operable.
 /// * **Export & print** (012) — optional [onExportPdf]/[onPrint] callbacks
 ///   each add a localized toolbar action; with both null the toolbar is
 ///   exactly the 011 widget. The library invokes the callback and nothing
-///   else — what export/print means belongs to the host (FR-015).
+///   else — what export/print means belongs to the host.
 /// * **Navigation** — previous/next buttons and the left/right arrow keys move
 ///   one page at a time, bounded at the first/last page; a localized
 ///   "page X of N" indicator sits between them.
@@ -61,9 +61,9 @@ import 'preview_sheet.dart';
 ///   is actual size. The page re-fits on viewport resize while a sticky fit
 ///   mode is active, and scrolls when zoomed past the viewport.
 /// * **Lazy** — pages are requested from the [RenderedReport] on demand, so
-///   showing the first page never builds the rest (FR-021).
+///   showing the first page never builds the rest.
 /// * **WYSIWYG** — the current page paints through the same pipeline as the
-///   design surface, so what is previewed is what was designed (FR-009).
+///   design surface, so what is previewed is what was designed.
 ///
 /// The host must wire `JetPrintLocalizations.delegate` (and the library's
 /// supported locales), exactly as for `JetReportDesigner`.
@@ -117,7 +117,7 @@ class JetReportPreview extends StatefulWidget {
   /// same [report]; the library itself performs no I/O here.
   final VoidCallback? onPrint;
 
-  /// Reserved hook for renaming the report from the preview (017, FR-008). The
+  /// Reserved hook for renaming the report from the preview. The
   /// preview no longer surfaces an inline-rename affordance in its toolbar — the
   /// host drives renaming from its own UI — but this callback stays available so
   /// a host can wire it to the same `controller.rename` that backs the designer.
@@ -295,7 +295,7 @@ class _JetReportPreviewState extends State<JetReportPreview> {
     return KeyEventResult.ignored;
   }
 
-  /// The preview's right-slot actions (017 / FR-011): the page-navigation group
+  /// The preview's right-slot actions: the page-navigation group
   /// first, then export / print (each only when its callback is wired), then the
   /// zoom group. The buttons are already icon-only and the zoom control is a
   /// compact label + popup, so [compact] and [veryNarrow] are unused here (the
@@ -340,7 +340,7 @@ class _JetReportPreviewState extends State<JetReportPreview> {
         onPressed: _index < _pageCount - 1 ? () => _goTo(_index + 1) : null,
       ),
       const _Divider(),
-      // Artifact actions — export / print (012, FR-015): each appears only when
+      // Artifact actions — export / print: each appears only when
       // its callback is wired; with both null the group is absent (011 parity).
       if (widget.onExportPdf != null || widget.onPrint != null) ...<Widget>[
         if (widget.onExportPdf != null)
@@ -402,9 +402,9 @@ class _JetReportPreviewState extends State<JetReportPreview> {
           children: <Widget>[
             // --- Top toolbar (017): the report name (leading) + the
             // Designer|Preview mode switch (center) are the shared shell's own
-            // regions, positionally identical to the designer (FR-001). The
+            // regions, positionally identical to the designer. The
             // right slot carries the preview's own export/print, zoom and
-            // page-navigation groups (FR-011). The old standalone back button is
+            // page-navigation groups. The old standalone back button is
             // folded into the switch's Designer segment, which emits the
             // existing onBack switch request. ---
             UnifiedTopBar(
@@ -660,7 +660,7 @@ class _ToolbarButton extends StatelessWidget {
       // fires [onPressed] also flips this tooltip open, so its floating copy
       // of the label can be on-screen at the same time as the button's own
       // accessible name. Excluded from semantics: the wrapping [Semantics]
-      // below is the button's one authoritative accessible name — FR-018 —
+      // below is the button's one authoritative accessible name — FR-018
       // so the hover-only popup text must not register a second, duplicate
       // node under the same label.
       builder: (BuildContext context) => ExcludeSemantics(child: Text(label)),

@@ -1,4 +1,4 @@
-// Preview chrome localization — English + fallback (011 — C11 / FR-017).
+// Preview chrome localization — English + fallback (011 — C11).
 //
 // German and Turkish each get their OWN test file
 // (preview_localization_de_test.dart / preview_localization_tr_test.dart),
@@ -17,19 +17,19 @@ void main() {
     expect(find.bySemanticsLabel('Previous page'), findsOneWidget);
     expect(find.bySemanticsLabel('Next page'), findsOneWidget);
     expect(find.bySemanticsLabel('Fit to width'), findsOneWidget);
-    // 012 export/print actions (FR-014).
+    // 012 export/print actions.
     expect(find.bySemanticsLabel('Export as PDF'), findsOneWidget);
     expect(find.bySemanticsLabel('Print'), findsOneWidget);
   });
 
-  testWidgets('an unsupported locale falls back to English (FR-017)',
+  testWidgets('an unsupported locale falls back to English',
       (WidgetTester tester) async {
     await pumpLocalizedPreview(tester, const Locale('fr'), withActions: true);
     expect(find.text('Page 1 of 2'), findsOneWidget);
     // No raw resource keys leak through.
     expect(find.text('previewPageIndicator'), findsNothing);
     expect(find.bySemanticsLabel('previewNextPage'), findsNothing);
-    // The 012 actions fall back to English too (FR-014).
+    // The 012 actions fall back to English too.
     expect(find.bySemanticsLabel('Export as PDF'), findsOneWidget);
     expect(find.bySemanticsLabel('Print'), findsOneWidget);
     expect(find.bySemanticsLabel('previewExport'), findsNothing);

@@ -34,10 +34,10 @@ class ElementResolver {
   ///
   /// In a **schema-aware** context the caller supplies [knownFields] (the names
   /// declared by the active data source). A text binding that references a field
-  /// outside that set resolves to [unresolvedFieldToken] (013 / FR-007). When
+  /// outside that set resolves to [unresolvedFieldToken]. When
   /// [knownFields] is null (a headless render with no declared schema) behavior
   /// is unchanged — a missing field resolves empty — so existing reports never
-  /// regress (013 / SC-005).
+  /// regress.
   ElementResolver({
     required this.functions,
     required this.diagnostics,
@@ -219,7 +219,7 @@ class ElementResolver {
       return TextElement(
           id: el.id, bounds: el.bounds, text: '!ERR', style: el.style);
     }
-    // Schema-aware unresolved-binding check (013 / FR-007): a reference to a
+    // Schema-aware unresolved-binding check: a reference to a
     // field the data source does not declare renders the (localizable) token.
     final Set<String>? known = knownFields;
     if (known != null) {
@@ -254,7 +254,7 @@ class ElementResolver {
     if (value is JetError) {
       diagnostics.error('Expression error: ${value.message}', elementId: el.id);
     }
-    // Apply the label's display format (013 / FR-011): a non-empty pattern that
+    // Apply the label's display format: a non-empty pattern that
     // does not fit the value's type, or is malformed, leaves the value unchanged
     // (FR-012) — never an error token.
     final String? format = el.format;

@@ -1,5 +1,5 @@
-/// Per-render inputs for `JetReportEngine.render` (spec 011): host-supplied
-/// parameter values plus the explicit formatting locale (FR-012/FR-012a).
+/// Per-render inputs for `JetReportEngine.render`: host-supplied
+/// parameter values plus the explicit formatting locale.
 ///
 /// `dart:ui` is imported for the [Locale] **value type only** (it has a const
 /// constructor and is what hosts already hold); no other `dart:ui` symbol may
@@ -34,16 +34,16 @@ class RenderOptions {
   });
 
   /// Host-supplied parameter values keyed by parameter name, resolved by
-  /// `$P{name}` references (FR-012).
+  /// `$P{name}` references.
   ///
   /// A parameter the template declares but the host does not supply falls back
   /// to its declared default; a declared parameter with neither a supplied
   /// value nor a default renders as empty and surfaces a diagnostic on
-  /// `RenderedReport.diagnostics` (FR-013).
+  /// `RenderedReport.diagnostics`.
   final Map<String, Object?> parameters;
 
   /// The explicit locale for number/date/currency formatting during this
-  /// render (FR-012a).
+  /// render.
   ///
   /// Formatting follows this locale only — never the app's UI locale and never
   /// the ambient `Intl.defaultLocale` — so the same render is deterministic
@@ -55,13 +55,13 @@ class RenderOptions {
   /// formatting needs no initialization.
   final Locale locale;
 
-  /// The field names the active data source declares (013 / FR-007).
+  /// The field names the active data source declares.
   ///
   /// When supplied (a schema-aware render — e.g. the designer preview, which
   /// knows the attached schema), a text binding that references a field outside
   /// this set renders [unresolvedFieldToken] instead of resolving empty. Leaving
   /// it null renders such a binding empty, exactly as before — so existing
-  /// headless renders never change (SC-005).
+  /// headless renders never change.
   final Set<String>? knownFields;
 
   /// The text rendered for a binding to a field absent from [knownFields]
@@ -70,7 +70,7 @@ class RenderOptions {
   /// `JetPrintLocalizations.of(context).errorUnresolvedToken`).
   final String unresolvedFieldToken;
 
-  /// Host-contributed font families available to this render (022 / FR-003).
+  /// Host-contributed font families available to this render.
   ///
   /// The faces are the bytes the host hands in. The engine builds **one**
   /// `FontRegistry` (the bundled defaults, then these families
@@ -78,7 +78,7 @@ class RenderOptions {
   /// so the preview, PDF/PNG export, and print paths all measure and paint from
   /// the identical bytes — WYSIWYG by construction. Register
   /// **before** rendering; the empty default reproduces today's behavior
-  /// exactly (SC-005).
+  /// exactly.
   ///
   /// Pass the **same** `List<JetFontFamily>` here and to
   /// `JetReportDesigner.fonts`/`JetReportWorkspace.fonts` so the designer picker

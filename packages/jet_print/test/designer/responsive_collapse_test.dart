@@ -1,10 +1,10 @@
-// Responsive-collapse (T011) + splitter-resize (T011a) widget tests.
+// Responsive-collapse + splitter-resize (T011a) widget tests.
 //
 // Below the 1024px breakpoint the right panel collapses to an icon rail with a
-// visible expand affordance, and expanding restores it (FR-011/FR-014, SC-004).
+// visible expand affordance, and expanding restores it.
 // The left toolbox is a fixed icon strip and stays visible at every width. At
 // desktop width the right panel is draggable down to an enforced minimum while
-// the surface absorbs the freed space (FR-013).
+// the surface absorbs the freed space.
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 

@@ -9,7 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
 /// A small report with one element at a known band-relative anchor, so a page
-/// change can be shown not to move content (C8.1).
+/// change can be shown not to move content.
 ReportDefinition _report({PageFormat page = PageFormat.a4Portrait}) =>
     ReportDefinition(
       name: 'Page test',
@@ -45,7 +45,7 @@ TextElement _onlyText(JetReportDesignerController c) =>
         .single as TextElement;
 
 void main() {
-  group('setPageFormat — orientation & resize (C3.1)', () {
+  group('setPageFormat — orientation & resize', () {
     test('swapping width/height rotates A4 portrait to landscape', () {
       final JetReportDesignerController c =
           JetReportDesignerController(definition: _report());
@@ -59,7 +59,7 @@ void main() {
     });
   });
 
-  group('setPageFormat — clamp keeps a usable page (C4.1/C4.3/C3.4)', () {
+  group('setPageFormat — clamp keeps a usable page', () {
     test('margins exceeding the width are scaled to leave positive content',
         () {
       final JetReportDesignerController c = JetReportDesignerController(
@@ -106,7 +106,7 @@ void main() {
       c.dispose();
     });
 
-    test('a valid page is committed unchanged (clamp is idempotent, C4.2)', () {
+    test('a valid page is committed unchanged (clamp is idempotent)', () {
       final JetReportDesignerController c =
           JetReportDesignerController(definition: _report());
       const PageFormat valid = PageFormat(
@@ -121,8 +121,8 @@ void main() {
     });
   });
 
-  group('setPageFormat — undo/redo & no-op (C5)', () {
-    test('a page change undoes in one step to the exact prior page (C5.1)', () {
+  group('setPageFormat — undo/redo & no-op', () {
+    test('a page change undoes in one step to the exact prior page', () {
       final JetReportDesignerController c =
           JetReportDesignerController(definition: _report());
       final PageFormat before = c.definition.page;
@@ -135,7 +135,7 @@ void main() {
       c.dispose();
     });
 
-    test('redo re-applies the change (C5.2)', () {
+    test('redo re-applies the change', () {
       final JetReportDesignerController c =
           JetReportDesignerController(definition: _report());
       const PageFormat letter = PageFormat(
@@ -147,7 +147,7 @@ void main() {
       c.dispose();
     });
 
-    test('setPageFormat with the current page is a no-op (C5.3)', () {
+    test('setPageFormat with the current page is a no-op', () {
       final JetReportDesignerController c =
           JetReportDesignerController(definition: _report());
       int notifications = 0;
@@ -160,8 +160,8 @@ void main() {
     });
   });
 
-  group('setPageFormat — persistence & content (C6.1/C8.1)', () {
-    test('an edited page round-trips losslessly through the codec (C6.1)', () {
+  group('setPageFormat — persistence & content', () {
+    test('an edited page round-trips losslessly through the codec', () {
       final JetReportDesignerController c =
           JetReportDesignerController(definition: _report());
       // Letter, landscape, Narrow margins.
@@ -173,7 +173,7 @@ void main() {
       c.dispose();
     });
 
-    test('changing to a smaller page preserves element anchors (C8.1)', () {
+    test('changing to a smaller page preserves element anchors', () {
       final JetReportDesignerController c =
           JetReportDesignerController(definition: _report());
       final JetRect before = _onlyText(c).bounds;

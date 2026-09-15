@@ -1,5 +1,5 @@
 // ReportLayouter: pagination, page chrome, coordinates, diagnostics (008a),
-// migrated to the reified model + native layoutDefinition API (spec 024).
+// migrated to the reified model + native layoutDefinition API.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/domain/band.dart';
 import 'package:jet_print/src/domain/detail_scope.dart';

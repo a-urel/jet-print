@@ -1,4 +1,4 @@
-// Outline panel tree test (model-driven, T071).
+// Outline panel tree test (model-driven).
 //
 // The Outline tab renders the live `ReportDefinition` as an indented tree: a
 // Report root, one branch per band (localized band-type caption), and a leaf per
@@ -8,7 +8,7 @@
 //
 // These tests drive the public `JetReportDesigner` (Outline is reached by
 // selecting its tab) and never reach into `src/`. Bands are keyed by their
-// stable id (spec 024); the blank default has 'pageHeader', 'detail',
+// stable id; the blank default has 'pageHeader', 'detail',
 // 'pageFooter'.
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';

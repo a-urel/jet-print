@@ -10,13 +10,13 @@ import 'panels/properties_panel.dart';
 
 /// The right context panel: a [ShadTabs] hosting the three designer context
 /// panels — **Data Source**, **Outline**, **Properties** — in that fixed order,
-/// with Data Source active by default (FR-004/005/006).
+/// with Data Source active by default.
 ///
 /// `ShadTabs` renders exactly one body at a time and highlights the active tab.
 /// `maintainState: false` makes the inactive bodies leave the tree entirely
 /// (rather than merely being hidden), giving an unambiguous "exactly one panel
 /// visible" guarantee. `expandContent: true` lets the active body fill the
-/// panel's height so each panel scrolls within its own bounds (FR-010). Captions
+/// panel's height so each panel scrolls within its own bounds. Captions
 /// come from [JetPrintLocalizations].
 ///
 /// The tab selection is owned by a [ShadTabsController] so a pending

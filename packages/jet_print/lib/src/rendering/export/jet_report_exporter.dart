@@ -1,7 +1,7 @@
 // lib/src/rendering/export/jet_report_exporter.dart
-/// The export facade (spec 012): turns the [RenderedReport] the preview
+/// The export facade: turns the [RenderedReport] the preview
 /// displays into shareable artifacts. Headless — bytes in, bytes out; the
-/// host owns persistence (FR-009).
+/// host owns persistence.
 library;
 
 import 'dart:typed_data';
@@ -12,7 +12,7 @@ import '../paint/report_painter.dart';
 import 'pdf_painter.dart';
 
 /// Turns a rendered report into shareable artifacts — the export-side
-/// counterpart of `JetReportPreview` (FR-001).
+/// counterpart of `JetReportPreview`.
 ///
 /// Stateless and `const`-constructible. Every method consumes the same
 /// [RenderedReport] the preview shows: no re-fill, no re-layout, no second
@@ -26,14 +26,14 @@ class JetReportExporter {
 
   /// Exports the complete report as a PDF document, pages in order.
   ///
-  /// The returned bytes are an in-memory PDF (FR-002) with one page per
+  /// The returned bytes are an in-memory PDF with one page per
   /// [RenderedReport.pageCount] at the template's true physical size in
-  /// PostScript points (FR-008), real selectable/searchable text placed at
+  /// PostScript points, real selectable/searchable text placed at
   /// the pre-measured baselines, and the measuring fonts embedded (FR-004/
   /// 005). All pages are materialized via [RenderedReport.pageAt] regardless
-  /// of what the preview has lazily viewed (FR-011).
+  /// of what the preview has lazily viewed.
   ///
-  /// Identical rendered inputs produce byte-identical output (FR-007): the
+  /// Identical rendered inputs produce byte-identical output: the
   /// export path reads no clock, randomness, or ambient locale.
   Future<Uint8List> toPdf(RenderedReport report) async {
     // The registry the engine measured with, carried on the report (022) —
@@ -50,9 +50,9 @@ class JetReportExporter {
   ///
   /// The page is rasterized through the preview's own paint path (the same
   /// `CanvasPainter` the on-screen preview uses), so the pixels match the
-  /// preview of that page by construction (FR-006). Output dimensions are
+  /// preview of that page by construction. Output dimensions are
   /// exactly `round(page.width x scale)` by `round(page.height x scale)`
-  /// pixels (SC-006). For all pages, iterate `0..pageCount-1` in order.
+  /// pixels. For all pages, iterate `0.pageCount-1` in order.
   ///
   /// Throws a [RangeError] when [pageIndex] is outside `[0, pageCount)` —
   /// the same structured error [RenderedReport.pageAt] uses — and an

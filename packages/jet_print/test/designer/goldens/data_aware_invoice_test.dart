@@ -1,4 +1,4 @@
-// Data-aware invoice golden (US4 / FR-021; WYSIWYG).
+// Data-aware invoice golden (WYSIWYG).
 //
 // Pins the data-aware invoice **design surface**: a populated Data Source panel
 // (the invoice schema, incl. the nested `lines` collection) beside the canvas
@@ -35,7 +35,7 @@ const JetDataSchema _schema = JetDataSchema(
 // path-based ids the template→definition adapter assigns, so the design canvas
 // renders byte-identically: the title/summary bands become body slots, and the
 // `collectionField: 'lines'` detail band becomes a NestedScope whose first
-// child is the per-row BandNode (spec 024).
+// child is the per-row BandNode.
 ReportDefinition _definition() => const ReportDefinition(
       name: 'Invoice',
       page: PageFormat.a4Portrait,

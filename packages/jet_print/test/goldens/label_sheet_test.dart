@@ -1,4 +1,4 @@
-// Rendered multi-column label sheet golden (spec 034). Public API only;
+// Rendered multi-column label sheet golden. Public API only;
 // regenerate with `--update-goldens`.
 @Tags(['golden'])
 library;

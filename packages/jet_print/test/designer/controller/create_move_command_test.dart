@@ -49,7 +49,7 @@ void main() {
       expect(els.length, 2);
       expect(els.last, isA<BarcodeElement>());
       expect(c.selection.singleOrNull, els.last.id);
-      // The pre-existing sibling is untouched (non-destructive, FR-025).
+      // The pre-existing sibling is untouched (non-destructive).
       expect(els.first.id, 'keep1');
       expect(
           els.first.bounds, const JetRect(x: 5, y: 5, width: 40, height: 12));

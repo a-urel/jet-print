@@ -1,4 +1,4 @@
-// End-to-end: calculator + element expression with $V{} (spec 005b).
+// End-to-end: calculator + element expression with $V{}.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/data_row.dart';
 import 'package:jet_print/src/data/field_def.dart';

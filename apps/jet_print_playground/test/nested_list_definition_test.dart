@@ -1,5 +1,5 @@
 // Confirms the nested-list sample (Customer ▸ Order ▸ Line) is authored as a
-// genuinely nested tree in the reified band model (spec 024): two collection
+// genuinely nested tree in the reified band model: two collection
 // scopes deep, with per-record chrome expressed the supported way (a customer
 // GroupLevel) so the definition is pristine under the library validator, and
 // rendering it through the native renderDefinition path is clean — all through
@@ -56,9 +56,7 @@ void main() {
       expect((lines.children.single as BandNode).band.type, BandType.detail);
     });
 
-    test(
-        'every footer level is authored inline as SUM(\$F{lineTotal}) (spec 033)',
-        () {
+    test('every footer level is authored inline as SUM(\$F{lineTotal})', () {
       final ReportDefinition def = nestedListsDefinition();
       final DetailScope root = def.body.root;
 
@@ -71,7 +69,7 @@ void main() {
               .firstWhere((ReportElement e) => e.id == 'orderTotalFooter')
           as TextElement;
       expect(orderTotalFooter.expression, r'SUM($F{lineTotal})',
-          reason: 'lines footer folds the same-scope lines inline (spec 029)');
+          reason: 'lines footer folds the same-scope lines inline');
 
       // The `orders` scope carries no ScopeTotal: the customer footer + summary
       // descend [orders, lines] via spec 033 inline folding.
@@ -85,13 +83,13 @@ void main() {
               .firstWhere((ReportElement e) => e.id == 'customerTotal')
           as TextElement;
       expect(customerTotal.expression, r'SUM($F{lineTotal})',
-          reason: 'customer footer descends [orders, lines] inline (spec 033)');
+          reason: 'customer footer descends [orders, lines] inline');
 
       // The summary grand total is also inline — descends [orders, lines].
       final TextElement grand = def.body.summary!.elements
           .firstWhere((ReportElement e) => e.id == 'grandTotal') as TextElement;
       expect(grand.expression, r'SUM($F{lineTotal})',
-          reason: 'grand total descends [orders, lines] inline (spec 033)');
+          reason: 'grand total descends [orders, lines] inline');
     });
 
     test('rendered customer footer totals + grand total are live data sums',
@@ -109,14 +107,14 @@ void main() {
           _runsForId(report, 'customerTotal');
       expect(actualCustomerTotals, expectedCustomerTotals,
           reason: 'each customer footer total equals the live roll-up of its '
-              'orders’ line-sums (SC-001)');
+              'orders’ line-sums');
 
       // The grand total = the overall sum across all customers.
       final double grand = kSampleCustomers.fold<double>(
           0, (double sum, Map<String, Object?> c) => sum + _customerSum(c));
       final List<String> actualGrand = _runsForId(report, 'grandTotal');
       expect(actualGrand, <String>[_formatTotal(grand)],
-          reason: 'the grand total equals the overall live data sum (SC-002)');
+          reason: 'the grand total equals the overall live data sum');
     });
 
     test('rendered per-order footer totals equal the data line-sums', () {

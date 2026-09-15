@@ -22,7 +22,7 @@ extension CtrlBands on JetReportDesignerController {
     _commit(SetColumnLayoutCommand(bandId: bandId, layout: layout));
   }
 
-  /// Clears band [bandId]'s column layout as one undoable step (spec 035). An
+  /// Clears band [bandId]'s column layout as one undoable step. An
   /// unknown id — or a band that already has no layout — is ignored.
   void removeColumnLayout(String bandId) {
     final Band? band = findBand(_document.definition, bandId);
@@ -117,7 +117,7 @@ extension CtrlBands on JetReportDesignerController {
   }
 
   /// Retypes band [bandId] to [newType], relocating it to that type's slot and
-  /// updating its [Band.type] (FR-012 / FR-001a) — id, height, and elements are
+  /// updating its [Band.type] — id, height, and elements are
   /// preserved. Supported for the singleton-slot types (furniture + body
   /// once-bands); a no-op for a non-singleton target, an occupied target slot,
   /// an unknown id, or an unchanged type. One undoable step; the band stays

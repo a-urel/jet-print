@@ -1,4 +1,4 @@
-/// A compiled, reusable expression (spec 005a).
+/// A compiled, reusable expression.
 library;
 
 import 'aggregate/aggregate_functions.dart';
@@ -82,7 +82,7 @@ class Expression {
   /// aggregate sub-terms of a compound expression (`SUM($F{x}) + 1`). A field
   /// referenced only outside an aggregate is NOT reported. Used by the designer
   /// to accept a descendant leaf as a valid aggregate operand while still
-  /// flagging the same leaf when referenced bare (spec 033, FR-006/FR-007).
+  /// flagging the same leaf when referenced bare.
   Set<String> get aggregateOperandFields {
     final Set<String> operands = <String>{};
     void collectFields(Expr node) {

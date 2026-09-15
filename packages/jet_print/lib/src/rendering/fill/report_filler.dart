@@ -1,4 +1,4 @@
-/// The Fill data pass (spec 007b/007c). Walks a [ReportTemplate] over a
+/// The Fill data pass. Walks a [ReportTemplate] over a
 /// [JetDataSource], drives the variable calculator, and emits the resolved band
 /// stream — title/groupHeader/detail/groupFooter/summary/noData — as a
 /// [FilledReport] + diagnostics. INTERNAL — the public surface is the 011
@@ -99,7 +99,7 @@ class ReportFiller {
     return r;
   }
 
-  /// Fills [rawDefinition] over [source] natively (spec 024) — the reified
+  /// Fills [rawDefinition] over [source] natively — the reified
   /// counterpart of [fill]. Produces a [FilledReport] **byte-identical** to
   /// filling the equivalent legacy template: groups are keyed internally by
   /// their display [GroupLevel.name] (so a variable's `resetGroup` *id* is
@@ -114,7 +114,7 @@ class ReportFiller {
     String unresolvedFieldToken = '#ERROR',
   }) {
     // Open the source early so its declared schema is available for the
-    // descendant-lift pre-pass (spec 033). The cursor is positioned before
+    // descendant-lift pre-pass. The cursor is positioned before
     // the first row, exactly as if opened later.
     final DataSet ds = source.open(params);
     final List<FieldDef> rootFields = ds.fields;
@@ -125,7 +125,7 @@ class ReportFiller {
     // place and handled by expandAggregates as before.
     final DescendantLift lift =
         liftDescendantAggregates(rawDefinition, rootFields);
-    // Expand inline aggregates (spec 028) before any group/variable logic: a
+    // Expand inline aggregates before any group/variable logic: a
     // stored SUM($F{...}) in a summary/group-footer band becomes a hidden
     // band-scoped variable + $V{} reference, so it computes through the
     // unchanged calculator. Returns the definition unchanged when there are none.
@@ -141,7 +141,7 @@ class ReportFiller {
     // summary reference it as `$F{name}`. Under a schema-aware render these
     // computed names aren't in the caller's `knownFields`, so widen that set
     // with every published total name; otherwise the unresolved-binding gate
-    // (FR-007) would render `#ERROR` for a legitimately-injected field.
+    // would render `#ERROR` for a legitimately-injected field.
     final Set<String>? effectiveKnownFields = knownFields == null
         ? null
         : <String>{
@@ -471,8 +471,8 @@ class ReportFiller {
           final PreparedFooter? footer =
               s.footer == null ? null : prepareNestedFooter(s.footer!);
           // Classify each footer aggregate operand once: same-scope folds over the
-          // immediate child rows (spec 029); a descendant leaf folds over the whole
-          // subtree (spec 033); an ambiguous operand renders the fallback (FR-010).
+          // immediate child rows; a descendant leaf folds over the whole
+          // subtree; an ambiguous operand renders the fallback.
           final List<FieldDef> childFields = childRows.first.fields;
           final List<List<String>?> descPaths =
               <List<String>?>[]; // null → same-scope
@@ -890,7 +890,7 @@ class ReportFiller {
   }
 
   /// Every published-total name declared anywhere in [scope]'s nested-scope
-  /// tree (spec 030, B2) — the synthetic fields the rollup injects onto parent
+  /// tree — the synthetic fields the rollup injects onto parent
   /// rows, so the schema-aware resolver must treat them as known.
   static Set<String> _publishedTotalNames(DetailScope scope) {
     final Set<String> names = <String>{};
@@ -908,7 +908,7 @@ class ReportFiller {
     return names;
   }
 
-  /// Rebuilds the immutable [row] (spec 030, B2) with [extras] published-total
+  /// Rebuilds the immutable [row] with [extras] published-total
   /// fields appended and each [replaced] nested collection swapped for its
   /// augmented child rows. A replaced collection's [FieldDef] is re-typed to the
   /// augmented child schema (which now includes deeper published-total names) so

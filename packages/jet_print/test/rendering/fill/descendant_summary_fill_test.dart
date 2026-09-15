@@ -30,7 +30,7 @@ TextElement _el(String id, {String? text, String? expr}) => TextElement(
 
 // An explicit schema declaring the nested shape, so resolveAggregatePath can
 // descend [orders, lines] to find lineTotal. Inference now types nested
-// List<Map> columns as collections too (SC-006), so a declared schema is no
+// List<Map> columns as collections too, so a declared schema is no
 // longer required — the final test in this file proves the inferred path.
 const List<FieldDef> _rootSchema = <FieldDef>[
   FieldDef('customerCode', type: JetFieldType.string),

@@ -152,7 +152,7 @@ class _InlineNotice extends StatelessWidget {
 
 /// The "Add column layout" affordance. Disabled (greyed, non-tappable) when the
 /// report shape can't host a label grid, wrapped in a tooltip that explains the
-/// requirement (spec 035 / FR-003). Enabled, it commits a default layout.
+/// requirement. Enabled, it commits a default layout.
 class _ColumnLayoutAddButton extends StatelessWidget {
   const _ColumnLayoutAddButton({
     required this.enabled,
@@ -249,7 +249,7 @@ class _LabeledRow extends StatelessWidget {
 }
 
 /// A small inline warning shown beneath a binding whose field is missing from
-/// (or out of scope in) the attached data source (FR-018) — a triangle glyph
+/// (or out of scope in) the attached data source — a triangle glyph
 /// plus the localized message, in the theme's destructive color.
 class _UnresolvedHint extends StatelessWidget {
   const _UnresolvedHint({required this.message});

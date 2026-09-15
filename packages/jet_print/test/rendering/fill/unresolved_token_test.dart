@@ -1,4 +1,4 @@
-// Unresolved-binding token (013 / FR-007, T006): in a schema-aware context an
+// Unresolved-binding token: in a schema-aware context an
 // unknown field renders the token; with no schema, behavior is unchanged.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/data_row.dart';

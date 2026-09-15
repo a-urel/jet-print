@@ -1,4 +1,4 @@
-/// The Fill-stage [EvalContext] (spec 007b). Wraps a data row, params, and the
+/// The Fill-stage [EvalContext]. Wraps a data row, params, and the
 /// calculator's variable values, and records two content signals into shared
 /// sinks: a missing-field **warning** (a `$F{}` to a name the row's schema does
 /// not declare; deduped via [warnedFields]) and a reserved **page-scoped**

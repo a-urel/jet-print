@@ -1,4 +1,4 @@
-// Public font value-type validation (022 — contracts C1–C3; T002).
+// Public font value-type validation.
 //
 // JetFontFace is a plain descriptor (bytes + weight + italic, value-equal by
 // bytes identity). JetFontFamily validates its faces EAGERLY and SYNCHRONOUSLY
@@ -15,7 +15,7 @@ import 'package:jet_print/src/rendering/text/jet_font.dart';
 import '../../support/test_fonts.dart';
 
 void main() {
-  group('JetFontFace — descriptor & defaults (C1)', () {
+  group('JetFontFace — descriptor & defaults', () {
     test('defaults to normal weight, upright', () {
       final JetFontFace face = JetFontFace(bytes: validRegularFontBytes());
       expect(face.weight, JetFontWeight.normal);
@@ -39,7 +39,7 @@ void main() {
     });
   });
 
-  group('JetFontFamily — accepts valid fonts (C2)', () {
+  group('JetFontFamily — accepts valid fonts', () {
     test('a regular-only family is valid (bold/italic optional)', () {
       final JetFontFamily family = JetFontFamily(
         name: 'Acme Brand',
@@ -65,7 +65,7 @@ void main() {
     });
   });
 
-  group('JetFontFamily — rejects bad input, synchronously (C3)', () {
+  group('JetFontFamily — rejects bad input, synchronously', () {
     test('an empty name throws ArgumentError', () {
       expect(
         () => JetFontFamily(

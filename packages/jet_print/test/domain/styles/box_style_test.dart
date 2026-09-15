@@ -34,7 +34,7 @@ void main() {
   });
 
   // --- 021 format properties: sentinel-based copyWith -----------------------
-  group('JetBoxStyle.copyWith (021 / US2)', () {
+  group('JetBoxStyle.copyWith', () {
     const JetBoxStyle base = JetBoxStyle(
       fill: JetColor(0x3300FF00),
       stroke: JetColor(0xFF112233),

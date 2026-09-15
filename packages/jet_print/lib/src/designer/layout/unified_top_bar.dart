@@ -3,8 +3,8 @@
 /// the preview read as *one toolbar that changes by context*: the left
 /// (file icon + report name) and center (the Designer|Preview mode switch)
 /// regions are produced by this single widget, so they occupy the **same
-/// position and visual style** in both modes (FR-001, SC-003) — only the
-/// right-hand [actions] slot differs (FR-011).
+/// position and visual style** in both modes — only the
+/// right-hand [actions] slot differs.
 ///
 /// The report name is shown read-only here; renaming is surfaced elsewhere by
 /// the host (the controller's `rename` mutator / the preview's `onRename`).
@@ -68,14 +68,14 @@ class UnifiedTopBar extends StatelessWidget {
 
   /// The current stored report name. Empty or whitespace-only renders the
   /// localized placeholder (`reportTitlePlaceholder`), identically in both
-  /// modes (FR-006, FR-010).
+  /// modes.
   final String name;
 
   /// Builds the center region — the Designer|Preview mode switch — given the
   /// bar's [veryNarrow] state so the switch can go icon-only on a phone.
   final UnifiedCenterBuilder centerBuilder;
 
-  /// Builds the mode-specific right-slot actions (FR-011).
+  /// Builds the mode-specific right-slot actions.
   final UnifiedActionsBuilder actions;
 
   /// Below this width the [actions] are asked to render compact (icon-only).
@@ -85,10 +85,10 @@ class UnifiedTopBar extends StatelessWidget {
   /// gap separates them from the switch). Below it the whole bar scrolls
   /// horizontally instead of overflowing — the leading name + switch stay at the
   /// start, so they remain visible at scroll origin while the trailing actions
-  /// scroll into view (C6.1 / C6.2).
+  /// scroll into view.
   final double scrollWidth;
 
-  /// The shared bar height — identical in both modes (FR-001 / C1.3).
+  /// The shared bar height — identical in both modes.
   static const double height = 52;
 
   @override
@@ -164,7 +164,7 @@ class UnifiedTopBar extends StatelessWidget {
 }
 
 /// The report-name region: the stored name shown read-only, with the localized
-/// placeholder when it is empty/whitespace (FR-006, FR-010).
+/// placeholder when it is empty/whitespace.
 ///
 /// Renaming is no longer surfaced from the toolbar; the host drives it elsewhere
 /// through the controller's `rename` mutator (or the preview's `onRename`).

@@ -1,4 +1,4 @@
-// T081 — performance smoke: a multi-element drag over a large design (SC-007).
+// performance smoke: a multi-element drag over a large design.
 //
 // Seeds 200 elements, selects 20, and live-drags them across several frames.
 // The design-time canvas paints element appearance from a cached `ui.Picture`

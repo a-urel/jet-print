@@ -1,4 +1,4 @@
-// US3 controls (T050): the top-bar Undo/Redo buttons reflect canUndo/canRedo
+// US3 controls: the top-bar Undo/Redo buttons reflect canUndo/canRedo
 // and drive the controller; ⌘Z / ⇧⌘Z act when the canvas is focused.
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';

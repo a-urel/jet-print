@@ -17,12 +17,12 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'support/designer_harness.dart';
 
-// --- Clipboard-group helpers (016 / US1 / C2) ---
+// --- Clipboard-group helpers ---
 const Key _cutKey = ValueKey<String>('jet_print.designer.action.cut');
 const Key _copyKey = ValueKey<String>('jet_print.designer.action.copy');
 const Key _pasteKey = ValueKey<String>('jet_print.designer.action.paste');
 
-// --- Unified-toolbar mode switch (017 / US1 / C2) ---
+// --- Unified-toolbar mode switch ---
 const Key _nameKey = ValueKey<String>('jet_print.toolbar.name');
 const Key _modeSwitchKey = ValueKey<String>('jet_print.toolbar.modeSwitch');
 const Key _modeDesignerKey =
@@ -229,7 +229,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    // 017 (C6.2): when narrow the action LABELS collapse to icons, but the name
+    // when narrow the action LABELS collapse to icons, but the name
     // region and the mode switch are never the regions that collapse — they stay
     // visible and reachable.
     testWidgets('collapses action labels to icons but keeps name + switch',
@@ -248,7 +248,7 @@ void main() {
       expect(find.text('Save'), findsNothing);
       expect(find.byIcon(LucideIcons.folderOpen), findsOneWidget);
       expect(find.byIcon(LucideIcons.save), findsOneWidget);
-      // The name region and the mode switch stay put (C6.2).
+      // The name region and the mode switch stay put.
       expect(find.text('Untitled report'), findsOneWidget);
       expect(find.byKey(_modeDesignerKey), findsOneWidget);
       expect(find.byKey(_modePreviewKey), findsOneWidget);
@@ -300,7 +300,7 @@ void main() {
           reason: 'the compact zoom % label is shown at desktop width');
     });
 
-    // US2 (C3.4): the ruler toggle is wired to the controller exactly like the
+    // the ruler toggle is wired to the controller exactly like the
     // grid/snap toggles — it flips `rulersEnabled` and its active styling
     // (secondary vs ghost) tracks that flag at every step.
     testWidgets('the ruler toggle drives rulersEnabled and reflects its state',
@@ -326,9 +326,9 @@ void main() {
       expect(variant(), ShadButtonVariant.secondary);
     });
 
-    // 015 (C5.1): the grid toggle flips `gridEnabled` (visibility only) and
+    // the grid toggle flips `gridEnabled` (visibility only) and
     // reflects its state, WITHOUT touching `snapEnabled` — the two tools are
-    // independent (FR-010).
+    // independent.
     testWidgets('the grid toggle drives gridEnabled and leaves snap untouched',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
@@ -355,8 +355,8 @@ void main() {
       expect(variant(), ShadButtonVariant.secondary);
     });
 
-    // 015 (C5.2): the snap (magnet) toggle flips `snapEnabled` and reflects its
-    // state, WITHOUT touching `gridEnabled` (FR-010).
+    // the snap (magnet) toggle flips `snapEnabled` and reflects its
+    // state, WITHOUT touching `gridEnabled`.
     testWidgets('the snap toggle drives snapEnabled and leaves grid untouched',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
@@ -384,7 +384,7 @@ void main() {
     });
   });
 
-  // 016 (C2 / US1): a fenced Cut / Copy / Paste icon-button group, fully
+  // a fenced Cut / Copy / Paste icon-button group, fully
   // mouse-operable, with enablement bound to canCopy/canPaste and localized
   // tooltips carrying the platform shortcut glyph.
   group('designer top bar — clipboard group', () {
@@ -400,7 +400,7 @@ void main() {
     testWidgets(
         'nothing selected ⇒ Cut & Copy disabled; empty ⇒ Paste disabled',
         (WidgetTester tester) async {
-      // Blank document: no selection, empty clipboard (SC-003).
+      // Blank document: no selection, empty clipboard.
       await pumpDesignerWith(tester);
       expect(_disabled(tester, _cutKey), isTrue);
       expect(_disabled(tester, _copyKey), isTrue);
@@ -440,7 +440,7 @@ void main() {
       await tester.tap(find.byKey(_pasteKey));
       await tester.pumpAndSettle();
 
-      // Element count +1 and the pasted copy is the new selection (SC-001).
+      // Element count +1 and the pasted copy is the new selection.
       expect(_elementCount(c), 2);
       expect(c.selection.singleOrNull, isNotNull);
       expect(c.selection.singleOrNull, isNot('a'));
@@ -501,10 +501,10 @@ void main() {
     });
   });
 
-  // 017 (US1 / C2): the designer hosts the unified toolbar's two-segment
+  // the designer hosts the unified toolbar's two-segment
   // Designer|Preview mode switch. Designer is the active segment; selecting
   // Preview emits the host switch-request via the existing onPreviewRequested.
-  group('designer top bar — mode switch (017 / US1)', () {
+  group('designer top bar — mode switch', () {
     testWidgets('renders the two-segment switch with Designer active', (
       WidgetTester tester,
     ) async {
@@ -514,7 +514,7 @@ void main() {
 
       expect(find.byKey(_modeDesignerKey), findsOneWidget);
       expect(find.byKey(_modePreviewKey), findsOneWidget);
-      // Active = filled (secondary); inactive = ghost (C2.1).
+      // Active = filled (secondary); inactive = ghost.
       expect(_segmentVariant(tester, _modeDesignerKey),
           ShadButtonVariant.secondary);
       expect(_segmentVariant(tester, _modePreviewKey), ShadButtonVariant.ghost);
@@ -537,7 +537,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(calls, 1);
       expect(identical(got, c.definition), isTrue,
-          reason: 'the live definition is handed to the host (C2.2)');
+          reason: 'the live definition is handed to the host');
     });
 
     testWidgets(
@@ -550,7 +550,7 @@ void main() {
       expect(_segmentDisabled(tester, _modePreviewKey), isTrue);
     });
 
-    testWidgets('tapping the already-active Designer segment is a no-op (C2.5)',
+    testWidgets('tapping the already-active Designer segment is a no-op',
         (WidgetTester tester) async {
       final JetReportDesignerController c = JetReportDesignerController();
       addTearDown(c.dispose);
@@ -563,7 +563,7 @@ void main() {
       expect(calls, 0, reason: 'the active segment performs no switch');
     });
 
-    // 017 (FR-005 / SC-002 / C2.4): a switch request must NOT mutate the
+    // a switch request must NOT mutate the
     // controller — the host owns the swap; edits, history and selection survive.
     testWidgets('a switch request never mutates the controller', (
       WidgetTester tester,
@@ -586,17 +586,17 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(identical(c.definition, beforeDefinition), isTrue,
-          reason: 'the switch request leaves the model untouched (FR-005)');
+          reason: 'the switch request leaves the model untouched');
       expect(c.canUndo, undoBefore);
       expect(c.canRedo, redoBefore);
       expect(c.selection, selectionBefore);
     });
   });
 
-  // 017 (US3 / C5.1 / SC-005): the designer's right slot carries the editing
+  // the designer's right slot carries the editing
   // actions exclusively — none of the preview's viewing-only actions appear.
-  group('designer top bar — mode-specific actions (017 / US3)', () {
-    testWidgets('the right slot shows the editing actions (C5.1)', (
+  group('designer top bar — mode-specific actions', () {
+    testWidgets('the right slot shows the editing actions', (
       WidgetTester tester,
     ) async {
       await pumpDesigner(
@@ -623,7 +623,7 @@ void main() {
       expect(find.text('Save'), findsOneWidget);
     });
 
-    testWidgets('no preview-only signature action is present (SC-005)', (
+    testWidgets('no preview-only signature action is present', (
       WidgetTester tester,
     ) async {
       await pumpDesignerWith(tester);

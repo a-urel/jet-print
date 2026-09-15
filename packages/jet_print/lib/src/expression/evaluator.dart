@@ -1,5 +1,5 @@
 /// The expression evaluator: walks an [Expr] against an [EvalContext] producing
-/// a [JetValue] (spec 005a). Internal to the expression seam.
+/// a [JetValue]. Internal to the expression seam.
 ///
 /// Total by construction: a failed operation returns a [JetError] (a value)
 /// rather than throwing, and an error operand propagates upward. Numbers are

@@ -1,8 +1,8 @@
-// Pure grid-line geometry (spec 015, contract C1). `gridLineOffsets` enumerates
+// Pure grid-line geometry. `gridLineOffsets` enumerates
 // the snap-coincident lines to draw along one axis of one band, from the band
 // origin, as exact multiples of the step — so a drawn line always lands on a
 // snap target (true WYSIWYG). This file pins the ENUMERATION contract (C1.1,
-// C1.4, C1.5); the adaptive-density cases (C1.2/C1.3) are added in US3.
+// C1.4, C1.5); the adaptive-density cases are added in US3.
 //
 // Imports the pure helper directly (it carries no Flutter/domain import), the
 // same way the ruler-scale tests exercise their measurement core.
@@ -11,7 +11,7 @@ import 'package:jet_print/src/designer/canvas/design_tunables.dart';
 import 'package:jet_print/src/designer/canvas/grid_geometry.dart';
 
 void main() {
-  group('gridLineOffsets — line enumeration (C1.1/C1.4/C1.5)', () {
+  group('gridLineOffsets — line enumeration', () {
     // A scale generous enough that step·scale clears any minGap, so no
     // coarsening is in play and we observe the raw multiples.
     const double generousScale = 10;
@@ -69,7 +69,7 @@ void main() {
     });
   });
 
-  group('gridLineOffsets — adaptive density (C1.2/C1.3)', () {
+  group('gridLineOffsets — adaptive density', () {
     test('no coarsening while step·scale clears the floor (f = 1)', () {
       // scale 1 ⇒ step·scale ≈ 14.17 px ≥ 4 px ⇒ raw step.
       final List<double> lines = gridLineOffsets(

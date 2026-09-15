@@ -40,7 +40,7 @@ void main() {
   });
 
   // --- 021 format properties: underline + copyWith --------------------------
-  group('JetTextStyle.underline (021 / US1)', () {
+  group('JetTextStyle.underline', () {
     test('defaults to false', () {
       expect(JetTextStyle.fallback.underline, isFalse);
       expect(const JetTextStyle().underline, isFalse);
@@ -74,7 +74,7 @@ void main() {
     });
   });
 
-  group('JetTextStyle.copyWith (021 / US1)', () {
+  group('JetTextStyle.copyWith', () {
     const JetTextStyle base = JetTextStyle(
       fontFamily: 'Inter',
       fontSize: 18,

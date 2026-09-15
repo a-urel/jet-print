@@ -1,4 +1,4 @@
-/// The command that removes the selected elements (FR-014).
+/// The command that removes the selected elements.
 library;
 
 import '../../../domain/band.dart';

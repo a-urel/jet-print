@@ -1,4 +1,4 @@
-/// Clones an element with a fresh id and bounds, for paste/duplicate (FR-015).
+/// Clones an element with a fresh id and bounds, for paste/duplicate.
 ///
 /// Uses the built-in element codecs to round-trip the element through its JSON
 /// form, then overrides `id` and `bounds`. This preserves every type-specific

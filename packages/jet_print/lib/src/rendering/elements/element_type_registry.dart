@@ -1,4 +1,4 @@
-/// The unified element-type extension point (spec 007a): binds an element type's
+/// The unified element-type extension point: binds an element type's
 /// codec (persist) and renderer (draw) under one `typeKey`. COMPOSES — does not
 /// replace — the domain `ElementCodecRegistry` ([codecs]), which `report_codec`
 /// consumes for save/load; [renderers] is used for render-time dispatch.

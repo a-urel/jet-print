@@ -1,4 +1,4 @@
-/// Inline-aggregate expansion (spec 028, Phase A): a pure transform that turns
+/// Inline-aggregate expansion (Phase A): a pure transform that turns
 /// inline aggregate calls (`SUM($F{customerTotal})`) authored in a value field
 /// into hidden, band-scoped [ReportVariable]s plus `$V{}` references, so the fill
 /// pass computes them through the unchanged variable/accumulator pipeline.
@@ -289,7 +289,7 @@ class DescendantAggregate {
   final String? resetGroup;
 
   /// True when the operand resolved to ≥2 descend paths; the filler renders the
-  /// unresolved fallback for this aggregate (FR-010), never a guessed total.
+  /// unresolved fallback for this aggregate, never a guessed total.
   final bool ambiguous;
 }
 

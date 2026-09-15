@@ -53,7 +53,7 @@ extension _CanvasGestures on _DesignCanvasState {
   }
 
   /// Resolves the selection on a secondary (right) button press, BEFORE the
-  /// context menu opens, so the menu acts on what was clicked (FR-010). Runs from
+  /// context menu opens, so the menu acts on what was clicked. Runs from
   /// a raw [Listener] (which sees the pointer-down ahead of the gesture arena, so
   /// the resulting `notifyListeners` rebuilds the menu's enabled states against
   /// the just-updated selection — `ShadContextMenuRegion` opens the menu itself):
@@ -163,7 +163,7 @@ extension _CanvasGestures on _DesignCanvasState {
       HardwareKeyboard.instance.logicalKeysPressed
           .contains(LogicalKeyboardKey.shiftRight);
 
-  /// Mouse wheel: Ctrl/⌘ + wheel zooms (FR-020); a plain wheel scrolls the page.
+  /// Mouse wheel: Ctrl/⌘ + wheel zooms; a plain wheel scrolls the page.
   /// Both axes are routed explicitly (nested scroll views otherwise let the
   /// inner axis swallow a cross-axis scroll). The signal is claimed via the
   /// resolver so the scroll views never also act on it.

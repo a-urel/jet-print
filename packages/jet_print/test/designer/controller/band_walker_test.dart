@@ -130,7 +130,7 @@ void main() {
     });
   });
 
-  group('band_walker nested DetailScope.footer (spec 031)', () {
+  group('band_walker nested DetailScope.footer', () {
     // root → NestedScope(DetailScope(id:'lines', footer: lf w/ element 'ot')).
     ReportDefinition defWithFooter() => ReportDefinition(
           name: 'R',
@@ -199,7 +199,7 @@ void main() {
 
     test('mapBands preserves the nested footer band and the scope totals', () {
       // Regression: rebuilding the scope field-by-field used to drop both the
-      // nested footer (spec 029) and the published totals (spec 030) — so a
+      // nested footer and the published totals — so a
       // single element edit silently destroyed live totals.
       final ReportDefinition mapped =
           mapBands(defWithFooter(), (Band b) => b.copyWith(height: 99));
@@ -226,7 +226,7 @@ void main() {
 
     test('removeBandFromTree of an unrelated band keeps footer + totals', () {
       // Removing the per-row band must not destroy the scope's footer (spec
-      // 029) or its published totals (spec 030).
+      // 029) or its published totals.
       final ReportDefinition removed =
           removeBandFromTree(defWithFooter(), 'lineRow');
       expect(findBand(removed, 'lineRow'), isNull);
@@ -266,7 +266,7 @@ void main() {
     });
   });
 
-  group('SetScopeCollectionCommand preserves footer + totals (spec 031)', () {
+  group('SetScopeCollectionCommand preserves footer + totals', () {
     DesignerDocument docWithFooter() => DesignerDocument(
           definition: ReportDefinition(
             name: 'R',
@@ -315,7 +315,7 @@ void main() {
   });
 
   group('field preservation through band transforms', () {
-    test('mapBands keeps the page watermark (spec 043)', () {
+    test('mapBands keeps the page watermark', () {
       final ReportDefinition d = _def().copyWith(
         furniture: _def().furniture.copyWith(
               watermark: () => const Watermark(text: 'DRAFT'),
@@ -325,7 +325,7 @@ void main() {
       expect(after.furniture.watermark, const Watermark(text: 'DRAFT'));
     });
 
-    test('updateElement keeps the page watermark (spec 043)', () {
+    test('updateElement keeps the page watermark', () {
       final ReportDefinition d = _def().copyWith(
         furniture: _def().furniture.copyWith(
               watermark: () => const Watermark(text: 'DRAFT'),

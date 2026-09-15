@@ -1,4 +1,4 @@
-// Binding commands (US2 / FR-009, FR-012, FR-013).
+// Binding commands.
 //
 // Public-API controller tests (no `src/`): bind a text element to an
 // expression, bind an image element to a field, clear a binding, and confirm

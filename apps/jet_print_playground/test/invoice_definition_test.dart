@@ -1,4 +1,4 @@
-// Confirms the new architecture end to end (spec 024): the invoice authored in
+// Confirms the new architecture end to end: the invoice authored in
 // the reified band model ([invoiceSampleDefinition]) renders through the native
 // `renderDefinition` path — all through `package:jet_print/jet_print.dart` only.
 import 'package:flutter_test/flutter_test.dart';

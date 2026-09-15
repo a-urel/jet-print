@@ -1,4 +1,4 @@
-/// The forward-only row cursor contract (spec 004).
+/// The forward-only row cursor contract.
 library;
 
 import 'data_row.dart';

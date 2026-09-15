@@ -36,7 +36,7 @@ const String _money = '#,##0.00';
 /// Thousands-grouped integer mask.
 const String _int = '#,##0';
 
-/// The sales-ledger report authored in the reified band model (spec 024/040).
+/// The sales-ledger report authored in the reified band model.
 ReportDefinition ledgerSampleDefinition() => ReportDefinition(
       name: 'Sales Ledger',
       page: PageFormat.a4Portrait,

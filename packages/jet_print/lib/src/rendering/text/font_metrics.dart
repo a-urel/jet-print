@@ -1,5 +1,5 @@
 // lib/src/rendering/text/font_metrics.dart
-/// Parsed, scale-free font metrics (spec 006): values are in font units; callers
+/// Parsed, scale-free font metrics: values are in font units; callers
 /// scale by `fontSize / unitsPerEm`.
 library;
 

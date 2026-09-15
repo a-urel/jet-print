@@ -236,7 +236,7 @@ class PdfInspector {
   /// Decodes every `[<hex>]TJ` text string on page [index] through every
   /// ToUnicode CMap in the document; a string is included when every CID
   /// resolves through that CMap (the wrong font's CMap yields gaps and is
-  /// dropped). This mirrors how a viewer extracts/searches text (FR-004).
+  /// dropped). This mirrors how a viewer extracts/searches text.
   Set<String> textOnPage(int index) {
     final Set<String> out = <String>{};
     for (final Match m in _tjRe.allMatches(contentOf(index))) {

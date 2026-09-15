@@ -1,4 +1,4 @@
-/// A shared visible-placeholder primitive (spec 007a): an outline rect plus a
+/// A shared visible-placeholder primitive: an outline rect plus a
 /// small label. Backs the image-missing, barcode, and unknown-element cases so a
 /// renderer never leaves an element blank (render-don't-crash).
 library;
@@ -26,7 +26,7 @@ const JetTextStyle _placeholderStyle =
 ///
 /// [color] tints the outline and the label — the barcode placeholder passes
 /// the element's bar color so a color edit is visible and WYSIWYG-consistent
-/// before real symbology rendering lands (021 / research §8). Omitted, the
+/// before real symbology rendering lands. Omitted, the
 /// placeholder keeps its muted grey (image-missing, unknown element).
 void emitPlaceholder(
   FrameBuilder out,

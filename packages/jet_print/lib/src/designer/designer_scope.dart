@@ -7,7 +7,7 @@ import 'controller/jet_report_designer_controller.dart';
 
 /// An [InheritedNotifier] that shares one [JetReportDesignerController] across
 /// the canvas and the panels, so a selection or model change in any of them
-/// rebuilds the others (FR-018, the cross-panel sync seam).
+/// rebuilds the others (the cross-panel sync seam).
 class DesignerScope extends InheritedNotifier<JetReportDesignerController> {
   /// Wraps [child] with access to [controller].
   const DesignerScope({

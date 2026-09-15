@@ -1,4 +1,4 @@
-// Binding persistence + reopen-without-source (US2 / FR-019, FR-019a).
+// Binding persistence + reopen-without-source.
 //
 // Bindings are self-describing (TextElement.expression / FieldImageSource), so
 // they round-trip losslessly and a report reopened with NO data source attached
@@ -76,7 +76,7 @@ void main() {
     // Attach NO dataSchema (as if reopened on a fresh session).
     await pumpDesigner(tester, designer: JetReportDesigner(controller: c));
 
-    // The structure tree shows its empty state (FR-019a).
+    // The structure tree shows its empty state.
     expect(find.text('No data source attached.'), findsOneWidget);
     // The binding is preserved (the token is painted on the canvas; assert the
     // self-describing model rather than the painted pixels).

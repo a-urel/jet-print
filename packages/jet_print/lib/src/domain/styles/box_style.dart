@@ -26,7 +26,7 @@ class JetBoxStyle with ValueEquality {
 
   /// Sentinel distinguishing an omitted [copyWith] argument from an explicit
   /// null — both [fill] and [stroke] are nullable, and "clear to no fill /
-  /// no outline" must be expressible (021 / FR-007, FR-008).
+  /// no outline" must be expressible.
   static const Object _unset = Object();
 
   /// Fill color, or null for no fill.

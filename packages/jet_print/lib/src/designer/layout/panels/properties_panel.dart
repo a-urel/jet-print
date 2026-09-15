@@ -144,7 +144,7 @@ ColumnLayout _withColumnCount(
 final RegExp _simpleFieldRef = RegExp(r'^\$F\{([^{}]+)\}$');
 
 /// Body of the **Properties** tab: a context-aware inspector bound to the
-/// controller (FR-007 / FR-019). It edits whatever is selected:
+/// controller. It edits whatever is selected:
 ///
 /// * a single **element** — its position (X/Y) and size (W/H) as live numeric
 ///   fields committed through `setGeometry`, plus its text (for a text element)
@@ -477,7 +477,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
       _Header(
           icon: LucideIcons.rows3, title: l10n.propertiesScope, theme: theme),
       // The master/root scope iterates the records themselves and carries no
-      // collection field; only a nested scope binds one (US3 / FR-015).
+      // collection field; only a nested scope binds one.
       if (!isRoot) ...<Widget>[
         const SizedBox(height: 14),
         SectionLabel(l10n.propertiesBinding),
@@ -500,7 +500,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     ];
   }
 
-  /// The collection fields a nested scope can iterate (US3 / FR-015): the
+  /// The collection fields a nested scope can iterate: the
   /// collection-typed fields in its PARENT scope's field scope (a scope binds a
   /// whole collection). Empty when no schema is attached, hiding the picker.
   List<FieldDef> _scopeCollectionChoices(
@@ -564,7 +564,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     ];
   }
 
-  /// The label-grid (multi-column) editor for a detail band (spec 035). Shown
+  /// The label-grid (multi-column) editor for a detail band. Shown
   /// only for detail bands. Three states: no layout + eligible body → an
   /// enabled "Add column layout"; no layout + ineligible → the Add disabled with
   /// a tooltip; layout present → the four geometry fields + Remove (editable
@@ -666,7 +666,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
       ));
 
     // When the report shape no longer activates the grid, the geometry checks
-    // are moot — show only the inactive notice (FR-009). Otherwise surface the
+    // are moot — show only the inactive notice. Otherwise surface the
     // friendly, localized column diagnostics (spec 035 UX): derived from the
     // same geometry the engine validates, but rounded, plain-language, and with
     // the per-element overflows collapsed into one row.
@@ -718,7 +718,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
       SectionLabel(l10n.propertiesPage),
       // Paper type: named by the matching preset (with its size) or Custom,
       // resizing the page through setPageFormat while preserving the current
-      // margins (US1). Label-less — the picker's value and tooltip name it.
+      // margins. Label-less — the picker's value and tooltip name it.
       _PresetDropdown(
         fieldKey: const ValueKey<String>('$_p.field.paper'),
         label: customMode ? l10n.propertiesCustom : paper.label!,
@@ -737,7 +737,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
               },
             ),
           // Custom: keep the current dimensions but reveal the W/H fields so
-          // the user can type exact values (US3).
+          // the user can type exact values.
           _DropdownOption(
             optionKey: const ValueKey<String>('$_p.field.paper.option.Custom'),
             label: l10n.propertiesCustom,
@@ -747,7 +747,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
         ],
       ),
       const SizedBox(height: 12),
-      // Orientation: derived from width vs height; toggling swaps them (US3).
+      // Orientation: derived from width vs height; toggling swaps them.
       _OrientationToggle(
         landscape: landscape,
         portraitLabel: l10n.orientationPortrait,
@@ -760,7 +760,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
       ),
       const SizedBox(height: 12),
       _PagePreview(page: page),
-      // Custom width/height: shown only in Custom mode (US3). The controller
+      // Custom width/height: shown only in Custom mode. The controller
       // clamps a sub-minimum dimension; the field reverts non-numeric input.
       if (customMode) ...<Widget>[
         const SizedBox(height: 8),
@@ -791,7 +791,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
         ),
       ],
       // Margins: a preset picker that writes all four sides, plus per-side
-      // fields. Editing any side yields an uneven set that reads Custom (US2).
+      // fields. Editing any side yields an uneven set that reads Custom.
       const SizedBox(height: 14),
       SectionLabel(l10n.propertiesMargins),
       _PresetDropdown(

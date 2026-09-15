@@ -1,4 +1,4 @@
-// Shared value formatter (013 / T017): the label `format` property semantics —
+// Shared value formatter: the label `format` property semantics
 // number/date patterns apply; mismatch/malformed/empty leave the value as-is.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/expression/format/apply_jet_format.dart';

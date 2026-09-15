@@ -1,7 +1,7 @@
 // Binding scope resolution across arbitrary master/detail nesting (US3 /
 // FR-016, FR-017, FR-018). Pure logic — white-box (data seam) test.
 //
-// Reification (spec 024): a band's data scope is the chain of [DetailScope]s
+// Reification: a band's data scope is the chain of [DetailScope]s
 // enclosing it. The designer computes that chain with [scopePathToBand] (and
 // the band owning an element with [findBandOfElement]); the data seam then
 // resolves the schema for that chain via [fieldsInScopeForChain]. These tests

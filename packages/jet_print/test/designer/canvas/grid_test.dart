@@ -1,4 +1,4 @@
-// Visible alignment grid — placement & visibility (spec 015, US1 / contract C2).
+// Visible alignment grid — placement & visibility.
 //
 // Drives the public designer and locates the grid by its stable widget key (the
 // painter itself is private — keys are the test seam, as for the rulers). Pins:
@@ -67,7 +67,7 @@ void main() {
       (WidgetTester tester) async {
     await pumpDesignerWith(tester);
     // First child paints first → it sits behind band chrome, elements, and the
-    // selection overlay (FR-003): content pixels are never obscured.
+    // selection overlay: content pixels are never obscured.
     expect(_pageStack(tester).children.first.key, _kGrid);
   });
 

@@ -24,7 +24,7 @@ extension _CanvasDropMenu on _DesignCanvasState {
   }
 
   /// Drops a field dragged from the Data Source panel, creating a text element
-  /// bound to `$F{fieldName}` at the drop point (US2 / FR-011). Same coordinate
+  /// bound to `$F{fieldName}` at the drop point. Same coordinate
   /// math as [_handleDrop]; a drop outside any band is ignored.
   void _handleFieldDrop(
     FieldDragData data,
@@ -59,13 +59,13 @@ extension _CanvasDropMenu on _DesignCanvasState {
   }
 
   /// The canvas right-click menu: Cut / Copy / Paste / — / Duplicate / Delete,
-  /// built from the same `ShadContextMenuItem` the Arrange menu uses (FR-002).
+  /// built from the same `ShadContextMenuItem` the Arrange menu uses.
   /// Cut/Copy/Duplicate/Delete enable on [JetReportDesignerController.canCopy]
   /// and Paste on `canPaste` — the same predicates the toolbar reads, so the two
-  /// surfaces cannot diverge (FR-005a, FR-012). Each item invokes the matching
-  /// controller op and the menu closes on tap (FR-003, FR-011). The trailing
+  /// surfaces cannot diverge. Each item invokes the matching
+  /// controller op and the menu closes on tap. The trailing
   /// shortcut hint reuses the platform glyph helper (⌘/Ctrl+); Delete has no
-  /// modifier, so it carries no trailing glyph (FR-014a).
+  /// modifier, so it carries no trailing glyph.
   List<Widget> _contextMenuItems(
     JetReportDesignerController controller,
     JetPrintLocalizations l10n,

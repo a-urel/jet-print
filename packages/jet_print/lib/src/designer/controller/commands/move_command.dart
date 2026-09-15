@@ -1,4 +1,4 @@
-/// The command that repositions one or more elements (FR-008/010).
+/// The command that repositions one or more elements.
 library;
 
 import '../../../domain/geometry.dart';
@@ -11,7 +11,7 @@ import '../element_bounds.dart';
 /// The controller computes the clamped target bounds for the whole selection up
 /// front and bakes them into the command, so redo reproduces the exact same
 /// positions. Multi-element by construction — moving a selection is one command,
-/// hence one undo step (FR-017).
+/// hence one undo step.
 class MoveCommand extends EditCommand {
   /// Creates a move to the band-relative, clamped [newBounds] (keyed by id).
   const MoveCommand(this.newBounds);

@@ -1,4 +1,4 @@
-/// The command that restyles a shape element (021 / US2 / FR-007, FR-008).
+/// The command that restyles a shape element.
 library;
 
 import '../../../domain/elements/shape_element.dart';

@@ -1,4 +1,4 @@
-// Phase 4 / T026 (spec 024 / C12): author-time `validate()` diagnostics
+// Phase 4 / T026: author-time `validate()` diagnostics
 // surface in the designer via `controller.diagnostics`, so the editor can flag
 // semantic problems (a `$F{}` on record-blind furniture; a duplicate group
 // name) without throwing. Consumer-style: public API only.
@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
 void main() {
-  group('author-time validation surfaces in the designer (T026)', () {
+  group('author-time validation surfaces in the designer', () {
     test('a clean default definition yields no error diagnostics', () {
       final JetReportDesignerController c = JetReportDesignerController();
       expect(

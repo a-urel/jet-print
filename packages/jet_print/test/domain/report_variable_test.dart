@@ -1,4 +1,4 @@
-// ReportVariable value type + serialization (spec 005b). No Flutter UI.
+// ReportVariable value type + serialization. No Flutter UI.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/domain/report_variable.dart';
 

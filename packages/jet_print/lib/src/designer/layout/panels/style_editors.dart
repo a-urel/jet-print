@@ -23,7 +23,7 @@ part of 'properties_panel.dart';
 // --- Shared color vocabulary -------------------------------------------------
 
 /// Accepts `#RRGGBB` / `#AARRGGBB` (the `#` optional) — the only hex forms the
-/// color editor commits (research §5).
+/// color editor commits.
 final RegExp _hexColorRe = RegExp(r'^#?([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$');
 
 /// Formats a color for display: `#RRGGBB` when fully opaque, `#AARRGGBB`
@@ -79,11 +79,11 @@ List<_Swatch> _swatches(JetPrintLocalizations l10n) => <_Swatch>[
 
 // --- _ColorField --------------------------------------------------------------
 
-/// The shared color editor (C6): a trigger showing the current swatch + hex
+/// The shared color editor: a trigger showing the current swatch + hex
 /// (or the localized None state) that opens a popover with the palette grid, a
 /// hex input, and — only where the property is optional — a None entry.
 ///
-/// Commit rules (research §5): a swatch pick or valid 6-digit hex preserves
+/// Commit rules: a swatch pick or valid 6-digit hex preserves
 /// the stored alpha; a valid 8-digit hex sets alpha; malformed hex is
 /// rejected — the field restores the last valid value, flashes the trigger
 /// border in the destructive color, and commits nothing. Closing the popover
@@ -107,7 +107,7 @@ class _ColorField extends StatefulWidget {
   /// The current color, or null for the None state (only when [allowNone]).
   final JetColor? value;
 
-  /// Whether the popover offers a None entry committing `null` (C7).
+  /// Whether the popover offers a None entry committing `null`.
   final bool allowNone;
 
   /// Renders a square swatch-only trigger (the Font row's `[C]` box) instead of
@@ -159,7 +159,7 @@ class _ColorFieldState extends State<_ColorField> {
   void _commitHex() {
     final JetColor? parsed = _parseHexColor(_hex.text, widget.value);
     if (parsed == null) {
-      // Reject: restore the last valid value and flash the trigger (C6).
+      // Reject: restore the last valid value and flash the trigger.
       _hex.text = widget.value == null ? '' : _hexDisplay(widget.value!);
       _popover.hide();
       setState(() => _flash = true);
@@ -390,7 +390,7 @@ class _SwatchTile extends StatelessWidget {
 
 // --- _FontFamilyRow ------------------------------------------------------------
 
-/// The font-family picker (C3): enumerates the designer registry's families
+/// The font-family picker: enumerates the designer registry's families
 /// (default first), each menu item previewed in its own typeface. An element
 /// whose stored family is not registered gets that name appended, selected and
 /// marked unavailable (localized); the stored value survives every unrelated
@@ -475,7 +475,7 @@ class _FontFamilyRow extends StatelessWidget {
 
 // --- _StyleToggleGroup ---------------------------------------------------------
 
-/// The B/I/U toggle group (C5). Bold reads active iff the weight is exactly
+/// The B/I/U toggle group. Bold reads active iff the weight is exactly
 /// [JetFontWeight.bold]; a press while inactive commits `bold`, while active
 /// commits `normal` — intermediate weights display inactive and are preserved
 /// until the toggle is operated (clarification #1). Italic and underline map

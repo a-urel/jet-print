@@ -1,4 +1,4 @@
-/// A report variable — a named accumulated/derived value (spec 005b).
+/// A report variable — a named accumulated/derived value.
 library;
 
 import 'value_equality.dart';
@@ -80,7 +80,7 @@ class ReportVariable with ValueEquality {
   /// [VariableResetScope.group]); otherwise `null`.
   ///
   /// In the legacy `ReportTemplate` model this is a `ReportGroup` **name**. In
-  /// the reified model (spec 024) it is a `GroupLevel` **id** (FR-003a); the
+  /// the reified model it is a `GroupLevel` **id**; the
   /// 1→2 migration rewrites each name to the matching group id.
   final String? resetGroup;
 

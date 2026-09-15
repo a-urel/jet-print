@@ -1,4 +1,4 @@
-// VariableCalculator: running totals, group resets, breaks (spec 005b).
+// VariableCalculator: running totals, group resets, breaks.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/data/data_row.dart';
 import 'package:jet_print/src/data/field_def.dart';

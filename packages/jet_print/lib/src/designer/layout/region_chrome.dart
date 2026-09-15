@@ -72,7 +72,7 @@ class SectionLabel extends StatelessWidget {
 
 /// Shared layout for a right-panel body: a [RegionHeader], a one-line muted
 /// [hint] describing the panel's future purpose, then the panel's own
-/// [children] in an independently scrollable column (FR-010). Keeps the three
+/// [children] in an independently scrollable column. Keeps the three
 /// panels (Data Source / Outline / Properties) visually consistent.
 class PanelScaffold extends StatelessWidget {
   /// Creates a panel body with [icon]/[title] header, a [hint], and [children].
@@ -276,7 +276,7 @@ class LabelWithDescription extends StatelessWidget {
 }
 
 /// A centered, muted hint shown when a region has no real content yet, so the
-/// region never reads as a blank void (FR-007 / empty-surface edge case).
+/// region never reads as a blank void (empty-surface edge case).
 class RegionEmptyHint extends StatelessWidget {
   /// Creates an empty-state hint showing [message] under an [icon].
   const RegionEmptyHint({required this.icon, required this.message, super.key});

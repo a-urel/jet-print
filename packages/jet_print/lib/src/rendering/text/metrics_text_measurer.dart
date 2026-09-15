@@ -1,5 +1,5 @@
 // lib/src/rendering/text/metrics_text_measurer.dart
-/// Default [TextMeasurer] (spec 006): measures glyph advances via [FontMetrics],
+/// Default [TextMeasurer]: measures glyph advances via [FontMetrics],
 /// greedily word-wraps while preserving literal whitespace, and lays out lines.
 library;
 
