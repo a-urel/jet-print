@@ -41,12 +41,13 @@ ReportDefinition oneBandReport({
     );
 ```
 
-Four constructors deep for one empty band, and every level is load-bearing:
+Four wrappers around one empty band, and every level is load-bearing:
 
-- **`ReportDefinition`** names the report and fixes its `PageFormat`. The
-  default is `PageFormat.a4Portrait` — 595.28 by 841.89, with uniform 28.35
-  margins, all in **points**, which is the model's only unit. No pixels, no
-  millimetres: a band's `height` and an element's `bounds` are points too.
+- **`ReportDefinition`** names the report and fixes its `PageFormat`, which is
+  required and never inferred. The builder's default is `PageFormat.a4Portrait`
+  — 595.28 by 841.89, with uniform 28.35 margins, all in **points**, which is
+  the model's only unit. No pixels, no millimetres: a band's `height` and an
+  element's `bounds` are points too.
 - **`ReportBody`** holds the data-driven content. Its once-per-report slots —
   `title`, `summary`, `noData` — are optional and omitted here.
 - **`DetailScope`** with a null `collectionField` is the *master* scope: it
@@ -54,13 +55,13 @@ Four constructors deep for one empty band, and every level is load-bearing:
   it a nested scope over a child collection, which is page 02's subject.
 - **`BandNode`** wraps a band printed once per row of the scope that owns it.
 
-The remaining defaults are `'detail'`, `BandType.detail`, a height of 120, and
-no elements at all. `type` is not a free choice there:
-`domain/report_validation.dart` → `validate` slot-checks every band against the
-slot holding it, and a `BandNode` child whose type is not `BandType.detail` is
-an **error** diagnostic. The builder's default is the one type that slot
-accepts. Elements are optional because what a band first contributes to a page
-is its height.
+The remaining defaults are `'test'` for the report's name, `'detail'` and
+`BandType.detail` for the band, a height of 120, and no elements at all. `type`
+is not a free choice there: `domain/report_validation.dart` → `validate`
+slot-checks every band against the slot holding it, and a `BandNode` child whose
+type is not `BandType.detail` is an **error** diagnostic. The builder's default
+is the one type that slot accepts. Elements are optional because what a band
+first contributes to a page is its height.
 
 Every node in that tree carries an `id`, and the ids are the addressing scheme
 the whole designer is built on: `createElement(..., bandId: 'detail')`,
@@ -85,35 +86,17 @@ the white-box allowlist `AGENTS.md` describes — so the excerpt above is
 consumer-level code. Every type it names is public surface, and if one of them
 stopped being exported the file would stop compiling.
 
-## Run it
-
-```bash
-flutter test packages/jet_print/test/public_api_test.dart
-```
-
-That file's own header says it "acts as an external consumer": it imports the
-barrel and never `package:jet_print/src/...`, so what it does is exactly what a
-host app can do. Three of its cases are about the shape above.
-
-The reified tree types — `ReportDefinition`, `ReportBody`, `DetailScope`,
-`ScopeNode`, `BandNode`, `Band`, `BandType`, `PageFormat` — are all reachable
-from the barrel, so a one-band definition can be written by a consumer at all.
-`validate` is public and returns no error diagnostics for one. And
-`const JetReportEngine().renderDefinition(...)`, handed a one-band definition
-and a `JetInMemoryDataSource` holding a single empty row, returns a
-`RenderedReport`: a band, a page and a row are the whole input the engine needs.
-The file's remaining cases exercise the rest of the public surface — the
-controller's mutators, the format round trip, the preview — each of which a
-later page takes up.
-
 ## Why the model is a tree
 
 The obvious alternative is the one banded-report tools have used for decades: a
 flat list of bands, each declaring its role in a `type` field. It is easy to
-read, easy to serialize, and it is what this model replaced —
-`ReportDefinition`'s own header records the four things a band's role used to be
-inferred from: `type`, a group name, a `collectionField`, and position. That
-inference fails in three ways.
+read, easy to serialize, and it is what this model replaced. The inference it
+required is not a memory: it still runs, in
+`domain/serialization/migrations/v1_to_v2.dart` → `V1ToV2Migration`, which reads
+a v1 band's `type`, its group name, its `collectionField` and its position to
+work out which slot of the tree that band belongs in — four inputs to place one
+band, exercised by `test/domain/serialization/migration_v1_to_v2_test.dart`.
+That inference fails in three ways.
 
 **Role becomes a guess.** When those four inputs disagree there is no right
 answer, only whichever rule the code reading the list happens to apply — and the
@@ -141,8 +124,31 @@ compiler-as-enforcement argument the frame makes for its primitives.
 The costs are real. There is no index: you cannot ask a definition for "its
 bands", you walk it, which is why `designer/controller/band_walker.dart` →
 `mapBands` exists rather than every edit command re-implementing the descent.
-And the tree is verbose to build by hand — four constructors for one empty band
+And the tree is verbose to build by hand — four wrappers around one empty band
 is why the tests share a builder instead of each writing the nesting out.
+
+## Run it
+
+```bash
+flutter test packages/jet_print/test/public_api_test.dart
+```
+
+That file's own header says it "acts as an external consumer": it imports the
+barrel and never `package:jet_print/src/...`, so what it does is exactly what a
+host app can do. Several of its cases speak to the shape above.
+
+The reified tree types — `ReportDefinition`, `ReportBody`, `DetailScope`,
+`ScopeNode`, `BandNode`, `Band`, `BandType`, `PageFormat` — are all reachable
+from the barrel, so a consumer can write this tree at all; the case proving it
+assembles a richer definition than the excerpt, with furniture, a title, a
+`GroupLevel` and a `NestedScope`, which is the same reachability argument with
+more of it. `validate` is public and returns no error diagnostics for a one-band
+definition. And `const JetReportEngine().renderDefinition(...)`, handed one of
+those and a `JetInMemoryDataSource` holding a single empty row, returns a
+`RenderedReport`: a band, a page and a row are the whole input the engine needs.
+The remaining cases exercise the rest of the public surface — the controller's
+mutators, the format round trip, the preview — each of which a later page takes
+up.
 
 ## What is not here yet
 
