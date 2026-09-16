@@ -1,9 +1,9 @@
 # The wiki
 
-Six pages follow one report from four lines of model to ink, and each one adds
-exactly one thing the page before it did without. Read in order they are a
-narrative; read singly they are reference. Both uses are intended, which is what
-the two lists below are for.
+Six pages follow one report from a definition with a single empty band to ink,
+and each adds exactly one thing the page before it did without. Read in order
+they are a narrative; read singly they are reference. Both uses are intended,
+which is what the two lists below are for.
 
 They teach mechanism. The rules themselves live in
 [`../AGENTS.md`](../AGENTS.md), each named next to the test that enforces it —
@@ -26,11 +26,11 @@ produce a `PageFrame`; everything after it only draws one.
 **Not written yet.** Four designer pages — `07-designer-loop.md` (the controller
 and its command stack), `08-the-canvas.md` (design-time frame, hit-testing,
 selection chrome), `09-the-panels.md` (outline, properties, inspectors) and
-`10-designer-seams.md` (l10n, templates, the `part`/`extension` splits) — plus
-five recipes under `recipes/` for adding an element type, an expression function,
-a localized string, a golden and a playground demo. They are later phases of this
-same wiki; until they land, the designer is covered only by `AGENTS.md`'s layer
-table and trap list.
+`10-designer-seams.md` (localization, value templates, and the designer's own
+seams) — plus five recipes under `recipes/`: adding an element type, an expression
+function or a localized string, regenerating goldens, and adding a playground
+demo. They are later phases of this same wiki; until they land, the designer is
+covered only by `AGENTS.md`'s layer table and trap list.
 
 ## If you came for one answer
 

@@ -36,11 +36,16 @@ root package, so the bare command passes while testing nothing.
 `layer_boundaries_test.dart` reads every file under `domain/`, `data/` and
 `expression/`, extracts its `import`/`export` URIs, and fails if any reaches the
 rendering or designer seams or a Flutter UI library. It also asserts each
-directory *has* files, so an empty scan cannot produce a false green. It has since
-grown past those three: it also pins the `rendering/` seam (no designer imports,
-and `dart:ui` only in `paint/canvas_painter.dart`, `paint/page_rasterizer.dart`
-and `engine/render_options.dart`), confines `package:printing` to `lib/src/print/`,
-and checks what the public entry point exports.
+directory *has* files, so an empty scan cannot produce a false green. It has long
+since grown past those three directories. It also pins two pure designer geometry
+helpers; the sub-seam rules inside `rendering/` (`fill/`, `layout/`, `elements/`,
+`export/` and the `engine/` facade, each with its own allowed dependencies);
+`dart:ui` to `paint/canvas_painter.dart`, `paint/page_rasterizer.dart` and
+`engine/render_options.dart` — note the test's *name* says only the two painters,
+while its body carries an explicit third branch for `RenderOptions`' `Locale`;
+`package:printing` to `lib/src/print/`, which no library file but the barrel may
+reach; what the public entry point exports, `show` combinators included; and that
+`schemaVersion` is still 2.
 
 It matches `import`/`export` directives by regex rather than raw substrings, so a
 file may name a forbidden URI in a comment without failing.

@@ -65,6 +65,14 @@ consumer: `lib/jet_print.dart` exports `JetReportFormat`, `ReportFormatException
 `UnknownElement` and `UnknownScopeNode` but neither codec type, and `JetReportFormat`
 builds its registry privately.
 
+What that extension point buys is proven, and it is narrower than it sounds:
+`test/rendering/elements/persisted_extension_test.dart` gives a `StarElement` its
+own `ElementCodec` and `ElementRenderer`, registers both on an
+`ElementTypeRegistry`, then round-trips it through `encodeDefinition` /
+`decodeDefinition` and paints it — with **no edit anywhere under `lib/src/`**. It
+reaches those registries through `package:jet_print/src/…` imports, which a
+consumer cannot. No edits required; not open to everyone.
+
 ## What "preserved verbatim" preserves
 
 Two types carry unrecognized JSON, and they preserve it differently.

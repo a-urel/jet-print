@@ -58,13 +58,14 @@ an unregistered name — returns a `JetError` value propagating up like any othe
 records the other, rendering `!ERR` either way: a bad expression costs a cell,
 not the document.
 
-Recording is bounded, because a dirty dataset repeats its faults per row.
-`rendering/fill/diagnostic_budget.dart` → `DiagnosticBudget` wraps the sink for
-per-row *data* faults only — a non-numeric value skipped from an aggregate, a
-collection entry that is not a row — deduping by a caller-supplied key within one
-master row, prefixing each message with that row's position, and capping the fill
-at `kMaxPerRowDataDiagnostics`, which is 100, with one info line at `finish`
-counting what it suppressed. Structural faults stay on their own once-only paths.
+Recording is bounded, because a dirty dataset repeats its faults per row:
+`rendering/fill/diagnostic_budget.dart` → `DiagnosticBudget` dedupes by a caller
+key within one master row, prefixes each message with the row's position, and caps
+the fill at `kMaxPerRowDataDiagnostics` — 100 — counting the rest in one info line
+at `finish`. The missing-field warning above is one of its clients, whatever the
+budget's dartdoc says: `FillEvalContext.resolveField` records `field:<name>` on
+the budget whenever it holds one, and the filler supplies one wherever a row is
+resolved. Only a context built without one dedupes forever, via `warnedFields`.
 
 The `{ … }` and `[field]` form is the **designer's** display spelling, not a
 second language: `designer/template/value_template_compiler.dart` →

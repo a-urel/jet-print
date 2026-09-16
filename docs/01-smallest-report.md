@@ -86,6 +86,17 @@ the white-box allowlist `AGENTS.md` describes — so the excerpt above is
 consumer-level code. Every type it names is public surface, and if one of them
 stopped being exported the file would stop compiling.
 
+The engine behind that door is one `const` value:
+[`rendering/engine/jet_report_engine.dart`](../packages/jet_print/lib/src/rendering/engine/jet_report_engine.dart)
+→ `JetReportEngine` declares no fields. `renderDefinition` builds one
+`FontRegistry` for the render, runs `ReportFiller.fillDefinition` then
+`ReportLayouter.layoutLazyDefinition` under the host's locale, and returns a
+`RenderedReport` reading the three diagnostic sinks those steps wrote. It owns no
+rendering logic — every later page names the filler, the layouter and the
+painters, never the engine — and it is where degrading beats throwing: a declared
+parameter with no value and no default warns and resolves empty, and a non-bytes
+image source draws the glyph in `rendering/elements/placeholder.dart`.
+
 ## Why the model is a tree
 
 The obvious alternative is the one banded-report tools have used for decades: a
@@ -149,17 +160,6 @@ those and a `JetInMemoryDataSource` holding a single empty row, returns a
 The remaining cases exercise the rest of the public surface — the controller's
 mutators, the format round trip, the preview — each of which a later page takes
 up.
-
-`const` is not decoration:
-[`rendering/engine/jet_report_engine.dart`](../packages/jet_print/lib/src/rendering/engine/jet_report_engine.dart)
-→ `JetReportEngine` declares no fields. `renderDefinition` builds one
-`FontRegistry` for the render, calls `ReportFiller.fillDefinition` then
-`ReportLayouter.layoutLazyDefinition` with the host's locale installed around
-both, and returns a `RenderedReport` reading the three diagnostic sinks those
-steps wrote — parameters, fill, layout. The facade owns no rendering logic, which
-is why every later page names the filler, the layouter and the painters rather
-than the engine, and it is where degrading beats throwing: a declared parameter
-with neither a supplied value nor a default warns and resolves empty.
 
 ## What is not here yet
 
