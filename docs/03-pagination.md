@@ -13,8 +13,8 @@ exact the moment `renderDefinition` returns.
 → `layoutLazyDefinition` is the first pass: it measures every filled band, walks
 them with a cursor, decides every break, and records what landed where as a
 list-of-lists of `_PlacedBand` — a measured band plus a page-absolute `x` and `y`
-— while building **no** paint primitives. What it returns, `LazyLayout`, knows
-`pageCount` (`_plans.length`) and can produce any page on demand.
+— while emitting **no** paint primitives through the renderers' `emit`. What it
+returns, `LazyLayout`, knows `pageCount` and can produce any page on demand.
 
 The second pass is `LazyLayout.buildPage`, which replays one page's recorded
 placements through the element renderers' `emit` and appends that page's chrome.
@@ -32,10 +32,9 @@ for page 0 number the same for 100 records as for 1000.
 Measuring once and placing later is sound only because measurement is
 position-independent: `BandMeasurer` grows each element to its content height at
 the element's authored width and takes the band height as the maximum element
-bottom, floored at the designed height, with no input from where the band will
-land. `rendering/elements/renderers/text_element_renderer.dart` →
-`TextElementRenderer` keeps that honest by wrapping at `el.bounds.width` in both
-`measure` and `emit`.
+bottom, floored at the designed height — no input from where the band lands.
+`rendering/elements/renderers/text_element_renderer.dart` → `TextElementRenderer`
+keeps that honest by wrapping at `el.bounds.width` in both `measure` and `emit`.
 
 ## What decides a break
 
@@ -59,18 +58,19 @@ linearPlans.last.add((band: mb, x: left, y: cursorY));
 cursorY += mb.height;
 ```
 
-`cursorY > bodyTop` is what stops a band too tall for any page from looping
-forever: at the top of a fresh page there is nowhere better to go, so it is
-placed anyway, overflows, and is diagnosed. The three `GroupLevel` pagination
-flags reach into this same loop. `startNewPage` breaks before every group
-instance *after the first*; `reprintHeaderOnEachPage` pushes the group's measured
-header bands onto an open-group stack that `breakPage` re-emits at the new page's
-top. `keepTogether` needs a group's total extent before reaching its end, so a
-pre-pass walks the stream with a cumulative-height table and a span stack,
-recording each such group's extent against the index of its opening header; the
-fit test compares it against capacity *less* the outer headers that would
-reprint, and a group too tall even for a fresh page is not moved, only split. One
-shape skips the loop entirely: when `report_definition.dart` → `soleDetailBand`
+`cursorY > bodyTop` stops a break that would accomplish nothing but an empty
+page: at the top of a fresh page there is nowhere better to go, so an over-tall
+band is placed anyway, overflows, and is diagnosed. The three `GroupLevel`
+pagination flags reach into this same loop. `startNewPage` breaks before every
+group instance *after the first*. Every group header is pushed onto an open-group
+stack as it is placed; `reprintHeaderOnEachPage` rides along on that entry and
+decides only whether `breakPage` re-emits it at the next page's top.
+`keepTogether` needs a group's total extent before reaching its end, so a pre-pass
+walks the stream with a cumulative-height table and a span stack, recording each
+such group's extent against the index of its opening header; the fit test
+compares it against capacity *less* the outer headers that would reprint, and a
+group too tall even for a fresh page is not moved, only split. One shape skips
+the loop entirely: when `domain/report_definition.dart` → `soleDetailBand`
 carries a `ColumnLayout`, the layouter lays a uniform label grid at a fixed pitch.
 
 ## Furniture, and what page one does differently
@@ -110,8 +110,7 @@ if (name == 'PAGE_COUNT') return JetString('$_pageCount');
 Strings, deliberately. The expression engine holds every number as a `double`, so
 a `JetNumber` here would render `1.0` — the hazard page 02's *Trap* describes for
 `jetStringify`, sidestepped by never making these numbers. The cost is that a
-first-page condition is written `$V{PAGE_NUMBER} == "1"`, string equality, and
-`report_layouter_test.dart` spells exactly that.
+first-page condition is written as string equality, `$V{PAGE_NUMBER} == "1"`.
 
 A body band cannot reach either name — the hand-off page 02 set up from its side.
 `rendering/fill/fill_eval_context.dart` → `FillEvalContext.resolveVariable`
@@ -121,28 +120,28 @@ returns `JetNull` for anything in `kPageScopedVariables` and records the name;
 ## Why it is like this, and the alternative rejected
 
 The alternative is to materialize every page up front and hand back a list —
-precisely what `LayoutResult` is, and what the layouter's older API still
-returns. It is simpler, and it makes diagnostics final. It loses on both axes
-that matter. **Memory becomes unbounded in the report**, every page's primitives
-live at once for a dataset whose size the library does not control. And **time to
-first page scales with the last page**: the preview paints exactly one page —
-`designer/preview/jet_report_preview.dart` reads `pageAt(_index)` — and the
-thumbnail rail only the indices it is showing, so under a build-all layout,
-opening a 900-page report to read page 1 costs 900 pages of emit.
+precisely what `LayoutResult` is. It is simpler, and it makes diagnostics final.
+It loses on both axes that matter. **Memory becomes unbounded in the report**,
+every page's primitives live at once for a dataset whose size the library does
+not control. And **time to first page scales with the last page**: the preview
+paints exactly one page — `designer/preview/jet_report_preview.dart` reads
+`pageAt(_index)` — and the thumbnail rail only what it shows, so opening a
+900-page report to read page 1 would cost 900 pages of emit.
 
 So the eager path was not deleted, it was inverted. `ReportLayouter.layoutDefinition`
-is now `layoutLazyDefinition` plus a `for` loop calling `buildPage(i)`, and it has
-no caller in `lib/` at all — `JetReportEngine.renderDefinition` always takes the
-lazy seam. Being the same code makes the two equal by construction rather than by
-maintenance, and lets the pre-lazy corpus in `test/rendering/layout/` keep proving
-the break rules through the surviving wrapper.
+is now `layoutLazyDefinition` plus a `for` loop calling `buildPage(i)`, and
+`JetReportEngine.renderDefinition` always takes the lazy seam — as of writing the
+wrapper's only callers are tests — which nothing asserts, so check it by grep
+rather than trusting this sentence. Being the same code makes the two equal by
+construction, and lets the pre-lazy corpus in `test/rendering/layout/` keep
+proving the break rules through the wrapper.
 
 The costs are real. Laziness begins at the frame and nowhere earlier: fill is
 eager over rows (page 02) and the boundary pass eager over bands, so an exact
-`pageCount` is bought by doing all of that work first — a `JetPagedDataSource`
+`pageCount` is bought by doing all that work first — a `JetPagedDataSource`
 streams into a pipeline that has already decided to hold everything. And
-`RenderedReport`'s cache never evicts, so a PDF export, which walks `pageAt(i)`
-across the whole report, leaves every frame resident.
+`RenderedReport`'s cache never evicts, so a PDF export walks `pageAt(i)` across
+the whole report and leaves every frame resident.
 
 ## Run it
 
@@ -151,10 +150,10 @@ flutter test packages/jet_print/test/rendering/engine/lazy_pagination_test.dart
 flutter test packages/jet_print/test/rendering/layout/
 ```
 
-The first is the seam's own proof, structural rather than timed. A spy renderer
-registry counts every `emit`: the boundary pass over three bands reports zero,
-and `buildPage(0)` over the same input reports two — one per element on page 0,
-the third band's frame unbuilt. A second case lays the same report both ways and
+The first is the seam's own proof, structural rather than timed. A spy registry
+counts every `emit`: the boundary pass over three bands reports zero, and
+`buildPage(0)` over the same input reports two — one per element on page 0, the
+third band's frame unbuilt. A second case lays the same report both ways and
 asserts `lazy.buildPage(i) == eager.pages[i]` for every page, chrome included.
 The second command is the break rules themselves: group reprints, `keepTogether`
 against repeated outer headers, chrome anchoring, and the title ordering on page
@@ -165,16 +164,17 @@ one.
 **Diagnostics are not final when `renderDefinition` returns.** `LazyLayout` hands
 `RenderedReport` the boundary pass's diagnostics object and keeps appending to it
 as pages build — chrome expressions that fail at evaluation, `onElementPrint`
-callbacks that throw or return the wrong type. Assert on `report.diagnostics`
-without touching `pageAt` and you see only what the boundary pass found. The
-corollary bites harder: the build path is re-entered per page, so anything
-recorded there multiplies by the page count unless it joins a dedupe set. Chrome
+callbacks that throw or return the wrong type. `RenderedReport.diagnostics`
+merges its sources live, so asserting on it without touching `pageAt` shows only
+what the passes *before* page-building found. The corollary bites harder: the
+build path is re-entered per page, so anything recorded there multiplies by the
+page count unless it joins a dedupe set. Chrome
 errors join two — `chromeFlagged`, so a reference already diagnosed statically is
 not re-reported at runtime, and `_runtimeDiagnosed`, keyed by element id and
 message so the count cannot depend on which pages were built. Several cases in
-`report_layouter_test.dart` assert a diagnostic appears exactly **once** across a
-multi-page report; a new one added inside `buildPage` without that protection
-turns one authoring mistake into one warning per page.
+`test/rendering/layout/report_layouter_test.dart` assert a diagnostic appears
+exactly **once** across a multi-page report; a new one added inside `buildPage`
+without that protection turns one authoring mistake into one warning per page.
 
 ## Next
 
