@@ -150,6 +150,17 @@ The remaining cases exercise the rest of the public surface — the controller's
 mutators, the format round trip, the preview — each of which a later page takes
 up.
 
+`const` is not decoration:
+[`rendering/engine/jet_report_engine.dart`](../packages/jet_print/lib/src/rendering/engine/jet_report_engine.dart)
+→ `JetReportEngine` declares no fields. `renderDefinition` builds one
+`FontRegistry` for the render, calls `ReportFiller.fillDefinition` then
+`ReportLayouter.layoutLazyDefinition` with the host's locale installed around
+both, and returns a `RenderedReport` reading the three diagnostic sinks those
+steps wrote — parameters, fill, layout. The facade owns no rendering logic, which
+is why every later page names the filler, the layouter and the painters rather
+than the engine, and it is where degrading beats throwing: a declared parameter
+with neither a supplied value nor a default warns and resolves empty.
+
 ## What is not here yet
 
 Each of these is one later page, and each is genuinely absent from the shape
@@ -173,6 +184,14 @@ One property worth carrying forward: the model is allowed to represent more than
 the engine renders. Several per-row bands in one scope, or a scope node kind
 this build has never heard of, are reported by `validate` as **info** — stated,
 not silently reinterpreted, and not rejected either.
+
+And `validate` only helps where something calls it. The designer calls it live —
+`designer/controller/jet_report_designer_controller.dart` → `diagnostics` is
+`validate(_document.definition)` — but the render path never does, so a definition
+built in code and handed straight to the engine is checked by nothing unless a test
+checks it. Commit `bc8cc9c` is the cost: a playground sample's heading band sat in
+a per-row slot and printed sixteen times, once per data row, while the slot rule
+naming that mistake sat unused in `report_validation.dart`. Validate what you add.
 
 ## Next
 

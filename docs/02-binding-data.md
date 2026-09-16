@@ -58,6 +58,14 @@ an unregistered name — returns a `JetError` value propagating up like any othe
 records the other, rendering `!ERR` either way: a bad expression costs a cell,
 not the document.
 
+Recording is bounded, because a dirty dataset repeats its faults per row.
+`rendering/fill/diagnostic_budget.dart` → `DiagnosticBudget` wraps the sink for
+per-row *data* faults only — a non-numeric value skipped from an aggregate, a
+collection entry that is not a row — deduping by a caller-supplied key within one
+master row, prefixing each message with that row's position, and capping the fill
+at `kMaxPerRowDataDiagnostics`, which is 100, with one info line at `finish`
+counting what it suppressed. Structural faults stay on their own once-only paths.
+
 The `{ … }` and `[field]` form is the **designer's** display spelling, not a
 second language: `designer/template/value_template_compiler.dart` →
 `parseValueField` compiles `{SUM([lineTotal])}` to the canonical

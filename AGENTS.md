@@ -178,8 +178,9 @@ Real ones, each of which has cost time before.
 
 ## Going deeper
 
-- [`docs/architecture.md`](docs/architecture.md) — how a report becomes pixels,
-  layer by layer, and where the extension points are.
+- [`docs/README.md`](docs/README.md) — the wiki: a six-page walk through the
+  engine, with the designer chapters still to come. Start there when you need to
+  understand a subsystem rather than look a rule up.
 - [`docs/testing.md`](docs/testing.md) — the test taxonomy, golden discipline,
   tags, and the per-platform CI legs.
 - [`docs/workflow.md`](docs/workflow.md) — how a change moves from idea to merge.

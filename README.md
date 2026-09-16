@@ -76,7 +76,7 @@ green.
 [`AGENTS.md`](AGENTS.md) is the guide for contributors and AI coding agents: the
 rules that hold the design together, which test enforces each one, a map of the
 layers, and the traps worth knowing before your first edit. It links deeper
-notes in [`docs/`](docs/) — [architecture](docs/architecture.md),
+notes in [`docs/`](docs/) — [the wiki](docs/README.md),
 [testing](docs/testing.md), [workflow](docs/workflow.md).
 
 ## Consuming the library

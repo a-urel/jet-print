@@ -36,13 +36,27 @@ root package, so the bare command passes while testing nothing.
 `layer_boundaries_test.dart` reads every file under `domain/`, `data/` and
 `expression/`, extracts its `import`/`export` URIs, and fails if any reaches the
 rendering or designer seams or a Flutter UI library. It also asserts each
-directory *has* files, so an empty scan cannot produce a false green.
+directory *has* files, so an empty scan cannot produce a false green. It has since
+grown past those three: it also pins the `rendering/` seam (no designer imports,
+and `dart:ui` only in `paint/canvas_painter.dart`, `paint/page_rasterizer.dart`
+and `engine/render_options.dart`), confines `package:printing` to `lib/src/print/`,
+and checks what the public entry point exports.
 
-`barcode_dependency_isolation_test.dart` does the same for `package:barcode`,
-allowing exactly one adapter file.
+It matches `import`/`export` directives by regex rather than raw substrings, so a
+file may name a forbidden URI in a comment without failing.
 
-Both match directives rather than raw substrings, which is why they can safely
-contain the very strings they forbid.
+`barcode_dependency_isolation_test.dart` guards `package:barcode` and does **not**
+work that way. Its first assertion reads every `.dart` file under
+`packages/jet_print/lib`, skips the one whose path ends
+`package_barcode_encoder.dart`, and fails on any whose *text* contains
+`package:barcode/` — a comment mentioning the package is a CI failure, not just an
+import. Its second assertion scans `lib/src/domain` the same way, for
+`package:barcode/` or the substring `rendering/elements/barcode`, which catches a
+relative import of the adapter's directory as well as the vendor package.
+
+Whether that strictness is deliberate or accidental has not been decided; the
+behaviour above is what the test does today, and changing it is a change to a
+passing CI gate.
 
 ### The two consumer tests
 

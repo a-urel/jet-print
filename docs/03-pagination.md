@@ -22,6 +22,17 @@ Caching sits above it, in `rendering/engine/rendered_report.dart` →
 `RenderedReport.pageAt`: a `Map<int, RenderedPage>` filled by `putIfAbsent`, so a
 page is built at most once and re-access returns the *identical* instance.
 
+That replay is also the host's one hook into what gets drawn. When
+`RenderOptions.onElementPrint` is non-null, the layouter's `_place` calls it once
+per element immediately before `emit`, passing an `ElementPrintContext` carrying
+the page number and count, the band's type and name, and the row's fields and
+variables — on preview, export and print alike, since all three go through
+`buildPage`. Returning `null` suppresses the element; returning one of the same
+runtime type replaces it, and its `bounds` supply the x, y and width `emit` is
+handed. Its height does not: that comes from the measured box, because the
+boundary pass already committed to it. A different type, or a throw, is a warning
+and a fall back to the original.
+
 "Lazy" oversells it, though. The boundary pass measures **all** bands —
 `rendering/layout/band_measurer.dart` → `BandMeasurer.measure` runs once per
 filled band and `LazyLayout` retains a `MeasuredBand` for each — so what is
