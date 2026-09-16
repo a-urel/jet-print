@@ -77,12 +77,15 @@ void main() {
       () async {
     final FontRegistry reg = FontRegistry()..registerDefault();
     final ui.Picture picture = await recordPageFrame(await imageFrame(), reg);
-    // The picture holds its own references, so it is still rasterizable after
-    // the painter released its handles.
-    final ui.Image image = await picture.toImage(10, 10);
-    expect(image.width, 10);
-    image.dispose();
-    picture.dispose();
+    try {
+      // The picture holds its own references, so it is still rasterizable
+      // after the painter released its handles.
+      final ui.Image image = await picture.toImage(10, 10);
+      expect(image.width, 10);
+      image.dispose();
+    } finally {
+      picture.dispose();
+    }
   });
 
   test('scale is applied to the recording canvas', () async {
@@ -96,14 +99,39 @@ void main() {
               fill: JetColor.black)))
         .build();
     final ui.Picture picture = await recordPageFrame(frame, reg, scale: 2.0);
-    final ui.Image image = await picture.toImage(20, 20);
-    final ByteData pixels =
-        (await image.toByteData(format: ui.ImageByteFormat.rawRgba))!;
-    // RGBA at (15, 15): opaque alpha means the scaled rect reached it.
-    final int alpha = pixels.getUint8((15 * 20 + 15) * 4 + 3);
-    expect(alpha, 255);
-    image.dispose();
-    picture.dispose();
+    try {
+      final ui.Image image = await picture.toImage(20, 20);
+      final ByteData pixels =
+          (await image.toByteData(format: ui.ImageByteFormat.rawRgba))!;
+      // RGBA at (15, 15): opaque alpha means the scaled rect reached it.
+      final int alpha = pixels.getUint8((15 * 20 + 15) * 4 + 3);
+      expect(alpha, 255);
+      image.dispose();
+    } finally {
+      picture.dispose();
+    }
+  });
+
+  // `CanvasPainter.prepare` decodes images into `_decoded` one primitive at a
+  // time, so a throw partway through leaves the already-decoded handles alive.
+  // The thumbnail rail documents that path as reachable AND swallows it
+  // (page_thumbnail_rail.dart), so without this the leak accumulates silently
+  // per failed tile — the very leak this seam exists to close.
+  test('releases the painter even when painting throws', () async {
+    final FontRegistry reg = FontRegistry()..registerDefault();
+    final _ThrowingPainter spy = _ThrowingPainter();
+
+    await expectLater(
+      recordPageFrame(
+        await imageFrame(),
+        reg,
+        newPainter: (ui.Canvas canvas, FontRegistry fonts) => spy,
+      ),
+      throwsA(isA<StateError>()),
+    );
+
+    expect(spy.disposed, isTrue,
+        reason: 'a backend that throws mid-paint must still be released');
   });
 
   test('disposes through the abstraction, not the concrete painter', () async {
@@ -118,6 +146,12 @@ void main() {
     expect(spy.painted, isTrue);
     picture.dispose();
   });
+}
+
+/// A backend that fails mid-paint, to prove the seam still releases it.
+class _ThrowingPainter extends _DisposeSpy {
+  @override
+  void drawImage(ImagePrimitive p) => throw StateError('corrupt image');
 }
 
 /// A real [CanvasPainter] that grabs its decoded-image handles as it is

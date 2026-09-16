@@ -20,6 +20,14 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../support/workspace.dart';
 
+/// Matches a `CanvasPainter` **construction** in either spelling — `CanvasPainter(`
+/// and the `CanvasPainter.new` tear-off (which the seam itself uses, and which a
+/// plain `contains('CanvasPainter(')` scan would miss) — tolerating whitespace
+/// before the paren. Dartdoc references such as `[CanvasPainter]` or
+/// `[CanvasPainter.prepare]` deliberately do not match, so files may still name
+/// the class in prose.
+final RegExp _construction = RegExp(r'CanvasPainter\s*(?:\(|\.new)');
+
 void main() {
   test('only record_page_frame.dart constructs a CanvasPainter', () {
     final Directory root = findWorkspaceRoot();
@@ -31,7 +39,7 @@ void main() {
       // The seam itself, and the class's own declaration file.
       if (f.path.endsWith('record_page_frame.dart')) continue;
       if (f.path.endsWith('canvas_painter.dart')) continue;
-      if (f.readAsStringSync().contains('CanvasPainter(')) {
+      if (_construction.hasMatch(f.readAsStringSync())) {
         offenders.add(f.path);
       }
     }

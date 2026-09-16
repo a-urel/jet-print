@@ -36,8 +36,16 @@ Future<ui.Picture> recordPageFrame(
   if (scale != 1.0) canvas.scale(scale, scale);
   final ReportPainter painter =
       (newPainter ?? CanvasPainter.new)(canvas, fonts);
-  await paintFrame(frame, painter);
-  final ui.Picture picture = recorder.endRecording();
-  painter.dispose();
-  return picture;
+  try {
+    await paintFrame(frame, painter);
+    // Returned from inside the `try` so the `finally` still runs AFTER
+    // `endRecording` on the success path — the picture must already hold its
+    // own references before the backend drops its handles.
+    return recorder.endRecording();
+  } finally {
+    // `prepare` decodes images one primitive at a time, so a throw partway
+    // through leaves the earlier handles alive. The thumbnail rail swallows
+    // exactly that exception, so without this the leak accrues per failed tile.
+    painter.dispose();
+  }
 }

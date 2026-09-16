@@ -4,9 +4,10 @@
 /// `dart:ui` picture and encodes it as PNG.
 ///
 /// Zero parallel paint code: pixel parity with the preview
-/// is by construction, because this IS the preview's painter. Joins
-/// `canvas_painter.dart` as the second (and only other) declared `dart:ui`
-/// file in the rendering seam — the architecture test pins that allowlist.
+/// is by construction, because this IS the preview's painter. One of three
+/// declared `dart:ui` files in the rendering seam, with `canvas_painter.dart`
+/// (the backend) and `record_page_frame.dart` (the recorder/painter/dispose
+/// seam this goes through) — the architecture test pins that allowlist.
 library;
 
 import 'dart:typed_data';
