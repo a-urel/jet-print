@@ -124,7 +124,9 @@ schema), lift, expand, then per master row run `augmentForScope` *before*
 those sinks an aggregate is flagged — but only a *top-level* one:
 `domain/report_validation.dart` → `aggregateBand` tests `topLevelAggregate`
 against the expression root, so I8 catches a bare `SUM($F{x})` in a page header
-and misses `SUM($F{x}) + 500`, which route 2 nonetheless expands.
+and misses `SUM($F{x}) + 500` wherever it is misplaced — the same shape route 2
+legitimately expands when it *is* in a summary or root group footer, the only
+slots `expandAggregates` rewrites.
 
 ## Why it is like this, and the alternative rejected
 
@@ -145,8 +147,7 @@ change with reading order.
 The costs are real. **Fill is eager over rows** even when the source is not: the
 `while (ds.moveNext())` loop runs to completion and materializes every band
 before layout begins, so `JetPagedDataSource` streams into a fill that does not.
-**The sinks are a closed set**, and **the `__agg` prefix is reserved**: a user
-variable of that name is shadowed.
+**The sinks are a closed set**, and **the `__agg` prefix is reserved**.
 
 ## Run it
 
@@ -161,8 +162,7 @@ plus one with no orders, one authored `SUM($F{lineTotal})` in the customer group
 footer and the *same* string in the summary, asserting 35, 300, 0 and a grand
 total of 335, then the same numbers with **no declared schema**: route 3
 descending a chain nobody declared. `AVG` there is 67 — 335 over five leaves,
-not the mean of three subtotals — making the flat-fold property above an
-assertion.
+not the mean of three subtotals — making the flat-fold property an assertion.
 
 ## Trap
 
