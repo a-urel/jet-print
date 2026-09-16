@@ -26,6 +26,19 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 > The detailed, spec-by-spec log below records every change since the legacy flat
 > model and is aimed at upgraders, not first-time readers.
 
+### Fixed
+
+- **Charts can be saved, duplicated and pasted again.** `ChartElement` was
+  registered only in the render-time codec+renderer pairing
+  (`registerBuiltInElementTypes`) and never in the codec-only
+  `registerBuiltInElementCodecs`, which is what the persistence paths use. A
+  report containing a chart therefore rendered correctly but threw
+  `Bad state: No ElementCodec registered for type "chart"` on save
+  (`JetReportFormat.encodeDefinition`) and on designer duplicate / paste. The
+  two built-in registration lists are now pinned against each other by
+  `test/architecture/built_in_element_registration_test.dart`, so a future
+  element type cannot reach one list without the other.
+
 ### Changed
 
 - Crosstab style editors: the eight crosstab

@@ -35,6 +35,13 @@ class ElementCodecRegistry {
     _codecs[typeKey] = codec;
   }
 
+  /// The `type` keys currently registered, in registration order.
+  ///
+  /// Introspection only — dispatch goes through [encode]/[decode]. It exists so
+  /// the library's built-in registration lists can be pinned against each other
+  /// (see `test/architecture/built_in_element_registration_test.dart`).
+  Iterable<String> get typeKeys => _codecs.keys;
+
   /// Encodes [element] to a JSON-safe map. [UnknownElement]s are emitted from
   /// their preserved raw JSON; all others are `{'type': typeKey, ...fields}`.
   Map<String, Object?> encode(ReportElement element) {
