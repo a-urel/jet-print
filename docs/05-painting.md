@@ -34,13 +34,16 @@ every painter.
 
 The other paint file,
 [`rendering/paint/page_rasterizer.dart`](../packages/jet_print/lib/src/rendering/paint/page_rasterizer.dart)
-→ `PageRasterizer`, has no drawing code — it is the preview's path:
+→ `PageRasterizer`, has no drawing code — it is the path the preview and its
+thumbnail rail already run, both recording `pageAt(i).frame` through this same
+painter:
 
 ```dart
+final ui.PictureRecorder recorder = ui.PictureRecorder();
 final ui.Canvas canvas = ui.Canvas(recorder)..scale(scale, scale);
 await paintFrame(frame, CanvasPainter(canvas, fonts));
-// ... endRecording().toImage at the rounded pixel size, the PNG encode, and
-// the ui.Image disposal in a finally
+// ... recorder.endRecording().toImage at the rounded pixel size, the PNG
+// encode, and the ui.Image disposal in a finally
 ```
 
 The difference is where the scale goes: the preview and design canvas record at
@@ -56,9 +59,9 @@ carrying both its `top` and its `baseline` within the block. The backends take
 different halves of that:
 
 ```dart
-// canvas_painter.dart → drawTextRun
+// rendering/paint/canvas_painter.dart → drawTextRun
 _canvas.drawParagraph(para, ui.Offset(dx, p.bounds.y + line.top));
-// pdf_painter.dart → drawTextRun
+// rendering/export/pdf_painter.dart → drawTextRun
 g.drawString(font, p.style.fontSize, line.text, dx,
     _mapY(p.bounds.y + line.baseline));
 ```
@@ -82,11 +85,17 @@ commented as the canvas's math. What holds the two copies together is a test.
 [`rendering/export/pdf_painter.dart`](../packages/jet_print/lib/src/rendering/export/pdf_painter.dart)
 → `PdfPainter` imports no Flutter and no `dart:ui`; it is pure Dart over
 `package:pdf`'s low-level `PdfDocument`/`PdfPage`/`PdfGraphics`, accumulating
-pages so `toPdf` writes a whole report through one painter. It records no picture
-and shares no drawing code with the canvas backend — what it shares are the inputs
-and the geometry: the primitives, the measured lines, `FontRegistry`
-byte-for-byte, `rendering/paint/image_fit.dart` → `computeImageFit`, and
-`rendering/text/underline_metrics.dart` → `underlineFor`.
+pages so that `rendering/export/jet_report_exporter.dart` →
+`JetReportExporter.toPdf` writes a whole report through one painter and one
+`save`. It records no picture and shares no drawing code with the canvas backend
+— what it shares are the inputs and the geometry: the primitives, the measured
+lines, `FontRegistry` byte-for-byte, `rendering/paint/image_fit.dart` →
+`computeImageFit`, and `rendering/text/underline_metrics.dart` → `underlineFor`.
+
+What it produces is a real document, not a picture of one. Each measured line
+becomes its own PDF text object drawn against the embedded TTF, so the exported
+text is selectable and searchable at exactly the baselines the preview drew — and
+it is that one-text-object-per-line structure the parity test counts.
 
 What it rebuilds is what the medium forces. PDF's origin is bottom-left, so every
 draw call maps `y' = pageHeight - y` individually — deliberately not a global
@@ -159,7 +168,7 @@ the operators — one text object per pre-measured line and no more, each at
 `pageHeight - (bounds.y + line.baseline)`; the alignment copy against the canvas's
 formula; one stroked underline at `underlineFor`'s geometry; fill before stroke;
 `computeImageFit`'s rects; no global y-flip. Arithmetic on operators rather than a
-comparison of pictures, so it runs everywhere, not only where goldens do.
+comparison of pictures, so it runs on every host, not only macOS.
 
 The second is the visual pin, and it pins the canvas side only — four reports
 through `JetReportPreview`. The PDF's own pin is byte-level, against a fixed

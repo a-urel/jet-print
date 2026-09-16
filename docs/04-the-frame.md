@@ -196,5 +196,5 @@ Page 05, [painting](05-painting.md), picks the frame up from here: how
 `CanvasPainter` turns primitives into `dart:ui` calls, how `PdfPainter` writes
 the same primitives as PDF operators with embedded fonts and selectable text, and
 why the rendering seam's `dart:ui` imports are a short pinned allowlist — the two
-paint backends, plus `rendering/engine/render_options.dart` for a `Locale` value
-type — enforced by `test/architecture/layer_boundaries_test.dart`.
+paint files that draw through it, plus `rendering/engine/render_options.dart` for
+a `Locale` value type — enforced by `test/architecture/layer_boundaries_test.dart`.
