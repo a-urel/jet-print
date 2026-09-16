@@ -20,7 +20,7 @@ import '../../domain/geometry.dart';
 import '../../rendering/engine/rendered_report.dart';
 import '../../rendering/frame/page_frame.dart';
 import '../../rendering/paint/canvas_painter.dart';
-import '../../rendering/paint/report_painter.dart';
+import '../../rendering/paint/record_page_frame.dart';
 import '../../rendering/text/font_registry.dart';
 import '../canvas/design_tunables.dart';
 import '../canvas/frame_custom_painter.dart';
@@ -231,10 +231,7 @@ class _JetReportPreviewState extends State<JetReportPreview> {
   Future<void> _record() async {
     final int seq = ++_recordSeq;
     final PageFrame frame = _frame;
-    final ui.PictureRecorder recorder = ui.PictureRecorder();
-    final ReportPainter painter = CanvasPainter(ui.Canvas(recorder), _fonts);
-    await paintFrame(frame, painter);
-    final ui.Picture picture = recorder.endRecording();
+    final ui.Picture picture = await recordPageFrame(frame, _fonts);
     if (!mounted || seq != _recordSeq) {
       picture.dispose();
       return;

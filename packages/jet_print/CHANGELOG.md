@@ -28,6 +28,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Decoded image textures are released on every paint path, not just the design
+  canvas.** `CanvasPainter.dispose()` — which frees the GPU texture behind each
+  decoded image — was declared on the concrete painter only. The preview, the
+  page-thumbnail rail and `PageRasterizer` hold the `ReportPainter` abstraction
+  (or, in the rasterizer's case, kept no reference at all), so the method was
+  invisible to them and three of the four consumers silently skipped it, leaking
+  a texture per recorded frame on CanvasKit. `dispose()` is now part of the
+  `ReportPainter` contract, and the recorder → painter → `paintFrame` →
+  `endRecording` → release sequence is single-sourced in `recordPageFrame`, so
+  no consumer can drop the last step; a new architecture test keeps
+  `CanvasPainter` construction to that one seam. `PageRasterizer` also now
+  disposes the intermediate `ui.Picture` it rasterizes from, which was leaked on
+  the same path.
+
 - **Charts can be saved, duplicated and pasted again.** `ChartElement` was
   registered only in the render-time codec+renderer pairing
   (`registerBuiltInElementTypes`) and never in the codec-only

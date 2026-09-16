@@ -15,7 +15,7 @@ import 'dart:ui' as ui;
 import '../frame/page_frame.dart';
 import '../text/font_registry.dart';
 import 'canvas_painter.dart';
-import 'report_painter.dart';
+import 'record_page_frame.dart';
 
 /// Rasterizes one [PageFrame] to PNG bytes at a host-chosen scale.
 class PageRasterizer {
@@ -32,13 +32,17 @@ class PageRasterizer {
     FontRegistry fonts, {
     double scale = 1.0,
   }) async {
-    final ui.PictureRecorder recorder = ui.PictureRecorder();
-    final ui.Canvas canvas = ui.Canvas(recorder)..scale(scale, scale);
-    await paintFrame(frame, CanvasPainter(canvas, fonts));
-    final ui.Image image = await recorder.endRecording().toImage(
-          (frame.page.width * scale).round(),
-          (frame.page.height * scale).round(),
-        );
+    final ui.Picture picture =
+        await recordPageFrame(frame, fonts, scale: scale);
+    final ui.Image image;
+    try {
+      image = await picture.toImage(
+        (frame.page.width * scale).round(),
+        (frame.page.height * scale).round(),
+      );
+    } finally {
+      picture.dispose();
+    }
     try {
       final ByteData? data =
           await image.toByteData(format: ui.ImageByteFormat.png);

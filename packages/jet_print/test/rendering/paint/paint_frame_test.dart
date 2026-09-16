@@ -30,6 +30,8 @@ class _Recorder implements ReportPainter {
   void drawPath(PathPrimitive p) => calls.add('path');
   @override
   void endPage() => calls.add('endPage');
+  @override
+  void dispose() => calls.add('dispose');
 }
 
 void main() {

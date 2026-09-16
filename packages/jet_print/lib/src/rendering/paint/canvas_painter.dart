@@ -219,6 +219,7 @@ class CanvasPainter implements ReportPainter {
   /// Releases every decoded image's GPU texture. Call **after** the frame is
   /// recorded — the recorded `Picture` keeps its own reference, so the handles
   /// are then redundant. On CanvasKit, skipping this leaks a texture per record.
+  @override
   void dispose() {
     for (final ui.Image image in _decoded.values) {
       image.dispose();
