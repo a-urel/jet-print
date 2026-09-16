@@ -128,7 +128,10 @@ Real ones, each of which has cost time before.
 - **`flutter test` at the root tests nothing.** Always name the member packages.
 - **Goldens are macOS-only.** They carry the `golden` tag (see `dart_test.yaml`);
   other CI legs run `--exclude-tags golden`. Host font rasterization and PDF font
-  subsetting differ per OS, so a golden regenerated elsewhere is wrong.
+  subsetting differ per OS, so a golden regenerated elsewhere is wrong. CI's macOS
+  leg runs `dart format --set-exit-if-changed` before anything else and stops
+  there on failure, so a format regression silently skips the goldens too —
+  don't read a green golden suite as confirmation that formatting passed.
 - **A new enum variant hits several exhaustive switches.** Adding a `ShapeKind`,
   for instance, means the geometry switch in `rendering/elements/shape_path.dart`
   *and* the designer's thumbnail painter *and* the inspector gallery. Dart will
@@ -169,12 +172,6 @@ Real ones, each of which has cost time before.
   the file relative to the package (the library's tests use
   `findWorkspaceRoot()` from `test/support/workspace.dart`). Golden paths are
   exempt: `matchesGoldenFile` resolves relative to the test file.
-- **`main` currently fails the format gate**, on seven files that predate any
-  recent change. CI's macOS leg runs `dart format --set-exit-if-changed` and
-  stops there, so the rest of that leg — including the goldens, which only run
-  on macOS — never executes. Your local `dart format` will report the same seven.
-  Don't mistake them for your own: compare against `main` before reformatting,
-  and format the files you touched rather than sweeping the tree.
 - **Per-package lockfiles are not committed** — only the root `pubspec.lock`.
 - **Run `git` from the repo root.** `flutter` commands leave the shell inside a
   package directory.
