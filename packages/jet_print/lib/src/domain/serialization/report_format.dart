@@ -29,7 +29,7 @@ import 'report_format_exception.dart';
 /// the 1→2 migration on [decodeDefinition].
 abstract final class JetReportFormat {
   /// The pre-wired registry of built-in element codecs (`text`, `shape`,
-  /// `image`, `barcode`). Built once and reused; never mutated.
+  /// `image`, `barcode`, `chart`). Built once and reused; never mutated.
   static final ElementCodecRegistry _registry = _buildRegistry();
 
   /// Forward migrations for the reified [ReportDefinition] format:

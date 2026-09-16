@@ -23,6 +23,11 @@ import 'renderers/text_element_renderer.dart';
 
 /// Registers `text`, `shape`, `image`, `barcode`, and `chart` (each codec paired
 /// with its renderer) into [registry].
+///
+/// Must cover the same type keys as the codec-only
+/// `registerBuiltInElementCodecs`, which the persistence paths use; the two are
+/// pinned against each other by
+/// `test/architecture/built_in_element_registration_test.dart`.
 void registerBuiltInElementTypes(ElementTypeRegistry registry) {
   registry
     ..register<TextElement>(

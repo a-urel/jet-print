@@ -51,6 +51,14 @@ bool _isWhiteBoxSeamTest(File file) {
       path.contains('/test/expression/') ||
       path.contains('/test/rendering/') ||
       path.contains('/test/print/') ||
+      // Built-in registration parity (chart-codec drift fix): the two
+      // registration lists (`built_in_element_codecs.dart` in domain,
+      // `built_in_element_renderers.dart` in rendering) are both unexported
+      // `src/` modules, and pinning them against each other means calling both
+      // — a source-text scan could be fooled by a registration written any
+      // other way. White-box by necessity.
+      path.endsWith(
+          '/test/architecture/built_in_element_registration_test.dart') ||
       // Web-platform fidelity tests (e4): exercise unexported `src/` types
       // (e.g. `jetStringify` in the expression engine) to verify web/VM parity;
       // they are white-box seam tests, not external consumers.

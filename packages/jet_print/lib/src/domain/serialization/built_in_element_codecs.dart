@@ -2,18 +2,28 @@
 library;
 
 import 'barcode_element_codec.dart';
+import 'chart_element_codec.dart';
 import 'element_codec.dart';
 import 'image_element_codec.dart';
 import 'shape_element_codec.dart';
 import 'text_element_codec.dart';
 
 /// Registers all element types shipped with the library (`text`, `shape`,
-/// `image`, `barcode`) into [registry]. Consumers add their own types with
-/// further `registry.register(...)` calls (open/closed).
+/// `image`, `barcode`, `chart`) into [registry]. Consumers add their own types
+/// with further `registry.register(...)` calls (open/closed).
+///
+/// This list is codec-only: it is what the **persistence** paths use
+/// (`JetReportFormat`, and the designer's `cloneElement` for duplicate/paste),
+/// which need no renderer. It must stay in step with the paired codec+renderer
+/// list in `rendering/elements/built_in_element_renderers.dart` — the two
+/// cannot be collapsed, because `domain/` may not import `rendering/`. They are
+/// pinned against each other by
+/// `test/architecture/built_in_element_registration_test.dart`.
 void registerBuiltInElementCodecs(ElementCodecRegistry registry) {
   registry
     ..register('text', const TextElementCodec())
     ..register('shape', const ShapeElementCodec())
     ..register('image', const ImageElementCodec())
-    ..register('barcode', const BarcodeElementCodec());
+    ..register('barcode', const BarcodeElementCodec())
+    ..register('chart', const ChartElementCodec());
 }
