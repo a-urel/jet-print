@@ -55,4 +55,36 @@ void main() {
 
     expect(decoded.every((ui.Image i) => i.debugDisposed), isTrue);
   });
+
+  // The root cause of the leak: `dispose()` lived only on the concrete
+  // CanvasPainter, so the three call sites that (correctly) hold the
+  // `ReportPainter` abstraction could not see it and silently skipped it.
+  // Disposal is part of the backend's lifecycle, so it belongs on the contract.
+  test('dispose() is reachable through the ReportPainter abstraction',
+      () async {
+    final Uint8List png = await pngBytes();
+    final FontRegistry reg = FontRegistry()..registerDefault();
+    final ui.PictureRecorder rec = ui.PictureRecorder();
+    final CanvasPainter concrete = CanvasPainter(ui.Canvas(rec), reg);
+    // Held as the abstraction, exactly as the preview and the thumbnail rail
+    // hold it.
+    final ReportPainter painter = concrete;
+
+    final frame = (FrameBuilder(const PageFormat(
+            width: 10, height: 10, margins: JetEdgeInsets.all(0)))
+          ..add(ImagePrimitive(
+              bounds: const JetRect(x: 0, y: 0, width: 10, height: 10),
+              bytes: png,
+              fit: JetBoxFit.contain)))
+        .build();
+    await paintFrame(frame, painter);
+    rec.endRecording();
+
+    final List<ui.Image> decoded = concrete.debugDecodedImages.toList();
+    expect(decoded, isNotEmpty);
+
+    painter.dispose();
+
+    expect(decoded.every((ui.Image i) => i.debugDisposed), isTrue);
+  });
 }

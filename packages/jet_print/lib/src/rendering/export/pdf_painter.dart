@@ -291,6 +291,11 @@ class PdfPainter implements ReportPainter {
   /// Serializes the accumulated document. Call once, after the last page.
   Future<Uint8List> save() => _document.save();
 
+  /// No-op: this backend builds a PDF document in memory and holds no engine
+  /// resources to release — the bytes leave through [save].
+  @override
+  void dispose() {}
+
   static PdfColor _pdfColor(JetColor color) => PdfColor.fromInt(color.argb);
 
   /// Runs [draw] inside a graphics-state scope that applies [opacity] as the

@@ -38,6 +38,8 @@ class _RecordingPainter implements ReportPainter {
   void drawLine(LinePrimitive p) => calls.add('line');
   @override
   void drawPath(PathPrimitive p) => calls.add('path');
+  @override
+  void dispose() => calls.add('dispose');
 }
 
 void main() {

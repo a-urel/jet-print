@@ -20,7 +20,7 @@ import '../../rendering/elements/render_context.dart';
 import '../../rendering/frame/frame_builder.dart';
 import '../../rendering/frame/page_frame.dart';
 import '../../rendering/paint/canvas_painter.dart';
-import '../../rendering/paint/report_painter.dart';
+import '../../rendering/paint/record_page_frame.dart';
 import '../../rendering/text/font_registry.dart';
 import '../../rendering/text/metrics_text_measurer.dart';
 import 'binding_token.dart';
@@ -90,13 +90,6 @@ class DesignTimeFrameBuilder {
   /// Records [frame] into a cacheable [ui.Picture] at 1:1 logical scale. The
   /// caller blits the picture under its view transform (see `FrameCustomPainter`).
   /// Async because [CanvasPainter.prepare] loads fonts and decodes images.
-  Future<ui.Picture> recordFrame(PageFrame frame) async {
-    final ui.PictureRecorder recorder = ui.PictureRecorder();
-    final CanvasPainter painter = CanvasPainter(ui.Canvas(recorder), fonts);
-    await paintFrame(frame, painter);
-    final ui.Picture picture = recorder.endRecording();
-    painter
-        .dispose(); // free decoded image textures; the picture keeps its refs
-    return picture;
-  }
+  Future<ui.Picture> recordFrame(PageFrame frame) =>
+      recordPageFrame(frame, fonts);
 }

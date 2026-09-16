@@ -1,7 +1,12 @@
 // lib/src/rendering/paint/canvas_painter.dart
-/// The on-screen paint backend: the ONLY rendering file that imports
-/// Flutter / `dart:ui`. Draws the same line-level runs the measurer produced,
-/// using the SAME font variant the measurer measured.
+/// The on-screen paint backend. Draws the same line-level runs the measurer
+/// produced, using the SAME font variant the measurer measured.
+///
+/// One of three rendering files allowed to import Flutter / `dart:ui` —
+/// with `page_rasterizer.dart` (PNG encoding) and `record_page_frame.dart`
+/// (the recorder/painter/dispose seam). `layer_boundaries_test.dart` pins that
+/// allowlist. Consumers do not build this painter directly; they go through
+/// `recordPageFrame`, which is what releases it.
 library;
 
 import 'dart:typed_data';
@@ -219,6 +224,7 @@ class CanvasPainter implements ReportPainter {
   /// Releases every decoded image's GPU texture. Call **after** the frame is
   /// recorded — the recorded `Picture` keeps its own reference, so the handles
   /// are then redundant. On CanvasKit, skipping this leaks a texture per record.
+  @override
   void dispose() {
     for (final ui.Image image in _decoded.values) {
       image.dispose();
