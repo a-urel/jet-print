@@ -40,7 +40,7 @@ previous one".
 **Immutable.** The constructor copies its argument into an unmodifiable list, so
 a frame handed to several surfaces cannot be mutated by any of them. The write
 side is a separate type,
-[`frame_builder.dart`](../packages/jet_print/lib/src/rendering/frame/frame_builder.dart)
+[`rendering/frame/frame_builder.dart`](../packages/jet_print/lib/src/rendering/frame/frame_builder.dart)
 → `FrameBuilder`: renderers `add` primitives, then `build` snapshots them.
 Append-only while being built, frozen once built.
 
@@ -52,7 +52,7 @@ matters more than it sounds; see *Run it*.
 ## The five primitives
 
 `FramePrimitive` in
-[`frame/primitive.dart`](../packages/jet_print/lib/src/rendering/frame/primitive.dart)
+[`rendering/frame/primitive.dart`](../packages/jet_print/lib/src/rendering/frame/primitive.dart)
 is a sealed base carrying the three fields every drawn thing has: `bounds` in
 page points, an optional `elementId` naming the element that produced it, and a
 `rotation` the paint layer applies about the bounds' center.
@@ -72,13 +72,14 @@ print is spelled with those five:
 
 - A **chart** is paths for the series, lines for axes and gridlines, rectangles
   for bars and text runs for labels, all assembled from pure geometry by
-  `renderers/chart_element_renderer.dart` → `ChartElementRenderer`.
+  `rendering/elements/renderers/chart_element_renderer.dart` → `ChartElementRenderer`.
 - A **barcode** is a run of rectangles, plus one text run when the
   human-readable line is shown.
-- A **watermark** is a text run with a non-zero `rotation` and a faded color —
-  `rendering/watermark_primitive.dart` → `buildWatermarkPrimitive`.
+- A **watermark** is a rotated text run — or a rotated image, when it carries one
+  instead — faded by its opacity: `rendering/watermark_primitive.dart` →
+  `buildWatermarkPrimitive`.
 - A **shape**, block arrows and rounded rectangles included, is a path from
-  `elements/shape_path.dart` → `shapePath`.
+  `rendering/elements/shape_path.dart` → `shapePath`.
 
 The consequence is the whole point: **adding a chart type, a barcode symbology or
 a shape never touches a painter.** A new element type lands entirely on the emit
@@ -90,17 +91,16 @@ because none of them was ever told what a chart is.
 Named individually, because the list is the argument:
 
 - the **design canvas** — `designer/canvas/design_time_frame.dart` →
-  `DesignTimeFrameBuilder`, building a frame from a non-paginated design-time
-  layout with the *unchanged* element renderers, then recording it to a picture;
+  `DesignTimeFrameBuilder`, over a design-time layout with *unchanged* renderers;
 - the **preview** — `designer/preview/jet_report_preview.dart` — and the
   **thumbnail rail** — `designer/preview/page_thumbnail_rail.dart` — both
   painting `pageAt(index).frame`, at different sizes;
-- the **PNG rasterizer** — `paint/page_rasterizer.dart` → `PageRasterizer`,
-  recording the preview's own painter through a scale transform;
-- the **PDF painter** — `export/pdf_painter.dart` → `PdfPainter`, a pure-Dart
-  backend over `package:pdf`.
+- the **PNG rasterizer** — `rendering/paint/page_rasterizer.dart` →
+  `PageRasterizer`, recording the preview's own painter at a chosen scale;
+- the **PDF painter** — `rendering/export/pdf_painter.dart` → `PdfPainter`, a
+  pure-Dart backend over `package:pdf`.
 
-They all meet at one function, `paint/report_painter.dart` → `paintFrame`:
+They all meet at `rendering/paint/report_painter.dart` → `paintFrame`:
 
 ```dart
 for (final FramePrimitive primitive in frame.primitives) {
@@ -112,9 +112,11 @@ for (final FramePrimitive primitive in frame.primitives) {
 }
 ```
 
-The switch is exhaustive over a sealed base with no `default`, so a sixth
-primitive is a compile error in every backend until each one handles it — the
-compiler, not a reviewer, is what stops a backend from silently skipping
+It is a switch *statement* over a sealed base with no `default`, so Dart requires
+it to be exhaustive: a sixth primitive fails to compile here, in `paintFrame`
+itself. The backends fail second — a new primitive also brings a new `drawX`
+member on the abstract `ReportPainter`, which every implementor must then supply.
+The compiler, not a reviewer, is what stops a surface from silently skipping
 something it does not recognize.
 
 So WYSIWYG does not hold because several painters are kept in agreement. It holds
@@ -136,25 +138,23 @@ wraps it after *results* is not a bug anyone finds; it is one a user reports
 months later, about a document already sent.
 
 **Nothing to test parity against.** With several drawing paths, parity is an
-N-way pixel comparison, per platform, per font — and pixels are exactly what
-differs innocently across hosts. With one frame, everything above the frame is
-proven once and only the small backend below it needs pixels. That moves the
-interesting assertions off images entirely: layout tests in
-`test/rendering/layout/report_layouter_test.dart` find a primitive by its
-`elementId` and assert its `bounds`. Those tests are fast, exact and
-platform-independent, and not expressible at all if "where the header landed"
-exists only as pixels.
+N-way pixel comparison, per platform, per font — and pixels differ innocently
+across hosts. With one frame, everything above it is proven once, and only the
+small backend below it needs pixels at all. The interesting assertions move off
+images: layout tests in `test/rendering/layout/report_layouter_test.dart` find a
+primitive by its `elementId` and assert its `bounds` — fast, exact,
+platform-independent, and not expressible if "where the header landed" exists
+only as pixels.
 
 **Extension becomes N-way.** A new element type would have to teach every surface
 how to draw it, forever. Against the frame it teaches one emitter and reaches
 all of them at once.
 
-The frame's own costs are real and worth naming rather than hiding: one page's
-primitives are materialized in memory before anything draws, and a primitive
-cannot ask a painter a question — it cannot measure text, so the measurer runs
-above the frame and its results travel inside `TextRunPrimitive`. Both were
-accepted deliberately; pagination stays lazy per page, so what is materialized is
-one page's worth, not a report's.
+The frame's own costs are real and worth naming: one page's primitives are
+materialized before anything draws, and a primitive cannot ask a painter a
+question — it cannot measure text, so the measurer runs above the frame and its
+results travel inside `TextRunPrimitive`. Both were accepted deliberately, and
+pagination stays lazy per page, so what is materialized is one page, not a report.
 
 ## Run it
 
@@ -165,6 +165,7 @@ flutter test packages/jet_print/test/rendering/frame/
 `frame_builder_test.dart` is the shortest complete statement of the contract:
 
 ```dart
+// ... rect is a const RectPrimitive
 final FrameBuilder b = FrameBuilder(PageFormat.a4Portrait)..add(rect);
 final PageFrame frame = b.build();
 expect(frame.primitives, <Object>[rect]);
@@ -181,20 +182,19 @@ unrotated one.
 ## Trap
 
 **A new field on a primitive is invisible until it is added to that primitive's
-`props`.** Each subclass spreads `baseProps` and then lists its own fields, and
-the equality mixin compares exactly what `props` returns — nothing more. Omit a
-field and the code still compiles and still paints correctly, but two primitives
-that genuinely differ compare equal, and every equality-based assertion above
-them goes blind to the difference. That is how a change ends up proven by a test
-that could not have failed. Adding `rotation` to the shared base was this hazard
-exactly, which is why `test/rendering/frame/primitive_test.dart` asserts that
-each new field *breaks* equality rather than only asserting its default. When you
-add a field, add that assertion in the same change.
+`props`.** Each subclass spreads `baseProps` then lists its own fields, and the
+equality mixin compares exactly what `props` returns — nothing more. Omit a field
+and the code still compiles and still paints correctly, but two primitives that
+genuinely differ compare equal, and every equality-based assertion above them
+goes blind. That is how a change ends up proven by a test that could not have
+failed. `test/rendering/frame/primitive_test.dart` asserts that each new field
+*breaks* equality, not merely that it defaults; add that assertion with the field.
 
 ## Next
 
 Page 05, [painting](05-painting.md), picks the frame up from here: how
 `CanvasPainter` turns primitives into `dart:ui` calls, how `PdfPainter` writes
 the same primitives as PDF operators with embedded fonts and selectable text, and
-why only two files in the whole rendering seam may import `dart:ui` at all — an
-allowlist pinned by `test/architecture/layer_boundaries_test.dart`.
+why the rendering seam's `dart:ui` imports are a short pinned allowlist — the two
+paint backends, plus `rendering/engine/render_options.dart` for a `Locale` value
+type — enforced by `test/architecture/layer_boundaries_test.dart`.
