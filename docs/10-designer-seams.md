@@ -132,12 +132,14 @@ export 'src/designer/controller/jet_report_designer_controller.dart'
 
 Among the four split files only the controller reaches a consumer this way; the other three extend
 private `State` classes, so their extensions are private too and stop at the library edge. But the
-requirement is about visibility, not about those files: it binds every public extension on an
-exported class, wherever in `lib/src/` it is written. Omit the name and the package still analyzes,
-the class still exports, and its extension methods silently vanish from the public surface. What
-catches that is a consumer-shaped test — `public_api_test.dart` imports only the entry point and
-calls `setShapeKind`, `setTextStyle` and `setBarcodeColor`, all extension members — and nothing
-catches it for an extension no such test exercises.
+requirement is about visibility, not about those files: it reaches any public extension a consumer is
+meant to call, wherever in `lib/src/` it is written. `public` is the weaker word here — Dart has no
+package-private, so an extension written only to be reachable from a sibling library is public too, and
+correctly absent from the barrel. Omit the name of one a consumer needs and the package still analyzes,
+the class still exports, and its methods silently vanish from the public surface. What catches that is
+a consumer-shaped test — `public_api_test.dart` imports only the entry point and calls `setShapeKind`,
+`setTextStyle` and `setBarcodeColor`, all extension members — and nothing catches it for an extension
+no such test exercises.
 
 The stakes are that high because the entry point is singular, and exactly so:
 **`packages/jet_print/lib/` holds exactly one library file at its root, `jet_print.dart`, and every
@@ -173,8 +175,8 @@ flutter test packages/jet_print/test/public_api_test.dart \
 
 `public_api_test.dart` is the consumer standing in for a host, and the extension methods it calls pin
 the barrel's `show` list. `value_template_compiler_test.dart` states the three forms, the literal
-fallback, and round-trip stability on the supported subset; the preset files pin recognition,
-tolerance, and the margins `applyPaper` leaves alone.
+fallback, and round-trip stability on the supported subset; the preset files pin recognition and
+tolerance.
 
 ## Trap
 
