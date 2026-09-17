@@ -51,7 +51,10 @@ class CanvasPainter implements ReportPainter {
   final Map<ImagePrimitive, ui.Image> _decoded = <ImagePrimitive, ui.Image>{};
 
   /// Every `ui.Paragraph` built by [drawTextRun] this record — each already
-  /// released. Kept only so tests can assert the release actually happened.
+  /// released. Kept only so tests can assert the release actually happened, so
+  /// it is populated under `assert` and stays EMPTY in release builds: one
+  /// entry per laid-out line per record is real per-line allocation, and no
+  /// shipped code reads it.
   ///
   /// One paragraph is built per laid-out LINE, so a text-heavy page produces
   /// many; none was ever disposed, which leaked a paragraph per line per
@@ -123,8 +126,10 @@ class CanvasPainter implements ReportPainter {
     final ui.Color color = ui.Color(p.style.color.argb);
     for (final line in p.lines) {
       if (line.text.isEmpty) continue;
-      // Placement is computed BEFORE the paragraph exists, so nothing between
-      // building it and drawing it can throw past the release below.
+      // Placement is computed before the paragraph exists, so the only
+      // statements between `build()` and the `try` are the assignment itself:
+      // `layout` runs INSIDE the guard, because a paragraph that throws while
+      // laying out is exactly the handle the `finally` exists to release.
       final double extra = p.bounds.width - line.width;
       final double dx = switch (p.style.align) {
         JetTextAlign.center => p.bounds.x + extra / 2,
@@ -138,10 +143,13 @@ class CanvasPainter implements ReportPainter {
         ..pushStyle(ui.TextStyle(
             color: color, fontFamily: uiFamily, fontSize: p.style.fontSize))
         ..addText(line.text);
-      final ui.Paragraph para = pb.build()
-        ..layout(const ui.ParagraphConstraints(width: double.infinity));
-      _paragraphs.add(para);
+      final ui.Paragraph para = pb.build();
       try {
+        assert(() {
+          _paragraphs.add(para);
+          return true;
+        }());
+        para.layout(const ui.ParagraphConstraints(width: double.infinity));
         _canvas.drawParagraph(para, ui.Offset(dx, p.bounds.y + line.top));
       } finally {
         para.dispose();
