@@ -47,18 +47,36 @@ Finder _marginOption(String kind) =>
 Finder _shapeThumb(String name) =>
     find.byKey(ValueKey<String>('$_p.shape.$name'));
 
-/// The seven forms the gallery offers, in roster order. `line` is a valid
-/// ShapeKind but is intentionally NOT offered — a diagonal is not a useful
-/// authoring primitive (a rule is a thin rectangle).
-const List<String> _shapeForms = <String>[
-  'rectangle',
-  'ellipse',
-  'triangle',
-  'diamond',
-  'pentagon',
-  'hexagon',
-  'star',
+/// Every form the gallery must offer: each [ShapeKind] except [ShapeKind.line],
+/// which is a valid kind but intentionally NOT offered — a diagonal is not a
+/// useful authoring primitive (a rule is a thin rectangle).
+///
+/// DERIVED from the enum, never hand-listed. A hand-written copy here would go
+/// stale the moment a `ShapeKind` is added and would then quietly shrink every
+/// loop below to the forms it still knows about — which is exactly what
+/// happened: this list named seven forms long after the gallery grew to
+/// fourteen, so half the roster went unchecked.
+final List<String> _shapeForms = <String>[
+  for (final ShapeKind k in ShapeKind.values)
+    if (k != ShapeKind.line) k.name,
 ];
+
+/// The shape-form thumbnails the gallery is ACTUALLY rendering right now, read
+/// back off the widget tree by key.
+///
+/// The point of reading the tree rather than a list: a roster guard that
+/// compares one hand-written list against another proves only that someone
+/// copied it correctly. This returns what a user can really click.
+Set<String> _renderedShapeForms(WidgetTester tester) {
+  const String prefix = '$_p.shape.';
+  return tester.allWidgets
+      .map((Widget w) => w.key)
+      .whereType<ValueKey<String>>()
+      .map((ValueKey<String> k) => k.value)
+      .where((String v) => v.startsWith(prefix))
+      .map((String v) => v.substring(prefix.length))
+      .toSet();
+}
 
 /// The left margin-guide inset in the preview (guide left minus sheet left), the
 /// testable expression of the live left margin's proportion.
@@ -1754,7 +1772,7 @@ void main() {
 
   // --- Shape gallery -------------------------------------------
   group('properties — shape gallery', () {
-    testWidgets('shows the Shape section with the seven closed forms',
+    testWidgets('shows the Shape section with every offered form',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);
       await _openProperties(tester);
@@ -1765,6 +1783,27 @@ void main() {
       }
       // The legacy diagonal line is not offered as an authoring form.
       expect(_shapeThumb('line'), findsNothing);
+    });
+
+    testWidgets('the gallery offers every ShapeKind except line',
+        (WidgetTester tester) async {
+      // The roster guard, asserted against the RENDERED gallery. A new
+      // ShapeKind that never reaches `_galleryForms` ships a shape the
+      // designer cannot author, and the compiler cannot catch it: the
+      // exhaustive switches in `shape_path.dart` and the thumbnail painter
+      // fail the build and get fixed, while the gallery roster is a plain
+      // `const List` that simply does not mention it.
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      await _addShape(tester, c);
+
+      expect(
+        _renderedShapeForms(tester),
+        equals(_shapeForms.toSet()),
+        reason: 'every ShapeKind except line must be offered, and nothing '
+            'else. A kind missing here is unauthorable in the designer; an '
+            'extra one is a form the roster should not carry.',
+      );
     });
 
     testWidgets('no gallery for a text element', (WidgetTester tester) async {
