@@ -14,43 +14,51 @@ disagree on.
 ## What a backend is
 
 [`rendering/paint/report_painter.dart`](../packages/jet_print/lib/src/rendering/paint/report_painter.dart)
-→ `ReportPainter` is ten members: `prepare`, `beginPage`, `endPage`,
-`pushTransform`/`popTransform`, and one `drawX` per primitive; page 04 showed the
-dispatch. `prepare` is the only asynchronous member — fonts load and images decode
-there, once per frame, which leaves every `drawX` synchronous and the walk over
-the list ordinary straight-line code. And `beginPage`/`endPage` bracket one frame,
+→ `ReportPainter` is eleven members: `prepare`, `beginPage`, `endPage`,
+`pushTransform`/`popTransform`, `dispose`, and one `drawX` per primitive; page 04
+showed the dispatch. `prepare` is the only asynchronous member — fonts load and
+images decode there, once per frame, which leaves every `drawX` synchronous and the
+walk over the list ordinary straight-line code. `dispose` is its counterpart, on the
+interface so a consumer holding the abstraction can release whatever backend it
+holds; `PdfPainter`'s body is empty. And `beginPage`/`endPage` bracket one frame,
 leaving each backend to decide what a *document* is.
 
 ## The canvas path, and the PNG that reuses it
 
 [`rendering/paint/canvas_painter.dart`](../packages/jet_print/lib/src/rendering/paint/canvas_painter.dart)
-→ `CanvasPainter` is one of the two paint files on the `dart:ui` allowlist page 04
-pointed at, pinned by `test/architecture/layer_boundaries_test.dart` (the third
-entry is a `Locale`). Its `prepare` registers each run's exact variant bytes under
-a variant-unique engine name from `rendering/text/ui_font_family.dart` →
-`uiFontFamily`; because that registration is process-global and CanvasKit appends
-without deduplicating, the "already registered" guard is a `static` set shared by
-every painter.
-
-The other paint file,
-[`rendering/paint/page_rasterizer.dart`](../packages/jet_print/lib/src/rendering/paint/page_rasterizer.dart)
-→ `PageRasterizer`, has no drawing code — it is the path the preview and its
-thumbnail rail already run, both recording `pageAt(i).frame` through this same
-painter:
+→ `CanvasPainter` is on the `dart:ui` allowlist page 04 pointed at, pinned by
+`test/architecture/layer_boundaries_test.dart`. Its `prepare` registers each run's
+exact variant bytes under a variant-unique engine name from
+`rendering/text/ui_font_family.dart` → `uiFontFamily`; because that registration is
+process-global and CanvasKit appends without deduplicating, the "already
+registered" guard is a `static` set shared by every painter. No consumer builds this
+painter itself:
+[`rendering/paint/record_page_frame.dart`](../packages/jet_print/lib/src/rendering/paint/record_page_frame.dart)
+→ `recordPageFrame` is the one place the recording sequence is written — recorder,
+painter, `paintFrame`, `endRecording`, release.
 
 ```dart
-final ui.PictureRecorder recorder = ui.PictureRecorder();
-final ui.Canvas canvas = ui.Canvas(recorder)..scale(scale, scale);
-await paintFrame(frame, CanvasPainter(canvas, fonts));
-// ... recorder.endRecording().toImage at the rounded pixel size, the PNG
-// encode, and the ui.Image disposal in a finally
+// rendering/paint/record_page_frame.dart → recordPageFrame
+final ReportPainter painter = (newPainter ?? CanvasPainter.new)(canvas, fonts);
+try {
+  await paintFrame(frame, painter);
+  return recorder.endRecording(); // returned from *inside* the try, so the picture
+} finally {                       // holds its own references before the backend
+  painter.dispose();              // drops its handles
+}
 ```
 
-The difference is where the scale goes: the preview and design canvas record at
-1:1 and blit under a view transform (`designer/canvas/frame_custom_painter.dart` →
-`FrameCustomPainter`), so zooming re-blits rather than re-records, while the
-rasterizer scales *before* recording and `toImage` gets exactly
-`round(page.width × scale)` device pixels.
+Release after `endRecording` is why this is a seam and not a step inside
+`paintFrame`. The picture it returns is the caller's to dispose, and the four
+consumers do: the preview, its thumbnail rail, the design canvas
+(`designer/canvas/design_time_frame.dart` → `recordFrame`), and
+[`rendering/paint/page_rasterizer.dart`](../packages/jet_print/lib/src/rendering/paint/page_rasterizer.dart)
+→ `PageRasterizer`, which has no drawing code of its own and feeds that picture to
+`toImage` and the PNG encoder. The difference is where the scale goes: the first
+three record at 1:1 and blit under a view transform
+(`designer/canvas/frame_custom_painter.dart` → `FrameCustomPainter`), so zooming
+re-blits rather than re-records, while the rasterizer passes `scale` and `toImage`
+gets exactly `round(page.width × scale)` device pixels.
 
 ## Where a line of text lands
 
@@ -93,9 +101,9 @@ lines, `FontRegistry` byte-for-byte, `rendering/paint/image_fit.dart` →
 `computeImageFit`, and `rendering/text/underline_metrics.dart` → `underlineFor`.
 
 What it produces is a real document, not a picture of one. Each measured line
-becomes its own PDF text object drawn against the embedded TTF, so the exported
-text is selectable and searchable at exactly the baselines the preview drew — and
-it is that one-text-object-per-line structure the parity test counts.
+becomes its own PDF text object against the embedded TTF, so exported text is
+selectable and searchable at exactly the baselines the preview drew — the
+one-text-object-per-line structure the parity test counts.
 
 What it rebuilds is what the medium forces. PDF's origin is bottom-left, so every
 draw call maps `y' = pageHeight - y` individually — deliberately not a global
@@ -134,26 +142,25 @@ that asks a barcode a question — the renderer, the designer's validity check, 
 layout box — and a version bump becomes a change to all of them rather than to one
 file's insides. The interface it implements, `BarcodeEncoder`, is what makes the
 seam testable: `BarcodeElementRenderer` takes it as a defaulted constructor
-argument, so a test can substitute a fake encoder and pin the painting without
-encoding anything.
+argument, so a test can pin the painting with a fake encoder.
 
 ## Why it is like this, and the alternative rejected
 
 The alternative was available and much shorter. `package:pdf` ships a widgets
 layer with text, styles, alignment and decoration; let each backend lay text out
 with its own library's facilities and most of `PdfPainter` disappears. It fails on
-the one thing the product sells. Layout would happen twice, from two metric
-sources and two wrap algorithms, agreeing on ordinary Latin text right up until
-they did not — a heading wrapping after a different word in the PDF than in the
-preview, found in a document already sent. It also cuts pagination loose: page
+the one thing the product sells: layout would happen twice, from two metric sources
+and two wrap algorithms, agreeing on ordinary Latin text right up until they did
+not — a heading wrapping after a different word in the PDF than in the preview,
+found in a document already sent. It also cuts pagination loose: page
 03's breaks come from measured band heights, so a backend that re-wraps has
 silently disagreed about how many pages there are.
 
 The cost is specific. Measurement sums per-codepoint advances from `hmtx` with no
-`kern` or `GPOS` parsed, so `line.width` is a kerning-free, shaping-free number
-while the canvas draws each line through the engine's real shaper. Widths and
-alignment rest on the measurer's arithmetic, glyph positions on the engine's —
-which shows, where it shows at all, as alignment drift rather than broken text.
+`kern` or `GPOS` parsed, so `line.width` is a kerning-free, shaping-free number while
+the canvas draws each line through the engine's real shaper. Widths and alignment
+rest on the measurer's arithmetic, glyph positions on the engine's — which shows,
+where it shows at all, as alignment drift rather than broken text.
 
 ## Run it
 
@@ -167,7 +174,7 @@ hand-built frames through `PdfPainter`, reads the content stream back and assert
 the operators — one text object per pre-measured line and no more, each at
 `pageHeight - (bounds.y + line.baseline)`; the alignment copy against the canvas's
 formula; one stroked underline at `underlineFor`'s geometry; fill before stroke;
-`computeImageFit`'s rects; no global y-flip. Arithmetic on operators rather than a
+`computeImageFit`'s rects; no global y-flip. Arithmetic on operators, not a
 comparison of pictures, so it runs on every host, not only macOS.
 
 The second is the visual pin, and it pins the canvas side only — four reports
@@ -178,17 +185,13 @@ the one-paint-path rule they enforce in its *Hard rules*.
 
 ## Trap
 
-**Constructing a `CanvasPainter` makes you responsible for disposing it, and
-`dispose` is not on the interface.** `prepare` decodes every `ImagePrimitive` into
-a `ui.Image`, and `CanvasPainter.dispose` releases those textures; commit
-`27c9fb2` added it because on CanvasKit each record leaked a GPU texture, and
-disposing after `endRecording` is safe precisely because the recorded picture
-holds its own references. But `dispose` is declared on `CanvasPainter`, not on
-`ReportPainter`, so a call site that types its variable as the interface — the
-more polite-looking choice — cannot call it. Of the four construction sites in the
-library, only `designer/canvas/design_time_frame.dart` → `recordFrame` holds the
-concrete type and disposes; the preview, the thumbnail rail and `PageRasterizer`
-do not. Hold the concrete type when you add a recording site.
+**Construct a `CanvasPainter` anywhere but the record seam and an architecture test
+fails on your file.** `test/architecture/canvas_painter_single_construction_test.dart`
+scans `lib/` for `CanvasPainter(` or the `CanvasPainter.new` tear-off, excusing only
+`record_page_frame.dart` and the class's own file. Being a source scan and not a
+behaviour test, what turns red is a list of paths: the property pinned is that nobody
+else writes that sequence, which is how the texture leak survived four open-coded
+sites. A new recording site calls `recordPageFrame`, and disposes what it returns.
 
 ## Next
 

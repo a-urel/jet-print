@@ -170,19 +170,21 @@ through the tree rebuilders — with the node's `rawJson` intact afterwards.
 
 ## Trap
 
-**There are two built-in registration lists, and they have already drifted.**
+**The built-in element types are enumerated twice, and adding one to a single list
+fails an architecture test.**
 `domain/serialization/built_in_element_codecs.dart` → `registerBuiltInElementCodecs`
-registers four type keys — `text`, `shape`, `image`, `barcode` — and is the one
-`JetReportFormat` wires. `rendering/elements/built_in_element_renderers.dart` →
-`registerBuiltInElementTypes` registers five, pairing each codec with its renderer, the
-fifth being `chart`. The two fail differently, which hides the gap:
-`ElementRendererRegistry.rendererFor` *falls back* to the placeholder renderer, while
-`ElementCodecRegistry.encode` **throws** `StateError` for a key it does not hold. So a
-`ChartElement` renders, previews and exports normally, while
-`JetReportFormat.encodeDefinition` throws `No ElementCodec registered for type "chart"`
-— as does `designer/controller/element_clone.dart` → `cloneElement`, the duplicate and
-paste primitive, which round-trips an element through that same registry. Register a new
-type in both lists, or it renders everywhere and saves nowhere.
+is codec-only, and is what the persistence paths use: `JetReportFormat`'s registry,
+and `designer/controller/element_clone.dart` → `cloneElement`, the duplicate/paste
+primitive that round-trips an element through a registry of its own.
+`rendering/elements/built_in_element_renderers.dart` → `registerBuiltInElementTypes`
+pairs each codec with a renderer under one explicitly-typed `register<E>` call, and is
+what the render paths use. The two cannot be collapsed, because `domain/` may not
+import `rendering/`, so
+`test/architecture/built_in_element_registration_test.dart` compares their key sets
+instead and its failure names the direction you missed: a type absent from the paired
+list saves but draws as the Unknown placeholder, and one absent from the codec-only
+list renders, previews and exports yet throws on save and on duplicate — which is how
+`chart` once shipped.
 
 ## Next
 
