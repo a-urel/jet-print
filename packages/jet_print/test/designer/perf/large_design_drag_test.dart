@@ -32,6 +32,29 @@
 // one of the layout's O(1) element lookups to an O(n) scan takes the ratio to
 // 3.97x and fails this test.
 //
+// The ratio alone would have a hole. A regression that inflates per-element work
+// by a constant factor scales BOTH sizes equally, so the ratio cancels it and
+// stays at 2.0 — verified on the sibling export guard, where an injected
+// duplicate emission left its ratio at exactly 2.0 and was caught only by an
+// absolute anchor. So there is an anchor here too, normalized per element per
+// frame: the ratio catches super-linear growth, the anchor catches a uniformly
+// fatter constant, and the two failure classes are disjoint.
+//
+// The ratio alone would have a hole. A regression that inflates per-element work
+// by a constant factor scales BOTH sizes equally, so the ratio cancels it —
+// measured, not assumed: doubling the selection's element lookups moved the
+// ratio from 1.79x DOWN to 1.65x, further from the ceiling rather than toward
+// it. So there is an absolute anchor too, normalized per element per frame. The
+// ratio catches super-linear growth, the anchor catches a uniformly fatter
+// constant, and the two failure classes are disjoint.
+//
+// Be precise about what the anchor reaches. It is set to catch a doubling of
+// TOTAL per-element work (~21 -> ~42). Doubling one contributing path is a much
+// smaller move: that same lookup injection took it from 20.96 to 25.33, +21%,
+// and passes. Catching that would need the anchor at ~24, leaving 14% headroom
+// over baseline — which would make this test the next thing to fail for reasons
+// nobody intended. The anchor is deliberately the coarse half of the pair.
+//
 // What this guard does NOT see: a regression that walks some other per-element
 // structure — a rect map, a widget list — without touching the elements
 // themselves. It watches element traversal, which is where this designer's
@@ -61,6 +84,20 @@ const int _frames = 12;
 /// changes, not machine noise.
 const double _maxScaling = 2.6;
 
+/// The absolute anchor: how often one element may be looked at during one drag
+/// frame. Measured at 20.96 when this guard was written, so a uniform doubling
+/// of per-element work lands at ~42 and trips this, while ~52% of legitimate
+/// growth still fits underneath. A doubling of one contributing path moves it
+/// far less (+21% for the selection lookups) and is out of reach — see the
+/// header.
+///
+/// Unlike the ratio, this number is emergent rather than structural — several
+/// code paths contribute to it. If a deliberate change trips it, raise it and
+/// say in the change description what new per-element work was added and why,
+/// the same discipline a moved golden gets. Raising it without an answer is the
+/// bug you have not found yet.
+const double _maxReadsPerElementPerFrame = 32;
+
 void main() {
   testWidgets('a 20-element drag scales linearly with design size',
       (WidgetTester tester) async {
@@ -70,6 +107,13 @@ void main() {
     expect(small, greaterThan(0),
         reason: 'the drag must actually traverse the model; a zero count means '
             'the counting elements never reached the designer');
+    final double perElementPerFrame = small / (_smallDesign * _frames);
+    expect(perElementPerFrame, lessThan(_maxReadsPerElementPerFrame),
+        reason: 'each element may be looked at about '
+            '${_maxReadsPerElementPerFrame.toStringAsFixed(0)} times per drag '
+            'frame; ${perElementPerFrame.toStringAsFixed(1)} means per-element '
+            'work grew by a constant factor, which the ratio below cannot see');
+
     final double scaling = large / small;
     expect(scaling, lessThan(_maxScaling),
         reason: 'doubling the design size must at most double the per-frame '
