@@ -14,8 +14,8 @@ Copy the shape of `test/rendering/elements/persisted_extension_test.dart` first;
    `ReportElement` with `ValueEquality`. Implement `typeKey`, the three
    polymorphic rewriters the base class declares (`withBounds`, `withName`,
    `withVisible`), and a `props` spreading `baseProps` first — as every built-in
-   does, and as that test's `StarElement` does not. Never hand-roll
-   `==`/`hashCode`: that is how a base field silently leaves equality. `AGENTS.md`'s
+   does, and as that test's `StarElement` does not. Never hand-roll `==`/`hashCode`;
+   `domain/value_equality.dart`'s dartdoc gives the reason. `AGENTS.md`'s
    inward-dependency rule applies, per `test/architecture/layer_boundaries_test.dart`.
 2. **Codec** — `lib/src/domain/serialization/<name>_element_codec.dart`,
    extending `ElementCodec<X>` with `fromJson` / `toJson`. Omit defaults rather
