@@ -96,11 +96,13 @@ each kind of drag has already clamped — a resize by `designer/canvas/resize_ha
 `clampResizeToBand`, pinning only the dragged edge, a move by the rigid-group intersection in
 `designer/controller/jet_report_designer_controller.dart` → `_clampedMoveTargets`. Neither is
 `designer/controller/element_bounds.dart` → `clampToBand`: that one is move-style, for the
-committed and numeric paths. Two comments — `element_bounds.dart`'s library dartdoc and
-`selection_overlay.dart`'s — used to call `clampToBand` the single clamp authority; both now
-name all three, and `clamp_semantics_test.dart` pins two, `clampToBand` against
+committed and numeric paths. Three comments used to name `clampToBand` where a different clamp
+was the authority — `element_bounds.dart`'s library dartdoc, `selection_overlay.dart`'s, and,
+in the very file that defines `clampResizeToBand`, `resize_handle.dart`'s. All three are
+corrected, and `clamp_semantics_test.dart` pins that pair, `clampToBand` against
 `clampResizeToBand`: given one overflowing rect, the move-style clamp keeps its size and slides
-it, the edge-style one pins only the dragged edge. So the chrome tracks the clamped element and
+it, the edge-style one pins only the dragged edge. `_clampedMoveTargets` is in neither list: no
+comment ever misdescribed it, and no test pins it. So the chrome tracks the clamped element and
 cannot leave its band, and live snap guides join it in the same overlay, in a layer always present
 so that a guide appearing mid-drag never unmounts the keyed, gesture-owning handles beside it.
 

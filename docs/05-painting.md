@@ -39,8 +39,7 @@ process-global and CanvasKit appends without deduplicating, the "already
 registered" guard is a `static` set shared by every painter. No consumer builds this
 painter itself:
 [`rendering/paint/record_page_frame.dart`](../packages/jet_print/lib/src/rendering/paint/record_page_frame.dart)
-→ `recordPageFrame` is the one place the recording sequence is written — recorder,
-painter, `paintFrame`, `endRecording`, release.
+→ `recordPageFrame` is the one place the recording sequence is written:
 
 ```dart
 // rendering/paint/record_page_frame.dart → recordPageFrame
@@ -89,9 +88,9 @@ face's `hhea` table, and those bytes are what the canvas registers and the PDF
 embeds. The residual is that the engine derives its own ascent for the face; the
 goldens are where a disagreement would show.
 
-Horizontal placement is the honest exception. `dx` — distribute the unused width,
-left, centre or right — is written out twice, once per backend, the PDF copy
-commented as the canvas's math. What holds the two copies together is a test.
+Horizontal placement is the honest exception. `dx` — distributing the unused width — is
+written out twice, once per backend, the PDF copy commented as the canvas's math. What
+holds the two copies together is a test.
 
 ## PDF: what is shared, and what is rebuilt
 
@@ -128,9 +127,8 @@ Neither uses `dart:ui`'s `TextDecoration` — because there would be no second
 implementation to agree with it. PDF has no text-decoration property at the
 graphics level (`package:pdf` exposes underline only in its widgets layer, which
 draws a line itself), so the exporter must place that line from *some* number, and
-the number the engine would use comes from font tables nothing on the PDF path
-reads: the in-house parser `rendering/text/ttf/ttf_metrics.dart` reads `head`,
-`hhea`, `maxp`, `hmtx` and `cmap`, and no `post` table. One shared helper is what
+the number the engine would use lives in the `post` table, which the in-house parser
+`rendering/text/ttf/ttf_metrics.dart` does not read. One shared helper is what
 makes the two segments identical rather than merely similar; real per-face metrics
 later would change that function alone.
 
@@ -142,10 +140,9 @@ turns the vendor's positioned elements into `BarcodeModule` rectangles and
 `BarcodeHriText` runs, and its `BarcodeException` into a `BarcodeInvalid` value
 carrying a reason, so the vendor's types, exceptions and coordinate conventions
 stop at the seam and the renderer downstream only ever fills rectangles it already
-understands. Let that vocabulary past the adapter and it spreads to everything
-that asks a barcode a question — the renderer, the designer's validity check, the
-layout box — and a version bump becomes a change to all of them rather than to one
-file's insides. The interface it implements, `BarcodeEncoder`, is what makes the
+understands. Let that vocabulary past the adapter and a version bump becomes a change
+to every caller that asks a barcode a question rather than to one file's insides.
+The interface it implements, `BarcodeEncoder`, is what makes the
 seam testable: `BarcodeElementRenderer` takes it as a defaulted constructor
 argument, so a test can pin the painting with a fake encoder.
 
@@ -176,11 +173,9 @@ flutter test packages/jet_print/test/goldens/
 
 The first is where backend parity is proven, and it uses no pixels: it paints
 hand-built frames through `PdfPainter`, reads the content stream back and asserts
-the operators — one text object per pre-measured line and no more, each at
-`pageHeight - (bounds.y + line.baseline)`; the alignment copy against the canvas's
-formula; one stroked underline at `underlineFor`'s geometry; fill before stroke;
-`computeImageFit`'s rects; no global y-flip. Arithmetic on operators, not a
-comparison of pictures, so it runs on every host, not only macOS.
+the operators: one text object per pre-measured line and no more, and every formula
+this chapter derived above, re-asserted against the canvas's copy of it. Arithmetic on
+operators rather than a comparison of pictures, so it runs on every host, not macOS alone.
 
 The second is the visual pin, and it pins the canvas side only — four reports
 through `JetReportPreview`. The PDF's own pin is byte-level, against a fixed
@@ -193,10 +188,10 @@ the one-paint-path rule they enforce in its *Hard rules*.
 **Construct a `CanvasPainter` anywhere but the record seam and an architecture test
 fails on your file.** `test/architecture/canvas_painter_single_construction_test.dart`
 scans `lib/` for `CanvasPainter(` or the `CanvasPainter.new` tear-off, excusing only
-`record_page_frame.dart` and the class's own file. Being a source scan and not a
-behaviour test, what turns red is a list of paths: the property pinned is that nobody
-else writes that sequence, which is how the texture leak survived four open-coded
-sites. A new recording site calls `recordPageFrame`, and disposes what it returns.
+`record_page_frame.dart` and the class's own file. Being a source scan, what turns red is
+a list of paths; the property pinned is that nobody else writes that sequence — which is
+how the texture leak survived four open-coded sites. A new recording site calls
+`recordPageFrame`, and disposes what it returns.
 
 ## Next
 
