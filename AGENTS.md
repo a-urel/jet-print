@@ -19,7 +19,7 @@ library **only through its public API**, which is how the API stays honest.
 packages/jet_print/           the product
   lib/jet_print.dart          the ONLY public entry point (exports, nothing else)
   lib/src/                    private: domain · expression · data · rendering · designer · print
-  test/                       377 test files
+  test/                       ~390 test files
 packages/jet_print_google_fonts/   optional font catalog add-on
 apps/jet_print_playground/    consumer app + worked samples
 ```
@@ -107,19 +107,42 @@ test is the thing to argue with — change it deliberately and say so.
 
 | Seam | Files | What it holds |
 |---|---:|---|
-| `domain/` | 48 | The serializable report tree: `ReportDefinition`, bands, scopes, elements, styles, codecs, migration. Pure Dart. |
-| `expression/` | 23 | The `{...}` expression language: lexer, parser, AST, evaluator, function registry, aggregates, formatting. Pure Dart. |
-| `data/` | 17 | Data-source seam: `JetDataSource` and its in-memory / JSON / object / paged implementations, `JetDataSchema`, `FieldDef`, `DataSet` cursors. Pure Dart. |
-| `rendering/` | 57 | Fill → layout → paint. `report_filler` binds data, `report_layouter` paginates, `paint/` records pictures, `export/` writes PDF/PNG, `crosstab/` plans pivots, `text/` does fonts and metrics. |
-| `designer/` | 146 | The interactive surface: `canvas/`, `controller/` (commands + undo/redo), `layout/` (panels, inspectors), `preview/`, `interaction/`, `l10n/`, `template/`. |
+| `domain/` | ~50 | The serializable report tree: `ReportDefinition`, bands, scopes, elements, styles, codecs, migration. Pure Dart. |
+| `expression/` | ~25 | The `{...}` expression language: lexer, parser, AST, evaluator, function registry, aggregates, formatting. Pure Dart. |
+| `data/` | ~15 | Data-source seam: `JetDataSource` and its in-memory / JSON / object / paged implementations, `JetDataSchema`, `FieldDef`, `DataSet` cursors. Pure Dart. |
+| `rendering/` | ~60 | Fill → layout → paint. `report_filler` binds data, `report_layouter` paginates, `paint/` records pictures, `export/` writes PDF/PNG, `crosstab/` plans pivots, `text/` does fonts and metrics. |
+| `designer/` | ~145 | The interactive surface: `canvas/`, `controller/` (commands + undo/redo), `layout/` (panels, inspectors), `preview/`, `interaction/`, `l10n/`, `template/`. |
 | `print/` | 1 | `JetReportPrinter` — the injectable system-printing seam. |
 
-Tests mirror this: `test/domain` (55), `test/expression` (30), `test/data` (14),
-`test/rendering` (97), `test/designer` (169), `test/print` (2),
-plus `test/architecture` (2), `test/goldens` (4), `test/web` (2), and 29 in the
-playground. Shared helpers live in `test/support/` — `report_builders.dart`
-builds fixtures, `workspace.dart` locates the repo root, `test_fonts.dart`
-loads deterministic fonts.
+Tests mirror this, to the same order of magnitude: `test/domain` (~55),
+`test/expression` (~30), `test/data` (~15), `test/rendering` (~100),
+`test/designer` (~175), `test/print` (2), `test/goldens` (4), `test/web` (2),
+and ~30 in the playground.
+
+These are deliberately approximate. An exact count is wrong the moment the next
+file lands, silently, with nothing failing — which is how every number in this
+file drifted before — and what the figures are for is relative weight: the
+designer dwarfs everything, `print/` is one file. Re-derive with
+`find packages/jet_print/test -name '*_test.dart' | wc -l` if you need the
+precise number; don't paste it back in.
+
+Two groups stay exact, because there the number is the point rather than the
+scale. `test/architecture` holds four whole-repo guards, each worth knowing by
+name:
+
+| Guard | Invariant |
+|---|---|
+| `layer_boundaries_test.dart` | dependencies point inward; only three rendering files touch `dart:ui` |
+| `barcode_dependency_isolation_test.dart` | `package:barcode` is reachable from one adapter |
+| `built_in_element_registration_test.dart` | the two built-in element lists cannot drift apart |
+| `canvas_painter_single_construction_test.dart` | one place builds a `CanvasPainter`, so one place releases it |
+
+And two tests sit at the `test/` root rather than in a seam, because they police
+the whole package: `encapsulation_test.dart` and `public_api_test.dart`.
+
+Shared helpers live in `test/support/` — `report_builders.dart` builds fixtures,
+`workspace.dart` locates the repo root, `test_fonts.dart` loads deterministic
+fonts.
 
 ## Traps
 
