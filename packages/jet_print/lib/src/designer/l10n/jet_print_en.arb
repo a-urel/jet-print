@@ -427,7 +427,7 @@
   },
   "propertiesGroupOnHeaderHint": "Edit page & group settings on the group header band.",
   "@propertiesGroupOnHeaderHint": {
-    "description": "Read-only hint shown when the group row is selected, pointing the author to the group header band where the key + pagination flags are edited (2026-06-14 design note)."
+    "description": "Read-only hint shown when the group row is selected, pointing the author to the group header band where the key + the start-new-page flag are edited (2026-06-14 design note)."
   },
   "propertiesScope": "Scope",
   "@propertiesScope": {

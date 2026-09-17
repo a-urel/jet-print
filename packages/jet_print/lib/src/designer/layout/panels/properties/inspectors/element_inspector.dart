@@ -673,7 +673,9 @@ extension _ElementInspector on _PropertiesPanelState {
 
   // --- Band ------------------------------------------------------------------
   // A band inspector edits only what belongs to the band itself: its height.
-  // The group's key + pagination flags live in the Group inspector, and a
-  // scope's collection in the Scope inspector — so a flag is never shown on both
-  // a group header and footer band (the old two-bands smell).
+  // A group's key + its start-new-page flag live in the group section that the
+  // BAND inspector renders on the group's carrier band (selecting the group row
+  // itself shows only a read-only hint), and a scope's collection in the Scope
+  // inspector — so a flag is never shown on both a group header and footer band
+  // (the old two-bands smell).
 }
