@@ -28,6 +28,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Text no longer leaks a `ui.Paragraph` per line on every record.**
+  `CanvasPainter.drawTextRun` builds one paragraph per laid-out line and drew it
+  without ever releasing it, so each record leaked one handle per line — denser
+  than the decoded-image leak fixed alongside it, since every report has text and
+  most have no images, and the preview re-records on every edit. Each paragraph
+  is now released as soon as its draw returns: `Canvas.drawParagraph` has the
+  paragraph paint itself into the canvas, so the recording holds its own
+  reference by the time the draw returns and the handle is redundant from that
+  point. That keeps the peak at one live paragraph rather than one per line of
+  the page. Guarded at the raster level on the web leg, because the golden suite
+  is macOS-only and a CanvasKit-only disposal bug cannot surface there.
+
 - **Decoded image textures are released on every paint path, not just the design
   canvas.** `CanvasPainter.dispose()` — which frees the GPU texture behind each
   decoded image — was declared on the concrete painter only. The preview, the

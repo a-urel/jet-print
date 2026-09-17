@@ -50,6 +50,23 @@ class CanvasPainter implements ReportPainter {
   final FontLoader _loadFont;
   final Map<ImagePrimitive, ui.Image> _decoded = <ImagePrimitive, ui.Image>{};
 
+  /// Every `ui.Paragraph` built by [drawTextRun] this record — each already
+  /// released. Kept only so tests can assert the release actually happened, so
+  /// it is populated under `assert` and stays EMPTY in release builds: one
+  /// entry per laid-out line per record is real per-line allocation, and no
+  /// shipped code reads it.
+  ///
+  /// One paragraph is built per laid-out LINE, so a text-heavy page produces
+  /// many; none was ever disposed, which leaked a paragraph per line per
+  /// record. Unlike [_decoded] these are released the moment the draw returns
+  /// rather than at [dispose]: `Canvas.drawParagraph` has the paragraph paint
+  /// ITSELF into the canvas (`_NativeParagraph._paint`), so the recording holds
+  /// its own reference by the time the draw returns and the handle is redundant
+  /// from that point. Releasing too early is not a silent corruption either —
+  /// `drawParagraph` asserts `!debugDisposed`. That keeps the peak at one live
+  /// paragraph instead of one per line of the page.
+  final List<ui.Paragraph> _paragraphs = <ui.Paragraph>[];
+
   /// Engine font registration is process-global: a typeface loaded under a
   /// `uiFamily` name stays registered for the isolate's lifetime. Re-registering
   /// it (CanvasKit appends without dedupe) bloats the font collection and slows
@@ -109,6 +126,16 @@ class CanvasPainter implements ReportPainter {
     final ui.Color color = ui.Color(p.style.color.argb);
     for (final line in p.lines) {
       if (line.text.isEmpty) continue;
+      // Placement is computed before the paragraph exists, so the only
+      // statements between `build()` and the `try` are the assignment itself:
+      // `layout` runs INSIDE the guard, because a paragraph that throws while
+      // laying out is exactly the handle the `finally` exists to release.
+      final double extra = p.bounds.width - line.width;
+      final double dx = switch (p.style.align) {
+        JetTextAlign.center => p.bounds.x + extra / 2,
+        JetTextAlign.right => p.bounds.x + extra,
+        JetTextAlign.left || JetTextAlign.justify => p.bounds.x,
+      };
       final ui.ParagraphBuilder pb = ui.ParagraphBuilder(ui.ParagraphStyle(
         fontFamily: uiFamily,
         fontSize: p.style.fontSize,
@@ -116,15 +143,17 @@ class CanvasPainter implements ReportPainter {
         ..pushStyle(ui.TextStyle(
             color: color, fontFamily: uiFamily, fontSize: p.style.fontSize))
         ..addText(line.text);
-      final ui.Paragraph para = pb.build()
-        ..layout(const ui.ParagraphConstraints(width: double.infinity));
-      final double extra = p.bounds.width - line.width;
-      final double dx = switch (p.style.align) {
-        JetTextAlign.center => p.bounds.x + extra / 2,
-        JetTextAlign.right => p.bounds.x + extra,
-        JetTextAlign.left || JetTextAlign.justify => p.bounds.x,
-      };
-      _canvas.drawParagraph(para, ui.Offset(dx, p.bounds.y + line.top));
+      final ui.Paragraph para = pb.build();
+      try {
+        assert(() {
+          _paragraphs.add(para);
+          return true;
+        }());
+        para.layout(const ui.ParagraphConstraints(width: double.infinity));
+        _canvas.drawParagraph(para, ui.Offset(dx, p.bounds.y + line.top));
+      } finally {
+        para.dispose();
+      }
       if (p.style.underline) {
         // An explicit stroked segment from the shared geometry helper — NOT
         // ui.TextDecoration, whose placement the PDF backend cannot replicate
@@ -221,14 +250,23 @@ class CanvasPainter implements ReportPainter {
   @visibleForTesting
   Iterable<ui.Image> get debugDecodedImages => _decoded.values;
 
+  /// The paragraphs built by [drawTextRun]; exposed for tests to assert
+  /// disposal.
+  @visibleForTesting
+  Iterable<ui.Paragraph> get debugParagraphs => _paragraphs;
+
   /// Releases every decoded image's GPU texture. Call **after** the frame is
   /// recorded — the recorded `Picture` keeps its own reference, so the handles
   /// are then redundant. On CanvasKit, skipping this leaks a texture per record.
+  ///
+  /// Paragraphs need no release here: [drawTextRun] frees each one as soon as
+  /// its draw returns (see [_paragraphs]), so this only resets that gauge.
   @override
   void dispose() {
     for (final ui.Image image in _decoded.values) {
       image.dispose();
     }
     _decoded.clear();
+    _paragraphs.clear();
   }
 }
