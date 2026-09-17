@@ -186,11 +186,31 @@ Real ones, each of which has cost time before.
 - **Run `git` from the repo root.** `flutter` commands leave the shell inside a
   package directory.
 
+## Where to read it
+
+`docs/` carries the mechanism behind these rules, `docs/recipes/` the procedure.
+Take the row, not the front door.
+
+| You are about to | Read |
+|---|---|
+| Change the report model — definitions, bands, scopes, elements | [`docs/01-smallest-report.md`](docs/01-smallest-report.md) |
+| Touch a binding, a `$F{}` / `{…}` expression, or an aggregate | [`docs/02-binding-data.md`](docs/02-binding-data.md) |
+| Change page breaks, furniture, or page numbers | [`docs/03-pagination.md`](docs/03-pagination.md) |
+| Draw something new, or change how anything is painted or exported | [`docs/04-the-frame.md`](docs/04-the-frame.md), [`05`](docs/05-painting.md) |
+| Bump `schemaVersion`, write a migration, or handle an unknown node | [`docs/06-round-tripping.md`](docs/06-round-tripping.md) |
+| Add a designer edit, an undo step, a canvas gesture or an inspector | [`docs/07-designer-loop.md`](docs/07-designer-loop.md), [`08`](docs/08-the-canvas.md), [`09`](docs/09-the-panels.md) |
+| Use a designer scope, the fx editor, or the barrel's `show` list | [`docs/10-designer-seams.md`](docs/10-designer-seams.md) |
+| **Add an element type** | [`docs/recipes/add-element-type.md`](docs/recipes/add-element-type.md) |
+| **Add an expression function** | [`docs/recipes/add-expression-function.md`](docs/recipes/add-expression-function.md) |
+| **Add a localized string** | [`docs/recipes/add-localized-string.md`](docs/recipes/add-localized-string.md) |
+| **Add a playground demo** | [`docs/recipes/add-playground-demo.md`](docs/recipes/add-playground-demo.md) |
+| **A golden failed** | [`docs/recipes/update-goldens.md`](docs/recipes/update-goldens.md) |
+
 ## Going deeper
 
-- [`docs/README.md`](docs/README.md) — the wiki: a six-page walk through the
-  engine, with the designer chapters still to come. Start there when you need to
-  understand a subsystem rather than look a rule up.
+- [`docs/README.md`](docs/README.md) — the wiki's index, and the conventions its
+  pages are written to. The table above is the shortcut; this is the map, and the
+  place to read before you write a page rather than read one.
 - [`docs/testing.md`](docs/testing.md) — the test taxonomy, golden discipline,
   tags, and the per-platform CI legs.
 - [`docs/workflow.md`](docs/workflow.md) — how a change moves from idea to merge.
