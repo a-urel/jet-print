@@ -318,8 +318,15 @@ class PdfPainter implements ReportPainter {
   /// Serializes the accumulated document. Call once, after the last page.
   Future<Uint8List> save() => _document.save();
 
-  /// No-op: this backend builds a PDF document in memory and holds no engine
-  /// resources to release — the bytes leave through [save].
+  /// No-op: nothing native to release. This backend decodes to plain Dart
+  /// pixel buffers (`_DecodedImage`) and hands its fonts and images to the PDF
+  /// document, which owns them until [save] — the bytes leave through there.
+  ///
+  /// Stated positively rather than left blank because [ReportPainter.dispose]
+  /// is abstract on purpose: a concrete default is not inherited under
+  /// `implements`, so a backend that forgot to release something would compile
+  /// either way. Every backend answers the question; this one's answer is that
+  /// it holds nothing.
   @override
   void dispose() {}
 
