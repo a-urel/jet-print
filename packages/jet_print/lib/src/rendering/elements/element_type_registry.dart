@@ -1,7 +1,10 @@
-/// The unified element-type extension point: binds an element type's
+/// The unified element-type registration seam: binds an element type's
 /// codec (persist) and renderer (draw) under one `typeKey`. COMPOSES — does not
 /// replace — the domain `ElementCodecRegistry` ([codecs]), which `report_codec`
 /// consumes for save/load; [renderers] is used for render-time dispatch.
+///
+/// Package-internal: [ElementTypeRegistry] is not exported and no public entry
+/// point accepts one, so a host cannot register an element type today.
 library;
 
 import '../../domain/report_element.dart';

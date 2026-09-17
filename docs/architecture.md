@@ -130,18 +130,44 @@ platform-agnostic and printing is testable without a printer.
 
 ## Extension points
 
-These exist so new capability lands without editing the core. Use them.
+These exist so new capability lands without editing the core. Use them — but
+note which of them a **host** can reach, and which are internal to the package.
+
+### Reachable by a host (exported, and a public entry point takes one)
 
 | To add… | Register with | Notes |
 |---|---|---|
-| A new element type's persistence | `ElementCodecRegistry.register(typeKey, codec)` | `domain/serialization/element_codec.dart`. Last-write-wins, so a consumer can override a built-in. |
-| A new element type's appearance | `ElementRendererRegistry.register(typeKey, renderer)` | `rendering/elements/element_renderer_registry.dart`. Unregistered types fall back to the Unknown placeholder rather than crashing. |
-| A third-party encoder or backend | A single adapter file | The `package:barcode` seam is the model: exactly one file imports it, and a test enforces that. |
+| A data backend | Implement `JetDataSource` | Exported; `JetReportEngine.renderDefinition` takes one. |
 | Per-element host behavior at print time | `RenderOptions.onElementPrint` | Fires at the emit seam for preview, export and print. It can transform or suppress an element but **cannot change its height** — the emitted box is already measured. |
+| Fonts | `RenderOptions.fonts` / `JetReportDesigner.fonts` | `JetFontFamily`/`JetFontFace` are exported value types. |
+| The print dialog | `PrintDialogPresenter` on `JetReportPrinter` | Exported, injectable. |
+
+### Internal to the package (open/closed for library code and white-box tests)
+
+None of these registry types is exported from `lib/jet_print.dart`, and no
+public entry point accepts one — every instance the library persists or renders
+through is private and pre-wired. A host cannot use them today; opening one up
+means exporting the type *and* threading a host-supplied instance through the
+public API.
+
+| Seam | Registry | Where the only instances live |
+|---|---|---|
+| Element persistence | `ElementCodecRegistry.register(typeKey, codec)` | `JetReportFormat._registry` (`static final`, never mutated) and `element_clone.dart`'s private top-level one. |
+| Element appearance | `ElementRendererRegistry.register(typeKey, renderer)` | Built per render chain. Unregistered types fall back to the Unknown placeholder rather than crashing. |
+| Both, paired | `ElementTypeRegistry.register<E>(typeKey, codec, renderer)` | Built per render chain. |
+| Expression functions | `JetFunctionRegistry.register(name, fn)` | Built by `ReportFiller`/`ReportLayouter` from `registerBuiltInFunctions`. |
+
+A third-party encoder or backend is a different shape again: a single adapter
+file. The `package:barcode` seam is the model — exactly one file imports it, and
+a test enforces that.
 
 `test/rendering/elements/persisted_extension_test.dart` proves a custom element
-type can be added with zero edits to library `src/`. If a change would break
-that test, the extension point is not doing its job.
+type can be added with zero edits to library `src/`. Read what that does and
+does not say: the test itself imports 20 `src/` paths, which it may because
+`test/rendering/` is allowlisted in `encapsulation_test.dart`. It pins the
+*core* as open/closed. It is **not** evidence that a host outside the package
+can register an element type — a host has no way to reach any of the registries
+above. If a change would break that test, the internal seam is not doing its job.
 
 ## Public API
 
