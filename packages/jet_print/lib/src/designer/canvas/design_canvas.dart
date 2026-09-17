@@ -322,17 +322,20 @@ class _DesignCanvasState extends State<DesignCanvas> {
     final JetReportDesignerController controller = DesignerScope.of(context);
     final ShadColorScheme colors = ShadTheme.of(context).colorScheme;
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
-    // Two layouts, split by role. The committed [layout] drives click hit-testing
-    // and the selection overlay (which builds its previews by *adding* the live
-    // move/resize delta to committed positions — feeding it the already-moved
-    // geometry would double-count). The [displayLayout] reflects any in-progress
-    // drag (move/resize/band-resize) and draws everything that represents the
-    // model — the cached picture, grid, band separators, badges, hit regions — so
-    // they reflow together in realtime. Idle (and during element move/resize,
-    // which never changes band geometry) the two are identical; only a band
-    // resize makes them diverge, which is exactly where the reflow is wanted. When
-    // idle, `displayDefinition` is the same instance, so the layout is
-    // reused rather than recomputed.
+    // Two layouts, split by role. The committed [layout] drives the INPUT side:
+    // the two drop handlers (`_handleFieldDrop` / `_handleDrop`) and the gesture
+    // hit-tests, which must resolve a pointer against committed geometry.
+    // The [displayLayout] drives everything DRAWN — the cached picture, grid,
+    // band separators, badges, hit regions, crosstab placeholders, and the
+    // selection overlay — so the chrome reflows with the preview in realtime.
+    // (The overlay takes the display layout on purpose: it reads each rect
+    // straight from the layout, which already bakes the in-progress delta, so
+    // feeding it committed geometry would leave the outline and handles behind
+    // the element they belong to. See `selection_overlay.dart`.)
+    // Idle (and during element move/resize, which never changes band geometry)
+    // the two are identical; only a band resize makes them diverge, which is
+    // exactly where the reflow is wanted. When idle, `displayDefinition` is the
+    // same instance, so the layout is reused rather than recomputed.
     final DesignTimeLayout layout = DesignTimeLayout.of(controller.definition);
     final ReportDefinition displayed = controller.displayDefinition;
     final DesignTimeLayout displayLayout =

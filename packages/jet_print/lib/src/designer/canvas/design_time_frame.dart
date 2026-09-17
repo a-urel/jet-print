@@ -2,9 +2,16 @@
 ///
 /// WYSIWYG, non-negotiable: element appearance is produced by the
 /// **unchanged** `ElementRenderer.emit` + `CanvasPainter` path — there is no
-/// parallel element-drawing code in the designer. The only design-specific part
-/// is *where* bands sit (the non-paginated [DesignTimeLayout]); each element is
-/// emitted at its page-absolute rect exactly as the render-time layouter does.
+/// parallel element-drawing code in the designer. Each element is emitted at
+/// its page-absolute rect exactly as the render-time layouter does.
+///
+/// Two things are design-specific, both of them *inputs* to that unchanged
+/// path rather than drawing code:
+///
+///  1. *Where* bands sit — the non-paginated [DesignTimeLayout].
+///  2. *What* a bound element shows — [DesignTimeFrameBuilder._designTimeDisplay]
+///     swaps a data-bound `TextElement`'s resolved value for its binding token,
+///     then feeds that through the same text renderer as ordinary text.
 library;
 
 import 'dart:ui' as ui;
