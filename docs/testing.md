@@ -74,10 +74,28 @@ tagged `golden` in `dart_test.yaml` and run **only on macOS**, because host font
 rasterization and PDF font subsetting differ per OS. Other CI legs pass
 `--exclude-tags golden`.
 
+**A passing golden is not a byte-identical one.** `test/support/golden_config_io.dart`
+installs a tolerant comparator: it accepts any image whose `diffPercent` is at
+most `0.005`, i.e. half a percent of pixels may differ. That is deliberate — host
+rasterization wobbles — but it means "goldens green" says *no visible change*,
+not *no change*, and a claim of byte-identical output needs a different check.
+The one genuinely byte-pinned artifact is `invoice.pdf`, compared as bytes in
+`test/rendering/export/pdf_determinism_test.dart`.
+
+That tolerance has a consequence worth knowing before you trust a `failures/`
+directory: **a fully passing run can still write a complete set of failure
+images.** Reproduced by deleting every `failures/` directory, then running
+`test/rendering/export/png_export_test.dart` alone: "All tests passed!", and four
+`invoice_page1_2x_*` images appear. The comparison detects a real difference, the
+tolerance lets it pass, and the artifacts are written regardless — which call
+writes them is not established. So images in `failures/` do not mean a golden
+moved. Check the run's exit status, not the directory.
+
 Discipline, in order:
 
-1. A golden moved. **Look at the failure image first** —
-   `test/**/failures/` holds the diff, master and test images (git-ignored).
+1. A golden moved — confirmed by a failing run, not by files in `failures/`.
+   **Look at the failure image first** — `test/**/failures/` holds the diff,
+   master and test images (git-ignored).
 2. Name what changed and why. "The toolbar gained a button, so the top bar's
    measured width shifted" is an explanation. "Rendering changed slightly" is not.
 3. Only then regenerate, on macOS, and say in the change description which
