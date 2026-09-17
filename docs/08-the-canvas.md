@@ -95,8 +95,11 @@ so they neither shrink nor grow with the zoom. Their geometry comes from the dis
 which each kind of drag has already clamped — a resize by `designer/canvas/resize_handle.dart` →
 `clampResizeToBand`, pinning only the dragged edge, a move by the rigid-group intersection in
 `designer/controller/jet_report_designer_controller.dart` → `_clampedMoveTargets`. Neither is
-`designer/controller/element_bounds.dart` → `clampToBand`, whatever nearby comments say: that
-one is move-style, for the committed and numeric paths. So the chrome tracks the clamped element
+`designer/controller/element_bounds.dart` → `clampToBand`: that one is move-style, for the
+committed and numeric paths. Comments around all three used to say otherwise; they now name the
+right clamp, and `test/designer/controller/clamp_semantics_test.dart` pins the difference —
+given one overflowing rect, the move-style clamp keeps its size and slides it, the resize-style
+clamp pins only the dragged edge. So the chrome tracks the clamped element
 and cannot leave its band, and live snap guides join it in the same overlay, in a layer always
 present so that a guide appearing mid-drag never unmounts the keyed, gesture-owning handles
 beside it.
@@ -172,11 +175,20 @@ fallback — a dropped element must land *somewhere*, so a drop into the empty f
 resolves to the nearest band. Click selection must not have it: `bandIdAt` returning null is
 what lets an empty spot on the paper select the report. Swapped, neither failure looks like a
 bug — clicks in the margin start selecting whichever band is nearest, or a drop into the gap
-silently does nothing. `band_page_select_test.dart` pins the click side. The confusion is
-already live in the tree twice: the comment above the `bandIdAt` call in
+silently does nothing.
+
+The confusion was live in the tree twice — the comment above the `bandIdAt` call in
 `designer/canvas/design_canvas/gestures.dart` → `_selectEmptyTarget`, and the dartdoc on
-`design_time_layout.dart` → `crosstabIdAt`, both say `bandIdAt` snaps to the nearest band, which
-its own body does not do. Fix both.
+`design_time_layout.dart` → `crosstabIdAt`, both claiming `bandIdAt` snaps, which its own body
+never did. Both are corrected, and the pair is now pinned behaviourally rather than described:
+`band_page_select_test.dart` covers the click side, and
+`test/designer/canvas/band_lookup_semantics_test.dart` covers both lookups over one layout.
+
+That test also records a **second** difference, which is not about snapping and is easy to miss:
+the two bounds are not the same shape. `bandIdAt` tests `dy <= bottom` and `bandIdNear` tests
+`dy < bottom`, so on a shared seam between two bands — a point that is inside a band by either
+reading — `bandIdAt` answers the band *above* and `bandIdNear` the band *below*. Anything that
+reasons about "which band is this point in" has to pick one and mean it.
 
 ## Next
 

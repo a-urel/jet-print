@@ -18,7 +18,12 @@ disagree on.
 `pushTransform`/`popTransform`, `dispose`, and one `drawX` per primitive; page 04
 showed the dispatch. `prepare` is the only asynchronous member — fonts load and
 images decode there, once per frame, which leaves every `drawX` synchronous and the
-walk over the list ordinary straight-line code. `dispose` is its counterpart, on the
+walk over the list ordinary straight-line code. The fonts it loads are the bundled
+defaults plus whatever the host contributed: `JetFontFamily`/`JetFontFace` are
+exported value types, handed in as `RenderOptions.fonts` for a render or
+`JetReportDesigner.fonts` for the designer, and folded into the `FontRegistry` the
+render chain carries. `FontRegistry` itself stays internal — this is the seam, and
+it is one of the few the library genuinely opens to a host. `dispose` is its counterpart, on the
 interface so a consumer holding the abstraction can release whatever backend it
 holds; `PdfPainter`'s body is empty. And `beginPage`/`endPage` bracket one frame,
 leaving each backend to decide what a *document* is.

@@ -36,12 +36,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   built-in". None of them is exported from `package:jet_print/jet_print.dart`,
   and no public entry point accepts one: the instances they feed are private and
   pre-wired (`JetReportFormat`'s never-mutated `static final`, the render chain's
-  own), so exporting the types alone would not help. Their dartdoc, and the
-  extension-points table in `docs/architecture.md`, now say what is actually
-  reachable from a host — `JetDataSource`, `RenderOptions.onElementPrint`,
-  `RenderOptions.fonts` and `PrintDialogPresenter` — and what is internal. No
-  behaviour changed; if you need to register a custom element type or expression
-  function, that capability does not exist yet. Please open an issue.
+  own), so exporting the types alone would not help. Their dartdoc now says what
+  is actually reachable from a host — `JetDataSource`,
+  `RenderOptions.onElementPrint`, `RenderOptions.fonts` and
+  `PrintDialogPresenter` — and what is internal; `docs/06-round-tripping.md`
+  covers the element-codec case in full. No behaviour changed; if you need to
+  register a custom element type or expression function, that capability does not
+  exist yet. Please open an issue.
 
 - **Text no longer leaks a `ui.Paragraph` per line on every record.**
   `CanvasPainter.drawTextRun` builds one paragraph per laid-out line and drew it
