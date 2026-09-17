@@ -27,7 +27,8 @@ start there if what you need is what must hold rather than why.
 | 10 | [Designer seams](10-designer-seams.md) | inherited scopes, lookups, value templates, localization, and what the barrel charges |
 
 Page 04 is the one to read if you only read one. Everything before it exists to
-produce a `PageFrame`; everything after it only draws or edits one.
+produce a `PageFrame`; everything after it either draws one, or edits the
+definition that produces the next one.
 
 ## The recipes
 
@@ -106,8 +107,10 @@ anchor loudly, because grep finds nothing; a moved line silently points at the
 wrong code. The same rot is why no page states a line count in prose — both are
 a number that goes wrong without saying so.
 
-**Every "run this" is a command CI already runs.** A command invented for the
-page is proven by nothing and decays unobserved.
+**Every "run this" runs against code CI already runs.** The command itself is
+usually narrower than CI's — a single directory rather than the whole suite — but
+the tests behind it must be tests CI executes. Code invented for a page is proven
+by nothing and decays unobserved.
 
 **One fact, one layer.** `AGENTS.md` carries the contract — what must hold, and
 the test that enforces it. `docs/` carries the mechanism: why the seam exists.
