@@ -63,6 +63,34 @@ PageFrame _frameWithImages(List<Uint8List> images) {
 
 FontRegistry _fonts() => FontRegistry()..registerDefault();
 
+/// Wraps a real [ui.Codec] and records whether it was disposed.
+///
+/// `ui.Codec` is a plain abstract class, so a test can implement it. This
+/// observes the REAL handle rather than a counter: a counter cannot tell
+/// "disposed" from "decremented", so a test asserting one would still pass if
+/// the `dispose()` call were deleted and the bookkeeping left behind.
+class _SpyCodec implements ui.Codec {
+  _SpyCodec(this._inner);
+
+  final ui.Codec _inner;
+  bool disposed = false;
+
+  @override
+  int get frameCount => _inner.frameCount;
+
+  @override
+  int get repetitionCount => _inner.repetitionCount;
+
+  @override
+  Future<ui.FrameInfo> getNextFrame() => _inner.getNextFrame();
+
+  @override
+  void dispose() {
+    disposed = true;
+    _inner.dispose();
+  }
+}
+
 /// A text run of [lineCount] laid-out lines. Lines are built directly rather
 /// than measured: the painter never re-wraps them, so the geometry only has to
 /// be self-consistent.
@@ -183,6 +211,45 @@ void main() {
     painter.dispose();
 
     expect(CanvasPainter.debugLiveDecodedImages, 0);
+  });
+
+  test('every image codec is released once its frame is decoded', () async {
+    // The codec is a native decoder in its own right: disposing the `ui.Image`
+    // it yields does not release it, and nothing else did. It has no
+    // `debugDisposed`, so the painter takes an injectable instantiator and the
+    // test hands back a spy over the real codec.
+    final List<_SpyCodec> spies = <_SpyCodec>[];
+    final ui.PictureRecorder rec = ui.PictureRecorder();
+    final CanvasPainter painter = CanvasPainter(
+      ui.Canvas(rec),
+      _fonts(),
+      codecInstantiator: (Uint8List bytes) async {
+        final _SpyCodec spy = _SpyCodec(await ui.instantiateImageCodec(bytes));
+        spies.add(spy);
+        return spy;
+      },
+    );
+    final PageFrame frame = _frameWith(<FramePrimitive>[
+      ImagePrimitive(
+        bounds: const JetRect(x: 0, y: 0, width: 4, height: 4),
+        bytes: _validPng(),
+        fit: JetBoxFit.contain,
+      ),
+      ImagePrimitive(
+        bounds: const JetRect(x: 0, y: 8, width: 4, height: 4),
+        bytes: _validPng(),
+        fit: JetBoxFit.contain,
+      ),
+    ]);
+
+    await paintFrame(frame, painter);
+    rec.endRecording();
+
+    expect(spies, hasLength(2),
+        reason: 'two distinct buffers, so two codecs were created');
+    expect(spies.every((_SpyCodec c) => c.disposed), isTrue);
+
+    painter.dispose();
   });
 
   test('PageRasterizer disposes the picture it recorded', () async {

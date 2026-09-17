@@ -32,6 +32,11 @@ import 'report_painter.dart';
 typedef FontLoader = Future<void> Function(Uint8List bytes,
     {String? fontFamily});
 
+/// Decodes encoded image [bytes] into a codec. Defaults to `dart:ui`'s
+/// `instantiateImageCodec`; injectable so a test can hand back a codec whose
+/// disposal it can observe — `ui.Codec` has no `debugDisposed` of its own.
+typedef CodecInstantiator = Future<ui.Codec> Function(Uint8List bytes);
+
 /// Paints a [PageFrame] onto a `dart:ui` [ui.Canvas].
 class CanvasPainter implements ReportPainter {
   /// Creates a painter drawing to [_canvas], resolving fonts via [_registry].
@@ -42,13 +47,16 @@ class CanvasPainter implements ReportPainter {
     this._canvas,
     this._registry, {
     FontLoader? fontLoader,
+    CodecInstantiator? codecInstantiator,
     Set<String>? registeredFamilies,
   })  : _loadFont = fontLoader ?? ui.loadFontFromList,
+        _instantiateCodec = codecInstantiator ?? ui.instantiateImageCodec,
         _registered = registeredFamilies ?? _engineRegisteredFamilies;
 
   final ui.Canvas _canvas;
   final FontRegistry _registry;
   final FontLoader _loadFont;
+  final CodecInstantiator _instantiateCodec;
 
   /// Decoded textures, keyed by the IDENTITY of the encoded byte buffer.
   ///
@@ -127,13 +135,23 @@ class CanvasPainter implements ReportPainter {
         await _ensureFont(p.fontFamily, p.style.weight, p.style.italic);
       } else if (p is ImagePrimitive) {
         if (_decoded.containsKey(p.bytes)) continue;
-        final ui.Codec codec = await ui.instantiateImageCodec(p.bytes);
-        _decoded[p.bytes] = (await codec.getNextFrame()).image;
-        assert(() {
-          debugLiveDecodedImages++;
-          debugTotalDecodedImages++;
-          return true;
-        }());
+        final ui.Codec codec = await _instantiateCodec(p.bytes);
+        try {
+          // The codec is a native decoder in its own right, distinct from the
+          // `ui.Image` it yields — disposing the image does not release it, and
+          // nothing else does either. Released here rather than at [dispose]:
+          // only this one frame is ever read, so the decoder is spent the moment
+          // `getNextFrame` returns. The `finally` covers a throwing frame
+          // extraction, which is the path the thumbnail rail swallows.
+          _decoded[p.bytes] = (await codec.getNextFrame()).image;
+          assert(() {
+            debugLiveDecodedImages++;
+            debugTotalDecodedImages++;
+            return true;
+          }());
+        } finally {
+          codec.dispose();
+        }
       }
     }
   }
