@@ -5,8 +5,7 @@ What the user sees and touches: the picture a printer gets, under chrome that ne
 Page 07 left the loop at `notifyListeners`; this page is what happens next, and what turns a
 pointer back into a call on the controller. The canvas is not a second renderer: it builds a
 `PageFrame` through the engine's own element renderers, records it through the seam page 05
-owns, and layers interaction on a picture it never edits — everything design-only, from the
-grid to the selection handles, being a widget above that picture.
+owns, and layers interaction on a picture it never edits.
 
 ## The design-time frame is the render path
 
@@ -70,7 +69,7 @@ carry semantics and test keys and deliberately do not capture pointers. It walks
 `layout.bands.reversed`, each band's elements in reverse: paint order is band order then
 element order, so the last drawn is on top and the first reverse hit wins. Containment is a
 rect test widened by `slop`, passed at every call site as `kHandleHitSize / 2 / transform.scale`
-— a constant eight screen pixels at any zoom, so a thin or tiny element stays grabbable.
+— half a handle's hit box in screen pixels at any zoom, so a thin element stays grabbable.
 
 A miss is not resolved on the spot: the page point is parked and classified on tap-up, because a
 press that becomes a drag — a marquee, a band-divider resize — fires `onTapCancel` and must
@@ -92,9 +91,13 @@ the growth-facing edge, bottom for a flow band, top for a bottom-anchored footer
 upward; for the report or a crosstab, an outline alone, neither resizable by hand.
 
 Handles are drawn at `kHandleVisualSize` and hit at `kHandleHitSize`, both in *screen* pixels,
-so they neither shrink nor grow with the zoom; their geometry comes from the display layout,
-already run through the controller's `clampToBand`, so the chrome tracks the clamped element and
-cannot leave its band. Live snap guides join them in the same overlay, in a layer that is always
+so they neither shrink nor grow with the zoom. Their geometry comes from the display layout,
+which each kind of drag has already clamped — a resize by `designer/canvas/resize_handle.dart` →
+`clampResizeToBand`, pinning only the dragged edge, a move by the rigid-group intersection in
+`designer/controller/jet_report_designer_controller.dart` → `_clampedMoveTargets`. Neither is
+`designer/controller/element_bounds.dart` → `clampToBand`, whatever nearby comments say: that
+one is move-style, for the committed and numeric paths. So the chrome tracks the clamped element
+and cannot leave its band, and live snap guides join it in the same overlay, in a layer always
 present so that a guide appearing mid-drag never unmounts the keyed, gesture-owning handles
 beside it.
 
@@ -105,33 +108,33 @@ beside it.
 arrives as an argument from `designer/canvas/design_tunables.dart`, so the density math is
 unit-testable without a widget.
 
-Grid lines are exact multiples of the snap step — `kGridStep`, the point value of the 5 mm
-`kGridStepMm` — and `designer/controller/snapping.dart` reads that same constant, so every
-drawn line *is* a snap candidate. Density adapts: the step coarsens by
-`f = ⌈minGapPx / (step·scale)⌉`, and past `kGridMaxCoarsenFactor` the function returns
-nothing, hiding the grid rather than smearing the page into a fill. `RulerScale` likewise
-picks the smallest entry on a nice-number millimetre ladder whose spacing clears the label
-gap, and computes each major from its integer millimetre value rather than accumulating, which
-keeps alignment float-exact. Millimetres are display-only — `designer/canvas/ruler_metrics.dart`
-→ `kPointsPerMm` converts for tick labels and for `selectionExtent`, the span the rulers
-highlight — and the model stays in points.
+Grid lines are exact multiples of the snap step — `kGridStep`, the point value of `kGridStepMm`
+— and `designer/controller/snapping.dart` reads that same constant, so every drawn line *is* a
+snap candidate. Density adapts: the step coarsens by `f = ⌈minGapPx / (step·scale)⌉`, and past
+`kGridMaxCoarsenFactor` the function returns nothing, hiding the grid rather than smearing the
+page into a fill. `RulerScale` likewise picks the smallest entry on a nice-number millimetre
+ladder whose spacing clears the label gap, and computes each major from its integer millimetre
+value rather than accumulating, which keeps alignment float-exact. Millimetres are display-only,
+and only for the ticks: `kPointsPerMm` in `designer/canvas/ruler_metrics.dart` feeds the tick
+layout, while the span `selectionExtent` in that same file hands the rulers to highlight is page
+points, scaled like the page.
 
 ## Interaction adapts to the pointer, not the platform
 
-The canvas tracks the device kind of the most recent pointer-down over it rather than
-checking the host platform, so a mouse on a touchscreen laptop keeps pixel precision while a
-finger on the same machine gets fat targets. Touch changes three things: handle hit boxes
-become `kHandleHitSizeTouch` while the *drawn* square stays `kHandleVisualSize` (goldens
-never simulate touch, so none of them move); the scrollbars thicken; and a drag beginning on
-empty canvas pans the viewport instead of starting a marquee, there being no wheel to scroll
-with and no grabbing a thin bar with a finger (`touch_targets_test.dart` pins the first).
+The canvas tracks the device kind of the most recent pointer-down over it rather than checking
+the host platform, so a mouse on a touchscreen laptop keeps pixel precision while a finger on
+the same machine gets fat targets. Touch changes three things: handle hit boxes become
+`kHandleHitSizeTouch` while the *drawn* square stays `kHandleVisualSize` (goldens never simulate
+touch, so none of them move); the scrollbars thicken; and a drag beginning on empty canvas pans
+the viewport instead of starting a marquee, there being no wheel and no grabbing a thin bar with
+a finger. `touch_targets_test.dart` pins the first.
 
-Long-press is the touch right-click. `ShadContextMenuRegion` is configured
-`longPressEnabled: true`, so the gesture exists on desktop too, and `tapEnabled: false`,
-because its mobile default opens the menu on a plain touch-down and that stole finger-downs
-from the resize handles. Since the menu owns a long-press, the handles and the band divider
-accept a long-press-drag as well as a pan-drag and route both into the same resize, so a hold
-on a handle wins the arena instead of opening a menu.
+Long-press is the touch right-click. `ShadContextMenuRegion` is configured `longPressEnabled:
+true`, so the gesture exists on desktop too, and `tapEnabled: false`, because its mobile default
+opens the menu on a plain touch-down and that stole finger-downs from the resize handles. Since
+the menu owns a long-press, the handles and the band divider accept a long-press-drag as well as
+a pan-drag, routing both into the same resize, so a hold on a handle wins the arena instead of
+opening a menu.
 
 ## Why it is like this, and the alternative rejected
 
@@ -154,11 +157,11 @@ flutter test packages/jet_print/test/designer/canvas/
 ```
 
 `grid_geometry_test.dart` and `ruler_scale_test.dart` assert enumeration, coarsening and tick
-alignment with no widget in sight. `band_page_select_test.dart` states the click
-classification end to end, margin gutter included, and `resize_cursor_test.dart` pins that
-handle order by driving a mouse over each handle at 0.25 zoom, where the boxes overlap.
-`bound_token_render_test.dart` is the golden for the token and the image placeholder; being
-`golden`-tagged it is macOS-only, for the reason `AGENTS.md` gives under *Traps*.
+alignment with no widget. `band_page_select_test.dart` states the click classification end to
+end, margin gutter included, and `resize_cursor_test.dart` pins the handle order by driving a
+mouse over each at 0.25 zoom, where the boxes overlap. `bound_token_render_test.dart` is the
+golden for the token and the image placeholder; `golden`-tagged, so macOS-only, for the reason
+`AGENTS.md` gives under *Traps*.
 
 ## Trap
 
@@ -170,9 +173,10 @@ resolves to the nearest band. Click selection must not have it: `bandIdAt` retur
 what lets an empty spot on the paper select the report. Swapped, neither failure looks like a
 bug — clicks in the margin start selecting whichever band is nearest, or a drop into the gap
 silently does nothing. `band_page_select_test.dart` pins the click side. The confusion is
-already live in the tree: the comment above the `bandIdAt` call in
-`designer/canvas/design_canvas/gestures.dart` → `_selectEmptyTarget` says `bandIdAt` snaps to
-the nearest band, which its own body does not do.
+already live in the tree twice: the comment above the `bandIdAt` call in
+`designer/canvas/design_canvas/gestures.dart` → `_selectEmptyTarget`, and the dartdoc on
+`design_time_layout.dart` → `crosstabIdAt`, both say `bandIdAt` snaps to the nearest band, which
+its own body does not do. Fix both.
 
 ## Next
 
