@@ -31,6 +31,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter_test/flutter_test.dart';
 
+import '../support/workspace.dart';
+
 Future<ui.Image> _opaqueImage(int width, int height) {
   final Completer<ui.Image> completer = Completer<ui.Image>();
   ui.decodeImageFromPixels(
@@ -47,13 +49,15 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('a golden mismatch inside a plain test() is not swallowed', () async {
-    // Derived from the comparator itself, never from `Directory.current`:
-    // the documented gate runs from the workspace root, so a relative path
-    // here would resolve somewhere else entirely.
-    final Directory failures = Directory.fromUri(
-        (goldenFileComparator as LocalFileComparator)
-            .basedir
-            .resolve('failures'));
+    // Anchored on the workspace root, never on `Directory.current`: the
+    // documented gate runs from the workspace root while `flutter test` inside
+    // the package runs from the package, so a relative path resolves to two
+    // different places. `LocalFileComparator.basedir` is the more direct
+    // anchor, but web's `flutter_test` exports a `LocalFileComparator` with no
+    // such getter, and the Chrome leg type-checks every test file before
+    // `@TestOn` or `--exclude-tags` can exclude one.
+    final Directory failures = Directory(
+        '${findWorkspaceRoot().path}/packages/jet_print/test/architecture/failures');
     addTearDown(() {
       if (failures.existsSync()) {
         failures.deleteSync(recursive: true);
