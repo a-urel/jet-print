@@ -32,8 +32,9 @@ definition that produces the next one.
 
 ## The recipes
 
-A recipe is the sequence and nothing else. Each cites the page that says why the
-sequence has that shape, and `AGENTS.md` for the rules it crosses.
+A recipe is a sequence, plus whatever analysis that sequence needs and nothing
+more. Each cites the page that says why it has that shape, and `AGENTS.md` for
+the rules it crosses.
 
 | Doing this | Recipe |
 |---|---|
@@ -42,6 +43,11 @@ sequence has that shape, and `AGENTS.md` for the rules it crosses.
 | Adding a localized string | [`recipes/add-localized-string.md`](recipes/add-localized-string.md) |
 | Adding a playground demo | [`recipes/add-playground-demo.md`](recipes/add-playground-demo.md) |
 | A golden failed | [`recipes/update-goldens.md`](recipes/update-goldens.md) |
+
+What no page covers: the printing seam (`lib/src/print/`, `JetReportPrinter`),
+and how a `PivotGrid` is planned (`rendering/crosstab/`) — the designer side of a
+crosstab is page 09, the planner has no page. For those two, `AGENTS.md`'s layer
+table and traps are the whole of the written guidance.
 
 ## If you came for one answer
 
@@ -84,28 +90,37 @@ only what is visible in the output.
 2. Puts the smallest working thing first — a command and what it prints, not a
    block of code to copy.
 3. Introduces one concept at a time.
-4. Shows mechanism from real code: a short excerpt, quoted rather than
+4. Shows mechanism from real code: five to ten lines, quoted rather than
    paraphrased, anchored by file and symbol.
-5. Carries a **why it is like this, and the alternative rejected** section. A
-   page without one documents the shape and loses the reason, and the reason is
-   the part that stops the next person undoing it.
+5. Carries a section saying **why it is like this, and which alternative was
+   rejected** — the content, under whatever heading the page needs. A page
+   without one documents the shape and loses the reason, and the reason is the
+   part that stops the next person undoing it.
 6. Puts traps in place rather than in a list at the end, each naming the test
    that enforces it.
 
 It ends with **Run it** and **Next**. A recipe is the smaller form: the same
 opening claim, then **The sequence** as numbered steps, **Verify**, **Next**.
 
-**Length.** A narrative page is 120–200 lines, a recipe 60–80. The ceiling is
+**Length.** A narrative page is 120–200 lines, a recipe 60–80 — a budget you
+work to, which is the one kind of line number that belongs here. The ceiling is
 the working part: a page at 200 lines cannot absorb a new paragraph, only trade
 for one, and that trade is where the editing happens. A peer session once
-spliced a paragraph into a page already at the ceiling — correctly, on the
-substance — because nothing outside a git-ignored plan file said the ceiling
-existed.
+spliced a paragraph into a page already at the ceiling because nothing outside a
+git-ignored plan file said the ceiling existed.
 
 **Anchors are file and symbol, never `file:line`.** A renamed symbol breaks the
 anchor loudly, because grep finds nothing; a moved line silently points at the
-wrong code. The same rot is why no page states a line count in prose — both are
-a number that goes wrong without saying so.
+wrong code. The same rot is why no page *describes* code by a line count: it is a
+number that goes wrong without saying so.
+
+The same asymmetry governs how you check a claim. **A pattern tells you where to
+look, never what is there.** In a repo that hard-wraps prose, a grep for a
+multi-word phrase has a hole exactly as wide as the line width — "stops there"
+finds nothing when it wrapped as "stops / there", and the sweep hunting the
+`_groupSection` dartdoc missed it because it reads "three pagination / flags".
+Search for the rarest single token, then read the region. An empty result is the
+one outcome that feels like an answer and never is.
 
 **Every "run this" runs against code CI already runs.** The command itself is
 usually narrower than CI's — a single directory rather than the whole suite — but
@@ -121,9 +136,9 @@ Two failure modes of that last rule, both learned writing these pages:
 
 - **The pull to restate is strongest when you are fixing an omission**, because
   the omission feels like it needs compensating for. And a restatement is not
-  only a copy that may drift later — it can be born wrong: a recipe reworded
-  page 06's registration trap and inverted it, one sentence after citing that
-  page correctly.
+  only a copy that may drift later — it can be born wrong:
+  `recipes/add-element-type.md` reworded page 06's registration trap and
+  inverted it (`122b829`, M1), one sentence after citing that page correctly.
 - **A mirrored pair is an alarm, not a verdict.** When the same claim appears
   twice, what it fires is a question — is the other one wrong, or merely
   *similar*? The same words can be false in one place and true in another. Page

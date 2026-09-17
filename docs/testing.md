@@ -117,10 +117,6 @@ the Skia glyph cache and can move canvas goldens that have nothing to do with
 your change; and non-English locales are wider — German binds toolbar width, so
 a locale test needs its own isolate per locale.
 
-The order to work in when one moves — including why the list of goldens to
-regenerate comes from the test output and not from the `failures/` directory —
-is [`recipes/update-goldens.md`](recipes/update-goldens.md).
-
 ## Support helpers
 
 `test/support/` — use these rather than hand-rolling:
