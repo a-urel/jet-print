@@ -1,23 +1,22 @@
 # Add an element type
 
-The order to wire a new drawable report object in, and the two edits that look redundant and are not.
+The order to wire a new drawable report object in, and the steps whose absence nothing reports.
 
-The rules this touches live in [`../../AGENTS.md`](../../AGENTS.md); what a
-renderer may emit is [page 04](../04-the-frame.md); why registration is split in
-two is [page 06](../06-round-tripping.md), *Trap*. This page is only the sequence.
+The rules this touches live in [`../../AGENTS.md`](../../AGENTS.md) and what a
+renderer may emit is [page 04](../04-the-frame.md). This page is only the sequence.
 
 ## The sequence
 
-Start from `test/rendering/elements/persisted_extension_test.dart`, which defines
-an element, a codec and a renderer entirely in test code and proves the round
-trip and the draw. Copy its shape first — it is also the proof that nothing below
-is needed to make a type *work*; the steps are what make it a built-in.
+Copy the shape of `test/rendering/elements/persisted_extension_test.dart` first;
+[page 06](../06-round-tripping.md) says what it proves and what it does not.
 
 1. **Domain class** — `lib/src/domain/elements/<name>_element.dart`, extending
-   `ReportElement`. Implement `typeKey` and the three polymorphic rewriters the
-   base class declares (`withBounds`, `withName`, `withVisible`), plus `==` and
-   `hashCode`. Keep it Flutter-free, per `AGENTS.md`'s inward-dependency rule;
-   `test/architecture/layer_boundaries_test.dart` is what stops you otherwise.
+   `ReportElement` with `ValueEquality`. Implement `typeKey`, the three
+   polymorphic rewriters the base class declares (`withBounds`, `withName`,
+   `withVisible`), and a `props` spreading `baseProps` first — as every built-in
+   does, and as that test's `StarElement` does not. Never hand-roll
+   `==`/`hashCode`: that is how a base field silently leaves equality. `AGENTS.md`'s
+   inward-dependency rule applies, per `test/architecture/layer_boundaries_test.dart`.
 2. **Codec** — `lib/src/domain/serialization/<name>_element_codec.dart`,
    extending `ElementCodec<X>` with `fromJson` / `toJson`. Omit defaults rather
    than writing them, so an unset property stays absent from the JSON.
@@ -26,9 +25,8 @@ is needed to make a type *work*; the steps are what make it a built-in.
    (`domain/serialization/built_in_element_codecs.dart`).
 4. **Renderer** — `rendering/elements/renderers/<name>_element_renderer.dart`,
    extending `ElementRenderer<X>`: `measure` returns a size, `emit` appends
-   primitives to the `FrameBuilder`. If the type needs a third-party encoder,
-   the vendor import belongs in one adapter file and nowhere else — the file
-   `AGENTS.md`'s third-party rule names is the worked example, and its guard,
+   primitives to the `FrameBuilder`. A third-party encoder falls under
+   `AGENTS.md`'s third-party rule; its guard,
    `test/architecture/barcode_dependency_isolation_test.dart`, covers your
    package only once you add it there.
 5. **Register the pair** — one `register<XElement>('<key>', const
@@ -37,29 +35,33 @@ is needed to make a type *work*; the steps are what make it a built-in.
    (`rendering/elements/built_in_element_renderers.dart`). Pass `X` explicitly;
    inference widens it and stops checking the pairing.
 
-Steps 3 and 5 are both mandatory. A type present in one list only still draws
-correctly on the canvas, so **a correct-looking canvas is not confirmation that
-you registered it**; run
-`test/architecture/built_in_element_registration_test.dart`, whose failure names
-the half you missed.
+Steps 3 and 5 are both mandatory and they fail differently —
+[page 06](../06-round-tripping.md), *Trap*, states both directions. The
+operational point: the half a correct-looking canvas **cannot** rule out is the
+codec registration. Run `test/architecture/built_in_element_registration_test.dart`,
+whose failure names the half you missed.
 
-6. **Designer** — a `DesignerToolType` variant *and* its `kDefaultElementSize`
+6. **Fill-time resolution**, if the type reads data — an arm in
+   `rendering/fill/element_resolver.dart` → `ElementResolver.resolve`. Without
+   one the element renders its authored value on every row and reports nothing.
+7. **Designer** — a `DesignerToolType` variant *and* its `kDefaultElementSize`
    entry in `designer/canvas/design_tunables.dart`; a `_ToolboxEntry` in
-   `designer/layout/designer_toolbox.dart`; `buildDefaultElement` in
-   `designer/controller/commands/create_element_command.dart`, the one arm the
-   compiler will demand; `elementGlyph` in `designer/element_glyph.dart`, whose
-   icon the toolbox repeats with nothing linking the two lists; `elementTypeLabel`
-   in `designer/l10n/element_type_label.dart`, plus its `elementType…` key in all
+   `designer/layout/designer_toolbox.dart`; the two arms the compiler will
+   demand, `buildDefaultElement`
+   (`designer/controller/commands/create_element_command.dart`) and `_typeKeyFor`
+   (`designer/controller/api/statics.dart`), the second assigning the id prefix;
+   `elementGlyph` in `designer/element_glyph.dart`, whose icon the toolbox
+   repeats with nothing linking the two lists; `elementTypeLabel` in
+   `designer/l10n/element_type_label.dart`, plus its `elementType…` key in all
    three ARB files ([recipe](add-localized-string.md)) — skip that and the type
    reads as the generic fallback wherever a label appears. Last, an inspector arm
    in `designer/layout/panels/properties/inspectors/element_inspector.dart` for
    whatever the type adds beyond position and size.
-7. **Export** the class from `lib/jet_print.dart` and add a `CHANGELOG.md` entry.
+8. **Export** the class from `lib/jet_print.dart` and add a `CHANGELOG.md` entry.
 
-Then sweep. If the type carries an enum of its own, `AGENTS.md`'s trap on
-exhaustive switches applies unchanged — run the grep it prescribes. And check
-`kDefaultElementSize`: a plain `const` map read with `!`, so a missing entry
-compiles and crashes the first time someone drags the tool.
+Then sweep. If the type carries an enum, `AGENTS.md`'s trap on exhaustive
+switches applies unchanged — run the grep it prescribes. And `kDefaultElementSize`
+is a `const` map read with `!`: a missing entry compiles and crashes on first drag.
 
 ## Verify
 
@@ -70,11 +72,9 @@ flutter test packages/jet_print/test/rendering/elements/persisted_extension_test
 ```
 
 Then the full gate from the repository root, as `AGENTS.md` specifies it. If a
-golden moves and you did not touch a golden fixture, stop and read
-[`update-goldens.md`](update-goldens.md).
+golden moves and you touched no golden fixture, read [`update-goldens.md`](update-goldens.md).
 
 ## Next
 
 [`add-expression-function.md`](add-expression-function.md) if the type needs a
-function to bind against; [page 06](../06-round-tripping.md) for what an older
-build does with your type.
+function to bind against; [page 06](../06-round-tripping.md) for what an older build does with it.

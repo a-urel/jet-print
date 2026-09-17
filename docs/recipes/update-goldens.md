@@ -19,14 +19,17 @@ all of it assumes the canonical host `AGENTS.md`'s golden trap names.
    Every failure names its golden. That is the set that moved — write it down
    before you touch anything.
 
-2. **Look at the images.** Each failure writes its PNGs into a `failures/`
-   directory beside the test (git-ignored, so they never reach a commit):
+2. **Look at the images**, but identify them from step 1's list, not from the
+   directory. A comparison writes its PNGs beside the test:
 
    ```bash
    find packages/jet_print/test -type d -name failures
    ```
 
-   Open `*_masterImage.png` and `*_testImage.png` side by side, and
+   That directory is untracked and never cleaned, and a comparison that
+   *passed* inside the comparator's tolerance writes to it too — its contents
+   prove nothing on their own. Match filenames and timestamps against step 1,
+   then open `*_masterImage.png` and `*_testImage.png` side by side, with
    `*_isolatedDiff.png` for where they part.
 
 3. **Name what moved, and why, in a sentence you would defend in review.** If
@@ -39,12 +42,11 @@ all of it assumes the canonical host `AGENTS.md`'s golden trap names.
    flutter test --update-goldens packages/jet_print/test/goldens/rendered_invoice_test.dart
    ```
 
-   Never run `--update-goldens` across a whole package. The flag rewrites the
-   PNG of **every** golden the run touches, passing ones included: re-encoding
-   alone changes the bytes, and the comparator tolerates a small pixel
-   difference besides (`test/support/golden_config_io.dart`). A broad update
-   therefore yields a diff in which a real move and a byte-level no-op look
-   identical, and step 1's list is what still tells them apart.
+   Never run `--update-goldens` across a whole package. It rewrites the PNG of
+   **every** golden the run touches, passing ones included — re-encoding alone
+   changes the bytes, and the comparator tolerates a small pixel difference
+   besides (`test/support/golden_config_io.dart`) — so a broad update yields a
+   diff in which a real move and a byte-level no-op look identical.
 
 5. **Read the diff back against that list.**
 
@@ -59,9 +61,7 @@ all of it assumes the canonical host `AGENTS.md`'s golden trap names.
    tagged set, and confirm green.
 
 7. **Put step 3's sentence in the commit body**, naming each golden file you
-   regenerated. `AGENTS.md`'s golden rule requires it, and there is a practical
-   reason it has to be prose: a reviewer's only other evidence is a binary diff,
-   which shows nothing at all.
+   regenerated, as `AGENTS.md`'s golden rule requires.
 
 ## Verify
 

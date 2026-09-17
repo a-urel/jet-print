@@ -57,9 +57,9 @@ Width is the other. If the string lands in a toolbar, a top bar or any fixed-wid
 chrome, overflow is locale-dependent — `AGENTS.md`'s localization trap names
 which locale to suspect. Confirm by pumping the designer at that locale, not by
 eyeballing the ARB. `test/designer/localization_de_test.dart` and its `_tr`
-sibling are where such a check belongs; note that each non-English locale has its
-own file for a reason spelled out there, so add to a file rather than merging
-them.
+sibling are where such a check belongs; each non-English locale has its own file
+for the reason `test/designer/localization_test.dart` spells out, so add to a
+file rather than merging them.
 
 ## Verify
 

@@ -18,9 +18,9 @@ inside `packages/jet_print`, not for a host.
    else discovers it.
 2. **Implement it** as a `JetExprFn` — `(List<JetValue> args, EvalContext ctx)`
    returning a `JetValue`. Check arity first, then each argument's type, and
-   **return a `JetError` rather than throwing**: the strict model treats a bad
-   call as a value, not an exception. You never have to check for an error
-   argument; the evaluator propagates one before it calls you.
+   **return a `JetError` rather than throwing** — [page 02](../02-binding-data.md)
+   draws that line. You never have to check for an error argument; the evaluator
+   propagates one before it calls you.
 3. **Register it** in that family's `register…Functions`, as
    `registry.register('NAME', _name)`. Built-in names are uppercase by
    convention and lookup is case-sensitive, so `Name` and `NAME` are two

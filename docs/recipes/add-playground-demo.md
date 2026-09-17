@@ -25,9 +25,11 @@ page is the sequence.
    record list built in `initState` carries the stable key, the icon and the
    body; the `labels` list built in `build` carries the caption. They are zipped
    **by index**, and nothing links them, so an entry added to one and not the
-   other silently renames every demo after it. The caption may come from the
-   app's own ARB set under `lib/l10n/` — the playground has its own `l10n.yaml`,
-   separate from the library's — or be a literal; both are already in use.
+   other silently renames every demo after it. The caption may be a literal, or
+   a key in the app's own ARB set under `lib/l10n/` — the playground has its own
+   `l10n.yaml`, so that is the same procedure as
+   [`add-localized-string.md`](add-localized-string.md) with `flutter gen-l10n`
+   run from `apps/jet_print_playground` instead. Both patterns are in use.
 4. **Assert `validate()` is empty.** In
    `test/<name>_definition_test.dart`, beside its neighbours:
 
