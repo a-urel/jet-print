@@ -40,6 +40,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the page. Guarded at the raster level on the web leg, because the golden suite
   is macOS-only and a CanvasKit-only disposal bug cannot surface there.
 
+- **One image repeated down a band decoded once per row.** The decode cache in
+  the on-screen paint backend was keyed by the whole drawing primitive, whose
+  identity includes position, so a single logo on 40 detail rows produced 40
+  separate decodes and 40 GPU textures instead of one. It is now keyed by the
+  image bytes. Each cache probe was also hashing the entire encoded image to
+  compare keys; that cost goes with it.
+
 - **Decoded image textures are released on every paint path, not just the design
   canvas.** `CanvasPainter.dispose()` — which frees the GPU texture behind each
   decoded image — was declared on the concrete painter only. The preview, the

@@ -184,7 +184,17 @@ bool _isWhiteBoxSeamTest(File file) {
       // white-box.
       path.endsWith('/test/designer/preview/lru_cache_test.dart') ||
       path.endsWith('/test/designer/preview/preview_sheet_test.dart') ||
-      path.endsWith('/test/designer/preview/page_thumbnail_rail_test.dart');
+      path.endsWith('/test/designer/preview/page_thumbnail_rail_test.dart') ||
+      // Painter texture disposal: every record path builds its `CanvasPainter`
+      // inside `recordPageFrame` and never hands it back, so the ONLY way to
+      // observe a leaked decoded texture is
+      // `CanvasPainter.debugLiveDecodedImages` — an unexported `src/` test
+      // seam. These tests pin that the seam's release actually reaches the
+      // preview, the thumbnail rail and the design canvas; the leak is
+      // CanvasKit-specific and invisible to any public-API assertion.
+      path.endsWith(
+          '/test/designer/preview/preview_texture_dispose_test.dart') ||
+      path.endsWith('/test/designer/canvas/frame_record_dispose_test.dart');
 }
 
 void main() {
