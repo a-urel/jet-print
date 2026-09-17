@@ -1,6 +1,6 @@
 # Testing
 
-406 test files: 377 in the library, 29 in the playground. They are the reason
+Roughly 420 test files: ~390 in the library, ~30 in the playground. The counts here are approximate on purpose — see AGENTS.md; an exact figure is wrong as soon as the next file lands and nothing fails when it does. They are the reason
 the rules in [`../AGENTS.md`](../AGENTS.md) are enforceable rather than
 aspirational.
 
@@ -20,12 +20,12 @@ root package, so the bare command passes while testing nothing.
 
 | Directory | Files | What it proves |
 |---|---:|---|
-| `test/architecture/` | 2 | Layer boundaries and third-party isolation, by scanning import directives. |
-| `test/domain/` | 55 | The model, `validate()`, and serialization round-trips including lossless unknown types. |
-| `test/expression/` | 30 | Lexer, parser, evaluator, functions, aggregates, formatting. |
-| `test/data/` | 14 | Data sources, schemas, cursors, nested collections. |
-| `test/rendering/` | 97 | Fill, layout, pagination, frames, painters, export, text metrics, crosstab. |
-| `test/designer/` | 169 | Controller commands, undo/redo, canvas interaction, panels, inspectors, and designer goldens. |
+| `test/architecture/` | 4 | Whole-repo invariants: layer boundaries, third-party isolation, built-in element registration parity, and single-site painter construction. Mostly by scanning import directives; the registration guard compares registries at runtime. |
+| `test/domain/` | ~55 | The model, `validate()`, and serialization round-trips including lossless unknown types. |
+| `test/expression/` | ~30 | Lexer, parser, evaluator, functions, aggregates, formatting. |
+| `test/data/` | ~15 | Data sources, schemas, cursors, nested collections. |
+| `test/rendering/` | ~100 | Fill, layout, pagination, frames, painters, export, text metrics, crosstab. |
+| `test/designer/` | ~175 | Controller commands, undo/redo, canvas interaction, panels, inspectors, and designer goldens. |
 | `test/print/` | 2 | The printer seam. |
 | `test/goldens/` | 4 | The cross-cutting visual and byte-pinned goldens. |
 | `test/web/` | 2 | Behavior that differs under CanvasKit. |
@@ -74,10 +74,28 @@ tagged `golden` in `dart_test.yaml` and run **only on macOS**, because host font
 rasterization and PDF font subsetting differ per OS. Other CI legs pass
 `--exclude-tags golden`.
 
+**A passing golden is not a byte-identical one.** `test/support/golden_config_io.dart`
+installs a tolerant comparator: it accepts any image whose `diffPercent` is at
+most `0.005`, i.e. half a percent of pixels may differ. That is deliberate — host
+rasterization wobbles — but it means "goldens green" says *no visible change*,
+not *no change*, and a claim of byte-identical output needs a different check.
+The one genuinely byte-pinned artifact is `invoice.pdf`, compared as bytes in
+`test/rendering/export/pdf_determinism_test.dart`.
+
+That tolerance has a consequence worth knowing before you trust a `failures/`
+directory: **a fully passing run can still write a complete set of failure
+images.** Reproduced by deleting every `failures/` directory, then running
+`test/rendering/export/png_export_test.dart` alone: "All tests passed!", and four
+`invoice_page1_2x_*` images appear. The comparison detects a real difference, the
+tolerance lets it pass, and the artifacts are written regardless — which call
+writes them is not established. So images in `failures/` do not mean a golden
+moved. Check the run's exit status, not the directory.
+
 Discipline, in order:
 
-1. A golden moved. **Look at the failure image first** —
-   `test/**/failures/` holds the diff, master and test images (git-ignored).
+1. A golden moved — confirmed by a failing run, not by files in `failures/`.
+   **Look at the failure image first** — `test/**/failures/` holds the diff,
+   master and test images (git-ignored).
 2. Name what changed and why. "The toolbar gained a button, so the top bar's
    measured width shifted" is an explanation. "Rendering changed slightly" is not.
 3. Only then regenerate, on macOS, and say in the change description which
