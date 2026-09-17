@@ -35,6 +35,19 @@ enum ResizeHandle {
 }
 
 /// Which edges a handle drag moves.
+///
+/// **Package-internal, and deliberately not exported from `jet_print.dart`.**
+/// This is public only because Dart has no package-private: [snapResize] in
+/// `controller/snapping.dart` is a separate library, and — along with
+/// [resizeRect] and [clampResizeToBand] below — is one of the only three
+/// callers. [ResizeHandle] itself is exported, because a consumer names a
+/// handle when calling `beginResize`; nothing asks a consumer to ask a handle
+/// which edges it moves. Adding these getters to the barrel would pin four
+/// names as public API with no caller to serve.
+///
+/// The omission is pinned by
+/// `test/architecture/public_extension_export_test.dart`, whose allowlist
+/// records the reasoning; change this decision there too.
 extension ResizeHandleEdges on ResizeHandle {
   /// Whether dragging this handle moves the left edge.
   bool get movesLeft =>
