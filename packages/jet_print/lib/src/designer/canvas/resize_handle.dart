@@ -35,6 +35,11 @@ enum ResizeHandle {
 }
 
 /// Which edges a handle drag moves.
+///
+/// Public for cross-library reach only: `controller/snapping.dart` is a
+/// different library and Dart has no package-private. It is therefore
+/// deliberately absent from the barrel's `export … show` list — no consumer
+/// calls these getters. See `AGENTS.md`, *Four god-files are split with `part`*.
 extension ResizeHandleEdges on ResizeHandle {
   /// Whether dragging this handle moves the left edge.
   bool get movesLeft =>
