@@ -20,7 +20,7 @@ root package, so the bare command passes while testing nothing.
 
 | Directory | Files | What it proves |
 |---|---:|---|
-| `test/architecture/` | 4 | Whole-repo invariants: layer boundaries, third-party isolation, built-in element registration parity, and single-site painter construction. Mostly by scanning import directives; the registration guard compares registries at runtime. |
+| `test/architecture/` | 7 | Whole-repo invariants, each named in [`../AGENTS.md`](../AGENTS.md)'s guard table, where the list is the point. Mostly by scanning source text; the registration guard compares registries at runtime. |
 | `test/domain/` | ~55 | The model, `validate()`, and serialization round-trips including lossless unknown types. |
 | `test/expression/` | ~30 | Lexer, parser, evaluator, functions, aggregates, formatting. |
 | `test/data/` | ~15 | Data sources, schemas, cursors, nested collections. |
@@ -31,7 +31,11 @@ root package, so the bare command passes while testing nothing.
 | `test/web/` | 2 | Behavior that differs under CanvasKit. |
 | `test/` (root) | 2 | `encapsulation_test.dart` and `public_api_test.dart`. |
 
-### The two architecture tests
+### The two import-scanning architecture tests
+
+`AGENTS.md`'s table names all seven. These two are worth reading side by side,
+because they scan for the same kind of violation by different means, and the
+difference decides what each will let through.
 
 `layer_boundaries_test.dart` reads every file under `domain/`, `data/` and
 `expression/`, extracts its `import`/`export` URIs, and fails if any reaches the
@@ -136,7 +140,8 @@ a test involves image decoding, remember it needs `runAsync`.
 
 ## CI
 
-`.github/workflows/ci.yml`, five legs:
+`.github/workflows/ci.yml`, six legs — three OS entries of one matrix job, then
+three jobs of their own:
 
 | Leg | Runs |
 |---|---|
@@ -144,7 +149,8 @@ a test involves image decoding, remember it needs `runAsync`.
 | Ubuntu | analyze, build, suite minus goldens |
 | Windows | analyze, build, suite minus goldens |
 | web (chrome) | build, suite minus goldens — **per package**, because the repo-root multi-package `--platform chrome` command fails on DDC workspace path resolution |
-| android / ios | build only |
+| android (apk) | build only |
+| ios (no codesign) | build only |
 
 Every leg builds the playground app, which is what proves the native plugin
 toolchain still links on that OS.
