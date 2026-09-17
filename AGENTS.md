@@ -166,12 +166,16 @@ Real ones, each of which has cost time before.
   the `_rebuild()` / `_notify()` proxies; and a *public* extension on a public
   class must be named in the barrel's `export ... show` list, or its methods are
   uncallable through `package:jet_print/jet_print.dart`.
-- **The two engine files are long on purpose.** `rendering/fill/report_filler.dart`
-  (946 lines) and `rendering/layout/report_layouter.dart` (763) are each one
-  algorithm — bind, walk, accumulate; measure, break, place — whose steps share
-  mutable state across the whole pass, which is why neither joined the four
-  designer files split above. Size alone is not a reason to split them; find a
-  seam first, or leave them.
+- **A long engine file may be long on purpose — apply the test, not a roster.**
+  `rendering/fill/report_filler.dart` (bind, walk, accumulate) and
+  `rendering/layout/report_layouter.dart` (measure, break, place) are each *one*
+  algorithm whose steps share mutable state across the whole pass, which is why
+  neither joined the four designer files split above: no seam can be cut without
+  threading that state through it by hand. **The test is shape, not size.** A
+  long file that is one such pass stays long, and its length wants a comment
+  saying so. A long file that is several things sitting together is not
+  protected by this rule and probably does have a seam. Either way, find the
+  seam before you split.
 - **A test that opens a file must not use a bare relative path.** The documented
   command runs from the workspace root, so `Directory.current` is the root, not
   the package — a path like `sample_data/x.json` then resolves to nothing. Locate
