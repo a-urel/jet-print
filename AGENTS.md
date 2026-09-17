@@ -136,7 +136,7 @@ name — and the list is the point, so a new guard belongs in it:
 | `barcode_dependency_isolation_test.dart` | `package:barcode` is reachable from one adapter |
 | `built_in_element_registration_test.dart` | the two built-in element lists cannot drift apart |
 | `canvas_painter_single_construction_test.dart` | one place builds a `CanvasPainter`, so one place releases it |
-| `cache_key_isolation_test.dart` | no cache keys on a `FramePrimitive`, whose value equality walks its bytes |
+| `cache_key_isolation_test.dart` | nothing caches on a frame primitive, whose `==` walks its lists |
 | `documented_claims_test.dart` | the structural claims `docs/` states, each naming the page to update |
 
 And two tests sit at the `test/` root rather than in a seam, because they police
@@ -192,10 +192,11 @@ Real ones, each of which has cost time before.
   the `_rebuild()` / `_notify()` proxies; and an extension carrying methods a
   *consumer* is meant to call must be named in the barrel's `export ... show`
   list, or those methods are uncallable through
-  `package:jet_print/jet_print.dart`. Scope matters: Dart has no
-  package-private, so an extension that is public only to be reachable from a
-  sibling library is correctly *absent* from that list — say which one it is
-  where it is written, because the two are indistinguishable from the keyword.
+  `package:jet_print/jet_print.dart`. `public` does not settle which kind an
+  extension is: one can be public solely for cross-library reach, and is then
+  correctly *absent* from that list — so say which kind it is where it is
+  written. Why the two are indistinguishable is `docs/10-designer-seams.md`,
+  *Four files split with `part`*.
 - **A long engine file may be long on purpose — apply the test, not a roster.**
   `rendering/fill/report_filler.dart` (bind, walk, accumulate) and
   `rendering/layout/report_layouter.dart` (measure, break, place) are each *one*
@@ -228,8 +229,8 @@ Take the row, not the front door.
 | Change page breaks, furniture, or page numbers | [`docs/03-pagination.md`](docs/03-pagination.md) |
 | Draw something new, or change how anything is painted or exported | [`docs/04-the-frame.md`](docs/04-the-frame.md), [`05`](docs/05-painting.md) |
 | Bump `schemaVersion`, write a migration, or handle an unknown node | [`docs/06-round-tripping.md`](docs/06-round-tripping.md) |
-| Add a designer edit, an undo step, a canvas gesture or an inspector | [`docs/07-designer-loop.md`](docs/07-designer-loop.md), [`08`](docs/08-the-canvas.md), [`09`](docs/09-the-panels.md) |
-| Use a designer scope, the fx editor, or the barrel's `show` list | [`docs/10-designer-seams.md`](docs/10-designer-seams.md) |
+| Add a designer edit, an undo step, a canvas gesture, an inspector or the fx dialog | [`docs/07-designer-loop.md`](docs/07-designer-loop.md), [`08`](docs/08-the-canvas.md), [`09`](docs/09-the-panels.md) |
+| Use a designer scope, a value template, or the barrel's `show` list | [`docs/10-designer-seams.md`](docs/10-designer-seams.md) |
 | **Add an element type** | [`docs/recipes/add-element-type.md`](docs/recipes/add-element-type.md) |
 | **Add an expression function** | [`docs/recipes/add-expression-function.md`](docs/recipes/add-expression-function.md) |
 | **Add a localized string** | [`docs/recipes/add-localized-string.md`](docs/recipes/add-localized-string.md) |
@@ -239,8 +240,7 @@ Take the row, not the front door.
 ## Going deeper
 
 - [`docs/README.md`](docs/README.md) — the wiki's index, and the conventions its
-  pages are written to. The table above is the shortcut; this is the map, and the
-  place to read before you write a page rather than read one.
+  pages are written to: read it before you write a page rather than read one.
 - [`docs/testing.md`](docs/testing.md) — the test taxonomy, golden discipline,
   tags, and the per-platform CI legs.
 - [`docs/workflow.md`](docs/workflow.md) — how a change moves from idea to merge.
