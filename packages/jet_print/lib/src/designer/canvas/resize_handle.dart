@@ -47,7 +47,8 @@ enum ResizeHandle {
 ///
 /// The omission is pinned by
 /// `test/architecture/public_extension_export_test.dart`, whose allowlist
-/// records the reasoning; change this decision there too.
+/// records the reasoning; change this decision there too. The rule it enforces
+/// is `AGENTS.md`, *Four god-files are split with `part` + `extension`*.
 extension ResizeHandleEdges on ResizeHandle {
   /// Whether dragging this handle moves the left edge.
   bool get movesLeft =>
