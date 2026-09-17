@@ -93,14 +93,14 @@ tagged `golden` in `dart_test.yaml` and run **only on macOS**, because host font
 rasterization and PDF font subsetting differ per OS. Other CI legs pass
 `--exclude-tags golden`.
 
-Discipline, in order:
-
-1. A golden moved. **Look at the failure image first** —
-   `test/**/failures/` holds the diff, master and test images (git-ignored).
-2. Name what changed and why. "The toolbar gained a button, so the top bar's
-   measured width shifted" is an explanation. "Rendering changed slightly" is not.
-3. Only then regenerate, on macOS, and say in the change description which
-   goldens moved.
+The comparator is not exact. `test/flutter_test_config.dart` replaces the
+framework's with `_TolerantGoldenComparator` from
+`test/support/golden_config_io.dart`, which passes any comparison whose
+differing-pixel fraction is at or below 0.005; the config file's own header says
+why, and is the place to read it. So a passing golden means *within tolerance*,
+not byte-identical. The threshold sits far below a real visual regression, which
+is orders of magnitude larger — but it is not zero, and nothing downstream of a
+green run should be read as proof that the bytes matched.
 
 A golden that shifts for a reason you cannot articulate is an undiscovered bug,
 not noise. Regenerating to get green is how a WYSIWYG tool starts lying.
@@ -109,6 +109,10 @@ Two recurring causes worth recognizing: adding or removing chrome widgets drifts
 the Skia glyph cache and can move canvas goldens that have nothing to do with
 your change; and non-English locales are wider — German binds toolbar width, so
 a locale test needs its own isolate per locale.
+
+The order to work in when one moves — including why the list of goldens to
+regenerate comes from the test output and not from the `failures/` directory —
+is [`recipes/update-goldens.md`](recipes/update-goldens.md).
 
 ## Support helpers
 
