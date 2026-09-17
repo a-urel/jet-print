@@ -59,6 +59,15 @@ bool _isWhiteBoxSeamTest(File file) {
       // other way. White-box by necessity.
       path.endsWith(
           '/test/architecture/built_in_element_registration_test.dart') ||
+      // fx palette / function-registry parity: same shape as the element
+      // registration guard above. The designer's `expression_function_catalog`
+      // and the expression seam's `registerBuiltInFunctions` are both
+      // unexported `src/` modules, and pinning them against each other means
+      // BUILDING a registry and reading its keys — a source-text scan could be
+      // fooled by a cascade, a loop, or the catalog's computed aggregate
+      // entries. White-box by necessity.
+      path.endsWith('/test/architecture/'
+          'expression_function_catalog_registration_test.dart') ||
       // Web-platform fidelity tests (e4): exercise unexported `src/` types
       // (e.g. `jetStringify` in the expression engine) to verify web/VM parity;
       // they are white-box seam tests, not external consumers.

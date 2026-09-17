@@ -33,18 +33,12 @@
 // 3.97x and fails this test.
 //
 // The ratio alone would have a hole. A regression that inflates per-element work
-// by a constant factor scales BOTH sizes equally, so the ratio cancels it and
-// stays at 2.0 — verified on the sibling export guard, where an injected
-// duplicate emission left its ratio at exactly 2.0 and was caught only by an
-// absolute anchor. So there is an anchor here too, normalized per element per
-// frame: the ratio catches super-linear growth, the anchor catches a uniformly
-// fatter constant, and the two failure classes are disjoint.
-//
-// The ratio alone would have a hole. A regression that inflates per-element work
 // by a constant factor scales BOTH sizes equally, so the ratio cancels it —
-// measured, not assumed: doubling the selection's element lookups moved the
-// ratio from 1.79x DOWN to 1.65x, further from the ceiling rather than toward
-// it. So there is an absolute anchor too, normalized per element per frame. The
+// measured, not assumed, on both guards. Here, doubling the selection's element
+// lookups moved the ratio from 1.79x DOWN to 1.65x, further from the ceiling
+// rather than toward it. On the sibling export guard, an injected duplicate
+// emission left its ratio at exactly 2.0 and was caught only by the absolute
+// anchor. So there is an anchor here too, normalized per element per frame: the
 // ratio catches super-linear growth, the anchor catches a uniformly fatter
 // constant, and the two failure classes are disjoint.
 //
@@ -54,6 +48,15 @@
 // and passes. Catching that would need the anchor at ~24, leaving 14% headroom
 // over baseline — which would make this test the next thing to fail for reasons
 // nobody intended. The anchor is deliberately the coarse half of the pair.
+//
+// Both numbers survive the web. Every assertion here is double arithmetic, and
+// JavaScript's single number type has already produced three bugs in this repo,
+// so the counts were checked under CanvasKit as well as the VM: `flutter test
+// --platform chrome` from the package directory yields 50,302 and 90,102, and a
+// per-element-per-frame figure of 20.96 — identical to the VM, not merely close
+// enough to pass. The count is a tally of comparisons rather than a measured
+// quantity, so it carries no representation to differ over. That is a property
+// of counting, and one more reason it beat the clock here.
 //
 // What this guard does NOT see: a regression that walks some other per-element
 // structure — a rect map, a widget list — without touching the elements

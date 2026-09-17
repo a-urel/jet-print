@@ -3,8 +3,11 @@
 /// snippets, caret positions, and signature labels live here. Aggregate names
 /// stay single-sourced via [aggregateCalculationFor].
 ///
-/// New engine function → add an entry here (a catalog test asserts the offered
-/// names all compile as calls).
+/// New engine function → add an entry here: an architecture test pins the
+/// non-aggregate entries against the evaluator's registry, so a palette name the
+/// engine cannot dispatch — or an engine function missing from the palette —
+/// fails the suite. A function meant to stay unpaletted declares itself in that
+/// test's `_deliberatelyUnpaletted` instead.
 library;
 
 import '../../expression/aggregate/aggregate_functions.dart';

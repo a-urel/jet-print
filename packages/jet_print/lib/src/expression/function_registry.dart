@@ -36,4 +36,12 @@ class JetFunctionRegistry {
 
   /// Returns the function registered under [name], or `null` if none.
   JetExprFn? lookup(String name) => _functions[name];
+
+  /// The names currently registered, in registration order.
+  ///
+  /// Introspection only — dispatch goes through [lookup]. It exists so the
+  /// designer's fx palette can be pinned against the names the evaluator can
+  /// actually dispatch (see
+  /// `test/architecture/expression_function_catalog_registration_test.dart`).
+  Iterable<String> get registeredNames => _functions.keys;
 }

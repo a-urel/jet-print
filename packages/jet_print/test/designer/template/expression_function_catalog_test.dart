@@ -1,7 +1,15 @@
 /// Tests for the designer's expression-function catalog (032): the metadata that
 /// drives the fx editor's function palette. Verifies grouping, snippet shape,
-/// caret placement, and — critically — that every catalog name maps to a
-/// function the engine actually evaluates and parses.
+/// caret placement, that the aggregate group is the inline-aggregate
+/// vocabulary, that a spot-check of built-in names is offered, and that every
+/// offered name PARSES as a call.
+///
+/// Parses, and no more: the parser holds no function registry, so it builds a
+/// `CallExpr` from any well-formed identifier — `{NOTAFUNCTION([qty])}` compiles
+/// here exactly as `{UPPER([qty])}` does. Whether the engine can actually
+/// EVALUATE an offered name is a different contract, and it is pinned by
+/// `test/architecture/expression_function_catalog_registration_test.dart`,
+/// which compares the catalog against the evaluator's registry at runtime.
 library;
 
 import 'package:flutter_test/flutter_test.dart';
