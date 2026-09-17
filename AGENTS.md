@@ -137,6 +137,7 @@ name — and the list is the point, so a new guard belongs in it:
 | `built_in_element_registration_test.dart` | the two built-in element lists cannot drift apart |
 | `canvas_painter_single_construction_test.dart` | one place builds a `CanvasPainter`, so one place releases it |
 | `cache_key_isolation_test.dart` | nothing caches on a frame primitive, whose `==` walks its lists |
+| `public_extension_export_test.dart` | a public extension on an exported type is exported, or allowlisted with a reason |
 | `documented_claims_test.dart` | the structural claims `docs/` states, each naming the page to update |
 
 And two tests sit at the `test/` root rather than in a seam, because they police
