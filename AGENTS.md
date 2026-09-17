@@ -128,10 +128,11 @@ Real ones, each of which has cost time before.
 - **`flutter test` at the root tests nothing.** Always name the member packages.
 - **Goldens are macOS-only.** They carry the `golden` tag (see `dart_test.yaml`);
   other CI legs run `--exclude-tags golden`. Host font rasterization and PDF font
-  subsetting differ per OS, so a golden regenerated elsewhere is wrong. CI's macOS
-  leg runs `dart format --set-exit-if-changed` before anything else and stops
-  there on failure, so a format regression silently skips the goldens too —
-  don't read a green golden suite as confirmation that formatting passed.
+  subsetting differ per OS, so a golden regenerated elsewhere is wrong. That leg
+  is one job — format, analyze, build, test, in order — so an earlier step
+  failing takes the job red before the goldens run at all. **A red macOS leg is
+  not evidence about the goldens**: they may never have executed. Fix the earlier
+  step and read the leg again; only a green one means they ran.
 - **A new enum variant hits several exhaustive switches.** Adding a `ShapeKind`,
   for instance, means the geometry switch in `rendering/elements/shape_path.dart`
   *and* the designer's thumbnail painter *and* the inspector gallery. Dart will
