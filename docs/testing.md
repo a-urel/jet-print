@@ -20,7 +20,7 @@ root package, so the bare command passes while testing nothing.
 
 | Directory | Files | What it proves |
 |---|---:|---|
-| `test/architecture/` | 6 | Whole-repo invariants: layer boundaries, third-party isolation, built-in element registration parity, single-site painter construction, no cache keyed on a frame primitive, and public extensions exported or deliberately not. Mostly by scanning source; the registration guard compares registries at runtime. AGENTS.md lists each guard against its invariant. |
+| `test/architecture/` | 8 | Whole-repo invariants: layer boundaries, third-party isolation, built-in element registration parity, single-site painter construction, no cache keyed on a frame primitive, public extensions exported or deliberately not, a failing golden actually failing its test, and the fx palette matching the engine's function table. Mostly by scanning source; the registration guard compares registries at runtime. AGENTS.md lists each guard against its invariant. |
 | `test/domain/` | ~55 | The model, `validate()`, and serialization round-trips including lossless unknown types. |
 | `test/expression/` | ~30 | Lexer, parser, evaluator, functions, aggregates, formatting. |
 | `test/data/` | ~15 | Data sources, schemas, cursors, nested collections. |
@@ -82,14 +82,24 @@ not *no change*, and a claim of byte-identical output needs a different check.
 The one genuinely byte-pinned artifact is `invoice.pdf`, compared as bytes in
 `test/rendering/export/pdf_determinism_test.dart`.
 
-That tolerance has a consequence worth knowing before you trust a `failures/`
-directory: **a fully passing run can still write a complete set of failure
-images.** Reproduced by deleting every `failures/` directory, then running
-`test/rendering/export/png_export_test.dart` alone: "All tests passed!", and four
-`invoice_page1_2x_*` images appear. The comparison detects a real difference, the
-tolerance lets it pass, and the artifacts are written regardless — which call
-writes them is not established. So images in `failures/` do not mean a golden
-moved. Check the run's exit status, not the directory.
+**Images in `failures/` after a passing run mean a golden FAILED and the failure
+was swallowed.** An earlier version of this section blamed the tolerance for
+that, and was wrong — the tolerant branch returns before any failure output is
+generated. The real cause, pinned by
+`test/architecture/golden_failure_surfaces_test.dart`: `matchesGoldenFile` routes
+through `TestWidgetsFlutterBinding.runAsync`, whose `catchError` reports the
+exception to `FlutterError` and completes the future with `null`, and
+`AsyncMatcher` reads `null` as "matched". Inside `testWidgets` the reported error
+still fails the test, because `runTest` installs a collector on
+`FlutterError.onError`. Inside a plain `test()` nothing collects it.
+
+So a golden assertion in a plain `test()` can mismatch, write its four
+`failures/` images, and report "All tests passed!". Reproduce it by deleting
+every `failures/` directory and running
+`test/rendering/export/png_export_test.dart` alone;
+`test/goldens/label_sheet_test.dart`, which uses `testWidgets`, writes nothing.
+**Treat images in `failures/` as a failing golden that did not fail its test, and
+put golden assertions inside `testWidgets`.**
 
 Discipline, in order:
 

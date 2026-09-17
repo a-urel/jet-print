@@ -38,6 +38,9 @@
 // does not work here. At ~40ms the measurement is dominated by JIT warmup:
 // whichever size runs first is the slower one regardless of size, so the ratio
 // is noise and frequently inverted. Counting survives that; timing does not.
+// Web is not a concern here: the `@TestOn('vm')` below keeps this off the chrome
+// leg, so JavaScript's single number type never reaches these assertions. The
+// sibling designer guard does run there, and states its own chrome result.
 @TestOn('vm')
 library;
 
