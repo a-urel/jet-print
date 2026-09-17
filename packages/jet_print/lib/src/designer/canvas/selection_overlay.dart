@@ -152,9 +152,15 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
       ),
     ));
 
-    // Geometry comes straight from the (display) layout, which already bakes any
-    // in-progress move / resize / band-resize through the single `clampToBand`
-    // authority — so the chrome can never exceed the band.
+    // Geometry comes straight from the (display) layout, which already bakes
+    // any in-progress drag, so the chrome tracks the element without doing its
+    // own math. For an element move or resize that geometry is already clamped
+    // — by `_clampedMoveTargets` and `clampResizeToBand` respectively, NOT by a
+    // single `clampToBand` authority (see `controller/element_bounds.dart`) —
+    // so the chrome stays inside the band. A BAND resize is different:
+    // `SetBandHeightCommand` changes only the band's height and never re-clamps
+    // its elements, so shrinking a band can put an element, and this chrome
+    // with it, past the band's new bottom.
     JetRect? rectFor(String id) => widget.layout.elementRect(id);
 
     for (final String id in selection.ids) {

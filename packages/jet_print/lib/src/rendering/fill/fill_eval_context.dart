@@ -1,8 +1,13 @@
 /// The Fill-stage [EvalContext]. Wraps a data row, params, and the
-/// calculator's variable values, and records two content signals into shared
-/// sinks: a missing-field **warning** (a `$F{}` to a name the row's schema does
-/// not declare; deduped via [warnedFields]) and a reserved **page-scoped**
-/// variable reference (into [pageRefs], for the caller to reject, §2/§5).
+/// calculator's variable values, and records two content signals: a
+/// missing-field **warning** (a `$F{}` to a name the row's schema does not
+/// declare) and a reserved **page-scoped** variable reference (into
+/// [pageRefs], for the caller to reject, §2/§5).
+///
+/// The missing-field warning goes to the [DiagnosticBudget] when one is
+/// supplied — row-tagged, deduped within the row, and capped — which is every
+/// real fill. The [warnedFields] once-only sink is the budget-less fallback and
+/// no production path reaches it; see `diagnostic_budget.dart`.
 library;
 
 import '../../data/data_row.dart';
@@ -18,11 +23,12 @@ class FillEvalContext implements EvalContext {
   /// Creates a context over an optional [row], [params], and [variables].
   ///
   /// [warnedFields] and [pageRefs] are shared sinks the caller owns and reads
-  /// back after the fill: resolving a missing field adds its name to
-  /// [warnedFields] (deduping the warning), and resolving a reserved page-scoped
-  /// variable adds its name to [pageRefs]. Both mutations happen as a side effect
-  /// of [resolveField] and [resolveVariable] respectively. [elementId] tags any
-  /// missing-field warning with its originating element.
+  /// back after the fill. Resolving a reserved page-scoped variable adds its
+  /// name to [pageRefs]. Resolving a missing field records through [budget] when
+  /// one is passed, and only otherwise adds the name to [warnedFields] to dedupe
+  /// a single warning. Both mutations happen as a side effect of [resolveField]
+  /// and [resolveVariable] respectively. [elementId] tags the missing-field
+  /// warning with its originating element on either path.
   FillEvalContext({
     DataRow? row,
     Map<String, Object?> params = const <String, Object?>{},

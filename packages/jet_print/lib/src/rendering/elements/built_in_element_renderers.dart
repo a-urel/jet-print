@@ -1,7 +1,12 @@
 /// Registers the built-in element types (codec + renderer) shipped with the
 /// library, through the single paired `ElementTypeRegistry.register` call so each
-/// built-in flows the same path a custom type does. Consumers add
-/// their own types with further `register(...)` calls.
+/// built-in flows the same path an added type does.
+///
+/// A further `register(...)` call adds a type — but only from inside the
+/// package: `ElementTypeRegistry` is not exported and the render chain builds
+/// its own, so this is open/closed for library code and white-box tests, not
+/// for a host. Same scope as `domain/serialization/built_in_element_codecs.dart`,
+/// which this list is pinned against.
 library;
 
 import '../../domain/elements/barcode_element.dart';

@@ -9,9 +9,20 @@
 /// total emitted at [kMaxPerRowDataDiagnostics] — emitting a single trailing
 /// summary at [finish] when any were suppressed.
 ///
-/// Only per-row DATA faults route through here; structural/definition
-/// diagnostics (a field/collection absent from the schema, a parse error) stay
-/// deduped-once on their existing paths.
+/// What actually routes through here, as of the current call sites:
+/// a `$F{}` to a **field** the row's schema does not declare
+/// (`fill_eval_context.dart` → `resolveField`, key `field:<name>`), a non-row
+/// entry inside a collection, and every non-numeric value skipped by an
+/// aggregate. A missing field is structural, not per-row — but at scale it
+/// recurs on every row, so it is budgeted and row-tagged like the rest. No
+/// production path reaches the once-only `warnedFields` fallback: every fill
+/// builds a budget (`report_filler.dart`) and passes it to each context, and
+/// the one budget-less construction — `scanPageScoped`'s row-less probe —
+/// returns from `resolveField` before it. Tests are what keep it exercised.
+///
+/// Still deduped-once on their own paths: a **collection** field absent from
+/// the schema or not resolving to a list (`report_filler.dart` →
+/// `childRowsOf`, via `warnedCollections`), and definition/parse diagnostics.
 library;
 
 import 'report_diagnostics.dart';

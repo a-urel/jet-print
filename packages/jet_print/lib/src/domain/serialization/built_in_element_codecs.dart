@@ -9,8 +9,15 @@ import 'shape_element_codec.dart';
 import 'text_element_codec.dart';
 
 /// Registers all element types shipped with the library (`text`, `shape`,
-/// `image`, `barcode`, `chart`) into [registry]. Consumers add their own types
-/// with further `registry.register(...)` calls (open/closed).
+/// `image`, `barcode`, `chart`) into [registry].
+///
+/// Adding a type means a further `registry.register(...)` call — but every
+/// registry the library actually persists through is private and pre-wired:
+/// `JetReportFormat._registry` is a never-mutated `static final`, and
+/// `element_clone.dart` holds its own private top-level one. Neither
+/// [ElementCodecRegistry] nor those instances are exported, so this is
+/// open/closed for the library's own code and its white-box tests, not for a
+/// host.
 ///
 /// This list is codec-only: it is what the **persistence** paths use
 /// (`JetReportFormat`, and the designer's `cloneElement` for duplicate/paste),

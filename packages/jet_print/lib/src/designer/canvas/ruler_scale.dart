@@ -7,9 +7,10 @@
 /// here: alignment exactness, an adaptive "nice-step" labelled interval so labels
 /// never crowd or vanish, and a subdivision floor.
 ///
-/// It imports **only `dart:math`** — no Flutter, no domain, no tunables — so it
-/// is unit-testable without a widget, and carries no view/render
-/// coupling (the ladder/divisions/floor are injected by the caller).
+/// It has **no imports at all** — no Flutter, no domain, no tunables, not even
+/// `dart:math` — so it is unit-testable without a widget, and carries no
+/// view/render coupling (the ladder/divisions/floor are injected by the
+/// caller).
 library;
 
 /// One tick on a ruler strip.

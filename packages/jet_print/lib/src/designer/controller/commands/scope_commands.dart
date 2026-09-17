@@ -75,18 +75,16 @@ class SetScopeCollectionCommand extends EditCommand {
   DesignerDocument apply(DesignerDocument before) => before.withDefinition(
         mapScopes(
           before.definition,
+          // The thunk is what makes `copyWith` usable here: `() => null`
+          // CLEARS the slot, where a bare `null` would mean "leave it alone"
+          // (`domain/copy_support.dart`). Rebuilding the scope field-by-field
+          // also works, and is what this did — but it silently drops any field
+          // added to `DetailScope` later, which is why `footer` and `totals`
+          // had to be reinstated here by hand once before. Pinned by
+          // band_walker_test.dart's "rebinding changes collectionField and
+          // NOTHING else".
           (DetailScope s) => s.id == scopeId
-              // Build directly (not copyWith) so a null [collectionField] clears it.
-              ? DetailScope(
-                  id: s.id,
-                  collectionField: collectionField,
-                  groups: s.groups,
-                  children: s.children,
-                  // Rebinding (or clearing) the collection must not drop the
-                  // scope's footer or published totals.
-                  footer: s.footer,
-                  totals: s.totals,
-                )
+              ? s.copyWith(collectionField: () => collectionField)
               : s,
         ),
       );

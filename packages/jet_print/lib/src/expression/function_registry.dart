@@ -1,4 +1,14 @@
-/// The expression function registry — engine extension point #4.
+/// The expression function registry — the evaluator's name→function table.
+///
+/// **Internal seam, not a host extension point.** [JetFunctionRegistry] is not
+/// exported from `lib/jet_print.dart`, and no public entry point accepts one:
+/// `JetReportEngine.renderDefinition` takes no registry and `RenderOptions` has
+/// no field for one, so the public render path always gets the defaults
+/// `ReportFiller`/`ReportLayouter` build from `registerBuiltInFunctions`. Both
+/// constructors do take an optional registry, but only package-internal callers
+/// and tests can pass one; a host cannot register a custom function today. Opening this up is a public-API change — export the class
+/// *and* thread a host registry through `RenderOptions` into both the filler and
+/// the layouter — not a wording change here.
 library;
 
 import 'eval_context.dart';
@@ -14,9 +24,10 @@ typedef JetExprFn = JetValue Function(List<JetValue> args, EvalContext context);
 
 /// A mutable name→function table consulted by the evaluator for call nodes.
 ///
-/// This is the public extension point: consumers `register` custom functions
-/// with zero core edits. Built-in names are UPPERCASE by convention and lookup
-/// is case-sensitive.
+/// The library's own registration seam: `registerBuiltInFunctions` and the
+/// per-family `register*Functions` helpers fill one at fill/layout setup.
+/// Built-in names are UPPERCASE by convention and lookup is case-sensitive.
+/// It is not reachable from outside the package — see the library dartdoc.
 class JetFunctionRegistry {
   final Map<String, JetExprFn> _functions = <String, JetExprFn>{};
 

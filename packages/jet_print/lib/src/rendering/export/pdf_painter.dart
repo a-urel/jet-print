@@ -142,8 +142,17 @@ class PdfPainter implements ReportPainter {
           JetTextAlign.left || JetTextAlign.justify => p.bounds.x,
         };
         // line.baseline is measured from the BLOCK top (= top + ascent), so
-        // the page-space baseline is bounds.y + line.baseline — the same
-        // glyph baseline the canvas backend produces. Never re-wrap.
+        // the page-space baseline is bounds.y + line.baseline. Never re-wrap.
+        //
+        // NOT the same instruction the canvas backend issues: CanvasPainter
+        // places the ui.Paragraph's TOP at bounds.y + line.top and lets Skia
+        // drop the first baseline by ITS own ascent. The two land on the same
+        // glyph baseline only while Skia's ascent for the resolved font equals
+        // the engine's, which is `hhea.ascender` scaled by fontSize/unitsPerEm
+        // (`ttf/ttf_metrics.dart`). Nothing pins that — Skia may prefer OS/2 —
+        // so this is a shared *measurement*, not a shared placement rule. The
+        // underline below does share one: both backends stroke from
+        // line.baseline via `underlineFor`.
         g.drawString(
           font,
           p.style.fontSize,

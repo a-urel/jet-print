@@ -183,7 +183,7 @@ void main() {
     final ui.Image image = await _decodeUi(png);
     await expectLater(
       image,
-      matchesGoldenFile('../goldens/chart_pdf_page1_2x.png'),
+      matchesGoldenFile('../goldens/chart_page1_2x.png'),
     );
   }, tags: 'golden');
 }
