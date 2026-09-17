@@ -76,7 +76,13 @@ class SetScopeCollectionCommand extends EditCommand {
         mapScopes(
           before.definition,
           (DetailScope s) => s.id == scopeId
-              // Build directly (not copyWith) so a null [collectionField] clears it.
+              // Built field-by-field. NOT because copyWith cannot clear a
+              // nullable slot — since `copy_support.dart`'s thunks it can:
+              // `s.copyWith(collectionField: () => collectionField)` would do.
+              // Kept explicit so the six fields are visible at the one place
+              // that rebinds a scope; the cost is that a NEW DetailScope field
+              // must be added here too or it is silently dropped (the
+              // "rebuilders drop fields silently" trap in AGENTS.md).
               ? DetailScope(
                   id: s.id,
                   collectionField: collectionField,
