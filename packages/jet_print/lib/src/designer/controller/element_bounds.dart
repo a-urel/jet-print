@@ -1,9 +1,26 @@
 /// Shared geometry helpers for editing element bounds within a band.
 ///
 /// Element bounds are **band-relative** (origin at the band's content top-left),
-/// so every geometry command — create / move / resize / set-geometry — clamps
-/// through the one [clampToBand] function here to guarantee containment:
-/// no element is ever committed off its band or off the page.
+/// and no element is ever committed off its band or off the page. Three clamps
+/// share that guarantee — [clampToBand] is not the only one, and is not the one
+/// a drag goes through:
+///
+///  * [clampToBand] — MOVE-style: keeps the size and slides the rect back
+///    in-bounds. Used by the committed/numeric paths: create
+///    (`create_element_command.dart`), paste (`_buildCopies`), set-geometry
+///    (`api/element_edit.dart`), `resizeTo`, and `_commitBounds`.
+///  * `clampResizeToBand` (`designer/canvas/resize_handle.dart`) — EDGE-style:
+///    pins only the edges the dragged handle moves. An interactive resize
+///    clamps its preview through this and commits that preview verbatim, so it
+///    never reaches [clampToBand].
+///  * `_clampedMoveTargets` (`jet_report_designer_controller.dart`) — clamps the
+///    move DELTA against the intersected in-band range of the whole selection,
+///    so a multi-selection stops as one unit instead of piling onto the border.
+///    Both the live preview and the committed move go through it; neither
+///    reaches [clampToBand].
+///
+/// The move/resize split is pinned by
+/// `test/designer/controller/clamp_semantics_test.dart`.
 library;
 
 import '../../domain/band.dart';

@@ -247,9 +247,10 @@ class DesignTimeLayout {
 
   /// The stable id of the crosstab whose block contains [point], or null.
   ///
-  /// Unlike [bandIdAt] this does NOT snap to the nearest block: a crosstab is
-  /// a flow node with no drop semantics, so a point outside every block simply
-  /// is not on one, and the caller falls back to the band underneath.
+  /// Like [bandIdAt] — and unlike [bandIdNear], which is the snapping lookup —
+  /// this does NOT snap to the nearest block: a crosstab is a flow node with no
+  /// drop semantics, so a point outside every block simply is not on one, and
+  /// the caller falls back to the band underneath.
   String? crosstabIdAt(JetOffset point) {
     for (final PlacedCrosstab c in crosstabs) {
       final JetRect r = c.rect;

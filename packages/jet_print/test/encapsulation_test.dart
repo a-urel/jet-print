@@ -97,6 +97,18 @@ bool _isWhiteBoxSeamTest(File file) {
       // way — white-box.
       path.endsWith(
           '/test/designer/canvas/crosstab_placeholder_height_test.dart') ||
+      // Band-lookup semantics: `DesignTimeLayout.bandIdAt` (click selection, no
+      // snap) and `bandIdNear` (drops, always snaps) are unexported `src/`
+      // geometry on the same class the two tests above already exercise
+      // white-box. Four comments got the pair backwards with nothing to catch
+      // them, so the distinction is pinned behaviourally here.
+      path.endsWith('/test/designer/canvas/band_lookup_semantics_test.dart') ||
+      // Clamp semantics: `clampToBand` (move-style, in `element_bounds.dart`)
+      // and `clampResizeToBand` (edge-style, in `resize_handle.dart`) are both
+      // unexported `src/` pure functions — the barrel exports `ResizeHandle`
+      // but neither clamp. Two comments called `clampToBand` the single clamp
+      // authority; this pins that they answer the same rect differently.
+      path.endsWith('/test/designer/controller/clamp_semantics_test.dart') ||
       // Paper & margin presets (018): the standard-size / margin recognition
       // helpers are unexported `src/` pure functions (the `format_presets.dart`
       // precedent — preset identity is derived for display, never persisted);

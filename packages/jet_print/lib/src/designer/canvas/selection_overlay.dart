@@ -152,9 +152,13 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
       ),
     ));
 
-    // Geometry comes straight from the (display) layout, which already bakes any
-    // in-progress move / resize / band-resize through the single `clampToBand`
-    // authority — so the chrome can never exceed the band.
+    // Geometry comes straight from the (display) layout, which already bakes
+    // any in-progress move / resize / band-resize — each already clamped by
+    // whichever of the three clamps owns it (`_clampedMoveTargets` for a move,
+    // `clampResizeToBand` for a resize, `clampToBand` only on the
+    // committed/numeric paths; see `controller/element_bounds.dart`). Every one
+    // of them guarantees containment, so the chrome can never exceed the band —
+    // but there is no single `clampToBand` authority to point at.
     JetRect? rectFor(String id) => widget.layout.elementRect(id);
 
     for (final String id in selection.ids) {

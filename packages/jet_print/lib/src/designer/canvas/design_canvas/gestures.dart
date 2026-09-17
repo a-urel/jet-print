@@ -141,8 +141,12 @@ extension _CanvasGestures on _DesignCanvasState {
       return false;
     }
     // A crosstab's block is tried first: it is a flow node that no band
-    // overlaps, and bandIdAt SNAPS to the nearest band, so asking it first
-    // would swallow every tap on a crosstab.
+    // overlaps, so a tap inside one must resolve to the crosstab, not to
+    // whatever the band lookup says. (`bandIdAt` does NOT snap — `bandIdNear`,
+    // used by the drop handlers, is the snapping one — so this ordering is
+    // belt-and-braces rather than the only thing standing between a crosstab
+    // tap and a band selection. Pinned by
+    // `test/designer/canvas/band_lookup_semantics_test.dart`.)
     final String? crosstab = layout.crosstabIdAt(page);
     if (crosstab != null) {
       controller.selectCrosstab(crosstab);
