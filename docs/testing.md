@@ -108,9 +108,22 @@ byte-pinned artifact is `invoice.pdf`, compared as bytes in
 `test/rendering/export/pdf_determinism_test.dart`, and it is the only place a
 byte claim is earned.
 
-A `failures/` directory can hold images from a run that reported success, so its
-contents are not evidence that a golden moved. Take the list of goldens to
-regenerate from the test output instead; the procedure, and the reason, are in
+**And a pin fails only if the comparator throws a `TestFailure`.**
+`matchesGoldenFile` compares inside `TestWidgetsFlutterBinding.runAsync`, which
+turns any other exception into a reported `FlutterError` and completes with
+`null` — which `AsyncMatcher` reads as a match. Inside `testWidgets` that reported
+error still fails the test; inside a plain `test()` nothing collects it. Seven
+pins compared a raw `ui.Image` from a plain `test()` and could not fail at all
+until `89752c4`; `test/architecture/golden_failure_surfaces_test.dart` is what
+keeps this true now. Six of the seven were merely mute — their goldens were
+current. The seventh had pinned pre-bold output for three months, while a
+`testWidgets` pin of the same fixture showed the title bold the whole time. **A
+golden that cannot fail does not merely miss regressions; it becomes a record of
+what the code used to do, and diverges from its siblings unobserved.**
+
+A `failures/` directory is untracked and nothing cleans it, so its contents can
+outlive the run that wrote them — it is not evidence that a golden moved. Take
+the list from the test output; the procedure is in
 [`recipes/update-goldens.md`](recipes/update-goldens.md).
 
 A golden that shifts for a reason you cannot articulate is an undiscovered bug,

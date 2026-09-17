@@ -26,11 +26,11 @@ all of it assumes the canonical host `AGENTS.md`'s golden trap names.
    find packages/jet_print/test -type d -name failures
    ```
 
-   That directory is untracked and never cleaned, and a comparison that
-   *passed* inside the comparator's tolerance writes to it too — its contents
-   prove nothing on their own. Match filenames and timestamps against step 1,
-   then open `*_masterImage.png` and `*_testImage.png` side by side, with
-   `*_isolatedDiff.png` for where they part.
+   That directory is untracked and nothing ever cleans it, so what is in it can
+   outlive the run that wrote it — it is not a record of *this* run. Match
+   filenames and timestamps against step 1, then open `*_masterImage.png` and
+   `*_testImage.png` side by side, with `*_isolatedDiff.png` for where they
+   part.
 
 3. **Name what moved, and why, in a sentence you would defend in review.** If
    you cannot, you have found a bug, not a golden. Check `../testing.md`'s two
