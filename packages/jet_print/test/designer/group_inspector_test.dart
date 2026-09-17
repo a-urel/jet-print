@@ -1,9 +1,14 @@
 // Spec 024 / C11, refined by the 2026-06-14 design note
-// (group-flags-on-band-inspector): the group's key + the three pagination flags
+// (group-flags-on-band-inspector): the group's key + its start-new-page flag
 // are edited from the band the author sees — the group's HEADER band — not from
 // an abstract group node. The footer band shows height only; a headerless group
-// falls back to its footer so the flags are never unreachable; selecting the
+// falls back to its footer so the section is never unreachable; selecting the
 // group row shows a read-only summary with no flag switches.
+//
+// One flag, not all three: `keepTogether` and `reprintHeaderOnEachPage` are
+// implemented and covered by `test/rendering/layout/report_layouter_test.dart`,
+// but kept out of the UI (same design note), which is why the cases below assert
+// only `startNewPage`.
 // Consumer-style: public API + the shared widget harness only.
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';

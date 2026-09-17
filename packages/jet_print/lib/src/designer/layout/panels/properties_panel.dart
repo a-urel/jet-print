@@ -371,10 +371,11 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
         ..addAll(_bandListSection(controller, bandId, theme, l10n, schema))
         ..addAll(_columnLayoutSection(controller, bandId, theme, l10n));
     }
-    // A group's key + pagination flags are edited from the band the author
-    // sees: its group HEADER band — or its FOOTER when the group has no header,
-    // so the flags are never unreachable (2026-06-14 design note). Exactly one
-    // band per group carries the section.
+    // A group's name, key and start-new-page flag are edited from the band the
+    // author sees: its group HEADER band — or its FOOTER when the group has no
+    // header, so the section is never unreachable (2026-06-14 design note).
+    // Exactly one band per group carries it. [GroupLevel] has three pagination
+    // flags; only `startNewPage` is surfaced — see [_groupSection].
     final GroupLevel? group = findGroupOfBand(controller.definition, bandId);
     if (group != null && (group.header?.id ?? group.footer?.id) == bandId) {
       children
@@ -392,7 +393,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
 
   // --- Group (first-class entity; its flags are edited from its header band) -
   //
-  // The group's key + the three pagination flags are edited from the group's
+  // The group's name, key and start-new-page flag are edited from the group's
   // carrier band via [_groupSection] (see [_bandInspector]), not from this
   // abstract node. Selecting the group row shows a read-only summary that points
   // the author to the group header band (2026-06-14 design note).
@@ -416,9 +417,15 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     ];
   }
 
-  /// The group's editable name + key (with field picker) + the three pagination
-  /// flags, surfaced on the group's carrier band by [_bandInspector]. Each edit
+  /// The group's editable name + key (with field picker) + its `startNewPage`
+  /// switch, surfaced on the group's carrier band by [_bandInspector]. Each edit
   /// writes through to the one [GroupLevel] — the single source of truth.
+  ///
+  /// ONE of [GroupLevel]'s three pagination flags, not all three: `keepTogether`
+  /// and `reprintHeaderOnEachPage` are implemented and covered by
+  /// `test/rendering/layout/report_layouter_test.dart`, but deliberately kept
+  /// out of the UI (2026-06-14 design note), and their controller setters stay
+  /// available. See the comment in the body.
   List<Widget> _groupSection(
     JetReportDesignerController controller,
     String groupId,
@@ -448,9 +455,12 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
         onCommit: (String v) => controller.setGroupKey(groupId, _compileKey(v)),
       ),
       const SizedBox(height: 12),
-      // keepTogether + reprintHeaderOnEachPage are implemented and golden-tested
-      // but hidden from the UI for now (2026-06-14 design note) — only
-      // start-new-page is surfaced. The controller setters remain available.
+      // keepTogether + reprintHeaderOnEachPage are implemented and covered by
+      // `test/rendering/layout/report_layouter_test.dart`, but hidden from the
+      // UI for now (2026-06-14 design note) — only start-new-page is surfaced.
+      // The controller setters remain available. (They are NOT golden-tested,
+      // which this comment claimed until a review checked: nothing under
+      // `test/goldens/` references either flag.)
       ShadSwitch(
         key: const ValueKey<String>('$_p.field.groupNewPage'),
         value: group.startNewPage,
