@@ -33,18 +33,12 @@
 // 3.97x and fails this test.
 //
 // The ratio alone would have a hole. A regression that inflates per-element work
-// by a constant factor scales BOTH sizes equally, so the ratio cancels it and
-// stays at 2.0 — verified on the sibling export guard, where an injected
-// duplicate emission left its ratio at exactly 2.0 and was caught only by an
-// absolute anchor. So there is an anchor here too, normalized per element per
-// frame: the ratio catches super-linear growth, the anchor catches a uniformly
-// fatter constant, and the two failure classes are disjoint.
-//
-// The ratio alone would have a hole. A regression that inflates per-element work
 // by a constant factor scales BOTH sizes equally, so the ratio cancels it —
-// measured, not assumed: doubling the selection's element lookups moved the
-// ratio from 1.79x DOWN to 1.65x, further from the ceiling rather than toward
-// it. So there is an absolute anchor too, normalized per element per frame. The
+// measured, not assumed, on both guards. Here, doubling the selection's element
+// lookups moved the ratio from 1.79x DOWN to 1.65x, further from the ceiling
+// rather than toward it. On the sibling export guard, an injected duplicate
+// emission left its ratio at exactly 2.0 and was caught only by the absolute
+// anchor. So there is an anchor here too, normalized per element per frame: the
 // ratio catches super-linear growth, the anchor catches a uniformly fatter
 // constant, and the two failure classes are disjoint.
 //
