@@ -28,6 +28,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **The declared Flutter floor now matches what is actually tested.**
+  `packages/jet_print/pubspec.yaml` declared `flutter: ">=3.6.0"` — 38 minor
+  versions below anything the package has ever been built against. CI pins
+  3.44.0 in all four jobs and `AGENTS.md` documents 3.44.0+, so the constraint
+  claimed support nobody had verified, and a consumer on an older SDK would have
+  resolved this package and then failed to build it. It is now `>=3.44.0`. The
+  Dart constraint stays `^3.6.0`: pub workspaces need 3.6, and each Flutter
+  release pins its own Dart, so that pairing is unreachable in practice.
+
 - **PDF export decodes each image once, not once per row.** `PdfPainter`'s
   decoded-pixel cache was keyed on the whole `ImagePrimitive`. Because
   `ImagePrimitive`'s value equality includes `bounds` and `elementId` — and
