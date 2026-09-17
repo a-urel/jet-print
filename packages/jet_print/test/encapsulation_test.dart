@@ -97,6 +97,18 @@ bool _isWhiteBoxSeamTest(File file) {
       // way — white-box.
       path.endsWith(
           '/test/designer/canvas/crosstab_placeholder_height_test.dart') ||
+      // Band-lookup semantics: `DesignTimeLayout.bandIdAt` (click selection, no
+      // snap) and `bandIdNear` (drops, always snaps) are unexported `src/`
+      // geometry on the same class the two tests above already exercise
+      // white-box. Four comments got the pair backwards with nothing to catch
+      // them, so the distinction is pinned behaviourally here.
+      path.endsWith('/test/designer/canvas/band_lookup_semantics_test.dart') ||
+      // Clamp semantics: `clampToBand` (move-style, in `element_bounds.dart`)
+      // and `clampResizeToBand` (edge-style, in `resize_handle.dart`) are both
+      // unexported `src/` pure functions — the barrel exports `ResizeHandle`
+      // but neither clamp. Two comments called `clampToBand` the single clamp
+      // authority; this pins that they answer the same rect differently.
+      path.endsWith('/test/designer/controller/clamp_semantics_test.dart') ||
       // Paper & margin presets (018): the standard-size / margin recognition
       // helpers are unexported `src/` pure functions (the `format_presets.dart`
       // precedent — preset identity is derived for display, never persisted);
@@ -184,7 +196,17 @@ bool _isWhiteBoxSeamTest(File file) {
       // white-box.
       path.endsWith('/test/designer/preview/lru_cache_test.dart') ||
       path.endsWith('/test/designer/preview/preview_sheet_test.dart') ||
-      path.endsWith('/test/designer/preview/page_thumbnail_rail_test.dart');
+      path.endsWith('/test/designer/preview/page_thumbnail_rail_test.dart') ||
+      // Painter texture disposal: every record path builds its `CanvasPainter`
+      // inside `recordPageFrame` and never hands it back, so the ONLY way to
+      // observe a leaked decoded texture is
+      // `CanvasPainter.debugLiveDecodedImages` — an unexported `src/` test
+      // seam. These tests pin that the seam's release actually reaches the
+      // preview, the thumbnail rail and the design canvas; the leak is
+      // CanvasKit-specific and invisible to any public-API assertion.
+      path.endsWith(
+          '/test/designer/preview/preview_texture_dispose_test.dart') ||
+      path.endsWith('/test/designer/canvas/frame_record_dispose_test.dart');
 }
 
 void main() {

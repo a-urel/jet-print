@@ -15,9 +15,10 @@ tree rather than being hidden, which is why panel view state below resets when y
 No widget under `designer/layout/` writes to a `ReportDefinition`. An editor is handed the value
 it should display and a callback it hands a value back to, and that callback is always a
 controller mutator. `designer/layout/panels/properties/fields/text_input.dart` → `_NumberField`
-is the smallest complete case — the X/Y/W/H fields, the band height, the margins and the
-crosstab metrics are all this one widget, owning a `TextEditingController` for the in-progress
-string and nothing else. Its whole commit:
+is the smallest complete case — the X/Y/W/H fields, the band height, the margins and the crosstab
+metrics are all this one widget. It owns a `TextEditingController` for the in-progress string and a
+`FocusNode` (its own, unless the panel hands it one of its focus targets), and no model state at
+all. Its whole commit:
 
 ```dart
 void _commit() {
@@ -42,19 +43,21 @@ the path is page 07's: the element inspector passes `onCommit: (double v) =>
 controller.setGeometry(id, x: v)`, and `designer/controller/api/element_edit.dart` → `setGeometry`
 reads the element's current bounds, substitutes the one named axis, applies `clampToBand`, and
 hands a `ResizeCommand` to `_commit`, which banks the prior document and notifies. One keystroke,
-one history entry. The editor never learns whether its value survived the clamp; it finds out the
-way every observer does, because `designer/designer_scope.dart` → `DesignerScope` is an
-`InheritedNotifier` and the notification rebuilds the panel with the clamped `value` — which
-`didUpdateWidget` copies into the text controller **only while the field is unfocused**, so typing
-is never overwritten but an undo or a canvas drag lands at once.
+one history entry — **unless the clamp absorbs the edit entirely**, because `setGeometry` returns on
+`if (clamped == b)` before reaching `_commit`: typing `-20` into the X of an element already at 0
+records nothing, notifies nothing, and leaves the field showing `-20` (page 07's value-equal no-op,
+one step earlier). Otherwise the editor learns the clamped value the way every observer does, since
+`designer/designer_scope.dart` → `DesignerScope` is an `InheritedNotifier` and the rebuild hands the
+field a new `value` — which `didUpdateWidget` copies into the text controller **only while the field
+is unfocused**, so typing is never overwritten but an undo or a canvas drag lands at once.
 
-Every other editor is that shape with a different payload. `_ValueField` in
+Every other editor is that shape with a different payload: `_ValueField` in
 `properties/fields/value_field.dart` is given a `ValueDisplay` and returns raw token text for
-`setValue` to parse, its field picker and its fx dialog routing through that same `onCommit`, so
-the three ways to author a binding are one path. That `ValueDisplay` is `reverseCompile` from
+`setValue` to parse, its field picker and its fx dialog routing through that same `onCommit`, so the
+three ways to author a binding are one path. That `ValueDisplay` is `reverseCompile` from
 `designer/template/value_template_compiler.dart`, the projection page 08 describes — and where the
-canvas takes only `.text`, the panel also reads `.editable` and renders the input `readOnly` when
-it is false, so a binding outside the grammar cannot be typed over.
+canvas takes only `.text`, the panel reads `.editable` too and renders the input `readOnly` when it
+is false, so a binding outside the grammar cannot be typed over.
 
 ## The panel dispatches on the selection
 
@@ -62,14 +65,14 @@ it is false, so a binding outside the grammar cannot be typed over.
 is a chain over the `Selection` page 07 defines:
 
 ```dart
-// ... above: the pending-focus request, the theme/schema/l10n lookups and the
-// inspected-key bookkeeping; here: the crosstab, group and scope arms, each
-// guarded exactly like the element arm below
 final List<Widget> children;
 if (selection.isReport) {
   children = _reportInspector(controller, theme, l10n);
 } else if (selection.bandId case final String bandId) {
   children = _bandInspector(controller, bandId, theme, l10n, schema);
+// ... here, the crosstab, group and scope arms, each guarded exactly like the
+// element arm below — and, above this block, the pending-focus request, the
+// theme/schema/l10n lookups and the inspected-key bookkeeping
 } else if (selection.singleOrNull case final String id
     when _find(controller, id) != null) {
   children = _elementInspector(
@@ -88,17 +91,17 @@ gives under *Four god-files are split with `part` + `extension`*. **A selection 
 falls to the empty state** — `_EmptyState`, showing the localized multi-selection message above one
 element and the "select something" hint otherwise. The `when` clauses route into it: a selection
 naming a node the definition no longer holds skips its arm rather than building half an inspector.
-
-One arm is a signpost: `_groupInspector` renders a header and a sentence, no editors, because a
-group's name, key and start-new-page flag are edited from the band the author can see —
-`_bandInspector` appends `_groupSection` on the group's header band, or its footer when there is
-no header. `selectGroup` has no caller in `lib/`, so that arm is reached only by a host.
+One arm is a signpost rather than an editor: `_groupInspector` renders a header and a sentence,
+because a group's name, key and flags are edited on its carrier band — `_bandInspector` appends
+`_groupSection` on the group's header, or its footer when there is no header — and `selectGroup`
+has no caller in `lib/` at all, so that arm is reached only by a host.
 
 The panel is not remounted when the selection changes. It is one `State`, so a `_NumberField` at
 the same position survives from element to element and takes the new value through
 `didUpdateWidget` — deliberate for the numeric fields, wrong for anything holding a draft, which is
-why the font and barcode sections sit inside a `KeyedSubtree` keyed by the element's id: switching
-elements destroys those editors and a half-typed hex colour with them.
+why every section that holds one (font, barcode, chart, appearance, and any later addition) sits
+inside a `KeyedSubtree` keyed by the element's id: switching elements destroys those editors and a
+half-typed hex colour with them.
 
 ## The outline is the tree made navigable
 
@@ -118,7 +121,7 @@ back from `controller.selection` on the next build and exposed to the semantics 
 Expansion is the outline's own state: a `Set<String>` of collapsed ids, keyed by id so it survives
 an add, a remove or a reorder, and reset when the tab is left. The rows carry the structural
 affordances too — reorder, retype, remove, and the "+" menus in `outline_panel/add_menus.dart`,
-whose `_retypeTargets` omits the furniture types the layouter cannot yet lay out.
+whose `_retypeTargets` omits the furniture the layouter cannot yet lay out.
 
 ## One pair of style editors, two inspectors
 
@@ -133,26 +136,28 @@ Nullable slots are the interesting part. A crosstab role whose style is unset di
 *effective* value it would inherit rather than a blank control, and any edit commits a concrete
 style — a one-way door, which is why each role carries a reset writing `null` back through
 `copyWith`'s thunk form (`AGENTS.md`, *`copyWith` uses thunks*). Those inherited values are
-mirrored constants, not imports — the render layer is not a designer dependency — and the doc
-comment above them names the test pinning each copy.
+mirrored constants, not imports — the render layer is not a designer dependency — so the doc comment
+names the test pinning each copy separately. That is the divergence the shared editors exist to
+prevent, here unprevented: private to different libraries, the two copies can be compared by no
+test, and a planner default changed on one side leaves the panel showing the other.
 
 ## Why it is like this, and the alternative rejected
 
 The alternative is per-inspector editors — the crosstab inspector composing its own font row out of
-the same primitives the element inspector composes its own out of. That is what the tree looked
-like before `a8254c2` and `6998750`, and those commit messages say why it changed: the element
-inspector had assembled family/size/colour/B-I-U/align inline, each crosstab appearance slot
-needed the same controls, and composing them per slot meant repeating that block once per slot.
-The duplication is why the crosstab style editors were deferred in the first place.
+the same primitives the element inspector composes its own out of. That is what the tree looked like
+before `a8254c2` and `6998750`, and those commit messages say why it changed: the element inspector
+had assembled family/size/colour/B-I-U/align inline, each crosstab appearance slot needed the same
+controls, and composing them per slot meant repeating that block once per slot — the duplication
+that had made the crosstab style editors get deferred in the first place.
 
 The failure mode is not the repetition. It is that two copies of a font row diverge — one gains a
-preset, one a keyboard behaviour, one starts preserving stored alpha on a hex edit — and **nothing
-catches it**, because each copy passes its own tests. The extraction's own check was built to be
-exactly that: the element inspector was moved onto the shared editor first, with key composition
-chosen so every shipped key survived verbatim, so the existing element tests validated the new
-widget unedited. The cost is that one editor must then serve slots with different rules —
-`_BoxStyleEditor` carries a `showFill` flag for the line shape, which has no interior, a path no
-crosstab slot exercises and which therefore got a test of its own.
+preset, one starts preserving stored alpha on a hex edit — and **nothing catches it**, because each
+copy passes its own tests. The extraction's own check was built to be exactly that: the element
+inspector was moved onto the shared editor first, with key composition chosen so every shipped key
+survived verbatim, so the existing element tests validated the new widget unedited. The cost is
+that one editor must then serve slots with different rules — `_BoxStyleEditor` carries a `showFill`
+flag for the line shape, which has no interior, a path no crosstab slot exercises and which
+therefore got a test of its own.
 
 ## Run it
 
@@ -160,12 +165,12 @@ crosstab slot exercises and which therefore got a test of its own.
 flutter test packages/jet_print/test/designer/
 ```
 
-The root of that directory is the largest single group in the repo's test tree, and nearly all of
-it drives the public `JetReportDesigner` — `properties_editor_test.dart` reaches the inspector by
+The root of that directory is the largest single group in the repo's test tree, and nearly all of it
+drives the public `JetReportDesigner` — `properties_editor_test.dart` reaches the inspector by
 tapping its tab, as a user would. Three of its cases state the binding path end to end: *editing X
 commits to the model as one undoable step* types, submits, asserts the model and undoes it; *the
-width stepper bumps the size by one* proves the stepper is that same commit; *the fields reflect
-a model change made elsewhere* calls `setGeometry` and watches the field follow.
+width stepper bumps the size by one* proves the stepper is that same commit; *the fields reflect a
+model change made elsewhere* calls `setGeometry` and watches the field follow.
 
 ## Trap
 

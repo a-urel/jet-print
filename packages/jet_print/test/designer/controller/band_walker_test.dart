@@ -281,6 +281,16 @@ void main() {
                     totals: const <ScopeTotal>[
                       ScopeTotal('orderTotal', r'SUM($F{lineTotal})'),
                     ],
+                    // Every non-`collectionField` slot is populated, so a
+                    // rebuilder that drops any one of them is visible.
+                    groups: <GroupLevel>[
+                      GroupLevel(
+                        id: 'bySku',
+                        name: 'SKU',
+                        key: r'$F{sku}',
+                        header: _band('gh', BandType.groupHeader),
+                      ),
+                    ],
                     footer: _band('lf', BandType.groupFooter),
                     children: <ScopeNode>[
                       BandNode(_band('lineRow', BandType.detail)),
@@ -311,6 +321,30 @@ void main() {
       expect(scope.collectionField, isNull);
       expect(scope.footer?.id, 'lf');
       expect(scope.totals.length, 1);
+    });
+
+    test('rebinding changes collectionField and NOTHING else', () {
+      // The command now rebinds through `copyWith`, so no field CAN be
+      // dropped — this is what pins that, and what would catch a return to a
+      // field-by-field rebuild (the trap AGENTS.md names). Comparing against
+      // the source scope with only `collectionField` swapped checks every slot
+      // at once, including any field added to `DetailScope` later.
+      final DetailScope before =
+          findScope(docWithFooter().definition, 'lines')!;
+      final DesignerDocument doc = const SetScopeCollectionCommand(
+              scopeId: 'lines', collectionField: 'rows')
+          .apply(docWithFooter());
+      final DetailScope after = findScope(doc.definition, 'lines')!;
+
+      expect(after, before.copyWith(collectionField: () => 'rows'));
+      // Spelled out too, so a failure says WHICH slot was dropped rather than
+      // printing two whole scopes.
+      expect(after.collectionField, 'rows');
+      expect(after.id, before.id);
+      expect(after.groups, before.groups);
+      expect(after.children, before.children);
+      expect(after.footer, before.footer);
+      expect(after.totals, before.totals);
     });
   });
 

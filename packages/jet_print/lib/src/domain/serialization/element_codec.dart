@@ -1,4 +1,7 @@
-/// The element serialization extension point.
+/// The element serialization seam: one codec per element `typeKey`.
+///
+/// Open/closed *within the package* — see `built_in_element_codecs.dart` for
+/// why a host cannot reach the registries this feeds.
 library;
 
 import '../report_element.dart';
@@ -6,7 +9,7 @@ import '../unknown_element.dart';
 import 'report_format_exception.dart';
 
 /// Serializes a single element type [E] to/from JSON. Register one per element
-/// type so custom types persist with zero core edits.
+/// type so a new type persists with no edits to the codec/dispatch core.
 ///
 /// `toJson` takes a `covariant ReportElement` (not `E`) so that
 /// `ElementCodec<E>` stays a subtype of `ElementCodec<ReportElement>` and can be

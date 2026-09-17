@@ -28,6 +28,40 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Documentation: the element and expression registries were described as host
+  extension points they are not.** `JetFunctionRegistry`, `ElementCodecRegistry`,
+  `ElementRendererRegistry` and `ElementTypeRegistry` each advertised themselves
+  as a public/open-closed seam — "consumers `register` custom functions with zero
+  core edits", "consumers add their own types", "a consumer can override a
+  built-in". None of them is exported from `package:jet_print/jet_print.dart`,
+  and no public entry point accepts one: the instances they feed are private and
+  pre-wired (`JetReportFormat`'s never-mutated `static final`, the render chain's
+  own), so exporting the types alone would not help. Their dartdoc, and the
+  extension-points table in `docs/architecture.md`, now say what is actually
+  reachable from a host — `JetDataSource`, `RenderOptions.onElementPrint`,
+  `RenderOptions.fonts` and `PrintDialogPresenter` — and what is internal. No
+  behaviour changed; if you need to register a custom element type or expression
+  function, that capability does not exist yet. Please open an issue.
+
+- **Text no longer leaks a `ui.Paragraph` per line on every record.**
+  `CanvasPainter.drawTextRun` builds one paragraph per laid-out line and drew it
+  without ever releasing it, so each record leaked one handle per line — denser
+  than the decoded-image leak fixed alongside it, since every report has text and
+  most have no images, and the preview re-records on every edit. Each paragraph
+  is now released as soon as its draw returns: `Canvas.drawParagraph` has the
+  paragraph paint itself into the canvas, so the recording holds its own
+  reference by the time the draw returns and the handle is redundant from that
+  point. That keeps the peak at one live paragraph rather than one per line of
+  the page. Guarded at the raster level on the web leg, because the golden suite
+  is macOS-only and a CanvasKit-only disposal bug cannot surface there.
+
+- **One image repeated down a band decoded once per row.** The decode cache in
+  the on-screen paint backend was keyed by the whole drawing primitive, whose
+  identity includes position, so a single logo on 40 detail rows produced 40
+  separate decodes and 40 GPU textures instead of one. It is now keyed by the
+  image bytes. Each cache probe was also hashing the entire encoded image to
+  compare keys; that cost goes with it.
+
 - **Decoded image textures are released on every paint path, not just the design
   canvas.** `CanvasPainter.dispose()` — which frees the GPU texture behind each
   decoded image — was declared on the concrete painter only. The preview, the

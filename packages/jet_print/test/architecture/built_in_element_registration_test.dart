@@ -6,8 +6,12 @@
 //     PERSISTENCE paths use: `JetReportFormat`'s static registry (every save)
 //     and the designer's `cloneElement` (duplicate / paste).
 //   * `registerBuiltInElementTypes` (rendering) — codec **paired** with
-//     renderer under one `register<E>` call, which is what makes a mismatched
-//     pair a compile error. This is what the RENDER paths use.
+//     renderer under one `register<E>` call. That rejects a mismatched pair
+//     only because the built-ins pass an EXPLICIT type argument: as
+//     `element_type_registry.dart`'s own dartdoc says, Dart's covariant
+//     generics let an inferred call widen `E` to `ReportElement` and compile a
+//     mismatch, so the signature "enforces pairing, it does not fully prevent
+//     it". This is what the RENDER paths use.
 //
 // The lists cannot be collapsed into one: `domain/` may not import
 // `rendering/` (see layer_boundaries_test.dart), so the paired list can never

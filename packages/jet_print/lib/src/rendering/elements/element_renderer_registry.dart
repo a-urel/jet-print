@@ -1,7 +1,9 @@
 /// Maps element `type` keys to their [ElementRenderer]s and dispatches (007a).
 /// Unregistered types (including a round-tripped `UnknownElement`) resolve to the
 /// built-in [UnknownElementRenderer] placeholder. Registration is last-write-wins
-/// (matching `ElementCodecRegistry`), so a consumer can override a built-in.
+/// (matching `ElementCodecRegistry`), so a *later* registration overrides a
+/// built-in — for library code and white-box tests only: this registry is not
+/// exported and the render chain builds its own.
 library;
 
 import '../../domain/report_element.dart';

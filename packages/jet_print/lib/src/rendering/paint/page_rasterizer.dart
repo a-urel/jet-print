@@ -13,6 +13,8 @@ library;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
+
 import '../frame/page_frame.dart';
 import '../text/font_registry.dart';
 import 'canvas_painter.dart';
@@ -22,6 +24,13 @@ import 'record_page_frame.dart';
 class PageRasterizer {
   /// Creates the stateless rasterizer.
   const PageRasterizer();
+
+  /// Test seam: the picture returned by the last [rasterize] call, so a test
+  /// can assert it was disposed. `recordPageFrame` hands ownership of the
+  /// picture to its caller, so releasing it is this class's job, not the
+  /// seam's. Only assigned when asserts are enabled.
+  @visibleForTesting
+  static ui.Picture? debugLastPicture;
 
   /// Paints [frame] through the preview's [CanvasPainter] (fonts resolved via
   /// [fonts]) with a `scale` canvas transform and encodes the result as PNG.
@@ -35,6 +44,10 @@ class PageRasterizer {
   }) async {
     final ui.Picture picture =
         await recordPageFrame(frame, fonts, scale: scale);
+    assert(() {
+      debugLastPicture = picture;
+      return true;
+    }());
     final ui.Image image;
     try {
       image = await picture.toImage(
