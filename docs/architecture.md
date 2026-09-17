@@ -145,10 +145,12 @@ note which of them a **host** can reach, and which are internal to the package.
 ### Internal to the package (open/closed for library code and white-box tests)
 
 None of these registry types is exported from `lib/jet_print.dart`, and no
-public entry point accepts one — every instance the library persists or renders
-through is private and pre-wired. A host cannot use them today; opening one up
-means exporting the type *and* threading a host-supplied instance through the
-public API.
+public entry point accepts one, so every instance reached through the public API
+is private and pre-wired. Inside the package there *is* an injection seam —
+`ReportFiller`, `ReportLayouter` and `DesignTimeFrameBuilder` all take an
+optional registry — but it is unreachable from outside. A host cannot use these
+today; opening one up means exporting the type *and* threading a host-supplied
+instance through the public API.
 
 | Seam | Registry | Where the only instances live |
 |---|---|---|
@@ -163,7 +165,7 @@ a test enforces that.
 
 `test/rendering/elements/persisted_extension_test.dart` proves a custom element
 type can be added with zero edits to library `src/`. Read what that does and
-does not say: the test itself imports 20 `src/` paths, which it may because
+does not say: the test itself imports 19 `src/` paths, which it may because
 `test/rendering/` is allowlisted in `encapsulation_test.dart`. It pins the
 *core* as open/closed. It is **not** evidence that a host outside the package
 can register an element type — a host has no way to reach any of the registries

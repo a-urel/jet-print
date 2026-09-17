@@ -332,10 +332,14 @@ class _DesignCanvasState extends State<DesignCanvas> {
     // straight from the layout, which already bakes the in-progress delta, so
     // feeding it committed geometry would leave the outline and handles behind
     // the element they belong to. See `selection_overlay.dart`.)
-    // Idle (and during element move/resize, which never changes band geometry)
-    // the two are identical; only a band resize makes them diverge, which is
-    // exactly where the reflow is wanted. When idle, `displayDefinition` is the
-    // same instance, so the layout is reused rather than recomputed.
+    // They are the same object ONLY when idle: `displayDefinition` returns the
+    // committed instance, `identical` short-circuits, and the layout is reused
+    // rather than recomputed. Any drag makes them diverge, because
+    // `displayDefinition` bakes the live `MoveCommand`/`ResizeCommand`/
+    // `SetBandHeightCommand` into a throwaway projection. An element drag moves
+    // the element rects while every BAND rect stays put; only a band resize
+    // reflows the bands below it — which is exactly where the chrome reflow is
+    // wanted.
     final DesignTimeLayout layout = DesignTimeLayout.of(controller.definition);
     final ReportDefinition displayed = controller.displayDefinition;
     final DesignTimeLayout displayLayout =

@@ -10,8 +10,10 @@
 ///
 ///  1. *Where* bands sit — the non-paginated [DesignTimeLayout].
 ///  2. *What* a bound element shows — [DesignTimeFrameBuilder._designTimeDisplay]
-///     swaps a data-bound `TextElement`'s resolved value for its binding token,
-///     then feeds that through the same text renderer as ordinary text.
+///     replaces a data-bound `TextElement`'s authored `text` with its binding
+///     token label, then feeds that through the same text renderer as ordinary
+///     text. Nothing is resolved here: the design view never runs a fill, so
+///     there is no value to show — that is the point of drawing the token.
 library;
 
 import 'dart:ui' as ui;

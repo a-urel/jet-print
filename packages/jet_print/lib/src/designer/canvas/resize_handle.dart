@@ -66,9 +66,11 @@ extension ResizeHandleEdges on ResizeHandle {
 ///
 /// Only the edges the handle controls move; the opposite edges stay put. If a
 /// drag would shrink or invert an edge past the minimum, that edge is pinned so
-/// the box keeps at least the minimum extent. Band/page containment is
-/// applied separately by the controller (`clampToBand`). The minimum is
-/// parameterized so a [ShapeKind.line] can collapse one axis to 0.
+/// the box keeps at least the minimum extent. Band/page containment is applied
+/// separately — by [clampResizeToBand] below for an interactive drag (the
+/// controller commits that preview verbatim), and by `clampToBand` only on the
+/// committed/numeric paths. The minimum is parameterized so a [ShapeKind.line]
+/// can collapse one axis to 0.
 JetRect resizeRect(
   JetRect start,
   ResizeHandle handle,

@@ -1,4 +1,5 @@
-/// Blits the cached committed frame under the canvas zoom, cheaply.
+/// Blits the cached frame — committed, or a live drag preview — under the
+/// canvas zoom, cheaply.
 library;
 
 import 'dart:ui' as ui;

@@ -1,9 +1,9 @@
 /// Shared geometry helpers for editing element bounds within a band.
 ///
 /// Element bounds are **band-relative** (origin at the band's content top-left),
-/// and no element is ever committed off its band or off the page. Three clamps
-/// share that guarantee — [clampToBand] is not the only one, and is not the one
-/// a drag goes through:
+/// and no *element-geometry* command commits an element off its band or off the
+/// page. Three clamps share that guarantee — [clampToBand] is not the only one,
+/// and is not the one a drag goes through:
 ///
 ///  * [clampToBand] — MOVE-style: keeps the size and slides the rect back
 ///    in-bounds. Used by the committed/numeric paths: create
@@ -21,6 +21,12 @@
 ///
 /// The move/resize split is pinned by
 /// `test/designer/controller/clamp_semantics_test.dart`.
+///
+/// The guarantee is scoped to commands that move an ELEMENT. Changing a BAND is
+/// not one: `SetBandHeightCommand` is `band.copyWith(height: height)` and never
+/// touches the band's elements, so shrinking a band can leave an element
+/// hanging past its new bottom until some element-geometry command re-clamps
+/// it. Nothing here prevents that.
 library;
 
 import '../../domain/band.dart';

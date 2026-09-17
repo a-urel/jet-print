@@ -324,10 +324,11 @@ void main() {
     });
 
     test('rebinding changes collectionField and NOTHING else', () {
-      // The command rebuilds the scope, so every other field is at risk of
-      // being silently dropped — the trap AGENTS.md names. Comparing against
-      // the source scope with only `collectionField` swapped checks all of
-      // them at once, including any field added to `DetailScope` later.
+      // The command now rebinds through `copyWith`, so no field CAN be
+      // dropped — this is what pins that, and what would catch a return to a
+      // field-by-field rebuild (the trap AGENTS.md names). Comparing against
+      // the source scope with only `collectionField` swapped checks every slot
+      // at once, including any field added to `DetailScope` later.
       final DetailScope before =
           findScope(docWithFooter().definition, 'lines')!;
       final DesignerDocument doc = const SetScopeCollectionCommand(
