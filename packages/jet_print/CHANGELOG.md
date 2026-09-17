@@ -28,6 +28,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **PDF export decodes each image once, not once per row.** `PdfPainter`'s
+  decoded-pixel cache was keyed on the whole `ImagePrimitive`. Because
+  `ImagePrimitive`'s value equality includes `bounds` and `elementId` — and
+  walks the byte list element-wise — every cache probe hashed the entire image
+  *and* missed for a repeated one, so a logo down a 50-row band was decoded 50
+  times on export. It now keys on the byte buffer, matching the sibling
+  `_embeddedImages` cache in the same class and the equivalent fix already made
+  to `CanvasPainter`. Output is unchanged: the byte-pinned `invoice.pdf` golden
+  is identical, since embedding was already deduplicated.
+
 - **Documentation: the element and expression registries were described as host
   extension points they are not.** `JetFunctionRegistry`, `ElementCodecRegistry`,
   `ElementRendererRegistry` and `ElementTypeRegistry` each advertised themselves
