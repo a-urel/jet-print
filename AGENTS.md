@@ -127,8 +127,8 @@ designer dwarfs everything, `print/` is one file. Re-derive with
 precise number; don't paste it back in.
 
 Two groups stay exact, because there the number is the point rather than the
-scale. `test/architecture` holds four whole-repo guards, each worth knowing by
-name:
+scale. `test/architecture` holds the whole-repo guards, each worth knowing by
+name — and the list is the point, so a new guard belongs in it:
 
 | Guard | Invariant |
 |---|---|
@@ -136,6 +136,9 @@ name:
 | `barcode_dependency_isolation_test.dart` | `package:barcode` is reachable from one adapter |
 | `built_in_element_registration_test.dart` | the two built-in element lists cannot drift apart |
 | `canvas_painter_single_construction_test.dart` | one place builds a `CanvasPainter`, so one place releases it |
+| `cache_key_isolation_test.dart` | nothing caches on a frame primitive, whose `==` walks its lists |
+| `public_extension_export_test.dart` | a public extension on an exported type is exported, or the omission is written down |
+| `expression_function_catalog_registration_test.dart` | the fx palette and the engine's function table cannot drift apart |
 
 And two tests sit at the `test/` root rather than in a seam, because they police
 the whole package: `encapsulation_test.dart` and `public_api_test.dart`.
