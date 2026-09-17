@@ -12,8 +12,7 @@ frame.
 ## What a frame is
 
 [`rendering/frame/page_frame.dart`](../packages/jet_print/lib/src/rendering/frame/page_frame.dart)
-→ `PageFrame`, essentially in full — the file is under thirty lines, doc comments
-included:
+→ `PageFrame`, in full but for its `toString` and its doc comments:
 
 ```dart
 class PageFrame with ValueEquality {
@@ -96,11 +95,13 @@ Named individually, because the list is the argument:
   **thumbnail rail** — `designer/preview/page_thumbnail_rail.dart` — both
   painting `pageAt(index).frame`, at different sizes;
 - the **PNG rasterizer** — `rendering/paint/page_rasterizer.dart` →
-  `PageRasterizer`, recording the preview's own painter at a chosen scale;
+  `PageRasterizer`, that same recording at a chosen scale;
 - the **PDF painter** — `rendering/export/pdf_painter.dart` → `PdfPainter`, a
   pure-Dart backend over `package:pdf`.
 
-They all meet at `rendering/paint/report_painter.dart` → `paintFrame`:
+They all meet at `rendering/paint/report_painter.dart` → `paintFrame` — the first
+four through `rendering/paint/record_page_frame.dart` → `recordPageFrame`, which
+owns that sequence for them, the exporter calling `paintFrame` itself once per page:
 
 ```dart
 for (final FramePrimitive primitive in frame.primitives) {
@@ -195,6 +196,5 @@ failed. `test/rendering/frame/primitive_test.dart` asserts that each new field
 Page 05, [painting](05-painting.md), picks the frame up from here: how
 `CanvasPainter` turns primitives into `dart:ui` calls, how `PdfPainter` writes
 the same primitives as PDF operators with embedded fonts and selectable text, and
-why the rendering seam's `dart:ui` imports are a short pinned allowlist — the two
-paint files that draw through it, plus `rendering/engine/render_options.dart` for
-a `Locale` value type — enforced by `test/architecture/layer_boundaries_test.dart`.
+why the rendering seam's `dart:ui` imports are a short allowlist, held and named by
+`test/architecture/layer_boundaries_test.dart`.
