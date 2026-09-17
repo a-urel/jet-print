@@ -20,7 +20,7 @@ root package, so the bare command passes while testing nothing.
 
 | Directory | Files | What it proves |
 |---|---:|---|
-| `test/architecture/` | 7 | Whole-repo invariants, each named in [`../AGENTS.md`](../AGENTS.md)'s guard table, where the list is the point. Mostly by scanning source text; the registration guard compares registries at runtime. |
+| `test/architecture/` | 9 | Whole-repo invariants, each named in [`../AGENTS.md`](../AGENTS.md)'s guard table, where the list is the point. Mostly by scanning source text; the registration guard compares registries at runtime. |
 | `test/domain/` | ~55 | The model, `validate()`, and serialization round-trips including lossless unknown types. |
 | `test/expression/` | ~30 | Lexer, parser, evaluator, functions, aggregates, formatting. |
 | `test/data/` | ~15 | Data sources, schemas, cursors, nested collections. |
@@ -133,6 +133,83 @@ Two recurring causes worth recognizing: adding or removing chrome widgets drifts
 the Skia glyph cache and can move canvas goldens that have nothing to do with
 your change; and non-English locales are wider — German binds toolbar width, so
 a locale test needs its own isolate per locale.
+
+## Performance guards
+
+Two tests assert that work stays proportional to input: the designer's
+`test/designer/perf/large_design_drag_test.dart` and the engine's
+`test/rendering/export/export_performance_test.dart`. **Neither reads a clock.**
+
+They used to. Both asserted elapsed milliseconds, and both were retired in the
+same change after one of them failed repeatedly on unmodified code — including
+in isolation, on commits that had passed it hours earlier — while three agent
+sessions shared a laptop. A wall-clock ceiling measures the machine as much as
+the diff.
+
+### What each one actually asserts
+
+| | drag guard | export guard |
+|---|---|---|
+| Counts | model traversal (`ReportElement.id` reads) | engine output (pages, primitives) |
+| Ratio | 200 vs 400 elements, ceiling `2.6x` | 500 vs 1,000 rows, pages `closeTo(2.0)` |
+| Anchor | `32` reads per element per frame | `2` primitives per record, exact |
+| Guards | per-frame designer work | the ENGINE, not the PDF writer |
+
+### Why both a ratio and an anchor
+
+They catch **disjoint** failure classes, and either alone has a hole you cannot
+see from inside it.
+
+A ratio misses any regression that scales both operands equally — and it is
+worse than "misses". Injecting a duplicated element lookup moved the drag
+ratio from 1.79x **down** to 1.65x, *away* from its ceiling. **A ratio guard
+trending down is not evidence of improvement.**
+
+An anchor catches that, but its sensitivity is bounded by how much of the total
+the regressing path owns:
+
+- **Structural anchors are exact.** The export guard's `2` primitives per record
+  IS the fixture's shape, so any duplication trips it.
+- **Emergent anchors are coarse.** The drag guard's `32` is the sum of several
+  contributing paths against a measured baseline of 20.96. A uniform doubling of
+  per-element work lands near 42 and trips. A doubling of *one* path moved it
+  only to 25.33 (+21%) and is out of reach. Tightening it to ~24 would leave 14%
+  headroom over baseline — a guard that becomes the next thing to fail for
+  reasons nobody intended.
+
+### Rules worth carrying to a new guard
+
+1. **Count, don't time.** A timing ratio does not port to a fast operation. At
+   the export's ~40ms, JIT warmup dominates: whichever dataset runs first is the
+   slower one regardless of size, so the ratio is noise and frequently inverted.
+   Counting survives warmup; timing does not.
+2. **A guard you have not watched fail does not earn its place.** An
+   artifact-size guard was written for regressions inside the PDF writer and then
+   deleted, because emitting every text run twice grows the PDF by only ~21%
+   (23.57 → 28.56 bytes per record) — stream compression squashes it, and it
+   inflates both sizes alike so a ratio cancels it too. The gap is recorded in
+   that test's header rather than papered over.
+3. **A tag buys quiet, not signal.** Both tests could have carried a tag and run
+   alone, the way `golden` does. That would have stopped the noise without making
+   either assertion mean anything. Tagging is the right tool when the *host*
+   legitimately differs — OS font rasterization — not when the assertion was
+   never measuring the code.
+4. **A count is immune to the platform's number semantics; a measurement is
+   not.** This is the second reason to prefer counting, and the stronger one. A
+   tally of comparisons has no representation to differ over, so the drag
+   guard's figures are *identical* on the VM and under CanvasKit — 50,302 and
+   90,102 traversals, 20.96 per element per frame, the same numbers, not merely
+   close enough to pass. A quantity you *measured* has a representation, and
+   JavaScript has one number type: that is the class AGENTS.md's web-numbers
+   trap describes, three bugs deep in this repo. So a counted assertion cannot
+   land in that category, while a measured one can — run
+   `flutter test --platform chrome` from the package directory before trusting
+   any guard that asserts on something measured. (Each perf test's header states
+   its own chrome result, or why it is not exposed.)
+
+If a deliberate change trips one of these, raise the constant and say in the
+change description what new work was added and why — the same discipline a moved
+golden gets. Raising it without an answer is the bug you have not found yet.
 
 ## Support helpers
 
