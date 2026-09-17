@@ -41,15 +41,15 @@ void _commit() {
 What it gives back is one parsed `double` — not a rect, not a delta, not the element. The rest of
 the path is page 07's: the element inspector passes `onCommit: (double v) =>
 controller.setGeometry(id, x: v)`, and `designer/controller/api/element_edit.dart` → `setGeometry`
-reads the element's current bounds, substitutes the one named axis, applies `clampToBand`, and
-hands a `ResizeCommand` to `_commit`, which banks the prior document and notifies. One keystroke,
-one history entry — **unless the clamp absorbs the edit entirely**, because `setGeometry` returns on
+reads the element's current bounds, substitutes the one named axis, applies `clampToBand`, and hands
+a `ResizeCommand` to `_commit`, which banks the prior document and notifies. One keystroke, one
+history entry — **unless the clamp absorbs the edit entirely**, because `setGeometry` returns on
 `if (clamped == b)` before reaching `_commit`: typing `-20` into the X of an element already at 0
 records nothing, notifies nothing, and leaves the field showing `-20` (page 07's value-equal no-op,
 one step earlier). Otherwise the editor learns the clamped value the way every observer does, since
-`designer/designer_scope.dart` → `DesignerScope` is an `InheritedNotifier` and the rebuild hands the
-field a new `value` — which `didUpdateWidget` copies into the text controller **only while the field
-is unfocused**, so typing is never overwritten but an undo or a canvas drag lands at once.
+`designer/designer_scope.dart` → `DesignerScope` is an `InheritedNotifier` and the rebuild hands
+the field a new `value` — which `didUpdateWidget` copies into the text controller **only while the
+field is unfocused**, so typing is never overwritten but an undo or a canvas drag lands at once.
 
 Every other editor is that shape with a different payload: `_ValueField` in
 `properties/fields/value_field.dart` is given a `ValueDisplay` and returns raw token text for
@@ -85,23 +85,23 @@ if (selection.isReport) {
 }
 ```
 
-Each inspector is a method returning a flat `List<Widget>` the panel scrolls, the two largest
-living in their own `part` files under `panels/properties/inspectors/` for the reason `AGENTS.md`
-gives under *Four god-files are split with `part` + `extension`*. **A selection with no inspector
-falls to the empty state** — `_EmptyState`, showing the localized multi-selection message above one
-element and the "select something" hint otherwise. The `when` clauses route into it: a selection
-naming a node the definition no longer holds skips its arm rather than building half an inspector.
-One arm is a signpost rather than an editor: `_groupInspector` renders a header and a sentence,
-because a group's name, key and flags are edited on its carrier band — `_bandInspector` appends
-`_groupSection` on the group's header, or its footer when there is no header — and `selectGroup`
-has no caller in `lib/` at all, so that arm is reached only by a host.
+Each inspector is a method returning a flat `List<Widget>` the panel scrolls, the two largest living
+in their own `part` files under `panels/properties/inspectors/` for the reason `AGENTS.md` gives
+under *Four god-files are split with `part` + `extension`*. **A selection with no inspector falls to
+the empty state** — `_EmptyState`, showing the localized multi-selection message above one element
+and the "select something" hint otherwise. The `when` clauses route into it: a selection naming a
+node the definition no longer holds skips its arm rather than building half an inspector. One arm is
+a signpost rather than an editor: `_groupInspector` renders a header and a sentence, because a
+group's name, key and start-new-page flag are edited on its carrier band — `_bandInspector`
+appends `_groupSection` on the group's header, or its footer when there is no header — and
+`selectGroup` has no caller in `lib/` at all, so that arm is reached only by a host.
 
-The panel is not remounted when the selection changes. It is one `State`, so a `_NumberField` at
-the same position survives from element to element and takes the new value through
-`didUpdateWidget` — deliberate for the numeric fields, wrong for anything holding a draft, which is
-why every section that holds one (font, barcode, chart, appearance, and any later addition) sits
-inside a `KeyedSubtree` keyed by the element's id: switching elements destroys those editors and a
-half-typed hex colour with them.
+The panel is not remounted when the selection changes. It is one `State`, so a `_NumberField` at the
+same position survives from element to element and takes the new value through `didUpdateWidget` —
+deliberate for the numeric fields, wrong for anything holding a draft, which is why every section
+that holds one (font, barcode, chart, appearance, and any later addition) sits inside a
+`KeyedSubtree` keyed by the element's id: switching elements destroys those editors and a half-typed
+hex colour with them.
 
 ## The outline is the tree made navigable
 
@@ -135,27 +135,27 @@ crosstab inspector one namespace per appearance role.
 Nullable slots are the interesting part. A crosstab role whose style is unset displays the
 *effective* value it would inherit rather than a blank control, and any edit commits a concrete
 style — a one-way door, which is why each role carries a reset writing `null` back through
-`copyWith`'s thunk form (`AGENTS.md`, *`copyWith` uses thunks*). Those inherited values are
-mirrored constants, not imports — the render layer is not a designer dependency — so the doc comment
+`copyWith`'s thunk form (`AGENTS.md`, *`copyWith` uses thunks*). Those inherited values are mirrored
+constants, not imports — the render layer is not a designer dependency — so the doc comment
 names the test pinning each copy separately. That is the divergence the shared editors exist to
 prevent, here unprevented: private to different libraries, the two copies can be compared by no
 test, and a planner default changed on one side leaves the panel showing the other.
 
 ## Why it is like this, and the alternative rejected
 
-The alternative is per-inspector editors — the crosstab inspector composing its own font row out of
-the same primitives the element inspector composes its own out of. That is what the tree looked like
-before `a8254c2` and `6998750`, and those commit messages say why it changed: the element inspector
-had assembled family/size/colour/B-I-U/align inline, each crosstab appearance slot needed the same
-controls, and composing them per slot meant repeating that block once per slot — the duplication
-that had made the crosstab style editors get deferred in the first place.
+The alternative is per-inspector editors — the crosstab inspector composing its own font row out
+of the same primitives the element inspector composes its own out of. That is what the tree looked
+like before `a8254c2` and `6998750`, and those commit messages say why it changed: the element
+inspector had assembled family/size/colour/B-I-U/align inline, each crosstab appearance slot needed
+the same controls, and composing them per slot meant repeating that block once per slot. The
+duplication is why the crosstab style editors were deferred in the first place.
 
 The failure mode is not the repetition. It is that two copies of a font row diverge — one gains a
-preset, one starts preserving stored alpha on a hex edit — and **nothing catches it**, because each
-copy passes its own tests. The extraction's own check was built to be exactly that: the element
+preset, one starts preserving stored alpha on a hex edit — and **nothing catches it**, because
+each copy passes its own tests. The extraction's own check was built to be exactly that: the element
 inspector was moved onto the shared editor first, with key composition chosen so every shipped key
-survived verbatim, so the existing element tests validated the new widget unedited. The cost is
-that one editor must then serve slots with different rules — `_BoxStyleEditor` carries a `showFill`
+survived verbatim, so the existing element tests validated the new widget unedited. The cost is that
+one editor must then serve slots with different rules — `_BoxStyleEditor` carries a `showFill`
 flag for the line shape, which has no interior, a path no crosstab slot exercises and which
 therefore got a test of its own.
 

@@ -90,19 +90,19 @@ an overlapping edge hit box never masks a corner; for a band, an outline and one
 the growth-facing edge, bottom for a flow band, top for a bottom-anchored footer, which grows
 upward; for the report or a crosstab, an outline alone, neither resizable by hand.
 
-Handles are drawn at `kHandleVisualSize` and hit at `kHandleHitSize`, both in *screen* pixels,
-so they neither shrink nor grow with the zoom. Their geometry comes from the display layout,
-which each kind of drag has already clamped — a resize by `designer/canvas/resize_handle.dart` →
+Handles are drawn at `kHandleVisualSize` and hit at `kHandleHitSize`, both in *screen* pixels, so
+they neither shrink nor grow with the zoom. Their geometry comes from the display layout, which
+each kind of drag has already clamped — a resize by `designer/canvas/resize_handle.dart` →
 `clampResizeToBand`, pinning only the dragged edge, a move by the rigid-group intersection in
 `designer/controller/jet_report_designer_controller.dart` → `_clampedMoveTargets`. Neither is
 `designer/controller/element_bounds.dart` → `clampToBand`: that one is move-style, for the
-committed and numeric paths. Comments around all three used to say otherwise; they now name the
-right clamp, and `test/designer/controller/clamp_semantics_test.dart` pins the difference —
-given one overflowing rect, the move-style clamp keeps its size and slides it, the resize-style
-clamp pins only the dragged edge. So the chrome tracks the clamped element
-and cannot leave its band, and live snap guides join it in the same overlay, in a layer always
-present so that a guide appearing mid-drag never unmounts the keyed, gesture-owning handles
-beside it.
+committed and numeric paths. Two comments — `element_bounds.dart`'s library dartdoc and
+`selection_overlay.dart`'s — used to call `clampToBand` the single clamp authority; both now
+name all three, and `clamp_semantics_test.dart` pins two, `clampToBand` against
+`clampResizeToBand`: given one overflowing rect, the move-style clamp keeps its size and slides
+it, the edge-style one pins only the dragged edge. So the chrome tracks the clamped element and
+cannot leave its band, and live snap guides join it in the same overlay, in a layer always present
+so that a guide appearing mid-drag never unmounts the keyed, gesture-owning handles beside it.
 
 ## Grid and rulers are arithmetic
 
@@ -181,8 +181,8 @@ The confusion was live in the tree twice — the comment above the `bandIdAt` ca
 `designer/canvas/design_canvas/gestures.dart` → `_selectEmptyTarget`, and the dartdoc on
 `design_time_layout.dart` → `crosstabIdAt`, both claiming `bandIdAt` snaps, which its own body
 never did. Both are corrected, and the pair is now pinned behaviourally rather than described:
-`band_page_select_test.dart` covers the click side, and
-`test/designer/canvas/band_lookup_semantics_test.dart` covers both lookups over one layout.
+`band_page_select_test.dart` covers the click side, and `band_lookup_semantics_test.dart`
+covers both lookups over one layout.
 
 That test also records a **second** difference, which is not about snapping and is easy to miss:
 the two bounds are not the same shape. `bandIdAt` tests `dy <= bottom` and `bandIdNear` tests
