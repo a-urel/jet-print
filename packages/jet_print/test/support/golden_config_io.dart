@@ -2,7 +2,6 @@
 // Imported by flutter_test_config.dart via conditional import.
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart' show FlutterError;
 import 'package:flutter_test/flutter_test.dart';
 
 const double _goldenTolerance = 0.005;
@@ -31,6 +30,14 @@ class _TolerantGoldenComparator extends LocalFileComparator {
       return true;
     }
     final String error = await generateFailureOutput(result, golden, basedir);
-    throw FlutterError(error);
+    // `TestFailure`, not `FlutterError`. `matchesGoldenFile` runs `compare`
+    // inside `TestWidgetsFlutterBinding.runAsync`, which swallows any other
+    // exception into `FlutterError.reportError` and completes with `null` —
+    // which `AsyncMatcher` reads as a match. Only `TestFailure` is caught by
+    // `MatchesGoldenFile.matchAsync` and turned into a real mismatch, so this
+    // is what makes a golden pin in a plain `test()` body able to fail at all.
+    // `LocalFileComparator.getGoldenBytes` already uses `fail()` for the same
+    // reason.
+    throw TestFailure(error);
   }
 }
