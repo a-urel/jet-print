@@ -23,7 +23,19 @@ resolution: workspace
 
 environment:
   sdk: ^3.6.0
-  flutter: ">=3.6.0"
+  # Tracks the version CI pins (.github/workflows/ci.yml, all four jobs) and
+  # that AGENTS.md documents. It was ">=3.6.0", which the package has never
+  # been built against — 38 minor versions below anything tested — so it
+  # claimed support nobody had verified.
+  #
+  # The `sdk:` line above is DELIBERATELY not raised to match, so don't
+  # "fix" the inconsistency: 3.6 is a feature floor with its own reason —
+  # pub workspaces are stable from 3.6 (see the root pubspec) — and the root
+  # workspace pubspec, which members resolve against, also pins ^3.6.0.
+  # Raising it here alone would make the two disagree. In practice it is
+  # unreachable anyway: each Flutter release pins its own Dart, so nobody
+  # resolves Dart 3.6 against Flutter 3.44.
+  flutter: ">=3.44.0"
 
 dependencies:
   flutter:

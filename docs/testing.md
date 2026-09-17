@@ -1,6 +1,6 @@
 # Testing
 
-406 test files: 377 in the library, 29 in the playground. They are the reason
+Roughly 420 test files: ~390 in the library, ~30 in the playground. The counts here are approximate on purpose — see AGENTS.md; an exact figure is wrong as soon as the next file lands and nothing fails when it does. They are the reason
 the rules in [`../AGENTS.md`](../AGENTS.md) are enforceable rather than
 aspirational.
 
@@ -20,12 +20,12 @@ root package, so the bare command passes while testing nothing.
 
 | Directory | Files | What it proves |
 |---|---:|---|
-| `test/architecture/` | 2 | Layer boundaries and third-party isolation, by scanning import directives. |
-| `test/domain/` | 55 | The model, `validate()`, and serialization round-trips including lossless unknown types. |
-| `test/expression/` | 30 | Lexer, parser, evaluator, functions, aggregates, formatting. |
-| `test/data/` | 14 | Data sources, schemas, cursors, nested collections. |
-| `test/rendering/` | 97 | Fill, layout, pagination, frames, painters, export, text metrics, crosstab. |
-| `test/designer/` | 169 | Controller commands, undo/redo, canvas interaction, panels, inspectors, and designer goldens. |
+| `test/architecture/` | 4 | Whole-repo invariants: layer boundaries, third-party isolation, built-in element registration parity, and single-site painter construction. Mostly by scanning import directives; the registration guard compares registries at runtime. |
+| `test/domain/` | ~55 | The model, `validate()`, and serialization round-trips including lossless unknown types. |
+| `test/expression/` | ~30 | Lexer, parser, evaluator, functions, aggregates, formatting. |
+| `test/data/` | ~15 | Data sources, schemas, cursors, nested collections. |
+| `test/rendering/` | ~100 | Fill, layout, pagination, frames, painters, export, text metrics, crosstab. |
+| `test/designer/` | ~175 | Controller commands, undo/redo, canvas interaction, panels, inspectors, and designer goldens. |
 | `test/print/` | 2 | The printer seam. |
 | `test/goldens/` | 4 | The cross-cutting visual and byte-pinned goldens. |
 | `test/web/` | 2 | Behavior that differs under CanvasKit. |
@@ -93,14 +93,21 @@ tagged `golden` in `dart_test.yaml` and run **only on macOS**, because host font
 rasterization and PDF font subsetting differ per OS. Other CI legs pass
 `--exclude-tags golden`.
 
-The comparator is not exact. `test/flutter_test_config.dart` replaces the
-framework's with `_TolerantGoldenComparator` from
-`test/support/golden_config_io.dart`, which passes any comparison whose
-differing-pixel fraction is at or below 0.005; the config file's own header says
-why, and is the place to read it. So a passing golden means *within tolerance*,
-not byte-identical. The threshold sits far below a real visual regression, which
-is orders of magnitude larger — but it is not zero, and nothing downstream of a
-green run should be read as proof that the bytes matched.
+**A passing golden is not a byte-identical one.** `test/flutter_test_config.dart`
+replaces the framework comparator with `_TolerantGoldenComparator` from
+`test/support/golden_config_io.dart`, which accepts any image whose `diffPercent`
+is at most `0.005` — half a percent of pixels may differ. That is deliberate,
+because host rasterization wobbles, and the threshold sits far below a real
+visual regression, which is orders of magnitude larger. But it is not zero: a
+green PNG golden means *no visible change*, not *no change*. The one genuinely
+byte-pinned artifact is `invoice.pdf`, compared as bytes in
+`test/rendering/export/pdf_determinism_test.dart`, and it is the only place a
+byte claim is earned.
+
+A `failures/` directory can hold images from a run that reported success, so its
+contents are not evidence that a golden moved. Take the list of goldens to
+regenerate from the test output instead; the procedure, and the reason, are in
+[`recipes/update-goldens.md`](recipes/update-goldens.md).
 
 A golden that shifts for a reason you cannot articulate is an undiscovered bug,
 not noise. Regenerating to get green is how a WYSIWYG tool starts lying.
