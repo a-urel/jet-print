@@ -4,9 +4,10 @@
 /// `dart:ui` picture and encodes it as PNG.
 ///
 /// Zero parallel paint code: pixel parity with the preview
-/// is by construction, because this IS the preview's painter. Joins
-/// `canvas_painter.dart` as the second (and only other) declared `dart:ui`
-/// file in the rendering seam — the architecture test pins that allowlist.
+/// is by construction, because this IS the preview's painter. One of three
+/// declared `dart:ui` files in the rendering seam, with `canvas_painter.dart`
+/// (the backend) and `record_page_frame.dart` (the recorder/painter/dispose
+/// seam this goes through) — the architecture test pins that allowlist.
 library;
 
 import 'dart:typed_data';
@@ -15,7 +16,7 @@ import 'dart:ui' as ui;
 import '../frame/page_frame.dart';
 import '../text/font_registry.dart';
 import 'canvas_painter.dart';
-import 'report_painter.dart';
+import 'record_page_frame.dart';
 
 /// Rasterizes one [PageFrame] to PNG bytes at a host-chosen scale.
 class PageRasterizer {
@@ -32,13 +33,17 @@ class PageRasterizer {
     FontRegistry fonts, {
     double scale = 1.0,
   }) async {
-    final ui.PictureRecorder recorder = ui.PictureRecorder();
-    final ui.Canvas canvas = ui.Canvas(recorder)..scale(scale, scale);
-    await paintFrame(frame, CanvasPainter(canvas, fonts));
-    final ui.Image image = await recorder.endRecording().toImage(
-          (frame.page.width * scale).round(),
-          (frame.page.height * scale).round(),
-        );
+    final ui.Picture picture =
+        await recordPageFrame(frame, fonts, scale: scale);
+    final ui.Image image;
+    try {
+      image = await picture.toImage(
+        (frame.page.width * scale).round(),
+        (frame.page.height * scale).round(),
+      );
+    } finally {
+      picture.dispose();
+    }
     try {
       final ByteData? data =
           await image.toByteData(format: ui.ImageByteFormat.png);

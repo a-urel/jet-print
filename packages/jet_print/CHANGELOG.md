@@ -26,6 +26,33 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 > The detailed, spec-by-spec log below records every change since the legacy flat
 > model and is aimed at upgraders, not first-time readers.
 
+### Fixed
+
+- **Decoded image textures are released on every paint path, not just the design
+  canvas.** `CanvasPainter.dispose()` — which frees the GPU texture behind each
+  decoded image — was declared on the concrete painter only. The preview, the
+  page-thumbnail rail and `PageRasterizer` hold the `ReportPainter` abstraction
+  (or, in the rasterizer's case, kept no reference at all), so the method was
+  invisible to them and three of the four consumers silently skipped it, leaking
+  a texture per recorded frame on CanvasKit. `dispose()` is now part of the
+  `ReportPainter` contract, and the recorder → painter → `paintFrame` →
+  `endRecording` → release sequence is single-sourced in `recordPageFrame`, so
+  no consumer can drop the last step; a new architecture test keeps
+  `CanvasPainter` construction to that one seam. `PageRasterizer` also now
+  disposes the intermediate `ui.Picture` it rasterizes from, which was leaked on
+  the same path.
+
+- **Charts can be saved, duplicated and pasted again.** `ChartElement` was
+  registered only in the render-time codec+renderer pairing
+  (`registerBuiltInElementTypes`) and never in the codec-only
+  `registerBuiltInElementCodecs`, which is what the persistence paths use. A
+  report containing a chart therefore rendered correctly but threw
+  `Bad state: No ElementCodec registered for type "chart"` on save
+  (`JetReportFormat.encodeDefinition`) and on designer duplicate / paste. The
+  two built-in registration lists are now pinned against each other by
+  `test/architecture/built_in_element_registration_test.dart`, so a future
+  element type cannot reach one list without the other.
+
 ### Changed
 
 - Crosstab style editors: the eight crosstab

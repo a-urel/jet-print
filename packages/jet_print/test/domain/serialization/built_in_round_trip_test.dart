@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/src/domain/band.dart';
 import 'package:jet_print/src/domain/detail_scope.dart';
 import 'package:jet_print/src/domain/elements/barcode_element.dart';
+import 'package:jet_print/src/domain/elements/chart_element.dart';
 import 'package:jet_print/src/domain/elements/image_element.dart';
 import 'package:jet_print/src/domain/elements/image_source.dart';
 import 'package:jet_print/src/domain/elements/shape_element.dart';
@@ -21,7 +22,7 @@ import 'package:jet_print/src/domain/styles/color.dart';
 import 'package:jet_print/src/domain/styles/text_style.dart';
 
 void main() {
-  test('registerBuiltInElementCodecs round-trips all four element types', () {
+  test('registerBuiltInElementCodecs round-trips all five element types', () {
     final ElementCodecRegistry registry = ElementCodecRegistry();
     registerBuiltInElementCodecs(registry);
 
@@ -61,6 +62,14 @@ void main() {
               symbology: BarcodeSymbology.qrCode,
               data: 'https://example.com/inv/42',
             ),
+            ChartElement(
+              id: 'trend',
+              bounds: JetRect(x: 0, y: 40, width: 200, height: 36),
+              chartType: ChartType.bar,
+              collectionField: 'months',
+              categoryExpression: r'$F{label}',
+              valueExpression: r'$F{revenue}',
+            ),
           ],
         ),
       ),
@@ -75,10 +84,11 @@ void main() {
     expect(encodeDefinition(decoded, registry),
         equals(encodeDefinition(definition, registry)));
     final List<ReportElement> elements = decoded.furniture.pageHeader!.elements;
-    expect(elements.length, 4);
+    expect(elements.length, 5);
     expect(elements[0], isA<TextElement>());
     expect(elements[1], isA<ShapeElement>());
     expect(elements[2], isA<ImageElement>());
     expect(elements[3], isA<BarcodeElement>());
+    expect(elements[4], isA<ChartElement>());
   });
 }

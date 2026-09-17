@@ -40,6 +40,17 @@ abstract class ReportPainter {
 
   /// Ends the page.
   void endPage();
+
+  /// Releases any resources the backend acquired while painting (decoded image
+  /// textures, for instance). Call it **after** the page has been recorded or
+  /// written out — a recorded `Picture` keeps its own references, so the
+  /// backend's handles are redundant from that point on.
+  ///
+  /// Part of the contract rather than of any one backend: the consumers that
+  /// hold a [ReportPainter] must be able to release it without knowing which
+  /// backend they have. Backends with nothing to release implement it as a
+  /// no-op. `recordPageFrame` is what calls it for the on-screen path.
+  void dispose();
 }
 
 /// Paints [frame] with [painter]: prepare → beginPage → primitives → endPage.

@@ -16,8 +16,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../domain/page_format.dart';
 import '../../rendering/engine/rendered_report.dart';
 import '../../rendering/frame/page_frame.dart';
-import '../../rendering/paint/canvas_painter.dart';
-import '../../rendering/paint/report_painter.dart';
+import '../../rendering/paint/record_page_frame.dart';
 import '../canvas/frame_custom_painter.dart';
 import '../l10n/jet_print_localizations.dart';
 import 'lru_cache.dart';
@@ -208,11 +207,7 @@ class PageThumbnailRailState extends State<PageThumbnailRail> {
     try {
       final RenderedReport report = widget.report;
       final PageFrame frame = report.pageAt(index).frame;
-      final ui.PictureRecorder recorder = ui.PictureRecorder();
-      final ReportPainter painter =
-          CanvasPainter(ui.Canvas(recorder), report.fonts);
-      await paintFrame(frame, painter);
-      final ui.Picture picture = recorder.endRecording();
+      final ui.Picture picture = await recordPageFrame(frame, report.fonts);
       if (!mounted || !identical(report, widget.report)) {
         picture.dispose();
         return;

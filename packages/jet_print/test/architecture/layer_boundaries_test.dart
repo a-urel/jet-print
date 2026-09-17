@@ -303,17 +303,21 @@ void main() {
     });
 
     test(
-        'only paint/canvas_painter.dart and paint/page_rasterizer.dart '
+        'only the paint/ dart:ui backends and the record seam '
         'import dart:ui / Flutter UI', () {
       final List<String> violations = <String>[];
       for (final File file in renderingFiles()) {
         final String path = file.path.replaceAll(r'\', '/');
         // The two declared dart:ui paint backends: the preview's canvas
         // painter (011) and the PNG rasterizer composing it (012 — PNG
-        // encoding is an engine capability). Nothing else.
+        // encoding is an engine capability), plus the record seam that owns
+        // the recorder/painter/dispose sequence for every on-screen consumer
+        // (it necessarily touches ui.PictureRecorder and ui.Picture).
+        // Nothing else.
         final bool isDeclaredUiBackend =
             path.endsWith('/paint/canvas_painter.dart') ||
-                path.endsWith('/paint/page_rasterizer.dart');
+                path.endsWith('/paint/page_rasterizer.dart') ||
+                path.endsWith('/paint/record_page_frame.dart');
         // The single sanctioned exception besides the painters (011):
         // RenderOptions carries the host's per-render `Locale` — a pure value
         // type from dart:ui with a const constructor. No other dart:ui symbol

@@ -8,7 +8,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
-/// A fixture exercising all four creatable element types plus the full
+/// A fixture exercising all five creatable element types plus the full
 /// parameter / variable / group payload carried by a definition.
 ReportDefinition _fixture() => ReportDefinition(
       name: 'Showcase',
@@ -45,6 +45,15 @@ ReportDefinition _fixture() => ReportDefinition(
               bounds: JetRect(x: 220, y: 40, width: 40, height: 40),
               symbology: BarcodeSymbology.qrCode,
               data: 'https://example.com/inv/42',
+            ),
+            ChartElement(
+              id: 'trend',
+              bounds: JetRect(x: 0, y: 40, width: 200, height: 36),
+              chartType: ChartType.bar,
+              collectionField: 'months',
+              categoryExpression: r'$F{label}',
+              valueExpression: r'$F{revenue}',
+              title: 'Revenue',
             ),
           ],
         ),
@@ -95,6 +104,7 @@ void main() {
       expect(els[1], isA<ShapeElement>());
       expect(els[2], isA<ImageElement>());
       expect(els[3], isA<BarcodeElement>());
+      expect(els[4], isA<ChartElement>());
       // The declarations round-trip.
       expect(decoded.parameters.single.name, 'asOf');
       expect(decoded.variables.single.calculation, JetCalculation.sum);
