@@ -55,6 +55,15 @@
 // over baseline — which would make this test the next thing to fail for reasons
 // nobody intended. The anchor is deliberately the coarse half of the pair.
 //
+// Both numbers survive the web. Every assertion here is double arithmetic, and
+// JavaScript's single number type has already produced three bugs in this repo,
+// so the counts were checked under CanvasKit as well as the VM: `flutter test
+// --platform chrome` from the package directory yields 50,302 and 90,102, and a
+// per-element-per-frame figure of 20.96 — identical to the VM, not merely close
+// enough to pass. The count is a tally of comparisons rather than a measured
+// quantity, so it carries no representation to differ over. That is a property
+// of counting, and one more reason it beat the clock here.
+//
 // What this guard does NOT see: a regression that walks some other per-element
 // structure — a rect map, a widget list — without touching the elements
 // themselves. It watches element traversal, which is where this designer's
