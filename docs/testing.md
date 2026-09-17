@@ -169,10 +169,18 @@ the regressing path owns:
    either assertion mean anything. Tagging is the right tool when the *host*
    legitimately differs — OS font rasterization — not when the assertion was
    never measuring the code.
-4. **Verify numeric assertions under CanvasKit.** Ratios and anchors are double
-   arithmetic, and JavaScript has one number type — already three bugs deep in
-   this repo. Run `flutter test --platform chrome` from the package directory
-   before trusting a new one; see AGENTS.md's web-numbers trap.
+4. **A count is immune to the platform's number semantics; a measurement is
+   not.** This is the second reason to prefer counting, and the stronger one. A
+   tally of comparisons has no representation to differ over, so the drag
+   guard's figures are *identical* on the VM and under CanvasKit — 50,302 and
+   90,102 traversals, 20.96 per element per frame, the same numbers, not merely
+   close enough to pass. A quantity you *measured* has a representation, and
+   JavaScript has one number type: that is the class AGENTS.md's web-numbers
+   trap describes, three bugs deep in this repo. So a counted assertion cannot
+   land in that category, while a measured one can — run
+   `flutter test --platform chrome` from the package directory before trusting
+   any guard that asserts on something measured. (Each perf test's header states
+   its own chrome result, or why it is not exposed.)
 
 If a deliberate change trips one of these, raise the constant and say in the
 change description what new work was added and why — the same discipline a moved
