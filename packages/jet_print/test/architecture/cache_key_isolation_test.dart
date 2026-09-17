@@ -10,8 +10,8 @@
 //
 // Both are fixed, so this guard is green on arrival. It exists for the next
 // cache, and for the shape `value_equality.dart` names as still unguarded:
-// nothing caches on a text primitive today, and anything that starts to pays
-// the same probe over `TextRunPrimitive.lines`.
+// nothing caches on a text primitive today, and anything that starts to pay
+// the same probe over `TextRunPrimitive.lines` would.
 //
 // WHY PRIMITIVES AND NOT EVERY `ValueEquality` TYPE.
 //
@@ -98,8 +98,12 @@ Map<String, String> _libSources() {
   };
 }
 
-/// The types this guard bans as `Map`/`Set` keys: `FramePrimitive` plus every
-/// class reaching it through `extends`.
+/// `FramePrimitive` plus every class reaching it through `extends`.
+///
+/// Deliberately does NOT subtract [_allowedKeyTypes]. The allowlist is applied
+/// where offenders are matched, not here, so that allowlisting a type — which
+/// the failure message explicitly invites — cannot also silence the test below
+/// that checks this closure still works.
 ///
 /// The closure is load-bearing, not decorative. `FramePrimitive` declares the
 /// mixin and its five subclasses inherit it WITHOUT restating it, so a
@@ -125,15 +129,22 @@ Set<String> _bannedKeyTypes(Map<String, String> sources) {
       if (types.contains(parent) && types.add(child)) grew = true;
     });
   }
-  return types.difference(_allowedKeyTypes);
+  return types;
 }
 
 void main() {
   test('no Map or Set in lib/ is keyed on a frame primitive', () {
     final Map<String, String> sources = _libSources();
-    final Set<String> banned = _bannedKeyTypes(sources);
+    final Set<String> banned =
+        _bannedKeyTypes(sources).difference(_allowedKeyTypes);
+    // The HashMap family is included because it is what an equality-keyed cache
+    // is usually SPELLED as — `canvas_painter.dart` already declares one — and
+    // all of them hash with `==`/`hashCode`. `SplayTree*` is deliberately absent:
+    // it orders with `compare` and never calls `==`. The optional `?` catches a
+    // nullable key argument, which keys on the same values.
     final RegExp keyed = RegExp(
-      '(?:Map|Set)<\\s*(${banned.map(RegExp.escape).join('|')})\\s*[,>]',
+      '(?:Map|Set|HashMap|HashSet|LinkedHashMap|LinkedHashSet)'
+      '<\\s*(${banned.map(RegExp.escape).join('|')})\\??\\s*[,>]',
     );
 
     final List<String> offenders = <String>[];
@@ -158,17 +169,38 @@ void main() {
     );
   });
 
-  test('the ban set includes types that only INHERIT the mixin', () {
+  test('the ban set includes EVERY type that only inherits the mixin', () {
     // Guards the guard, and asserts on the produced set rather than on the
     // regexes feeding it: an earlier version checked only that the patterns
     // matched text, which stayed green when the `extends` closure was disabled
-    // — so the first test silently stopped covering the two types that matter.
+    // — so the first test silently stopped covering the types that matter.
+    //
+    // It also checks the WHOLE descendant set rather than the two the dartdoc
+    // happens to name. Requiring only those two would stay green if the closure
+    // later dropped `LinePrimitive`, `RectPrimitive` or `PathPrimitive`, and the
+    // first test would quietly stop covering them — the same silent-shrink the
+    // paragraph above exists to prevent, one level in.
     final Set<String> banned = _bannedKeyTypes(_libSources());
+    final Directory root = findWorkspaceRoot();
+    final String primitives = File('${root.path}/packages/jet_print/lib/src/'
+            'rendering/frame/primitive.dart')
+        .readAsStringSync();
+    // Derived from the declaring file with a DIFFERENT pattern than the closure
+    // uses, so the two cannot break together and agree on nothing.
+    final Set<String> declared =
+        RegExp(r'class\s+(\w+)\s+extends\s+FramePrimitive')
+            .allMatches(primitives)
+            .map((Match m) => m.group(1)!)
+            .toSet();
+
+    expect(declared.length, greaterThanOrEqualTo(5),
+        reason: 'primitive.dart declares five subclasses; finding fewer means '
+            'this check has broken, not the tree');
     expect(banned, contains('FramePrimitive'),
         reason: 'the sealed base must seed the set');
-    expect(banned, containsAll(<String>['TextRunPrimitive', 'ImagePrimitive']),
-        reason: 'these inherit ValueEquality without restating it; if they are '
-            'absent the `extends` closure has regressed and the first test is '
-            'checking less than it appears to');
+    expect(banned, containsAll(declared),
+        reason: 'every subclass inherits ValueEquality without restating it. '
+            'Missing: ${declared.difference(banned)} — the `extends` closure has '
+            'regressed and the first test is checking less than it appears to');
   });
 }
