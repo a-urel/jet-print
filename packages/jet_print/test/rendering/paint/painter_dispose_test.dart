@@ -94,7 +94,13 @@ PageFrame _frameWith(List<FramePrimitive> primitives) {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  setUp(CanvasPainter.debugResetDecodedImageCounters);
+  setUp(() {
+    CanvasPainter.debugResetDecodedImageCounters();
+    // Cleared too, or `isNotNull` below stops meaning "this call assigned it":
+    // the static survives the test that set it, so a later test could read a
+    // disposed picture left over from an earlier one and pass on stale state.
+    PageRasterizer.debugLastPicture = null;
+  });
 
   test('dispose is reachable through a ReportPainter reference', () async {
     final ui.PictureRecorder rec = ui.PictureRecorder();
