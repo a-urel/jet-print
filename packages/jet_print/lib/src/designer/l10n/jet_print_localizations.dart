@@ -713,7 +713,7 @@ abstract class JetPrintLocalizations {
   /// **'Reprint header on each page'**
   String get propertiesGroupReprintHeader;
 
-  /// Read-only hint shown when the group row is selected, pointing the author to the group header band where the key + the start-new-page flag are edited (2026-06-14 design note).
+  /// Read-only hint shown when the group row is selected, pointing the author to the group's CARRIER band — its header, or its footer when the group has no header — where the name, key and start-new-page flag are edited (2026-06-14 design note).
   ///
   /// In en, this message translates to:
   /// **'Edit page & group settings on the group header band.'**

@@ -6,8 +6,9 @@
 // group row shows a read-only summary with no flag switches.
 //
 // One flag, not all three: `keepTogether` and `reprintHeaderOnEachPage` are
-// implemented and golden-tested but kept out of the UI (same design note), which
-// is why the cases below assert only `startNewPage`.
+// implemented and covered by `test/rendering/layout/report_layouter_test.dart`,
+// but kept out of the UI (same design note), which is why the cases below assert
+// only `startNewPage`.
 // Consumer-style: public API + the shared widget harness only.
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';

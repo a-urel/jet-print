@@ -422,9 +422,10 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
   /// writes through to the one [GroupLevel] — the single source of truth.
   ///
   /// ONE of [GroupLevel]'s three pagination flags, not all three: `keepTogether`
-  /// and `reprintHeaderOnEachPage` are implemented and golden-tested but
-  /// deliberately kept out of the UI (2026-06-14 design note), and their
-  /// controller setters stay available. See the comment in the body.
+  /// and `reprintHeaderOnEachPage` are implemented and covered by
+  /// `test/rendering/layout/report_layouter_test.dart`, but deliberately kept
+  /// out of the UI (2026-06-14 design note), and their controller setters stay
+  /// available. See the comment in the body.
   List<Widget> _groupSection(
     JetReportDesignerController controller,
     String groupId,
@@ -454,9 +455,12 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
         onCommit: (String v) => controller.setGroupKey(groupId, _compileKey(v)),
       ),
       const SizedBox(height: 12),
-      // keepTogether + reprintHeaderOnEachPage are implemented and golden-tested
-      // but hidden from the UI for now (2026-06-14 design note) — only
-      // start-new-page is surfaced. The controller setters remain available.
+      // keepTogether + reprintHeaderOnEachPage are implemented and covered by
+      // `test/rendering/layout/report_layouter_test.dart`, but hidden from the
+      // UI for now (2026-06-14 design note) — only start-new-page is surfaced.
+      // The controller setters remain available. (They are NOT golden-tested,
+      // which this comment claimed until a review checked: nothing under
+      // `test/goldens/` references either flag.)
       ShadSwitch(
         key: const ValueKey<String>('$_p.field.groupNewPage'),
         value: group.startNewPage,
