@@ -1,6 +1,12 @@
 /// Positioned display-list primitives: the WYSIWYG contract between
 /// layout and paint. Pure-Dart geometry; each primitive carries its originating
-/// element id for designer hit-testing.
+/// element id as provenance.
+///
+/// Nothing under `lib/` reads [FramePrimitive.elementId] — designer
+/// hit-testing goes through `DesignTimeLayout.elementRect`
+/// (`designer/canvas/hit_testing.dart`), never through the display list. The
+/// id is consumed by the rendering tests, which use it to assert *which*
+/// element produced a given primitive; keep emitting it.
 library;
 
 import 'dart:typed_data';
@@ -22,7 +28,8 @@ sealed class FramePrimitive with ValueEquality {
   /// Position and size, in page points.
   final JetRect bounds;
 
-  /// The originating element's id, or null (e.g. chrome).
+  /// The originating element's id, or null (e.g. chrome). Provenance only —
+  /// see the library dartdoc for who actually reads it.
   final String? elementId;
 
   /// Clockwise rotation in radians, applied about [bounds]'s center by the
