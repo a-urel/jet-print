@@ -163,9 +163,13 @@ Real ones, each of which has cost time before.
   `design_canvas.dart`, `jet_report_designer_controller.dart` and
   `outline_panel.dart` each spread across part files. Two consequences: `setState`
   and `notifyListeners` are `@protected` and unreachable from an extension, hence
-  the `_rebuild()` / `_notify()` proxies; and a *public* extension on a public
-  class must be named in the barrel's `export ... show` list, or its methods are
-  uncallable through `package:jet_print/jet_print.dart`.
+  the `_rebuild()` / `_notify()` proxies; and an extension carrying methods a
+  *consumer* is meant to call must be named in the barrel's `export ... show`
+  list, or those methods are uncallable through
+  `package:jet_print/jet_print.dart`. Scope matters: Dart has no
+  package-private, so an extension that is public only to be reachable from a
+  sibling library is correctly *absent* from that list — say which one it is
+  where it is written, because the two are indistinguishable from the keyword.
 - **A long engine file may be long on purpose — apply the test, not a roster.**
   `rendering/fill/report_filler.dart` (bind, walk, accumulate) and
   `rendering/layout/report_layouter.dart` (measure, break, place) are each *one*
