@@ -100,7 +100,7 @@ where it will be found:
 | What changed, for users | `CHANGELOG.md` |
 | Why this code is shaped this way | A doc comment next to it |
 | A rule everyone must follow | `AGENTS.md`, plus a test enforcing it |
-| How a subsystem fits together | `docs/architecture.md` |
+| How a subsystem fits together | the wiki, starting at `docs/README.md` |
 | A trap that cost someone a day | The trap list in `AGENTS.md` |
 
 A rule written only in prose decays silently. Where you can, land it as a test

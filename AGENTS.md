@@ -137,8 +137,10 @@ name — and the list is the point, so a new guard belongs in it:
 | `built_in_element_registration_test.dart` | the two built-in element lists cannot drift apart |
 | `canvas_painter_single_construction_test.dart` | one place builds a `CanvasPainter`, so one place releases it |
 | `cache_key_isolation_test.dart` | nothing caches on a frame primitive, whose `==` walks its lists |
-| `public_extension_export_test.dart` | a public extension on an exported type is exported, or the omission is written down |
+| `public_extension_export_test.dart` | a public extension on an exported type is exported, or allowlisted with a reason |
 | `expression_function_catalog_registration_test.dart` | the fx palette and the engine's function table cannot drift apart |
+| `golden_failure_surfaces_test.dart` | a golden mismatch in a plain `test()` fails rather than being swallowed |
+| `documented_claims_test.dart` | the structural claims `docs/` states, each naming the page to update |
 
 And two tests sit at the `test/` root rather than in a seam, because they police
 the whole package: `encapsulation_test.dart` and `public_api_test.dart`.
@@ -154,7 +156,11 @@ Real ones, each of which has cost time before.
 - **`flutter test` at the root tests nothing.** Always name the member packages.
 - **Goldens are macOS-only.** They carry the `golden` tag (see `dart_test.yaml`);
   other CI legs run `--exclude-tags golden`. Host font rasterization and PDF font
-  subsetting differ per OS, so a golden regenerated elsewhere is wrong.
+  subsetting differ per OS, so a golden regenerated elsewhere is wrong. That leg
+  is one job — format, analyze, build, test, in order — so an earlier step
+  failing takes the job red before the goldens run at all. **A red macOS leg is
+  not evidence about the goldens**: they may never have executed. Fix the earlier
+  step and read the leg again; only a green one means they ran.
 - **A new enum variant hits several exhaustive switches.** Adding a `ShapeKind`,
   for instance, means the geometry switch in `rendering/elements/shape_path.dart`
   *and* the designer's thumbnail painter *and* the inspector gallery. Dart will
@@ -186,29 +192,58 @@ Real ones, each of which has cost time before.
   `design_canvas.dart`, `jet_report_designer_controller.dart` and
   `outline_panel.dart` each spread across part files. Two consequences: `setState`
   and `notifyListeners` are `@protected` and unreachable from an extension, hence
-  the `_rebuild()` / `_notify()` proxies; and a *public* extension on a public
-  class must be named in the barrel's `export ... show` list, or its methods are
-  uncallable through `package:jet_print/jet_print.dart`.
+  the `_rebuild()` / `_notify()` proxies; and an extension carrying methods a
+  *consumer* is meant to call must be named in the barrel's `export ... show`
+  list, or those methods are uncallable through
+  `package:jet_print/jet_print.dart`. `public` does not settle which kind an
+  extension is: one can be public solely for cross-library reach, and is then
+  correctly *absent* from that list — so say which kind it is where it is
+  written. Why the two are indistinguishable is `docs/10-designer-seams.md`,
+  *Four files split with `part`*.
+- **A long engine file may be long on purpose — apply the test, not a roster.**
+  `rendering/fill/report_filler.dart` (bind, walk, accumulate) and
+  `rendering/layout/report_layouter.dart` (measure, break, place) are each *one*
+  algorithm whose steps share mutable state across the whole pass, which is why
+  neither joined the four designer files split above: no seam can be cut without
+  threading that state through it by hand. **The test is shape, not size.** A
+  long file that is one such pass stays long, and its length wants a comment
+  saying so. A long file that is several things sitting together is not
+  protected by this rule and probably does have a seam. Either way, find the
+  seam before you split.
 - **A test that opens a file must not use a bare relative path.** The documented
   command runs from the workspace root, so `Directory.current` is the root, not
   the package — a path like `sample_data/x.json` then resolves to nothing. Locate
   the file relative to the package (the library's tests use
   `findWorkspaceRoot()` from `test/support/workspace.dart`). Golden paths are
   exempt: `matchesGoldenFile` resolves relative to the test file.
-- **`main` currently fails the format gate**, on seven files that predate any
-  recent change. CI's macOS leg runs `dart format --set-exit-if-changed` and
-  stops there, so the rest of that leg — including the goldens, which only run
-  on macOS — never executes. Your local `dart format` will report the same seven.
-  Don't mistake them for your own: compare against `main` before reformatting,
-  and format the files you touched rather than sweeping the tree.
 - **Per-package lockfiles are not committed** — only the root `pubspec.lock`.
 - **Run `git` from the repo root.** `flutter` commands leave the shell inside a
   package directory.
 
+## Where to read it
+
+`docs/` carries the mechanism behind these rules, `docs/recipes/` the procedure.
+Take the row, not the front door.
+
+| You are about to | Read |
+|---|---|
+| Change the report model — definitions, bands, scopes, elements | [`docs/01-smallest-report.md`](docs/01-smallest-report.md) |
+| Touch a binding, a `$F{}` / `{…}` expression, or an aggregate | [`docs/02-binding-data.md`](docs/02-binding-data.md) |
+| Change page breaks, furniture, or page numbers | [`docs/03-pagination.md`](docs/03-pagination.md) |
+| Draw something new, or change how anything is painted or exported | [`docs/04-the-frame.md`](docs/04-the-frame.md), [`05`](docs/05-painting.md) |
+| Bump `schemaVersion`, write a migration, or handle an unknown node | [`docs/06-round-tripping.md`](docs/06-round-tripping.md) |
+| Add a designer edit, an undo step, a canvas gesture, an inspector or the fx dialog | [`docs/07-designer-loop.md`](docs/07-designer-loop.md), [`08`](docs/08-the-canvas.md), [`09`](docs/09-the-panels.md) |
+| Use a designer scope, a value template, or the barrel's `show` list | [`docs/10-designer-seams.md`](docs/10-designer-seams.md) |
+| **Add an element type** | [`docs/recipes/add-element-type.md`](docs/recipes/add-element-type.md) |
+| **Add an expression function** | [`docs/recipes/add-expression-function.md`](docs/recipes/add-expression-function.md) |
+| **Add a localized string** | [`docs/recipes/add-localized-string.md`](docs/recipes/add-localized-string.md) |
+| **Add a playground demo** | [`docs/recipes/add-playground-demo.md`](docs/recipes/add-playground-demo.md) |
+| **A golden failed** | [`docs/recipes/update-goldens.md`](docs/recipes/update-goldens.md) |
+
 ## Going deeper
 
-- [`docs/architecture.md`](docs/architecture.md) — how a report becomes pixels,
-  layer by layer, and where the extension points are.
+- [`docs/README.md`](docs/README.md) — the wiki's index, and the conventions its
+  pages are written to: read it before you write a page rather than read one.
 - [`docs/testing.md`](docs/testing.md) — the test taxonomy, golden discipline,
   tags, and the per-platform CI legs.
 - [`docs/workflow.md`](docs/workflow.md) — how a change moves from idea to merge.

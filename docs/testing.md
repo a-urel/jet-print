@@ -20,7 +20,7 @@ root package, so the bare command passes while testing nothing.
 
 | Directory | Files | What it proves |
 |---|---:|---|
-| `test/architecture/` | 4 | Whole-repo invariants: layer boundaries, third-party isolation, built-in element registration parity, and single-site painter construction. Mostly by scanning import directives; the registration guard compares registries at runtime. |
+| `test/architecture/` | 7 | Whole-repo invariants, each named in [`../AGENTS.md`](../AGENTS.md)'s guard table, where the list is the point. Mostly by scanning source text; the registration guard compares registries at runtime. |
 | `test/domain/` | ~55 | The model, `validate()`, and serialization round-trips including lossless unknown types. |
 | `test/expression/` | ~30 | Lexer, parser, evaluator, functions, aggregates, formatting. |
 | `test/data/` | ~15 | Data sources, schemas, cursors, nested collections. |
@@ -31,18 +31,41 @@ root package, so the bare command passes while testing nothing.
 | `test/web/` | 2 | Behavior that differs under CanvasKit. |
 | `test/` (root) | 2 | `encapsulation_test.dart` and `public_api_test.dart`. |
 
-### The two architecture tests
+### The two import-scanning architecture tests
+
+`AGENTS.md`'s table names all seven. These two are worth reading side by side,
+because they scan for the same kind of violation by different means, and the
+difference decides what each will let through.
 
 `layer_boundaries_test.dart` reads every file under `domain/`, `data/` and
 `expression/`, extracts its `import`/`export` URIs, and fails if any reaches the
 rendering or designer seams or a Flutter UI library. It also asserts each
-directory *has* files, so an empty scan cannot produce a false green.
+directory *has* files, so an empty scan cannot produce a false green. It has long
+since grown past those three directories. It also pins two pure designer geometry
+helpers; the sub-seam rules inside `rendering/` (`fill/`, `layout/`, `elements/`,
+`export/` and the `engine/` facade, each with its own allowed dependencies);
+`dart:ui` to `paint/canvas_painter.dart`, `paint/page_rasterizer.dart` and
+`engine/render_options.dart` — note the test's *name* says only the two painters,
+while its body carries an explicit third branch for `RenderOptions`' `Locale`;
+`package:printing` to `lib/src/print/`, which no library file but the barrel may
+reach; what the public entry point exports, `show` combinators included; and that
+`schemaVersion` is still 2.
 
-`barcode_dependency_isolation_test.dart` does the same for `package:barcode`,
-allowing exactly one adapter file.
+It matches `import`/`export` directives by regex rather than raw substrings, so a
+file may name a forbidden URI in a comment without failing.
 
-Both match directives rather than raw substrings, which is why they can safely
-contain the very strings they forbid.
+`barcode_dependency_isolation_test.dart` guards `package:barcode` and does **not**
+work that way. Its first assertion reads every `.dart` file under
+`packages/jet_print/lib`, skips the one whose path ends
+`package_barcode_encoder.dart`, and fails on any whose *text* contains
+`package:barcode/` — a comment mentioning the package is a CI failure, not just an
+import. Its second assertion scans `lib/src/domain` the same way, for
+`package:barcode/` or the substring `rendering/elements/barcode`, which catches a
+relative import of the adapter's directory as well as the vendor package.
+
+Whether that strictness is deliberate or accidental has not been decided; the
+behaviour above is what the test does today, and changing it is a change to a
+passing CI gate.
 
 ### The two consumer tests
 
@@ -74,32 +97,34 @@ tagged `golden` in `dart_test.yaml` and run **only on macOS**, because host font
 rasterization and PDF font subsetting differ per OS. Other CI legs pass
 `--exclude-tags golden`.
 
-**A passing golden is not a byte-identical one.** `test/support/golden_config_io.dart`
-installs a tolerant comparator: it accepts any image whose `diffPercent` is at
-most `0.005`, i.e. half a percent of pixels may differ. That is deliberate — host
-rasterization wobbles — but it means "goldens green" says *no visible change*,
-not *no change*, and a claim of byte-identical output needs a different check.
-The one genuinely byte-pinned artifact is `invoice.pdf`, compared as bytes in
-`test/rendering/export/pdf_determinism_test.dart`.
+**A passing golden is not a byte-identical one.** `test/flutter_test_config.dart`
+replaces the framework comparator with `_TolerantGoldenComparator` from
+`test/support/golden_config_io.dart`, which accepts any image whose `diffPercent`
+is at most `0.005` — half a percent of pixels may differ. That is deliberate,
+because host rasterization wobbles, and the threshold sits far below a real
+visual regression, which is orders of magnitude larger. But it is not zero: a
+green PNG golden means *no visible change*, not *no change*. The one genuinely
+byte-pinned artifact is `invoice.pdf`, compared as bytes in
+`test/rendering/export/pdf_determinism_test.dart`, and it is the only place a
+byte claim is earned.
 
-That tolerance has a consequence worth knowing before you trust a `failures/`
-directory: **a fully passing run can still write a complete set of failure
-images.** Reproduced by deleting every `failures/` directory, then running
-`test/rendering/export/png_export_test.dart` alone: "All tests passed!", and four
-`invoice_page1_2x_*` images appear. The comparison detects a real difference, the
-tolerance lets it pass, and the artifacts are written regardless — which call
-writes them is not established. So images in `failures/` do not mean a golden
-moved. Check the run's exit status, not the directory.
+**And a pin fails only if the comparator throws a `TestFailure`.**
+`matchesGoldenFile` compares inside `TestWidgetsFlutterBinding.runAsync`, which
+turns any other exception into a reported `FlutterError` and completes with
+`null` — which `AsyncMatcher` reads as a match. Inside `testWidgets` that reported
+error still fails the test; inside a plain `test()` nothing collects it. Seven
+pins compared a raw `ui.Image` from a plain `test()` and could not fail at all
+until `89752c4`; `test/architecture/golden_failure_surfaces_test.dart` is what
+keeps this true now. Six of the seven were merely mute — their goldens were
+current. The seventh had pinned pre-bold output for three months, while a
+`testWidgets` pin of the same fixture showed the title bold the whole time. **A
+golden that cannot fail does not merely miss regressions; it becomes a record of
+what the code used to do, and diverges from its siblings unobserved.**
 
-Discipline, in order:
-
-1. A golden moved — confirmed by a failing run, not by files in `failures/`.
-   **Look at the failure image first** — `test/**/failures/` holds the diff,
-   master and test images (git-ignored).
-2. Name what changed and why. "The toolbar gained a button, so the top bar's
-   measured width shifted" is an explanation. "Rendering changed slightly" is not.
-3. Only then regenerate, on macOS, and say in the change description which
-   goldens moved.
+A `failures/` directory is untracked and nothing cleans it, so its contents can
+outlive the run that wrote them — it is not evidence that a golden moved. Take
+the list from the test output; the procedure is in
+[`recipes/update-goldens.md`](recipes/update-goldens.md).
 
 A golden that shifts for a reason you cannot articulate is an undiscovered bug,
 not noise. Regenerating to get green is how a WYSIWYG tool starts lying.
@@ -128,7 +153,8 @@ a test involves image decoding, remember it needs `runAsync`.
 
 ## CI
 
-`.github/workflows/ci.yml`, five legs:
+`.github/workflows/ci.yml`, six legs — three OS entries of one matrix job, then
+three jobs of their own:
 
 | Leg | Runs |
 |---|---|
@@ -136,7 +162,8 @@ a test involves image decoding, remember it needs `runAsync`.
 | Ubuntu | analyze, build, suite minus goldens |
 | Windows | analyze, build, suite minus goldens |
 | web (chrome) | build, suite minus goldens — **per package**, because the repo-root multi-package `--platform chrome` command fails on DDC workspace path resolution |
-| android / ios | build only |
+| android (apk) | build only |
+| ios (no codesign) | build only |
 
 Every leg builds the playground app, which is what proves the native plugin
 toolchain still links on that OS.
