@@ -55,9 +55,27 @@ class PdfPainter implements ReportPainter {
   /// Images already embedded, keyed by the primitive's byte instance.
   final Map<Uint8List, PdfImage> _embeddedImages = <Uint8List, PdfImage>{};
 
-  /// Pixels decoded in [prepare], keyed by primitive (value equality).
-  final Map<ImagePrimitive, _DecodedImage> _decoded =
-      <ImagePrimitive, _DecodedImage>{};
+  /// Pixels decoded in [prepare], keyed by the primitive's byte instance —
+  /// the same rule as [_embeddedImages] above.
+  ///
+  /// NOT by the primitive: a decode depends only on the bytes (`fit`,
+  /// `opacity` and `bounds` are applied at draw time), while `ImagePrimitive`'s
+  /// value equality covers all of them and walks the byte list element-wise
+  /// (see `ValueEquality`). Keying on the primitive hashed every byte on every
+  /// probe AND never hit for a repeated image, so one logo down a band decoded
+  /// once per row. `CanvasPainter` was fixed the same way.
+  final Map<Uint8List, _DecodedImage> _decoded = <Uint8List, _DecodedImage>{};
+
+  /// Test seam: how many distinct images [prepare] has decoded. One per byte
+  /// buffer, not one per primitive.
+  ///
+  /// Deliberately NOT annotated `@visibleForTesting`: that annotation lives in
+  /// `package:meta`, re-exported by `package:flutter/foundation.dart`, and this
+  /// seam must stay importable headlessly — `layer_boundaries_test.dart` bans
+  /// every `package:flutter/` import under `export/` so PDF generation runs
+  /// with no Flutter present. Adding the annotation means adding a dependency
+  /// for it; the `debug` prefix carries the same message.
+  int get debugDecodedImageCount => _decoded.length;
 
   PdfGraphics? _graphics;
   double _pageHeight = 0;
@@ -77,9 +95,9 @@ class PdfPainter implements ReportPainter {
   @override
   Future<void> prepare(PageFrame frame) async {
     for (final FramePrimitive p in frame.primitives) {
-      if (p is ImagePrimitive && !_decoded.containsKey(p)) {
+      if (p is ImagePrimitive && !_decoded.containsKey(p.bytes)) {
         final _DecodedImage? decoded = _DecodedImage.decode(p.bytes);
-        if (decoded != null) _decoded[p] = decoded;
+        if (decoded != null) _decoded[p.bytes] = decoded;
       }
     }
   }
@@ -177,7 +195,7 @@ class PdfPainter implements ReportPainter {
 
   @override
   void drawImage(ImagePrimitive p) {
-    final _DecodedImage? decoded = _decoded[p];
+    final _DecodedImage? decoded = _decoded[p.bytes];
     if (decoded == null) return; // undecodable bytes: draw nothing, like
     // an unresolved source upstream — never crash the export (B5).
     _withOpacity(_g, p.opacity, () {
