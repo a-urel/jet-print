@@ -2,11 +2,9 @@
 
 The plumbing the canvas and the panels both stand on — and what the barrel charges for it.
 
-Pages 07 to 09 followed one loop: a pointer becomes a command, a command becomes a definition, a
-definition becomes a frame. This page is what that loop assumes is already there — what carries the
-controller, the fonts and the schema down the tree, the lookups that answer without touching the
-model, the compiler turning a display token into an expression string while evaluating nothing, and
-the price the four `part`-split files pay at the package's single door.
+The designer's plumbing is inherited scopes and stateless lookups: cheap, and almost none of it
+reaching the model. It costs something in exactly one place — the package's single door, where a name
+left out of an `export … show` deletes methods from the public surface without breaking a build.
 
 ## Three scopes, three answers to "what if it is absent"
 
@@ -30,16 +28,15 @@ without one is not a state the library models.
 The other two scopes answer that question differently, and what each carries is the reason.
 `designer/designer_font_scope.dart` → `DesignerFontScope` is a plain `InheritedWidget`, not an
 `InheritedNotifier`: the registry is hoisted once and never changes under the tree, so there is
-nothing to notify. Its `of` falls back to a fresh default-only `FontRegistry` — the same family set
-the engine and exporter construct on their own — so a panel pumped in isolation gets a real answer
-rather than an empty one. `designer/designer_schema_scope.dart` → `DesignerSchemaScope` is nullable
-on purpose: `of` returning null means no data source is attached, a legal displayable state — the
-Data Source panel's empty state — not a missing dependency.
+nothing to notify. Its `of` falls back to a fresh default-only `FontRegistry`, the same set the
+engine and exporter construct on their own, so a panel pumped in isolation gets a real answer rather
+than an empty one. `designer/designer_schema_scope.dart` → `DesignerSchemaScope` is nullable on
+purpose: `of` returning null means no data source is attached, a legal displayable state — the Data
+Source panel's empty state — not a missing dependency.
 
-All three are built in one place, `designer/jet_report_designer.dart` →
-`_JetReportDesignerState.build`, nested schema outside fonts outside controller. So the rule is not
-"use an `InheritedWidget` for designer state": mutability picks the widget type, and whether *absent*
-is a legal state picks the missing-scope policy.
+All three are built at one site, `designer/jet_report_designer.dart` →
+`_JetReportDesignerState.build`. So the rule is not "use an `InheritedWidget` for designer state":
+mutability picks the widget type, and whether *absent* is a legal state picks the missing-scope policy.
 
 ## Lookups that never reach the model
 
@@ -61,11 +58,11 @@ The glyph lookups sit one layer out. `designer/element_glyph.dart` → `elementG
 `fieldTypeGlyph` maps a `JetFieldType` through an exhaustive `switch`. The asymmetry is forced: a
 field type is a closed enum, so the switch makes a new variant a compile error, while the element
 hierarchy is deliberately open — `UnknownElement` exists so an element this build never heard of
-survives a round trip (page 06), and it has to be drawable rather than fatal. That fallback is the
-cost of the openness, and why a new element type is a grep rather than something the compiler finds
-for you. `element_glyph.dart`'s dartdoc claims three consumers — outline, properties header, palette
-— and two are real: `designer/layout/designer_toolbox.dart` keys its entries on `DesignerToolType`
-and never holds a `ReportElement`, so it carries a parallel icon list of its own.
+survives a round trip (page 06), and it has to be drawable rather than fatal. The square is the cost
+of that openness. `element_glyph.dart`'s dartdoc claims three consumers — outline, properties header,
+palette — and two are real: `designer/layout/designer_toolbox.dart` keys on `DesignerToolType`, never
+holds a `ReportElement`, and carries a parallel list of the same icons. So the same dartdoc's promise
+that a new element type gets its icon "in exactly one place" is wrong by one: it takes two.
 
 ## The compiler writes expressions and never runs them
 
@@ -82,12 +79,12 @@ Parser(tokenize(expr))
 return BindingValue(expr);
 ```
 
-The parser is the arbiter, used twice and trusted both times. `_compileTemplate` first offers the
-whole body as a single expression, so `{SUM([t]) + 500}` compiles to arithmetic rather than a
-concatenation of literal runs; only when the parser rejects that does it fall back to the
-part-by-part scan producing `CONCAT`. The compiled string is then parsed once more before it is
-accepted, so a template that would not evaluate degrades to literal text rather than to a stored
-expression that fails at render.
+The parser is the arbiter throughout. `_compileTemplate` first offers the whole body as a single
+expression — unless a `\` escape marks it literal — so `{SUM([t]) + 500}` compiles to arithmetic
+rather than a concatenation of literal runs, and only a parse failure falls back to the part-by-part
+scan producing `CONCAT`. The compiled string is then parsed again before it is accepted, so a
+template that would not evaluate degrades to literal text rather than to a stored expression that
+fails at render.
 
 `reverseCompile` is the inverse, and the projection both the value field and the canvas token read
 (page 08), which is why the two cannot disagree. Its `editable` flag is the honest part: an
@@ -95,9 +92,11 @@ expression outside the template grammar is shown verbatim in braces and read-onl
 designer cannot round-trip is never silently rewritten by the field displaying it.
 
 The alternative — storing the template and teaching the render chain to expand it — was rejected, at
-the cost of one directional scan and one reverse renderer. What that buys is that **no file under
-`lib/src/designer/` imports the expression evaluator**: bindings stay single-sourced in
-`TextElement.expression`, and the designer has no evaluation path that could drift from the engine's.
+the cost of one directional scan and one reverse renderer. What it buys is that **no file under
+`lib/src/designer/` ever evaluates an expression — `evaluate` appears nowhere under that
+directory.** The seam type is imported there, for parsing and inspection, but never run, so the
+designer has no evaluation path that could drift from the engine's. Nothing in `test/architecture/`
+pins that yet: today it is a grep.
 
 ## Four files split with `part`, and what that costs at the barrel
 
@@ -107,13 +106,14 @@ with no seam between them: every method reached the same private state, so extra
 own *library* meant making that state non-private. `part of` avoids the trade, because a part file is
 the same library as its parent — an `extension` declared there keeps full access to `_document`,
 `_history`, `_editingId` and the rest, and the split changes file layout, not API. Two consequences
-follow from that access.
+follow.
 
 The first is that same-library is not same-*class*. `setState` and `notifyListeners` are `@protected`
 — available to a subclass, flagged through an extension, which is not an instance member of the class
 it extends — so each parent declares a proxy its extensions call instead: `_rebuild(fn)` wrapping
-`setState` in the three widget files, `_notify()` wrapping `notifyListeners` in the controller. The
-same boundary catches statics, which is why the controller's pure helpers are top-level functions in
+`setState` in the three widget files, `_notify()` wrapping `notifyListeners` in the controller. An
+extension body does not see the class's static scope either — `C._s()` resolves, bare `_s()` does not
+— which is spelling rather than access, and why the controller's pure helpers sit at top level in
 `controller/api/statics.dart`.
 
 The second reaches a consumer. An extension's methods are callable only where the extension is in
@@ -130,35 +130,36 @@ export 'src/designer/controller/jet_report_designer_controller.dart'
         CtrlElementEdit,
 ```
 
-Only the controller needs this: the three widget files extend private `State` classes, so their
-extensions are private too and stop at the library edge — an asymmetry that follows from each class's
-visibility, not from a style choice. Omit a `Ctrl…` name and the package still analyzes, the
-controller still exports, and every method in that family silently vanishes from the public surface.
-What catches it is a consumer-shaped test: `public_api_test.dart` imports only the entry point and
-calls `setShapeKind`, `setTextStyle` and `setBarcodeColor`, all of which live in extensions.
+Among the four split files only the controller reaches a consumer this way; the other three extend
+private `State` classes, so their extensions are private too and stop at the library edge. But the
+requirement is about visibility, not about those files: it binds every public extension on an
+exported class, wherever in `lib/src/` it is written. Omit the name and the package still analyzes,
+the class still exports, and its extension methods silently vanish from the public surface. What
+catches that is a consumer-shaped test — `public_api_test.dart` imports only the entry point and
+calls `setShapeKind`, `setTextStyle` and `setBarcodeColor`, all extension members — and nothing
+catches it for an extension no such test exercises.
 
 The stakes are that high because the entry point is singular, and exactly so:
-**`packages/jet_print/lib/` holds exactly one library file at its root, `jet_print.dart`; every other
-Dart file in the package lives under `lib/src/`.** Everything a consumer can name is in that file's
-`export … show` clauses, which is what makes an omitted extension a real risk rather than a
-theoretical one.
+**`packages/jet_print/lib/` holds exactly one library file at its root, `jet_print.dart`, and every
+other Dart file under `lib/` lives in `lib/src/`.** Everything a consumer can name is in that file's
+`export … show` clauses — which is what makes an omitted extension a real risk, not a theoretical one.
 
 ## Localization is a contract here, a procedure elsewhere
 
-Three ARB files under `designer/l10n/` carry the same key set; `jet_print_en.arb` is the template and
-the only one carrying a descriptor per message. `l10n.yaml` pins the two guarantees that matter:
-English is the first supported locale, so an unsupported locale or a missing key resolves to English
-rather than to whichever locale sorts first alphabetically, and `nullable-getter: false` makes
-`of(context)` total, because the library reads strings unconditionally. The
-`jet_print_localizations*.dart` files beside them are *outputs* — the generator rewrites them, so an
-edit there is lost — and reach consumers through the barrel as `JetPrintLocalizations`, delegate and
-supported locales included.
+`AGENTS.md` carries the ARB-editing rules under *Traps*, and the procedure is
+`docs/recipes/add-localized-string.md`. What belongs here is the seam: `l10n.yaml` pins two
+guarantees that answer different questions. `preferred-supported-locales: [en]` puts English first in
+the generated `supportedLocales`, which governs *locale resolution* — an active locale the library
+does not support resolves to English, not to whichever locale sorts first. A key missing from one ARB
+is a different mechanism: `gen-l10n` fills it from the template at generation time, so that gap
+closes before any locale is resolved. `nullable-getter: false` is the second, making `of(context)`
+total because the library reads strings unconditionally. Both reach consumers through the barrel as
+`JetPrintLocalizations`, whose `delegate` and `supportedLocales` are statics on it.
 
-Each non-English locale is verified in its own test file, which reads like duplication and is not:
-Flutter's global localizations load some locales' CLDR data through process-global async state, and
-switching between two non-English locales in one isolate leaves the later tree unbuilt. German is the
-widest language here, so `localization_de_test.dart` doubles as the overflow check. The procedure —
-edit the ARBs, regenerate, re-run — is a recipe, in `docs/recipes/`.
+Each non-English locale is verified in its own test file, which reads like duplication and is not.
+The observable rule is one isolate per non-English locale; the cause, as those files' own note
+explains it, is a framework quirk — CLDR data loading through process-global async state, so two such
+locales in one isolate leave the later tree unbuilt.
 
 ## Run it
 
@@ -172,24 +173,25 @@ flutter test packages/jet_print/test/public_api_test.dart \
 
 `public_api_test.dart` is the consumer standing in for a host, and the extension methods it calls pin
 the barrel's `show` list. `value_template_compiler_test.dart` states the three forms, the literal
-fallback, and round-trip stability on the supported subset; the two preset files pin recognition,
-tolerance, and the margins `applyPaper` must leave alone.
+fallback, and round-trip stability on the supported subset; the preset files pin recognition,
+tolerance, and the margins `applyPaper` leaves alone.
 
 ## Trap
 
-**One thirteen-arm operator table is written twice, and neither copy can see the other.**
+**One thirteen-arm operator table is written twice, and only a comment links the copies.**
 `expression/ast.dart` and `value_template_compiler.dart` each declare a private `_binarySymbol`
 mapping `BinaryOp` to its source symbol — the first for `toString`, the second so a reversed token
-re-parses to the same tree. The duplication is forced: `ast.dart`'s copy is private to its own
-library, and no other layer can import a private symbol; a comment is the only link between them.
+re-parses to the same tree. The duplication is a choice, not a wall: the compiler already imports
+`expression/ast.dart`, so dropping one underscore would single-source the table with no new
+dependency.
 
 The failure mode is narrow and so easy to miss. A *new* `BinaryOp` breaks the build in both places,
 since both are exhaustive switch expressions — that direction is safe. A *changed* arm is not: spell
-one operator differently in one table and `toString` and the round trip disagree, with no compile
-error and no failing test until an expression using it is reverse-compiled. Grep `_binarySymbol`.
+one operator differently and `toString` and the round trip disagree, with no compile error and no
+failing test until an expression using it is reverse-compiled. Grep `_binarySymbol`.
 
 ## Next
 
 The narrative ends here. What follows are the recipes in `docs/recipes/` — short procedural pages for
 the tasks this walk kept deferring: adding an element type, an expression function or a localized
-string, regenerating goldens, and adding a playground demo. `docs/README.md` routes between them.
+string, regenerating goldens, adding a playground demo. `docs/README.md` routes between them.
