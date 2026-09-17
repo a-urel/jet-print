@@ -19,13 +19,16 @@ library;
 /// `List` prop cost time proportional to everything in it, so a `Map` or `Set`
 /// keyed on such a value pays that on *every* probe, not just on a hit.
 /// `ImagePrimitive.bytes` and `TextRunPrimitive.lines` are the two that bite.
-/// `CanvasPainter`'s decoded-image cache was keyed on the whole
-/// `ImagePrimitive` and therefore hashed every byte of every image on every
-/// lookup — and, because `bounds` and `elementId` are in `props` too, never hit
-/// for a repeated image anyway, so one logo down a band decoded once per row.
-/// It keys on the byte buffer's identity now. `PdfPainter._decoded` still keys
-/// on the primitive and still has both halves of that problem; its sibling
-/// `_embeddedImages` shows the shape to copy.
+/// Both painters' decoded-image caches were once keyed on the whole
+/// `ImagePrimitive`, which hashed every byte of every image on every lookup —
+/// and, because `bounds` and `elementId` are in `props` too, never hit for a
+/// repeated image anyway, so one logo down a band decoded once per row. Both
+/// key on the byte buffer now; `PdfPainter._embeddedImages` had always done so,
+/// which is what made its sibling `_decoded` look wrong.
+///
+/// No cache is keyed on a primitive today. `TextRunPrimitive.lines` is the
+/// remaining shape to be careful with: nothing caches on a text primitive yet,
+/// and anything that starts to would pay the same O(content) probe.
 ///
 /// So: mix this in for equality freely; when caching, key on something O(1)
 /// (an identity, an id) rather than on the value itself.
