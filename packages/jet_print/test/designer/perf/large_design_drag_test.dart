@@ -17,13 +17,19 @@
 // their per-element work off the same field. So the count *is* the work, not a
 // proxy for it: index the lookup and it falls, scan more and it rises.
 //
-// The assertion is a RATIO, not an absolute. Doubling the design size doubles
-// linear per-frame work, so a healthy engine lands near 2.0x. Per-frame work
-// that is quadratic in the design size (re-walking every element once per
-// selected element, re-laying-out per element, a per-element rect lookup that
-// scans) lands near 4.0x. The ceiling sits between them. An absolute count
-// would be brittle — any legitimate extra walk moves it — while the ratio locks
-// the shape of the curve, which is the actual claim.
+// The primary assertion is a RATIO. Doubling the design size doubles linear
+// per-frame work, so a healthy engine lands near 2.0x. Per-frame work that is
+// quadratic in the design size (re-walking every element once per selected
+// element, re-laying-out per element, a per-element rect lookup that scans)
+// lands near 4.0x. The ceiling sits between them. A bound on the raw TOTAL
+// would be brittle — 50,302 moves on any legitimate extra walk — so it is the
+// ratio, not a total, that locks the shape of the curve.
+//
+// A ratio cannot be the whole guard, though, and a second assertion below is an
+// absolute after all: a per-element-per-frame anchor, normalized and coarse
+// rather than a raw total. The paragraph after next explains what a ratio
+// structurally cannot catch and why that anchor is not the brittle thing this
+// paragraph rules out.
 //
 // Measured when this guard was written: 50,302 and 90,102 traversals — a 1.79x
 // ratio (part of the per-frame cost is selection-sized, so healthy sits a little
