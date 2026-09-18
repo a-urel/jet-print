@@ -106,3 +106,39 @@ where it will be found:
 A rule written only in prose decays silently. Where you can, land it as a test
 and let `AGENTS.md` point at the test — then the rule fails loudly when it stops
 being true.
+
+## Agent tooling
+
+The repo carries the official Dart and Flutter agent support from
+[docs.flutter.dev/ai/get-started](https://docs.flutter.dev/ai/get-started), laid
+out per agent because each one reads a different place. All of it is
+configuration; none of it changes what the quality gate checks.
+
+| Agent | Skills | Rules | MCP server |
+|---|---|---|---|
+| Claude Code | `dart-flutter@dart-flutter` plugin (per machine) | `CLAUDE.md` `@`-imports `.agent/rules/` | the plugin |
+| Codex | the same plugin, via `codex plugin add dart-flutter@dart-flutter` | `.agent/rules/*.md` | the plugin |
+| Cursor | the plugin, via `/add-plugin dart-flutter` | `.cursor/rules/*.mdc` | the plugin |
+| GitHub Copilot | `.agents/skills/` | `.github/copilot-instructions.md` | `.vscode/mcp.json` |
+| Antigravity CLI, others | `.agents/skills/` | — | `.agents/mcp_config.json` |
+
+Three things to know when touching it:
+
+- **`.agents/skills/` is vendored, and `skills-lock.json` is its record.** It is
+  the output of the two `npx skills add … --agent universal` commands the Flutter
+  docs give, committed so that agents without a plugin system see the same
+  skills the plugins ship. Refresh it with `npx skills update`, not by editing a
+  `SKILL.md` — an edit is overwritten by the next refresh.
+- **The rules exist once.** `.agent/rules/` holds the upstream `.md` verbatim.
+  `CLAUDE.md` imports it rather than copying, because an import cannot drift.
+  Cursor and Copilot cannot import, so they carry the body, and
+  `test/architecture/agent_rule_copies_test.dart` holds those copies to the
+  canonical file. To refresh from upstream, replace the `.md` and `.mdc`
+  together, re-paste the body into the Copilot file, and let the test say what
+  was missed. It has already earned its keep: when first vendored, upstream's
+  own `.mdc` differed from its `.md` by one character ("MCP tool" against
+  "MCP Tool"), so the `.mdc` here is aligned to the `.md` rather than verbatim.
+- **`.vscode/` stays personal except `mcp.json`.** The `.gitignore` carves out
+  that one file because every Copilot user needs the same MCP wiring; launch
+  configurations remain untracked.
+

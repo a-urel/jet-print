@@ -142,6 +142,7 @@ name — and the list is the point, so a new guard belongs in it:
 | `golden_failure_surfaces_test.dart` | a golden mismatch in a plain `test()` fails rather than being swallowed |
 | `documented_claims_test.dart` | the structural claims `docs/` states, each naming the page to update |
 | `guard_table_completeness_test.dart` | this table names every guard in `test/architecture`, and only those |
+| `agent_rule_copies_test.dart` | the Flutter agent rules exist once, and every per-agent copy matches |
 
 And two tests sit at the `test/` root rather than in a seam, because they police
 the whole package: `encapsulation_test.dart` and `public_api_test.dart`.
@@ -247,7 +248,9 @@ Take the row, not the front door.
   pages are written to: read it before you write a page rather than read one.
 - [`docs/testing.md`](docs/testing.md) — the test taxonomy, golden discipline,
   tags, and the per-platform CI legs.
-- [`docs/workflow.md`](docs/workflow.md) — how a change moves from idea to merge.
+- [`docs/workflow.md`](docs/workflow.md) — how a change moves from idea to merge,
+  and *Agent tooling*: where each coding agent's Dart/Flutter skills, rules and
+  MCP wiring live.
 - [`README.md`](README.md) — user-facing quickstart.
 - [`packages/jet_print/README.md`](packages/jet_print/README.md) — library
   quickstart and public API tour.
