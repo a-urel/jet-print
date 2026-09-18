@@ -320,4 +320,136 @@ void main() {
               '$families split files, which should be ${families - 1}.');
     }
   });
+
+  /// A doc read as ONE whitespace-normalized string.
+  ///
+  /// Markdown wraps at the column, not at the claim: docs/03 ends a line on
+  /// "The three `GroupLevel`" and opens the next with "pagination flags". A
+  /// line-oriented scan has a hole exactly as wide as the wrap, and would
+  /// silently match nothing here — passing while asserting on an empty set.
+  /// Flattening first is what closes that; every scan below uses it.
+  String flat(String relative) => File('${root.path}/$relative')
+      .readAsStringSync()
+      .replaceAll(RegExp(r'\s+'), ' ');
+
+  /// Every count [pattern] states in the flattened [relative] docs.
+  List<int> flatCounts(List<String> files, RegExp pattern) => <int>[
+        for (final String relative in files)
+          for (final RegExpMatch m in pattern.allMatches(flat(relative)))
+            if (_numberWords[m.group(1)!.toLowerCase()] != null)
+              _numberWords[m.group(1)!.toLowerCase()]!,
+      ];
+
+  test('docs/04 states the number of fields FramePrimitive actually carries',
+      () {
+    // Scoped to the BASE class body, not the file: the subclasses declare
+    // their own finals (TextRunPrimitive alone has lines/style/fontFamily),
+    // and counting those would assert a number against correct prose. The
+    // claim is about "the fields every drawn thing has", which is the sealed
+    // base's own.
+    final String src = File(
+      '${root.path}/packages/jet_print/lib/src/rendering/frame/primitive.dart',
+    ).readAsStringSync();
+    final int open = src.indexOf('sealed class FramePrimitive');
+    expect(open, isNot(-1),
+        reason: 'FramePrimitive is no longer declared `sealed class` — the '
+            'scan below no longer finds the base, so fix the pattern rather '
+            'than the assertion.');
+    final String body = src.substring(open, src.indexOf('\n}', open));
+    final int actual =
+        RegExp(r'\n\s+final\s+[\w<>?]+\s+\w+;').allMatches(body).length;
+
+    final List<int> stated = flatCounts(
+      <String>['docs/04-the-frame.md'],
+      RegExp(r'(\w+) fields every drawn thing has', caseSensitive: false),
+    );
+    expect(stated, isNotEmpty,
+        reason: 'The "fields every drawn thing has" claim is gone from '
+            'docs/04-the-frame.md; this check is now inert.');
+    expect(stated.toSet(), <int>{actual},
+        reason: 'docs/04 states a base-field count FramePrimitive does not '
+            'carry ($stated vs $actual).');
+  });
+
+  test('the GroupLevel pagination-flag count docs state matches the model', () {
+    // The flags ARE the bool fields: GroupLevel's other finals are id, name,
+    // key, header and footer. If a non-pagination bool is ever added this
+    // fails on correct prose — which is the right moment to re-read the
+    // sentence anyway, and the message says so rather than leaving the next
+    // author to guess why.
+    final int actual = RegExp(r'\n\s+final bool\s+\w+;')
+        .allMatches(File(
+                '${root.path}/packages/jet_print/lib/src/domain/group_level.dart')
+            .readAsStringSync())
+        .length;
+    final List<int> stated = flatCounts(
+      <String>['docs/03-pagination.md', 'docs/README.md'],
+      RegExp(r'(\w+) `GroupLevel` pagination flags', caseSensitive: false),
+    );
+
+    expect(stated.length, greaterThanOrEqualTo(2),
+        reason: 'Found only ${stated.length} stated GroupLevel flag counts; '
+            'docs/03 and docs/README each state one. Note docs/03 WRAPS '
+            'mid-claim, so a line-oriented scan finds nothing — if this '
+            'number fell, check that before lowering it.');
+    expect(stated.toSet(), <int>{actual},
+        reason: 'The docs state a GroupLevel pagination-flag count the model '
+            'does not have ($stated vs $actual bool fields). If a bool was '
+            'added that is NOT a pagination flag, this equivalence no longer '
+            'holds and the test needs narrowing, not the docs.');
+  });
+
+  test('docs/testing.md states the CI shape ci.yml actually has', () {
+    final List<String> ci =
+        File('${root.path}/.github/workflows/ci.yml').readAsLinesSync();
+    final int jobsAt = ci.indexWhere((String l) => l == 'jobs:');
+    expect(jobsAt, isNot(-1), reason: 'ci.yml has no top-level `jobs:` key.');
+    final int osEntries =
+        ci.where((String l) => RegExp(r'^\s+- os:').hasMatch(l)).length;
+    // Top-level job keys live below `jobs:`; the `on:` triggers above it look
+    // identical at this indent, which is why the scan starts after `jobs:`.
+    final int jobKeys = ci
+        .skip(jobsAt + 1)
+        .where((String l) => RegExp(r'^  [a-z][a-z0-9_-]*:$').hasMatch(l))
+        .length;
+    final int standalone = jobKeys - 1; // all but the matrix job
+    final int legs = osEntries + standalone;
+
+    expect(
+      flatCounts(<String>['docs/testing.md'], RegExp(r'ci\.yml`?, (\w+) legs')),
+      <int>[legs],
+      reason: 'docs/testing.md states a leg count ci.yml does not produce '
+          '(expected $legs = $osEntries OS entries + $standalone standalone '
+          'jobs).',
+    );
+    expect(
+      flatCounts(
+          <String>['docs/testing.md'], RegExp(r'(\w+) OS entries of one')),
+      <int>[osEntries],
+      reason: 'docs/testing.md states an OS-entry count the ci.yml matrix does '
+          'not have.',
+    );
+    expect(
+      flatCounts(
+          <String>['docs/testing.md'], RegExp(r'(\w+) jobs of their own')),
+      <int>[standalone],
+      reason: 'docs/testing.md states a standalone-job count ci.yml does not '
+          'have.',
+    );
+
+    // The page also TABULATES the legs, one row each. A count updated in the
+    // prose but not in the table is the half-done edit this file exists for.
+    final List<String> lines =
+        File('${root.path}/docs/testing.md').readAsLinesSync();
+    final int header = lines.indexWhere((String l) => l.startsWith('| Leg |'));
+    expect(header, isNot(-1),
+        reason: 'The CI leg table is gone from '
+            'docs/testing.md; this check is now inert.');
+    final int rows = lines
+        .skip(header + 2) // header + the |---|---| separator
+        .takeWhile((String l) => l.startsWith('|'))
+        .length;
+    expect(rows, legs,
+        reason: 'The CI leg table lists $rows legs but ci.yml runs $legs.');
+  });
 }
