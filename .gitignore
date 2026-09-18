@@ -23,8 +23,9 @@ migrate_working_dir/
 *.iws
 .idea/
 
-# VS Code
-.vscode/
+# VS Code — personal, except the Dart MCP server wiring every Copilot user needs.
+.vscode/*
+!.vscode/mcp.json
 
 # Flutter / Dart / Pub
 **/doc/api/

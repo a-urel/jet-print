@@ -8,6 +8,22 @@ it is imported here:
 Everything below is Claude Code specific and adds to, never overrides, the rules
 in `AGENTS.md`.
 
+## Dart and Flutter agent support
+
+Skills and the Dart MCP server come from the official plugin, installed once per
+machine, not per repo:
+
+```bash
+claude plugin marketplace add flutter/agent-plugins
+claude plugin install dart-flutter@dart-flutter
+```
+
+Plugins do not load rules, so the official Flutter rules are imported here from
+their canonical copy in `.agent/rules/` (imported, not pasted — see
+`docs/workflow.md`, *Agent tooling*, for why):
+
+@.agent/rules/flutter-hot-reload.md
+
 ## Use the superpowers skills
 
 This project drives development through the `superpowers` plugin. Invoke the

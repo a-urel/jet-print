@@ -1,0 +1,28 @@
+# GitHub Copilot instructions
+
+The project guidance lives in [`AGENTS.md`](../AGENTS.md) at the repository
+root. Read it first; it is canonical for every coding agent, this one included.
+
+The Dart and Flutter MCP server is wired in `.vscode/mcp.json`, and the official
+Flutter and Dart skills live in `.agents/skills/`. The rule below is the
+official Flutter agent rule, copied verbatim from
+<https://github.com/flutter/agent-plugins/tree/main/rules>; the canonical copy
+is `.agent/rules/flutter-hot-reload.md`, and
+`packages/jet_print/test/architecture/agent_rule_copies_test.dart` fails if this
+copy drifts from it. Refresh both together.
+
+
+# Proactive Flutter Hot Reload Rule
+
+Whenever you edit or modify any `.dart` file under `lib/` in this project:
+
+1. **When to Skip**:
+   - **Files Outside `lib/`**: Only trigger hot reload or hot restart for edits under `lib/`. Do not trigger when modifying files in other directories (e.g., `test/**`, `integration_test/**`, `benchmark/**`, `test_driver/**` or `example/**`).
+   - **Comments & Documentation**: Do not trigger hot reload or hot restart when changes only affect comments, docstrings, or whitespace.
+
+2. **Discover & Connect**:
+   - Discover active running application instances using the `dtd` MCP Tool (or `list_running_apps` / `vm_service`) from the Dart MCP server.
+
+3. **Trigger Hot Reload / Hot Restart**:
+   - Execute the `hot_reload` MCP tool immediately after making changes to UI widgets (including `build` methods of stateful widgets) or simple methods.
+   - Execute the `hot_restart` MCP tool if fundamental logic, state initialization (e.g., `initState`), global/static state, or `main()` was modified.
