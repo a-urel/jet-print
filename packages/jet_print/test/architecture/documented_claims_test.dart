@@ -33,6 +33,20 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../support/workspace.dart';
 
+/// Number words the docs spell out for small counts.
+const Map<String, int> _numberWords = <String, int>{
+  'one': 1,
+  'two': 2,
+  'three': 3,
+  'four': 4,
+  'five': 5,
+  'six': 6,
+  'seven': 7,
+  'eight': 8,
+  'nine': 9,
+  'ten': 10,
+};
+
 void main() {
   final Directory root = findWorkspaceRoot();
 
@@ -128,18 +142,6 @@ void main() {
     // Trap section) means a PAIR, and matching it would make this test fail on
     // correct prose. A count-claim carries a determiner or opens a sentence;
     // a quantity does not.
-    const Map<String, int> words = <String, int>{
-      'one': 1,
-      'two': 2,
-      'three': 3,
-      'four': 4,
-      'five': 5,
-      'six': 6,
-      'seven': 7,
-      'eight': 8,
-      'nine': 9,
-      'ten': 10,
-    };
     final String page =
         File('${root.path}/docs/04-the-frame.md').readAsStringSync();
     final List<RegExp> claims = <RegExp>[
@@ -151,8 +153,8 @@ void main() {
     final List<int> stated = <int>[
       for (final RegExp claim in claims)
         for (final RegExpMatch m in claim.allMatches(page))
-          if (words[m.group(1)!.toLowerCase()] != null)
-            words[m.group(1)!.toLowerCase()]!,
+          if (_numberWords[m.group(1)!.toLowerCase()] != null)
+            _numberWords[m.group(1)!.toLowerCase()]!,
     ];
 
     expect(stated.length, greaterThanOrEqualTo(4),
@@ -167,5 +169,155 @@ void main() {
             'edit reached some of the five places and not the others. The '
             'page and the code must agree: $stated vs ${subclassCount()} '
             'actual subclasses.');
+  });
+
+  /// Every count [pattern] states across [files], as integers.
+  ///
+  /// [pattern]'s first group is the number token. A token that is not a number
+  /// word is SKIPPED rather than failing: "the ARB file" and "no ARB change"
+  /// are ordinary prose, and a guard that fired on them would be failing the
+  /// person who wrote clearly.
+  List<int> statedCounts(List<String> files, RegExp pattern) => <int>[
+        for (final String relative in files)
+          for (final RegExpMatch m in pattern
+              .allMatches(File('${root.path}/$relative').readAsStringSync()))
+            if (_numberWords[m.group(1)!.toLowerCase()] != null)
+              _numberWords[m.group(1)!.toLowerCase()]!,
+      ];
+
+  test('the ARB-file count the docs state matches the l10n directory', () {
+    // AGENTS.md and two recipes all say "three ARB files". The recipe one is
+    // the reason this is worth a test: it is PROCEDURAL — it tells an author
+    // which files to edit. Every other figure guarded here is descriptive, so
+    // a stale one misinforms; a stale count HERE walks someone past a locale
+    // and ships it untranslated, which nothing else catches. German strings
+    // are the widest in this UI, so a missed locale is not cosmetic.
+    const List<String> sites = <String>[
+      'AGENTS.md',
+      'docs/recipes/add-localized-string.md',
+      'docs/recipes/add-element-type.md',
+    ];
+    final int actual =
+        Directory('${root.path}/packages/jet_print/lib/src/designer/l10n')
+            .listSync()
+            .whereType<File>()
+            .where((File f) => f.path.endsWith('.arb'))
+            .length;
+    final List<int> stated =
+        statedCounts(sites, RegExp(r'(\w+)\s+ARB\b', caseSensitive: false));
+
+    expect(stated.length, greaterThanOrEqualTo(3),
+        reason: 'Found only ${stated.length} stated ARB counts across '
+            '${sites.join(", ")}; there are four. A rewording that drops the '
+            'scan to zero would make this pass vacuously — lower this '
+            'deliberately if the docs genuinely say it fewer times.');
+    expect(stated.toSet(), <int>{actual},
+        reason: 'The docs state an ARB-file count the l10n directory does not '
+            'have ($stated vs $actual). Adding a locale means adding its .arb '
+            'AND updating every place that tells an author how many to edit.');
+  });
+
+  test('the generated-localization count matches what gen-l10n writes', () {
+    // Same sentence in the recipe as the ARB count ("the three ARB files, the
+    // four generated Dart files"), so it is guarded here rather than left as
+    // the unguarded half of a pair. l10n.yaml's output-localization-file is
+    // jet_print_localizations.dart, so gen-l10n writes that plus one per
+    // locale; the other files in that directory are hand-written helpers.
+    final int actual =
+        Directory('${root.path}/packages/jet_print/lib/src/designer/l10n')
+            .listSync()
+            .whereType<File>()
+            .where((File f) =>
+                f.path.replaceAll(r'\', '/').split('/').last.startsWith(
+                      'jet_print_localizations',
+                    ) &&
+                f.path.endsWith('.dart'))
+            .length;
+    final List<int> stated = statedCounts(
+      <String>['docs/recipes/add-localized-string.md'],
+      RegExp(r'(\w+)\s+generated Dart files', caseSensitive: false),
+    );
+
+    expect(stated, isNotEmpty,
+        reason: 'The generated-file count vanished from '
+            'docs/recipes/add-localized-string.md; this check now proves '
+            'nothing.');
+    expect(stated.toSet(), <int>{actual},
+        reason: 'The recipe states a generated-file count gen-l10n does not '
+            'produce ($stated vs $actual).');
+  });
+
+  test('the split-file count the docs state matches the designer part-ofs', () {
+    // "Four god-files are split with `part` + `extension`" is stated in
+    // AGENTS.md and echoed in three wiki pages, twice as "the four split
+    // files" — five sites that rot together.
+    //
+    // Scoped to lib/src/designer DELIBERATELY. Across all of lib/src there are
+    // FIVE part-of families, because domain/detail_scope.dart has one too, and
+    // a whole-src scan would make this guard assert the wrong number against
+    // correct prose. The claim is about the designer's god-files.
+    const List<String> sites = <String>[
+      'AGENTS.md',
+      'docs/07-designer-loop.md',
+      'docs/09-the-panels.md',
+      'docs/10-designer-seams.md',
+    ];
+    final Set<String> families = <String>{
+      for (final File f
+          in Directory('${root.path}/packages/jet_print/lib/src/designer')
+              .listSync(recursive: true)
+              .whereType<File>()
+              .where((File f) => f.path.endsWith('.dart')))
+        ...RegExp("part of '([^']*)'")
+            .allMatches(f.readAsStringSync())
+            .map((RegExpMatch m) => m.group(1)!.split('/').last),
+    };
+    final List<int> stated = statedCounts(
+      sites,
+      RegExp(r'(\w+)\s+(?:god-files?|split files)', caseSensitive: false),
+    );
+
+    expect(stated.length, greaterThanOrEqualTo(4),
+        reason: 'Found only ${stated.length} stated split-file counts across '
+            '${sites.join(", ")}; there are five.');
+    expect(stated.toSet(), <int>{families.length},
+        reason: 'The docs state a split-file count the designer does not have '
+            '($stated vs ${families.length}: ${families.toList()..sort()}). '
+            'Splitting a fifth god-file, or rejoining one, means updating '
+            'every page that counts them.');
+  });
+
+  test('the derived "other N" in docs/10 tracks the split-file count', () {
+    // docs/10-designer-seams.md: "Among the four split files only the
+    // controller reaches a consumer this way; the other three extend ...".
+    // That second number is DERIVED — count minus the controller — so it rots
+    // one sentence away from a figure the test above already holds. Guarding
+    // the head of the sentence and not its tail is the mirrored-pair failure
+    // this repo keeps finding.
+    final int families = <String>{
+      for (final File f
+          in Directory('${root.path}/packages/jet_print/lib/src/designer')
+              .listSync(recursive: true)
+              .whereType<File>()
+              .where((File f) => f.path.endsWith('.dart')))
+        ...RegExp("part of '([^']*)'")
+            .allMatches(f.readAsStringSync())
+            .map((RegExpMatch m) => m.group(1)!.split('/').last),
+    }.length;
+    final List<String> lines =
+        File('${root.path}/docs/10-designer-seams.md').readAsLinesSync();
+    final Iterable<String> sentence = lines.where(
+        (String l) => l.contains('split files') && l.contains('the other '));
+    expect(sentence, isNotEmpty,
+        reason: 'The "Among the four split files ... the other three" sentence '
+            'is gone from docs/10-designer-seams.md, so this check is inert. '
+            'Delete it deliberately, or repoint it.');
+    for (final String line in sentence) {
+      final RegExpMatch? m =
+          RegExp(r'the other (\w+)', caseSensitive: false).firstMatch(line);
+      expect(_numberWords[m!.group(1)!.toLowerCase()], families - 1,
+          reason: 'docs/10 says "the other ${m.group(1)}" of '
+              '$families split files, which should be ${families - 1}.');
+    }
   });
 }
