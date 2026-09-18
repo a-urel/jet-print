@@ -99,12 +99,24 @@ void main() {
   });
 
   test('CLAUDE.md imports each canonical rule rather than copying it', () {
-    final String claude = File('${root.path}/CLAUDE.md').readAsStringSync();
+    final String claude = File('${root.path}/CLAUDE.md')
+        .readAsStringSync()
+        .replaceAll('\r\n', '\n');
     for (final File rule in rules) {
       expect(claude, contains('@.agent/rules/${_stem(rule)}.md'),
           reason: '${_stem(rule)}: CLAUDE.md has no `@.agent/rules/'
               '${_stem(rule)}.md` import, so Claude Code never sees the rule. '
               'Import it; do not paste it — an import cannot drift.');
+      // The import alone is not the invariant: a pasted body beside it would
+      // keep the import and still be a copy that drifts. So the body must be
+      // absent — checked by its first heading line, because a partially
+      // pasted or already-drifted body would not match the whole text.
+      final String heading = _body(rule.readAsStringSync()).split('\n').first;
+      expect(claude, isNot(contains(heading)),
+          reason: '${_stem(rule)}: CLAUDE.md contains the rule\'s body '
+              '("$heading") as well as the import. That is a copy, and it '
+              'will drift from .agent/rules/ the next time the rule is '
+              'refreshed. Delete the pasted text; the import is enough.');
     }
   });
 }

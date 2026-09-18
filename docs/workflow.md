@@ -128,7 +128,14 @@ Three things to know when touching it:
   the output of the two `npx skills add … --agent universal` commands the Flutter
   docs give, committed so that agents without a plugin system see the same
   skills the plugins ship. Refresh it with `npx skills update`, not by editing a
-  `SKILL.md` — an edit is overwritten by the next refresh.
+  `SKILL.md` — an edit is overwritten by the next refresh, and the lock's hash
+  stops matching. A wrong skill is reported upstream, not patched here.
+- **Vendored skills are generic; this repo's docs win where they disagree.**
+  They describe a fresh Flutter app, not this workspace. The localization skill,
+  for one, still sets `synthetic-package: true`, which modern `gen-l10n` no
+  longer has — both `l10n.yaml` files here use `output-dir`, and
+  [`recipes/add-localized-string.md`](recipes/add-localized-string.md) is the
+  procedure to follow. `AGENTS.md` and `docs/` take precedence over any skill.
 - **The rules exist once.** `.agent/rules/` holds the upstream `.md` verbatim.
   `CLAUDE.md` imports it rather than copying, because an import cannot drift.
   Cursor and Copilot cannot import, so they carry the body, and
