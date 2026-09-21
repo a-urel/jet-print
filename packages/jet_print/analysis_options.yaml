@@ -1,0 +1,67 @@
+# Static-analysis configuration for the PUBLISHED `jet_print` package.
+#
+# This file is a deliberate second copy of the workspace configuration in the
+# repository-root `analysis_options.yaml`, and it must be kept in step with it.
+# `test/architecture/analysis_options_parity_test.dart` fails when the two
+# drift, so change both or neither.
+#
+# Why the copy exists: the published archive contains only
+# `packages/jet_print/`. The root file is not in it. So pana on pub.dev — and
+# anyone who unpacks the archive and analyses it — sees the analyzer's own
+# defaults, not the strict settings CI enforces. That is a different rule set
+# from the one this code has ever been checked against, over source nobody has
+# linted under it. Restating the settings here makes the package
+# self-sufficient: it carries its own rules wherever it is analysed.
+#
+# `flutter_lints` is a dev dependency of this package in its own right (see
+# `pubspec.yaml`), not merely of the workspace, so the include below resolves
+# for a consumer analysing the package standing alone.
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    # Generated localization output (gen-l10n). It is real, exported source
+    # (`synthetic-package:false`) but machine-generated; excluding it keeps the
+    # zero-warning gate over hand-written code without editing generated files
+    # to satisfy strict lints such as `directives_ordering` (research D6 /
+    # T004).
+    #
+    # The root config spells this `**/l10n/jet_print_localizations*.dart`,
+    # which is written from the workspace root. Exclude globs resolve against
+    # the directory holding the options file, and inside the archive there is
+    # no workspace root, so the path is restated relative to this package. The
+    # generated files land in `lib/src/designer/l10n/` — that location is set
+    # by `output-dir` in `l10n.yaml`; move one and this path must move too.
+    - "lib/src/designer/l10n/jet_print_localizations*.dart"
+    # The remaining excludes are carried over verbatim from the root config so
+    # the two files can be compared line for line. This package has no
+    # platform directories of its own; the entries are inert here and kept for
+    # parity rather than for effect.
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    # Hygiene lints promoted to errors so warnings cannot accumulate unnoticed.
+    unused_import: error
+    unused_local_variable: error
+    unused_element: error
+    unused_field: error
+    dead_code: error
+    # TODOs stay informational rather than failing the gate.
+    todo: ignore
+
+linter:
+  rules:
+    # Inside lib/ the library uses relative imports for its own internals; this
+    # keeps the public/private boundary unambiguous and the architecture test
+    # simple to reason about.
+    - prefer_relative_imports
+    - directives_ordering

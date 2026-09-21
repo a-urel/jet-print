@@ -1,0 +1,45 @@
+# What `pub publish` leaves out of the `jet_print` archive.
+#
+# `.pubignore` REPLACES `.gitignore` for packaging: where this file is present,
+# pub reads it instead of the `.gitignore` in the same directory when deciding
+# what goes into the archive. It therefore has to list everything that should
+# stay out, including paths git already ignores — nothing is inherited from the
+# `.gitignore` it displaces. (There is no `.gitignore` in this directory today;
+# the repository-root one is unaffected, and git's view of the tree does not
+# change.) The syntax is `.gitignore` syntax and paths are relative to this
+# package directory.
+#
+# Safety check behind the exclusions below: the bundled default font is
+# embedded as base64 in `lib/src/rendering/text/fonts/default_font_data.dart`,
+# generated offline from `tool/fonts/`. `pubspec.yaml` declares no `assets:`
+# and no `fonts:` section, and nothing under `lib/` reads a `.ttf`, a bundle or
+# `tool/` at run time, so excluding `tool/` removes a build-time input only.
+#
+# `README.md`, `CHANGELOG.md`, `LICENSE`, `lib/`, `pubspec.yaml` and
+# `l10n.yaml` are deliberately NOT listed: pana scores the first three and the
+# rest are what a consumer resolves against.
+
+# Build output and local tool state. Large, machine-specific, never consumed by
+# a package consumer.
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# The test suite, including PNG/PDF goldens and fixtures — several megabytes,
+# and the bulk of the archive. A consumer cannot run it: the architecture
+# guards resolve paths from the workspace root, which the archive does not
+# contain. pana does not score it either.
+test/
+dart_test.yaml
+
+# Font-subsetting tooling: `generate_default_font.dart` plus the four committed
+# Noto Sans TTF subsets it reads. Development inputs, already baked into
+# `lib/` as base64 (see the note above) — not loaded at run time.
+tool/
+
+# The example ships: it is worth 10 pana points and is the first thing an
+# evaluator opens. Do not add `example/` here to shrink the archive.
+# Its lockfile does not ship, though — `.pubignore` replaces the repository's
+# `.gitignore` for packaging, so the ignore rule there does not reach it.
+example/pubspec.lock
