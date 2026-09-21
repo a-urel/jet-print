@@ -38,7 +38,7 @@ not re-estimates.
 | E3 Desktop matrix | 1 | M | Done | `.github/workflows/ci.yml` matrix: macOS, Ubuntu, Windows |
 | E4 Web support | 1/2 | L | Done | `web (chrome)` CI job; one real `double.toString` divergence found and fixed |
 | E5 Mobile / touch | 1/2 | XL | Done | `android (apk)` and `ios (no codesign)` CI jobs; touch handles, long-press menu, phone-width layout |
-| E6 1.0 API freeze + pub.dev | 2 | M | Not started | `version: 0.1.0`; `CHANGELOG.md` still carries the work under `## Unreleased` |
+| E6 1.0 API freeze + pub.dev | 2 | M | In progress | `version: 0.1.0`, unpublished; P1 has written the release prep but nothing is verified |
 | E7 Designer-as-product | 3 | L | Not started | no data-connection UI, no packaging or signing; file I/O exists only as playground host code |
 | E8 Spec 033 multi-level aggregates | pre-1.0 | M | Done | PR #22, merged 2026-06-18 |
 
@@ -141,10 +141,13 @@ API-stability review and freeze; `1.0.0`; cut a real CHANGELOG release entry;
 `example/`; dartdoc + docs; CONTRIBUTING / CODE_OF_CONDUCT; multi-platform CI
 green. **Must come after E4 and E5** (see sequencing).
 
-**Not started.** The version is still `0.1.0` and the accumulated work is still
-filed under `## Unreleased`; the only versioned heading in the changelog is the
-original `## 0.1.0` scaffold entry, which is undated and describes a package
-that no longer exists in that shape. The detailed requirements — what pub.dev
+**In progress, unverified.** The version is still `0.1.0` and the package is
+not on pub.dev, but P1 has done the release prep: the changelog now carries a
+dated `## 0.1.0 - 2026-09-21` entry with the scaffold stub retired, `example/`
+exists, `intl` is pinned, and the analyser config ships with the package. None
+of it has been compiled, analysed or tested — see
+[`release-checklist.md`](release-checklist.md) for what the ticks there do and
+do not mean. The detailed requirements — what pub.dev
 rejects a publish for, what its score panel rewards, and the specific gaps —
 were worked out separately on 2026-06-23 and are folded into P1 and P4 below.
 
@@ -230,9 +233,9 @@ checkable by somebody who does not work on the project.
 
 | Phase | Duration | Exit criterion |
 |---|---|---|
-| P0 Decisions | 3 days | three decision records merged to `main` |
+| P0 Decisions | 3 days | the blocking decisions recorded under `decisions/` (six records; none on `main` yet) |
 | P1 Publish 0.1.0 | 1 week | `flutter pub add jet_print` works for a stranger |
-| P2 Monepro embed pilot | 2 weeks, parallel with P1 | one real Monepro report rendered and exported from the published package, plus a written friction list |
+| P2 Stand-in consumer pilot | 2 weeks, parallel with P1 | one report authored in `apps/ledger_pilot/`, rendered and exported through the package's public API, plus a written friction list — amended, see below |
 | P3 Extensibility boundary and defect closure | 3 weeks | no open question that would force a breaking change after 1.0 |
 | P4 1.0 freeze | 3 weeks | `1.0.0` on pub.dev with all six platforms declared and green |
 | P5 Designer-as-product | deferred | starts only on demonstrated demand |
@@ -251,14 +254,34 @@ forces the `intl` constraint, the `example/` and the dated changelog entry to be
 real rather than nearly done. The itemised work, with what a 2026-09-21 audit
 confirmed and what it refuted, is in
 [`release-checklist.md`](release-checklist.md) — note that the dartdoc floor is
-already cleared by a wide margin, and that the largest unknown is not any of the
-items June expected but the package's missing local `analysis_options.yaml`.
+already cleared by a wide margin, and that the largest unknown was not any of
+the items June expected but the package's missing local `analysis_options.yaml`,
+which now exists and has still never been run.
 
-**P2 — Monepro embed pilot.** Runs in parallel with P1 and consumes what P1
-publishes. One real report from a real product, rendered and exported through
-the published package with no path dependency and no reaching into `lib/src/`.
-The friction list is half the deliverable: the pilot exists to find out what is
-awkward about the public API while the API can still change.
+**P2 — Stand-in consumer pilot.** Was *Monepro embed pilot*, and the criterion
+it was given is amended rather than met. The original, kept here because a plan
+that silently rewrites its own success conditions is worth less than no plan:
+
+> One real Monepro report rendered and exported from the published package,
+> plus a written friction list. Runs in parallel with P1 and consumes what P1
+> publishes: one real report from a real product, rendered and exported through
+> the published package with no path dependency and no reaching into
+> `lib/src/`.
+
+Two of its three parts are unavailable to this phase. The product repository
+stays out of scope, so there is no embed to build; and `0.1.0` is not on
+pub.dev, so there is no archive to consume. What runs instead is
+`apps/ledger_pilot/`, a Turkish trial balance over a synthetic chart of
+accounts, built inside this repository and consuming `jet_print` by path
+through `package:jet_print/jet_print.dart`, still with no reaching into
+`lib/src/`. The friction list remains the deliverable that outlives the phase.
+
+[`decisions/0006`](decisions/0006-p2-runs-against-a-stand-in-consumer.md) rules
+on the substitution and is the place to read what it costs: a path dependency
+proves nothing about the published archive, and a consumer written by someone
+who has just read the source cannot report the friction of not knowing where to
+look. The first-party embed is deferred, not cancelled; 0006 says what re-opens
+it. P2 completing is not evidence that the API has met the world.
 
 **P3 — Extensibility boundary and defect closure.** The extensibility question
 resolved to **closed by design** — the library does not take third-party

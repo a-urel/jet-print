@@ -70,6 +70,7 @@ the anchor loudly, a moved line points silently at the wrong code.
 | 0003 | [Full mobile support is in 1.0 scope](0003-mobile-in-1-0-scope.md) | Accepted 2026-09-21 |
 | 0004 | [A band shrink keeps authored element geometry](0004-band-shrink-keeps-authored-geometry.md) | Accepted — P3 |
 | 0005 | [The group hint names the band that actually carries the settings](0005-group-hint-names-the-carrier-band.md) | Accepted — P3 |
+| 0006 | [P2 runs against a stand-in consumer](0006-p2-runs-against-a-stand-in-consumer.md) | Accepted — P2 |
 
 The directory itself is authoritative; this table is a convenience, and a record
 that is present but unlisted is still in force.
