@@ -68,13 +68,18 @@ table and traps are the whole of the written guidance.
 | An extension's methods vanished from the public API | 10 |
 | A string shows in English under a German locale | 10 |
 
-## The other two docs
+## The other four docs
 
 - [`testing.md`](testing.md) — the test taxonomy, what each directory proves,
   golden discipline, the allowlist that lets library tests reach `src/`, and the
   per-platform CI legs.
 - [`workflow.md`](workflow.md) — how a change moves from idea to merge, and where
   durable knowledge is supposed to end up.
+- [`roadmap.md`](roadmap.md) — the E1–E8 production-readiness epics and their
+  status, and the five phases that now govern the run to 1.0.
+- [`release-checklist.md`](release-checklist.md) — the itemised P1 work between
+  this tree and a package a stranger can install, and what a pub.dev readiness
+  audit confirmed and refuted.
 
 ## Writing a page
 
