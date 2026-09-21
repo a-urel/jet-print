@@ -1,0 +1,49 @@
+name: ledger_pilot
+description: >-
+  The P2 embed pilot: a Turkish trial balance ("mizan") over a TDHP chart of
+  accounts, written strictly as an outside consumer of jet_print. It stands in
+  for a first-party embed in a product whose own repository stays untouched,
+  and exists to produce a friction list against the public API while that API
+  can still change.
+publish_to: 'none' # A pilot, never published.
+
+# Member of the jet_print workspace; resolved once at the workspace root.
+resolution: workspace
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # The report's own strings are Turkish, so the shell runs under a tr locale
+  # and needs the Global* delegates alongside JetPrintLocalizations.delegate.
+  flutter_localizations:
+    sdk: flutter
+
+  # The library under pilot. No version constraint: it resolves to the local
+  # workspace member. P2's brief wants the published package instead, but P1
+  # has not shipped it yet — see README.md, "What this pilot does not prove".
+  jet_print:
+
+  # Export is headless: JetReportExporter.toPdf returns bytes and the host
+  # decides what becomes of them. Declared directly because main.dart imports
+  # it to hand those bytes to the platform's share sheet.
+  printing: ^5.14.3
+
+  # JetReportPreview calls ShadTheme.of(context), so the host must supply a
+  # shadcn_ui shell above it. Declared directly for the same reason: main.dart
+  # imports it. This is a direct dependency on a pre-1.0 third-party package
+  # that the pilot takes on solely to show a preview.
+  shadcn_ui: ^0.54.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

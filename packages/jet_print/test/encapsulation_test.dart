@@ -225,6 +225,10 @@ void main() {
       Directory('${root.path}/packages/jet_print/test');
   final Directory playgroundLib =
       Directory('${root.path}/apps/jet_print_playground/lib');
+  // The P2 embed pilot (apps/ledger_pilot) is written strictly as an outside
+  // consumer, which is the whole point of it; scanning it here is what makes
+  // that a checked claim rather than an intention.
+  final Directory pilotLib = Directory('${root.path}/apps/ledger_pilot/lib');
 
   group('encapsulation', () {
     test('the source trees to scan actually exist (no false green)', () {
@@ -234,6 +238,7 @@ void main() {
         libraryLib,
         libraryTest,
         playgroundLib,
+        pilotLib,
       ]) {
         expect(
           dir.existsSync(),
@@ -246,7 +251,11 @@ void main() {
 
     test('no consumer file imports package:jet_print/src/...', () {
       final List<String> violations = <String>[];
-      for (final Directory dir in <Directory>[libraryTest, playgroundLib]) {
+      for (final Directory dir in <Directory>[
+        libraryTest,
+        playgroundLib,
+        pilotLib,
+      ]) {
         for (final File file in _dartFiles(dir)) {
           if (_isWhiteBoxSeamTest(file)) continue;
           for (final String uri in _directiveUris(file)) {

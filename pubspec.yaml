@@ -19,3 +19,7 @@ workspace:
   - packages/jet_print/example
   - packages/jet_print_google_fonts
   - apps/jet_print_playground
+  # The P2 embed pilot: a Turkish trial balance written strictly as an outside
+  # consumer of the public API. A member so one root `pub get` resolves it and
+  # the root `flutter analyze` covers it.
+  - apps/ledger_pilot
