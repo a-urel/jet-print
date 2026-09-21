@@ -33,9 +33,28 @@ Estimated total: **130-150 of 160**, midpoint 140. Conventions 30/30, platform
 support 20/20, documentation 10/20, static analysis 40-50 (unverifiable),
 dependency currency 30-40 (unverifiable).
 
+## Where this stands
+
+Everything on this list that is a file change has been written, on the branch
+`docs/p0-decisions`. **None of it has been compiled, analysed, formatted or
+tested** — no Dart or Flutter toolchain is reachable from the session that wrote
+it, and pub.dev is unreachable too. Treat the ticks below as "written", not as
+"verified", until `verify-p1.sh` has run clean on a machine with a toolchain.
+The two most likely failures are `dart format` disagreeing with hand-wrapped
+lines, and the analyser reporting real diagnostics in `lib/` — which is the
+point of the first item, since nothing has ever analysed this package from
+inside its own directory.
+
+Three things were found along the way and are worth reading before the
+remaining items: the README Quickstart did not compile (`TextElement` requires
+`text`, and the sample omitted it — fixed); `JetReportPreview` needs a
+`shadcn_ui` ancestor and says so nowhere; and the example surfaced nine pieces
+of API friction, now collected in [`api-friction.md`](api-friction.md) as the
+seed of the P4 freeze review.
+
 ## Blocking — do these in order
 
-- [ ] **Add `packages/jet_print/analysis_options.yaml`.** The strict config CI
+- [x] **Add `packages/jet_print/analysis_options.yaml`.** The strict config CI
       enforces lives at the *repository root*, so it is not in the published
       archive and pana never sees it. The root file also excludes the generated
       localizations, and that exclusion disappears on publish, putting roughly
@@ -46,17 +65,17 @@ dependency currency 30-40 (unverifiable).
       been masking. Do this first: until it is done, the 50-point analysis
       section is a black box and every other estimate rests on it. *~30 min plus
       whatever it uncovers.*
-- [ ] **Add `packages/jet_print/example/`.** The only confirmed deduction in the
+- [x] **Add `packages/jet_print/example/`.** The only confirmed deduction in the
       audit, and the only item on this list that certainly adds points (+10).
       `apps/jet_print_playground` is already a working consumer; trim it to one
       screen. It must keep compiling — pana analyses it. *2-4 h.*
-- [ ] **Pin `intl`.** `intl: any` is the sole expected `--dry-run` warning and
+- [x] **Pin `intl`.** `intl: any` is the sole expected `--dry-run` warning and
       the only theoretical threat to the 20-point lower-bound check. Use
       `^0.20.3`, which is what the lockfile already resolves. *5 min.*
 - [ ] **Run `flutter pub outdated` and bump what has moved.** The last
       unquantified 10 points. `shadcn_ui ^0.54.0` is pre-1.0 and the likeliest
       mover. *15 min to 2 h.*
-- [ ] **Reconcile the changelog.** `## 0.1.0` at line 848 describes an "Initial
+- [x] **Reconcile the changelog.** `## 0.1.0` at line 848 describes an "Initial
       scaffold release" advertising `JetPrintPlaceholder`, a widget that no
       longer exists, while every real feature sits under `## Unreleased` at line
       7. Publishing as-is ships a release note for a package that was never
@@ -68,11 +87,11 @@ dependency currency 30-40 (unverifiable).
 
 ## Worth doing, cheap
 
-- [ ] **Add `packages/jet_print/.pubignore`** for `test/` and `tool/`. The
+- [x] **Add `packages/jet_print/.pubignore`** for `test/` and `tool/`. The
       archive is 6.8 MB, of which 4.0 MB is of no use to a consumer. *15 min.*
-- [ ] **Trim the package description.** 217 characters against pana's preferred
+- [x] **Trim the package description.** 217 characters against pana's preferred
       60-180; expect a hint. Cutting the trailing clause is enough. *10 min.*
-- [ ] **Give the four `crosstab/*` barrel exports explicit `show` clauses.** Four
+- [x] **Give the four `crosstab/*` barrel exports explicit `show` clauses.** Four
       of the 65 exports re-export everything public in their file, so any new
       public symbol there joins the API silently. This matters more once
       [`decisions/0002`](decisions/0002-extension-seam-closed-for-1-0.md) makes

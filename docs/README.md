@@ -68,7 +68,7 @@ table and traps are the whole of the written guidance.
 | An extension's methods vanished from the public API | 10 |
 | A string shows in English under a German locale | 10 |
 
-## The other four docs
+## The other five docs
 
 - [`testing.md`](testing.md) — the test taxonomy, what each directory proves,
   golden discipline, the allowlist that lets library tests reach `src/`, and the
@@ -80,6 +80,9 @@ table and traps are the whole of the written guidance.
 - [`release-checklist.md`](release-checklist.md) — the itemised P1 work between
   this tree and a package a stranger can install, and what a pub.dev readiness
   audit confirmed and refuted.
+- [`api-friction.md`](api-friction.md) — where the published surface made a
+  consumer's job harder than it needed to be, and the input to the P4 freeze
+  review.
 
 ## Writing a page
 
