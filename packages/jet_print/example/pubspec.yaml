@@ -1,0 +1,42 @@
+name: jet_print_example
+description: >-
+  The smallest useful jet_print consumer: one screen that builds a report
+  definition in code, renders it over a handful of literal rows, previews it,
+  and exports a PDF.
+publish_to: none
+
+# Member of the jet_print workspace, exactly as apps/jet_print_playground is:
+# one `flutter pub get` at the repository root resolves it, and the root
+# `flutter analyze` (which CI runs) then covers example/lib as well. The
+# `path:` dependency below is what keeps the example resolvable on its own
+# once it ships inside the published archive, where there is no workspace.
+resolution: workspace
+
+environment:
+  sdk: ^3.6.0
+  flutter: ">=3.44.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # The package this example exists to demonstrate. `path: ../` is the package
+  # root — the example is a directory inside it.
+  jet_print:
+    path: ../
+
+  # Export is headless: JetReportExporter.toPdf returns bytes and the host
+  # decides what becomes of them. This example offers them to the platform's
+  # share/save sheet. Declared directly because main.dart imports it.
+  printing: ^5.14.3
+
+  # jet_print's designer and preview widgets are shadcn_ui-themed, so the host
+  # supplies the ShadApp shell above them. Declared directly for the same
+  # reason: main.dart imports it.
+  shadcn_ui: ^0.54.0
+
+dev_dependencies:
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

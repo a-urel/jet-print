@@ -40,6 +40,7 @@ build/
 
 # Per-package lockfiles are NOT committed in a workspace — only the root pubspec.lock is.
 packages/*/pubspec.lock
+packages/*/example/pubspec.lock
 apps/*/pubspec.lock
 
 # Coverage

@@ -14,5 +14,8 @@ environment:
 # the whole repo into one root pubspec.lock (FR-006a / SC-002).
 workspace:
   - packages/jet_print
+  # The package's pub.dev example app; a member so the root `pub get` resolves
+  # it and the root `flutter analyze` covers it.
+  - packages/jet_print/example
   - packages/jet_print_google_fonts
   - apps/jet_print_playground

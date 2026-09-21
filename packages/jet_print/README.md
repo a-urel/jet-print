@@ -49,6 +49,9 @@ const ReportDefinition definition = ReportDefinition(
             TextElement(
               id: 't1',
               bounds: JetRect(x: 0, y: 0, width: 200, height: 24),
+              // `text` is the design-time literal; a non-null `expression`
+              // replaces it per row at fill time.
+              text: 'name',
               expression: r'"Hello, " + $F{name} + "!"',
             ),
           ],
