@@ -6,6 +6,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+_Nothing yet._
+
+## 0.1.0 - 2026-09-21
+
 > **Highlights** — the first public shape of `jet_print`. In one sentence: design
 > a report as a reified, id'd section tree, fill it with your data, and preview,
 > paginate, export to PDF/PNG, or print it — from a single entry point.
@@ -845,16 +849,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   it (the designer chrome wires these automatically; hosts may call
   `requestPropertiesFocus()` to deep-link their own UI into the inspector).
 
-## 0.1.0
+### Notes
 
-Initial scaffold release.
-
-### Added
-
-- Single public entry point `package:jet_print/jet_print.dart`.
-- `JetPrintPlaceholder` — a `const`, theme-aware placeholder widget that reflects
-  the active `shadcn_ui` theme.
-- `jetPrintVersion` — the library's declared version string, establishing the
-  SemVer baseline.
-- Three internal layer seams (`domain`, `rendering`, `designer`) under `lib/src/`
-  with an inward-only dependency rule enforced by an architecture test.
+- **This version supersedes an unpublished scaffold.** An earlier `## 0.1.0`
+  entry in this file recorded the spec-001 scaffold release: the single export
+  barrel `package:jet_print/jet_print.dart`, `jetPrintVersion`, the three
+  internal layer seams (`domain`, `rendering`, `designer`) under `lib/src/`
+  with their inward-only dependency rule enforced by an architecture test, and
+  `JetPrintPlaceholder`, a theme-aware placeholder widget. That version was
+  never published to pub.dev, and the placeholder was removed in `fe79c076`.
+  The barrel, `jetPrintVersion` and the layer rule survive and ship as part of
+  this release; the entry above is what `0.1.0` contains.

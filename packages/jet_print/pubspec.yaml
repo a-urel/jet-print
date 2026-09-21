@@ -1,12 +1,14 @@
 name: jet_print
 description: >-
-  A layered, theme-aware Flutter library for building WYSIWYG report designers:
-  a reified report model, a render/paginate engine, PDF/PNG export and system
-  printing, and an interactive shadcn_ui-themed designer surface.
+  A Flutter library for building WYSIWYG report designers: a reified report
+  model, a render/paginate engine, and PDF/PNG export with system printing.
 version: 0.1.0
 
-# pub.dev metadata (Epic 1 — release hygiene). Version stays 0.1.0 until the
-# 1.0 API freeze (Epic 6). Topics: lowercase, no spaces, <=5.
+# pub.dev metadata (Epic 1 — release hygiene). 0.1.0 is published as a preview
+# rather than held until the 1.0 API freeze; see
+# docs/decisions/0001-publish-0-1-0-as-a-preview.md. Below 1.0 a minor bump is
+# already allowed to break, so publishing here promises no stability and
+# freezes nothing. Topics: lowercase, no spaces, <=5.
 repository: https://github.com/a-urel/jet-print
 homepage: https://github.com/a-urel/jet-print
 issue_tracker: https://github.com/a-urel/jet-print/issues
@@ -43,9 +45,17 @@ dependencies:
   # First-party localization support: flutter_localizations provides the Global*
   # delegates and locale-resolution machinery; intl backs the gen-l10n output.
   # The library ships its own en/de/tr chrome strings.
+  #
+  # `intl` was `any`, which is not a constraint at all: a consumer resolving
+  # against the published package could pick any version, including one whose
+  # date/number formatting had changed under the gen-l10n output. It is now
+  # bounded at `^0.20.3` — the version the workspace lockfile already resolves,
+  # and so the only version this package has been tested against. A caret on a
+  # `0.x` version admits `0.20.x` only, so the constraint states a lower bound
+  # that is verified and stops short of the next breaking release.
   flutter_localizations:
     sdk: flutter
-  intl: any
+  intl: ^0.20.3
   # shadcn_ui constraint below was written by `flutter pub add` so it records the
   # real resolved range, not a placeholder.
   shadcn_ui: ^0.54.0
