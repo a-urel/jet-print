@@ -68,7 +68,7 @@ table and traps are the whole of the written guidance.
 | An extension's methods vanished from the public API | 10 |
 | A string shows in English under a German locale | 10 |
 
-## The other five docs
+## The other six docs
 
 - [`testing.md`](testing.md) — the test taxonomy, what each directory proves,
   golden discipline, the allowlist that lets library tests reach `src/`, and the
@@ -83,6 +83,9 @@ table and traps are the whole of the written guidance.
 - [`api-friction.md`](api-friction.md) — where the published surface made a
   consumer's job harder than it needed to be, and the input to the P4 freeze
   review.
+- [`serialization-gap.md`](serialization-gap.md) — whether a consumer can store
+  a report definition in a database and read it back, and what is missing to
+  operate that round trip.
 
 ## Writing a page
 
