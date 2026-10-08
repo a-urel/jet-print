@@ -28,6 +28,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Page headers and footers now honor `visible` and `format`.** The layouter
+  placed every page-furniture element as authored: a header logo set hidden, or
+  given a visibility expression, printed on every page, and a footer text's
+  `format` was dropped when its expression was substituted, so a formatted date
+  or total printed raw. Furniture visibility is evaluated per page, so
+  `$V{PAGE_NUMBER} == "1"` works as a "first page only" condition; a hidden
+  furniture band keeps its height, since the body's capacity is fixed before
+  pages are built. The per-page text is now resolved with `copyWith`, so it
+  cannot drop a field either.
+
 - **`Band.copyWith` can now clear `name` and `columnLayout`.** Both took plain
   nullable parameters, so `null` meant "keep" and nothing could clear them;
   renaming a band back to its default label and removing a label layout each

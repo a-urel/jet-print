@@ -5,20 +5,25 @@
 library;
 
 import '../../domain/bool_property.dart';
+import '../../expression/eval_context.dart';
 import '../../expression/expression.dart';
 import '../../expression/expression_exception.dart';
 import '../../expression/value.dart';
-import 'fill_eval_context.dart';
 import 'report_diagnostics.dart';
 
-/// Returns whether the object is visible. [pageRefs] is the set the [ctx] fills
-/// when a page-scoped variable is referenced (illegal here → diagnostic).
+/// Returns whether the object is visible, evaluating [prop] against [ctx].
+///
+/// A row-scoped `FillEvalContext` fills [pageRefs] when a page-scoped variable
+/// is referenced — illegal for a body object, whose page is not yet known, so
+/// that is a diagnostic. Page furniture evaluates against a `PageEvalContext`,
+/// where page variables are exactly what an expression may use, and passes no
+/// [pageRefs].
 bool resolveVisibility(
   BoolProperty prop,
-  FillEvalContext ctx,
+  EvalContext ctx,
   ReportDiagnostics diagnostics, {
   required String id,
-  required Set<String> pageRefs,
+  Set<String> pageRefs = const <String>{},
 }) {
   return prop.getValue((String exprText) {
     final Expression parsed;
