@@ -329,6 +329,10 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
       'Edit page & group settings on the group header band.';
 
   @override
+  String get propertiesGroupOnFooterHint =>
+      'Edit page & group settings on the group footer band.';
+
+  @override
   String get propertiesScope => 'Scope';
 
   @override

@@ -28,6 +28,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **The group-row hint names the band that actually carries the settings.**
+  Selecting a group row always said to edit its settings "on the group header
+  band" — even for a footer-only group, whose settings live on its footer, so
+  the hint pointed at a band that did not exist. It now names the header when
+  there is one and the footer otherwise (new key `propertiesGroupOnFooterHint`
+  in en/de/tr), and shows no hint for a group with neither.
+
 - **The field picker's search box and empty result are localized.** Its
   "Search fields" placeholder and "No matching fields" line were hardcoded
   English and showed untranslated under `de` and `tr`. They are now the
