@@ -28,6 +28,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **A total wrapped in parentheses no longer prints 0.** Nested-footer and
+  scope totals recovered an aggregate's argument by slicing the source text
+  between its first `(` and last `)`. For `(SUM($F{qty}))` that slice is
+  `SUM($F{qty})` itself, which failed as an unknown function on every row, and
+  the failures were folded away, leaving 0. The argument is now taken from the
+  parsed expression. The same rewrite also rebuilt the footer text field by
+  field and dropped its `name`; it now uses `copyWith`.
+
 - **Page headers and footers now honor `visible` and `format`.** The layouter
   placed every page-furniture element as authored: a header logo set hidden, or
   given a visibility expression, printed on every page, and a footer text's

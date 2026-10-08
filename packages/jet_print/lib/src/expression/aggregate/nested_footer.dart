@@ -74,18 +74,8 @@ ReportElement _rewrite(
     return e;
   }
   if (agg == null) return e;
-  final String inner =
-      expr.substring(expr.indexOf('(') + 1, expr.lastIndexOf(')'));
   final String name = '__nagg${aggs.length}';
-  aggs.add(NestedAgg(name, agg.calculation, Expression.parse(inner)));
+  aggs.add(NestedAgg(name, agg.calculation, Expression.ofRoot(agg.argument)));
   mark();
-  return TextElement(
-    id: e.id,
-    bounds: e.bounds,
-    text: e.text,
-    style: e.style,
-    expression: '\$V{$name}',
-    format: e.format,
-    visible: e.visible,
-  );
+  return e.copyWith(expression: () => '\$V{$name}');
 }

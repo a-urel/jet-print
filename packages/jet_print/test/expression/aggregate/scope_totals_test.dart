@@ -59,4 +59,24 @@ void main() {
       isEmpty,
     );
   });
+
+  // Regression: the argument was sliced from the source text between the first
+  // '(' and the last ')'. For a parenthesized total that slice is the whole
+  // aggregate call, which then failed on every row, so the total read 0.
+  test('a parenthesized aggregate keeps its real argument', () {
+    final specs = prepareScopeTotals(const <ScopeTotal>[
+      ScopeTotal('t', r'(SUM($F{lineTotal}))'),
+    ]);
+    expect(specs.single.calculation, JetCalculation.sum);
+    final ctx = RowEvalContext(
+      row: DataRow(
+        fields: const <FieldDef>[
+          FieldDef('lineTotal', type: JetFieldType.double),
+        ],
+        values: <String, Object?>{'lineTotal': 4.0},
+      ),
+      functions: JetFunctionRegistry(),
+    );
+    expect(specs.single.argument.evaluate(ctx), const JetNumber(4.0));
+  });
 }

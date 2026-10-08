@@ -25,6 +25,11 @@ class Expression {
   factory Expression.parse(String source) =>
       Expression._(Parser(tokenize(source)).parseExpression());
 
+  /// Wraps an already-parsed AST node — e.g. an aggregate's argument taken from
+  /// [topLevelAggregate] — so it evaluates without re-deriving its source text
+  /// (internal seam, like [root]).
+  const Expression.ofRoot(Expr root) : _root = root;
+
   /// The parsed AST root (internal seam — used by the aggregate synthesizer and
   /// the value-template compiler to inspect/rewrite expressions).
   Expr get root => _root;
