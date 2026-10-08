@@ -133,6 +133,10 @@ class ReportFiller {
     final List<DescendantAggregate> descAggs = lift.aggregates;
     final ReportDiagnostics diagnostics = ReportDiagnostics();
     final DiagnosticBudget budget = DiagnosticBudget(diagnostics);
+    // Tags each run of a nested scope's totals or footer: a scope nested two
+    // deep runs once per parent row, and the budget dedupes by key within a
+    // master row, so each instance needs its own key to keep its own warning.
+    int scopeInstance = 0;
     final Set<String> warnedFields = <String>{};
     final Set<String> ignoredPageRefs = <String>{};
 
@@ -430,9 +434,12 @@ class ReportFiller {
               functions: _functions,
             )));
           }
-          _reportSkips(budget, 'agg:scope:${cs.id}:${a.name}',
+          _reportSkips(
+              budget,
+              'agg:scope:${cs.id}:${a.name}#${++scopeInstance}',
               'published total "${a.name}"',
-              nonNumeric: acc.skippedNonNumeric, errors: acc.skippedErrors);
+              nonNumeric: acc.skippedNonNumeric,
+              errors: acc.skippedErrors);
           // A published total can collide either with a real data field on the
           // parent row (shadowing it) or with a sibling scope's total already
           // published into `extras` this invocation — validation enforces
@@ -536,8 +543,9 @@ class ReportFiller {
                     : accs![k].value,
             };
             // Name the nested scope (not the aggregate): footer.aggs[k].name is the synthesized $V{__naggN} name, not a user-facing id — naming the scope is robust and parse-free (spec E2).
+            final int instance = ++scopeInstance;
             for (int k = 0; k < footer.aggs.length; k++) {
-              _reportSkips(budget, 'agg:footer:${s.id}:$k',
+              _reportSkips(budget, 'agg:footer:${s.id}:$k#$instance',
                   'a footer aggregate in scope "${s.id}"',
                   nonNumeric: accs![k].skippedNonNumeric,
                   errors: accs[k].skippedErrors);
@@ -873,6 +881,8 @@ class ReportFiller {
   /// Records this row's aggregate skips into [target]: wrong-type inputs and
   /// inputs that failed to evaluate, each as its own deduped row issue. Either
   /// leaves the aggregate short of what the data holds, so neither is silent.
+  /// The two kinds use disjoint key namespaces (`agg:…` / `error:agg:…`): a
+  /// suffix would let a total named, say, `total:error` collide with `total`.
   static void _reportSkips(DiagnosticBudget budget, String key, String target,
       {required int nonNumeric, required int errors}) {
     if (nonNumeric > 0) {
@@ -880,7 +890,7 @@ class ReportFiller {
           key, '$nonNumeric non-numeric value(s) were skipped from $target');
     }
     if (errors > 0) {
-      budget.recordRowIssue('$key:error',
+      budget.recordRowIssue('error:$key',
           '$errors value(s) failed to evaluate and were skipped from $target');
     }
   }
