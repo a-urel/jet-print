@@ -14,7 +14,6 @@ import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/domain/report_element.dart';
 import 'package:jet_print/src/domain/report_validation.dart';
 import 'package:jet_print/src/domain/report_variable.dart';
-import 'package:jet_print/src/expression/expression_exception.dart';
 import 'package:jet_print/src/expression/value.dart';
 import 'package:jet_print/src/rendering/fill/filled_report.dart';
 import 'package:jet_print/src/rendering/fill/report_diagnostics.dart';
@@ -253,21 +252,55 @@ void main() {
         (res.report.bands.single.elements.single as TextElement).text, 'none');
   });
 
-  test('a malformed variable expression fails fast (throws)', () {
-    expect(
-      () => ReportFiller().fillDefinition(
-        template(
-          detail: <ReportElement>[t('d', text: '.')],
-          variables: const <ReportVariable>[
-            ReportVariable(name: 'v', expression: r'CONCAT('),
-          ],
-        ),
-        JetInMemoryDataSource(<Map<String, Object?>>[
-          <String, Object?>{'x': 1}
-        ]),
+  // #61 — deliberately replaces the old "fails fast (throws)" pin: a malformed
+  // variable aborted the whole render, while a malformed element expression
+  // renders `!ERR` with a diagnostic. Variables now fail the same way.
+  test('a malformed variable expression renders !ERR and is diagnosed once',
+      () {
+    final FillResult res = ReportFiller().fillDefinition(
+      template(
+        detail: <ReportElement>[t('d', expr: r'$V{v}')],
+        variables: const <ReportVariable>[
+          ReportVariable(name: 'v', expression: r'CONCAT('),
+        ],
       ),
-      throwsA(isA<ExpressionException>()),
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'x': 1},
+        <String, Object?>{'x': 2},
+      ]),
     );
+    for (final FilledBand b in res.report.bands) {
+      expect((b.elements.single as TextElement).text, '!ERR');
+    }
+    expect(
+        res.diagnostics.entries.where((domain.Diagnostic d) =>
+            d.severity == domain.DiagnosticSeverity.error &&
+            d.message.contains('variable "v" failed to parse')),
+        hasLength(1));
+  });
+
+  test('a malformed group key renders as one group and is diagnosed once', () {
+    final FillResult res = ReportFiller().fillDefinition(
+      template(
+        detail: <ReportElement>[t('d', expr: r'$F{x}')],
+        groups: <GroupLevel>[
+          GroupLevel(id: 'g', name: 'g', key: ')(', header: gh('g', text: 'H')),
+        ],
+      ),
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'x': 'a'},
+        <String, Object?>{'x': 'b'},
+      ]),
+    );
+    expect(
+        res.report.bands
+            .where((FilledBand b) => b.type == BandType.groupHeader),
+        hasLength(1));
+    expect(
+        res.diagnostics.entries.where((domain.Diagnostic d) =>
+            d.severity == domain.DiagnosticSeverity.error &&
+            d.message.contains('group "g"')),
+        hasLength(1));
   });
 
   test('determinism — re-filling identical inputs yields an equal report', () {

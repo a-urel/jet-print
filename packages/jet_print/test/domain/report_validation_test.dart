@@ -10,6 +10,7 @@ import 'package:jet_print/src/domain/report_band.dart' show BandType;
 import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/domain/report_element.dart';
 import 'package:jet_print/src/domain/report_validation.dart';
+import 'package:jet_print/src/domain/report_variable.dart';
 import 'package:jet_print/src/domain/scope_total.dart';
 
 TextElement _txt(String id, {String? expression}) => TextElement(
@@ -124,6 +125,79 @@ void main() {
         ),
       );
       expect(_has(validate(def), DiagnosticSeverity.error, 'parse'), isTrue);
+    });
+
+    // #61: variables were never validated, so a broken one surfaced only as a
+    // render-time failure.
+    group('I9 variables', () {
+      ReportDefinition withVars(List<ReportVariable> vars) =>
+          _valid().copyWith(variables: vars);
+
+      test('a valid variable set raises nothing', () {
+        expect(
+            validate(withVars(const <ReportVariable>[
+              ReportVariable(
+                  name: 'total',
+                  expression: r'$F{amount}',
+                  calculation: JetCalculation.sum),
+              ReportVariable(
+                  name: 'perInvoice',
+                  expression: r'$F{amount}',
+                  calculation: JetCalculation.sum,
+                  resetScope: VariableResetScope.group,
+                  resetGroup: 'root/g0'),
+            ])),
+            isEmpty);
+      });
+
+      test('flags an expression that does not parse', () {
+        final List<Diagnostic> ds = validate(withVars(const <ReportVariable>[
+          ReportVariable(name: 'v', expression: r'$F{amount'),
+        ]));
+        expect(_has(ds, DiagnosticSeverity.error, 'variable "v"'), isTrue);
+        expect(_has(ds, DiagnosticSeverity.error, 'parse'), isTrue);
+      });
+
+      test('flags a duplicate name', () {
+        expect(
+            _has(
+                validate(withVars(const <ReportVariable>[
+                  ReportVariable(name: 'v', expression: '1'),
+                  ReportVariable(name: 'v', expression: '2'),
+                ])),
+                DiagnosticSeverity.error,
+                'duplicate variable name "v"'),
+            isTrue);
+      });
+
+      test('flags a name in the reserved __ namespace', () {
+        expect(
+            _has(
+                validate(withVars(const <ReportVariable>[
+                  ReportVariable(name: '__agg0', expression: '1'),
+                ])),
+                DiagnosticSeverity.error,
+                'reserved'),
+            isTrue);
+      });
+
+      test('flags a group reset that names no group', () {
+        for (final String? group in <String?>[null, 'nope']) {
+          expect(
+              _has(
+                  validate(withVars(<ReportVariable>[
+                    ReportVariable(
+                        name: 'v',
+                        expression: '1',
+                        resetScope: VariableResetScope.group,
+                        resetGroup: group),
+                  ])),
+                  DiagnosticSeverity.error,
+                  'resets on group'),
+              isTrue,
+              reason: 'resetGroup: $group');
+        }
+      });
     });
 
     test('I4 flags a field binding on record-blind furniture', () {

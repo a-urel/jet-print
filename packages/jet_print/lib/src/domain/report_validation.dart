@@ -30,10 +30,10 @@ import 'group_level.dart';
 import 'report_band.dart' show BandType;
 import 'report_definition.dart';
 import 'report_element.dart';
-import 'report_variable.dart' show JetCalculation;
+import 'report_variable.dart';
 import 'scope_total.dart';
 
-/// Validates [def]'s semantic invariants (I1–I8), returning a [Diagnostic] for
+/// Validates [def]'s semantic invariants (I1–I9), returning a [Diagnostic] for
 /// each violation in document order. Returns an empty list for a valid
 /// definition. **Never throws.**
 ///
@@ -48,6 +48,9 @@ import 'scope_total.dart';
 ///   collection total); anywhere else is an error, because only those bands are
 ///   expanded by the aggregate synthesizer. A scope `footer` is slot-checked
 ///   (`groupFooter`) and is forbidden on the root (which has no collection).
+/// * I9 report variables: each expression parses, names are unique and outside
+///   the `__` namespace the aggregate synthesizer reserves, and a group-scoped
+///   variable resets on a group that exists — reported as **errors**.
 ///
 /// When [schema] is provided, an additional operand check is applied to each
 /// aggregate in a sink band: same-scope or unique-descend → no diagnostic;
@@ -355,6 +358,7 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
   walkScope(def.body.root, isRoot: true, chain: const <DetailScope>[]);
 
   _validateColumns(def, out);
+  _validateVariables(def, out);
 
   // I1 — duplicate ids (reported once per offending id, in first-seen order).
   for (final MapEntry<String, int> e in idCounts.entries) {
@@ -365,6 +369,41 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
   }
 
   return out;
+}
+
+/// I9 — validates [def]'s report variables, appending errors to [out].
+///
+/// A group-scoped variable's `resetGroup` may name its group by id (what the
+/// designer stores) or by name (what synthesized variables carry); either is
+/// accepted, so only a reset that matches no root group is flagged.
+void _validateVariables(ReportDefinition def, List<Diagnostic> out) {
+  final Set<String> groupRefs = <String>{
+    for (final GroupLevel g in def.body.root.groups) ...<String>[g.id, g.name],
+  };
+  final Set<String> seen = <String>{};
+  for (final ReportVariable v in def.variables) {
+    if (!seen.add(v.name)) {
+      out.add(Diagnostic(
+          DiagnosticSeverity.error, 'duplicate variable name "${v.name}"'));
+    }
+    if (v.name.startsWith('__')) {
+      out.add(Diagnostic(DiagnosticSeverity.error,
+          'variable "${v.name}" uses the reserved "__" name prefix'));
+    }
+    try {
+      Expression.parse(v.expression);
+    } on ExpressionException catch (e) {
+      out.add(Diagnostic(DiagnosticSeverity.error,
+          'variable "${v.name}" expression failed to parse: ${e.message}'));
+    }
+    if (v.resetScope == VariableResetScope.group &&
+        (v.resetGroup == null || !groupRefs.contains(v.resetGroup))) {
+      out.add(Diagnostic(
+          DiagnosticSeverity.error,
+          'variable "${v.name}" resets on group "${v.resetGroup ?? ''}", '
+          'which is not a group of the report'));
+    }
+  }
 }
 
 /// Validates [ct] (spec A crosstab), appending diagnostics to [out]. Every

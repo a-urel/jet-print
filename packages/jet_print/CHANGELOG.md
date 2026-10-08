@@ -28,6 +28,19 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **A malformed variable or group key no longer aborts the render, and
+  `validate()` now checks variables.** A report variable whose expression did
+  not parse (say `$F{amount`), or a group key that did not parse, threw out of
+  `JetReportEngine.renderDefinition` — while a malformed *element* expression
+  has always rendered `!ERR` with a diagnostic. Now a broken variable evaluates
+  to an error on every row whatever its calculation (it prints `!ERR`, never a
+  plausible-looking total), a broken group key never breaks, and each records
+  one error diagnostic. `validate()` gains rule **I9**: a variable's expression
+  must parse, its name must be unique and outside the `__` prefix the
+  aggregate synthesizer reserves, and a group-scoped variable must reset on a
+  group that exists. **Behaviour change:** a fill with a malformed variable
+  used to throw `ExpressionException`; it now returns normally.
+
 - **The field picker's search box and empty result are localized.** Its
   "Search fields" placeholder and "No matching fields" line were hardcoded
   English and showed untranslated under `de` and `tr`. They are now the

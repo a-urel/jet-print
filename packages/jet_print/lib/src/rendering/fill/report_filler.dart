@@ -29,6 +29,7 @@ import '../../expression/aggregate/variable_accumulator.dart';
 import '../../expression/aggregate/variable_calculator.dart';
 import '../../expression/eval_context.dart';
 import '../../expression/expression.dart';
+import '../../expression/expression_exception.dart';
 import '../../expression/function_registry.dart';
 import '../../expression/functions/built_in_functions.dart';
 import '../../expression/value.dart';
@@ -203,6 +204,9 @@ class ReportFiller {
       functions: _functions,
       contextFactory: contextFactory,
     )..start();
+    for (final String message in calc.compileErrors) {
+      diagnostics.error(message);
+    }
 
     // Spec 033: split lifted aggregates by reset scope and build per-name
     // accumulators. Accumulators fold every master row's descendant leaves;
@@ -229,7 +233,13 @@ class ReportFiller {
 
     void scanPageScoped(String expression, String site) {
       final Set<String> refs = <String>{};
-      Expression.parse(expression).evaluate(FillEvalContext(
+      final Expression parsed;
+      try {
+        parsed = Expression.parse(expression);
+      } on ExpressionException {
+        return; // reported once, by the calculator's compileErrors
+      }
+      parsed.evaluate(FillEvalContext(
         functions: _functions,
         diagnostics: diagnostics,
         warnedFields: <String>{},
