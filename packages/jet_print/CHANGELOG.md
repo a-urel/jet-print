@@ -28,6 +28,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Malformed report JSON now fails with `ReportFormatException`, and only
+  that.** `JetReportFormat.decodeDefinition` and `decodeDefinitionJson`
+  promised `ReportFormatException`, but a truncated or hand-edited document
+  could escape as a `TypeError` (a `!` or `as` cast meeting the wrong type), an
+  `ArgumentError` (an unknown enum name such as a variable `calculation` of
+  `"median"`) or a `FormatException` (text that is not JSON), so a host
+  catching `on ReportFormatException` crashed. Both entry points now convert
+  those into a `ReportFormatException` that keeps the underlying message. A
+  test swaps every value of a report touching every decoder for each
+  wrong-typed stand-in, and removes every key, and requires nothing else to
+  escape.
+
 - **A malformed variable or group key no longer aborts the render, and
   `validate()` now checks variables.** A report variable whose expression did
   not parse (say `$F{amount`), or a group key that did not parse, threw out of
