@@ -34,7 +34,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   callback or `dataSchema` — the playground's "Select data source" — kept
   seeing the old rows in preview until the report itself was edited. Either
   change now invalidates the cache: the next preview entry re-renders, and a
-  preview already on screen re-renders in place.
+  preview already on screen re-renders in place. A render still in flight when
+  the inputs change is superseded, and export and print are offered only while
+  the report on screen is current — not during a re-render, and not after a
+  failed one.
 
 - **The field picker's search box and empty result are localized.** Its
   "Search fields" placeholder and "No matching fields" line were hardcoded
