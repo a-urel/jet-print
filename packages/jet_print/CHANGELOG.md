@@ -28,6 +28,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **An aggregate that skips a failed value now says so.** An aggregate input
+  that evaluated to an error — `SUM($F{amount} / $F{qty})` over a row where
+  `qty` is 0 — was skipped exactly like a blank, so the total came out short
+  with no `!ERR` and no diagnostic. It is still skipped (the total remains the
+  fold of the rows that evaluated), but each such row now records a warning,
+  "N value(s) failed to evaluate and were skipped from …", next to the
+  existing one for non-numeric values.
+
 - **A chart over an infinite value no longer throws from `pageAt`.** An
   infinite chart value — reachable from a JSON number like `1e400` or an
   overflowing multiplication — went straight into the series, and scaling the

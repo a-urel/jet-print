@@ -274,6 +274,32 @@ void main() {
     );
   });
 
+  // Regression (#62): an aggregate input that evaluates to an error was
+  // skipped exactly like a blank, so one bad row (here a division by zero)
+  // left the total silently short. It is still skipped — the total stays the
+  // sum of the rows that evaluated — but the skip is now reported.
+  test('an aggregate input that errors is skipped and reported', () {
+    final FillResult res = ReportFiller().fillDefinition(
+      template(
+        detail: <ReportElement>[t('d', text: '.')],
+        summary: <ReportElement>[t('s', expr: r'SUM($F{a} / $F{b})')],
+      ),
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'a': 11, 'b': 2},
+        <String, Object?>{'a': 5, 'b': 0},
+      ]),
+    );
+    final TextElement total =
+        res.report.bands.last.elements.single as TextElement;
+    // Fractional on purpose: a whole double stringifies differently on web.
+    expect(total.text, '5.5');
+    expect(
+        res.diagnostics.entries.where((domain.Diagnostic d) =>
+            d.message.contains('failed to evaluate') &&
+            d.message.contains('skipped')),
+        hasLength(1));
+  });
+
   // Regression (#64): the data set was opened before the try/finally that
   // closes it, so a fill that threw in between (here the deliberate fail-fast
   // on a malformed variable) never closed a host's cursor.
