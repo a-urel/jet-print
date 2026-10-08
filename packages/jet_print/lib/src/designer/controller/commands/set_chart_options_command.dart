@@ -14,9 +14,9 @@ import '../element_edit_command.dart';
 /// [categoryExpression] and [title] are nullable on the element, so they are
 /// thunks here as in [ChartElement.copyWith]: `() => null` clears them.
 ///
-/// Supplying [chartType] is a deliberate pick, so it clears any preserved
-/// [ChartElement.unknownChartType] — even picking [ChartType.bar], the type an
-/// unknown one renders as.
+/// Supplying [chartType] is a deliberate pick, so [ChartElement.copyWith]
+/// clears any preserved [ChartElement.unknownChartType] — even picking
+/// [ChartType.bar], the type an unknown one renders as.
 ///
 /// A no-op for a non-chart or absent [id].
 class SetChartOptionsCommand extends ElementEditCommand<ChartElement> {
@@ -68,7 +68,6 @@ class SetChartOptionsCommand extends ElementEditCommand<ChartElement> {
   @override
   ChartElement edit(ChartElement element) => element.copyWith(
         chartType: chartType,
-        unknownChartType: chartType == null ? null : () => null,
         collectionField: collectionField,
         valueExpression: valueExpression,
         categoryExpression: categoryExpression,

@@ -71,6 +71,22 @@ void main() {
       expect(codec.toJson(codec.fromJson(newer)), equals(newer));
     });
 
+    // Review finding on #65: copyWith kept the preserved name when the type
+    // changed, so the codec re-wrote the old unknown type over the new one.
+    test('copyWith(chartType:) supersedes the preserved name', () {
+      final ChartElement picked =
+          codec.fromJson(newer).copyWith(chartType: ChartType.pie);
+      expect(picked.unknownChartType, isNull);
+      expect(codec.toJson(picked)['chartType'], 'pie');
+    });
+
+    test('copyWith without chartType keeps the preserved name', () {
+      final ChartElement edited =
+          codec.fromJson(newer).copyWith(showAxes: false);
+      expect(edited.unknownChartType, 'area');
+      expect(codec.toJson(edited)['chartType'], 'area');
+    });
+
     test('a known chartType never carries an unknown name', () {
       final ChartElement loaded =
           codec.fromJson(<String, Object?>{...newer, 'chartType': 'line'});

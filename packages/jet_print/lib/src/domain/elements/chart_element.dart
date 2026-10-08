@@ -118,6 +118,10 @@ class ChartElement extends ReportElement with ValueEquality {
   /// The nullable fields — [categoryExpression], [title], [unknownChartType]
   /// and [name] — take a thunk: omit to preserve, pass `() => value` to
   /// replace (`() => null` clears).
+  ///
+  /// Supplying [chartType] is a type change, so it also drops a preserved
+  /// [unknownChartType] — otherwise the codec would write the old unknown name
+  /// over the new type — unless [unknownChartType] is passed explicitly.
   ChartElement copyWith({
     JetRect? bounds,
     ChartType? chartType,
@@ -147,7 +151,8 @@ class ChartElement extends ReportElement with ValueEquality {
         showLegend: showLegend ?? this.showLegend,
         seriesColor: seriesColor ?? this.seriesColor,
         points: points ?? this.points,
-        unknownChartType: pick(unknownChartType, this.unknownChartType),
+        unknownChartType: pick(
+            unknownChartType, chartType == null ? this.unknownChartType : null),
         name: pick(name, this.name),
         visible: visible ?? this.visible,
       );
