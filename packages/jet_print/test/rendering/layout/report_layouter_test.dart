@@ -1359,6 +1359,53 @@ void main() {
           <String>['H2']);
     });
 
+    // Review on #72: the previous instance was closed only after the page
+    // break checks, so a break caused by the new header itself reprinted the
+    // previous instance's header above it.
+    test('a break caused by the second header reprints only that header', () {
+      final ReportDefinition tpl = _tplWithGroups(<GroupLevel>[
+        const GroupLevel(
+            id: 'g', name: 'g', key: r'$F{g}', reprintHeaderOnEachPage: true),
+      ]);
+      // Body capacity 80: d0 + H1 fill it exactly, so H2 breaks the page.
+      final LayoutResult r = ReportLayouter().layoutDefinition(
+          tpl,
+          _filled(<FilledBand>[
+            _gband(BandType.detail, height: 70, id: 'd0'),
+            _gband(BandType.groupHeader, group: 'g', height: 10, id: 'H1'),
+            _gband(BandType.groupHeader, group: 'g', height: 10, id: 'H2'),
+            _gband(BandType.detail, height: 10, id: 'd1'),
+          ]));
+      expect(r.pages, hasLength(2));
+      expect(
+          r.pages[1].primitives
+              .whereType<RectPrimitive>()
+              .map((RectPrimitive p) => p.elementId),
+          <String>['H2', 'd1']);
+    });
+
+    test('keepTogether moves only the instance that does not fit', () {
+      final ReportDefinition tpl = _tplWithGroups(<GroupLevel>[
+        const GroupLevel(id: 'g', name: 'g', key: r'$F{g}', keepTogether: true),
+      ]);
+      // Capacity 80: H1 + d1 (40) fit; H2 + d2 (50) would end at 90.
+      final LayoutResult r = ReportLayouter().layoutDefinition(
+          tpl,
+          _filled(<FilledBand>[
+            _gband(BandType.groupHeader, group: 'g', height: 10, id: 'H1'),
+            _gband(BandType.detail, height: 30, id: 'd1'),
+            _gband(BandType.groupHeader, group: 'g', height: 10, id: 'H2'),
+            _gband(BandType.detail, height: 40, id: 'd2'),
+          ]));
+      expect(r.pages, hasLength(2));
+      List<String?> ids(PageFrame p) => p.primitives
+          .whereType<RectPrimitive>()
+          .map((RectPrimitive x) => x.elementId)
+          .toList();
+      expect(ids(r.pages[0]), <String>['H1', 'd1']);
+      expect(ids(r.pages[1]), <String>['H2', 'd2']);
+    });
+
     test('a page break reprints only the open instance\'s header', () {
       final ReportDefinition tpl = _tplWithGroups(<GroupLevel>[
         const GroupLevel(

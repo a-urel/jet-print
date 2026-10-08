@@ -738,7 +738,23 @@ class ReportLayouter {
             levelOf.containsKey(band.group);
         final int level = isGroupBand ? levelOf[band.group]! : -1;
 
-        if (band.type == BandType.groupFooter && isGroupBand) {
+        // A header either continues a synthetic group's header run or opens a
+        // new instance. A new instance closes the previous one at its level
+        // (and anything deeper) *before* the break checks below, so a break
+        // the new header causes never reprints the instance it replaces.
+        final bool continuesHeaderRun = band.type == BandType.groupHeader &&
+            isGroupBand &&
+            prevHeaderGroup == band.group &&
+            multiHeaderGroups.contains(band.group) &&
+            openStack.isNotEmpty &&
+            openStack.last.name == band.group;
+        if (band.type == BandType.groupHeader &&
+            isGroupBand &&
+            !continuesHeaderRun) {
+          while (openStack.isNotEmpty && openStack.last.level >= level) {
+            openStack.removeLast();
+          }
+        } else if (band.type == BandType.groupFooter && isGroupBand) {
           while (openStack.isNotEmpty && openStack.last.level > level) {
             openStack.removeLast();
           }
@@ -783,15 +799,10 @@ class ReportLayouter {
         cursorY += mb.height;
 
         if (band.type == BandType.groupHeader && isGroupBand) {
-          if (prevHeaderGroup == band.group &&
-              multiHeaderGroups.contains(band.group) &&
-              openStack.isNotEmpty &&
-              openStack.last.name == band.group) {
+          if (continuesHeaderRun) {
             openStack.last.headers.add(mb);
           } else {
-            while (openStack.isNotEmpty && openStack.last.level >= level) {
-              openStack.removeLast();
-            }
+            // The previous instance was already closed before the checks.
             openStack.add((
               name: band.group!,
               level: level,

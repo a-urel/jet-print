@@ -36,6 +36,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   because the detail band is hidden). The second instance lost its
   `startNewPage` break, joined the first's `keepTogether` span, and a page
   break reprinted both headers. The merge now applies to crosstab groups only.
+  Relatedly, a page break caused by a new instance's own header no longer
+  reprints the header of the instance it replaces: the previous instance is
+  now closed before the break checks, not after.
 
 - **The field picker's search box and empty result are localized.** Its
   "Search fields" placeholder and "No matching fields" line were hardcoded
