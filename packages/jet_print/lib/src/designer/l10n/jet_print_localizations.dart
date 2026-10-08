@@ -527,6 +527,18 @@ abstract class JetPrintLocalizations {
   /// **'Insert a data field'**
   String get valueFieldPickerTooltip;
 
+  /// Placeholder of the search box at the top of the data-source field picker, which filters the listed fields by name.
+  ///
+  /// In en, this message translates to:
+  /// **'Search fields'**
+  String get fieldPickerSearchHint;
+
+  /// Shown in the data-source field picker when no field name matches the search text.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching fields'**
+  String get fieldPickerNoMatches;
+
   /// Tooltip for the value field's fx button that opens the expression editor.
   ///
   /// In en, this message translates to:

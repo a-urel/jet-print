@@ -15,6 +15,10 @@ const String _p = 'jet_print.designer.properties';
 ValueKey<String> _chartTypeKey(String id) => ValueKey<String>('$_p.chart.$id');
 ValueKey<String> _chartValueKey(String id) =>
     ValueKey<String>('$_p.field.chartValue.$id');
+ValueKey<String> _chartCategoryKey(String id) =>
+    ValueKey<String>('$_p.field.chartCategory.$id');
+ValueKey<String> _chartTitleKey(String id) =>
+    ValueKey<String>('$_p.field.chartTitle.$id');
 ValueKey<String> _chartCollectionKey(String id) =>
     ValueKey<String>('$_p.field.chartCollection.$id');
 ValueKey<String> _chartCollectionPickKey(String id) =>
@@ -58,6 +62,8 @@ ReportDefinition _docWithChart() => const ReportDefinition(
                   chartType: ChartType.bar,
                   collectionField: 'months',
                   valueExpression: r'$F{revenue}',
+                  categoryExpression: r'$F{month}',
+                  title: 'Revenue',
                 ),
               ],
             )),
@@ -126,6 +132,32 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(_chart(c).valueExpression, r'$F{profit}');
+  });
+
+  // Regression: the inspector committed `title: null` for an emptied field, and
+  // `setChartOptions` reads null as "leave unchanged", so the title stuck.
+  testWidgets('emptying the title field clears the chart title',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c = await _pump(tester);
+    expect(_chart(c).title, 'Revenue');
+
+    await tester.enterText(find.byKey(_chartTitleKey('c1')), '');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    expect(_chart(c).title, isNull);
+  });
+
+  testWidgets('emptying the category field clears the category expression',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c = await _pump(tester);
+    expect(_chart(c).categoryExpression, r'$F{month}');
+
+    await tester.enterText(find.byKey(_chartCategoryKey('c1')), '');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    expect(_chart(c).categoryExpression, isNull);
   });
 
   testWidgets('toolbox has a chart tool button', (WidgetTester tester) async {

@@ -96,6 +96,16 @@ are the furniture that repeats; the `columnHeader`, `columnFooter` and
 `background` slots are representable in the model but are not laid out, and each
 one present draws an info diagnostic.
 
+Furniture honors `visible` per page: `buildPage` evaluates each page header and
+footer band, and each of their elements, against the same `PageEvalContext` the
+page numbers use, so `$V{PAGE_NUMBER} == "1"` is a legal "first page only"
+condition here where a body band would reject it. A hidden furniture band draws
+nothing but keeps its height — the boundary pass fixed the body's capacity
+before any page was known — and a broken expression keeps the object visible,
+diagnosed once through `_runtimeDiagnosed`. So does one that references a field
+or a non-page variable: the page context resolves those to null, which could
+otherwise read as a clean `false` and hide the object silently.
+
 Page one alone reorders two things: the first `BandType.title` band in its plan
 is drawn at the top margin rather than at its boundary-pass `y`, and the
 page-header chrome shifts down by that band's height — JasperReports' default

@@ -41,9 +41,7 @@ List<ScopeAgg> prepareScopeTotals(List<ScopeTotal> totals) {
       continue;
     }
     if (agg == null) continue;
-    final String inner = t.expression.substring(
-        t.expression.indexOf('(') + 1, t.expression.lastIndexOf(')'));
-    out.add(ScopeAgg(t.name, agg.calculation, Expression.parse(inner)));
+    out.add(ScopeAgg(t.name, agg.calculation, Expression.ofRoot(agg.argument)));
   }
   return out;
 }

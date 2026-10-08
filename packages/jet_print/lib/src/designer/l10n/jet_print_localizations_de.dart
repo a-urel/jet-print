@@ -224,6 +224,12 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   String get valueFieldPickerTooltip => 'Datenfeld einfügen';
 
   @override
+  String get fieldPickerSearchHint => 'Felder durchsuchen';
+
+  @override
+  String get fieldPickerNoMatches => 'Keine passenden Felder';
+
+  @override
   String get valueFieldFxTooltip => 'Ausdruck erstellen';
 
   @override

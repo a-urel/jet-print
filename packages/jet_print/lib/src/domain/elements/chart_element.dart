@@ -52,6 +52,12 @@ class ChartPoint with ValueEquality {
 /// [points] is empty in an authored element; the fill phase returns a resolved
 /// copy with [points] filled and the binding fields left intact. The renderer
 /// reads only [points] + the chrome flags.
+///
+/// When a report serialized by a *newer* version names a [chartType] this
+/// version does not recognize, the codec loads it as [ChartType.bar] (a safe
+/// render default) while preserving the original name in [unknownChartType], so
+/// re-saving does not discard it. A deliberate type pick clears it — the same
+/// contract as `ShapeElement.unknownForm`.
 class ChartElement extends ReportElement with ValueEquality {
   /// Creates a chart element.
   const ChartElement({
@@ -67,12 +73,18 @@ class ChartElement extends ReportElement with ValueEquality {
     this.showLegend = false,
     this.seriesColor = kDefaultChartColor,
     this.points = const <ChartPoint>[],
+    this.unknownChartType,
     super.name,
     super.visible,
   });
 
   /// The chart form (bar/line/pie).
   final ChartType chartType;
+
+  /// The original serialized type name when [chartType] was unrecognized on
+  /// load, else null. Non-null only when [chartType] is [ChartType.bar] (the
+  /// safe render default for an unknown type); a deliberate pick clears it.
+  final String? unknownChartType;
 
   /// The name of the bound collection field, resolved in the element's band scope.
   final String collectionField;
@@ -103,20 +115,26 @@ class ChartElement extends ReportElement with ValueEquality {
 
   /// Returns a copy with the named fields replaced and the rest preserved.
   ///
-  /// [name] is nullable, so it takes a thunk: omit to preserve, pass
-  /// `() => value` to replace (`() => null` clears).
+  /// The nullable fields — [categoryExpression], [title], [unknownChartType]
+  /// and [name] — take a thunk: omit to preserve, pass `() => value` to
+  /// replace (`() => null` clears).
+  ///
+  /// Supplying [chartType] is a type change, so it also drops a preserved
+  /// [unknownChartType] — otherwise the codec would write the old unknown name
+  /// over the new type — unless [unknownChartType] is passed explicitly.
   ChartElement copyWith({
     JetRect? bounds,
     ChartType? chartType,
     String? collectionField,
     String? valueExpression,
-    String? categoryExpression,
-    String? title,
+    String? Function()? categoryExpression,
+    String? Function()? title,
     bool? showAxes,
     bool? showValueLabels,
     bool? showLegend,
     JetColor? seriesColor,
     List<ChartPoint>? points,
+    String? Function()? unknownChartType,
     String? Function()? name,
     BoolProperty? visible,
   }) =>
@@ -126,13 +144,15 @@ class ChartElement extends ReportElement with ValueEquality {
         chartType: chartType ?? this.chartType,
         collectionField: collectionField ?? this.collectionField,
         valueExpression: valueExpression ?? this.valueExpression,
-        categoryExpression: categoryExpression ?? this.categoryExpression,
-        title: title ?? this.title,
+        categoryExpression: pick(categoryExpression, this.categoryExpression),
+        title: pick(title, this.title),
         showAxes: showAxes ?? this.showAxes,
         showValueLabels: showValueLabels ?? this.showValueLabels,
         showLegend: showLegend ?? this.showLegend,
         seriesColor: seriesColor ?? this.seriesColor,
         points: points ?? this.points,
+        unknownChartType: pick(
+            unknownChartType, chartType == null ? this.unknownChartType : null),
         name: pick(name, this.name),
         visible: visible ?? this.visible,
       );
@@ -162,6 +182,7 @@ class ChartElement extends ReportElement with ValueEquality {
         showLegend,
         seriesColor,
         points,
+        unknownChartType,
       ];
 
   @override

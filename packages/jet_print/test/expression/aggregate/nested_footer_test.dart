@@ -80,4 +80,40 @@ void main() {
     final prepared = prepareNestedFooter(band);
     expect(prepared.aggs.map((a) => a.name).toSet(), hasLength(2));
   });
+
+  // Regression: see scope_totals_test — the same first-'(' / last-')' slice
+  // turned a parenthesized footer total into a nested aggregate call.
+  test('a parenthesized aggregate keeps its real argument', () {
+    final band = const Band(id: 'f', type: BandType.groupFooter, height: 12)
+        .copyWith(elements: <ReportElement>[_el('t', r'(SUM($F{qty}))')]);
+    final agg = prepareNestedFooter(band).aggs.single;
+    final ctx = RowEvalContext(
+      row: DataRow(
+        fields: const <FieldDef>[FieldDef('qty', type: JetFieldType.double)],
+        values: <String, Object?>{'qty': 3.0},
+      ),
+      functions: JetFunctionRegistry(),
+    );
+    expect(agg.argument.evaluate(ctx), const JetNumber(3.0));
+  });
+
+  // Regression: the rewrite rebuilt the element field by field and dropped its
+  // name.
+  test('the rewritten element keeps every other field', () {
+    final band = const Band(id: 'f', type: BandType.groupFooter, height: 12)
+        .copyWith(elements: <ReportElement>[
+      const TextElement(
+        id: 't',
+        bounds: JetRect(x: 0, y: 0, width: 80, height: 12),
+        text: 't',
+        expression: r'SUM($F{qty})',
+        format: '#,##0',
+        name: 'Total qty',
+      ),
+    ]);
+    final TextElement t =
+        prepareNestedFooter(band).band.elements.single as TextElement;
+    expect(t.name, 'Total qty');
+    expect(t.format, '#,##0');
+  });
 }

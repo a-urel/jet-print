@@ -67,8 +67,18 @@ void main() {
     test('Band carries an optional name (default null)', () {
       const Band b = Band(id: 'b1', type: BandType.detail, height: 20);
       expect(b.name, isNull);
-      expect(b.copyWith(name: 'Lines').name, 'Lines');
-      expect(b.copyWith(name: 'Lines') == b, isFalse);
+      expect(b.copyWith(name: () => 'Lines').name, 'Lines');
+      expect(b.copyWith(name: () => 'Lines') == b, isFalse);
+    });
+
+    // Regression: name took a plain nullable parameter, so copyWith could not
+    // clear it and callers rebuilt the band field-by-field instead.
+    test('copyWith clears name with a null thunk and keeps it when omitted',
+        () {
+      const Band b =
+          Band(id: 'b1', type: BandType.detail, height: 20, name: 'Lines');
+      expect(b.copyWith(name: () => null).name, isNull);
+      expect(b.copyWith(height: 30).name, 'Lines');
     });
   });
 }

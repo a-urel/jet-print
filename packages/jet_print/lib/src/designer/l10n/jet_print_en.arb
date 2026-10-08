@@ -300,6 +300,14 @@
   "@valueFieldPickerTooltip": {
     "description": "Accessible label / tooltip for the value input's suffix button that opens the data-source field picker."
   },
+  "fieldPickerSearchHint": "Search fields",
+  "@fieldPickerSearchHint": {
+    "description": "Placeholder of the search box at the top of the data-source field picker, which filters the listed fields by name."
+  },
+  "fieldPickerNoMatches": "No matching fields",
+  "@fieldPickerNoMatches": {
+    "description": "Shown in the data-source field picker when no field name matches the search text."
+  },
   "valueFieldFxTooltip": "Build an expression",
   "@valueFieldFxTooltip": {
     "description": "Tooltip for the value field's fx button that opens the expression editor."

@@ -10,6 +10,7 @@ library;
 
 import 'bool_property.dart';
 import 'column_layout.dart';
+import 'copy_support.dart';
 import 'report_band.dart' show BandType;
 import 'report_element.dart';
 import 'value_equality.dart';
@@ -56,13 +57,16 @@ class Band with ValueEquality {
   final BoolProperty visible;
 
   /// Returns a copy with the given fields replaced.
+  ///
+  /// The nullable fields — [columnLayout] and [name] — take a thunk: omit to
+  /// preserve, pass `() => value` to replace (`() => null` clears).
   Band copyWith({
     String? id,
     BandType? type,
     double? height,
     List<ReportElement>? elements,
-    ColumnLayout? columnLayout,
-    String? name,
+    ColumnLayout? Function()? columnLayout,
+    String? Function()? name,
     BoolProperty? visible,
   }) =>
       Band(
@@ -70,8 +74,8 @@ class Band with ValueEquality {
         type: type ?? this.type,
         height: height ?? this.height,
         elements: elements ?? this.elements,
-        columnLayout: columnLayout ?? this.columnLayout,
-        name: name ?? this.name,
+        columnLayout: pick(columnLayout, this.columnLayout),
+        name: pick(name, this.name),
         visible: visible ?? this.visible,
       );
 

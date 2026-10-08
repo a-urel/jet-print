@@ -8,14 +8,8 @@ import '../edit_command.dart';
 import '../selection.dart';
 
 /// Clears the column layout of band [bandId], turning a label sheet back into a
-/// plain detail band.
-///
-/// `Band.copyWith` cannot null a field (`columnLayout ?? this.columnLayout`), so
-/// removal rebuilds the band through its constructor, explicitly carrying every
-/// OTHER field (id, type, height, elements, name, visible) and omitting
-/// `columnLayout` — the spec-031 silent-drop guard (also applies to `name` and
-/// `visible`, per the same class of latent silent-drop bug). A no-op for an
-/// unknown [bandId] or a band that already has no layout (the rebuilt band is
+/// plain detail band. Every other field is carried by [Band.copyWith]. A no-op
+/// for an unknown [bandId] or a band that already has no layout (the copy is
 /// value-equal, so commit no-ops).
 class RemoveColumnLayoutCommand extends EditCommand {
   /// Creates a command clearing band [bandId]'s column layout.
@@ -32,14 +26,7 @@ class RemoveColumnLayoutCommand extends EditCommand {
         updateBand(
           before.definition,
           bandId,
-          (Band b) => Band(
-            id: b.id,
-            type: b.type,
-            height: b.height,
-            elements: b.elements,
-            name: b.name,
-            visible: b.visible,
-          ),
+          (Band b) => b.copyWith(columnLayout: () => null),
         ),
         selection: Selection.band(bandId),
       );

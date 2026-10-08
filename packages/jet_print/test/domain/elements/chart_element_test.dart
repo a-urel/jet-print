@@ -53,6 +53,22 @@ void main() {
 
   test('equality is by value', () {
     expect(make(), equals(make()));
-    expect(make().copyWith(title: 'Other'), isNot(equals(make())));
+    expect(make().copyWith(title: () => 'Other'), isNot(equals(make())));
+  });
+
+  // Regression: title and categoryExpression took plain nullable parameters, so
+  // `copyWith(title: null)` could not clear them.
+  test('copyWith clears title and categoryExpression with a null thunk', () {
+    final c =
+        make().copyWith(title: () => null, categoryExpression: () => null);
+    expect(c.title, isNull);
+    expect(c.categoryExpression, isNull);
+    expect(c.valueExpression, r'$F{revenue}');
+  });
+
+  test('copyWith preserves title and categoryExpression when omitted', () {
+    final c = make().copyWith(showAxes: false);
+    expect(c.title, 'Revenue');
+    expect(c.categoryExpression, r'$F{label}');
   });
 }

@@ -11,6 +11,12 @@ import '../element_edit_command.dart';
 /// Every field not mentioned is preserved via [ChartElement.copyWith] — the
 /// silent-drop trap cannot occur here because the command only merges the
 /// explicitly-supplied non-null overrides into the existing element.
+/// [categoryExpression] and [title] are nullable on the element, so they are
+/// thunks here as in [ChartElement.copyWith]: `() => null` clears them.
+///
+/// Supplying [chartType] is a deliberate pick, so [ChartElement.copyWith]
+/// clears any preserved [ChartElement.unknownChartType] — even picking
+/// [ChartType.bar], the type an unknown one renders as.
 ///
 /// A no-op for a non-chart or absent [id].
 class SetChartOptionsCommand extends ElementEditCommand<ChartElement> {
@@ -39,10 +45,10 @@ class SetChartOptionsCommand extends ElementEditCommand<ChartElement> {
   final String? valueExpression;
 
   /// Per-item category expression (null = leave unchanged).
-  final String? categoryExpression;
+  final String? Function()? categoryExpression;
 
   /// Optional chart title (null = leave unchanged).
-  final String? title;
+  final String? Function()? title;
 
   /// Whether to draw the value axis (null = leave unchanged).
   final bool? showAxes;

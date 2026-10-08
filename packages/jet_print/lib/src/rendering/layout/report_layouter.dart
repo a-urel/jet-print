@@ -13,6 +13,7 @@
 library;
 
 import '../../domain/band.dart';
+import '../../domain/bool_property.dart';
 import '../../domain/column_layout.dart';
 import '../../domain/elements/image_element.dart';
 import '../../domain/elements/image_source.dart';
@@ -26,6 +27,7 @@ import '../../domain/report_element.dart';
 import '../../domain/watermark.dart';
 import '../../expression/expression.dart';
 import '../../expression/expression_exception.dart';
+import '../../expression/format/apply_jet_format.dart';
 import '../../expression/function_registry.dart';
 import '../../expression/functions/built_in_functions.dart';
 import '../../expression/value.dart';
@@ -37,6 +39,7 @@ import '../engine/element_print_callback.dart';
 import '../fill/filled_report.dart';
 import '../fill/page_variables.dart';
 import '../fill/report_diagnostics.dart';
+import '../fill/visibility.dart';
 import '../frame/frame_builder.dart';
 import '../frame/page_frame.dart';
 import '../frame/primitive.dart';
@@ -214,15 +217,7 @@ class LazyLayout {
   /// function it poisons to JetError -> '!ERR' (jetStringify of JetError).
   ReportElement _substitute(ReportElement el, int pageNumber) {
     if (el is! TextElement || el.expression == null) return el;
-    if (_chromeParseFailed.contains(el.id)) {
-      return TextElement(
-          id: el.id,
-          bounds: el.bounds,
-          text: '!ERR',
-          style: el.style,
-          name: el.name,
-          visible: el.visible);
-    }
+    if (_chromeParseFailed.contains(el.id)) return _resolvedText(el, '!ERR');
     final Expression? expr = _chromeExprs[el.id];
     if (expr == null) {
       // Unreachable: the pre-pass files every chrome text expression under
@@ -232,13 +227,7 @@ class LazyLayout {
       diagnostics.error(
           'internal: no compiled chrome expression for "${el.id}"',
           elementId: el.id);
-      return TextElement(
-          id: el.id,
-          bounds: el.bounds,
-          text: '!ERR',
-          style: el.style,
-          name: el.name,
-          visible: el.visible);
+      return _resolvedText(el, '!ERR');
     }
     final JetValue value = expr.evaluate(PageEvalContext(
       pageNumber: pageNumber,
@@ -253,13 +242,85 @@ class LazyLayout {
             elementId: el.id);
       }
     }
-    return TextElement(
-        id: el.id,
-        bounds: el.bounds,
-        text: jetStringify(value),
-        style: el.style,
-        name: el.name,
-        visible: el.visible);
+    // Apply the display format exactly as a body text does: a pattern that
+    // does not fit the value's type, or is malformed, leaves it unchanged.
+    final String? format = el.format;
+    final JetValue formatted = (format != null && format.isNotEmpty)
+        ? applyJetFormat(value, format)
+        : value;
+    return _resolvedText(el, jetStringify(formatted));
+  }
+
+  /// [el] carrying its final [text]: the expression and format are spent, and
+  /// every other field is kept by `copyWith`, so none is dropped.
+  TextElement _resolvedText(TextElement el, String text) =>
+      el.copyWith(text: text, expression: () => null, format: () => null);
+
+  /// Whether a page-furniture band or element is shown on page [pageNumber].
+  ///
+  /// Evaluated per page against the page context, so `$V{PAGE_NUMBER}` and
+  /// `$V{PAGE_COUNT}` are usable ("only on the first page"). Fail-safe like a
+  /// body object: a broken expression keeps it visible, and its diagnostic is
+  /// recorded once however many pages build.
+  ///
+  /// A page has no data row and only the page variables, so a field or any
+  /// other variable would resolve to null and could turn into a clean `false`
+  /// that hides the object without a word. Such a reference is diagnosed, as
+  /// it is for chrome text, and the object stays visible.
+  bool _furnitureVisible(BoolProperty visible, String id, int pageNumber) {
+    if (visible == const BoolProperty()) return true; // fast path
+    final String? unavailable = _pageUnavailableRefs(visible.expression);
+    if (unavailable != null) {
+      if (_runtimeDiagnosed.add('visible $id refs')) {
+        diagnostics.warning(
+            'visibility on "$id" references $unavailable, unavailable at page '
+            'scope; shown',
+            elementId: id);
+      }
+      return true;
+    }
+    final ReportDiagnostics found = ReportDiagnostics();
+    final bool shown = resolveVisibility(
+        visible,
+        PageEvalContext(
+          pageNumber: pageNumber,
+          pageCount: pageCount,
+          params: _params,
+          functions: _functions,
+        ),
+        found,
+        id: id);
+    for (final Diagnostic d in found.entries) {
+      if (_runtimeDiagnosed.add('visible $id ${d.message}')) diagnostics.add(d);
+    }
+    return shown;
+  }
+
+  /// The fields and non-page variables [source] references, described for a
+  /// diagnostic, or null when it references neither (or does not parse — a
+  /// parse failure is `resolveVisibility`'s to report).
+  static String? _pageUnavailableRefs(String? source) {
+    if (source == null) return null;
+    final ({
+      Set<String> fields,
+      Set<String> params,
+      Set<String> variables
+    }) refs;
+    try {
+      refs = Expression.parse(source).references;
+    } on ExpressionException {
+      return null;
+    }
+    final List<String> fields = refs.fields.toList()..sort();
+    final List<String> vars = refs.variables
+        .where((String v) => !kPageScopedVariables.contains(v))
+        .toList()
+      ..sort();
+    if (fields.isEmpty && vars.isEmpty) return null;
+    return <String>[
+      if (fields.isNotEmpty) 'field(s) ${fields.join(', ')}',
+      if (vars.isNotEmpty) 'non-page variable(s) ${vars.join(', ')}',
+    ].join(' and ');
   }
 
   /// Builds page [index]'s frame: the boundary pass's body placements in
@@ -309,11 +370,18 @@ class LazyLayout {
     }
     final int pageNumber = index + 1;
     double y = _top + titleShift;
+    // A hidden furniture band still reserves its height: the body's capacity
+    // was fixed by the boundary pass, before any page was known.
     for (final Band h in _headers) {
+      if (!_furnitureVisible(h.visible, h.id, pageNumber)) {
+        y += h.height;
+        continue;
+      }
       _place(
           <({ReportElement element, JetRect bounds})>[
             for (final ReportElement el in h.elements)
-              (element: _substitute(el, pageNumber), bounds: el.bounds),
+              if (_furnitureVisible(el.visible, el.id, pageNumber))
+                (element: _substitute(el, pageNumber), bounds: el.bounds),
           ],
           _left,
           y,
@@ -327,10 +395,15 @@ class LazyLayout {
     }
     y = _bodyBottom;
     for (final Band f in _footers) {
+      if (!_furnitureVisible(f.visible, f.id, pageNumber)) {
+        y += f.height;
+        continue;
+      }
       _place(
           <({ReportElement element, JetRect bounds})>[
             for (final ReportElement el in f.elements)
-              (element: _substitute(el, pageNumber), bounds: el.bounds),
+              if (_furnitureVisible(el.visible, el.id, pageNumber))
+                (element: _substitute(el, pageNumber), bounds: el.bounds),
           ],
           _left,
           y,

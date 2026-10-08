@@ -28,6 +28,64 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **The field picker's search box and empty result are localized.** Its
+  "Search fields" placeholder and "No matching fields" line were hardcoded
+  English and showed untranslated under `de` and `tr`. They are now the
+  `fieldPickerSearchHint` and `fieldPickerNoMatches` strings in all three
+  locales.
+
+- **The design canvas no longer freezes after a frame fails to record.** A
+  record that threw — a corrupt embedded image fails to decode — left the
+  canvas's in-flight flag set forever, so every later edit was skipped, even
+  deleting the image that caused it, and the error escaped unhandled. The
+  failure is now caught, as the page-thumbnail rail already did: the canvas
+  keeps its last good picture and records again on the next edit.
+
+- **A total wrapped in parentheses no longer prints 0.** Nested-footer and
+  scope totals recovered an aggregate's argument by slicing the source text
+  between its first `(` and last `)`. For `(SUM($F{qty}))` that slice is
+  `SUM($F{qty})` itself, which failed as an unknown function on every row, and
+  the failures were folded away, leaving 0. The argument is now taken from the
+  parsed expression. The same rewrite also rebuilt the footer text field by
+  field and dropped its `name`; it now uses `copyWith`.
+
+- **Page headers and footers now honor `visible` and `format`.** The layouter
+  placed every page-furniture element as authored: a header logo set hidden, or
+  given a visibility expression, printed on every page, and a footer text's
+  `format` was dropped when its expression was substituted, so a formatted date
+  or total printed raw. Furniture visibility is evaluated per page, so
+  `$V{PAGE_NUMBER} == "1"` works as a "first page only" condition; a hidden
+  furniture band keeps its height, since the body's capacity is fixed before
+  pages are built. A visibility expression that references a field or a
+  non-page variable, which a page cannot resolve, keeps the object visible
+  with a warning rather than silently hiding it. The per-page text is now resolved with `copyWith`, so it
+  cannot drop a field either.
+
+- **`Band.copyWith` can now clear `name` and `columnLayout`.** Both took plain
+  nullable parameters, so `null` meant "keep" and nothing could clear them;
+  renaming a band back to its default label and removing a label layout each
+  rebuilt the band field by field instead — the pattern that silently drops a
+  field the day `Band` gains one. Both parameters are now thunks
+  (`name: () => null` clears) — **breaking** for callers passing a value, which
+  becomes `name: () => 'x'` — and both commands go through `copyWith`.
+
+- **A chart type this build does not know is no longer rewritten to `bar`.**
+  A report from a newer build naming, say, an `area` chart loaded as a bar chart
+  — fine for rendering — but re-saved as `"chartType":"bar"`, silently replacing
+  the author's choice and breaking the lossless round-trip. The original name is
+  now kept in the new `ChartElement.unknownChartType` and written back on save,
+  the same contract `ShapeElement.unknownForm` already gave shapes; a deliberate
+  type pick clears it.
+
+- **Emptying a chart's title or category field now clears it.** Two layers
+  swallowed the edit: the title field reverted a blank entry before committing,
+  and `ChartElement.copyWith` took plain nullable `title` /
+  `categoryExpression` parameters, so a `null` meant "keep" and nothing could
+  clear them. Both parameters are now thunks, like `name` (`title: () => null`
+  clears) — **breaking** for callers passing `title: 'x'`, which becomes
+  `title: () => 'x'`. `setChartOptions` keeps its signature and, like
+  `setFormat`, now reads an empty `title` or `categoryExpression` as "clear".
+
 - **The declared Flutter floor now matches what is actually tested.**
   `packages/jet_print/pubspec.yaml` declared `flutter: ">=3.6.0"` — 38 minor
   versions below anything the package has ever been built against. CI pins

@@ -88,6 +88,8 @@
   "propertiesValue": "Değer",
   "valueFieldHint": "[alan] veya metin",
   "valueFieldPickerTooltip": "Veri alanı ekle",
+  "fieldPickerSearchHint": "Alanlarda ara",
+  "fieldPickerNoMatches": "Eşleşen alan yok",
   "valueFieldFxTooltip": "İfade oluştur",
   "exprEditorTitle": "İfade",
   "exprEditorFieldsLabel": "Alanlar",
