@@ -430,12 +430,9 @@ class ReportFiller {
               functions: _functions,
             )));
           }
-          if (acc.skippedNonNumeric > 0) {
-            budget.recordRowIssue(
-                'agg:scope:${cs.id}:${a.name}',
-                '${acc.skippedNonNumeric} non-numeric value(s) were skipped '
-                    'from published total "${a.name}"');
-          }
+          _reportSkips(budget, 'agg:scope:${cs.id}:${a.name}',
+              'published total "${a.name}"',
+              nonNumeric: acc.skippedNonNumeric, errors: acc.skippedErrors);
           // A published total can collide either with a real data field on the
           // parent row (shadowing it) or with a sibling scope's total already
           // published into `extras` this invocation — validation enforces
@@ -540,13 +537,10 @@ class ReportFiller {
             };
             // Name the nested scope (not the aggregate): footer.aggs[k].name is the synthesized $V{__naggN} name, not a user-facing id — naming the scope is robust and parse-free (spec E2).
             for (int k = 0; k < footer.aggs.length; k++) {
-              final int skips = accs![k].skippedNonNumeric;
-              if (skips > 0) {
-                budget.recordRowIssue(
-                    'agg:footer:${s.id}:$k',
-                    '$skips non-numeric value(s) were skipped from a footer '
-                        'aggregate in scope "${s.id}"');
-              }
+              _reportSkips(budget, 'agg:footer:${s.id}:$k',
+                  'a footer aggregate in scope "${s.id}"',
+                  nonNumeric: accs![k].skippedNonNumeric,
+                  errors: accs[k].skippedErrors);
             }
             addBand(footer.band, scopeRow, vars);
           }
@@ -632,14 +626,11 @@ class ReportFiller {
         // sums it live through the unchanged calculator.
         final DataRow row = augmentForScope(definition.body.root, ds.current);
         final int calcSkipsBefore = calc.aggregateSkips;
+        final int calcErrorsBefore = calc.aggregateErrorSkips;
         calc.advance(row, params: params);
-        final int calcSkipDelta = calc.aggregateSkips - calcSkipsBefore;
-        if (calcSkipDelta > 0) {
-          budget.recordRowIssue(
-              'agg:calc',
-              '$calcSkipDelta non-numeric value(s) were skipped from an '
-                  'aggregate');
-        }
+        _reportSkips(budget, 'agg:calc', 'an aggregate',
+            nonNumeric: calc.aggregateSkips - calcSkipsBefore,
+            errors: calc.aggregateErrorSkips - calcErrorsBefore);
         // Refresh the crosstab variable snapshot once for this master row
         // (see its declaration above) before folding any of its children.
         crosstabRowVars = calc.values;
@@ -682,17 +673,13 @@ class ReportFiller {
         // snapshot the group-scoped values (so the next break reads a completed
         // group, just as prevValues captures the completed master row).
         final int descSkipsBefore = _sumAccSkips(descAcc.values);
+        final int descErrorsBefore = _sumAccErrorSkips(descAcc.values);
         for (final DescendantAggregate a in descAggs) {
           foldDescInto(a, row);
         }
-        final int descSkipDelta =
-            _sumAccSkips(descAcc.values) - descSkipsBefore;
-        if (descSkipDelta > 0) {
-          budget.recordRowIssue(
-              'agg:desc',
-              '$descSkipDelta non-numeric value(s) were skipped from a '
-                  'roll-up aggregate');
-        }
+        _reportSkips(budget, 'agg:desc', 'a roll-up aggregate',
+            nonNumeric: _sumAccSkips(descAcc.values) - descSkipsBefore,
+            errors: _sumAccErrorSkips(descAcc.values) - descErrorsBefore);
         descGroupSnapshot = descValues(groupDescAggs);
       }
     } finally {
@@ -872,6 +859,30 @@ class ReportFiller {
       n += a.skippedNonNumeric;
     }
     return n;
+  }
+
+  /// The total error skips across [accs]; monotonic like [_sumAccSkips].
+  static int _sumAccErrorSkips(Iterable<VariableAccumulator> accs) {
+    int n = 0;
+    for (final VariableAccumulator a in accs) {
+      n += a.skippedErrors;
+    }
+    return n;
+  }
+
+  /// Records this row's aggregate skips into [target]: wrong-type inputs and
+  /// inputs that failed to evaluate, each as its own deduped row issue. Either
+  /// leaves the aggregate short of what the data holds, so neither is silent.
+  static void _reportSkips(DiagnosticBudget budget, String key, String target,
+      {required int nonNumeric, required int errors}) {
+    if (nonNumeric > 0) {
+      budget.recordRowIssue(
+          key, '$nonNumeric non-numeric value(s) were skipped from $target');
+    }
+    if (errors > 0) {
+      budget.recordRowIssue('$key:error',
+          '$errors value(s) failed to evaluate and were skipped from $target');
+    }
   }
 
   /// A copy of [v] whose group-reset reference, if it is a [GroupLevel] id, is

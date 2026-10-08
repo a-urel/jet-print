@@ -28,6 +28,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **An aggregate that skips a failed value now says so.** An aggregate input
+  that evaluated to an error — `SUM($F{amount} / $F{qty})` over a row where
+  `qty` is 0 — was skipped exactly like a blank, so the total came out short
+  with no `!ERR` and no diagnostic. It is still skipped (the total remains the
+  fold of the rows that evaluated), but each such row now records a warning,
+  "N value(s) failed to evaluate and were skipped from …", next to the
+  existing one for non-numeric values.
+
 - **The field picker's search box and empty result are localized.** Its
   "Search fields" placeholder and "No matching fields" line were hardcoded
   English and showed untranslated under `de` and `tr`. They are now the
