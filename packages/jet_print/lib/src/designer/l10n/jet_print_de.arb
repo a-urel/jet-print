@@ -88,6 +88,8 @@
   "propertiesValue": "Wert",
   "valueFieldHint": "[Feld] oder Text",
   "valueFieldPickerTooltip": "Datenfeld einfügen",
+  "fieldPickerSearchHint": "Felder durchsuchen",
+  "fieldPickerNoMatches": "Keine passenden Felder",
   "valueFieldFxTooltip": "Ausdruck erstellen",
   "exprEditorTitle": "Ausdruck",
   "exprEditorFieldsLabel": "Felder",

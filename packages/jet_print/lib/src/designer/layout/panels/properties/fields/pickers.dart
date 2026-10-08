@@ -283,6 +283,7 @@ class _FieldPickerMenuState extends State<_FieldPickerMenu> {
   @override
   Widget build(BuildContext context) {
     final ShadColorScheme colors = ShadTheme.of(context).colorScheme;
+    final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
     final String q = _query.trim().toLowerCase();
     final List<FieldDef> matches = q.isEmpty
         ? widget.fields
@@ -301,7 +302,7 @@ class _FieldPickerMenuState extends State<_FieldPickerMenu> {
             child: ShadInput(
               key: ValueKey<String>('${widget.keyPrefix}.search'),
               autofocus: true,
-              placeholder: const Text('Search fields'),
+              placeholder: Text(l10n.fieldPickerSearchHint),
               onChanged: (String v) => setState(() => _query = v),
             ),
           ),
@@ -309,7 +310,7 @@ class _FieldPickerMenuState extends State<_FieldPickerMenu> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               child: Text(
-                'No matching fields',
+                l10n.fieldPickerNoMatches,
                 style: TextStyle(fontSize: 13, color: colors.mutedForeground),
               ),
             )

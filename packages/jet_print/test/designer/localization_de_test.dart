@@ -216,4 +216,31 @@ void main() {
         contains('Farbe wählen'));
     sem.dispose();
   });
+
+  // Regression: the field picker's search placeholder and its empty-result
+  // line were hardcoded English, so they showed untranslated under de.
+  testWidgets('the field picker search and empty result are localized',
+      (WidgetTester tester) async {
+    const JetDataSchema schema = JetDataSchema(
+      name: 'Rechnung',
+      fields: <FieldDef>[FieldDef('kunde', type: JetFieldType.string)],
+    );
+    final JetReportDesignerController c = await pumpDesignerWith(tester,
+        dataSchema: schema, locale: const Locale('de'));
+    c.createElement(DesignerToolType.text,
+        bandId: firstDetailBandId(c), at: const JetOffset(20, 20));
+    await tester.pumpAndSettle();
+    await openPropertiesTab(tester);
+
+    const String pick = 'jet_print.designer.properties.field.value.pick';
+    await tester.tap(find.byKey(const ValueKey<String>(pick)));
+    await tester.pumpAndSettle();
+    expect(find.text('Felder durchsuchen'), findsOneWidget);
+
+    await tester.enterText(
+        find.byKey(const ValueKey<String>('$pick.search')), 'xyz');
+    await tester.pumpAndSettle();
+    expect(find.text('Keine passenden Felder'), findsOneWidget);
+    expect(find.text('No matching fields'), findsNothing);
+  });
 }

@@ -224,6 +224,12 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get valueFieldPickerTooltip => 'Veri alanı ekle';
 
   @override
+  String get fieldPickerSearchHint => 'Alanlarda ara';
+
+  @override
+  String get fieldPickerNoMatches => 'Eşleşen alan yok';
+
+  @override
   String get valueFieldFxTooltip => 'İfade oluştur';
 
   @override

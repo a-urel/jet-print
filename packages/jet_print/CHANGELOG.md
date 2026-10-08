@@ -28,6 +28,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **The field picker's search box and empty result are localized.** Its
+  "Search fields" placeholder and "No matching fields" line were hardcoded
+  English and showed untranslated under `de` and `tr`. They are now the
+  `fieldPickerSearchHint` and `fieldPickerNoMatches` strings in all three
+  locales.
+
 - **The design canvas no longer freezes after a frame fails to record.** A
   record that threw — a corrupt embedded image fails to decode — left the
   canvas's in-flight flag set forever, so every later edit was skipped, even
