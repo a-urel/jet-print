@@ -41,7 +41,9 @@ AxisScale niceAxis(double maxValue, {int targetTicks = 4}) {
   if (!(maxValue > 0) || !maxValue.isFinite) {
     return const AxisScale(niceMax: 1, step: 1, ticks: <double>[0, 1]);
   }
-  final int n = targetTicks < 1 ? 1 : targetTicks;
+  // At most 50 requested steps: the 1/2/5 rounding then yields at most ~75,
+  // under [_ticks]' cap, so the spacing is always exactly [AxisScale.step].
+  final int n = targetTicks.clamp(1, 50);
   final double rawStep = maxValue / n;
   if (rawStep > 0) {
     final double mag =
@@ -65,7 +67,8 @@ AxisScale niceAxis(double maxValue, {int targetTicks = 4}) {
       niceMax: maxValue, step: step, ticks: _ticks(maxValue, step));
 }
 
-/// The ticks 0, [step], … up to [max] inclusive, by count (at most 100).
+/// The ticks 0, [step], … up to [max] inclusive, by count. The cap (100) is a
+/// backstop against a degenerate step; [niceAxis] keeps real axes under it.
 List<double> _ticks(double max, double step) {
   final int count = (max / step).round().clamp(1, 99);
   return <double>[

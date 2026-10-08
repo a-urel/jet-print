@@ -39,6 +39,20 @@ void main() {
       }
     });
 
+    // Review on #68: when the tick cap was hit, the last gap stopped matching
+    // `step` (niceAxis(1000, targetTicks: 1000) ended 0..98, then 1000).
+    test('ticks stay evenly spaced by step even for huge tick requests', () {
+      for (final int target in <int>[4, 99, 1000, 1 << 30]) {
+        final AxisScale a = niceAxis(1000, targetTicks: target);
+        expect(a.ticks.length, lessThanOrEqualTo(100), reason: '$target');
+        for (int i = 1; i < a.ticks.length; i++) {
+          expect(a.ticks[i] - a.ticks[i - 1], closeTo(a.step, a.step * 1e-9),
+              reason: 'gap $i of targetTicks $target');
+        }
+        expect(a.ticks.last, a.niceMax);
+      }
+    });
+
     test('non-positive max is safe', () {
       expect(niceAxis(0).niceMax, greaterThan(0));
       expect(niceAxis(-5).niceMax, greaterThan(0));
