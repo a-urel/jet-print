@@ -102,7 +102,9 @@ page numbers use, so `$V{PAGE_NUMBER} == "1"` is a legal "first page only"
 condition here where a body band would reject it. A hidden furniture band draws
 nothing but keeps its height — the boundary pass fixed the body's capacity
 before any page was known — and a broken expression keeps the object visible,
-diagnosed once through `_runtimeDiagnosed`.
+diagnosed once through `_runtimeDiagnosed`. So does one that references a field
+or a non-page variable: the page context resolves those to null, which could
+otherwise read as a clean `false` and hide the object silently.
 
 Page one alone reorders two things: the first `BandType.title` band in its plan
 is drawn at the top margin rather than at its boundary-pass `y`, and the

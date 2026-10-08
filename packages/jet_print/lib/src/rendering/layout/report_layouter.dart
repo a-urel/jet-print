@@ -262,8 +262,23 @@ class LazyLayout {
   /// `$V{PAGE_COUNT}` are usable ("only on the first page"). Fail-safe like a
   /// body object: a broken expression keeps it visible, and its diagnostic is
   /// recorded once however many pages build.
+  ///
+  /// A page has no data row and only the page variables, so a field or any
+  /// other variable would resolve to null and could turn into a clean `false`
+  /// that hides the object without a word. Such a reference is diagnosed, as
+  /// it is for chrome text, and the object stays visible.
   bool _furnitureVisible(BoolProperty visible, String id, int pageNumber) {
     if (visible == const BoolProperty()) return true; // fast path
+    final String? unavailable = _pageUnavailableRefs(visible.expression);
+    if (unavailable != null) {
+      if (_runtimeDiagnosed.add('visible $id refs')) {
+        diagnostics.warning(
+            'visibility on "$id" references $unavailable, unavailable at page '
+            'scope; shown',
+            elementId: id);
+      }
+      return true;
+    }
     final ReportDiagnostics found = ReportDiagnostics();
     final bool shown = resolveVisibility(
         visible,
@@ -279,6 +294,33 @@ class LazyLayout {
       if (_runtimeDiagnosed.add('visible $id ${d.message}')) diagnostics.add(d);
     }
     return shown;
+  }
+
+  /// The fields and non-page variables [source] references, described for a
+  /// diagnostic, or null when it references neither (or does not parse — a
+  /// parse failure is `resolveVisibility`'s to report).
+  static String? _pageUnavailableRefs(String? source) {
+    if (source == null) return null;
+    final ({
+      Set<String> fields,
+      Set<String> params,
+      Set<String> variables
+    }) refs;
+    try {
+      refs = Expression.parse(source).references;
+    } on ExpressionException {
+      return null;
+    }
+    final List<String> fields = refs.fields.toList()..sort();
+    final List<String> vars = refs.variables
+        .where((String v) => !kPageScopedVariables.contains(v))
+        .toList()
+      ..sort();
+    if (fields.isEmpty && vars.isEmpty) return null;
+    return <String>[
+      if (fields.isNotEmpty) 'field(s) ${fields.join(', ')}',
+      if (vars.isNotEmpty) 'non-page variable(s) ${vars.join(', ')}',
+    ].join(' and ');
   }
 
   /// Builds page [index]'s frame: the boundary pass's body placements in

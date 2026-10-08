@@ -56,7 +56,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   or total printed raw. Furniture visibility is evaluated per page, so
   `$V{PAGE_NUMBER} == "1"` works as a "first page only" condition; a hidden
   furniture band keeps its height, since the body's capacity is fixed before
-  pages are built. The per-page text is now resolved with `copyWith`, so it
+  pages are built. A visibility expression that references a field or a
+  non-page variable, which a page cannot resolve, keeps the object visible
+  with a warning rather than silently hiding it. The per-page text is now resolved with `copyWith`, so it
   cannot drop a field either.
 
 - **`Band.copyWith` can now clear `name` and `columnLayout`.** Both took plain

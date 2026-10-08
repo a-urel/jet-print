@@ -142,6 +142,31 @@ void main() {
     });
   });
 
+  // Review finding on #65: a page context resolves fields and non-page
+  // variables to null, so `$F{flag} == true` evaluated to a clean false and
+  // hid the object silently instead of failing safe.
+  group('references unavailable at page scope', () {
+    for (final String expression in <String>[
+      r'$F{flag} == true',
+      r'$V{total} == 0',
+    ]) {
+      test('$expression keeps the object visible and is diagnosed once', () {
+        final LayoutResult r = _layout(_tpl(
+            header: _header(<ReportElement>[
+          _logo(visible: BoolProperty(expression: expression)),
+        ])));
+        for (final PageFrame page in r.pages) {
+          expect(_drawn(page, 'logo'), isTrue);
+        }
+        expect(
+            r.diagnostics.entries
+                .where((Diagnostic d) => d.elementId == 'logo')
+                .length,
+            1);
+      });
+    }
+  });
+
   group('format', () {
     test('a chrome text expression applies the element format', () {
       final LayoutResult r = _layout(
