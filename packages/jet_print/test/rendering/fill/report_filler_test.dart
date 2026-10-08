@@ -1,7 +1,11 @@
 // ReportFiller: the Fill data pass — flat bands (007b) + grouping (007c),
 // migrated to the reified model + native fillDefinition API.
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jet_print/src/data/data_row.dart';
+import 'package:jet_print/src/data/data_set.dart';
+import 'package:jet_print/src/data/field_def.dart';
 import 'package:jet_print/src/data/in_memory_data_source.dart';
+import 'package:jet_print/src/data/jet_data_source.dart';
 import 'package:jet_print/src/domain/band.dart';
 import 'package:jet_print/src/domain/detail_scope.dart';
 import 'package:jet_print/src/domain/diagnostic.dart' as domain;
@@ -294,6 +298,37 @@ void main() {
             d.message.contains('failed to evaluate') &&
             d.message.contains('skipped')),
         hasLength(1));
+  });
+
+  // Regression (#64): the data set was opened before the try/finally that
+  // closes it, so a fill that threw in between (here the deliberate fail-fast
+  // on a malformed variable) never closed a host's cursor.
+  test('a fill that throws still closes the data set', () {
+    final _ClosingSource source = _ClosingSource(<Map<String, Object?>>[
+      <String, Object?>{'x': 1}
+    ]);
+    expect(
+      () => ReportFiller().fillDefinition(
+        template(
+          detail: <ReportElement>[t('d', text: '.')],
+          variables: const <ReportVariable>[
+            ReportVariable(name: 'v', expression: r'CONCAT('),
+          ],
+        ),
+        source,
+      ),
+      throwsA(isA<ExpressionException>()),
+    );
+    expect(source.closed, 1);
+  });
+
+  test('a successful fill closes the data set exactly once', () {
+    final _ClosingSource source = _ClosingSource(<Map<String, Object?>>[
+      <String, Object?>{'x': 1}
+    ]);
+    ReportFiller().fillDefinition(
+        template(detail: <ReportElement>[t('d', text: '.')]), source);
+    expect(source.closed, 1);
   });
 
   test('determinism — re-filling identical inputs yields an equal report', () {
@@ -921,4 +956,39 @@ void main() {
     // The footer (emitted at end of data) preserves its authored text.
     expect((res.report.bands.last.elements.single as TextElement).text, 'fb');
   });
+}
+
+/// An in-memory source whose cursors count how often they are closed.
+class _ClosingSource implements JetDataSource {
+  _ClosingSource(List<Map<String, Object?>> rows)
+      : _inner = JetInMemoryDataSource(rows);
+
+  final JetInMemoryDataSource _inner;
+  int closed = 0;
+
+  @override
+  DataSet open([Map<String, Object?> params = const <String, Object?>{}]) =>
+      _ClosingDataSet(_inner.open(params), () => closed++);
+}
+
+class _ClosingDataSet implements DataSet {
+  _ClosingDataSet(this._inner, this._onClose);
+
+  final DataSet _inner;
+  final void Function() _onClose;
+
+  @override
+  List<FieldDef> get fields => _inner.fields;
+
+  @override
+  bool moveNext() => _inner.moveNext();
+
+  @override
+  DataRow get current => _inner.current;
+
+  @override
+  void close() {
+    _onClose();
+    _inner.close();
+  }
 }
