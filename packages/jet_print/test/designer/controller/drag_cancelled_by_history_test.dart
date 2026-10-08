@@ -56,6 +56,10 @@ void main() {
 
     c.undo();
     expect(c.moveDelta, isNull, reason: 'the live move is cancelled');
+    // The canvas gesture is still live until pointer-up and keeps calling
+    // updateMove (review on #74): that must not re-arm the cancelled move.
+    c.updateMove(const JetOffset(40, 0));
+    expect(c.moveDelta, isNull, reason: 'a late update does not revive it');
     c.commitMove(); // the pointer-up that follows
 
     expect(_bounds(c, 'a'), _a0, reason: 'A is where undo put it');
@@ -71,6 +75,7 @@ void main() {
     c.updateMove(const JetOffset(30, 0));
 
     c.redo();
+    c.updateMove(const JetOffset(40, 0));
     c.commitMove();
 
     expect(_bounds(c, 'a'), const JetRect(x: 15, y: 10, width: 20, height: 20));
@@ -83,6 +88,7 @@ void main() {
     c.updateResize(const JetOffset(15, 15));
 
     c.undo();
+    c.updateResize(const JetOffset(20, 20));
     c.commitResize();
 
     expect(_bounds(c, 'a'), _a0);
@@ -96,6 +102,7 @@ void main() {
     c.updateBandResize(50);
 
     c.undo();
+    c.updateBandResize(60);
     c.commitBandResize();
 
     expect(_band(c).height, 200);
@@ -112,6 +119,8 @@ void main() {
 
     c.open(_fixture());
     expect(c.moveDelta, isNull, reason: 'the live move is cancelled');
+    c.select('b');
+    c.updateMove(const JetOffset(40, 0));
     c.commitMove();
 
     expect(_bounds(c, 'b'), _b0);
