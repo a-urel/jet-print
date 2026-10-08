@@ -128,6 +128,14 @@ String? parseFieldToken(String raw) {
   return _simpleField.firstMatch(raw)?.group(1)?.trim();
 }
 
+/// The value-field display of a plain [literal] (an element with no
+/// expression): its template-structural characters (`\ [ ] { }`) escaped, so
+/// that committing the field unchanged parses back to the same literal through
+/// [parseValueField] — `[Draft]` must not become a binding, nor `C:\temp`
+/// lose its backslash.
+ValueDisplay displayLiteral(String literal) =>
+    ValueDisplay(_escapeTemplateLiteral(literal));
+
 /// Turns a stored [expression] into its display token for the value field/canvas.
 ValueDisplay reverseCompile(String expression) {
   final Expr root;

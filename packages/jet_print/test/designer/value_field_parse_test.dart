@@ -69,6 +69,37 @@ void main() {
     expect(_text(c, id).expression, isNull);
   });
 
+  // Regression (#56): a plain-text value was displayed raw but committed
+  // through the template parser, so re-committing what the field showed —
+  // pressing Apply in the fx editor without a change does exactly that — turned
+  // `[Draft]` into a binding to a field named Draft, and dropped a backslash.
+  group('committing the displayed text unchanged keeps a literal as it is', () {
+    String shown(WidgetTester tester) => tester
+        .widget<EditableText>(find.descendant(
+            of: find.byKey(_valueKey), matching: find.byType(EditableText)))
+        .controller
+        .text;
+
+    for (final (String typed, String literal) in <(String, String)>[
+      (r'\[Draft]', '[Draft]'),
+      (r'C:\\temp', r'C:\temp'),
+      (r'\{x\}', '{x}'),
+      (r'a \[b\] \\ c', r'a [b] \ c'),
+    ]) {
+      testWidgets(literal, (WidgetTester tester) async {
+        final JetReportDesignerController c = await pumpDesignerWith(tester);
+        final String id = await _selectedText(tester, c);
+        await _commit(tester, typed);
+        expect(_text(c, id).text, literal);
+        expect(_text(c, id).expression, isNull);
+
+        await _commit(tester, shown(tester)); // the unchanged re-commit
+        expect(_text(c, id).text, literal);
+        expect(_text(c, id).expression, isNull);
+      });
+    }
+  });
+
   testWidgets('switching bound → literal is a single undoable edit',
       (WidgetTester tester) async {
     final JetReportDesignerController c = await pumpDesignerWith(tester);
