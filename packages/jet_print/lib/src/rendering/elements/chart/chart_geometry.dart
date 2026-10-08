@@ -28,10 +28,11 @@ class AxisScale {
 }
 
 /// A nice-number axis covering 0..[maxValue] in roughly [targetTicks] steps,
-/// using the classic 1/2/5×10ⁿ ladder. Non-positive [maxValue] yields a safe
-/// unit axis (so an all-zero or empty series still draws).
+/// using the classic 1/2/5×10ⁿ ladder. A non-positive or non-finite [maxValue]
+/// yields a safe unit axis (so an all-zero or empty series still draws, and an
+/// infinite one cannot throw).
 AxisScale niceAxis(double maxValue, {int targetTicks = 4}) {
-  if (!(maxValue > 0)) {
+  if (!(maxValue > 0) || !maxValue.isFinite) {
     return const AxisScale(niceMax: 1, step: 1, ticks: <double>[0, 1]);
   }
   final double rawStep = maxValue / targetTicks;

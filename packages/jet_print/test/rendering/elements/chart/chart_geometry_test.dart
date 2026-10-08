@@ -12,6 +12,14 @@ void main() {
       expect(a.step, 5);
       expect(a.ticks, <double>[0, 5, 10, 15, 20, 25]);
     });
+    // Regression (#63): a non-finite max threw from `.floor()`.
+    test('a non-finite max is safe', () {
+      for (final double bad in <double>[double.infinity, double.nan]) {
+        expect(niceAxis(bad).niceMax, greaterThan(0));
+        expect(niceAxis(bad).niceMax.isFinite, isTrue);
+      }
+    });
+
     test('non-positive max is safe', () {
       expect(niceAxis(0).niceMax, greaterThan(0));
       expect(niceAxis(-5).niceMax, greaterThan(0));

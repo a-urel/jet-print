@@ -28,6 +28,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **A chart over an infinite value no longer throws from `pageAt`.** An
+  infinite chart value — reachable from a JSON number like `1e400` or an
+  overflowing multiplication — went straight into the series, and scaling the
+  value axis threw (`Infinity.floor()`) out of page building, breaking the
+  engine's never-throw promise. A non-finite value is now plotted as 0 with a
+  warning, like a non-number, and the axis itself falls back to a unit scale
+  for a non-finite maximum.
+
 - **The field picker's search box and empty result are localized.** Its
   "Search fields" placeholder and "No matching fields" line were hardcoded
   English and showed untranslated under `de` and `tr`. They are now the
