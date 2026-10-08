@@ -261,7 +261,12 @@ void main() {
       template(
         detail: <ReportElement>[t('d', expr: r'$V{v}')],
         variables: const <ReportVariable>[
-          ReportVariable(name: 'v', expression: r'CONCAT('),
+          // SUM on purpose: folding (skipping) the parse error would print a
+          // plausible 0 — the failure mode this guards against.
+          ReportVariable(
+              name: 'v',
+              expression: r'CONCAT(',
+              calculation: JetCalculation.sum),
         ],
       ),
       JetInMemoryDataSource(<Map<String, Object?>>[
@@ -272,10 +277,32 @@ void main() {
     for (final FilledBand b in res.report.bands) {
       expect((b.elements.single as TextElement).text, '!ERR');
     }
+    final List<domain.Diagnostic> errors = <domain.Diagnostic>[
+      for (final domain.Diagnostic d in res.diagnostics.entries)
+        if (d.severity == domain.DiagnosticSeverity.error) d,
+    ];
+    // One for the variable, one for the element that prints it — not one per
+    // row (review on #70).
+    expect(errors, hasLength(2), reason: '$errors');
+    expect(errors.first.message, contains('variable "v" failed to parse'));
+    expect(errors.last.elementId, 'd');
+  });
+
+  // Review on #70: an element whose expression errors was diagnosed on every
+  // row with the identical message, outside the row budget — 10k rows, 10k
+  // diagnostics. The same error on the same element is now reported once.
+  test('an element expression error repeating on every row is reported once',
+      () {
+    final FillResult res = ReportFiller().fillDefinition(
+      template(detail: <ReportElement>[t('d', expr: r'1 / 0')]),
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        for (int i = 0; i < 5; i++) <String, Object?>{'x': i},
+      ]),
+    );
     expect(
         res.diagnostics.entries.where((domain.Diagnostic d) =>
             d.severity == domain.DiagnosticSeverity.error &&
-            d.message.contains('variable "v" failed to parse')),
+            d.elementId == 'd'),
         hasLength(1));
   });
 

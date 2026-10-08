@@ -374,12 +374,12 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
 /// I9 — validates [def]'s report variables, appending errors to [out].
 ///
 /// A group-scoped variable's `resetGroup` may name its group by id (what the
-/// designer stores) or by name (what synthesized variables carry); either is
-/// accepted, so only a reset that matches no root group is flagged.
+/// designer stores) or by name (what synthesized variables carry), so it must
+/// match exactly one root group either way: none is a dangling reset, and two
+/// (one group's name is another's id) is ambiguous — the fill resolves ids
+/// first and could reset the wrong group.
 void _validateVariables(ReportDefinition def, List<Diagnostic> out) {
-  final Set<String> groupRefs = <String>{
-    for (final GroupLevel g in def.body.root.groups) ...<String>[g.id, g.name],
-  };
+  final List<GroupLevel> groups = def.body.root.groups;
   final Set<String> seen = <String>{};
   for (final ReportVariable v in def.variables) {
     if (!seen.add(v.name)) {
@@ -396,12 +396,22 @@ void _validateVariables(ReportDefinition def, List<Diagnostic> out) {
       out.add(Diagnostic(DiagnosticSeverity.error,
           'variable "${v.name}" expression failed to parse: ${e.message}'));
     }
-    if (v.resetScope == VariableResetScope.group &&
-        (v.resetGroup == null || !groupRefs.contains(v.resetGroup))) {
-      out.add(Diagnostic(
-          DiagnosticSeverity.error,
-          'variable "${v.name}" resets on group "${v.resetGroup ?? ''}", '
-          'which is not a group of the report'));
+    if (v.resetScope == VariableResetScope.group) {
+      final String? ref = v.resetGroup;
+      final int matches = ref == null
+          ? 0
+          : groups.where((GroupLevel g) => g.id == ref || g.name == ref).length;
+      if (matches == 0) {
+        out.add(Diagnostic(
+            DiagnosticSeverity.error,
+            'variable "${v.name}" resets on group "${ref ?? ''}", '
+            'which is not a group of the report'));
+      } else if (matches > 1) {
+        out.add(Diagnostic(
+            DiagnosticSeverity.error,
+            'variable "${v.name}" resets on group "$ref", which is ambiguous: '
+            'it is the id of one group and the name of another'));
+      }
     }
   }
 }

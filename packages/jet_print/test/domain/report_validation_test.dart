@@ -181,6 +181,28 @@ void main() {
             isTrue);
       });
 
+      // Review on #70: a reference may be a group's id or its name, so one that
+      // is the name of one group and the id of another is ambiguous — the fill
+      // resolves it by id and could reset the wrong group.
+      test('flags a group reset that matches two groups', () {
+        final ReportDefinition def = _valid(
+          body: const ReportBody(
+            root: DetailScope(id: 'root', groups: <GroupLevel>[
+              GroupLevel(id: 'g1', name: 'region', key: '1'),
+              GroupLevel(id: 'region', name: 'city', key: '2'),
+            ]),
+          ),
+        ).copyWith(variables: const <ReportVariable>[
+          ReportVariable(
+              name: 'v',
+              expression: '1',
+              resetScope: VariableResetScope.group,
+              resetGroup: 'region'),
+        ]);
+        expect(
+            _has(validate(def), DiagnosticSeverity.error, 'ambiguous'), isTrue);
+      });
+
       test('flags a group reset that names no group', () {
         for (final String? group in <String?>[null, 'nope']) {
           expect(

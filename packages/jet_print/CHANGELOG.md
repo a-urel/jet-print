@@ -37,8 +37,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   plausible-looking total), a broken group key never breaks, and each records
   one error diagnostic. `validate()` gains rule **I9**: a variable's expression
   must parse, its name must be unique and outside the `__` prefix the
-  aggregate synthesizer reserves, and a group-scoped variable must reset on a
-  group that exists. **Behaviour change:** a fill with a malformed variable
+  aggregate synthesizer reserves, and a group-scoped variable must reset on
+  exactly one group (a reference that is one group's id and another's name is
+  ambiguous). An element whose expression errors is now diagnosed once per
+  element and message rather than on every row. **Behaviour change:** a fill with a malformed variable
   used to throw `ExpressionException`; it now returns normally.
 
 - **The field picker's search box and empty result are localized.** Its
