@@ -28,6 +28,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **The workspace preview no longer shows stale data after the host switches
+  data.** `JetReportWorkspace` cached the rendered report by definition alone
+  and had no `didUpdateWidget`, so a host that changed its `renderReport`
+  callback or `dataSchema` — the playground's "Select data source" — kept
+  seeing the old rows in preview until the report itself was edited. Either
+  change now invalidates the cache: the next preview entry re-renders, and a
+  preview already on screen re-renders in place.
+
 - **The field picker's search box and empty result are localized.** Its
   "Search fields" placeholder and "No matching fields" line were hardcoded
   English and showed untranslated under `de` and `tr`. They are now the

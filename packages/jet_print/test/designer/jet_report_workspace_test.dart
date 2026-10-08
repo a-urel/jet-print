@@ -59,6 +59,7 @@ Future<JetReportWorkspace> _pumpWorkspace(
   ValueChanged<RenderedReport>? onExportPdf,
   ValueChanged<RenderedReport>? onPrint,
   WidgetBuilder? loadingBuilder,
+  JetDataSchema? dataSchema,
   Size size = const Size(1200, 800),
 }) async {
   await tester.binding.setSurfaceSize(size);
@@ -66,6 +67,7 @@ Future<JetReportWorkspace> _pumpWorkspace(
   final JetReportWorkspace workspace = JetReportWorkspace(
     controller: controller,
     renderReport: renderReport ?? _render,
+    dataSchema: dataSchema,
     onExportPdf: onExportPdf,
     onPrint: onPrint,
     loadingBuilder: loadingBuilder,
@@ -193,6 +195,84 @@ void main() {
     await tester.pump();
     await _enterPreview(tester);
     expect(renders, 2, reason: 'changed template ⇒ a fresh render');
+  });
+
+  // Regression (#58): the cached report was keyed on the definition alone, so
+  // a host that switched data (a new render callback, a new schema) and went
+  // back to preview saw the old data until the template itself was edited.
+  testWidgets('a new renderReport invalidates the cached report',
+      (WidgetTester tester) async {
+    final List<String> calls = <String>[];
+    final JetReportDesignerController controller =
+        JetReportDesignerController(definition: _definition());
+    addTearDown(controller.dispose);
+    await _pumpWorkspace(tester, controller: controller,
+        renderReport: (ReportDefinition t) {
+      calls.add('old');
+      return _render(t);
+    });
+    await _enterPreview(tester);
+    await tester.tap(find.byKey(_modeDesignerKey));
+    await tester.pump();
+
+    await _pumpWorkspace(tester, controller: controller,
+        renderReport: (ReportDefinition t) {
+      calls.add('new');
+      return _render(t);
+    });
+    await _enterPreview(tester);
+    expect(calls, <String>['old', 'new']);
+  });
+
+  testWidgets('a new dataSchema invalidates the cached report',
+      (WidgetTester tester) async {
+    int renders = 0;
+    RenderedReport counting(ReportDefinition t) {
+      renders++;
+      return _render(t);
+    }
+
+    final JetReportDesignerController controller =
+        JetReportDesignerController(definition: _definition());
+    addTearDown(controller.dispose);
+    await _pumpWorkspace(tester,
+        controller: controller, renderReport: counting);
+    await _enterPreview(tester);
+    await tester.tap(find.byKey(_modeDesignerKey));
+    await tester.pump();
+
+    await _pumpWorkspace(tester,
+        controller: controller,
+        renderReport: counting,
+        dataSchema: const JetDataSchema(
+            name: 'Selected',
+            fields: <FieldDef>[FieldDef('name', type: JetFieldType.string)]));
+    await _enterPreview(tester);
+    expect(renders, 2);
+  });
+
+  testWidgets('a new renderReport while previewing re-renders in place',
+      (WidgetTester tester) async {
+    final List<String> calls = <String>[];
+    final JetReportDesignerController controller =
+        JetReportDesignerController(definition: _definition());
+    addTearDown(controller.dispose);
+    await _pumpWorkspace(tester, controller: controller,
+        renderReport: (ReportDefinition t) {
+      calls.add('old');
+      return _render(t);
+    });
+    await _enterPreview(tester);
+
+    await _pumpWorkspace(tester, controller: controller,
+        renderReport: (ReportDefinition t) {
+      calls.add('new');
+      return _render(t);
+    });
+    await tester.pump(const Duration(milliseconds: 1));
+    await tester.pumpAndSettle();
+    expect(calls, <String>['old', 'new']);
+    expect(find.byKey(_pageKey), findsOneWidget);
   });
 
   testWidgets('a failed render reports the error and clears the spinner',

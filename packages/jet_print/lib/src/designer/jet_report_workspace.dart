@@ -65,9 +65,15 @@ class JetReportWorkspace extends StatefulWidget {
   final JetReportDesignerController controller;
 
   /// Produces the [RenderedReport] shown in preview from the live definition.
+  ///
+  /// The rendered report is cached until the definition changes. Passing a
+  /// different callback (or a different [dataSchema]) also invalidates it, so a
+  /// host that switches its data rebuilds with a new callback and the next
+  /// preview shows the new data.
   final ReportRenderCallback renderReport;
 
   /// The data-source structure shown in the designer's Data Source panel.
+  /// Changing it invalidates the cached preview (see [renderReport]).
   final JetDataSchema? dataSchema;
 
   /// Forwarded to the designer's Save action (the host persists the template).
@@ -122,7 +128,8 @@ class _JetReportWorkspaceState extends State<JetReportWorkspace> {
   RenderedReport? _report;
 
   /// The definition identity [_report] was rendered from; an unchanged identity
-  /// on the next preview entry means the cached report is still valid.
+  /// on the next preview entry means the cached report is still valid — unless
+  /// [didUpdateWidget] cleared it because the host's render inputs changed.
   ReportDefinition? _lastRendered;
 
   /// Whether a render is currently in flight (drives the loading indicator).
@@ -139,6 +146,24 @@ class _JetReportWorkspaceState extends State<JetReportWorkspace> {
   }
 
   void _enterDesigner() => setState(() => _mode = WorkspaceMode.designer);
+
+  /// A new [JetReportWorkspace.renderReport] or [JetReportWorkspace.dataSchema]
+  /// means the cached report may show data the host no longer renders (e.g.
+  /// after "Select data source"), so it stops counting as current: the next
+  /// preview entry re-renders, and a preview on screen re-renders now. The old
+  /// pages stay visible under the loading bar meanwhile.
+  @override
+  void didUpdateWidget(JetReportWorkspace oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.renderReport == oldWidget.renderReport &&
+        widget.dataSchema == oldWidget.dataSchema) {
+      return;
+    }
+    _lastRendered = null;
+    if (_mode == WorkspaceMode.preview) {
+      _startRender(widget.controller.definition);
+    }
+  }
 
   Future<void> _startRender(ReportDefinition definition) async {
     final int seq = ++_renderSeq;
