@@ -28,6 +28,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **The design canvas no longer freezes after a frame fails to record.** A
+  record that threw — a corrupt embedded image fails to decode — left the
+  canvas's in-flight flag set forever, so every later edit was skipped, even
+  deleting the image that caused it, and the error escaped unhandled. The
+  failure is now caught, as the page-thumbnail rail already did: the canvas
+  keeps its last good picture and records again on the next edit.
+
 - **A total wrapped in parentheses no longer prints 0.** Nested-footer and
   scope totals recovered an aggregate's argument by slicing the source text
   between its first `(` and last `)`. For `(SUM($F{qty}))` that slice is

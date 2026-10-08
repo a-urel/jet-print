@@ -289,15 +289,20 @@ class _DesignCanvasState extends State<DesignCanvas> {
   /// realtime. Coalesces rapid edits: only one record runs at a time, and it
   /// re-checks for newer changes on completion — so a fast drag drops
   /// intermediate frames instead of queuing a record per pointer move.
+  ///
+  /// A record can throw (a corrupt embedded image, a bad font — nothing
+  /// upstream catches those). The failure is swallowed, as the thumbnail rail
+  /// does: the canvas keeps its last good picture, and the in-flight flag is
+  /// cleared on every path so the next edit records again instead of the
+  /// canvas freezing. The same version is not retried, which would spin.
   void _maybeRebuild(JetReportDesignerController controller) {
     if (_building || controller.frameVersion == _renderedFrameVersion) return;
     _building = true;
     final int version = controller.frameVersion;
     final ReportDefinition definition = controller.displayDefinition;
     final DesignTimeLayout layout = DesignTimeLayout.of(definition);
-    _frameBuilder
-        .recordFrame(_frameBuilder.build(definition, layout))
-        .then((ui.Picture picture) {
+    _frameBuilder.recordFrame(_frameBuilder.build(definition, layout)).then(
+        (ui.Picture picture) {
       _building = false;
       if (!mounted) {
         picture.dispose();
@@ -309,6 +314,11 @@ class _DesignCanvasState extends State<DesignCanvas> {
         _renderedFrameVersion = version;
       });
       _maybeRebuild(controller); // coalesce any change that arrived meanwhile
+    }, onError: (Object _) {
+      _building = false;
+      if (mounted && controller.frameVersion != version) {
+        _maybeRebuild(controller); // a newer edit may record fine
+      }
     });
   }
 

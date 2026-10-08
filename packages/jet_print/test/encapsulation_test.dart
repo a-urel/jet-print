@@ -169,6 +169,11 @@ bool _isWhiteBoxSeamTest(File file) {
       // the widget test exercises them directly as a white-box seam test
       // (see the zoom_math_test precedent).
       path.endsWith('/test/designer/canvas/touch_targets_test.dart') ||
+      // Canvas record failure: the canvas's recorded picture reaches the
+      // screen only through `FrameCustomPainter`, an unexported `src/` canvas
+      // painter; asserting the canvas recovers from a failed record means
+      // reading the painter's revision. White-box by necessity.
+      path.endsWith('/test/designer/canvas/canvas_record_failure_test.dart') ||
       // SelectDataSource plumbing (task 2 fix): `DesignerSchemaScope` is an
       // unexported `src/` InheritedWidget; the test walks the element tree via
       // its internal type to assert the guarded callback is correctly plumbed
