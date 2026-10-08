@@ -20,6 +20,25 @@ void main() {
       }
     });
 
+    // Review on #68: extreme *finite* maxima broke it too — double.maxFinite
+    // rounded niceMax up to infinity and the tick loop never ended (a hang in
+    // pageAt); the smallest positive double underflowed the step to 0.
+    test('extreme finite maxima are safe, finite and bounded', () {
+      for (final double extreme in <double>[
+        double.maxFinite,
+        double.maxFinite / 3,
+        double.minPositive,
+        1e-320,
+      ]) {
+        final AxisScale a = niceAxis(extreme);
+        expect(a.niceMax.isFinite, isTrue, reason: '$extreme');
+        expect(a.niceMax, greaterThanOrEqualTo(extreme), reason: '$extreme');
+        expect(a.step > 0 && a.step.isFinite, isTrue, reason: '$extreme');
+        expect(a.ticks.length, inInclusiveRange(2, 100), reason: '$extreme');
+        expect(a.ticks.every((double t) => t.isFinite), isTrue);
+      }
+    });
+
     test('non-positive max is safe', () {
       expect(niceAxis(0).niceMax, greaterThan(0));
       expect(niceAxis(-5).niceMax, greaterThan(0));
