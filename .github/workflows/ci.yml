@@ -49,7 +49,7 @@ jobs:
           cache: true
 
       - name: Resolve workspace dependencies
-        run: flutter pub get
+        run: flutter pub get --enforce-lockfile
 
       - name: Verify formatting
         if: matrix.canonical
@@ -83,7 +83,7 @@ jobs:
           cache: true
 
       - name: Resolve workspace dependencies
-        run: flutter pub get
+        run: flutter pub get --enforce-lockfile
 
       - name: Build the playground for web
         working-directory: apps/jet_print_playground
@@ -115,7 +115,7 @@ jobs:
           channel: stable
           cache: true
       - name: Resolve workspace dependencies
-        run: flutter pub get
+        run: flutter pub get --enforce-lockfile
       - name: Build the playground APK
         working-directory: apps/jet_print_playground
         run: flutter build apk --debug
@@ -133,7 +133,7 @@ jobs:
           channel: stable
           cache: true
       - name: Resolve workspace dependencies
-        run: flutter pub get
+        run: flutter pub get --enforce-lockfile
       - name: Build the playground for iOS
         working-directory: apps/jet_print_playground
         run: flutter build ios --debug --no-codesign
