@@ -28,9 +28,23 @@ void main() {
     expect(withGrid.copyWith(height: 90).columnLayout, grid);
     expect(
         withGrid
-            .copyWith(columnLayout: grid.copyWith(columnCount: 2))
+            .copyWith(columnLayout: () => grid.copyWith(columnCount: 2))
             .columnLayout!
             .columnCount,
         2);
+  });
+
+  // Regression: columnLayout took a plain nullable parameter, so copyWith could
+  // not remove a layout.
+  test('copyWith clears columnLayout with a null thunk', () {
+    const Band withGrid = Band(
+        id: 'd',
+        type: BandType.detail,
+        height: 80,
+        columnLayout: grid,
+        name: 'Labels');
+    final Band cleared = withGrid.copyWith(columnLayout: () => null);
+    expect(cleared.columnLayout, isNull);
+    expect(cleared.name, 'Labels');
   });
 }

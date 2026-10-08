@@ -9,10 +9,6 @@ import '../edit_command.dart';
 /// Sets the display [name] of the band with [bandId] (`null` clears it back to
 /// the localized type label). Renaming to the current name is a value-equal
 /// no-op; a no-op for an absent id.
-///
-/// `Band.copyWith(name: null)` cannot clear an existing name (null is treated
-/// as "keep current"), so this command always reconstructs the [Band] fully,
-/// passing [name] verbatim — including `null`.
 class RenameBandCommand extends EditCommand {
   /// Creates a rename of band [bandId] to [name] (`null` clears).
   const RenameBandCommand({required this.bandId, required this.name});
@@ -31,16 +27,7 @@ class RenameBandCommand extends EditCommand {
         updateBand(
           before.definition,
           bandId,
-          // MAINTAINER: carry ALL Band fields here; add new ones when Band gains them.
-          (Band b) => Band(
-            id: b.id,
-            type: b.type,
-            height: b.height,
-            elements: b.elements,
-            columnLayout: b.columnLayout,
-            name: name,
-            visible: b.visible,
-          ),
+          (Band b) => b.copyWith(name: () => name),
         ),
       );
 }

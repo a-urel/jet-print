@@ -28,6 +28,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **`Band.copyWith` can now clear `name` and `columnLayout`.** Both took plain
+  nullable parameters, so `null` meant "keep" and nothing could clear them;
+  renaming a band back to its default label and removing a label layout each
+  rebuilt the band field by field instead — the pattern that silently drops a
+  field the day `Band` gains one. Both parameters are now thunks
+  (`name: () => null` clears) — **breaking** for callers passing a value, which
+  becomes `name: () => 'x'` — and both commands go through `copyWith`.
+
 - **A chart type this build does not know is no longer rewritten to `bar`.**
   A report from a newer build naming, say, an `area` chart loaded as a bar chart
   — fine for rendering — but re-saved as `"chartType":"bar"`, silently replacing

@@ -31,7 +31,7 @@ class SetColumnLayoutCommand extends EditCommand {
   @override
   DesignerDocument apply(DesignerDocument before) => before.withDefinition(
         updateBand(before.definition, bandId,
-            (Band b) => b.copyWith(columnLayout: layout)),
+            (Band b) => b.copyWith(columnLayout: () => layout)),
         selection: Selection.band(bandId),
       );
 }
