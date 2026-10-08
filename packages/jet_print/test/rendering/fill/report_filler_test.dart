@@ -18,7 +18,6 @@ import 'package:jet_print/src/domain/report_definition.dart';
 import 'package:jet_print/src/domain/report_element.dart';
 import 'package:jet_print/src/domain/report_validation.dart';
 import 'package:jet_print/src/domain/report_variable.dart';
-import 'package:jet_print/src/expression/expression_exception.dart';
 import 'package:jet_print/src/expression/value.dart';
 import 'package:jet_print/src/rendering/fill/filled_report.dart';
 import 'package:jet_print/src/rendering/fill/report_diagnostics.dart';
@@ -257,21 +256,82 @@ void main() {
         (res.report.bands.single.elements.single as TextElement).text, 'none');
   });
 
-  test('a malformed variable expression fails fast (throws)', () {
-    expect(
-      () => ReportFiller().fillDefinition(
-        template(
-          detail: <ReportElement>[t('d', text: '.')],
-          variables: const <ReportVariable>[
-            ReportVariable(name: 'v', expression: r'CONCAT('),
-          ],
-        ),
-        JetInMemoryDataSource(<Map<String, Object?>>[
-          <String, Object?>{'x': 1}
-        ]),
+  // #61 — deliberately replaces the old "fails fast (throws)" pin: a malformed
+  // variable aborted the whole render, while a malformed element expression
+  // renders `!ERR` with a diagnostic. Variables now fail the same way.
+  test('a malformed variable expression renders !ERR and is diagnosed once',
+      () {
+    final FillResult res = ReportFiller().fillDefinition(
+      template(
+        detail: <ReportElement>[t('d', expr: r'$V{v}')],
+        variables: const <ReportVariable>[
+          // SUM on purpose: folding (skipping) the parse error would print a
+          // plausible 0 — the failure mode this guards against.
+          ReportVariable(
+              name: 'v',
+              expression: r'CONCAT(',
+              calculation: JetCalculation.sum),
+        ],
       ),
-      throwsA(isA<ExpressionException>()),
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'x': 1},
+        <String, Object?>{'x': 2},
+      ]),
     );
+    for (final FilledBand b in res.report.bands) {
+      expect((b.elements.single as TextElement).text, '!ERR');
+    }
+    final List<domain.Diagnostic> errors = <domain.Diagnostic>[
+      for (final domain.Diagnostic d in res.diagnostics.entries)
+        if (d.severity == domain.DiagnosticSeverity.error) d,
+    ];
+    // One for the variable, one for the element that prints it — not one per
+    // row (review on #70).
+    expect(errors, hasLength(2), reason: '$errors');
+    expect(errors.first.message, contains('variable "v" failed to parse'));
+    expect(errors.last.elementId, 'd');
+  });
+
+  // Review on #70: an element whose expression errors was diagnosed on every
+  // row with the identical message, outside the row budget — 10k rows, 10k
+  // diagnostics. The same error on the same element is now reported once.
+  test('an element expression error repeating on every row is reported once',
+      () {
+    final FillResult res = ReportFiller().fillDefinition(
+      template(detail: <ReportElement>[t('d', expr: r'1 / 0')]),
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        for (int i = 0; i < 5; i++) <String, Object?>{'x': i},
+      ]),
+    );
+    expect(
+        res.diagnostics.entries.where((domain.Diagnostic d) =>
+            d.severity == domain.DiagnosticSeverity.error &&
+            d.elementId == 'd'),
+        hasLength(1));
+  });
+
+  test('a malformed group key renders as one group and is diagnosed once', () {
+    final FillResult res = ReportFiller().fillDefinition(
+      template(
+        detail: <ReportElement>[t('d', expr: r'$F{x}')],
+        groups: <GroupLevel>[
+          GroupLevel(id: 'g', name: 'g', key: ')(', header: gh('g', text: 'H')),
+        ],
+      ),
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'x': 'a'},
+        <String, Object?>{'x': 'b'},
+      ]),
+    );
+    expect(
+        res.report.bands
+            .where((FilledBand b) => b.type == BandType.groupHeader),
+        hasLength(1));
+    expect(
+        res.diagnostics.entries.where((domain.Diagnostic d) =>
+            d.severity == domain.DiagnosticSeverity.error &&
+            d.message.contains('group "g"')),
+        hasLength(1));
   });
 
   // Regression (#62): an aggregate input that evaluates to an error was
@@ -301,23 +361,18 @@ void main() {
   });
 
   // Regression (#64): the data set was opened before the try/finally that
-  // closes it, so a fill that threw in between (here the deliberate fail-fast
-  // on a malformed variable) never closed a host's cursor.
+  // closes it, so a fill that threw in between (here the host's cursor failing
+  // to report its schema) never closed a host's cursor.
   test('a fill that throws still closes the data set', () {
     final _ClosingSource source = _ClosingSource(<Map<String, Object?>>[
       <String, Object?>{'x': 1}
-    ]);
+    ], failFields: true);
     expect(
       () => ReportFiller().fillDefinition(
-        template(
-          detail: <ReportElement>[t('d', text: '.')],
-          variables: const <ReportVariable>[
-            ReportVariable(name: 'v', expression: r'CONCAT('),
-          ],
-        ),
+        template(detail: <ReportElement>[t('d', text: '.')]),
         source,
       ),
-      throwsA(isA<ExpressionException>()),
+      throwsA(isA<StateError>()),
     );
     expect(source.closed, 1);
   });
@@ -960,25 +1015,32 @@ void main() {
 
 /// An in-memory source whose cursors count how often they are closed.
 class _ClosingSource implements JetDataSource {
-  _ClosingSource(List<Map<String, Object?>> rows)
+  _ClosingSource(List<Map<String, Object?>> rows, {this.failFields = false})
       : _inner = JetInMemoryDataSource(rows);
 
   final JetInMemoryDataSource _inner;
+
+  /// Makes the opened cursor throw when asked for its schema, as a host's
+  /// database cursor can.
+  final bool failFields;
   int closed = 0;
 
   @override
   DataSet open([Map<String, Object?> params = const <String, Object?>{}]) =>
-      _ClosingDataSet(_inner.open(params), () => closed++);
+      _ClosingDataSet(_inner.open(params), () => closed++,
+          failFields: failFields);
 }
 
 class _ClosingDataSet implements DataSet {
-  _ClosingDataSet(this._inner, this._onClose);
+  _ClosingDataSet(this._inner, this._onClose, {required this.failFields});
 
   final DataSet _inner;
   final void Function() _onClose;
+  final bool failFields;
 
   @override
-  List<FieldDef> get fields => _inner.fields;
+  List<FieldDef> get fields =>
+      failFields ? throw StateError('cursor lost its schema') : _inner.fields;
 
   @override
   bool moveNext() => _inner.moveNext();

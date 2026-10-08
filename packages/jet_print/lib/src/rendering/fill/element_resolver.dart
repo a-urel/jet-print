@@ -261,7 +261,11 @@ class ElementResolver {
       return TextElement(
           id: el.id, bounds: el.bounds, text: el.text, style: el.style);
     }
-    if (value is JetError) {
+    // Once per element and message for the whole fill: the same error on every
+    // row (a `1 / 0`, an unparseable variable it prints) is one problem, and a
+    // per-row repeat would bypass the row budget — 10k rows, 10k diagnostics.
+    if (value is JetError &&
+        warnedFields.add('expr-error:${el.id}:${value.message}')) {
       diagnostics.error('Expression error: ${value.message}', elementId: el.id);
     }
     // Apply the label's display format: a non-empty pattern that
