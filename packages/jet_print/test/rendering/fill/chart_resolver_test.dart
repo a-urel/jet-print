@@ -63,6 +63,55 @@ void main() {
     expect(diags.entries, isNotEmpty);
   });
 
+  // Regression (#63): an infinite value went straight into the series, and the
+  // value axis threw on it (`Infinity.floor()`) — out of `pageAt`.
+  for (final double bad in <double>[double.infinity, double.negativeInfinity]) {
+    test('a non-finite value ($bad) resolves to 0 and warns', () {
+      final ReportDiagnostics diags = ReportDiagnostics();
+      final ChartElement r = resolverWith(diags).resolve(chart,
+          row: rowWith(<Object?>[
+            <String, Object?>{'label': 'Jan', 'revenue': bad},
+            <String, Object?>{'label': 'Feb', 'revenue': 5},
+          ])) as ChartElement;
+      expect(r.points.map((ChartPoint p) => p.value).toList(), <double>[0, 5]);
+      expect(diags.entries.where((Diagnostic d) => d.elementId == 'c1'),
+          hasLength(1));
+    });
+  }
+
+  test('a chart over an infinite value renders its page without throwing', () {
+    const ReportDefinition def = ReportDefinition(
+      name: 'Infinite chart',
+      page: PageFormat.a4Portrait,
+      body: ReportBody(
+        root: DetailScope(id: 'root', children: <ScopeNode>[
+          BandNode(Band(
+            id: 'detail',
+            type: BandType.detail,
+            height: 140,
+            elements: <ReportElement>[chart],
+          )),
+        ]),
+      ),
+    );
+    final RenderedReport report = const JetReportEngine().renderDefinition(
+      def,
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{
+          'months': <Map<String, Object?>>[
+            <String, Object?>{'label': 'Jan', 'revenue': double.infinity},
+          ],
+        },
+      ], fields: const <FieldDef>[
+        FieldDef('months', type: JetFieldType.collection, fields: <FieldDef>[
+          FieldDef('label', type: JetFieldType.string),
+          FieldDef('revenue', type: JetFieldType.double),
+        ]),
+      ]),
+    );
+    expect(() => report.pageAt(0), returnsNormally);
+  });
+
   test('null categoryExpression labels by index', () {
     const ChartElement noCat = ChartElement(
         id: 'c2',
