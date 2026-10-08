@@ -592,6 +592,13 @@ class ReportLayouter {
     final Map<String, GroupLevel> groupByName = <String, GroupLevel>{
       for (final GroupLevel g in groups) g.name: g,
     };
+    // Only a synthetic (crosstab) group emits several header bands per
+    // instance, so only its back-to-back headers are one header run. An
+    // ordinary group owns one header band: two in a row are two instances
+    // (a footer-less group whose rows printed nothing) and lay out as two.
+    final Set<String> multiHeaderGroups = <String>{
+      for (final GroupLevel g in filled.syntheticGroups) g.name,
+    };
 
     // Scoped to definitionGroups, not the unioned groups: its only consumer
     // is the exemption loop below, which is itself scoped to definitionGroups
@@ -668,7 +675,8 @@ class ReportLayouter {
         final int level = isGroupBand ? levelOf[band.group]! : -1;
         final bool newHeader = band.type == BandType.groupHeader &&
             isGroupBand &&
-            spanPrevHeader != band.group;
+            (spanPrevHeader != band.group ||
+                !multiHeaderGroups.contains(band.group));
         if (newHeader) {
           if (groupByName[band.group]!.startNewPage &&
               !seenStartNewPageGroup.add(band.group!)) {
@@ -776,6 +784,7 @@ class ReportLayouter {
 
         if (band.type == BandType.groupHeader && isGroupBand) {
           if (prevHeaderGroup == band.group &&
+              multiHeaderGroups.contains(band.group) &&
               openStack.isNotEmpty &&
               openStack.last.name == band.group) {
             openStack.last.headers.add(mb);

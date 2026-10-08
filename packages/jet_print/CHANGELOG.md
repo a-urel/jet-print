@@ -28,6 +28,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Back-to-back instances of a group now lay out as separate instances.**
+  The layouter folded consecutive headers of one group into a single header
+  run — a rule that exists for crosstab groups, which emit several header bands
+  per instance. An ordinary group owns one header band, so two in a row are two
+  instances (a group with no footer whose rows printed nothing, for example
+  because the detail band is hidden). The second instance lost its
+  `startNewPage` break, joined the first's `keepTogether` span, and a page
+  break reprinted both headers. The merge now applies to crosstab groups only.
+
 - **The field picker's search box and empty result are localized.** Its
   "Search fields" placeholder and "No matching fields" line were hardcoded
   English and showed untranslated under `de` and `tr`. They are now the

@@ -1333,4 +1333,52 @@ void main() {
     expect(_textRunAbsent(p1, 'rptHdr'), isTrue,
         reason: 'title should not appear on page 2');
   });
+
+  // Regression (#59): back-to-back headers of one group were folded into a
+  // single header run — a rule meant for crosstab synthetic groups, which emit
+  // several headers per instance. An ordinary group owns one header band, so
+  // two in a row are two instances (a group with no footer whose rows print
+  // nothing, e.g. a hidden detail band) and must be laid out as two.
+  group('back-to-back headers of an ordinary group are separate instances', () {
+    test('the second instance honors startNewPage', () {
+      final ReportDefinition tpl = _tplWithGroups(<GroupLevel>[
+        const GroupLevel(id: 'g', name: 'g', key: r'$F{g}', startNewPage: true),
+      ]);
+      final LayoutResult r = ReportLayouter().layoutDefinition(
+          tpl,
+          _filled(<FilledBand>[
+            _gband(BandType.groupHeader, group: 'g', height: 10, id: 'H1'),
+            _gband(BandType.groupHeader, group: 'g', height: 10, id: 'H2'),
+          ]));
+      expect(r.pages, hasLength(2));
+      expect(_textRunAbsent(r.pages[0], 'H2'), isTrue);
+      expect(
+          r.pages[1].primitives
+              .whereType<RectPrimitive>()
+              .map((RectPrimitive p) => p.elementId),
+          <String>['H2']);
+    });
+
+    test('a page break reprints only the open instance\'s header', () {
+      final ReportDefinition tpl = _tplWithGroups(<GroupLevel>[
+        const GroupLevel(
+            id: 'g', name: 'g', key: r'$F{g}', reprintHeaderOnEachPage: true),
+      ]);
+      // Body capacity 80: H1 + H2 + d1 (60) fit, d2 breaks the page.
+      final LayoutResult r = ReportLayouter().layoutDefinition(
+          tpl,
+          _filled(<FilledBand>[
+            _gband(BandType.groupHeader, group: 'g', height: 10, id: 'H1'),
+            _gband(BandType.groupHeader, group: 'g', height: 10, id: 'H2'),
+            _gband(BandType.detail, height: 40, id: 'd1'),
+            _gband(BandType.detail, height: 40, id: 'd2'),
+          ]));
+      expect(r.pages, hasLength(2));
+      expect(
+          r.pages[1].primitives
+              .whereType<RectPrimitive>()
+              .map((RectPrimitive p) => p.elementId),
+          <String>['H2', 'd2']);
+    });
+  });
 }
