@@ -9,7 +9,9 @@ import '../value.dart';
 ///
 /// Contribution filter: `JetNull`, `JetError`, and wrong-typed values are
 /// skipped (the running value is unaffected) — except [JetCalculation.none],
-/// which passes its latest value through unchanged.
+/// which passes its latest value through unchanged. A null is a legitimate
+/// blank; an error or a wrong type is not, so each is counted
+/// ([skippedErrors], [skippedNonNumeric]) for the fill to report.
 class VariableAccumulator {
   /// Creates an accumulator for [calculation], seeded to its initial value.
   VariableAccumulator(this.calculation) {
@@ -24,12 +26,19 @@ class VariableAccumulator {
   JetValue _value = const JetNull();
   bool _hasValue = false;
   int _skippedNonNumeric = 0;
+  int _skippedErrors = 0;
 
   /// The lifetime count of inputs dropped because they were the wrong type for
   /// this calculation (e.g. a string folded into a SUM). Null/error inputs are
   /// legitimate blanks and are NOT counted. Lifetime-monotonic: [reset] does
   /// not clear it, so callers can read it as a per-row delta (spec E2).
   int get skippedNonNumeric => _skippedNonNumeric;
+
+  /// The lifetime count of inputs dropped because they evaluated to a
+  /// `JetError` (e.g. a division by zero). Skipping keeps the total the fold
+  /// of the rows that did evaluate; counting lets the fill say so instead of
+  /// leaving it silently short. Lifetime-monotonic, like [skippedNonNumeric].
+  int get skippedErrors => _skippedErrors;
 
   /// The accumulator's current value.
   JetValue get value => switch (calculation) {
@@ -51,7 +60,11 @@ class VariableAccumulator {
       _value = input;
       return;
     }
-    if (input is JetNull || input is JetError) return; // skip blanks/errors
+    if (input is JetNull) return; // a blank: skipped, not counted
+    if (input is JetError) {
+      _skippedErrors++; // skipped, but counted for the fill to report
+      return;
+    }
     switch (calculation) {
       case JetCalculation.sum:
         if (input is JetNumber) {
@@ -107,8 +120,8 @@ class VariableAccumulator {
 
   /// Re-seeds the accumulator to its initial (empty-scope) state.
   void reset() {
-    // NB: _skippedNonNumeric is intentionally NOT reset — it is a
-    // lifetime-monotonic diagnostic counter (spec E2).
+    // NB: _skippedNonNumeric and _skippedErrors are intentionally NOT reset —
+    // they are lifetime-monotonic diagnostic counters (spec E2).
     _sum = 0;
     _count = 0;
     _value = const JetNull();

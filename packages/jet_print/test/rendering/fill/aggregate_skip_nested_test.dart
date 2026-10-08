@@ -136,4 +136,140 @@ void main() {
     expect(d.message, startsWith('Row 1: '));
     expect(d.message, contains('1 non-numeric'));
   });
+
+  // Review on #69: the error key was the non-numeric key + ':error', so a total
+  // literally named 'total:error' collided with total 'total', and the row
+  // budget's per-row dedupe dropped whichever warning came second.
+  test('error and non-numeric skips of distinct totals never share a key', () {
+    final FillResult res = ReportFiller().fillDefinition(
+      ReportDefinition(
+        name: 'collide',
+        page: PageFormat.a4Portrait,
+        body: ReportBody(
+          root: DetailScope(id: 'root', children: <ScopeNode>[
+            NestedScope(DetailScope(
+              id: 'lines',
+              collectionField: 'lines',
+              totals: const <ScopeTotal>[
+                ScopeTotal('total', r'SUM($F{a} / $F{b})'),
+                ScopeTotal('total:error', r'SUM($F{amount})'),
+              ],
+              children: <ScopeNode>[
+                BandNode(Band(
+                    id: 'line',
+                    type: BandType.detail,
+                    height: 12,
+                    elements: <ReportElement>[_el('x', text: '.')])),
+              ],
+            )),
+          ]),
+        ),
+      ),
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{
+          'lines': <Map<String, Object?>>[
+            <String, Object?>{'a': 1, 'b': 0, 'amount': 'x'},
+          ],
+        },
+      ]),
+    );
+    _match(
+        res,
+        'failed to evaluate and were skipped from published total '
+        '"total"');
+    _match(
+        res,
+        'non-numeric value(s) were skipped from published total '
+        '"total:error"');
+  });
+
+  // Review on #69: every instance of a scope shared one key, so when a scope
+  // nested two deep ran once per parent row, the per-row dedupe kept only the
+  // first instance's warning (and its count).
+  group('each instance of a nested scope reports its own skips', () {
+    final List<Map<String, Object?>> twoBadOrders = <Map<String, Object?>>[
+      <String, Object?>{
+        'orders': <Map<String, Object?>>[
+          <String, Object?>{
+            'lines': <Map<String, Object?>>[
+              <String, Object?>{'amount': 10.0},
+              <String, Object?>{'amount': 'x'},
+            ],
+          },
+          <String, Object?>{
+            'lines': <Map<String, Object?>>[
+              <String, Object?>{'amount': 'y'},
+              <String, Object?>{'amount': 'z'},
+            ],
+          },
+        ],
+      },
+    ];
+
+    ReportDefinition twoDeep({Band? linesFooter, List<ScopeTotal>? totals}) =>
+        ReportDefinition(
+          name: 'twoDeep',
+          page: PageFormat.a4Portrait,
+          body: ReportBody(
+            root: DetailScope(id: 'root', children: <ScopeNode>[
+              NestedScope(DetailScope(
+                id: 'orders',
+                collectionField: 'orders',
+                children: <ScopeNode>[
+                  NestedScope(DetailScope(
+                    id: 'lines',
+                    collectionField: 'lines',
+                    footer: linesFooter,
+                    totals: totals ?? const <ScopeTotal>[],
+                    children: <ScopeNode>[
+                      BandNode(Band(
+                          id: 'line',
+                          type: BandType.detail,
+                          height: 12,
+                          elements: <ReportElement>[_el('l', text: '.')])),
+                    ],
+                  )),
+                ],
+              )),
+            ]),
+          ),
+        );
+
+    List<String> skips(FillResult res, String target) => <String>[
+          for (final Diagnostic d in res.diagnostics.entries)
+            if (d.message.contains(target)) d.message,
+        ];
+
+    test('a nested footer', () {
+      final FillResult res = ReportFiller().fillDefinition(
+        twoDeep(
+            linesFooter: Band(
+                id: 'lines-footer',
+                type: BandType.groupFooter,
+                height: 12,
+                elements: <ReportElement>[
+              _el('lt', expr: r'SUM($F{amount})'),
+            ])),
+        JetInMemoryDataSource(twoBadOrders),
+      );
+      final List<String> found =
+          skips(res, 'footer aggregate in scope "lines"');
+      expect(found, hasLength(2));
+      expect(found[0], contains('1 non-numeric'));
+      expect(found[1], contains('2 non-numeric'));
+    });
+
+    test('a published total', () {
+      final FillResult res = ReportFiller().fillDefinition(
+        twoDeep(totals: const <ScopeTotal>[
+          ScopeTotal('lineSum', r'SUM($F{amount})'),
+        ]),
+        JetInMemoryDataSource(twoBadOrders),
+      );
+      final List<String> found = skips(res, 'published total "lineSum"');
+      expect(found, hasLength(2));
+      expect(found[0], contains('1 non-numeric'));
+      expect(found[1], contains('2 non-numeric'));
+    });
+  });
 }
