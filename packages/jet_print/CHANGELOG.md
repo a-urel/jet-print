@@ -28,6 +28,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **A fill that throws now closes the host's data set.** The filler opened the
+  data set early (to read its schema) but only started the `try`/`finally` that
+  closes it at the row loop, so anything that threw in between — a malformed
+  variable or group key fails fast there — left a custom `DataSet` (a database
+  cursor, a file handle) open. The whole fill now runs under one `finally`
+  that closes it exactly once.
+
 - **The field picker's search box and empty result are localized.** Its
   "Search fields" placeholder and "No matching fields" line were hardcoded
   English and showed untranslated under `de` and `tr`. They are now the
