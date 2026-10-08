@@ -28,6 +28,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Emptying a chart's title or category field now clears it.** Two layers
+  swallowed the edit: the title field reverted a blank entry before committing,
+  and `ChartElement.copyWith` took plain nullable `title` /
+  `categoryExpression` parameters, so a `null` meant "keep" and nothing could
+  clear them. Both parameters are now thunks, like `name` (`title: () => null`
+  clears) — **breaking** for callers passing `title: 'x'`, which becomes
+  `title: () => 'x'`. `setChartOptions` keeps its signature and, like
+  `setFormat`, now reads an empty `title` or `categoryExpression` as "clear".
+
 - **The declared Flutter floor now matches what is actually tested.**
   `packages/jet_print/pubspec.yaml` declared `flutter: ">=3.6.0"` — 38 minor
   versions below anything the package has ever been built against. CI pins

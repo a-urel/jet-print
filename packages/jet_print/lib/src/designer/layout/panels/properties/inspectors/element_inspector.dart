@@ -383,8 +383,8 @@ extension _ElementInspector on _PropertiesPanelState {
                   descendantOperands:
                       _descendantOperands(schema, controller, id),
                   descendantFields: _descendantFields(schema, controller, id),
-                  onCommit: (String v) => controller.setChartOptions(id,
-                      categoryExpression: v.isEmpty ? null : v),
+                  onCommit: (String v) =>
+                      controller.setChartOptions(id, categoryExpression: v),
                 ),
               ),
               // --- Title -------------------------------------------------------
@@ -394,8 +394,9 @@ extension _ElementInspector on _PropertiesPanelState {
                   fieldKey: ValueKey<String>('$_p.field.chartTitle.$id'),
                   value: element.title ?? '',
                   placeholder: l10n.valueFieldHint,
-                  onCommit: (String v) => controller.setChartOptions(id,
-                      title: v.isEmpty ? null : v),
+                  allowEmpty: true,
+                  onCommit: (String v) =>
+                      controller.setChartOptions(id, title: v),
                 ),
               ),
               // --- Chrome toggles ----------------------------------------------

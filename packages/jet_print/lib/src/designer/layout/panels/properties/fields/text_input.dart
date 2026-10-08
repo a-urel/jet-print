@@ -8,8 +8,10 @@ part of '../../properties_panel.dart';
 /// A plain single-line text field bound to a model string [value], committing
 /// the trimmed text on Enter or blur — each commit one undoable model edit. Used
 /// for the report's primary Name property and the group name/key fields. A blank
-/// entry reverts to the current value (the report keeps a name); while the field
-/// is focused the live value is never written over the user's in-progress text.
+/// entry reverts to the current value (the report keeps a name) unless
+/// [allowEmpty] is set, for an optional slot whose blank means "clear"; while
+/// the field is focused the live value is never written over the user's
+/// in-progress text.
 ///
 /// When [fields] is non-empty, a field-picker suffix button is shown; picking a
 /// field inserts the `[field]` shorthand and commits immediately.
@@ -22,6 +24,7 @@ class _TextInput extends StatefulWidget {
     this.fields = const <FieldDef>[],
     this.pickerTooltip = '',
     this.pickerKeyPrefix = '',
+    this.allowEmpty = false,
   });
 
   final Key fieldKey;
@@ -38,6 +41,10 @@ class _TextInput extends StatefulWidget {
 
   /// Key namespace for the picker test seam (used only when [fields] is non-empty).
   final String pickerKeyPrefix;
+
+  /// Whether a blank entry commits `''` (clearing an optional slot) instead of
+  /// reverting to [value].
+  final bool allowEmpty;
 
   @override
   State<_TextInput> createState() => _TextInputState();
@@ -71,7 +78,7 @@ class _TextInputState extends State<_TextInput> {
 
   void _commit() {
     final String text = _controller.text.trim();
-    if (text.isEmpty) {
+    if (text.isEmpty && !widget.allowEmpty) {
       _controller.text = widget.value; // keep the report named
       return;
     }

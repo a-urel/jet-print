@@ -103,15 +103,16 @@ class ChartElement extends ReportElement with ValueEquality {
 
   /// Returns a copy with the named fields replaced and the rest preserved.
   ///
-  /// [name] is nullable, so it takes a thunk: omit to preserve, pass
-  /// `() => value` to replace (`() => null` clears).
+  /// The nullable fields — [categoryExpression], [title] and [name] — take a
+  /// thunk: omit to preserve, pass `() => value` to replace (`() => null`
+  /// clears).
   ChartElement copyWith({
     JetRect? bounds,
     ChartType? chartType,
     String? collectionField,
     String? valueExpression,
-    String? categoryExpression,
-    String? title,
+    String? Function()? categoryExpression,
+    String? Function()? title,
     bool? showAxes,
     bool? showValueLabels,
     bool? showLegend,
@@ -126,8 +127,8 @@ class ChartElement extends ReportElement with ValueEquality {
         chartType: chartType ?? this.chartType,
         collectionField: collectionField ?? this.collectionField,
         valueExpression: valueExpression ?? this.valueExpression,
-        categoryExpression: categoryExpression ?? this.categoryExpression,
-        title: title ?? this.title,
+        categoryExpression: pick(categoryExpression, this.categoryExpression),
+        title: pick(title, this.title),
         showAxes: showAxes ?? this.showAxes,
         showValueLabels: showValueLabels ?? this.showValueLabels,
         showLegend: showLegend ?? this.showLegend,

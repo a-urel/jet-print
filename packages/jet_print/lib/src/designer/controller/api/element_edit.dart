@@ -147,6 +147,9 @@ extension CtrlElementEdit on JetReportDesignerController {
   /// Updates one or more properties of the [ChartElement] [id] as one undoable
   /// step, preserving every field not mentioned. A no-op for a non-chart or
   /// absent id.
+  ///
+  /// Pass an empty [categoryExpression] or [title] to clear it, as with
+  /// [setFormat]; `null` leaves it unchanged.
   void setChartOptions(
     String id, {
     ChartType? chartType,
@@ -164,8 +167,8 @@ extension CtrlElementEdit on JetReportDesignerController {
         chartType: chartType,
         collectionField: collectionField,
         valueExpression: valueExpression,
-        categoryExpression: categoryExpression,
-        title: title,
+        categoryExpression: _clearIfEmpty(categoryExpression),
+        title: _clearIfEmpty(title),
         showAxes: showAxes,
         showValueLabels: showValueLabels,
         showLegend: showLegend,
@@ -181,3 +184,11 @@ extension CtrlElementEdit on JetReportDesignerController {
 
   // --- Groups & scopes (first-class entities) -------------
 }
+
+/// Maps a "null keeps, empty clears" mutator argument to a `copyWith` thunk:
+/// `null` → omit (preserve), `''` → `() => null` (clear), else replace.
+String? Function()? _clearIfEmpty(String? value) => value == null
+    ? null
+    : value.isEmpty
+        ? () => null
+        : () => value;
