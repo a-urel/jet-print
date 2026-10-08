@@ -12,6 +12,47 @@ void main() {
       expect(a.step, 5);
       expect(a.ticks, <double>[0, 5, 10, 15, 20, 25]);
     });
+    // Regression (#63): a non-finite max threw from `.floor()`.
+    test('a non-finite max is safe', () {
+      for (final double bad in <double>[double.infinity, double.nan]) {
+        expect(niceAxis(bad).niceMax, greaterThan(0));
+        expect(niceAxis(bad).niceMax.isFinite, isTrue);
+      }
+    });
+
+    // Review on #68: extreme *finite* maxima broke it too — double.maxFinite
+    // rounded niceMax up to infinity and the tick loop never ended (a hang in
+    // pageAt); the smallest positive double underflowed the step to 0.
+    test('extreme finite maxima are safe, finite and bounded', () {
+      for (final double extreme in <double>[
+        double.maxFinite,
+        double.maxFinite / 3,
+        double.minPositive,
+        1e-320,
+      ]) {
+        final AxisScale a = niceAxis(extreme);
+        expect(a.niceMax.isFinite, isTrue, reason: '$extreme');
+        expect(a.niceMax, greaterThanOrEqualTo(extreme), reason: '$extreme');
+        expect(a.step > 0 && a.step.isFinite, isTrue, reason: '$extreme');
+        expect(a.ticks.length, inInclusiveRange(2, 100), reason: '$extreme');
+        expect(a.ticks.every((double t) => t.isFinite), isTrue);
+      }
+    });
+
+    // Review on #68: when the tick cap was hit, the last gap stopped matching
+    // `step` (niceAxis(1000, targetTicks: 1000) ended 0..98, then 1000).
+    test('ticks stay evenly spaced by step even for huge tick requests', () {
+      for (final int target in <int>[4, 99, 1000, 1 << 30]) {
+        final AxisScale a = niceAxis(1000, targetTicks: target);
+        expect(a.ticks.length, lessThanOrEqualTo(100), reason: '$target');
+        for (int i = 1; i < a.ticks.length; i++) {
+          expect(a.ticks[i] - a.ticks[i - 1], closeTo(a.step, a.step * 1e-9),
+              reason: 'gap $i of targetTicks $target');
+        }
+        expect(a.ticks.last, a.niceMax);
+      }
+    });
+
     test('non-positive max is safe', () {
       expect(niceAxis(0).niceMax, greaterThan(0));
       expect(niceAxis(-5).niceMax, greaterThan(0));

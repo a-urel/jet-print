@@ -188,4 +188,15 @@ class VariableCalculator {
     }
     return n;
   }
+
+  /// The lifetime total of inputs dropped because they evaluated to an error,
+  /// across all of this calculator's aggregates. Monotonic, like
+  /// [aggregateSkips].
+  int get aggregateErrorSkips {
+    int n = 0;
+    for (final VariableAccumulator a in _accumulators) {
+      n += a.skippedErrors;
+    }
+    return n;
+  }
 }

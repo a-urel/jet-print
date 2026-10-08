@@ -175,8 +175,18 @@ class ElementResolver {
       );
       final JetValue v = valueExpr.evaluate(ctx);
       final double value;
-      if (v is JetNumber) {
+      if (v is JetNumber && v.value.isFinite) {
         value = v.value.toDouble();
+      } else if (v is JetNumber) {
+        // An infinite (or NaN) value has no place on a value axis: plotting it
+        // would throw when the axis is scaled. Drop it to 0, like a non-number.
+        value = 0;
+        if (warnedFields.add('chart-inf:${el.id}')) {
+          diagnostics.warning(
+              'Chart "${el.id}" value expression resolved to a non-finite '
+              'number; plotted as 0',
+              elementId: el.id);
+        }
       } else {
         value = 0;
         if (warnedFields.add('chart-nan:${el.id}')) {
