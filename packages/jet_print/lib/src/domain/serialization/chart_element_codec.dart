@@ -16,15 +16,17 @@ class ChartElementCodec extends ElementCodec<ChartElement> {
   @override
   ChartElement fromJson(Map<String, Object?> json) {
     // Tolerant parse: an unrecognized chartType (e.g. one a newer version added)
-    // loads as ChartType.bar — a safe render default.
+    // loads as ChartType.bar — a safe render default — and the original name
+    // is preserved in `unknownChartType`, so re-saving does not lose it.
     final String rawType = json['chartType'] as String? ?? 'bar';
-    final ChartType type =
-        ChartType.values.asNameMap()[rawType] ?? ChartType.bar;
+    final ChartType? known = ChartType.values.asNameMap()[rawType];
+    final ChartType type = known ?? ChartType.bar;
     return ChartElement(
       id: json['id']! as String,
       bounds:
           JetRect.fromJson((json['bounds']! as Map).cast<String, Object?>()),
       chartType: type,
+      unknownChartType: known == null ? rawType : null,
       collectionField: json['collectionField'] as String? ?? '',
       valueExpression: json['valueExpression'] as String? ?? '',
       categoryExpression: json['categoryExpression'] as String?,
@@ -47,7 +49,7 @@ class ChartElementCodec extends ElementCodec<ChartElement> {
   Map<String, Object?> toJson(ChartElement el) => <String, Object?>{
         'id': el.id,
         'bounds': el.bounds.toJson(),
-        'chartType': el.chartType.name,
+        'chartType': el.unknownChartType ?? el.chartType.name,
         'collectionField': el.collectionField,
         'valueExpression': el.valueExpression,
         if (el.categoryExpression != null)

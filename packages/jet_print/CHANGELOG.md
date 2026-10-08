@@ -28,6 +28,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **A chart type this build does not know is no longer rewritten to `bar`.**
+  A report from a newer build naming, say, an `area` chart loaded as a bar chart
+  — fine for rendering — but re-saved as `"chartType":"bar"`, silently replacing
+  the author's choice and breaking the lossless round-trip. The original name is
+  now kept in the new `ChartElement.unknownChartType` and written back on save,
+  the same contract `ShapeElement.unknownForm` already gave shapes; a deliberate
+  type pick clears it.
+
 - **Emptying a chart's title or category field now clears it.** Two layers
   swallowed the edit: the title field reverted a blank entry before committing,
   and `ChartElement.copyWith` took plain nullable `title` /
