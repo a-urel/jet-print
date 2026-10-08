@@ -24,9 +24,12 @@
 ///
 /// The guarantee is scoped to commands that move an ELEMENT. Changing a BAND is
 /// not one: `SetBandHeightCommand` is `band.copyWith(height: height)` and never
-/// touches the band's elements, so shrinking a band can leave an element
-/// hanging past its new bottom until some element-geometry command re-clamps
-/// it. Nothing here prevents that.
+/// touches the band's elements. The interactive divider drag cannot shrink a
+/// band past its content (`updateBandResize` stops at the lowest element's
+/// bottom edge, the edge-pinning idiom above), but a programmatic
+/// `SetBandHeightCommand` — or the band height typed in the inspector — can
+/// still leave an element hanging past the new bottom until some
+/// element-geometry command re-clamps it.
 library;
 
 import '../../domain/band.dart';

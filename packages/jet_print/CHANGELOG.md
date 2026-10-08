@@ -28,6 +28,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Dragging a band's divider no longer leaves elements outside the band.**
+  Shrinking a band by its divider had only the minimum-height floor, so
+  elements ended up hanging past the new bottom edge. The drag now stops at the
+  lowest element's bottom edge — the same edge-pinning a dragged element gets at
+  its band — so nothing is moved or resized to make room; content that already
+  overflows blocks shrinking without growing the band. A programmatic
+  `SetBandHeightCommand` and the inspector's typed band height are unchanged.
+
 - **The field picker's search box and empty result are localized.** Its
   "Search fields" placeholder and "No matching fields" line were hardcoded
   English and showed untranslated under `de` and `tr`. They are now the

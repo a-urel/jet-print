@@ -141,15 +141,38 @@ extension CtrlResize on JetReportDesignerController {
   }
 
   /// Updates the in-progress band resize to a cumulative [heightDelta] (points,
-  /// positive grows the band), applying the [kMinBandHeight] floor; publishes the
-  /// preview.
+  /// positive grows the band); publishes the preview.
+  ///
+  /// The drag stops at the band's content, the way a dragged element edge pins
+  /// at its band: it cannot shrink the band past its lowest element's bottom
+  /// edge, so nothing ends up outside its band and nothing is moved or resized
+  /// to prevent it. Content that already overflows blocks shrinking without
+  /// growing the band. [kMinBandHeight] is the floor for an empty band. (A
+  /// programmatic `SetBandHeightCommand` is not clamped this way.)
   void updateBandResize(double heightDelta) {
     final double? start = _bandResizeStartHeight;
-    if (start == null) return;
+    final String? bandId = _bandResizeId;
+    if (start == null || bandId == null) return;
     final double next = start + heightDelta;
-    _bandResizePreviewHeight = next < kMinBandHeight ? kMinBandHeight : next;
+    final double floor = _bandResizeFloor(bandId, start);
+    _bandResizePreviewHeight = next < floor ? floor : next;
     _frameSerial++;
     _notify();
+  }
+
+  /// The lowest height the drag may reach for band [bandId] that started at
+  /// [start]: its content's bottom edge (capped at [start]), or
+  /// [kMinBandHeight] when that is higher.
+  double _bandResizeFloor(String bandId, double start) {
+    double content = 0;
+    for (final ReportElement e
+        in findBand(_document.definition, bandId)?.elements ??
+            const <ReportElement>[]) {
+      final double bottom = e.bounds.y + e.bounds.height;
+      if (bottom > content) content = bottom;
+    }
+    if (content > start) content = start;
+    return content > kMinBandHeight ? content : kMinBandHeight;
   }
 
   /// Commits the in-progress band resize as one history entry, or clears the
