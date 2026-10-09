@@ -28,6 +28,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Committing a plain-text value unchanged no longer changes it.** The value
+  field showed a literal label raw but committed it through the template
+  parser, which reads `[name]` as a field binding and `\` as an escape. So
+  re-committing what the field showed — which the fx editor's Apply does even
+  without an edit — turned a label reading `[Draft]` into a binding to a field
+  named `Draft`, and `C:\temp` lost its backslash. A literal is now displayed
+  with its `\ [ ] { }` escaped (`\[Draft\]`), the template's own literal
+  syntax, so it parses back to exactly what was stored.
+
 - **Undo, redo and opening a report now cancel a drag in progress.**
   Replacing the document left the live move, resize or band-resize state
   behind, and Ctrl+Z works mid-drag. So dragging element B and pressing Ctrl+Z
