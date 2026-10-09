@@ -59,6 +59,7 @@ Future<JetReportWorkspace> _pumpWorkspace(
   ValueChanged<RenderedReport>? onExportPdf,
   ValueChanged<RenderedReport>? onPrint,
   WidgetBuilder? loadingBuilder,
+  JetDataSchema? dataSchema,
   Size size = const Size(1200, 800),
 }) async {
   await tester.binding.setSurfaceSize(size);
@@ -66,6 +67,7 @@ Future<JetReportWorkspace> _pumpWorkspace(
   final JetReportWorkspace workspace = JetReportWorkspace(
     controller: controller,
     renderReport: renderReport ?? _render,
+    dataSchema: dataSchema,
     onExportPdf: onExportPdf,
     onPrint: onPrint,
     loadingBuilder: loadingBuilder,
@@ -193,6 +195,147 @@ void main() {
     await tester.pump();
     await _enterPreview(tester);
     expect(renders, 2, reason: 'changed template ⇒ a fresh render');
+  });
+
+  // Regression (#58): the cached report was keyed on the definition alone, so
+  // a host that switched data (a new render callback, a new schema) and went
+  // back to preview saw the old data until the template itself was edited.
+  testWidgets('a new renderReport invalidates the cached report',
+      (WidgetTester tester) async {
+    final List<String> calls = <String>[];
+    final JetReportDesignerController controller =
+        JetReportDesignerController(definition: _definition());
+    addTearDown(controller.dispose);
+    await _pumpWorkspace(tester, controller: controller,
+        renderReport: (ReportDefinition t) {
+      calls.add('old');
+      return _render(t);
+    });
+    await _enterPreview(tester);
+    await tester.tap(find.byKey(_modeDesignerKey));
+    await tester.pump();
+
+    await _pumpWorkspace(tester, controller: controller,
+        renderReport: (ReportDefinition t) {
+      calls.add('new');
+      return _render(t);
+    });
+    await _enterPreview(tester);
+    expect(calls, <String>['old', 'new']);
+  });
+
+  testWidgets('a new dataSchema invalidates the cached report',
+      (WidgetTester tester) async {
+    int renders = 0;
+    RenderedReport counting(ReportDefinition t) {
+      renders++;
+      return _render(t);
+    }
+
+    final JetReportDesignerController controller =
+        JetReportDesignerController(definition: _definition());
+    addTearDown(controller.dispose);
+    await _pumpWorkspace(tester,
+        controller: controller, renderReport: counting);
+    await _enterPreview(tester);
+    await tester.tap(find.byKey(_modeDesignerKey));
+    await tester.pump();
+
+    await _pumpWorkspace(tester,
+        controller: controller,
+        renderReport: counting,
+        dataSchema: const JetDataSchema(
+            name: 'Selected',
+            fields: <FieldDef>[FieldDef('name', type: JetFieldType.string)]));
+    await _enterPreview(tester);
+    expect(renders, 2);
+  });
+
+  testWidgets('a new renderReport while previewing re-renders in place',
+      (WidgetTester tester) async {
+    final List<String> calls = <String>[];
+    final JetReportDesignerController controller =
+        JetReportDesignerController(definition: _definition());
+    addTearDown(controller.dispose);
+    await _pumpWorkspace(tester, controller: controller,
+        renderReport: (ReportDefinition t) {
+      calls.add('old');
+      return _render(t);
+    });
+    await _enterPreview(tester);
+
+    await _pumpWorkspace(tester, controller: controller,
+        renderReport: (ReportDefinition t) {
+      calls.add('new');
+      return _render(t);
+    });
+    await tester.pump(const Duration(milliseconds: 1));
+    await tester.pumpAndSettle();
+    expect(calls, <String>['old', 'new']);
+    expect(find.byKey(_pageKey), findsOneWidget);
+  });
+
+  // Review on #73: invalidation did not supersede a render already in flight,
+  // so an old render that finished after the inputs changed marked itself
+  // current again and the next preview entry reused its stale rows.
+  testWidgets('an input change supersedes a render still in flight',
+      (WidgetTester tester) async {
+    final List<String> calls = <String>[];
+    final Completer<RenderedReport> oldGate = Completer<RenderedReport>();
+    final JetReportDesignerController controller =
+        JetReportDesignerController(definition: _definition());
+    addTearDown(controller.dispose);
+    await _pumpWorkspace(tester, controller: controller,
+        renderReport: (ReportDefinition t) {
+      calls.add('old');
+      return oldGate.future;
+    });
+    await tester.tap(find.byKey(_modePreviewKey));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1)); // old render starts
+    await tester.tap(find.byKey(_modeDesignerKey)); // leave it in flight
+    await tester.pump();
+
+    await _pumpWorkspace(tester, controller: controller,
+        renderReport: (ReportDefinition t) {
+      calls.add('new');
+      return _render(t);
+    });
+    oldGate.complete(_render(controller.definition)); // the stale one lands
+    await tester.pump();
+
+    await _enterPreview(tester);
+    expect(calls, <String>['old', 'new']);
+  });
+
+  // Review on #73: while a re-render for new inputs was running (or after it
+  // failed), export and print still acted on the old report.
+  testWidgets('export and print wait until the shown report is current',
+      (WidgetTester tester) async {
+    final JetReportDesignerController controller =
+        JetReportDesignerController(definition: _definition());
+    addTearDown(controller.dispose);
+    const ValueKey<String> exportKey =
+        ValueKey<String>('jet_print.preview.export');
+    void noop(RenderedReport _) {}
+    await _pumpWorkspace(tester,
+        controller: controller, onExportPdf: noop, onPrint: noop);
+    await _enterPreview(tester);
+    expect(find.byKey(exportKey), findsOneWidget);
+
+    final Completer<RenderedReport> gate = Completer<RenderedReport>();
+    await _pumpWorkspace(tester,
+        controller: controller,
+        onExportPdf: noop,
+        onPrint: noop,
+        renderReport: (ReportDefinition t) => gate.future);
+    await tester.pump(const Duration(milliseconds: 1)); // re-render running
+    expect(find.byKey(exportKey), findsNothing,
+        reason: 'the old report must not be exported as the new one');
+
+    gate.complete(_render(controller.definition));
+    await tester.pumpAndSettle();
+    expect(find.byKey(exportKey), findsOneWidget);
   });
 
   testWidgets('a failed render reports the error and clears the spinner',

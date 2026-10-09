@@ -28,6 +28,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **The workspace preview no longer shows stale data after the host switches
+  data.** `JetReportWorkspace` cached the rendered report by definition alone
+  and had no `didUpdateWidget`, so a host that changed its `renderReport`
+  callback or `dataSchema` — the playground's "Select data source" — kept
+  seeing the old rows in preview until the report itself was edited. Either
+  change now invalidates the cache: the next preview entry re-renders, and a
+  preview already on screen re-renders in place. A render still in flight when
+  the inputs change is superseded, and export and print are offered only while
+  the report on screen is current — not during a re-render, and not after a
+  failed one.
+
 - **Back-to-back instances of a group now lay out as separate instances.**
   The layouter folded consecutive headers of one group into a single header
   run — a rule that exists for crosstab groups, which emit several header bands
