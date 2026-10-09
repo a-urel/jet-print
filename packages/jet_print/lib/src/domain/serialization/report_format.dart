@@ -55,10 +55,11 @@ abstract final class JetReportFormat {
 
   /// Decodes a report [json] map into a [ReportDefinition], migrating a legacy
   /// v1 (flat-band) document forward when needed. Throws [ReportFormatException]
-  /// on malformed input or a `schemaVersion` newer than this build.
+  /// on malformed input or a `schemaVersion` newer than this build — and only
+  /// that: see [_asFormatError].
   static ReportDefinition decodeDefinition(Map<String, Object?> json) =>
-      defcodec.decodeDefinition(json, _registry,
-          migrations: _definitionMigrations);
+      _asFormatError(() => defcodec.decodeDefinition(json, _registry,
+          migrations: _definitionMigrations));
 
   /// Encodes [definition] to a UTF-8 JSON string (convenience over
   /// [encodeDefinition]).
@@ -69,10 +70,35 @@ abstract final class JetReportFormat {
   /// (convenience over [decodeDefinition]). Throws [ReportFormatException] when
   /// the text is not a JSON object.
   static ReportDefinition decodeDefinitionJson(String source) {
-    final Object? decoded = jsonDecode(source);
+    final Object? decoded = _asFormatError(() => jsonDecode(source));
     if (decoded is! Map) {
       throw const ReportFormatException('Report JSON must be a JSON object.');
     }
     return decodeDefinition(decoded.cast<String, Object?>());
+  }
+
+  /// Runs [decode], turning anything a malformed document can raise into a
+  /// [ReportFormatException], so a host needs exactly one `catch`.
+  ///
+  /// The codecs check the shapes they expect explicitly where a message helps,
+  /// but a document can be wrong in more places than are worth a hand-written
+  /// check: a `!`/`as` cast meets the wrong type (`TypeError`), an enum name is
+  /// unknown (`ArgumentError` from `values.byName`), a string is not a number,
+  /// a colour or JSON (`FormatException`), or an index is out of range
+  /// (`RangeError`, an `ArgumentError`). Each is the document's fault, so each
+  /// is reported as one, keeping the underlying message.
+  static T _asFormatError<T>(T Function() decode) {
+    try {
+      return decode();
+    } on ReportFormatException {
+      rethrow;
+    } on FormatException catch (e) {
+      throw ReportFormatException('Malformed report: ${e.message}');
+    } on TypeError catch (e) {
+      throw ReportFormatException('Malformed report: $e');
+    } on ArgumentError catch (e) {
+      throw ReportFormatException('Malformed report: ${e.message}: '
+          '${e.invalidValue}');
+    }
   }
 }
