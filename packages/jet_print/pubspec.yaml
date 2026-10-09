@@ -1,8 +1,7 @@
 name: jet_print
 description: >-
-  A layered, theme-aware Flutter library for building WYSIWYG report designers:
-  a reified report model, a render/paginate engine, PDF/PNG export and system
-  printing, and an interactive shadcn_ui-themed designer surface.
+  A Flutter library for building WYSIWYG report designers: a report model, a
+  paginating render engine, PDF/PNG export, printing, and a themed designer.
 version: 0.1.0
 
 # pub.dev metadata (Epic 1 — release hygiene). Version stays 0.1.0 until the
@@ -45,10 +44,17 @@ dependencies:
   # The library ships its own en/de/tr chrome strings.
   flutter_localizations:
     sdk: flutter
-  intl: any
+  # The version flutter_localizations pins on the supported Flutter (3.44).
+  intl: ^0.20.2
   # shadcn_ui constraint below was written by `flutter pub add` so it records the
   # real resolved range, not a placeholder.
   shadcn_ui: ^0.57.1
+  # Not imported directly: the icons arrive through shadcn_ui's re-export. It is
+  # declared only to raise the floor. shadcn_ui allows lucide_icons_flutter
+  # >=3.0.0, but the text-align icons (textAlignStart/Center/End) first ship in
+  # 3.1.1, and circleHelp is absent from 3.1.1-3.1.10 and 3.1.12-3.1.13. 3.1.14
+  # is the first version from which every icon the library uses is present.
+  lucide_icons_flutter: ^3.1.14
   # Export slice: `pdf` generates the PDF artifact (pure Dart — the
   # rendering seam stays Flutter-free); `printing` presents the system print
   # dialog (confined to lib/src/print/ behind a swappable presenter seam);

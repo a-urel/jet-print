@@ -4,7 +4,7 @@ All notable changes to the `jet_print` library are documented here. The format i
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.1.0
 
 > **Highlights** — the first public shape of `jet_print`. In one sentence: design
 > a report as a reified, id'd section tree, fill it with your data, and preview,
@@ -27,6 +27,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 > model and is aimed at upgraders, not first-time readers.
 
 ### Fixed
+
+- **The package compiles at the lowest dependency versions it allows.**
+  `shadcn_ui` allows `lucide_icons_flutter` 3.0.0, but some icons the designer
+  uses are missing from versions before 3.1.14 (`textAlignStart`/`Center`/`End`
+  first ship in 3.1.1, and `circleHelp` is absent from most 3.1.x releases
+  before 3.1.14), so a downgraded resolution failed to compile.
+  `lucide_icons_flutter: ^3.1.14` is now declared to raise that floor. `intl` is constrained to `^0.20.2` (it
+  was `any`).
+
+- **The README quickstart compiles.** Its `TextElement` was missing the
+  required `text:` argument.
 
 - **A preview render superseded before it starts no longer calls the host.**
   The workspace yields one frame before rendering so the loading bar can
@@ -382,6 +393,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   is now `kReportDefinitionSchemaVersion` (`2`).
 
 ### Added
+
+- **A package example**, `example/jet_print_example.dart`: describe a report,
+  fill it, export it to PDF, and preview it. A test runs it, so it keeps
+  compiling against the public API.
 
 - **The designer authors the reified tree natively.** The controller, Outline
   and Properties panels, and canvas all edit a `ReportDefinition`; bands, groups,
@@ -1028,16 +1043,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   it (the designer chrome wires these automatically; hosts may call
   `requestPropertiesFocus()` to deep-link their own UI into the inspector).
 
-## 0.1.0
-
-Initial scaffold release.
-
-### Added
+### Initial scaffold
 
 - Single public entry point `package:jet_print/jet_print.dart`.
-- `JetPrintPlaceholder` — a `const`, theme-aware placeholder widget that reflects
-  the active `shadcn_ui` theme.
 - `jetPrintVersion` — the library's declared version string, establishing the
   SemVer baseline.
-- Three internal layer seams (`domain`, `rendering`, `designer`) under `lib/src/`
-  with an inward-only dependency rule enforced by an architecture test.
+- Internal layer seams under `lib/src/` with an inward-only dependency rule
+  enforced by an architecture test.
