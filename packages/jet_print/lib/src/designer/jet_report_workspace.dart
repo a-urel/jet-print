@@ -65,9 +65,15 @@ class JetReportWorkspace extends StatefulWidget {
   final JetReportDesignerController controller;
 
   /// Produces the [RenderedReport] shown in preview from the live definition.
+  ///
+  /// The rendered report is cached until the definition changes. Passing a
+  /// different callback (or a different [dataSchema]) also invalidates it, so a
+  /// host that switches its data rebuilds with a new callback and the next
+  /// preview shows the new data.
   final ReportRenderCallback renderReport;
 
   /// The data-source structure shown in the designer's Data Source panel.
+  /// Changing it invalidates the cached preview (see [renderReport]).
   final JetDataSchema? dataSchema;
 
   /// Forwarded to the designer's Save action (the host persists the template).
@@ -122,7 +128,8 @@ class _JetReportWorkspaceState extends State<JetReportWorkspace> {
   RenderedReport? _report;
 
   /// The definition identity [_report] was rendered from; an unchanged identity
-  /// on the next preview entry means the cached report is still valid.
+  /// on the next preview entry means the cached report is still valid — unless
+  /// [didUpdateWidget] cleared it because the host's render inputs changed.
   ReportDefinition? _lastRendered;
 
   /// Whether a render is currently in flight (drives the loading indicator).
@@ -139,6 +146,28 @@ class _JetReportWorkspaceState extends State<JetReportWorkspace> {
   }
 
   void _enterDesigner() => setState(() => _mode = WorkspaceMode.designer);
+
+  /// A new [JetReportWorkspace.renderReport] or [JetReportWorkspace.dataSchema]
+  /// means the cached report may show data the host no longer renders (e.g.
+  /// after "Select data source"), so it stops counting as current: the next
+  /// preview entry re-renders, and a preview on screen re-renders now. The old
+  /// pages stay visible under the loading bar meanwhile, with export and print
+  /// held back (see [_buildPreviewSlot]). A render already in flight is
+  /// superseded, so it cannot land afterwards and mark its old inputs current.
+  @override
+  void didUpdateWidget(JetReportWorkspace oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.renderReport == oldWidget.renderReport &&
+        widget.dataSchema == oldWidget.dataSchema) {
+      return;
+    }
+    _lastRendered = null;
+    _renderSeq++; // supersede any render in flight
+    _rendering = false;
+    if (_mode == WorkspaceMode.preview) {
+      _startRender(widget.controller.definition);
+    }
+  }
 
   Future<void> _startRender(ReportDefinition definition) async {
     final int seq = ++_renderSeq;
@@ -212,12 +241,20 @@ class _JetReportWorkspaceState extends State<JetReportWorkspace> {
         loadingBuilder: widget.loadingBuilder,
       );
     }
+    // Export and print act on the report shown, so they are offered only while
+    // it is current: not during a re-render for new inputs or a new definition,
+    // and not after one failed (which keeps the old pages on screen).
+    final bool current =
+        !_rendering && identical(_lastRendered, widget.controller.definition);
     final Widget preview = JetReportPreview(
       report: report,
       onBack: _enterDesigner,
-      onExportPdf:
-          widget.onExportPdf == null ? null : () => widget.onExportPdf!(report),
-      onPrint: widget.onPrint == null ? null : () => widget.onPrint!(report),
+      onExportPdf: widget.onExportPdf == null || !current
+          ? null
+          : () => widget.onExportPdf!(report),
+      onPrint: widget.onPrint == null || !current
+          ? null
+          : () => widget.onPrint!(report),
     );
     // The preview is always the first child of a Stack so its element (and its
     // cached page picture) survives a re-render toggle without remounting. When a

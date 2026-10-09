@@ -91,7 +91,7 @@ extension _ElementInspector on _PropertiesPanelState {
         _ValueField(
           fieldKey: const ValueKey<String>('$_p.field.value'),
           display: element.expression == null
-              ? ValueDisplay(element.text)
+              ? displayLiteral(element.text)
               : reverseCompile(element.expression!),
           placeholder: l10n.valueFieldHint,
           focusNode: _textFocus,
