@@ -28,6 +28,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Dragging a band's divider no longer leaves elements outside the band.**
+  Shrinking a band by its divider had only the minimum-height floor, so
+  elements ended up hanging past the new bottom edge. The drag now stops at the
+  lowest element's bottom edge — the same edge-pinning a dragged element gets at
+  its band — so nothing is moved or resized to make room; content that already
+  overflows blocks shrinking without growing the band. A programmatic
+  `SetBandHeightCommand` and the inspector's typed band height are unchanged.
+
 - **The group-row hint names the band that actually carries the settings.**
   Selecting a group row always said to edit its settings "on the group header
   band" — even for a footer-only group, whose settings live on its footer, so
