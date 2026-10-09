@@ -11,7 +11,7 @@ import '../value_equality.dart';
 /// The form of a [ShapeElement].
 ///
 /// [line] and [rectangle] are special-cased by the renderer
-/// ([LinePrimitive]/[RectPrimitive]); every other value is an inscribed polygon
+/// (`LinePrimitive`/`RectPrimitive`); every other value is an inscribed polygon
 /// produced by the shared `shapePath` geometry and drawn as a single
 /// `PathPrimitive`, so canvas, preview, and export agree by construction.
 ///

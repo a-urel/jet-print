@@ -12,8 +12,8 @@ import 'dart:ui' show Locale;
 import '../text/jet_font.dart';
 import 'element_print_callback.dart';
 
-/// The per-render inputs of a [JetReportEngine.render] call, separate from the
-/// template: the values that may change on every render of the same design.
+/// The per-render inputs of a [JetReportEngine.renderDefinition] call, separate
+/// from the definition: the values that may change on every render of the same design.
 ///
 /// ```dart
 /// const RenderOptions(
@@ -23,7 +23,7 @@ import 'element_print_callback.dart';
 /// ```
 class RenderOptions {
   /// Creates render options; every field has a neutral default so
-  /// `render(template, source)` works without any options.
+  /// `renderDefinition(definition, source)` works without any options.
   const RenderOptions({
     this.parameters = const <String, Object?>{},
     this.locale = const Locale('en'),
