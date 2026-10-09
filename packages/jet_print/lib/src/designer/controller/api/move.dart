@@ -23,8 +23,13 @@ extension CtrlMove on JetReportDesignerController {
   /// single element is selected and snapping is on, [threshold] (points) and the
   /// grid/sibling/band candidates pull the delta to an aligned position and
   /// publish guides. [bypassSnap] (Alt/Option) disables snapping for this update.
+  ///
+  /// Ignored unless a move is active (since [beginMove]): a move cancelled
+  /// mid-gesture — undo, redo, open — must stay cancelled while the canvas
+  /// keeps reporting pointer motion until pointer-up.
   void updateMove(JetOffset delta,
       {double threshold = 0, bool bypassSnap = false}) {
+    if (_moveDelta == null) return;
     JetOffset effective = delta;
     _guides = const <SnapGuide>[];
     _activeBandId = null;
