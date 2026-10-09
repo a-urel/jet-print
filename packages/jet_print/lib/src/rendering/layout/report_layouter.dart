@@ -592,6 +592,13 @@ class ReportLayouter {
     final Map<String, GroupLevel> groupByName = <String, GroupLevel>{
       for (final GroupLevel g in groups) g.name: g,
     };
+    // Only a synthetic (crosstab) group emits several header bands per
+    // instance, so only its back-to-back headers are one header run. An
+    // ordinary group owns one header band: two in a row are two instances
+    // (a footer-less group whose rows printed nothing) and lay out as two.
+    final Set<String> multiHeaderGroups = <String>{
+      for (final GroupLevel g in filled.syntheticGroups) g.name,
+    };
 
     // Scoped to definitionGroups, not the unioned groups: its only consumer
     // is the exemption loop below, which is itself scoped to definitionGroups
@@ -668,7 +675,8 @@ class ReportLayouter {
         final int level = isGroupBand ? levelOf[band.group]! : -1;
         final bool newHeader = band.type == BandType.groupHeader &&
             isGroupBand &&
-            spanPrevHeader != band.group;
+            (spanPrevHeader != band.group ||
+                !multiHeaderGroups.contains(band.group));
         if (newHeader) {
           if (groupByName[band.group]!.startNewPage &&
               !seenStartNewPageGroup.add(band.group!)) {
@@ -730,7 +738,23 @@ class ReportLayouter {
             levelOf.containsKey(band.group);
         final int level = isGroupBand ? levelOf[band.group]! : -1;
 
-        if (band.type == BandType.groupFooter && isGroupBand) {
+        // A header either continues a synthetic group's header run or opens a
+        // new instance. A new instance closes the previous one at its level
+        // (and anything deeper) *before* the break checks below, so a break
+        // the new header causes never reprints the instance it replaces.
+        final bool continuesHeaderRun = band.type == BandType.groupHeader &&
+            isGroupBand &&
+            prevHeaderGroup == band.group &&
+            multiHeaderGroups.contains(band.group) &&
+            openStack.isNotEmpty &&
+            openStack.last.name == band.group;
+        if (band.type == BandType.groupHeader &&
+            isGroupBand &&
+            !continuesHeaderRun) {
+          while (openStack.isNotEmpty && openStack.last.level >= level) {
+            openStack.removeLast();
+          }
+        } else if (band.type == BandType.groupFooter && isGroupBand) {
           while (openStack.isNotEmpty && openStack.last.level > level) {
             openStack.removeLast();
           }
@@ -775,14 +799,10 @@ class ReportLayouter {
         cursorY += mb.height;
 
         if (band.type == BandType.groupHeader && isGroupBand) {
-          if (prevHeaderGroup == band.group &&
-              openStack.isNotEmpty &&
-              openStack.last.name == band.group) {
+          if (continuesHeaderRun) {
             openStack.last.headers.add(mb);
           } else {
-            while (openStack.isNotEmpty && openStack.last.level >= level) {
-              openStack.removeLast();
-            }
+            // The previous instance was already closed before the checks.
             openStack.add((
               name: band.group!,
               level: level,

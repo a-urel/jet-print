@@ -28,6 +28,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Back-to-back instances of a group now lay out as separate instances.**
+  The layouter folded consecutive headers of one group into a single header
+  run — a rule that exists for crosstab groups, which emit several header bands
+  per instance. An ordinary group owns one header band, so two in a row are two
+  instances (a group with no footer whose rows printed nothing, for example
+  because the detail band is hidden). The second instance lost its
+  `startNewPage` break, joined the first's `keepTogether` span, and a page
+  break reprinted both headers. The merge now applies to crosstab groups only.
+  Relatedly, a page break caused by a new instance's own header no longer
+  reprints the header of the instance it replaces: the previous instance is
+  now closed before the break checks, not after.
+
 - **Malformed report JSON now fails with `ReportFormatException`, and only
   that.** `JetReportFormat.decodeDefinition` and `decodeDefinitionJson`
   promised `ReportFormatException`, but a truncated or hand-edited document
