@@ -48,7 +48,7 @@ dependencies:
   intl: any
   # shadcn_ui constraint below was written by `flutter pub add` so it records the
   # real resolved range, not a placeholder.
-  shadcn_ui: ^0.54.0
+  shadcn_ui: ^0.57.1
   # Export slice: `pdf` generates the PDF artifact (pure Dart — the
   # rendering seam stays Flutter-free); `printing` presents the system print
   # dialog (confined to lib/src/print/ behind a swappable presenter seam);

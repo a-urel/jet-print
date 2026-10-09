@@ -50,7 +50,7 @@ dependencies:
   # host-font list demonstrated end-to-end.
   jet_print_google_fonts:
   # shadcn_ui constraint written by `flutter pub add` (real resolved range).
-  shadcn_ui: ^0.54.0
+  shadcn_ui: ^0.57.1
 
 dev_dependencies:
   flutter_test:
