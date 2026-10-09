@@ -35,13 +35,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   discarded the result, so one input change rendered twice. It now stops as
   soon as it is superseded, and only the newer render calls the host.
 
-- **Dragging a band's divider no longer leaves elements outside the band.**
-  Shrinking a band by its divider had only the minimum-height floor, so
-  elements ended up hanging past the new bottom edge. The drag now stops at the
-  lowest element's bottom edge — the same edge-pinning a dragged element gets at
-  its band — so nothing is moved or resized to make room; content that already
-  overflows blocks shrinking without growing the band. A programmatic
-  `SetBandHeightCommand` and the inspector's typed band height are unchanged.
+- **Resizing a band no longer leaves elements outside it.** Shrinking a band —
+  by dragging its divider or typing its height in the inspector
+  (`setBandHeight`) — had only the minimum-height floor, so elements ended up
+  hanging past the new bottom edge. Both now stop at the lowest element's
+  bottom edge — the same edge-pinning a dragged element gets at its band — so
+  nothing is moved or resized to make room; content that already overflows
+  blocks shrinking without growing the band. A numeric inspector field now
+  shows the value the model took after a commit, so a clamped height reads
+  back as the height the band kept rather than the number typed. A
+  programmatic `SetBandHeightCommand` is unchanged.
 
 - **The group-row hint names the band that actually carries the settings.**
   Selecting a group row always said to edit its settings "on the group header

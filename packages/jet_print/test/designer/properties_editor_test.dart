@@ -448,6 +448,33 @@ void main() {
       expect(_bandById(c, 'detail').height, 260);
     });
 
+    // A typed height below the band's content stops at the content, and the
+    // field shows the height the band actually took, not the typed number.
+    testWidgets('a typed band height stops at the content and shows it',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      c.createElement(DesignerToolType.shape,
+          bandId: 'detail', at: const JetOffset(10, 100));
+      c.setGeometry(c.selection.singleOrNull!, y: 100, height: 50); // to 150
+      c.selectBand('detail');
+      await tester.pumpAndSettle();
+
+      await tester.enterText(_editable('bandHeight'), '60');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(_bandById(c, 'detail').height, 150);
+      expect(_valueIn('bandHeight', '150'), findsOneWidget);
+
+      // Already at its content: the band does not change, and the field
+      // drops the typed number rather than showing a height it did not take.
+      await tester.enterText(_editable('bandHeight'), '40');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(_bandById(c, 'detail').height, 150);
+      expect(_valueIn('bandHeight', '150'), findsOneWidget);
+    });
+
     testWidgets('the group header band exposes a Start-on-new-page toggle',
         (WidgetTester tester) async {
       // The page-break flag is a GROUP property written through the

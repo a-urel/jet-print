@@ -197,6 +197,15 @@ class _NumberFieldState extends State<_NumberField> {
       return;
     }
     widget.onCommit(parsed);
+    // The model may clamp the commit (a band stops at its content) — even to
+    // the value it already had, which rebuilds nothing. Re-read it once the
+    // frame has rebuilt so the field shows what the model took, not the typed
+    // number.
+    WidgetsBinding.instance
+      ..addPostFrameCallback((_) {
+        if (mounted) _controller.text = _format(widget.value);
+      })
+      ..scheduleFrame();
   }
 
   void _bump(double delta) => widget.onCommit(widget.value + delta);
