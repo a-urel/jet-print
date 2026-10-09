@@ -122,6 +122,7 @@
   "propertiesGroupKeepTogether": "Birlikte tut",
   "propertiesGroupReprintHeader": "Başlığı her sayfada yinele",
   "propertiesGroupOnHeaderHint": "Sayfa ve grup ayarlarını grup başlığı bandında düzenleyin.",
+  "propertiesGroupOnFooterHint": "Sayfa ve grup ayarlarını grup alt bilgisi bandında düzenleyin.",
   "propertiesScope": "Kapsam",
   "outlineMoveUp": "Yukarı taşı",
   "outlineMoveDown": "Aşağı taşı",

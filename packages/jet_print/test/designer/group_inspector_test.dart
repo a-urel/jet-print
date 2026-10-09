@@ -157,4 +157,57 @@ void main() {
     expect(_field('groupKey'), findsNothing,
         reason: 'flag/key editing moved to the group header band');
   });
+
+  // Regression (#35): the group-row hint always named the HEADER band, even for
+  // a footer-only group, whose settings live on its footer — sending the author
+  // to a band that does not exist. The hint now names the actual carrier.
+  group('the group-row hint names the band that carries the settings', () {
+    const String headerHint =
+        'Edit page & group settings on the group header band.';
+    const String footerHint =
+        'Edit page & group settings on the group footer band.';
+
+    Future<void> selectGroupRow(
+        WidgetTester tester, ReportDefinition def) async {
+      final JetReportDesignerController controller =
+          JetReportDesignerController(definition: def);
+      await pumpDesignerWith(tester, controller: controller);
+      await openPropertiesTab(tester);
+      controller.selectGroup(controller.definition.body.root.groups.single.id);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('a group with a header points to the header',
+        (WidgetTester tester) async {
+      await selectGroupRow(tester, _grouped());
+      expect(find.text(headerHint), findsOneWidget);
+      expect(find.text(footerHint), findsNothing);
+    });
+
+    testWidgets('a footer-only group points to the footer',
+        (WidgetTester tester) async {
+      await selectGroupRow(tester, _footerOnly());
+      expect(find.text(footerHint), findsOneWidget);
+      expect(find.text(headerHint), findsNothing);
+    });
+
+    testWidgets('a group with neither band points nowhere',
+        (WidgetTester tester) async {
+      final ReportDefinition bare = _footerOnly().copyWith(
+        body: _footerOnly().body.copyWith(
+              root: _footerOnly().body.root.copyWith(groups: <GroupLevel>[
+                _footerOnly()
+                    .body
+                    .root
+                    .groups
+                    .single
+                    .copyWith(footer: () => null),
+              ]),
+            ),
+      );
+      await selectGroupRow(tester, bare);
+      expect(find.text(headerHint), findsNothing);
+      expect(find.text(footerHint), findsNothing);
+    });
+  });
 }

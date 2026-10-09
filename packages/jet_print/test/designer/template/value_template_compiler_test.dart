@@ -301,4 +301,23 @@ void main() {
           const BindingValue(r'SUM($F{qty} * $F{price})'));
     });
   });
+
+  // #56: the display form of a plain literal must parse back to that literal.
+  group('displayLiteral round-trips through parseValueField', () {
+    for (final String literal in <String>[
+      '',
+      'plain text',
+      '[Draft]',
+      r'C:\temp',
+      '{x}',
+      r'a [b] {c} \ d',
+      r'trailing \',
+    ]) {
+      test(literal.isEmpty ? '(empty)' : literal, () {
+        expect(parseValueField(displayLiteral(literal).text),
+            LiteralValue(literal));
+        expect(displayLiteral(literal).editable, isTrue);
+      });
+    }
+  });
 }

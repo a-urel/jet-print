@@ -36,6 +36,106 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   overflows blocks shrinking without growing the band. A programmatic
   `SetBandHeightCommand` and the inspector's typed band height are unchanged.
 
+- **The group-row hint names the band that actually carries the settings.**
+  Selecting a group row always said to edit its settings "on the group header
+  band" — even for a footer-only group, whose settings live on its footer, so
+  the hint pointed at a band that did not exist. It now names the header when
+  there is one and the footer otherwise (new key `propertiesGroupOnFooterHint`
+  in en/de/tr), and shows no hint for a group with neither.
+
+- **Committing a plain-text value unchanged no longer changes it.** The value
+  field showed a literal label raw but committed it through the template
+  parser, which reads `[name]` as a field binding and `\` as an escape. So
+  re-committing what the field showed — which the fx editor's Apply does even
+  without an edit — turned a label reading `[Draft]` into a binding to a field
+  named `Draft`, and `C:\temp` lost its backslash. A literal is now displayed
+  with its `\ [ ] { }` escaped (`\[Draft\]`), the template's own literal
+  syntax, so it parses back to exactly what was stored.
+
+- **Undo, redo and opening a report now cancel a drag in progress.**
+  Replacing the document left the live move, resize or band-resize state
+  behind, and Ctrl+Z works mid-drag. So dragging element B and pressing Ctrl+Z
+  restored the previous selection (say A) with B's drag still pending; releasing
+  the pointer then moved A, and that commit discarded the redo entry. The drag
+  is now abandoned whenever the document is replaced, and the release commits
+  nothing.
+
+- **The workspace preview no longer shows stale data after the host switches
+  data.** `JetReportWorkspace` cached the rendered report by definition alone
+  and had no `didUpdateWidget`, so a host that changed its `renderReport`
+  callback or `dataSchema` — the playground's "Select data source" — kept
+  seeing the old rows in preview until the report itself was edited. Either
+  change now invalidates the cache: the next preview entry re-renders, and a
+  preview already on screen re-renders in place. A render still in flight when
+  the inputs change is superseded, and export and print are offered only while
+  the report on screen is current — not during a re-render, and not after a
+  failed one.
+
+- **Back-to-back instances of a group now lay out as separate instances.**
+  The layouter folded consecutive headers of one group into a single header
+  run — a rule that exists for crosstab groups, which emit several header bands
+  per instance. An ordinary group owns one header band, so two in a row are two
+  instances (a group with no footer whose rows printed nothing, for example
+  because the detail band is hidden). The second instance lost its
+  `startNewPage` break, joined the first's `keepTogether` span, and a page
+  break reprinted both headers. The merge now applies to crosstab groups only.
+  Relatedly, a page break caused by a new instance's own header no longer
+  reprints the header of the instance it replaces: the previous instance is
+  now closed before the break checks, not after.
+
+- **Malformed report JSON now fails with `ReportFormatException`, and only
+  that.** `JetReportFormat.decodeDefinition` and `decodeDefinitionJson`
+  promised `ReportFormatException`, but a truncated or hand-edited document
+  could escape as a `TypeError` (a `!` or `as` cast meeting the wrong type), an
+  `ArgumentError` (an unknown enum name such as a variable `calculation` of
+  `"median"`) or a `FormatException` (text that is not JSON), so a host
+  catching `on ReportFormatException` crashed. Both entry points now convert
+  those into a `ReportFormatException` that keeps the underlying message. A
+  test swaps every value of a report touching every decoder for each
+  wrong-typed stand-in, and removes every key, and requires nothing else to
+  escape.
+
+- **A malformed variable or group key no longer aborts the render, and
+  `validate()` now checks variables.** A report variable whose expression did
+  not parse (say `$F{amount`), or a group key that did not parse, threw out of
+  `JetReportEngine.renderDefinition` — while a malformed *element* expression
+  has always rendered `!ERR` with a diagnostic. Now a broken variable evaluates
+  to an error on every row whatever its calculation (it prints `!ERR`, never a
+  plausible-looking total), a broken group key never breaks, and each records
+  one error diagnostic. `validate()` gains rule **I9**: a variable's expression
+  must parse, its name must be unique and outside the `__` prefix the
+  aggregate synthesizer reserves, and a group-scoped variable must reset on
+  exactly one group (a reference that is one group's id and another's name is
+  ambiguous). An element whose expression errors is now diagnosed once per
+  element and message rather than on every row. **Behaviour change:** a fill with a malformed variable
+  used to throw `ExpressionException`; it now returns normally.
+
+- **An aggregate that skips a failed value now says so.** An aggregate input
+  that evaluated to an error — `SUM($F{amount} / $F{qty})` over a row where
+  `qty` is 0 — was skipped exactly like a blank, so the total came out short
+  with no `!ERR` and no diagnostic. It is still skipped (the total remains the
+  fold of the rows that evaluated), but each such row now records a warning,
+  "N value(s) failed to evaluate and were skipped from …", next to the
+  existing one for non-numeric values.
+
+- **A chart over an infinite value no longer throws from `pageAt`.** An
+  infinite chart value — reachable from a JSON number like `1e400` or an
+  overflowing multiplication — went straight into the series, and scaling the
+  value axis threw (`Infinity.floor()`) out of page building, breaking the
+  engine's never-throw promise. A non-finite value is now plotted as 0 with a
+  warning, like a non-number, and the value axis is now total: a non-finite
+  maximum gets a unit scale, and an extreme finite one (`double.maxFinite`,
+  whose rounded maximum overflowed and hung the tick loop, or the smallest
+  positive double, whose step underflowed to 0) gets an exact linear scale.
+  Ticks are generated by count, so no input can loop forever.
+
+- **A fill that throws now closes the host's data set.** The filler opened the
+  data set early (to read its schema) but only started the `try`/`finally` that
+  closes it at the row loop, so anything that threw in between — a malformed
+  variable or group key fails fast there — left a custom `DataSet` (a database
+  cursor, a file handle) open. The whole fill now runs under one `finally`
+  that closes it exactly once.
+
 - **The field picker's search box and empty result are localized.** Its
   "Search fields" placeholder and "No matching fields" line were hardcoded
   English and showed untranslated under `de` and `tr`. They are now the

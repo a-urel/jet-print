@@ -92,6 +92,20 @@ void main() {
     expect(a.skippedNonNumeric, 1);
   });
 
+  // #62: an error is still skipped, but counted on its own, so the fill can
+  // report it instead of leaving the total silently short.
+  test('skippedErrors counts error inputs, not nulls, and survives reset', () {
+    final VariableAccumulator a = VariableAccumulator(JetCalculation.sum);
+    a.fold(const JetNumber(2));
+    a.fold(const JetError('Division by zero'));
+    a.fold(const JetNull());
+    expect(a.value, const JetNumber(2));
+    expect(a.skippedErrors, 1);
+    expect(a.skippedNonNumeric, 0);
+    a.reset();
+    expect(a.skippedErrors, 1, reason: 'lifetime-monotonic, like the other');
+  });
+
   test('skippedNonNumeric counts wrong-type AVG inputs', () {
     final VariableAccumulator a = _acc(JetCalculation.average);
     a.fold(const JetNumber(4));

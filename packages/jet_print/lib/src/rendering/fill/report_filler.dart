@@ -29,6 +29,7 @@ import '../../expression/aggregate/variable_accumulator.dart';
 import '../../expression/aggregate/variable_calculator.dart';
 import '../../expression/eval_context.dart';
 import '../../expression/expression.dart';
+import '../../expression/expression_exception.dart';
 import '../../expression/function_registry.dart';
 import '../../expression/functions/built_in_functions.dart';
 import '../../expression/value.dart';
@@ -117,6 +118,28 @@ class ReportFiller {
     // descendant-lift pre-pass. The cursor is positioned before
     // the first row, exactly as if opened later.
     final DataSet ds = source.open(params);
+    // One finally for the whole fill: anything after `open` can throw (a
+    // malformed variable or group key fails fast), and a host's cursor must be
+    // released either way.
+    try {
+      return _fillOpened(rawDefinition, ds,
+          params: params,
+          knownFields: knownFields,
+          unresolvedFieldToken: unresolvedFieldToken);
+    } finally {
+      ds.close();
+    }
+  }
+
+  /// [fillDefinition]'s body over the already-open [ds], which the caller
+  /// closes. The cursor is positioned before the first row.
+  FillResult _fillOpened(
+    ReportDefinition rawDefinition,
+    DataSet ds, {
+    required Map<String, Object?> params,
+    required Set<String>? knownFields,
+    required String unresolvedFieldToken,
+  }) {
     final List<FieldDef> rootFields = ds.fields;
 
     // Spec 033: lift descendant-operand aggregates (SUM($F{lineTotal}) where
@@ -133,6 +156,10 @@ class ReportFiller {
     final List<DescendantAggregate> descAggs = lift.aggregates;
     final ReportDiagnostics diagnostics = ReportDiagnostics();
     final DiagnosticBudget budget = DiagnosticBudget(diagnostics);
+    // Tags each run of a nested scope's totals or footer: a scope nested two
+    // deep runs once per parent row, and the budget dedupes by key within a
+    // master row, so each instance needs its own key to keep its own warning.
+    int scopeInstance = 0;
     final Set<String> warnedFields = <String>{};
     final Set<String> ignoredPageRefs = <String>{};
 
@@ -203,6 +230,9 @@ class ReportFiller {
       functions: _functions,
       contextFactory: contextFactory,
     )..start();
+    for (final String message in calc.compileErrors) {
+      diagnostics.error(message);
+    }
 
     // Spec 033: split lifted aggregates by reset scope and build per-name
     // accumulators. Accumulators fold every master row's descendant leaves;
@@ -229,7 +259,13 @@ class ReportFiller {
 
     void scanPageScoped(String expression, String site) {
       final Set<String> refs = <String>{};
-      Expression.parse(expression).evaluate(FillEvalContext(
+      final Expression parsed;
+      try {
+        parsed = Expression.parse(expression);
+      } on ExpressionException {
+        return; // reported once, by the calculator's compileErrors
+      }
+      parsed.evaluate(FillEvalContext(
         functions: _functions,
         diagnostics: diagnostics,
         warnedFields: <String>{},
@@ -430,12 +466,12 @@ class ReportFiller {
               functions: _functions,
             )));
           }
-          if (acc.skippedNonNumeric > 0) {
-            budget.recordRowIssue(
-                'agg:scope:${cs.id}:${a.name}',
-                '${acc.skippedNonNumeric} non-numeric value(s) were skipped '
-                    'from published total "${a.name}"');
-          }
+          _reportSkips(
+              budget,
+              'agg:scope:${cs.id}:${a.name}#${++scopeInstance}',
+              'published total "${a.name}"',
+              nonNumeric: acc.skippedNonNumeric,
+              errors: acc.skippedErrors);
           // A published total can collide either with a real data field on the
           // parent row (shadowing it) or with a sibling scope's total already
           // published into `extras` this invocation — validation enforces
@@ -539,14 +575,12 @@ class ReportFiller {
                     : accs![k].value,
             };
             // Name the nested scope (not the aggregate): footer.aggs[k].name is the synthesized $V{__naggN} name, not a user-facing id — naming the scope is robust and parse-free (spec E2).
+            final int instance = ++scopeInstance;
             for (int k = 0; k < footer.aggs.length; k++) {
-              final int skips = accs![k].skippedNonNumeric;
-              if (skips > 0) {
-                budget.recordRowIssue(
-                    'agg:footer:${s.id}:$k',
-                    '$skips non-numeric value(s) were skipped from a footer '
-                        'aggregate in scope "${s.id}"');
-              }
+              _reportSkips(budget, 'agg:footer:${s.id}:$k#$instance',
+                  'a footer aggregate in scope "${s.id}"',
+                  nonNumeric: accs![k].skippedNonNumeric,
+                  errors: accs[k].skippedErrors);
             }
             addBand(footer.band, scopeRow, vars);
           }
@@ -617,86 +651,76 @@ class ReportFiller {
       contextFactory: contextFactory,
     );
 
-    // `ds` was opened early (above) to read its schema for the descendant-lift
-    // pre-pass. The cursor is still positioned before the first row.
+    // `ds` was opened early (in `fillDefinition`) to read its schema for the
+    // descendant-lift pre-pass, and is closed there. The cursor is still
+    // positioned before the first row.
     bool hadRows = false;
     int rowNumber = 0;
     Map<String, JetValue> prevValues = const <String, JetValue>{};
     DataRow? prevRow;
-    try {
-      while (ds.moveNext()) {
-        budget.row = ++rowNumber;
-        // Inject this master row's published totals (and augment its nested
-        // collection tree) BEFORE the calculator advances, so the Phase A
-        // grand total over a published total (e.g. SUM($F{customerTotal}))
-        // sums it live through the unchanged calculator.
-        final DataRow row = augmentForScope(definition.body.root, ds.current);
-        final int calcSkipsBefore = calc.aggregateSkips;
-        calc.advance(row, params: params);
-        final int calcSkipDelta = calc.aggregateSkips - calcSkipsBefore;
-        if (calcSkipDelta > 0) {
-          budget.recordRowIssue(
-              'agg:calc',
-              '$calcSkipDelta non-numeric value(s) were skipped from an '
-                  'aggregate');
-        }
-        // Refresh the crosstab variable snapshot once for this master row
-        // (see its declaration above) before folding any of its children.
-        crosstabRowVars = calc.values;
-        // Spec A (Task 11): fold every registered crosstab over this row —
-        // the master row itself when it has no `collectionField`, otherwise
-        // each pooled row from its nested collection (via the shared
-        // `childRowsOf` seam, so schema inference and malformed-entry
-        // diagnostics match every other collection read). No row is ever
-        // retained: `fold` only updates running accumulators.
-        for (final _RegisteredCrosstab rc in crosstabs) {
-          final String? field = rc.crosstab.collectionField;
-          if (field == null) {
-            rc.aggregation.fold(row);
-          } else {
-            for (final DataRow childRow in childRowsOf(row, field)) {
-              rc.aggregation.fold(childRow);
-            }
+    while (ds.moveNext()) {
+      budget.row = ++rowNumber;
+      // Inject this master row's published totals (and augment its nested
+      // collection tree) BEFORE the calculator advances, so the Phase A
+      // grand total over a published total (e.g. SUM($F{customerTotal}))
+      // sums it live through the unchanged calculator.
+      final DataRow row = augmentForScope(definition.body.root, ds.current);
+      final int calcSkipsBefore = calc.aggregateSkips;
+      final int calcErrorsBefore = calc.aggregateErrorSkips;
+      calc.advance(row, params: params);
+      _reportSkips(budget, 'agg:calc', 'an aggregate',
+          nonNumeric: calc.aggregateSkips - calcSkipsBefore,
+          errors: calc.aggregateErrorSkips - calcErrorsBefore);
+      // Refresh the crosstab variable snapshot once for this master row
+      // (see its declaration above) before folding any of its children.
+      crosstabRowVars = calc.values;
+      // Spec A (Task 11): fold every registered crosstab over this row —
+      // the master row itself when it has no `collectionField`, otherwise
+      // each pooled row from its nested collection (via the shared
+      // `childRowsOf` seam, so schema inference and malformed-entry
+      // diagnostics match every other collection read). No row is ever
+      // retained: `fold` only updates running accumulators.
+      for (final _RegisteredCrosstab rc in crosstabs) {
+        final String? field = rc.crosstab.collectionField;
+        if (field == null) {
+          rc.aggregation.fold(row);
+        } else {
+          for (final DataRow childRow in childRowsOf(row, field)) {
+            rc.aggregation.fold(childRow);
           }
         }
-        final Set<String> broken = calc.brokenGroups;
-        if (!hadRows) {
-          emitGroupHeaders(groupOrder, row);
-        } else if (broken.isNotEmpty) {
-          // Spec 033: emit the broken group footer(s) with the completed-group
-          // descendant snapshot (parallels prevValues for the master calculator).
-          emitGroupFooters(brokenInOrder(broken, reversed: true), prevRow,
-              <String, JetValue>{...prevValues, ...descGroupSnapshot});
-          // Reset group-scoped descendant accumulators whose group broke, then
-          // emit new headers — mirroring VariableCalculator.advance's reset order.
-          for (final DescendantAggregate a in groupDescAggs) {
-            if (broken.contains(a.resetGroup)) descAcc[a.name]!.reset();
-          }
-          emitGroupHeaders(brokenInOrder(broken, reversed: false), row);
-        }
-        emitDetail(row);
-        hadRows = true;
-        prevValues = calc.values;
-        prevRow = row;
-        // Fold this master row's descendant leaves into all accumulators, then
-        // snapshot the group-scoped values (so the next break reads a completed
-        // group, just as prevValues captures the completed master row).
-        final int descSkipsBefore = _sumAccSkips(descAcc.values);
-        for (final DescendantAggregate a in descAggs) {
-          foldDescInto(a, row);
-        }
-        final int descSkipDelta =
-            _sumAccSkips(descAcc.values) - descSkipsBefore;
-        if (descSkipDelta > 0) {
-          budget.recordRowIssue(
-              'agg:desc',
-              '$descSkipDelta non-numeric value(s) were skipped from a '
-                  'roll-up aggregate');
-        }
-        descGroupSnapshot = descValues(groupDescAggs);
       }
-    } finally {
-      ds.close();
+      final Set<String> broken = calc.brokenGroups;
+      if (!hadRows) {
+        emitGroupHeaders(groupOrder, row);
+      } else if (broken.isNotEmpty) {
+        // Spec 033: emit the broken group footer(s) with the completed-group
+        // descendant snapshot (parallels prevValues for the master calculator).
+        emitGroupFooters(brokenInOrder(broken, reversed: true), prevRow,
+            <String, JetValue>{...prevValues, ...descGroupSnapshot});
+        // Reset group-scoped descendant accumulators whose group broke, then
+        // emit new headers — mirroring VariableCalculator.advance's reset order.
+        for (final DescendantAggregate a in groupDescAggs) {
+          if (broken.contains(a.resetGroup)) descAcc[a.name]!.reset();
+        }
+        emitGroupHeaders(brokenInOrder(broken, reversed: false), row);
+      }
+      emitDetail(row);
+      hadRows = true;
+      prevValues = calc.values;
+      prevRow = row;
+      // Fold this master row's descendant leaves into all accumulators, then
+      // snapshot the group-scoped values (so the next break reads a completed
+      // group, just as prevValues captures the completed master row).
+      final int descSkipsBefore = _sumAccSkips(descAcc.values);
+      final int descErrorsBefore = _sumAccErrorSkips(descAcc.values);
+      for (final DescendantAggregate a in descAggs) {
+        foldDescInto(a, row);
+      }
+      _reportSkips(budget, 'agg:desc', 'a roll-up aggregate',
+          nonNumeric: _sumAccSkips(descAcc.values) - descSkipsBefore,
+          errors: _sumAccErrorSkips(descAcc.values) - descErrorsBefore);
+      descGroupSnapshot = descValues(groupDescAggs);
     }
 
     // Spec A (Task 11): plan and splice every registered crosstab, in
@@ -872,6 +896,32 @@ class ReportFiller {
       n += a.skippedNonNumeric;
     }
     return n;
+  }
+
+  /// The total error skips across [accs]; monotonic like [_sumAccSkips].
+  static int _sumAccErrorSkips(Iterable<VariableAccumulator> accs) {
+    int n = 0;
+    for (final VariableAccumulator a in accs) {
+      n += a.skippedErrors;
+    }
+    return n;
+  }
+
+  /// Records this row's aggregate skips into [target]: wrong-type inputs and
+  /// inputs that failed to evaluate, each as its own deduped row issue. Either
+  /// leaves the aggregate short of what the data holds, so neither is silent.
+  /// The two kinds use disjoint key namespaces (`agg:…` / `error:agg:…`): a
+  /// suffix would let a total named, say, `total:error` collide with `total`.
+  static void _reportSkips(DiagnosticBudget budget, String key, String target,
+      {required int nonNumeric, required int errors}) {
+    if (nonNumeric > 0) {
+      budget.recordRowIssue(
+          key, '$nonNumeric non-numeric value(s) were skipped from $target');
+    }
+    if (errors > 0) {
+      budget.recordRowIssue('error:$key',
+          '$errors value(s) failed to evaluate and were skipped from $target');
+    }
   }
 
   /// A copy of [v] whose group-reset reference, if it is a [GroupLevel] id, is
