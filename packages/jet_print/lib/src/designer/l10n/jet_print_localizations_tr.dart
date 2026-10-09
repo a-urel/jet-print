@@ -329,6 +329,10 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
       'Sayfa ve grup ayarlarını grup başlığı bandında düzenleyin.';
 
   @override
+  String get propertiesGroupOnFooterHint =>
+      'Sayfa ve grup ayarlarını grup alt bilgisi bandında düzenleyin.';
+
+  @override
   String get propertiesScope => 'Kapsam';
 
   @override

@@ -330,6 +330,10 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
       'Seiten- und Gruppeneinstellungen am Gruppenkopf-Band bearbeiten.';
 
   @override
+  String get propertiesGroupOnFooterHint =>
+      'Seiten- und Gruppeneinstellungen am Gruppenfuß-Band bearbeiten.';
+
+  @override
   String get propertiesScope => 'Bereich';
 
   @override

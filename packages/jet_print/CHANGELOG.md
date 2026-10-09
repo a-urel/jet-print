@@ -28,6 +28,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **The group-row hint names the band that actually carries the settings.**
+  Selecting a group row always said to edit its settings "on the group header
+  band" — even for a footer-only group, whose settings live on its footer, so
+  the hint pointed at a band that did not exist. It now names the header when
+  there is one and the footer otherwise (new key `propertiesGroupOnFooterHint`
+  in en/de/tr), and shows no hint for a group with neither.
+
 - **Committing a plain-text value unchanged no longer changes it.** The value
   field showed a literal label raw but committed it through the template
   parser, which reads `[name]` as a field binding and `\` as an escape. So

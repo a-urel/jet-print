@@ -396,7 +396,8 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
   // The group's name, key and start-new-page flag are edited from the group's
   // carrier band via [_groupSection] (see [_bandInspector]), not from this
   // abstract node. Selecting the group row shows a read-only summary that points
-  // the author to the group header band (2026-06-14 design note).
+  // the author to the group's carrier band — its header, else its footer
+  // (2026-06-14 design note).
 
   List<Widget> _groupInspector(
     JetReportDesignerController controller,
@@ -406,14 +407,24 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
   ) {
     final GroupLevel? group = findGroup(controller.definition, groupId);
     if (group == null) return const <Widget>[];
+    // Point at the band that actually carries the settings — the same header-
+    // else-footer fallback `_bandInspector` uses — and at nothing when the
+    // group has neither band.
+    final String? hint = group.header != null
+        ? l10n.propertiesGroupOnHeaderHint
+        : group.footer != null
+            ? l10n.propertiesGroupOnFooterHint
+            : null;
     return <Widget>[
       _Header(icon: LucideIcons.group, title: group.name, theme: theme),
-      const SizedBox(height: 12),
-      Text(
-        l10n.propertiesGroupOnHeaderHint,
-        style: theme.textTheme.muted
-            .copyWith(color: theme.colorScheme.mutedForeground),
-      ),
+      if (hint != null) ...<Widget>[
+        const SizedBox(height: 12),
+        Text(
+          hint,
+          style: theme.textTheme.muted
+              .copyWith(color: theme.colorScheme.mutedForeground),
+        ),
+      ],
     ];
   }
 
