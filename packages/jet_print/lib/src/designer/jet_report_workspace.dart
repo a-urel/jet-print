@@ -176,6 +176,9 @@ class _JetReportWorkspaceState extends State<JetReportWorkspace> {
     // render() blocks the UI thread (a zero-delay timer, not a microtask, so it
     // runs after the current frame is drawn).
     await Future<void>.delayed(Duration.zero);
+    // Superseded during the yield (the inputs changed): the newer render runs
+    // the host callback; running it here too would only be discarded below.
+    if (!mounted || seq != _renderSeq) return;
     RenderedReport? report;
     FlutterErrorDetails? failure;
     try {

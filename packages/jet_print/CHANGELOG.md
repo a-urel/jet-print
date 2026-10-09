@@ -28,6 +28,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **A preview render superseded before it starts no longer calls the host.**
+  The workspace yields one frame before rendering so the loading bar can
+  paint. If `renderReport` or `dataSchema` changed during that frame, the
+  superseded render still went on to call the host's current callback, then
+  discarded the result, so one input change rendered twice. It now stops as
+  soon as it is superseded, and only the newer render calls the host.
+
 - **Dragging a band's divider no longer leaves elements outside the band.**
   Shrinking a band by its divider had only the minimum-height floor, so
   elements ended up hanging past the new bottom edge. The drag now stops at the
