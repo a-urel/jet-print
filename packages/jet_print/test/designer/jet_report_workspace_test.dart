@@ -254,6 +254,7 @@ void main() {
   testWidgets('a new renderReport while previewing re-renders in place',
       (WidgetTester tester) async {
     final List<String> calls = <String>[];
+    RenderedReport? newReport;
     final JetReportDesignerController controller =
         JetReportDesignerController(definition: _definition());
     addTearDown(controller.dispose);
@@ -267,11 +268,43 @@ void main() {
     await _pumpWorkspace(tester, controller: controller,
         renderReport: (ReportDefinition t) {
       calls.add('new');
-      return _render(t);
+      return newReport = _render(t);
     });
     await tester.pump(const Duration(milliseconds: 1));
     await tester.pumpAndSettle();
     expect(calls, <String>['old', 'new']);
+    expect(find.byKey(_pageKey), findsOneWidget);
+    // The preview shows the new callback's report, not the old pages.
+    expect(
+        tester.widget<JetReportPreview>(find.byType(JetReportPreview)).report,
+        same(newReport));
+  });
+
+  // Review on #73: a render superseded during its one-frame yield still went
+  // on to call the host's current callback, then discarded the result, so the
+  // host rendered twice for one input change.
+  testWidgets('a render superseded before it starts never calls the host',
+      (WidgetTester tester) async {
+    final List<String> calls = <String>[];
+    final JetReportDesignerController controller =
+        JetReportDesignerController(definition: _definition());
+    addTearDown(controller.dispose);
+    await _pumpWorkspace(tester, controller: controller,
+        renderReport: (ReportDefinition t) {
+      calls.add('old');
+      return _render(t);
+    });
+    await tester.tap(find.byKey(_modePreviewKey));
+    await tester.pump(); // render scheduled, still waiting on its yield
+
+    await _pumpWorkspace(tester, controller: controller,
+        renderReport: (ReportDefinition t) {
+      calls.add('new');
+      return _render(t);
+    });
+    await tester.pump(const Duration(milliseconds: 1)); // both yields end
+    await tester.pumpAndSettle();
+    expect(calls, <String>['new']);
     expect(find.byKey(_pageKey), findsOneWidget);
   });
 
