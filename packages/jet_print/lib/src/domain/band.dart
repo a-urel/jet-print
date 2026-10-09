@@ -49,7 +49,7 @@ class Band with ValueEquality {
   final ColumnLayout? columnLayout;
 
   /// Optional human-facing display name; when null/blank the Outline and
-  /// Properties show the localized [bandTypeLabel]. Unconstrained.
+  /// Properties show the localized band-type label. Unconstrained.
   final String? name;
 
   /// Controls whether this band is visible when rendering the report.
