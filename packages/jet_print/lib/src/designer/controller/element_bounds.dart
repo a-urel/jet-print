@@ -24,11 +24,11 @@
 ///
 /// The guarantee is scoped to commands that move an ELEMENT. Changing a BAND is
 /// not one: `SetBandHeightCommand` is `band.copyWith(height: height)` and never
-/// touches the band's elements. The interactive divider drag cannot shrink a
-/// band past its content (`updateBandResize` stops at the lowest element's
-/// bottom edge, the edge-pinning idiom above), but a programmatic
-/// `SetBandHeightCommand` — or the band height typed in the inspector — can
-/// still leave an element hanging past the new bottom until some
+/// touches the band's elements. Neither the interactive divider drag
+/// (`updateBandResize`) nor the inspector's typed height (`setBandHeight`) can
+/// shrink a band past its content: both stop at the lowest element's bottom
+/// edge, the edge-pinning idiom above. A programmatic `SetBandHeightCommand`
+/// can still leave an element hanging past the new bottom until some
 /// element-geometry command re-clamps it.
 library;
 

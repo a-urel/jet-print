@@ -104,6 +104,55 @@ void main() {
       c.setBandHeight('detail', 200);
       expect(c.canUndo, isFalse);
     });
+
+    // The inspector's typed height stops at the band's content, like the
+    // divider drag: it cannot shrink a band past its lowest element's bottom
+    // edge, so nothing ends up hanging outside its band.
+    test('setBandHeight stops at the lowest element bottom', () {
+      final JetReportDesignerController c = make();
+      c.createElement(DesignerToolType.shape,
+          bandId: 'detail', at: const JetOffset(10, 100));
+      final String id = c.selection.singleOrNull!;
+      c.setGeometry(id, y: 100, height: 50); // bottom edge at 150
+      c.setBandHeight('detail', 60);
+      expect(bandHeight(c, 'detail'), 150);
+      c.setBandHeight('detail', 170); // above the content: taken as typed
+      expect(bandHeight(c, 'detail'), 170);
+    });
+
+    test('content already past the bottom blocks shrinking but never grows',
+        () {
+      // A band of 50 whose element already reaches 100 (a loaded report, or a
+      // programmatic SetBandHeightCommand, can leave it so).
+      final JetReportDesignerController c = JetReportDesignerController(
+        definition: const ReportDefinition(
+          name: 'r',
+          page: PageFormat.a4Portrait,
+          body: ReportBody(
+            root: DetailScope(id: 'root', children: <ScopeNode>[
+              BandNode(Band(
+                id: 'detail',
+                type: BandType.detail,
+                height: 50,
+                elements: <ReportElement>[
+                  ShapeElement(
+                      id: 'tall',
+                      bounds: JetRect(x: 10, y: 10, width: 40, height: 90),
+                      kind: ShapeKind.rectangle),
+                ],
+              )),
+            ]),
+          ),
+        ),
+      );
+      addTearDown(c.dispose);
+      c.setBandHeight('detail', 20);
+      expect(bandHeight(c, 'detail'), 50,
+          reason: 'already below its content: no shrink, no forced growth');
+      expect(c.canUndo, isFalse, reason: 'nothing changed, nothing recorded');
+      c.setBandHeight('detail', 80); // growing is still taken as typed
+      expect(bandHeight(c, 'detail'), 80);
+    });
   });
 
   group('live band resize', () {

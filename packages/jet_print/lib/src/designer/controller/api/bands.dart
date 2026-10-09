@@ -6,12 +6,20 @@
 part of '../jet_report_designer_controller.dart';
 
 extension CtrlBands on JetReportDesignerController {
-  /// Sets band [bandId]'s height to [height] (floor-clamped) as one undoable
-  /// step — the committed form used by numeric editing and tests. An unknown id
-  /// is ignored.
+  /// Sets band [bandId]'s height to [height] as one undoable step — the
+  /// committed form used by numeric editing and tests. An unknown id is
+  /// ignored.
+  ///
+  /// Like the divider drag ([updateBandResize]), it stops at the band's
+  /// content: it cannot shrink the band past its lowest element's bottom edge,
+  /// so nothing ends up outside its band. Content that already overflows
+  /// blocks shrinking without growing the band, and [kMinBandHeight] is the
+  /// floor for an empty band. (A `SetBandHeightCommand` itself is not clamped.)
   void setBandHeight(String bandId, double height) {
-    if (findBand(_document.definition, bandId) == null) return;
-    _applyBandHeight(bandId, height);
+    final Band? band = findBand(_document.definition, bandId);
+    if (band == null) return;
+    final double floor = _bandResizeFloor(bandId, band.height);
+    _applyBandHeight(bandId, height < floor ? floor : height);
   }
 
   /// Sets band [bandId]'s multi-column label [layout] as one undoable step.
