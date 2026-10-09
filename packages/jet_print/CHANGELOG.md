@@ -28,6 +28,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Undo, redo and opening a report now cancel a drag in progress.**
+  Replacing the document left the live move, resize or band-resize state
+  behind, and Ctrl+Z works mid-drag. So dragging element B and pressing Ctrl+Z
+  restored the previous selection (say A) with B's drag still pending; releasing
+  the pointer then moved A, and that commit discarded the redo entry. The drag
+  is now abandoned whenever the document is replaced, and the release commits
+  nothing.
+
 - **The workspace preview no longer shows stale data after the host switches
   data.** `JetReportWorkspace` cached the rendered report by definition alone
   and had no `didUpdateWidget`, so a host that changed its `renderReport`

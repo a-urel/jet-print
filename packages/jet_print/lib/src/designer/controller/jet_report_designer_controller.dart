@@ -213,11 +213,34 @@ class JetReportDesignerController extends ChangeNotifier {
   /// id assignment past the largest existing suffix.
   void open(ReportDefinition definition) {
     _pendingPropertiesFocus = false; // stale intent from the prior document
+    _dropLiveDrags();
     _document =
         DesignerDocument(definition: definition, selection: Selection.empty);
     _history.clear();
     _ids.seedFrom(definition);
     notifyListeners();
+  }
+
+  /// Abandons any live move, element resize or band resize without committing
+  /// it. Called whenever the document is replaced — [open], undo, redo — since
+  /// a drag's state (its delta, its start bounds, the selection it applies to)
+  /// describes the document it began on; committing it against another one
+  /// moves the wrong element and drops the redo entry. The caller notifies.
+  void _dropLiveDrags() {
+    if (_moveDelta == null && _resizeId == null && _bandResizeId == null) {
+      return;
+    }
+    _moveDelta = null;
+    _resizeId = null;
+    _resizeHandle = null;
+    _resizeStart = null;
+    _resizePreview = null;
+    _bandResizeId = null;
+    _bandResizeStartHeight = null;
+    _bandResizePreviewHeight = null;
+    _guides = const <SnapGuide>[];
+    _activeBandId = null;
+    _frameSerial++; // the drag's preview frame is gone
   }
 
   // --- Selection -------------------------------------------------------------
