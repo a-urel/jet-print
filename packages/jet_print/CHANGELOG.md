@@ -296,6 +296,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **Requires `shadcn_ui` 0.57.1** (was `^0.54.0`), the latest release. A
+  host app that pins `shadcn_ui` below 0.57 must raise it. Nothing the
+  designer renders changes. 0.56 renamed shadcn_ui's slang-generated
+  localization classes, which jet_print does not use. 0.57 moved the dialog
+  and sheet safe-area padding to the route, which affects the expression
+  editor sheet only on a device with system insets.
+
 - Crosstab style editors: the eight crosstab
   appearance slots — the six on `CrosstabStyle` plus `CrosstabMeasure`'s two
   per-measure overrides — are now authorable in the Properties panel. They

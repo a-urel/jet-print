@@ -48,7 +48,7 @@ dependencies:
   intl: ^0.20.2
   # shadcn_ui constraint below was written by `flutter pub add` so it records the
   # real resolved range, not a placeholder.
-  shadcn_ui: ^0.54.0
+  shadcn_ui: ^0.57.1
   # Not imported directly: the icons arrive through shadcn_ui's re-export. It is
   # declared only to raise the floor. shadcn_ui allows lucide_icons_flutter
   # >=3.0.0, but the text-align icons (textAlignStart/Center/End) first ship in
