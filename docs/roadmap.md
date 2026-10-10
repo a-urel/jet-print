@@ -311,6 +311,17 @@ friction list surfaced, and clear the defects that would otherwise be
 discovered after the semver promise. The exit criterion is the absence of an
 open question, which is why it cannot be met by shipping code alone.
 
+The boundary is written down: the package README's *What you can extend* and
+[`decisions/0002`](decisions/0002-extension-seam-closed-for-1-0.md). What
+"open question" means is now defined too.
+[`decisions/0004`](decisions/0004-what-1-0-must-settle.md) counts a change to
+the output of an existing report, or to a default, as breaking after 1.0, the
+same as a change to the Dart surface, and on that rule triaged the friction
+list: eight entries, 1, 2, 7, 11, 12, 14, 19 and 20, must be fixed or
+deliberately accepted before the freeze, and the rest are additive or small.
+That makes P3 larger than documentation, since most of the eight change output
+or a default. P3 is met when those eight are closed.
+
 **P4 — 1.0 freeze.** E6, renamed for what it actually is. All six platforms —
 macOS, Linux, Windows, web, iOS, Android — declared in the pubspec and green in
 CI, because a platform claim that CI does not exercise is the same class of

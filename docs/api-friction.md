@@ -49,6 +49,9 @@ held.
    *`src/expression/value.dart` → `JetNumber`;
    `src/expression/aggregate/variable_accumulator.dart`.*
 
+   **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*.
+   Any fix changes totals, so it is output. The design needs its own brainstorm.
+
 2. **`PageFurniture.columnHeader` is public, exported, and draws nothing.**
    Repeating column captions on every page is the defining requirement of a
    tabular multi-page report. The slot exists, `BandType.columnHeader` and
@@ -61,6 +64,10 @@ held.
    *`src/domain/report_definition.dart` → `PageFurniture.columnHeader`,
    `.columnFooter`, `.background`; `src/rendering/layout/report_layouter.dart`.*
 
+   **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*.
+   Removing the slots changes the surface; implementing them changes the output
+   of reports that set them.
+
 3. **A per-page subtotal cannot be expressed.** A Turkish mizan running to
    several pages carries *nakli yekûn* — carried forward at the foot of each
    page, brought forward at the head of the next. Page chrome is evaluated
@@ -71,6 +78,10 @@ held.
    *`src/rendering/layout/page_eval_context.dart`;
    `src/rendering/fill/page_variables.dart` → `kPageScopedVariables`.*
 
+   **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *after 1.0,
+   additive*. A carried total is something chrome cannot express today. How it
+   is carried depends on how entry 2 is settled.
+
 4. **A group header cannot carry its own group's total.** Validation makes a
    top-level aggregate in a group header an error, and aggregate expansion
    rewrites only the summary band and root group footers. So the most common
@@ -80,6 +91,11 @@ held.
    *`src/domain/report_validation.dart` → `aggregateBand(g.header, supported:
    false)`; `src/expression/aggregate/aggregate_synthesizer.dart` →
    `expandAggregates`.*
+
+   **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *after 1.0,
+   additive*. Validation rejects an aggregate in a group header today, and
+   0004's output promise covers only definitions `validate` accepts, so allowing
+   it later changes no covered output.
 
 ## Wrong output rather than an error
 
@@ -92,6 +108,12 @@ held.
    plausible-looking wrong report.
    *`src/domain/group_level.dart` → `GroupLevel.key`;
    `src/rendering/fill/report_filler.dart`.*
+
+   **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *P3,
+   documentation*: the `GroupLevel` dartdoc should say that the source must
+   already be ordered by the key. A sort is *after 1.0, additive*. A diagnostic
+   for a repeated key would change what a render reports, so if one is wanted it
+   lands in P3 too.
 
 6. **`validate()` warns about the natural way to write a derived total.**
    `SUM($F{borc}) - SUM($F{alacak})` in a summary band draws two
@@ -107,6 +129,12 @@ held.
    `src/expression/aggregate/aggregate_synthesizer.dart` →
    `_expandInlineAggregates`.*
 
+   **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *P3, defect
+   fix*. It removes a false warning from `validate`; no render changes. If entry
+   11 is settled by making render validate, this has to be fixed first: the
+   warnings would then be render diagnostics, and removing them after 1.0 would
+   change output.
+
 7. **`UPPER` and `LOWER` are locale-blind, and wrong in Turkish.** They use
    Dart's `toUpperCase`/`toLowerCase`, which map `i`→`I` and `I`→`i`; Turkish
    needs `i`→`İ` and `I`→`ı`. `UPPER` on "Kısa Vadeli Yabancı Kaynaklar" yields
@@ -115,6 +143,10 @@ held.
    functions never see it.
    *`src/expression/functions/string_functions.dart` → `_upper`, `_lower`;
    `src/rendering/engine/render_options.dart` → `RenderOptions.locale`.*
+
+   **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*.
+   Locale-aware casing changes the output of every report that uppercases an
+   `i`.
 
 ## Correctness of the published contract
 
@@ -150,6 +182,10 @@ held.
     for #60.) [`serialization-gap.md`](serialization-gap.md) has the full
     analysis and judges it a P3 item rather than a freeze blocker.
 
+    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *after 1.0,
+    additive*. Distinguishable failures can be subtypes of
+    `ReportFormatException`, which existing `catch` clauses still catch.
+
 11. **`validate()` is opt-in, and the render path never calls it.** A host that
     builds a definition in code ships a mis-slotted band silently. There is also
     a `hasErrors` helper on the render-time diagnostics carrier and none on the
@@ -157,6 +193,10 @@ held.
     for the author-time half of an identical question.
     *`src/rendering/fill/report_diagnostics.dart` → `ReportDiagnostics.hasErrors`;
     `src/domain/report_validation.dart` → `validate`.*
+
+    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*.
+    Whether render validates is a default. A `hasErrors` on the author-time
+    diagnostics is additive.
 
 12. **One schema, three incompatible spellings.** A consumer needs
     `List<FieldDef>` for the in-memory data source, a `JetDataSchema` for
@@ -166,6 +206,10 @@ held.
     pilot needed all three at once. Without the wiring, a mistyped field name
     renders empty instead of `#ERROR` — the silent option is the default.
 
+    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*.
+    Whether an unknown field renders `#ERROR` without `knownFields` is a
+    default. Conversions between the three spellings are additive.
+
 ## Ergonomics
 
 13. **A group key has no label reachable from an expression.** `GroupLevel.name`
@@ -173,6 +217,9 @@ held.
     read fields off a row. To print "3 — Kısa Vadeli Yabancı Kaynaklar" the host
     must denormalise the class and account names onto all 68 rows, where they
     repeat a 6-entry and a 39-entry lookup.
+
+    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *after 1.0,
+    additive*. A new variable or function.
 
 14. **`GroupLevel` has both an `id` and a `name`, and which one is the reference
     depends where you stand.** The dartdoc says `name` is "display label only (no
@@ -185,10 +232,18 @@ held.
     `7b989f0`, `validate` rejects a `resetGroup` that matches one group's id and
     another's name — the ambiguity is now caught, but still not explained.
 
+    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*.
+    Merging or renaming the fields changes the surface and the schema; the
+    alternative is to document `name` as a unique key and accept it.
+
 15. **`text` is required even when `expression` is non-null.** Thirty of the
     pilot's thirty-six text elements carry both; every placeholder is discarded
     by every render. The house idiom is to repeat the field name, which reads as
     duplication to anyone who has not been told why.
+
+    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *after 1.0,
+    additive*. Dropping `required` from a parameter that gains a default breaks
+    no caller.
 
 16. **The smallest report is five nested constructors.** `ReportDefinition` →
     `ReportBody` → `DetailScope` → `BandNode` → `Band`, by hand, before a single
@@ -197,11 +252,18 @@ held.
     [`01-smallest-report.md`](01-smallest-report.md) names this cost from the
     inside; it lands harder from outside.
 
+    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *after 1.0,
+    additive*. A public builder is a new export.
+
 17. **`$V{PAGE_NUMBER}` and `$V{PAGE_COUNT}` are magic strings.** Documented in
     prose, no exported constants, no helper for the "Page N of M" footer nearly
     every report wants — both consumers spelled the concatenation by hand. They
     are also legal only in page and column header/footer bands, a rule enforced
     at fill time by a diagnostic rather than by any type.
+
+    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *after 1.0,
+    additive*. Constants and a page-footer helper are new exports; the band rule
+    stays as it is.
 
 18. **A format pattern and the locale that interprets it live in different
     files, with no cross-reference.** `TextElement.format` says "an ICU
@@ -210,15 +272,26 @@ held.
     as dot-thousands under `tr` — correct, and surprising. No exported money
     pattern, so the string is repeated as a private constant in every consumer.
 
+    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *P3,
+    documentation*.
+
 19. **`onExportPdf` is a `VoidCallback` while `toPdf` is async.** The assignment
     compiles silently because `void` is a top type, so there is no diagnostic at
     all: no progress state to drive, nowhere for the widget to catch a failure.
     The workspace variant at least receives the report; the preview's receives
     nothing, so the callback must close over it.
 
+    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*.
+    Changing the callback's type changes the surface.
+
 20. **`RenderedReport.fonts` is public but its type is not exported.**
     `FontRegistry` describes itself as internal, so a consumer cannot name the
     type of a field on a public class.
+
+    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*.
+    The type's members are already callable through the field, so they freeze
+    with it at 1.0. Exporting the type is additive but commits to that API;
+    hiding the field afterwards would change the surface.
 
 ## Documentation
 
@@ -230,6 +303,9 @@ held.
     aggregate nested inside arithmetic still lifts, and that an aggregate over a
     compound operand is a legal single-argument aggregate — are stated nowhere a
     consumer can reach. Both had to be read out of the synthesizer.
+
+    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *P3,
+    documentation*.
 
 ## How to use this list
 
@@ -243,3 +319,13 @@ they are an accounting library that cannot foot a column to zero, two public
 slots that draw nothing, and a layout every trial balance in the country uses.
 None of them is a small change, and all of them are cheaper before a semver
 promise than after.
+
+Since [`decisions/0004`](decisions/0004-what-1-0-must-settle.md), each open
+entry carries a **Triage** line saying when it has to be decided. *Before 1.0*
+means a fix after the freeze would change the Dart surface, the output of an
+existing report, or a default, and so would need a major version; P3 is met
+when every such entry is fixed or deliberately accepted. *After 1.0, additive*
+means the fix only adds something. *P3, documentation* or *defect fix* means it
+is small enough to close now and blocks nothing. Of entries 1 to 4, only 1 and
+2 block the freeze: 3 and 4 add what cannot be expressed today, however soon an
+accounting consumer wants them.
