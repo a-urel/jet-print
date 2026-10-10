@@ -4,9 +4,10 @@ Can a consumer of the published package store a report definition and read it
 back? Yes — `JetReportFormat` is exported with all four of its statics, so a
 host that keeps templates in files has everything it needs, and the playground
 proves it through the barrel alone. What is missing is narrower and shows up
-only once the store is a database rather than a disk: nothing public names the
-schema version being written, every decode failure arrives as one exception
-type carrying one English string, and a migration leaves no trace.
+only once the store is a database rather than a disk: nothing public named the
+schema version being written (fixed in `c4a7f8d`, below), every decode failure
+arrives as one exception type carrying one English string, and a migration
+leaves no trace.
 
 The difference is who owns the file. A desktop host writes a document the same
 user opens minutes later on the same build; if the decode throws, a dialog says
@@ -80,7 +81,12 @@ escaping.
 
 ## Three places it stops short of a database
 
-**One: nothing public names the schema version.**
+**One: nothing public names the schema version.** *Fixed* in `c4a7f8d`,
+before 0.1.0 was published: `JetReportFormat.schemaVersion` is a public `const`
+equal to `kReportDefinitionSchemaVersion`, the barrel-only test named below
+reads it instead of reconstructing it, and `test/public_api_test.dart` pins it
+against the key the encoder stamps. The rest of this point records the gap as
+it stood.
 `report_definition_codec.dart` → `kReportDefinitionSchemaVersion` is `2` and is
 stamped as the first key of every document, but it is a top-level constant in
 an unexported library and `JetReportFormat` does not re-expose it. A consumer
@@ -139,8 +145,8 @@ Persisting a report from a database-backed host, with only the barrel:
 onSaveRequested: (ReportDefinition d) => db.upsert(
       tenantId,
       JetReportFormat.encodeDefinitionJson(d),
-      // The version column has to come from somewhere, and this is where.
-      schemaVersion: 2, // kReportDefinitionSchemaVersion, hard-coded
+      // Before c4a7f8d this was a hard-coded 2.
+      schemaVersion: JetReportFormat.schemaVersion,
     );
 
 // Load: one error type, and a string match to classify it.
@@ -152,13 +158,16 @@ try {
 }
 ```
 
-Neither workaround is exotic or expensive. Both are written once, in one
-repository helper, and owned forever — which is the cost, because the
-hard-coded `2` and the matched sentence are then facts about `jet_print` living
-in somebody else's code, maintained by somebody who will not read the changelog
-entry when either moves. The README's *Save and reopen designs* section and
-`example/designer_example.dart` show the round trip to a JSON string, and say
-nothing about versions or decode failures.
+The version no longer needs a workaround. The string match still does, and it
+is not exotic or expensive. It is written once, in one repository helper, and
+owned forever — which is the cost, because the matched sentence is then a fact
+about `jet_print` living in somebody else's code, maintained by somebody who
+will not read the changelog entry when it moves. The hard-coded `2` had the
+same cost until `c4a7f8d`. The README's *Save and reopen designs* section shows
+the round trip to a JSON string and, since `c4a7f8d`, names
+`JetReportFormat.schemaVersion` and says a newer document throws
+`ReportFormatException`; it does not say how to tell that from a corrupt one,
+because nothing public can yet.
 
 ## What would have to be exported
 
@@ -167,7 +176,8 @@ boundary `decisions/0002` drew:
 
 - `kReportDefinitionSchemaVersion`, or the same integer as a static on
   `JetReportFormat` — matching `JetDataSourceFile.version`, which already does
-  this for the other format.
+  this for the other format. *Done* in `c4a7f8d`, as
+  `JetReportFormat.schemaVersion`.
 - Something on `ReportFormatException` that separates a too-new document from a
   structural fault: a subtype, or a nullable field carrying the document's
   version, either of which a host can branch on without reading prose.

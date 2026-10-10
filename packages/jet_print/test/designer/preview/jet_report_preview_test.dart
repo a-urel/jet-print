@@ -6,6 +6,7 @@
 // keyboard operation, and accessible names. WYSIWYG parity with the designer
 // surface (the shared paint pipeline) is pinned by the rendered-invoice
 // goldens.
+import 'package:flutter/material.dart' show MaterialApp;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -132,6 +133,43 @@ Future<void> _pickFit(WidgetTester tester, Key fitKey) async {
 }
 
 void main() {
+  // The class dartdoc and the README Quickstart both state this requirement;
+  // these pin it, so a change to it fails here rather than leaving them wrong.
+  group('host requirements', () {
+    testWidgets('throws on its first build without a shadcn_ui theme above it',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(MaterialApp(
+        localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+          JetPrintLocalizations.delegate,
+        ],
+        supportedLocales: JetPrintLocalizations.supportedLocales,
+        home: JetReportPreview(report: _report()),
+      ));
+      expect(
+        tester.takeException(),
+        isA<FlutterError>().having(
+            (FlutterError e) => e.message, 'message', contains('ShadTheme')),
+      );
+    });
+
+    testWidgets('builds in a MaterialApp given a ShadTheme above it',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(MaterialApp(
+        localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+          JetPrintLocalizations.delegate,
+        ],
+        supportedLocales: JetPrintLocalizations.supportedLocales,
+        home: ShadTheme(
+          data: ShadThemeData(),
+          child: JetReportPreview(report: _report()),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.text('Page 1 of 3'), findsOneWidget);
+    });
+  });
+
   testWidgets('shows the first page with a correct "page X of N" indicator',
       (WidgetTester tester) async {
     await _pumpPreview(tester);

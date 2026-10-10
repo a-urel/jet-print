@@ -28,6 +28,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **`JetReportPreview` says that it needs a shadcn_ui theme.** The preview
+  reads the ambient `ShadTheme`, so under a `MaterialApp` alone it throws on
+  its first build, and neither its dartdoc nor the README Quickstart said so.
+  Both now do: wrap it in a `ShadApp`, or in a `ShadTheme` inside a
+  `MaterialApp`, with `JetPrintLocalizations.delegate` wired, and add
+  `shadcn_ui` to the app's own dependencies to import them. The Quickstart
+  shows the `ShadApp` from `example/jet_print_example.dart`. The dartdoc's
+  code sample, which still called the removed `JetReportEngine.render`, now
+  calls `renderDefinition`. No behaviour changed.
+
 - **Band captions no longer cover the first element of a band.** The
   designer's band captions ("Group Header", "Detail", …) were drawn in the
   page's left margin, but a caption is wider than many margins (~70px for
@@ -256,9 +266,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   is actually reachable from a host — `JetDataSource`,
   `RenderOptions.onElementPrint`, `RenderOptions.fonts` and
   `PrintDialogPresenter` — and what is internal; `docs/06-round-tripping.md`
-  covers the element-codec case in full. No behaviour changed; if you need to
-  register a custom element type or expression function, that capability does not
-  exist yet. Please open an issue.
+  covers the element-codec case in full. No behaviour changed. Element types
+  and expression functions are a first-party set: the registries hold the
+  library's own, and a new one is added by a change to the `jet_print`
+  repository, not by a host. A public registration API would stretch every
+  saved report's compatibility promise over types this library did not define,
+  so `jet_print` does not offer one. That bounds the current scope rather than
+  ruling one out: it could be added later without changing any existing call.
 
 - **Text no longer leaks a `ui.Paragraph` per line on every record.**
   `CanvasPainter.drawTextRun` builds one paragraph per laid-out line and drew it
@@ -400,9 +414,23 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   format loads forward automatically: `JetReportFormat.decodeDefinitionJson`
   migrates a v1 JSON map to a `ReportDefinition` — every v1 construct maps to a
   v2 home and master-level band/sub-scope order is preserved. The schema version
-  is now `kReportDefinitionSchemaVersion` (`2`).
+  is now `2`, public as `JetReportFormat.schemaVersion`.
 
 ### Added
+
+- **`JetReportFormat.schemaVersion`**, the report schema version this build
+  writes (`2`): the `schemaVersion` key at the head of every encoded document.
+  A host that stores reports can keep it beside each one, to find the
+  documents an upgrade will migrate, without hard-coding the number or
+  encoding a throwaway definition to read it back. It mirrors
+  `JetDataSourceFile.version` for the data-source format. It is a `const`, so
+  it can be used where a constant is required.
+
+- **The README says what a host can extend.** A new *What you can extend*
+  section lists the four host seams (`JetDataSource`, `RenderOptions.fonts`,
+  `RenderOptions.onElementPrint` and `PrintDialogPresenter`) and states that
+  element types and expression functions are a fixed, first-party set, with no
+  registration API.
 
 - **README rewrite with screenshots and tested examples.** The README now
   shows the designer, previews, charts and barcodes (also listed under

@@ -247,6 +247,10 @@ Take the row, not the front door.
 | **Add a playground demo** | [`docs/recipes/add-playground-demo.md`](docs/recipes/add-playground-demo.md) |
 | **A golden failed** | [`docs/recipes/update-goldens.md`](docs/recipes/update-goldens.md) |
 
+The element and expression registries are first-party: no host can register a
+type or function, so adding one is a change to this repository, made with the
+two recipes above ([`decisions/0002`](docs/decisions/0002-extension-seam-closed-for-1-0.md)).
+
 ## Going deeper
 
 - [`docs/README.md`](docs/README.md) — the wiki's index, and the conventions its

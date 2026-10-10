@@ -38,10 +38,24 @@ import 'preview_sheet.dart';
 /// A read-only paginated viewer for a [RenderedReport], with a top
 /// toolbar styled to match the designer.
 ///
+/// **Host requirements.** The preview is built from `shadcn_ui` widgets and
+/// reads the ambient [ShadTheme], so it needs a shadcn_ui theme above it: a
+/// [ShadApp], or a [ShadTheme] inside a `MaterialApp`. It also needs
+/// `JetPrintLocalizations.delegate` (and the library's supported locales),
+/// exactly as `JetReportDesigner` does. Under a `MaterialApp` alone it throws
+/// a [FlutterError] on its first build. A host therefore depends on
+/// `shadcn_ui` itself, to import the theme widget.
+///
 /// ```dart
-/// final RenderedReport report = const JetReportEngine().render(template, source);
-/// // Inside an app that wires JetPrintLocalizations.delegate:
-/// Widget preview = JetReportPreview(report: report, onBack: () => pop());
+/// final RenderedReport report =
+///     const JetReportEngine().renderDefinition(definition, source);
+/// Widget app = ShadApp(
+///   localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+///     JetPrintLocalizations.delegate,
+///   ],
+///   supportedLocales: JetPrintLocalizations.supportedLocales,
+///   home: JetReportPreview(report: report, onBack: () => pop()),
+/// );
 /// ```
 ///
 /// * **Toolbar** — the report's name titles the bar; an optional back button
@@ -64,9 +78,6 @@ import 'preview_sheet.dart';
 ///   showing the first page never builds the rest.
 /// * **WYSIWYG** — the current page paints through the same pipeline as the
 ///   design surface, so what is previewed is what was designed.
-///
-/// The host must wire `JetPrintLocalizations.delegate` (and the library's
-/// supported locales), exactly as for `JetReportDesigner`.
 class JetReportPreview extends StatefulWidget {
   /// Creates a preview over [report], opening at [initialPage] (clamped to
   /// the report's page range). When [onBack] is given, a back button appears

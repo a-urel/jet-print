@@ -66,8 +66,10 @@ Future<Uint8List> exportGreetingsPdf(List<String> names) =>
 Future<bool> printGreetings(List<String> names) =>
     const JetReportPrinter().printReport(renderGreetings(names));
 
-/// 3c. Or preview it. The preview reads the ambient shadcn_ui theme and the
-/// library's own localizations.
+/// 3c. Or preview it. JetReportPreview is built from shadcn_ui widgets, so it
+/// needs a shadcn_ui theme above it — a ShadApp, as here, or a ShadTheme inside
+/// a MaterialApp — and the library's localizations. Without them it throws on
+/// its first build.
 class GreetingsApp extends StatelessWidget {
   /// Creates an app that previews [report].
   const GreetingsApp({super.key, required this.report});

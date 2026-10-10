@@ -123,7 +123,35 @@ Future<bool> printGreetings(List<String> names) =>
 ```
 
 `JetReportPreview(report: report)` shows the result on screen, with page
-navigation, zoom, thumbnails, PDF export and print buttons.
+navigation, zoom, thumbnails, PDF export and print buttons. It is built from
+[shadcn_ui](https://pub.dev/packages/shadcn_ui) widgets, so it needs a
+shadcn_ui theme above it, and the library's localizations. Add `shadcn_ui` to
+your app's dependencies and wrap the preview in a `ShadApp`, or in a
+`ShadTheme` if your app is a `MaterialApp`. Under a `MaterialApp` alone it
+throws on its first build:
+
+```dart
+/// 3c. Or preview it. JetReportPreview is built from shadcn_ui widgets, so it
+/// needs a shadcn_ui theme above it — a ShadApp, as here, or a ShadTheme inside
+/// a MaterialApp — and the library's localizations. Without them it throws on
+/// its first build.
+class GreetingsApp extends StatelessWidget {
+  /// Creates an app that previews [report].
+  const GreetingsApp({super.key, required this.report});
+
+  /// The filled report to preview.
+  final RenderedReport report;
+
+  @override
+  Widget build(BuildContext context) => ShadApp(
+        localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+          JetPrintLocalizations.delegate,
+        ],
+        supportedLocales: JetPrintLocalizations.supportedLocales,
+        home: JetReportPreview(report: report),
+      );
+}
+```
 
 ## Host the designer
 
@@ -181,6 +209,11 @@ String saveReport(JetReportDesignerController controller) =>
 void openReport(JetReportDesignerController controller, String json) =>
     controller.open(JetReportFormat.decodeDefinitionJson(json));
 ```
+
+Each document records the schema version that wrote it, and
+`JetReportFormat.schemaVersion` is the version this build writes. Older
+documents are migrated as they load; a newer one throws
+`ReportFormatException`.
 
 ## Bind your data
 
@@ -259,6 +292,28 @@ GroupLevel(
 
 Page numbers come from `$V{PAGE_NUMBER}` and `$V{PAGE_COUNT}` in a page footer.
 `validate(definition, schema: schema)` checks every binding before you render.
+
+## What you can extend
+
+Four seams are open to your app:
+
+- **Data.** Implement `JetDataSource`, whose `open` returns a `DataSet`
+  cursor, to read rows from a database, an API or anything else, and pass it
+  to `renderDefinition`.
+- **Fonts.** `RenderOptions.fonts` adds your own font families. The preview,
+  PDF and print all draw with the same font files.
+- **Elements as they print.** `RenderOptions.onElementPrint` is called for each
+  element just before it is painted, with the row it came from, and can change
+  or hide it.
+- **The print dialog.** `JetReportPrinter(presenter: ...)` takes a
+  `PrintDialogPresenter` that replaces the system print dialog.
+
+Element types and expression functions are not on that list. Both are a fixed
+set that ships with the library: there is no API for registering your own, and
+adding one means changing the
+[jet_print repository](https://github.com/a-urel/jet-print) itself. That keeps
+the saved-JSON format limited to types this library defines, which is how a
+report saved by one version still opens in another.
 
 ## Platform notes
 

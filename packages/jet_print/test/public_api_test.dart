@@ -294,6 +294,17 @@ void main() {
     controller.dispose();
   });
 
+  test('JetReportFormat.schemaVersion names the version every document carries',
+      () {
+    // A const, so a host can use it where a constant is required — a column
+    // default, a switch case — without encoding a throwaway definition.
+    const int version = JetReportFormat.schemaVersion;
+    expect(
+      JetReportFormat.encodeDefinition(_detailDef())['schemaVersion'],
+      version,
+    );
+  });
+
   test('JetReportDesignerController.rename is the additive 017 mutator', () {
     final JetReportDesignerController controller =
         JetReportDesignerController();
