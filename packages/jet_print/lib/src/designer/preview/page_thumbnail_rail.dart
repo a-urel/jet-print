@@ -207,7 +207,7 @@ class PageThumbnailRailState extends State<PageThumbnailRail> {
     try {
       final RenderedReport report = widget.report;
       final PageFrame frame = report.pageAt(index).frame;
-      final ui.Picture picture = await recordPageFrame(frame, report.fonts);
+      final ui.Picture picture = await recordPageFrame(frame, fontsOf(report));
       if (!mounted || !identical(report, widget.report)) {
         picture.dispose();
         return;

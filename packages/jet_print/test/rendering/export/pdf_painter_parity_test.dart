@@ -491,7 +491,7 @@ void main() {
       // The host font flows to export: the embedded program differs from the
       // default-only export of the same template/data.
       expect(hostBytes, isNot(orderedEquals(defaultBytes)),
-          reason: 'export read report.fonts, not a default-only registry');
+          reason: 'export read fontsOf(report), not a default-only registry');
     });
 
     test('a host face used twice embeds exactly one font program', () async {

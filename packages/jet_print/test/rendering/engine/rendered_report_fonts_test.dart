@@ -4,7 +4,7 @@
 // (registerDefault + registerHostFonts) and ATTACHES it to the returned
 // `RenderedReport`, so preview/export/print read the very bytes layout was
 // measured with — WYSIWYG by construction. White-box: reaches
-// the internal `RenderedReport.fonts`.
+// the internal `fontsOf(report)`.
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -70,10 +70,10 @@ void main() {
         ],
       ),
     );
-    expect(report.fonts, isA<FontRegistry>());
-    expect(report.fonts.bytesFor('Acme Brand'), same(bytes),
+    expect(fontsOf(report), isA<FontRegistry>());
+    expect(fontsOf(report).bytesFor('Acme Brand'), same(bytes),
         reason: 'the carried registry resolves the host face bytes');
-    expect(report.fonts.families, contains('Acme Brand'));
+    expect(fontsOf(report).families, contains('Acme Brand'));
   });
 
   test('an empty-fonts render carries a default-only registry', () {
@@ -81,10 +81,10 @@ void main() {
       _template(),
       _source(),
     );
-    expect(report.fonts.hasDefault, isTrue);
+    expect(fontsOf(report).hasDefault, isTrue);
     // Default-only: the unregistered "Acme Brand" falls back to the default.
-    expect(report.fonts.bytesFor('Acme Brand'),
-        same(report.fonts.bytesFor(FontRegistry.defaultFamily)));
-    expect(report.fonts.families, <String>[FontRegistry.defaultFamily]);
+    expect(fontsOf(report).bytesFor('Acme Brand'),
+        same(fontsOf(report).bytesFor(FontRegistry.defaultFamily)));
+    expect(fontsOf(report).families, <String>[FontRegistry.defaultFamily]);
   });
 }

@@ -39,7 +39,7 @@ class JetReportExporter {
     // The registry the engine measured with, carried on the report (022) —
     // including any host fonts — so measure/draw/embed all share one byte
     // source and the PDF matches the preview exactly.
-    final PdfPainter painter = PdfPainter(report.fonts);
+    final PdfPainter painter = PdfPainter(fontsOf(report));
     for (int i = 0; i < report.pageCount; i++) {
       await paintFrame(report.pageAt(i).frame, painter);
     }
@@ -69,7 +69,8 @@ class JetReportExporter {
     if (scale <= 0) {
       throw ArgumentError.value(scale, 'scale', 'must be strictly positive');
     }
-    return const PageRasterizer()
-        .rasterize(report.pageAt(pageIndex).frame, report.fonts, scale: scale);
+    return const PageRasterizer().rasterize(
+        report.pageAt(pageIndex).frame, fontsOf(report),
+        scale: scale);
   }
 }

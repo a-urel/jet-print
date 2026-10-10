@@ -138,6 +138,7 @@ name — and the list is the point, so a new guard belongs in it:
 | `canvas_painter_single_construction_test.dart` | one place builds a `CanvasPainter`, so one place releases it |
 | `cache_key_isolation_test.dart` | nothing caches on a frame primitive, whose `==` walks its lists |
 | `public_extension_export_test.dart` | a public extension on an exported type is exported, or allowlisted with a reason |
+| `exported_member_type_test.dart` | a public member of an exported type has no unexported type, or is allowlisted with a reason |
 | `expression_function_catalog_registration_test.dart` | the fx palette and the engine's function table cannot drift apart |
 | `golden_failure_surfaces_test.dart` | a golden mismatch in a plain `test()` fails rather than being swallowed |
 | `documented_claims_test.dart` | the structural claims `docs/` states, each naming the page to update |
