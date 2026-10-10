@@ -56,8 +56,9 @@ Future<JetReportWorkspace> _pumpWorkspace(
   WidgetTester tester, {
   required JetReportDesignerController controller,
   ReportRenderCallback? renderReport,
-  ValueChanged<RenderedReport>? onExportPdf,
-  ValueChanged<RenderedReport>? onPrint,
+  RenderedReportCallback? onExportPdf,
+  RenderedReportCallback? onPrint,
+  ReportErrorCallback? onError,
   WidgetBuilder? loadingBuilder,
   JetDataSchema? dataSchema,
   Size size = const Size(1200, 800),
@@ -70,6 +71,7 @@ Future<JetReportWorkspace> _pumpWorkspace(
     dataSchema: dataSchema,
     onExportPdf: onExportPdf,
     onPrint: onPrint,
+    onError: onError,
     loadingBuilder: loadingBuilder,
   );
   await tester.pumpWidget(ShadApp(
@@ -423,6 +425,27 @@ void main() {
     expect(printed, same(exported),
         reason: 'both actions act on the single current rendered report');
     expect(exported!.pageCount, 3);
+  });
+
+  testWidgets('a failing export reaches the workspace onError (#101)',
+      (WidgetTester tester) async {
+    final List<Object> errors = <Object>[];
+    final JetReportDesignerController controller =
+        JetReportDesignerController(definition: _definition());
+    addTearDown(controller.dispose);
+    await _pumpWorkspace(
+      tester,
+      controller: controller,
+      onExportPdf: (RenderedReport _) async => throw StateError('disk full'),
+      onError: (Object e, StackTrace _) => errors.add(e),
+    );
+    await _enterPreview(tester);
+
+    await tester
+        .tap(find.byKey(const ValueKey<String>('jet_print.preview.export')));
+    await tester.pumpAndSettle();
+    expect(errors.single, isStateError,
+        reason: 'the workspace forwards its error sink to the preview');
   });
 
   testWidgets(

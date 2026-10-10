@@ -6,6 +6,8 @@
 // keyboard operation, and accessible names. WYSIWYG parity with the designer
 // surface (the shared paint pipeline) is pinned by the rendered-invoice
 // goldens.
+import 'dart:async';
+
 import 'package:flutter/material.dart' show MaterialApp;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -84,8 +86,9 @@ Future<void> _pumpPreview(
   int initialPage = 0,
   Size size = const Size(800, 600),
   VoidCallback? onBack,
-  VoidCallback? onExportPdf,
-  VoidCallback? onPrint,
+  RenderedReportCallback? onExportPdf,
+  RenderedReportCallback? onPrint,
+  ReportErrorCallback? onError,
 }) async {
   await tester.binding.setSurfaceSize(size);
   addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -100,6 +103,7 @@ Future<void> _pumpPreview(
       onBack: onBack,
       onExportPdf: onExportPdf,
       onPrint: onPrint,
+      onError: onError,
     ),
   ));
   await tester.pumpAndSettle();
@@ -202,8 +206,8 @@ void main() {
       await _pumpPreview(
         tester,
         size: Size(width, 700),
-        onExportPdf: () {},
-        onPrint: () {},
+        onExportPdf: (RenderedReport _) {},
+        onPrint: (RenderedReport _) {},
       );
       expect(tester.takeException(), isNull,
           reason: 'width ${width}px should not overflow the toolbar');
@@ -236,8 +240,8 @@ void main() {
       await _pumpPreview(
         tester,
         size: Size(windowWidth, 700),
-        onExportPdf: () {},
-        onPrint: () {},
+        onExportPdf: (RenderedReport _) {},
+        onPrint: (RenderedReport _) {},
       );
       expect(tester.takeException(), isNull,
           reason: 'window ${windowWidth}px (content ${windowWidth - 16}px) '
@@ -623,7 +627,7 @@ void main() {
         'a non-null onExportPdf adds the export action; tap invokes the '
         'callback; print stays absent', (WidgetTester tester) async {
       int exports = 0;
-      await _pumpPreview(tester, onExportPdf: () => exports++);
+      await _pumpPreview(tester, onExportPdf: (RenderedReport _) => exports++);
       expect(find.byKey(_exportKey), findsOneWidget);
       expect(find.byKey(_printKey), findsNothing,
           reason: 'each action appears only with its own callback');
@@ -641,7 +645,7 @@ void main() {
     testWidgets('a non-null onPrint adds the print action; tap invokes it',
         (WidgetTester tester) async {
       int prints = 0;
-      await _pumpPreview(tester, onPrint: () => prints++);
+      await _pumpPreview(tester, onPrint: (RenderedReport _) => prints++);
       expect(find.byKey(_printKey), findsOneWidget);
       expect(find.byKey(_exportKey), findsNothing);
       expect(find.bySemanticsLabel('Print'), findsOneWidget);
@@ -656,7 +660,8 @@ void main() {
       int exports = 0;
       int prints = 0;
       await _pumpPreview(tester,
-          onExportPdf: () => exports++, onPrint: () => prints++);
+          onExportPdf: (RenderedReport _) => exports++,
+          onPrint: (RenderedReport _) => prints++);
       await tester.ensureVisible(find.byKey(_exportKey));
       await tester.tap(find.byKey(_exportKey));
       await tester.ensureVisible(find.byKey(_printKey));
@@ -671,11 +676,100 @@ void main() {
       int exports = 0;
       int prints = 0;
       await _pumpPreview(tester,
-          onExportPdf: () => exports++, onPrint: () => prints++);
+          onExportPdf: (RenderedReport _) => exports++,
+          onPrint: (RenderedReport _) => prints++);
       await _activateWithKeyboard(tester, _exportKey, LogicalKeyboardKey.enter);
       expect(exports, 1, reason: 'Enter activates the focused export action');
       await _activateWithKeyboard(tester, _printKey, LogicalKeyboardKey.enter);
       expect(prints, 1, reason: 'Enter activates the focused print action');
+    });
+  });
+
+  // #101: the actions receive the report they act on, may be async, disable
+  // their own button while the returned future runs, and route a failure to
+  // onError — the designer's convention for host callbacks.
+  group('preview — async export / print', () {
+    testWidgets('the callback receives the report the preview shows',
+        (WidgetTester tester) async {
+      final RenderedReport shown = _report();
+      RenderedReport? exported;
+      RenderedReport? printed;
+      await _pumpPreview(tester,
+          report: shown,
+          onExportPdf: (RenderedReport r) => exported = r,
+          onPrint: (RenderedReport r) => printed = r);
+      await tester.ensureVisible(find.byKey(_exportKey));
+      await tester.tap(find.byKey(_exportKey));
+      await tester.ensureVisible(find.byKey(_printKey));
+      await tester.tap(find.byKey(_printKey));
+      await tester.pumpAndSettle();
+      expect(exported, same(shown));
+      expect(printed, same(shown));
+    });
+
+    testWidgets('an action is disabled while its future runs',
+        (WidgetTester tester) async {
+      int exports = 0;
+      int prints = 0;
+      Completer<void> pending = Completer<void>();
+      await _pumpPreview(tester,
+          onExportPdf: (RenderedReport _) {
+            exports++;
+            return pending.future;
+          },
+          onPrint: (RenderedReport _) => prints++);
+      await tester.ensureVisible(find.byKey(_exportKey));
+      await tester.tap(find.byKey(_exportKey));
+      await tester.pump();
+      expect(exports, 1);
+
+      await tester.tap(find.byKey(_exportKey));
+      await tester.pump();
+      expect(exports, 1, reason: 'a second tap must not start a second export');
+      await tester.ensureVisible(find.byKey(_printKey));
+      await tester.tap(find.byKey(_printKey));
+      await tester.pump();
+      expect(prints, 1, reason: 'only the running action is disabled');
+
+      pending.complete();
+      await tester.pumpAndSettle();
+      pending = Completer<void>()..complete();
+      await tester.ensureVisible(find.byKey(_exportKey));
+      await tester.tap(find.byKey(_exportKey));
+      await tester.pumpAndSettle();
+      expect(exports, 2, reason: 're-enabled once the future completes');
+    });
+
+    testWidgets('a rejected future goes to onError and re-enables the action',
+        (WidgetTester tester) async {
+      final List<Object> errors = <Object>[];
+      int exports = 0;
+      await _pumpPreview(tester,
+          onExportPdf: (RenderedReport _) async {
+            exports++;
+            throw StateError('disk full');
+          },
+          onError: (Object e, StackTrace _) => errors.add(e));
+      await tester.ensureVisible(find.byKey(_exportKey));
+      await tester.tap(find.byKey(_exportKey));
+      await tester.pumpAndSettle();
+      expect(errors.single, isStateError);
+
+      await tester.tap(find.byKey(_exportKey));
+      await tester.pumpAndSettle();
+      expect(exports, 2);
+    });
+
+    testWidgets('a synchronous throw goes to onError',
+        (WidgetTester tester) async {
+      final List<Object> errors = <Object>[];
+      await _pumpPreview(tester,
+          onPrint: (RenderedReport _) => throw StateError('no printer'),
+          onError: (Object e, StackTrace _) => errors.add(e));
+      await tester.ensureVisible(find.byKey(_printKey));
+      await tester.tap(find.byKey(_printKey));
+      await tester.pumpAndSettle();
+      expect(errors.single, isStateError);
     });
   });
 
@@ -685,7 +779,8 @@ void main() {
     testWidgets('the right slot shows the viewing actions', (
       WidgetTester tester,
     ) async {
-      await _pumpPreview(tester, onExportPdf: () {}, onPrint: () {});
+      await _pumpPreview(tester,
+          onExportPdf: (RenderedReport _) {}, onPrint: (RenderedReport _) {});
       expect(find.byKey(_exportKey), findsOneWidget);
       expect(find.byKey(_printKey), findsOneWidget);
       expect(find.byKey(_zoomInKey), findsOneWidget);
@@ -697,7 +792,8 @@ void main() {
     testWidgets('no designer-only signature action is present', (
       WidgetTester tester,
     ) async {
-      await _pumpPreview(tester, onExportPdf: () {}, onPrint: () {});
+      await _pumpPreview(tester,
+          onExportPdf: (RenderedReport _) {}, onPrint: (RenderedReport _) {});
       // Undo/redo and the editing groups are designer-only.
       expect(
           find.byKey(const ValueKey<String>('jet_print.designer.action.undo')),

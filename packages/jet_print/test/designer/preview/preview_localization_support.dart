@@ -61,8 +61,8 @@ Future<void> pumpLocalizedPreview(
     supportedLocales: JetPrintLocalizations.supportedLocales,
     home: JetReportPreview(
       report: previewLocalizationReport(),
-      onExportPdf: withActions ? () {} : null,
-      onPrint: withActions ? () {} : null,
+      onExportPdf: withActions ? (RenderedReport _) {} : null,
+      onPrint: withActions ? (RenderedReport _) {} : null,
     ),
   ));
   await tester.pumpAndSettle();

@@ -17,6 +17,7 @@ import '../domain/report_definition.dart';
 import '../rendering/engine/rendered_report.dart';
 import '../rendering/text/jet_font.dart';
 import 'controller/jet_report_designer_controller.dart';
+import 'host_callback.dart';
 import 'jet_report_designer.dart';
 import 'layout/unified_top_bar.dart';
 import 'layout/workspace_mode_switch.dart';
@@ -39,7 +40,8 @@ typedef ReportRenderCallback = FutureOr<RenderedReport> Function(
 ///   renderReport: (ReportDefinition d) =>
 ///       JetReportEngine().renderDefinition(d, dataSource, options: options),
 ///   onSaveRequested: (ReportDefinition d) => write(JetReportFormat.encodeDefinitionJson(d)),
-///   onExportPdf: (RenderedReport r) => save(JetReportExporter().toPdf(r)),
+///   onExportPdf: (RenderedReport r) async =>
+///       save(await const JetReportExporter().toPdf(r)),
 /// );
 /// ```
 class JetReportWorkspace extends StatefulWidget {
@@ -86,17 +88,19 @@ class JetReportWorkspace extends StatefulWidget {
   /// author taps "Select data source" in an empty Data Source panel.
   final ReportSelectDataSourceCallback? onSelectDataSchema;
 
-  /// Forwarded to the embedded [JetReportDesigner.onError]: invoked when a host
-  /// Save/Open/Preview callback throws or rejects. Null ⇒ errors propagate.
+  /// Forwarded to the embedded [JetReportDesigner.onError] and
+  /// [JetReportPreview.onError]: invoked when a host Save/Open/Preview, export
+  /// or print callback throws or rejects. Null ⇒ errors propagate.
   final ReportErrorCallback? onError;
 
   /// Invoked with the **current** rendered report when the preview's export
-  /// action fires; null ⇒ no export action. The host performs the I/O.
-  final ValueChanged<RenderedReport>? onExportPdf;
+  /// action fires; null ⇒ no export action. The host performs the I/O. May be
+  /// async: see [JetReportPreview.onExportPdf]. A failure goes to [onError].
+  final RenderedReportCallback? onExportPdf;
 
   /// Invoked with the **current** rendered report when the preview's print
-  /// action fires; null ⇒ no print action.
-  final ValueChanged<RenderedReport>? onPrint;
+  /// action fires; null ⇒ no print action. Behaves as [onExportPdf].
+  final RenderedReportCallback? onPrint;
 
   /// Builds the indicator shown while a render is in flight; null ⇒ a themed
   /// indeterminate progress bar.
@@ -252,12 +256,9 @@ class _JetReportWorkspaceState extends State<JetReportWorkspace> {
     final Widget preview = JetReportPreview(
       report: report,
       onBack: _enterDesigner,
-      onExportPdf: widget.onExportPdf == null || !current
-          ? null
-          : () => widget.onExportPdf!(report),
-      onPrint: widget.onPrint == null || !current
-          ? null
-          : () => widget.onPrint!(report),
+      onExportPdf: current ? widget.onExportPdf : null,
+      onPrint: current ? widget.onPrint : null,
+      onError: widget.onError,
     );
     // The preview is always the first child of a Stack so its element (and its
     // cached page picture) survives a re-render toggle without remounting. When a

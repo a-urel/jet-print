@@ -8,6 +8,7 @@
 /// `FrameCustomPainter`. There is no preview-specific element drawing code.
 library;
 
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -26,6 +27,7 @@ import '../canvas/design_tunables.dart';
 import '../canvas/frame_custom_painter.dart';
 import '../canvas/zoom_math.dart';
 import '../controller/view_fit_mode.dart';
+import '../host_callback.dart';
 import '../l10n/jet_print_localizations.dart';
 import '../layout/page_nav_control.dart';
 import '../layout/popover_group.dart';
@@ -34,6 +36,12 @@ import '../layout/workspace_mode_switch.dart';
 import '../layout/zoom_control.dart';
 import 'page_thumbnail_rail.dart';
 import 'preview_sheet.dart';
+
+/// Invoked with the [RenderedReport] a preview action acts on — its export or
+/// print. May be async: while the returned Future runs, the action's button is
+/// disabled, and a thrown error or rejected Future is routed to the widget's
+/// `onError`.
+typedef RenderedReportCallback = FutureOr<void> Function(RenderedReport report);
 
 /// A read-only paginated viewer for a [RenderedReport], with a top
 /// toolbar styled to match the designer.
@@ -90,6 +98,7 @@ class JetReportPreview extends StatefulWidget {
     this.onBack,
     this.onExportPdf,
     this.onPrint,
+    this.onError,
     this.onRename,
   });
 
@@ -113,20 +122,29 @@ class JetReportPreview extends StatefulWidget {
   /// to the designer). Null ⇒ no back button is shown.
   final VoidCallback? onBack;
 
-  /// Invoked when the user triggers the toolbar's export action.
+  /// Invoked with [report] when the user triggers the toolbar's export action.
   /// Null ⇒ no export action is shown (the toolbar is otherwise unchanged).
   ///
   /// The library only invokes the callback — what "export" means (a save
-  /// dialog, a share sheet, an upload) and any busy UI are host concerns;
-  /// hosts typically call `JetReportExporter.toPdf` with the same [report].
-  final VoidCallback? onExportPdf;
+  /// dialog, a share sheet, an upload) is a host concern; hosts typically call
+  /// `JetReportExporter.toPdf` with the report they receive. While a returned
+  /// Future runs, the export button is disabled, so a second tap cannot start
+  /// a second export; a failure goes to [onError].
+  final RenderedReportCallback? onExportPdf;
 
-  /// Invoked when the user triggers the toolbar's print action.
+  /// Invoked with [report] when the user triggers the toolbar's print action.
   /// Null ⇒ no print action is shown.
   ///
   /// Hosts typically delegate to `JetReportPrinter.printReport` with the
-  /// same [report]; the library itself performs no I/O here.
-  final VoidCallback? onPrint;
+  /// report they receive; the library itself performs no I/O here. Busy state
+  /// and failures behave as for [onExportPdf].
+  final RenderedReportCallback? onPrint;
+
+  /// Invoked when [onExportPdf] or [onPrint] throws, synchronously or via a
+  /// rejected Future. Null ⇒ the error propagates: a synchronous throw is
+  /// rethrown and a rejected Future reaches the zone, as an un-awaited Future
+  /// would — never silently swallowed.
+  final ReportErrorCallback? onError;
 
   /// Reserved hook for renaming the report from the preview. The
   /// preview no longer surfaces an inline-rename affordance in its toolbar — the
@@ -139,6 +157,25 @@ class JetReportPreview extends StatefulWidget {
 }
 
 class _JetReportPreviewState extends State<JetReportPreview> {
+  /// Whether the export/print callback's Future is still running; its button
+  /// is disabled until then.
+  bool _exporting = false;
+  bool _printing = false;
+
+  /// Runs a host [action] on the shown report through the shared host-callback
+  /// policy, holding its button disabled (via [setBusy]) while a returned
+  /// Future runs.
+  void _runAction(
+      RenderedReportCallback action, void Function(bool busy) setBusy) {
+    final Future<void>? pending =
+        runHostCallback(() => action(widget.report), widget.onError);
+    if (pending == null) return;
+    setState(() => setBusy(true));
+    pending.whenComplete(() {
+      if (mounted) setState(() => setBusy(false));
+    });
+  }
+
   /// Absolute zoom: `1.0` == 100% == actual size, bounded by the shared
   /// [kMinZoom]/[kMaxZoom] so the preview and designer agree. Manual zoom is a
   /// straight multiplier on this; fit modes compute it from the viewport.
@@ -356,14 +393,19 @@ class _JetReportPreviewState extends State<JetReportPreview> {
             buttonKey: const ValueKey<String>('jet_print.preview.export'),
             icon: LucideIcons.fileDown,
             label: l10n.previewExport,
-            onPressed: widget.onExportPdf,
+            onPressed: _exporting
+                ? null
+                : () =>
+                    _runAction(widget.onExportPdf!, (bool b) => _exporting = b),
           ),
         if (widget.onPrint != null)
           _ToolbarButton(
             buttonKey: const ValueKey<String>('jet_print.preview.print'),
             icon: LucideIcons.printer,
             label: l10n.previewPrint,
-            onPressed: widget.onPrint,
+            onPressed: _printing
+                ? null
+                : () => _runAction(widget.onPrint!, (bool b) => _printing = b),
           ),
         const _Divider(),
       ],

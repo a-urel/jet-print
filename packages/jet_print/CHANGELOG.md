@@ -8,6 +8,21 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **Breaking (API): the preview's export and print callbacks receive the
+  report and may be async.** `JetReportPreview.onExportPdf` and `.onPrint`
+  were `VoidCallback`s, and `JetReportWorkspace`'s were
+  `ValueChanged<RenderedReport>`; both are now a `RenderedReportCallback`,
+  `FutureOr<void> Function(RenderedReport report)`. While a returned Future
+  runs, that action's button is disabled, and a thrown error or rejected
+  Future goes to the new `JetReportPreview.onError`. `JetReportWorkspace`
+  forwards its `onError` there, as it already did to the designer. Without
+  an `onError`, errors propagate as before. A preview host that closed over
+  the report now takes it as the parameter: `onExportPdf: (RenderedReport r)
+  => save(r)`. A workspace host's `ValueChanged<RenderedReport>` still
+  compiles. `ReportErrorCallback` is unchanged but now lives in its own
+  library; it is still exported from `jet_print.dart`.
+  ([#101](https://github.com/a-urel/jet-print/issues/101))
+
 - **Breaking (API): `RenderedReport.fonts` and the constructor's `fonts`
   parameter are removed.** The field's type, `FontRegistry`, was never
   exported, so a consumer could call its members without being able to name

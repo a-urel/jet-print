@@ -531,8 +531,8 @@ class _RenderedInvoiceExampleState extends State<RenderedInvoiceExample> {
 
   /// Export = save the in-memory PDF bytes wherever the user picks
   /// (host-owned I/O; the library stays headless).
-  Future<void> _savePdf() async {
-    final Uint8List pdf = await const JetReportExporter().toPdf(_report);
+  Future<void> _savePdf(RenderedReport report) async {
+    final Uint8List pdf = await const JetReportExporter().toPdf(report);
     final FileSaveLocation? location = await getSaveLocation(
       acceptedTypeGroups: const <XTypeGroup>[
         XTypeGroup(label: 'PDF document', extensions: <String>['pdf']),
@@ -549,7 +549,8 @@ class _RenderedInvoiceExampleState extends State<RenderedInvoiceExample> {
         report: _report,
         onBack: widget.onBack,
         onExportPdf: _savePdf,
-        onPrint: () => const JetReportPrinter().printReport(_report),
+        onPrint: (RenderedReport report) =>
+            const JetReportPrinter().printReport(report),
         onRename: widget.onRename,
       );
 }

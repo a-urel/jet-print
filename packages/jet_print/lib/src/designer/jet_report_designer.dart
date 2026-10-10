@@ -12,6 +12,7 @@ import 'designer_font_scope.dart';
 import 'designer_schema_scope.dart';
 import 'designer_scope.dart';
 import 'font_preload.dart';
+import 'host_callback.dart';
 import 'interaction/designer_shortcuts.dart';
 import 'l10n/jet_print_localizations.dart';
 import 'layout/designer_right_panel.dart';
@@ -37,14 +38,6 @@ typedef ReportOpenRequestedCallback = FutureOr<void> Function();
 /// [JetReportDesigner.onError].
 typedef ReportPreviewRequestedCallback = FutureOr<void> Function(
     ReportDefinition current);
-
-/// Invoked when a host Save/Open/Preview/SelectDataSchema callback throws —
-/// synchronously or via a rejected Future. Receives the [error] and its
-/// [stackTrace]. The library performs no file I/O itself, so this
-/// surfaces failures the host raised inside the `*Requested` callbacks. Null ⇒
-/// errors propagate as before (never silently swallowed).
-typedef ReportErrorCallback = void Function(
-    Object error, StackTrace stackTrace);
 
 /// Invoked when the author taps "Select data source" in an empty Data Source
 /// panel. The host picks a `*.jetreport.datasource` file, decodes it with
@@ -252,29 +245,7 @@ class _JetReportDesignerState extends State<JetReportDesigner> {
   /// throw or a rejected Future) to [JetReportDesigner.onError]. With no sink wired
   /// the error is rethrown, preserving today's propagate-don't-swallow behavior.
   void _guard(FutureOr<void> Function() run) {
-    final ReportErrorCallback? onError = widget.onError;
-    FutureOr<void> result;
-    try {
-      result = run();
-    } catch (error, stackTrace) {
-      if (onError != null) {
-        onError(error, stackTrace);
-        return;
-      }
-      rethrow;
-    }
-    if (result is Future<void>) {
-      result.catchError((Object error, StackTrace stackTrace) {
-        if (onError != null) {
-          onError(error, stackTrace);
-        } else {
-          // No sink: surface through the zone so Flutter's error handler picks
-          // it up (matches the behaviour of an un-awaited rejected Future in a
-          // VoidCallback before this guard existed).
-          Zone.current.handleUncaughtError(error, stackTrace);
-        }
-      });
-    }
+    runHostCallback(run, widget.onError);
   }
 
   /// Opens the collapsed narrow-layout overlay when a Properties-focus request
