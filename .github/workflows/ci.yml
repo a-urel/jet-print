@@ -194,7 +194,8 @@ jobs:
           while read -r test_file; do
             [ -n "$test_file" ] && flutter test --update-goldens "$test_file"
           done < failing-goldens.txt
-          git status --porcelain -- '*.png' | awk '{print $2}' > changed-goldens.txt
+          git status --porcelain -- 'packages/*.png' 'apps/*.png' \
+            | awk '{print $2}' > changed-goldens.txt
           echo "Regenerated:"
           cat changed-goldens.txt
           while read -r png; do
