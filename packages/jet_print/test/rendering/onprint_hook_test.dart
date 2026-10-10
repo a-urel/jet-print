@@ -3,6 +3,8 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
+import 'package:jet_print/src/rendering/engine/rendered_report.dart'
+    show frameOf;
 import 'package:jet_print/src/rendering/frame/primitive.dart';
 import 'package:jet_print/src/rendering/text/text_measurer.dart' show TextLine;
 
@@ -43,7 +45,7 @@ JetInMemoryDataSource _source(num amount) => JetInMemoryDataSource(
 // Collects the colors of the text-run primitives across all pages.
 List<JetColor> _textColors(RenderedReport r) => <JetColor>[
       for (int i = 0; i < r.pageCount; i++)
-        for (final p in r.pageAt(i).frame.primitives)
+        for (final p in frameOf(r.pageAt(i)).primitives)
           if (p is TextRunPrimitive) p.style.color,
     ];
 
@@ -60,7 +62,7 @@ void main() {
     );
     final bool hasAmtText = <bool>[
       for (int i = 0; i < r.pageCount; i++)
-        for (final FramePrimitive p in r.pageAt(i).frame.primitives)
+        for (final FramePrimitive p in frameOf(r.pageAt(i)).primitives)
           if (p is TextRunPrimitive) true,
     ].isNotEmpty;
     expect(hasAmtText, isFalse); // the only text element was suppressed
@@ -85,7 +87,7 @@ void main() {
     // original text still painted
     final List<String> texts = <String>[
       for (int i = 0; i < r.pageCount; i++)
-        for (final FramePrimitive p in r.pageAt(i).frame.primitives)
+        for (final FramePrimitive p in frameOf(r.pageAt(i)).primitives)
           if (p is TextRunPrimitive) p.lines.map((TextLine l) => l.text).join(),
     ];
     expect(texts.join(), contains('7'));
@@ -108,7 +110,7 @@ void main() {
     );
     final List<String> texts = <String>[
       for (int i = 0; i < r.pageCount; i++)
-        for (final FramePrimitive p in r.pageAt(i).frame.primitives)
+        for (final FramePrimitive p in frameOf(r.pageAt(i)).primitives)
           if (p is TextRunPrimitive) p.lines.map((TextLine l) => l.text).join(),
     ];
     expect(texts.join(), contains('7'));
@@ -258,8 +260,8 @@ void main() {
     // FramePrimitive subclasses all implement ==; compare lists directly.
     for (int i = 0; i < a.pageCount; i++) {
       expect(
-        a.pageAt(i).frame.primitives,
-        b.pageAt(i).frame.primitives,
+        frameOf(a.pageAt(i)).primitives,
+        frameOf(b.pageAt(i)).primitives,
         reason: 'page $i primitives differ',
       );
     }
@@ -313,7 +315,7 @@ void main() {
     );
     final List<String> texts = <String>[
       for (int i = 0; i < r.pageCount; i++)
-        for (final FramePrimitive p in r.pageAt(i).frame.primitives)
+        for (final FramePrimitive p in frameOf(r.pageAt(i)).primitives)
           if (p is TextRunPrimitive) p.lines.map((TextLine l) => l.text).join(),
     ];
     expect(texts.join(), isNot(contains('FLAG'))); // badge suppressed

@@ -85,8 +85,10 @@ void main() {
       () async {
     final RenderedReport report = _render(fonts: _brand());
     // The single shared frame canvas/preview/PNG/PDF all consume.
-    final TextRunPrimitive run =
-        report.pageAt(0).frame.primitives.whereType<TextRunPrimitive>().single;
+    final TextRunPrimitive run = frameOf(report.pageAt(0))
+        .primitives
+        .whereType<TextRunPrimitive>()
+        .single;
     expect(run.fontFamily, 'Acme Brand',
         reason: 'measurement resolved the host family');
 

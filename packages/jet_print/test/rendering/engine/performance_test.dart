@@ -141,6 +141,6 @@ void main() {
     // ignore: avoid_print
     print('[advisory] 1,000 records: first page viewable in'
         '${watch.elapsedMilliseconds} ms across $pageCount pages');
-    expect(report.pageAt(0).frame.primitives, isNotEmpty);
+    expect(frameOf(report.pageAt(0)).primitives, isNotEmpty);
   });
 }

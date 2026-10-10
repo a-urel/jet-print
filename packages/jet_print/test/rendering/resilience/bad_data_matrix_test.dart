@@ -64,7 +64,7 @@ Diagnostic _match(RenderedReport r, Pattern p) =>
 
 Map<String, String> _texts(RenderedReport r) => <String, String>{
       for (final TextRunPrimitive p
-          in r.pageAt(0).frame.primitives.whereType<TextRunPrimitive>())
+          in frameOf(r.pageAt(0)).primitives.whereType<TextRunPrimitive>())
         if (p.elementId != null)
           p.elementId!: p.lines.map((TextLine l) => l.text).join(),
     };

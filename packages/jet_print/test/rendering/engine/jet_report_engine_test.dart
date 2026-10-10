@@ -49,8 +49,9 @@ Map<String, String> _texts(PageFrame frame) => <String, String>{
 /// Every rendered text run on every page of [report].
 List<String> _allRuns(RenderedReport report) => <String>[
       for (int i = 0; i < report.pageCount; i++)
-        for (final TextRunPrimitive p
-            in report.pageAt(i).frame.primitives.whereType<TextRunPrimitive>())
+        for (final TextRunPrimitive p in frameOf(report.pageAt(i))
+            .primitives
+            .whereType<TextRunPrimitive>())
           p.lines.map((TextLine l) => l.text).join(),
     ];
 
@@ -161,7 +162,7 @@ void main() {
           const JetReportEngine().renderDefinition(template, source);
       expect(report.pageCount, 5);
       for (int i = 0; i < 5; i++) {
-        expect(_texts(report.pageAt(i).frame)['name'], 'row $i');
+        expect(_texts(frameOf(report.pageAt(i)))['name'], 'row $i');
       }
     });
 
@@ -169,7 +170,7 @@ void main() {
       final RenderedReport report =
           const JetReportEngine().renderDefinition(template, source);
       for (int i = 0; i < report.pageCount; i++) {
-        final Map<String, String> texts = _texts(report.pageAt(i).frame);
+        final Map<String, String> texts = _texts(frameOf(report.pageAt(i)));
         expect(texts['hd'], 'HEADER');
         expect(texts['pf'], 'Page ${i + 1} of 5');
       }
@@ -263,9 +264,7 @@ void main() {
 
     List<String> runsFor(RenderedReport report, String id) => <String>[
           for (int i = 0; i < report.pageCount; i++)
-            for (final TextRunPrimitive p in report
-                .pageAt(i)
-                .frame
+            for (final TextRunPrimitive p in frameOf(report.pageAt(i))
                 .primitives
                 .whereType<TextRunPrimitive>())
               if (p.elementId == id) p.lines.map((TextLine l) => l.text).join(),
@@ -369,8 +368,9 @@ void main() {
       expect(runsFor(report, 'sub'), <String>['L1.a', 'L1.b', 'L2.a']);
       // Document order: each line is followed by its own sub-rows.
       final List<String> ordered = <String>[
-        for (final TextRunPrimitive p
-            in report.pageAt(0).frame.primitives.whereType<TextRunPrimitive>())
+        for (final TextRunPrimitive p in frameOf(report.pageAt(0))
+            .primitives
+            .whereType<TextRunPrimitive>())
           if (p.elementId == 'line' || p.elementId == 'sub')
             p.lines.map((TextLine l) => l.text).join(),
       ];
@@ -1491,7 +1491,7 @@ void main() {
           .renderDefinition(template, source(), options: options);
       expect(a.pageCount, b.pageCount);
       for (int i = 0; i < a.pageCount; i++) {
-        expect(a.pageAt(i).frame, b.pageAt(i).frame,
+        expect(frameOf(a.pageAt(i)), frameOf(b.pageAt(i)),
             reason: 'page $i must be byte-identical across renders');
       }
     });

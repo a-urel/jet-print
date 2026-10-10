@@ -4,6 +4,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 import 'package:jet_print/jet_print.dart';
+import 'package:jet_print/src/rendering/engine/rendered_report.dart'
+    show frameOf;
 import 'package:jet_print/src/rendering/frame/primitive.dart'
     show TextRunPrimitive;
 import 'package:jet_print/src/rendering/text/text_measurer.dart' show TextLine;
@@ -13,8 +15,9 @@ import 'package:jet_print_playground/rendered_ledger_example.dart';
 /// The rendered text of [elementId] on a single [pageIndex], runs joined.
 List<String> _runsOnPage(RenderedReport r, int pageIndex, String elementId) =>
     <String>[
-      for (final TextRunPrimitive p
-          in r.pageAt(pageIndex).frame.primitives.whereType<TextRunPrimitive>())
+      for (final TextRunPrimitive p in frameOf(r.pageAt(pageIndex))
+          .primitives
+          .whereType<TextRunPrimitive>())
         if (p.elementId == elementId)
           p.lines.map((TextLine l) => l.text).join(),
     ];
@@ -23,7 +26,7 @@ List<String> _runsOnPage(RenderedReport r, int pageIndex, String elementId) =>
 List<String> _allRuns(RenderedReport r) => <String>[
       for (int i = 0; i < r.pageCount; i++)
         for (final TextRunPrimitive p
-            in r.pageAt(i).frame.primitives.whereType<TextRunPrimitive>())
+            in frameOf(r.pageAt(i)).primitives.whereType<TextRunPrimitive>())
           '$i|${p.elementId}|${p.lines.map((TextLine l) => l.text).join()}',
     ];
 

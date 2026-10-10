@@ -70,7 +70,7 @@ class JetReportPrinter {
   /// [PrintUnavailableException] where the platform cannot print.
   Future<bool> printReport(RenderedReport report, {String? jobName}) async {
     final Uint8List pdfBytes = await const JetReportExporter().toPdf(report);
-    final PageFormat page = report.pageAt(0).frame.page;
+    final PageFormat page = frameOf(report.pageAt(0)).page;
     final String name =
         jobName ?? (report.title.isNotEmpty ? report.title : 'Report');
     final PrintDialogPresenter present = _presenter ?? _systemPrintDialog;

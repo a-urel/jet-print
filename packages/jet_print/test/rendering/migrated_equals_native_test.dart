@@ -73,7 +73,7 @@ List<PageFrame> _frames(ReportDefinition def) {
     ]),
   );
   return <PageFrame>[
-    for (int i = 0; i < report.pageCount; i++) report.pageAt(i).frame,
+    for (int i = 0; i < report.pageCount; i++) frameOf(report.pageAt(i)),
   ];
 }
 

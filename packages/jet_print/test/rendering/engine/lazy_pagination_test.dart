@@ -219,7 +219,7 @@ void main() {
       expect(built, <int>[1], reason: 'only the requested page is built');
       final RenderedPage again = report.pageAt(1);
       expect(built, <int>[1], reason: 're-access must hit the cache');
-      expect(identical(p1.frame, again.frame), isTrue);
+      expect(identical(frameOf(p1), frameOf(again)), isTrue);
       expect(p1.index, 1);
     });
 
@@ -259,8 +259,8 @@ void main() {
       final RenderedReport report =
           const JetReportEngine().renderDefinition(template, source);
       expect(report.pageCount, 3, reason: '2 x 30pt bands per 80pt page');
-      expect(report.pageAt(0).frame.primitives, isNotEmpty);
-      expect(_textRun(report.pageAt(0).frame, 'name'), 'row 0');
+      expect(frameOf(report.pageAt(0)).primitives, isNotEmpty);
+      expect(_textRun(frameOf(report.pageAt(0)), 'name'), 'row 0');
     });
   });
 }

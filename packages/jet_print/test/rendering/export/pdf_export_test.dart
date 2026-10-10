@@ -102,8 +102,10 @@ void main() {
   group('B2 — images land at the shared computeImageFit geometry', () {
     test('a contain-fit PNG draws into the preview dst rect', () async {
       final RenderedReport report = imageReport(bytes: tinyPngBytes());
-      final ImagePrimitive primitive =
-          report.pageAt(0).frame.primitives.whereType<ImagePrimitive>().single;
+      final ImagePrimitive primitive = frameOf(report.pageAt(0))
+          .primitives
+          .whereType<ImagePrimitive>()
+          .single;
       // The preview geometry: same primitive bounds, same fit math, 4x2 src.
       final ImageFit fit =
           computeImageFit(primitive.fit, primitive.bounds, 4, 2);
@@ -120,8 +122,10 @@ void main() {
     test('a fill-fit JPEG draws into the element bounds exactly', () async {
       final RenderedReport report =
           imageReport(bytes: tinyJpegBytes(), fit: JetBoxFit.fill);
-      final ImagePrimitive primitive =
-          report.pageAt(0).frame.primitives.whereType<ImagePrimitive>().single;
+      final ImagePrimitive primitive = frameOf(report.pageAt(0))
+          .primitives
+          .whereType<ImagePrimitive>()
+          .single;
       final PdfInspector pdf = PdfInspector(await exporter.toPdf(report));
       final PdfImageDraw draw = pdf.imageDrawsOn(0).single;
       expect(draw.width, closeTo(primitive.bounds.width, 0.01));

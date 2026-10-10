@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
+import 'package:jet_print/src/rendering/engine/rendered_report.dart'
+    show frameOf;
 import 'package:jet_print_google_fonts/jet_print_google_fonts.dart';
 
 class _DiskBundle extends CachingAssetBundle {
@@ -58,6 +60,6 @@ void main() {
     );
     final Uint8List pdf = await const JetReportExporter().toPdf(report);
     expect(pdf, isNotEmpty);
-    expect(report.pageAt(0).frame.primitives, isNotEmpty);
+    expect(frameOf(report.pageAt(0)).primitives, isNotEmpty);
   });
 }

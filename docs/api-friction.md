@@ -339,22 +339,25 @@ Entries found after the two consumers, by a test rather than by building
 against the barrel.
 
 22. **`RenderedPage.frame` and `JetReportDesignerController.activeGuides`
-    expose unexported types.** The guard added for entry 20 found both on its
-    first run. `frame` is a `PageFrame`, the display list every painter and
-    exporter reads; neither it nor its primitives are exported, yet
-    `pageAt(i).frame.primitives` is walkable today, and the playground's
-    rendered-example tests walk it, with a `src/` import for the primitive
-    types. `activeGuides` is a `List<SnapGuide>`, the snap guides the canvas
-    overlay draws mid-drag. Both are allowlisted in the guard until this is
-    decided.
-    *`src/rendering/engine/rendered_report.dart` → `RenderedPage.frame`;
+    exposed unexported types.** *Fixed* in
+    [#105](https://github.com/a-urel/jet-print/issues/105), by hiding both, as
+    entry 20 was. The guard added for entry 20 found them on its first run.
+    `frame` was a `PageFrame`, the display list every painter and exporter
+    reads; neither it nor its primitives are exported, yet
+    `pageAt(i).frame.primitives` was walkable, and the playground's
+    rendered-example tests walked it with a `src/` import for the primitive
+    types. `activeGuides` was a `List<SnapGuide>`, the snap guides the canvas
+    overlay draws mid-drag. Exporting the frame would have frozen the whole IR
+    at 1.0 for no host use that
+    [`0002`](decisions/0002-extension-seam-closed-for-1-0.md) leaves open, so
+    the field is private and the engine's readers use `frameOf`; the guides
+    are read through `activeGuidesOf`. The barrel exports neither. Tests that
+    inspect primitives were already white-box and import `frameOf` the same
+    way. A public inspection API, text extraction for instance, would only
+    add surface, so it can follow 1.0.
+    *`src/rendering/engine/rendered_report.dart` → `frameOf`;
     `src/designer/controller/jet_report_designer_controller.dart` →
-    `activeGuides`.*
-
-    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*,
-    [#105](https://github.com/a-urel/jet-print/issues/105). Exporting the types
-    commits to their API, and hiding the members changes the surface, so it is
-    entry 20's question again.
+    `activeGuidesOf`.*
 
 ## How to use this list
 

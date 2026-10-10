@@ -53,8 +53,9 @@ final JetInMemoryDataSource _source = JetInMemoryDataSource(
 
 List<String> _runs(RenderedReport report) => <String>[
       for (int i = 0; i < report.pageCount; i++)
-        for (final TextRunPrimitive p
-            in report.pageAt(i).frame.primitives.whereType<TextRunPrimitive>())
+        for (final TextRunPrimitive p in frameOf(report.pageAt(i))
+            .primitives
+            .whereType<TextRunPrimitive>())
           p.lines.map((TextLine l) => l.text).join(),
     ];
 

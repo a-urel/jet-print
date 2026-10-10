@@ -2,7 +2,7 @@
 /// paginated viewer over a `RenderedReport`.
 ///
 /// WYSIWYG, non-negotiable: each page is painted by recording its
-/// `RenderedPage.frame` through the **shared** `paintFrame` → `CanvasPainter`
+/// frame (`frameOf(page)`) through the **shared** `paintFrame` → `CanvasPainter`
 /// pipeline — the identical path the designer's `DesignTimeFrameBuilder`
 /// uses — and blitting the recorded picture via the designer's
 /// `FrameCustomPainter`. There is no preview-specific element drawing code.
@@ -245,7 +245,7 @@ class _JetReportPreviewState extends State<JetReportPreview> {
 
   int get _pageCount => widget.report.pageCount;
 
-  PageFrame get _frame => widget.report.pageAt(_index).frame;
+  PageFrame get _frame => frameOf(widget.report.pageAt(_index));
 
   /// Shared across the toolbar popovers (page-jump + zoom) so opening one closes
   /// the other — at most one toolbar dropdown is open at a time.

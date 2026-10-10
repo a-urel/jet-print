@@ -315,7 +315,7 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
   ];
 
   List<Widget> _guideWidgets(JetReportDesignerController controller) {
-    final List<SnapGuide> guides = controller.activeGuides;
+    final List<SnapGuide> guides = activeGuidesOf(controller);
     final String? band = controller.activeBandId;
     if (guides.isEmpty || band == null) return const <Widget>[];
     final JetRect? bandRect = widget.layout.bandRect(band);

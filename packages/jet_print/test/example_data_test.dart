@@ -6,6 +6,8 @@ library;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
+import 'package:jet_print/src/rendering/engine/rendered_report.dart'
+    show frameOf;
 
 import 'support/example_web.dart'
     if (dart.library.io) 'support/example_io.dart';
@@ -26,7 +28,7 @@ void main() {
     final RenderedReport fromJson = renderSales(ordersFromJson);
     final RenderedReport fromObjects = renderSales(ordersFromObjects);
     expect(fromObjects.pageCount, fromJson.pageCount);
-    expect(fromObjects.pageAt(0).frame, fromJson.pageAt(0).frame);
+    expect(frameOf(fromObjects.pageAt(0)), frameOf(fromJson.pageAt(0)));
     expect(fromObjects.diagnostics.entries, isEmpty);
   });
 }

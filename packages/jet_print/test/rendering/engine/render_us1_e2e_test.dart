@@ -9,6 +9,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
+import 'package:jet_print/src/rendering/engine/rendered_report.dart'
+    show frameOf;
 import 'package:jet_print/src/rendering/frame/primitive.dart';
 import 'package:jet_print/src/rendering/text/text_measurer.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
@@ -76,8 +78,9 @@ RenderedReport _render() => const JetReportEngine().renderDefinition(
 
 List<String> _allRuns(RenderedReport report) => <String>[
       for (int i = 0; i < report.pageCount; i++)
-        for (final TextRunPrimitive p
-            in report.pageAt(i).frame.primitives.whereType<TextRunPrimitive>())
+        for (final TextRunPrimitive p in frameOf(report.pageAt(i))
+            .primitives
+            .whereType<TextRunPrimitive>())
           p.lines.map((TextLine l) => l.text).join(),
     ];
 
@@ -106,7 +109,7 @@ void main() {
     final RenderedReport b = _render();
     expect(a.pageCount, b.pageCount);
     for (int i = 0; i < a.pageCount; i++) {
-      expect(a.pageAt(i).frame, b.pageAt(i).frame);
+      expect(frameOf(a.pageAt(i)), frameOf(b.pageAt(i)));
     }
   });
 

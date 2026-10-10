@@ -111,7 +111,8 @@ void main() {
       );
       expect(report.pageCount, greaterThan(1));
       // The page footer reads "Page N of M", so each page's frame differs.
-      expect(report.pageAt(0).frame, isNot(equals(report.pageAt(1).frame)));
+      expect(
+          frameOf(report.pageAt(0)), isNot(equals(frameOf(report.pageAt(1)))));
     });
   });
 }

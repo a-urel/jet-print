@@ -4,6 +4,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
+import 'package:jet_print/src/designer/controller/jet_report_designer_controller.dart'
+    show activeGuidesOf;
 
 import '../support/designer_harness.dart';
 
@@ -57,7 +59,7 @@ void main() {
     controller.beginResize(id, ResizeHandle.right);
     controller.updateResize(const JetOffset(5, 0), threshold: 6);
     await tester.pump();
-    expect(controller.activeGuides, isNotEmpty);
+    expect(activeGuidesOf(controller), isNotEmpty);
     expect(_guideBox, findsWidgets);
 
     controller.commitResize();
@@ -83,7 +85,7 @@ void main() {
     controller.updateResize(const JetOffset(5, 0),
         threshold: 6, bypassSnap: true);
     await tester.pump();
-    expect(controller.activeGuides, isEmpty);
+    expect(activeGuidesOf(controller), isEmpty);
     expect(_guideBox, findsNothing);
     // Toggle state is unchanged — the bypass is a transient modifier, not a flip.
     expect(controller.snapEnabled, isTrue);

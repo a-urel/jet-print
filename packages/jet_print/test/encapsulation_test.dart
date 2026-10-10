@@ -220,7 +220,21 @@ bool _isWhiteBoxSeamTest(File file) {
       // CanvasKit-specific and invisible to any public-API assertion.
       path.endsWith(
           '/test/designer/preview/preview_texture_dispose_test.dart') ||
-      path.endsWith('/test/designer/canvas/frame_record_dispose_test.dart');
+      path.endsWith('/test/designer/canvas/frame_record_dispose_test.dart') ||
+      // Snap guides (#105): `activeGuidesOf` is the unexported `src/` reader
+      // of the guides the selection overlay draws mid-drag; `SnapGuide` is
+      // canvas state, not public API. These tests pin that a snapping move or
+      // resize raises a guide and that every teardown path clears it, which no
+      // public-API assertion can observe.
+      path.endsWith('/test/designer/canvas/snapping_test.dart') ||
+      path.endsWith('/test/designer/canvas/resize_snap_test.dart') ||
+      path.endsWith('/test/designer/canvas/resize_clamp_teardown_test.dart') ||
+      path.endsWith(
+          '/test/designer/controller/move_commit_teardown_test.dart') ||
+      // Example data parity (#105): the object and JSON example sources must
+      // render identical display lists, read through `frameOf`, the unexported
+      // `src/` accessor of a page's frame.
+      path.endsWith('/test/example_data_test.dart');
 }
 
 void main() {

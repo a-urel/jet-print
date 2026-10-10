@@ -156,9 +156,9 @@ void main() {
     expect(inMemory.pageCount, json.pageCount);
     expect(inMemory.pageCount, objects.pageCount);
     for (int i = 0; i < inMemory.pageCount; i++) {
-      expect(json.pageAt(i).frame, inMemory.pageAt(i).frame,
+      expect(frameOf(json.pageAt(i)), frameOf(inMemory.pageAt(i)),
           reason: 'JSON page $i must equal in-memory byte-for-byte');
-      expect(objects.pageAt(i).frame, inMemory.pageAt(i).frame,
+      expect(frameOf(objects.pageAt(i)), frameOf(inMemory.pageAt(i)),
           reason: 'object-backed page $i must equal in-memory byte-for-byte');
     }
   });
@@ -168,7 +168,7 @@ void main() {
         _render(JetInMemoryDataSource(_rows, fields: _schema));
     final List<String> runs = <String>[
       for (final TextRunPrimitive p
-          in report.pageAt(0).frame.primitives.whereType<TextRunPrimitive>())
+          in frameOf(report.pageAt(0)).primitives.whereType<TextRunPrimitive>())
         p.lines.map((TextLine l) => l.text).join(),
     ];
     expect(runs, contains('Printed by A. Urel'));

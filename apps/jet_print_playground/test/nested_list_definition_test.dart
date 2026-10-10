@@ -10,6 +10,8 @@ import 'package:jet_print/jet_print.dart';
 // Implementation imports: the rendered display-list primitives aren't part of
 // the public surface, so this equivalence proof reaches into them the same way
 // the engine's own tests do (jet_report_engine_test.dart's `_allRuns`).
+import 'package:jet_print/src/rendering/engine/rendered_report.dart'
+    show frameOf;
 import 'package:jet_print/src/rendering/frame/primitive.dart'
     show TextRunPrimitive;
 import 'package:jet_print/src/rendering/text/text_measurer.dart' show TextLine;
@@ -245,8 +247,9 @@ String _formatTotal(double value) => NumberFormat('#,##0.00').format(value);
 /// across all pages — the live footer-total values, one per emitted footer.
 List<String> _runsForId(RenderedReport report, String elementId) => <String>[
       for (int i = 0; i < report.pageCount; i++)
-        for (final TextRunPrimitive p
-            in report.pageAt(i).frame.primitives.whereType<TextRunPrimitive>())
+        for (final TextRunPrimitive p in frameOf(report.pageAt(i))
+            .primitives
+            .whereType<TextRunPrimitive>())
           if (p.elementId == elementId)
             p.lines.map((TextLine l) => l.text).join(),
     ];
@@ -256,8 +259,9 @@ List<String> _runsForId(RenderedReport report, String elementId) => <String>[
 /// the engine suite's `_allRuns` (collecting ALL runs, unfiltered).
 List<String> _textRuns(RenderedReport report) => <String>[
       for (int i = 0; i < report.pageCount; i++)
-        for (final TextRunPrimitive p
-            in report.pageAt(i).frame.primitives.whereType<TextRunPrimitive>())
+        for (final TextRunPrimitive p in frameOf(report.pageAt(i))
+            .primitives
+            .whereType<TextRunPrimitive>())
           p.lines.map((TextLine l) => l.text).join(),
     ];
 

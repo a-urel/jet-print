@@ -6,6 +6,8 @@
 import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
+import 'package:jet_print/src/rendering/engine/rendered_report.dart'
+    show frameOf;
 import 'package:jet_print/src/rendering/frame/primitive.dart'
     show
         FramePrimitive,
@@ -23,7 +25,7 @@ const int _grey = 0xFF888888;
 List<FramePrimitive> _prims(RenderedReport r, String elementId) =>
     <FramePrimitive>[
       for (int i = 0; i < r.pageCount; i++)
-        for (final FramePrimitive p in r.pageAt(i).frame.primitives)
+        for (final FramePrimitive p in frameOf(r.pageAt(i)).primitives)
           if (p.elementId == elementId) p,
     ];
 

@@ -374,6 +374,28 @@ void main() {
     expect(() => (report as dynamic).fonts, throwsNoSuchMethodError);
   });
 
+  test('RenderedPage carries no consumer-reachable frame (#105)', () {
+    // The display list is the engine's internal IR, read by the preview,
+    // exporter and printer. Its types are unexported, so a public field would
+    // freeze the whole IR at 1.0 without it being published.
+    final RenderedReport report = const JetReportEngine().renderDefinition(
+      _flatTextDef(),
+      JetInMemoryDataSource(const <Map<String, Object?>>[<String, Object?>{}]),
+    );
+    final RenderedPage page = report.pageAt(0);
+    expect(page.index, 0);
+    expect(() => (page as dynamic).frame, throwsNoSuchMethodError);
+  });
+
+  test('the designer controller exposes no snap guides (#105)', () {
+    // The guides are what the selection overlay draws mid-drag: canvas
+    // internals of the unexported SnapGuide type.
+    final JetReportDesignerController controller =
+        JetReportDesignerController();
+    addTearDown(controller.dispose);
+    expect(() => (controller as dynamic).activeGuides, throwsNoSuchMethodError);
+  });
+
   test('the eight ShapeKind forms are public and additive (020)', () {
     expect(
         ShapeKind.values,

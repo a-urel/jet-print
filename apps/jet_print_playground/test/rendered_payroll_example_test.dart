@@ -8,6 +8,8 @@ import 'package:intl/intl.dart';
 import 'package:jet_print/jet_print.dart';
 // Implementation imports for the rendered-run proof — the same reach-in the
 // engine's own tests use (cf. rendered_packing_slip_example_test.dart).
+import 'package:jet_print/src/rendering/engine/rendered_report.dart'
+    show frameOf;
 import 'package:jet_print/src/rendering/frame/primitive.dart'
     show TextRunPrimitive;
 import 'package:jet_print/src/rendering/text/text_measurer.dart' show TextLine;
@@ -117,8 +119,9 @@ void main() {
 /// The rendered text runs of [elementId], in paint order across all pages.
 List<String> _runsForId(RenderedReport report, String elementId) => <String>[
       for (int i = 0; i < report.pageCount; i++)
-        for (final TextRunPrimitive p
-            in report.pageAt(i).frame.primitives.whereType<TextRunPrimitive>())
+        for (final TextRunPrimitive p in frameOf(report.pageAt(i))
+            .primitives
+            .whereType<TextRunPrimitive>())
           if (p.elementId == elementId)
             p.lines.map((TextLine l) => l.text).join(),
     ];

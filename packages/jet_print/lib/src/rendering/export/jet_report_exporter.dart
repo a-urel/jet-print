@@ -41,7 +41,7 @@ class JetReportExporter {
     // source and the PDF matches the preview exactly.
     final PdfPainter painter = PdfPainter(fontsOf(report));
     for (int i = 0; i < report.pageCount; i++) {
-      await paintFrame(report.pageAt(i).frame, painter);
+      await paintFrame(frameOf(report.pageAt(i)), painter);
     }
     return painter.save();
   }
@@ -70,7 +70,7 @@ class JetReportExporter {
       throw ArgumentError.value(scale, 'scale', 'must be strictly positive');
     }
     return const PageRasterizer().rasterize(
-        report.pageAt(pageIndex).frame, fontsOf(report),
+        frameOf(report.pageAt(pageIndex)), fontsOf(report),
         scale: scale);
   }
 }

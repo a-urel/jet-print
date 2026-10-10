@@ -62,7 +62,7 @@ String _renderedText(
     JetInMemoryDataSource(<Map<String, Object?>>[row]),
     options: RenderOptions(locale: locale),
   );
-  final PageFrame frame = report.pageAt(0).frame;
+  final PageFrame frame = frameOf(report.pageAt(0));
   return frame.primitives
       .whereType<TextRunPrimitive>()
       .firstWhere((TextRunPrimitive p) => p.elementId == 'value')

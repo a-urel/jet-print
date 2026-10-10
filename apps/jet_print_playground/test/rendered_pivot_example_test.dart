@@ -5,6 +5,8 @@
 // per row". Public API only.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
+import 'package:jet_print/src/rendering/engine/rendered_report.dart'
+    show frameOf;
 import 'package:jet_print/src/rendering/frame/primitive.dart'
     show TextRunPrimitive;
 import 'package:jet_print/src/rendering/text/text_measurer.dart' show TextLine;
@@ -14,7 +16,7 @@ import 'package:jet_print_playground/rendered_pivot_example.dart';
 List<String> _allRunTexts(RenderedReport r) => <String>[
       for (int i = 0; i < r.pageCount; i++)
         for (final TextRunPrimitive p
-            in r.pageAt(i).frame.primitives.whereType<TextRunPrimitive>())
+            in frameOf(r.pageAt(i)).primitives.whereType<TextRunPrimitive>())
           p.lines.map((TextLine l) => l.text).join(),
     ];
 

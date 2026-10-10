@@ -63,7 +63,7 @@ JetInMemoryDataSource _rows() => JetInMemoryDataSource(<Map<String, Object?>>[
 
 Map<String, String> _texts(RenderedReport report) => <String, String>{
       for (final TextRunPrimitive p
-          in report.pageAt(0).frame.primitives.whereType<TextRunPrimitive>())
+          in frameOf(report.pageAt(0)).primitives.whereType<TextRunPrimitive>())
         if (p.elementId != null)
           p.elementId!: p.lines.map((TextLine l) => l.text).join(),
     };
@@ -218,9 +218,7 @@ void main() {
     expect(d.elementId, 'logo');
     // The shared renderer draws a placeholder for the unresolved image: the
     // element still contributes primitives (no crash, no network fetch).
-    final Iterable<FramePrimitive> placeholder = report
-        .pageAt(0)
-        .frame
+    final Iterable<FramePrimitive> placeholder = frameOf(report.pageAt(0))
         .primitives
         .where((FramePrimitive p) => p.elementId == 'logo');
     expect(placeholder, isNotEmpty);
