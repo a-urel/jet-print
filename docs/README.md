@@ -68,13 +68,22 @@ table and traps are the whole of the written guidance.
 | An extension's methods vanished from the public API | 10 |
 | A string shows in English under a German locale | 10 |
 
-## The other two docs
+## The other docs
 
 - [`testing.md`](testing.md) — the test taxonomy, what each directory proves,
   golden discipline, the allowlist that lets library tests reach `src/`, and the
   per-platform CI legs.
 - [`workflow.md`](workflow.md) — how a change moves from idea to merge, and where
   durable knowledge is supposed to end up.
+- [`roadmap.md`](roadmap.md) — the E1–E8 production-readiness epics and their
+  status, and the five phases that now govern the run to 1.0.
+- [`decisions/`](decisions/) — why a call was made and what was rejected, one
+  record per decision, never edited after acceptance.
+- [`api-friction.md`](api-friction.md) — where the public surface made a
+  consumer's job harder than it needed to be; the input to the 1.0 freeze
+  review.
+- [`serialization-gap.md`](serialization-gap.md) — whether a consumer can store
+  a report definition in a database and read it back, and what is missing.
 
 ## Writing a page
 
