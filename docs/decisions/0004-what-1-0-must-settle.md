@@ -26,8 +26,8 @@ kind of fix:
   `_lower`), so a Turkish report prints "KISA VADELI". The fix changes the
   output of every existing report that uppercases an `i`;
 - entry 11: `validate` is exported but no render path calls it
-  (`JetReportEngine.render` never does). Making render validate changes what
-  an existing host sees;
+  (`JetReportEngine.renderDefinition` never does). Making render validate
+  changes what an existing host sees;
 - entry 12: `RenderOptions.knownFields` defaults to null, and its dartdoc
   promises that leaving it null "renders such a binding empty, exactly as
   before". Turning `#ERROR` on by default changes output;
