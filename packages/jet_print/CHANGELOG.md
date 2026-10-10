@@ -266,9 +266,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   is actually reachable from a host — `JetDataSource`,
   `RenderOptions.onElementPrint`, `RenderOptions.fonts` and
   `PrintDialogPresenter` — and what is internal; `docs/06-round-tripping.md`
-  covers the element-codec case in full. No behaviour changed; if you need to
-  register a custom element type or expression function, that capability does not
-  exist yet. Please open an issue.
+  covers the element-codec case in full. No behaviour changed. Element types
+  and expression functions are a first-party set: the registries hold the
+  library's own, and a new one is added by a change to the `jet_print`
+  repository, not by a host. A public registration API would stretch every
+  saved report's compatibility promise over types this library did not define,
+  so `jet_print` does not offer one. That bounds the current scope rather than
+  ruling one out: it could be added later without changing any existing call.
 
 - **Text no longer leaks a `ui.Paragraph` per line on every record.**
   `CanvasPainter.drawTextRun` builds one paragraph per laid-out line and drew it
@@ -421,6 +425,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   encoding a throwaway definition to read it back. It mirrors
   `JetDataSourceFile.version` for the data-source format. It is a `const`, so
   it can be used where a constant is required.
+
+- **The README says what a host can extend.** A new *What you can extend*
+  section lists the four host seams (`JetDataSource`, `RenderOptions.fonts`,
+  `RenderOptions.onElementPrint` and `PrintDialogPresenter`) and states that
+  element types and expression functions are a fixed, first-party set, with no
+  registration API.
 
 - **README rewrite with screenshots and tested examples.** The README now
   shows the designer, previews, charts and barcodes (also listed under

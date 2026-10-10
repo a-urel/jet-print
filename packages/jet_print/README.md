@@ -293,6 +293,28 @@ GroupLevel(
 Page numbers come from `$V{PAGE_NUMBER}` and `$V{PAGE_COUNT}` in a page footer.
 `validate(definition, schema: schema)` checks every binding before you render.
 
+## What you can extend
+
+Four seams are open to your app:
+
+- **Data.** Implement `JetDataSource`, whose `open` returns a `DataSet`
+  cursor, to read rows from a database, an API or anything else, and pass it
+  to `renderDefinition`.
+- **Fonts.** `RenderOptions.fonts` adds your own font families. The preview,
+  PDF and print all draw with the same font files.
+- **Elements as they print.** `RenderOptions.onElementPrint` is called for each
+  element just before it is painted, with the row it came from, and can change
+  or hide it.
+- **The print dialog.** `JetReportPrinter(presenter: ...)` takes a
+  `PrintDialogPresenter` that replaces the system print dialog.
+
+Element types and expression functions are not on that list. Both are a fixed
+set that ships with the library: there is no API for registering your own, and
+adding one means changing the
+[jet_print repository](https://github.com/a-urel/jet-print) itself. That keeps
+the saved-JSON format limited to types this library defines, which is how a
+report saved by one version still opens in another.
+
 ## Platform notes
 
 Reports look the same on every platform, but are not byte-identical: text
