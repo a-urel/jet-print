@@ -6,6 +6,7 @@ library;
 
 import 'package:intl/intl.dart';
 
+import '../../data/declared_schema.dart';
 import '../../data/jet_data_source.dart';
 import '../../domain/report_definition.dart';
 import '../../domain/report_parameter.dart';
@@ -79,7 +80,7 @@ class JetReportEngine {
         definition,
         source,
         params: params,
-        knownFields: options.knownFields,
+        knownFields: options.knownFields ?? declaredFieldNames(source),
         unresolvedFieldToken: options.unresolvedFieldToken,
       ),
     );

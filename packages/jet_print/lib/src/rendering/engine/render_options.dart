@@ -57,15 +57,25 @@ class RenderOptions {
 
   /// The field names the active data source declares.
   ///
-  /// When supplied (a schema-aware render — e.g. the designer preview, which
-  /// knows the attached schema), a text binding that references a field outside
-  /// this set renders [unresolvedFieldToken] instead of resolving empty. Leaving
-  /// it null renders such a binding empty, exactly as before — so existing
-  /// headless renders never change.
+  /// A text binding that references a field outside this set renders
+  /// [unresolvedFieldToken] instead of resolving empty, and records a warning.
+  ///
+  /// Left null, the set is derived from the data source when the source
+  /// declares an explicit schema: `JetObjectDataSource` and
+  /// `JetPagedDataSource` always do, and `JetInMemoryDataSource` and
+  /// `JetJsonDataSource` do when constructed with `fields:`. The names of nested
+  /// collection fields are included. A schema inferred from the rows, or a
+  /// custom `JetDataSource`, derives nothing, and such a binding renders empty:
+  /// inference cannot tell a misspelled field from an optional key that no row
+  /// of this batch carries.
+  ///
+  /// Pass a set to override the derived one, for instance to accept a field a
+  /// custom source supplies.
   final Set<String>? knownFields;
 
-  /// The text rendered for a binding to a field absent from [knownFields];
-  /// ignored when [knownFields] is null. Defaults to the literal
+  /// The text rendered for a binding to a field absent from the known fields,
+  /// whether passed as [knownFields] or derived from an explicit schema; unused
+  /// when neither applies. Defaults to the literal
   /// `#ERROR`; a host with a `BuildContext` passes a localized value (e.g.
   /// `JetPrintLocalizations.of(context).errorUnresolvedToken`).
   final String unresolvedFieldToken;
