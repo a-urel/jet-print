@@ -38,7 +38,7 @@ not re-estimates.
 | E3 Desktop matrix | 1 | M | Done | `.github/workflows/ci.yml` matrix: macOS, Ubuntu, Windows |
 | E4 Web support | 1/2 | L | Done | `web (chrome)` CI job; one real `double.toString` divergence found and fixed |
 | E5 Mobile / touch | 1/2 | XL | Done | `android (apk)` and `ios (no codesign)` CI jobs; touch handles, long-press menu, phone-width layout |
-| E6 1.0 API freeze + pub.dev | 2 | M | In progress | `0.1.0` release prep merged (`e901735`, PR #79), not yet on pub.dev |
+| E6 1.0 API freeze + pub.dev | 2 | M | In progress | `0.1.0` and `0.1.1` on [pub.dev](https://pub.dev/packages/jet_print), tagged `jet_print-v0.1.0` and `jet_print-v0.1.1`; the `1.0.0` freeze remains |
 | E7 Designer-as-product | 3 | L | Not started | no data-connection UI, no packaging or signing; file I/O exists only as playground host code |
 | E8 Spec 033 multi-level aggregates | pre-1.0 | M | Done | PR #22, merged 2026-06-18 |
 
@@ -149,8 +149,10 @@ constrained `intl`, shortened the description and fixed five unresolved dartdoc
 references; its message records pana moving from 110 to 150 of 160, the last 10
 waiting on a `shadcn_ui` upgrade that `1a2b5da` (PR #81) then made. PR #82
 rewrote the package README around screenshots and examples that
-`test/readme_snippets_test.dart` keeps compiling. The version is still `0.1.0`
-and the package is still not on pub.dev. The detailed requirements — what
+`test/readme_snippets_test.dart` keeps compiling. `0.1.0` was published to
+pub.dev on 2026-10-10 from `2cbb3c0` (PR #86), and `0.1.1`, metadata and
+documentation only, the same day from `f139a08` (PR #92). What E6 still owes is
+the `1.0.0` freeze itself, which is P4. The detailed requirements — what
 pub.dev rejects a publish for, what its score panel rewards — were worked out
 on 2026-06-23 and are folded into P1 and P4 below.
 
@@ -250,7 +252,7 @@ checkable by somebody who does not work on the project.
 | Phase | Duration | Exit criterion |
 |---|---|---|
 | P0 Decisions | 3 days | the blocking decisions recorded under `decisions/` — **met** |
-| P1 Publish 0.1.0 | 1 week | `flutter pub add jet_print` works for a stranger |
+| P1 Publish 0.1.0 | 1 week | `flutter pub add jet_print` works for a stranger — **met** |
 | P2 Consumer pilot | 2 weeks, parallel with P1 | one real report rendered and exported from the published package, plus a written friction list — see below |
 | P3 Extensibility boundary and defect closure | 3 weeks | no open question that would force a breaking change after 1.0 |
 | P4 1.0 freeze | 3 weeks | `1.0.0` on pub.dev with all six platforms declared and green |
@@ -267,11 +269,15 @@ continuing to build against a package nobody can install. The exit criterion is
 deliberately phrased from outside: not "the publish command succeeded" but that
 an unconnected person can add the dependency and get a working package. That
 forces the `intl` constraint, the `example/` and the dated changelog entry to be
-real rather than nearly done, and all three now are — see E6 above. What
-remains is the publish itself, preceded by reading what
-`flutter pub publish --dry-run` says the archive contains, not only whether it
-passes: the archive is what a stranger installs, and nothing in this
-repository's CI ever consumes it.
+real rather than nearly done, and all three now are — see E6 above. **Met on
+2026-10-10.** `0.1.0` is on [pub.dev](https://pub.dev/packages/jet_print), with
+`0.1.1` after it, and the criterion was checked from outside rather than
+inferred from the publish succeeding: a fresh `flutter create` app with no path
+to this repository ran `flutter pub add jet_print`, resolved `0.1.1` from
+pub.dev (`source: hosted`), analyzed clean, and passed tests that render a
+report, export it to PDF, and show `JetReportPreview` under a `ShadApp`. Nothing
+in this repository's CI consumes the published archive, so that check is worth
+repeating by hand after each release.
 
 **P2 — Consumer pilot.** Not met, and not started in its own terms. The
 criterion as written:
@@ -282,9 +288,10 @@ criterion as written:
 > the published package with no path dependency and no reaching into
 > `lib/src/`.
 
-Two of its three parts are unavailable today: the product repository is out of
-scope for the run to 1.0, so there is no embed to build, and `0.1.0` is not on
-pub.dev, so there is no archive to consume. On 2026-09-21 a stand-in was written
+One of its three parts is unavailable today: the product repository is out of
+scope for the run to 1.0, so there is no embed to build. The published package
+it needs now exists — P1 is met — so a consumer can take a hosted dependency
+rather than a path one. On 2026-09-21 a stand-in was written
 instead — a Turkish trial balance over a synthetic chart of accounts, consuming
 `jet_print` by path through the barrel alone. It was never compiled and never
 merged; it survives on the branch `docs/p0-decisions` at `ca73f81`, and what it
