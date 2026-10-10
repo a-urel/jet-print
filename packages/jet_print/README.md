@@ -1,6 +1,7 @@
 # jet_print
 
 [![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/a-urel)
+[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/yazemo)
 
 Build **WYSIWYG report designers** in Flutter. Describe a report as a tree of
 bands and elements, fill it with your data, then preview, export to PDF/PNG or
@@ -342,7 +343,8 @@ a dismissed dialog may still report success.
 ## Support
 
 If jet_print saves you time, you can support its development through
-[GitHub Sponsors](https://github.com/sponsors/a-urel).
+[GitHub Sponsors](https://github.com/sponsors/a-urel) or
+[Buy Me a Coffee](https://buymeacoffee.com/yazemo).
 
 ## License
 
