@@ -126,18 +126,23 @@ held.
    compiles and the example tests run.
 
 9. **`JetReportPreview` requires a `shadcn_ui` ancestor and says so nowhere.**
-   It calls `ShadTheme.of(context)`, so a host wrapping it in `MaterialApp`
-   fails at runtime rather than at compile time. Both consumers had to take a
-   direct dependency on a pre-1.0 third-party UI package for the sole purpose of
-   showing a read-only page viewer. *Partly addressed:* the README's *Host the
-   designer* section now shows the `ShadApp` the designer needs, but the
-   Quickstart's `JetReportPreview` line and the widget's own dartdoc still say
-   nothing. A theme wrapper, or a line of dartdoc, closes it.
+   *Fixed* in `158eefa`, by documentation. It calls `ShadTheme.of(context)`, so
+   a host wrapping it in `MaterialApp` fails at runtime rather than at compile
+   time. Both consumers had to take a direct dependency on a pre-1.0
+   third-party UI package for the sole purpose of showing a read-only page
+   viewer. The widget's dartdoc now has a *Host requirements* paragraph, and
+   the README Quickstart shows the `ShadApp` wrapper from
+   `example/jet_print_example.dart` and says that a `ShadTheme` inside a
+   `MaterialApp` also works. `test/designer/preview/jet_report_preview_test.dart`,
+   *host requirements*, pins both halves of that claim. The requirement itself
+   stands: a host still depends on `shadcn_ui` to show the preview. Whether to
+   lift it with a theme wrapper is a question for P4.
 
 10. **A stored report cannot be operated over a database, though it can be
     saved and loaded.** `JetReportFormat` is exported and does the round trip;
     the playground uses it through the barrel and reaches into no internals. But
-    the schema version constant is not exported, and every decode failure
+    the schema version constant was not exported (since `c4a7f8d` it is, as
+    `JetReportFormat.schemaVersion`), and every decode failure
     arrives as one exception type carrying one English string — so a consumer
     cannot tell "written by a newer build" from "corrupt row" except by
     substring-matching a sentence. (Malformed documents raising `TypeError` or
