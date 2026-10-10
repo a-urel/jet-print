@@ -1,0 +1,30 @@
+# What `pub publish` leaves out of the `jet_print` archive.
+#
+# `.pubignore` REPLACES a `.gitignore` in the same directory for packaging, so
+# anything that must stay out is listed here even if git already ignores it.
+# There is no `.gitignore` in this directory; the repository-root one still
+# applies, and git's view of the tree does not change. Paths are relative to
+# this package directory, in `.gitignore` syntax.
+#
+# Deliberately NOT listed, because the archive needs them: `lib/`,
+# `pubspec.yaml`, `l10n.yaml`, `README.md`, `CHANGELOG.md`, `LICENSE`,
+# `example/` (pana scores it, and it is the first thing an evaluator opens) and
+# `doc/` (`pubspec.yaml` declares `screenshots:` from `doc/screenshots/`).
+
+# Build output and local tool state.
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# The test suite, with its PNG/PDF goldens and fixtures — larger than `lib/`. A
+# consumer cannot run it: the architecture guards resolve paths from the
+# workspace root, which the archive does not contain.
+test/
+dart_test.yaml
+
+# Font-subsetting tooling and the Noto Sans subsets it reads. The bundled
+# default font is already baked into `lib/` as base64
+# (`lib/src/rendering/text/fonts/default_font_data.dart`), and nothing under
+# `lib/` reads `tool/` at run time.
+tool/

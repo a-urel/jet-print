@@ -86,10 +86,14 @@ export 'src/designer/preview/jet_report_preview.dart' show JetReportPreview;
 export 'src/domain/band.dart' show Band;
 export 'src/domain/bool_property.dart' show BoolProperty;
 export 'src/domain/column_layout.dart' show ColumnLayout;
-export 'src/domain/crosstab/crosstab.dart';
-export 'src/domain/crosstab/crosstab_group.dart';
-export 'src/domain/crosstab/crosstab_measure.dart';
-export 'src/domain/crosstab/crosstab_style.dart';
+// CrosstabSort appears in two show clauses because crosstab.dart re-exports it
+// from crosstab_group.dart; naming it in both keeps each directive's surface
+// exactly what it was before these clauses were added.
+export 'src/domain/crosstab/crosstab.dart' show Crosstab, CrosstabSort;
+export 'src/domain/crosstab/crosstab_group.dart'
+    show CrosstabGroup, CrosstabSort;
+export 'src/domain/crosstab/crosstab_measure.dart' show CrosstabMeasure;
+export 'src/domain/crosstab/crosstab_style.dart' show CrosstabStyle;
 export 'src/domain/detail_scope.dart'
     show
         BandNode,
