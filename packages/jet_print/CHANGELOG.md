@@ -394,6 +394,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **README rewrite with screenshots and tested examples.** The README now
+  shows the designer, previews, charts and barcodes (also listed under
+  `screenshots:` for the pub.dev gallery), and covers installing, hosting the
+  designer, saving and reopening designs as JSON, and binding JSON or object
+  data with groups and totals. Its code is copied from
+  `example/designer_example.dart` and `example/data_example.dart` (new) and
+  `example/jet_print_example.dart`, which tests run, and
+  `test/readme_snippets_test.dart` fails if a README snippet stops matching
+  them.
+
 - **A package example**, `example/jet_print_example.dart`: describe a report,
   fill it, export it to PDF, and preview it. A test runs it, so it keeps
   compiling against the public API.
