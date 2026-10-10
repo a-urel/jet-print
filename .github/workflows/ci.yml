@@ -10,10 +10,18 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      update_goldens:
+        description: >-
+          Regenerate the goldens that fail on macOS and upload them as an
+          artifact (runs only the update-goldens job)
+        type: boolean
+        default: false
 
 jobs:
   build-and-test:
     name: ${{ matrix.os }}
+    if: ${{ !inputs.update_goldens }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -70,6 +78,7 @@ jobs:
 
   web:
     name: web (chrome)
+    if: ${{ !inputs.update_goldens }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
@@ -99,6 +108,7 @@ jobs:
 
   android:
     name: android (apk)
+    if: ${{ !inputs.update_goldens }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
@@ -122,6 +132,7 @@ jobs:
 
   ios:
     name: ios (no codesign)
+    if: ${{ !inputs.update_goldens }}
     runs-on: macos-latest
     steps:
       - name: Check out the repository
@@ -137,3 +148,63 @@ jobs:
       - name: Build the playground for iOS
         working-directory: apps/jet_print_playground
         run: flutter build ios --debug --no-codesign
+
+  update-goldens:
+    # Manual only (Run workflow -> update_goldens). Goldens are canonical on
+    # macOS, so a change that moves one has to be regenerated here. Follows
+    # docs/recipes/update-goldens.md: run the golden suite, regenerate only the
+    # files that fail, one test file at a time, and upload the new PNGs with
+    # the failure images (master/test/diff) for review. Nothing is committed:
+    # someone looks at the images, names what moved, and commits them.
+    name: update goldens (macos)
+    if: ${{ inputs.update_goldens }}
+    runs-on: macos-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.0
+          channel: stable
+          cache: true
+
+      - name: Resolve workspace dependencies
+        run: flutter pub get --enforce-lockfile
+
+      - name: Run the golden suite and list the failing test files
+        shell: bash
+        run: |
+          set +e
+          flutter test --tags golden --reporter expanded \
+            packages/jet_print apps/jet_print_playground 2>&1 | tee golden-run.log
+          set -e
+          grep -E '\[E\]$' golden-run.log \
+            | grep -oE '(packages|apps)/[^ :]+_test\.dart' \
+            | sort -u > failing-goldens.txt || true
+          echo "Failing golden test files:"
+          cat failing-goldens.txt
+
+      - name: Keep the failure images, then regenerate the failing files
+        shell: bash
+        run: |
+          mkdir -p golden-updates
+          find packages apps -type d -name failures -exec cp -R {} golden-updates/ \;
+          while read -r test_file; do
+            [ -n "$test_file" ] && flutter test --update-goldens "$test_file"
+          done < failing-goldens.txt
+          git status --porcelain -- '*.png' | awk '{print $2}' > changed-goldens.txt
+          echo "Regenerated:"
+          cat changed-goldens.txt
+          while read -r png; do
+            [ -n "$png" ] && mkdir -p "golden-updates/$(dirname "$png")" \
+              && cp "$png" "golden-updates/$png"
+          done < changed-goldens.txt
+          cp golden-run.log failing-goldens.txt changed-goldens.txt golden-updates/
+
+      - name: Upload the regenerated goldens
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-updates
+          path: golden-updates/

@@ -96,11 +96,12 @@ class _CanvasScrollbar extends StatelessWidget {
   }
 }
 
-/// A small, subtle caption naming a band's role, sat flush in the band's
-/// top-left corner (a "tab" — only the bottom-right corner is rounded). This is
-/// the band-identity affordance every report designer surfaces; it uses the
-/// fixed paper-chrome palette (not the app theme) so it reads on the white page
-/// in every theme, and stays muted so it never competes with band content.
+/// A small, subtle caption naming a band's role: a tab beside the page, its
+/// square right side against the page's left edge at the band's top (only the
+/// left corners are rounded). This is the band-identity affordance every
+/// report designer surfaces; it carries its own fill from the fixed
+/// paper-chrome palette (not the app theme), so it reads on the canvas in
+/// every theme, and stays muted so it never competes with band content.
 class _BandBadge extends StatelessWidget {
   const _BandBadge({required this.caption});
 
@@ -108,22 +109,32 @@ class _BandBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        color: _badgeBackgroundColor,
-        border: Border.fromBorderSide(BorderSide(color: _badgeBorderColor)),
-        borderRadius: BorderRadius.only(bottomRight: Radius.circular(4)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        child: Text(
-          caption,
-          style: const TextStyle(
-            fontSize: 9,
-            height: 1.2,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.2,
-            color: _badgeForegroundColor,
+    return SizedBox(
+      height: _DesignCanvasState._captionHeight,
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          color: _badgeBackgroundColor,
+          border: Border.fromBorderSide(BorderSide(color: _badgeBorderColor)),
+          // A tab on the band's top edge, attached to the page's left side.
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(4),
+            bottomLeft: Radius.circular(4),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          child: Text(
+            caption,
+            maxLines: 1,
+            softWrap: false,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 9,
+              height: 1.2,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.2,
+              color: _badgeForegroundColor,
+            ),
           ),
         ),
       ),

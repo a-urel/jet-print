@@ -172,6 +172,18 @@ class _DesignCanvasState extends State<DesignCanvas> {
 
   static const double _viewportPadding = 32;
 
+  /// Width of the column left of the page that holds the band captions
+  /// ("Detail", "Group Header", …). Captions live beside the page rather than
+  /// on it: one is wider than many reports' left margin, so on the page it
+  /// covered the first element of its band. Sized for the longest caption in
+  /// any shipped language (Turkish "Sütun Alt Bilgisi"); a longer one is
+  /// ellipsized. Screen pixels, so it does not scale with zoom.
+  static const double _captionColumnWidth = 112;
+
+  /// Height of one band caption tab, in screen pixels. Fixed so the tap
+  /// handler knows where a caption is without measuring it.
+  static const double _captionHeight = 17;
+
   /// Pointer kinds whose drags drive canvas interactions (move / marquee /
   /// resize). The trackpad is excluded so a two-finger trackpad pan scrolls the
   /// viewport instead of starting a rubber-band selection.
@@ -433,10 +445,14 @@ class _DesignCanvasState extends State<DesignCanvas> {
                 _viewInitialized = true;
                 _appliedFitRequest = controller.fitRequest;
                 _lastFitViewport = viewport;
+                // Fit the page to what the caption column leaves of the width.
+                final Size fitViewport = Size(
+                    math.max(0, viewport.width - _captionColumnWidth),
+                    viewport.height);
                 final double fitted = controller.viewFitMode ==
                         JetViewFitMode.page
-                    ? fitPageScale(layout.size, viewport, _viewportPadding)
-                    : fitWidthScale(layout.size, viewport, _viewportPadding);
+                    ? fitPageScale(layout.size, fitViewport, _viewportPadding)
+                    : fitWidthScale(layout.size, fitViewport, _viewportPadding);
                 controller.setViewScale(fitted);
                 if (_vScroll.hasClients) _vScroll.jumpTo(0);
                 if (_hScroll.hasClients) _hScroll.jumpTo(0);
@@ -455,15 +471,19 @@ class _DesignCanvasState extends State<DesignCanvas> {
             final double scale = controller.viewScale;
             final double pageW = layout.size.width * scale;
             final double pageH = layout.size.height * scale;
-            // The scroll content is the page plus padding, but never smaller than
-            // the viewport — so a page that fits is centered, and a larger one
-            // scrolls. The page is centered within that content.
-            final double contentW =
-                math.max(pageW + 2 * _viewportPadding, viewport.width);
+            // The scroll content is the caption column, the page and padding,
+            // but never smaller than the viewport — so a page that fits is
+            // centered, and a larger one scrolls. The column and page are
+            // centered together, the page to the column's right.
+            final double contentW = math.max(
+                _captionColumnWidth + pageW + 2 * _viewportPadding,
+                viewport.width);
             final double contentH =
                 math.max(pageH + 2 * _viewportPadding, viewport.height);
-            final JetOffset pageOffset =
-                JetOffset((contentW - pageW) / 2, (contentH - pageH) / 2);
+            final JetOffset pageOffset = JetOffset(
+                (contentW - _captionColumnWidth - pageW) / 2 +
+                    _captionColumnWidth,
+                (contentH - pageH) / 2);
             final CanvasViewTransform transform =
                 CanvasViewTransform(scale: scale, pan: pageOffset);
             final bool vScrollable = contentH > viewport.height + 0.5;
@@ -556,6 +576,8 @@ class _DesignCanvasState extends State<DesignCanvas> {
                             child: _buildPage(controller, layout, displayLayout,
                                 scale, colors, isEmpty),
                           ),
+                          // Band captions, in the column left of the page.
+                          ..._bandBadges(displayLayout, scale, pageOffset),
                         ],
                       ),
                     ),

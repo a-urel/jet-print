@@ -28,6 +28,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Band captions no longer cover the first element of a band.** The
+  designer's band captions ("Group Header", "Detail", …) were drawn in the
+  page's left margin, but a caption is wider than many margins (~70px for
+  "Group Header", ~100px in Turkish), so it ran onto the page and over
+  whatever started there. They now sit in a column beside the page,
+  right-aligned against its left edge at each band's top. Fit-to-width and
+  fit-to-page leave room for the column, and clicking a caption still selects
+  its band.
+
 - **The package compiles at the lowest dependency versions it allows.**
   `shadcn_ui` allows `lucide_icons_flutter` 3.0.0, but some icons the designer
   uses are missing from versions before 3.1.14 (`textAlignStart`/`Center`/`End`

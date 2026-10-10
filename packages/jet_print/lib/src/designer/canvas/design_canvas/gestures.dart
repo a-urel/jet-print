@@ -31,8 +31,14 @@ extension _CanvasGestures on _DesignCanvasState {
       // Defer band/report/clear classification — and any double-tap focus — to
       // tap-up: if this press turns into a drag (marquee or a band-handle
       // resize) the tap is cancelled and the selection is left alone.
-      // Shift+empty leaves the selection as-is.
-      _emptyTapPage = _shiftPressed ? null : page;
+      // Shift+empty leaves the selection as-is. A tap on a band's caption
+      // (in the column beside the page) counts as a tap on that band, so
+      // clicking a caption selects its band; the rest of the column is canvas.
+      final double? captionBandY =
+          _captionBandYAt(localPosition, transform, layout);
+      final JetOffset target =
+          captionBandY == null ? page : JetOffset(0, captionBandY);
+      _emptyTapPage = _shiftPressed ? null : target;
       _emptyTapWasDouble = near && !_shiftPressed;
       _trackTap(localPosition, near: near);
       return;
@@ -159,6 +165,31 @@ extension _CanvasGestures on _DesignCanvasState {
       controller.selectReport();
     }
     return true;
+  }
+
+  /// A page-space point inside the band whose caption tab is under [local] (a
+  /// canvas-content position), or null when [local] is not on a caption. A
+  /// caption fills the column left of the page, [_DesignCanvasState
+  /// ._captionHeight] tall from its band's top (see `_bandBadges`).
+  double? _captionBandYAt(
+    Offset local,
+    CanvasViewTransform transform,
+    DesignTimeLayout layout,
+  ) {
+    final double pageLeft = transform.pan.dx;
+    if (local.dx >= pageLeft ||
+        local.dx < pageLeft - _DesignCanvasState._captionColumnWidth) {
+      return null;
+    }
+    for (final PlacedBand band in layout.bands) {
+      final double top = transform.pan.dy + band.rect.y * transform.scale;
+      if (local.dy >= top &&
+          local.dy <= top + _DesignCanvasState._captionHeight) {
+        // The band's middle: its top edge is also the previous band's bottom.
+        return band.rect.y + band.rect.height / 2;
+      }
+    }
+    return null;
   }
 
   bool get _shiftPressed =>

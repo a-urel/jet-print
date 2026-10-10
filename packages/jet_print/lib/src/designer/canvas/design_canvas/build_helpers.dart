@@ -84,10 +84,6 @@ extension _CanvasBuild on _DesignCanvasState {
                         ),
                       ),
                     ),
-                  // Band-type captions, one per band, anchored at each band's
-                  // top-left corner. Drawn below element appearance so an element
-                  // sharing the corner visually wins; they never capture pointers.
-                  ..._bandBadges(controller, displayLayout, scale),
                   // Element appearance via the shared render pipeline (cached).
                   Positioned.fill(
                     child: CustomPaint(
@@ -158,28 +154,34 @@ extension _CanvasBuild on _DesignCanvasState {
     );
   }
 
-  /// One badge per band, anchored at the page's left edge and each band's top.
-  /// Anchoring at the page edge (left: 0) rather than the content margin keeps
-  /// the caption in the empty left-margin gutter so it never sits on top of the
-  /// first element (which starts at the margin). The badge size is constant (UI
-  /// chrome), so captions stay legible at any zoom; only the top anchor scales
-  /// with the view.
+  /// One caption per band, in the column left of the page ([pageOffset] is the
+  /// page's top-left in the canvas content): right-aligned against the page
+  /// edge at the band's top, so it reads as a tab on the band without covering
+  /// anything on the page. The caption size is constant (UI chrome), so it
+  /// stays legible at any zoom; only the top anchor scales with the view. A
+  /// tap on it falls through to the canvas, which selects the band
+  /// (`_handleTapDown`).
   List<Widget> _bandBadges(
-    JetReportDesignerController controller,
     DesignTimeLayout layout,
     double scale,
+    JetOffset pageOffset,
   ) {
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
+    const double inset = 4; // from the column's outer edge
     final List<Widget> badges = <Widget>[];
     for (final PlacedBand placed in layout.bands) {
       badges.add(Positioned(
         // Keyed by the band's stable id so duplicate band types (e.g. several
         // group headers) never produce a duplicate key.
         key: ValueKey<String>('jet_print.designer.bandBadge.${placed.id}'),
-        left: 0,
-        top: placed.rect.y * scale,
+        left: pageOffset.dx - _DesignCanvasState._captionColumnWidth + inset,
+        width: _DesignCanvasState._captionColumnWidth - inset,
+        top: pageOffset.dy + placed.rect.y * scale,
         child: IgnorePointer(
-          child: _BandBadge(caption: bandTypeLabel(placed.band.type, l10n)),
+          child: Align(
+            alignment: Alignment.topRight,
+            child: _BandBadge(caption: bandTypeLabel(placed.band.type, l10n)),
+          ),
         ),
       ));
     }
