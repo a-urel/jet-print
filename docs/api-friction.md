@@ -49,8 +49,9 @@ held.
    *`src/expression/value.dart` → `JetNumber`;
    `src/expression/aggregate/variable_accumulator.dart`.*
 
-   **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*.
-   Any fix changes totals, so it is output. The design needs its own brainstorm.
+   **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*,
+   [#95](https://github.com/a-urel/jet-print/issues/95). Any fix changes totals,
+   so it is output. The design needs its own brainstorm.
 
 2. **`PageFurniture.columnHeader` is public, exported, and draws nothing.**
    Repeating column captions on every page is the defining requirement of a
@@ -64,9 +65,10 @@ held.
    *`src/domain/report_definition.dart` → `PageFurniture.columnHeader`,
    `.columnFooter`, `.background`; `src/rendering/layout/report_layouter.dart`.*
 
-   **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*.
-   Removing the slots changes the surface; implementing them changes the output
-   of reports that set them.
+   **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*,
+   [#96](https://github.com/a-urel/jet-print/issues/96). Removing the slots
+   changes the surface; implementing them changes the output of reports that set
+   them.
 
 3. **A per-page subtotal cannot be expressed.** A Turkish mizan running to
    several pages carries *nakli yekûn* — carried forward at the foot of each
@@ -144,9 +146,9 @@ held.
    *`src/expression/functions/string_functions.dart` → `_upper`, `_lower`;
    `src/rendering/engine/render_options.dart` → `RenderOptions.locale`.*
 
-   **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*.
-   Locale-aware casing changes the output of every report that uppercases an
-   `i`.
+   **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*,
+   [#97](https://github.com/a-urel/jet-print/issues/97). Locale-aware casing
+   changes the output of every report that uppercases an `i`.
 
 ## Correctness of the published contract
 
@@ -194,9 +196,10 @@ held.
     *`src/rendering/fill/report_diagnostics.dart` → `ReportDiagnostics.hasErrors`;
     `src/domain/report_validation.dart` → `validate`.*
 
-    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*.
-    Whether render validates is a default. A `hasErrors` on the author-time
-    diagnostics is additive.
+    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*,
+    [#98](https://github.com/a-urel/jet-print/issues/98). Whether render
+    validates is a default. A `hasErrors` on the author-time diagnostics is
+    additive.
 
 12. **One schema, three incompatible spellings.** A consumer needs
     `List<FieldDef>` for the in-memory data source, a `JetDataSchema` for
@@ -206,9 +209,10 @@ held.
     pilot needed all three at once. Without the wiring, a mistyped field name
     renders empty instead of `#ERROR` — the silent option is the default.
 
-    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*.
-    Whether an unknown field renders `#ERROR` without `knownFields` is a
-    default. Conversions between the three spellings are additive.
+    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*,
+    [#99](https://github.com/a-urel/jet-print/issues/99). Whether an unknown
+    field renders `#ERROR` without `knownFields` is a default. Conversions
+    between the three spellings are additive.
 
 ## Ergonomics
 
@@ -232,9 +236,10 @@ held.
     `7b989f0`, `validate` rejects a `resetGroup` that matches one group's id and
     another's name — the ambiguity is now caught, but still not explained.
 
-    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*.
-    Merging or renaming the fields changes the surface and the schema; the
-    alternative is to document `name` as a unique key and accept it.
+    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*,
+    [#100](https://github.com/a-urel/jet-print/issues/100). Merging or renaming
+    the fields changes the surface and the schema; the alternative is to
+    document `name` as a unique key and accept it.
 
 15. **`text` is required even when `expression` is non-null.** Thirty of the
     pilot's thirty-six text elements carry both; every placeholder is discarded
@@ -281,17 +286,19 @@ held.
     The workspace variant at least receives the report; the preview's receives
     nothing, so the callback must close over it.
 
-    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*.
-    Changing the callback's type changes the surface.
+    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*,
+    [#101](https://github.com/a-urel/jet-print/issues/101). Changing the
+    callback's type changes the surface.
 
 20. **`RenderedReport.fonts` is public but its type is not exported.**
     `FontRegistry` describes itself as internal, so a consumer cannot name the
     type of a field on a public class.
 
-    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*.
-    The type's members are already callable through the field, so they freeze
-    with it at 1.0. Exporting the type is additive but commits to that API;
-    hiding the field afterwards would change the surface.
+    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*,
+    [#102](https://github.com/a-urel/jet-print/issues/102). The type's members
+    are already callable through the field, so they freeze with it at 1.0.
+    Exporting the type is additive but commits to that API; hiding the field
+    afterwards would change the surface.
 
 ## Documentation
 

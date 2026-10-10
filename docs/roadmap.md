@@ -320,7 +320,15 @@ same as a change to the Dart surface, and on that rule triaged the friction
 list: eight entries, 1, 2, 7, 11, 12, 14, 19 and 20, must be fixed or
 deliberately accepted before the freeze, and the rest are additive or small.
 That makes P3 larger than documentation, since most of the eight change output
-or a default. P3 is met when those eight are closed.
+or a default. P3 is met when those eight are closed, one issue each:
+[#95](https://github.com/a-urel/jet-print/issues/95),
+[#96](https://github.com/a-urel/jet-print/issues/96),
+[#97](https://github.com/a-urel/jet-print/issues/97),
+[#98](https://github.com/a-urel/jet-print/issues/98),
+[#99](https://github.com/a-urel/jet-print/issues/99),
+[#100](https://github.com/a-urel/jet-print/issues/100),
+[#101](https://github.com/a-urel/jet-print/issues/101) and
+[#102](https://github.com/a-urel/jet-print/issues/102).
 
 **P4 — 1.0 freeze.** E6, renamed for what it actually is. All six platforms —
 macOS, Linux, Windows, web, iOS, Android — declared in the pubspec and green in
