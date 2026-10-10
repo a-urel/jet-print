@@ -4,6 +4,19 @@ All notable changes to the `jet_print` library are documented here. The format i
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed
+
+- **Breaking (output): `UPPER` and `LOWER` follow the render locale.** Under a
+  Turkish or Azerbaijani `RenderOptions.locale`, `UPPER` maps `i` to `İ` and
+  `LOWER` maps `I` to `ı` and `İ` to `i`, so `UPPER("Kısa Vadeli")` prints
+  `KISA VADELİ` instead of `KISA VADELI`. Every other locale, including the
+  default `en`, cases exactly as before. A `tr` or `az` report that changes
+  the case of an `i` renders differently. Outside a render, the functions
+  follow `Intl.getCurrentLocale()`, as `FORMAT` does.
+  ([#97](https://github.com/a-urel/jet-print/issues/97))
+
 ## 0.1.1
 
 Documentation and package metadata only. Apart from `jetPrintVersion`, which

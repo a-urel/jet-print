@@ -114,6 +114,29 @@ void main() {
     );
   });
 
+  test('UPPER and LOWER follow the render locale', () {
+    const String upper = r'UPPER($F{name})';
+    const String lower = r'LOWER($F{name})';
+    final Map<String, Object?> mixed = <String, Object?>{'name': 'Kısa Vadeli'};
+    final Map<String, Object?> caps = <String, Object?>{'name': 'KISA VADELİ'};
+    expect(
+        _renderedText(upper, mixed, locale: const Locale('tr')), 'KISA VADELİ');
+    expect(
+        _renderedText(lower, caps, locale: const Locale('tr')), 'kısa vadeli');
+    expect(
+        _renderedText(upper, mixed, locale: const Locale('en')), 'KISA VADELI');
+  });
+
+  test('casing is independent of the ambient Intl.defaultLocale', () {
+    Intl.defaultLocale = 'tr';
+    expect(
+      _renderedText(r'UPPER($F{name})', <String, Object?>{'name': 'bilgi'},
+          locale: const Locale('en')),
+      'BILGI',
+      reason: 'the explicit render locale must win over the ambient default',
+    );
+  });
+
   test('the same inputs under two locales differ only in formatting', () {
     final String en =
         _renderedText(numberExpr, numberRow, locale: const Locale('en'));

@@ -42,12 +42,12 @@ class RenderOptions {
   /// `RenderedReport.diagnostics`.
   final Map<String, Object?> parameters;
 
-  /// The explicit locale for number/date/currency formatting during this
-  /// render.
+  /// The explicit locale for number/date/currency formatting, and for the case
+  /// mapping of `UPPER` and `LOWER`, during this render.
   ///
-  /// Formatting follows this locale only — never the app's UI locale and never
-  /// the ambient `Intl.defaultLocale` — so the same render is deterministic
-  /// wherever it runs. Defaults to the neutral `Locale('en')`.
+  /// Formatting and casing follow this locale only — never the app's UI locale
+  /// and never the ambient `Intl.defaultLocale` — so the same render is
+  /// deterministic wherever it runs. Defaults to the neutral `Locale('en')`.
   ///
   /// Date formatting for locales other than English requires the host to have
   /// initialized that locale's date symbols (e.g. `initializeDateFormatting()`

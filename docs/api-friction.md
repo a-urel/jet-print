@@ -137,18 +137,22 @@ held.
    warnings would then be render diagnostics, and removing them after 1.0 would
    change output.
 
-7. **`UPPER` and `LOWER` are locale-blind, and wrong in Turkish.** They use
-   Dart's `toUpperCase`/`toLowerCase`, which map `i`→`I` and `I`→`i`; Turkish
-   needs `i`→`İ` and `I`→`ı`. `UPPER` on "Kısa Vadeli Yabancı Kaynaklar" yields
-   "KISA VADELI" — a spelling error in the report's own language. The engine
-   already takes a per-render locale that number formatting honours; the case
-   functions never see it.
-   *`src/expression/functions/string_functions.dart` → `_upper`, `_lower`;
-   `src/rendering/engine/render_options.dart` → `RenderOptions.locale`.*
-
-   **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*,
-   [#97](https://github.com/a-urel/jet-print/issues/97). Locale-aware casing
-   changes the output of every report that uppercases an `i`.
+7. **`UPPER` and `LOWER` were locale-blind, and wrong in Turkish.** *Fixed*
+   in [#97](https://github.com/a-urel/jet-print/issues/97), by following the
+   render locale. They used Dart's `toUpperCase`/`toLowerCase`, which map
+   `i`→`I` and `I`→`i`; Turkish needs `i`→`İ` and `I`→`ı`. `UPPER` on "Kısa
+   Vadeli Yabancı Kaynaklar" yielded "KISA VADELI" — a spelling error in the
+   report's own language. The engine already took a per-render locale that
+   number formatting honoured; the case functions never saw it. They now case
+   by `Intl.getCurrentLocale()`, which the engine scopes to
+   `RenderOptions.locale` exactly as it does for `FORMAT`, so under `tr` or `az`
+   the dotted and dotless `i` keep their dots and every other locale is
+   unchanged. Settled before 1.0, as
+   [`0004`](decisions/0004-what-1-0-must-settle.md) required, because it
+   changes the output of every Turkish report that uppercases an `i`.
+   `test/expression/functions/string_functions_test.dart` and
+   `test/rendering/engine/render_locale_test.dart` pin it.
+   *`src/expression/functions/string_functions.dart` → `_upper`, `_lower`.*
 
 ## Correctness of the published contract
 
