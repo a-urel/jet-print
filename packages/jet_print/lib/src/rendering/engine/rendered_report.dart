@@ -40,15 +40,31 @@ class RenderedReport {
   /// [diagnosticsSources] merged in order. [title] carries the source
   /// template's name (for display, e.g. the preview toolbar); it defaults to
   /// empty.
+  ///
+  /// A report constructed here paints with the bundled default font only;
+  /// `JetReportEngine.render` attaches the registry it measured with instead.
   RenderedReport({
+    required int pageCount,
+    required PageFrame Function(int index) buildFrame,
+    required List<ReportDiagnostics> diagnosticsSources,
+    String title = '',
+  }) : this._(
+          pageCount: pageCount,
+          buildFrame: buildFrame,
+          diagnosticsSources: diagnosticsSources,
+          title: title,
+          fonts: FontRegistry()..registerDefault(),
+        );
+
+  RenderedReport._({
     required this.pageCount,
     required PageFrame Function(int index) buildFrame,
     required List<ReportDiagnostics> diagnosticsSources,
-    this.title = '',
-    FontRegistry? fonts,
+    required this.title,
+    required FontRegistry fonts,
   })  : _buildFrame = buildFrame,
         _sources = List<ReportDiagnostics>.unmodifiable(diagnosticsSources),
-        fonts = fonts ?? (FontRegistry()..registerDefault());
+        _fonts = fonts;
 
   /// The total number of pages, exact from the moment of rendering.
   final int pageCount;
@@ -56,16 +72,10 @@ class RenderedReport {
   /// The rendered template's name, for display (may be empty).
   final String title;
 
-  /// The font registry this report was measured with (022 — INTERNAL).
-  ///
-  /// `JetReportEngine.render` builds one registry (the bundled defaults plus
-  /// any `RenderOptions.fonts`) and attaches it here, so the preview, the
-  /// PDF/PNG exporter, and the printer paint and embed from the **same** bytes
-  /// layout was measured with — they read this instead of building a parallel
-  /// default-only registry. [FontRegistry] is unexported, so
-  /// this is not part of the public API; constructed directly it defaults to a
-  /// bundled-default-only registry (today's behavior).
-  final FontRegistry fonts;
+  /// The font registry this report was measured with (022). Private, and read
+  /// through [fontsOf], which the barrel does not export: [FontRegistry] is
+  /// internal, so a public field of it would publish its members (#102).
+  final FontRegistry _fonts;
 
   final PageFrame Function(int index) _buildFrame;
   final List<ReportDiagnostics> _sources;
@@ -99,3 +109,30 @@ class RenderedReport {
     );
   }
 }
+
+/// Creates a [RenderedReport] carrying the [fonts] its layout was measured with
+/// (022) — INTERNAL, not exported from `jet_print.dart`.
+///
+/// `JetReportEngine.render` builds one registry (the bundled defaults plus any
+/// `RenderOptions.fonts`) and attaches it here, so the preview, the PDF/PNG
+/// exporter and the printer paint and embed from the **same** bytes layout was
+/// measured with, instead of building a parallel default-only registry.
+RenderedReport renderedReportWithFonts({
+  required int pageCount,
+  required PageFrame Function(int index) buildFrame,
+  required List<ReportDiagnostics> diagnosticsSources,
+  required FontRegistry fonts,
+  String title = '',
+}) =>
+    RenderedReport._(
+      pageCount: pageCount,
+      buildFrame: buildFrame,
+      diagnosticsSources: diagnosticsSources,
+      title: title,
+      fonts: fonts,
+    );
+
+/// The font registry [report] was measured with — INTERNAL, not exported from
+/// `jet_print.dart`. A report built with the public constructor carries a
+/// bundled-default-only registry.
+FontRegistry fontsOf(RenderedReport report) => report._fonts;

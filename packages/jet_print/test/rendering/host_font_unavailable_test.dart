@@ -81,8 +81,8 @@ void main() {
         const JetReportEngine().renderDefinition(_definition(), _source());
     expect(report.pageCount, greaterThan(0));
     // The carried registry falls back to default for the unknown family.
-    expect(report.fonts.bytesFor(_ghost), isA<Uint8List>());
-    expect(report.fonts.resolveFamily(_ghost), isNot(_ghost),
+    expect(fontsOf(report).bytesFor(_ghost), isA<Uint8List>());
+    expect(fontsOf(report).resolveFamily(_ghost), isNot(_ghost),
         reason: 'an unregistered family resolves to the default for paint');
   });
 
