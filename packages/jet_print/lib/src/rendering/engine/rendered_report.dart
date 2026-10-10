@@ -26,8 +26,8 @@ class RenderedPage {
   final PageFrame frame;
 }
 
-/// The result of `JetReportEngine.render`: an exact [pageCount], lazily-built
-/// pages via [pageAt], and the merged render [diagnostics].
+/// The result of `JetReportEngine.renderDefinition`: an exact [pageCount],
+/// lazily-built pages via [pageAt], and the merged render [diagnostics].
 ///
 /// Pages are built **on demand** and cached: requesting the first
 /// page never constructs frames for the others, and re-requesting a page
@@ -42,7 +42,8 @@ class RenderedReport {
   /// empty.
   ///
   /// A report constructed here paints with the bundled default font only;
-  /// `JetReportEngine.render` attaches the registry it measured with instead.
+  /// `JetReportEngine.renderDefinition` attaches the registry it measured with
+  /// instead.
   RenderedReport({
     required int pageCount,
     required PageFrame Function(int index) buildFrame,
@@ -113,10 +114,11 @@ class RenderedReport {
 /// Creates a [RenderedReport] carrying the [fonts] its layout was measured with
 /// (022) — INTERNAL, not exported from `jet_print.dart`.
 ///
-/// `JetReportEngine.render` builds one registry (the bundled defaults plus any
-/// `RenderOptions.fonts`) and attaches it here, so the preview, the PDF/PNG
-/// exporter and the printer paint and embed from the **same** bytes layout was
-/// measured with, instead of building a parallel default-only registry.
+/// `JetReportEngine.renderDefinition` builds one registry (the bundled
+/// defaults plus any `RenderOptions.fonts`) and attaches it here, so the
+/// preview, the PDF/PNG exporter and the printer paint and embed from the
+/// **same** bytes layout was measured with, instead of building a parallel
+/// default-only registry.
 RenderedReport renderedReportWithFonts({
   required int pageCount,
   required PageFrame Function(int index) buildFrame,

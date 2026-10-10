@@ -1,6 +1,6 @@
 // Engine builds + carries one font registry.
 //
-// `JetReportEngine.render` builds a single `FontRegistry`
+// `JetReportEngine.renderDefinition` builds a single `FontRegistry`
 // (registerDefault + registerHostFonts) and ATTACHES it to the returned
 // `RenderedReport`, so preview/export/print read the very bytes layout was
 // measured with — WYSIWYG by construction. White-box: reaches

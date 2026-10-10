@@ -8,8 +8,9 @@ import 'data_set.dart';
 /// The host's side of the render contract: build one of the public
 /// implementations — `JetInMemoryDataSource` (rows as maps),
 /// `JetJsonDataSource` (a JSON array of objects), or `JetObjectDataSource<T>`
-/// (domain objects + extractor) — and hand it to `JetReportEngine.render`.
-/// All three yield identical rendered output for the same logical dataset.
+/// (domain objects + extractor) — and hand it to
+/// `JetReportEngine.renderDefinition`. All three yield identical rendered
+/// output for the same logical dataset.
 ///
 /// **Master/detail**: a row value that is a `List` of maps is a nested
 /// collection; declare it as a [JetFieldType.collection] `FieldDef` (with its

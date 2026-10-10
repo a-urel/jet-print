@@ -1,4 +1,4 @@
-/// Per-render inputs for `JetReportEngine.render`: host-supplied
+/// Per-render inputs for `JetReportEngine.renderDefinition`: host-supplied
 /// parameter values plus the explicit formatting locale.
 ///
 /// `dart:ui` is imported for the [Locale] **value type only** (it has a const

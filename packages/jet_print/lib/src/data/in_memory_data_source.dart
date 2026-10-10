@@ -8,7 +8,7 @@ import 'row_cursor_data_set.dart';
 
 /// A [JetDataSource] backed by an in-memory `List<Map<String, Object?>>`.
 ///
-/// The simplest way to feed `JetReportEngine.render`. A nested
+/// The simplest way to feed `JetReportEngine.renderDefinition`. A nested
 /// collection (master/detail) is just a `List` of child maps under one key:
 ///
 /// ```dart
