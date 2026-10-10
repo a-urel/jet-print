@@ -1,8 +1,9 @@
-// A minimal jet_print report: describe it, fill it with data, then preview it
-// in a widget or export it to PDF.
+// A minimal jet_print report: describe it, fill it with data, then export,
+// print or preview it.
 //
-// The designer is one widget away: put `const JetReportDesigner()` inside the
-// same ShadApp to let users edit the report instead of only viewing it.
+// More examples sit next to this file: designer_example.dart hosts the visual
+// designer and saves designs as JSON; data_example.dart binds JSON rows and Dart
+// objects, with groups, subtotals and page numbers.
 import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
@@ -61,7 +62,11 @@ RenderedReport renderGreetings(List<String> names) =>
 Future<Uint8List> exportGreetingsPdf(List<String> names) =>
     const JetReportExporter().toPdf(renderGreetings(names));
 
-/// 3b. Or preview it. The preview reads the ambient shadcn_ui theme and the
+/// 3b. Or hand it to the system print dialog (false when the user cancels).
+Future<bool> printGreetings(List<String> names) =>
+    const JetReportPrinter().printReport(renderGreetings(names));
+
+/// 3c. Or preview it. The preview reads the ambient shadcn_ui theme and the
 /// library's own localizations.
 class GreetingsApp extends StatelessWidget {
   /// Creates an app that previews [report].

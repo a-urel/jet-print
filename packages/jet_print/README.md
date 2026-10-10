@@ -1,54 +1,95 @@
 # jet_print
 
-A layered, theme-aware Flutter library for building **WYSIWYG report designers**.
-Design a report as a reified, id'd section tree; fill it with your data; preview,
-paginate, export to PDF/PNG, and print — all from a single public entry point.
+Build **WYSIWYG report designers** in Flutter. Describe a report as a tree of
+bands and elements, fill it with your data, then preview, export to PDF/PNG or
+print it. Or give your users the visual designer and let them build the report
+themselves.
 
-```dart
-import 'package:jet_print/jet_print.dart';
-```
+![The jet_print designer: toolbox, canvas, data fields and property inspector](https://raw.githubusercontent.com/a-urel/jet-print/main/packages/jet_print/doc/screenshots/designer.png)
+
+> **Status: 0.x.** The API may still change between minor versions until 1.0.
+> Breaking changes are listed in the [changelog](CHANGELOG.md).
 
 ## Features
 
-- **Reified report model** — `ReportDefinition` (page furniture + body), bands,
-  groups, and nested/recursive detail scopes; author-time `validate()` returns
-  structured `Diagnostic`s.
-- **Render engine** — `JetReportEngine` fills a definition with a `JetDataSource`
-  (in-memory / JSON / object-backed), paginates lazily, and surfaces render
-  diagnostics.
-- **Export & print** — `JetReportExporter` produces deterministic PDFs (real
-  selectable text, embedded fonts) and PNGs; `JetReportPrinter` presents the
-  system print dialog behind an injectable presenter seam.
-- **Interactive designer** — `JetReportDesigner` / `JetReportWorkspace`: select,
-  move, resize, align, undo/redo, zoom, rulers, grid-snap, clipboard.
-- **Rich elements** — text with fx expressions, shapes, images, and 10 barcode/QR
-  symbologies; multi-column label layouts.
-- **Localized chrome** — ships en/de/tr via `JetPrintLocalizations`.
+- **Visual designer.** `JetReportWorkspace` gives you a toolbox, canvas,
+  outline, data-field panel, property inspector and live preview in one widget,
+  with undo/redo, zoom, rulers, grid snap, alignment and clipboard.
+- **What you design is what prints.** The canvas, the preview, page thumbnails,
+  PDF and PNG are all drawn from the same recorded page, so they cannot
+  disagree.
+- **Bands and groups.** Title, page header and footer, detail, group
+  header/footer and summary bands; nested master–detail lists; multi-column
+  label sheets.
+- **Expressions and totals.** `$F{field}`, `$P{parameter}` and
+  `$V{PAGE_NUMBER}` references, functions, and `SUM`/`AVG`/`COUNT`/`MIN`/`MAX`
+  per group or for the whole report, with ICU number and date formats.
+- **Elements.** Text, shapes, images, bar, line and pie charts, crosstab
+  (pivot) tables, watermarks, and 20+ barcode and QR symbologies.
+- **Data from anywhere.** In-memory rows, JSON, your own Dart objects, or a
+  paged source.
+- **Real output.** PDFs with selectable text and embedded fonts, PNG pages, and
+  the system print dialog.
+- **Saved as JSON.** Reports serialize to versioned JSON that newer and older
+  builds both read without losing anything.
+- **Themed and localized.** Follows your shadcn_ui theme, light or dark;
+  English, German and Turkish built in.
 
-## Quickstart — render and export a report
+## Screenshots
+
+| Preview with page thumbnails | Charts |
+| --- | --- |
+| ![Invoice preview](https://raw.githubusercontent.com/a-urel/jet-print/main/packages/jet_print/doc/screenshots/preview_invoice.png) | ![Sales chart preview](https://raw.githubusercontent.com/a-urel/jet-print/main/packages/jet_print/doc/screenshots/preview_chart.png) |
+| **Barcodes and QR codes** | **Dark theme** |
+| ![Barcode gallery in the designer](https://raw.githubusercontent.com/a-urel/jet-print/main/packages/jet_print/doc/screenshots/designer_barcodes.png) | ![The designer in dark mode](https://raw.githubusercontent.com/a-urel/jet-print/main/packages/jet_print/doc/screenshots/designer_dark.png) |
+
+All screenshots are from the
+[playground app](https://github.com/a-urel/jet-print/tree/main/apps/jet_print_playground),
+which has a dozen ready-made reports to try.
+
+## Install
+
+```sh
+flutter pub add jet_print
+```
+
+Requires Flutter 3.44 or later. Runs on Android, iOS, web, macOS, Windows and
+Linux.
+
+## Quickstart
+
+Describe a report. A title band prints once; the detail band prints once per
+row, and its expression reads the row's `name` field:
 
 ```dart
-import 'dart:typed_data';
-
-import 'package:flutter/widgets.dart';
-import 'package:jet_print/jet_print.dart';
-
-// 1. Describe a report (or build one in the designer and serialize it).
-const ReportDefinition definition = ReportDefinition(
-  name: 'Greeting',
+const ReportDefinition greetingsReport = ReportDefinition(
+  name: 'Greetings',
   page: PageFormat.a4Portrait,
   body: ReportBody(
+    title: Band(
+      id: 'title',
+      type: BandType.title,
+      height: 40,
+      elements: <ReportElement>[
+        TextElement(
+          id: 'heading',
+          bounds: JetRect(x: 0, y: 0, width: 300, height: 28),
+          text: 'Greetings',
+          style: JetTextStyle(fontSize: 20, weight: JetFontWeight.bold),
+        ),
+      ],
+    ),
     root: DetailScope(
       id: 'root',
       children: <ScopeNode>[
         BandNode(Band(
           id: 'detail',
           type: BandType.detail,
-          height: 40,
+          height: 24,
           elements: <ReportElement>[
             TextElement(
-              id: 't1',
-              bounds: JetRect(x: 0, y: 0, width: 200, height: 24),
+              id: 'greeting',
+              bounds: JetRect(x: 0, y: 0, width: 300, height: 20),
               text: '', // replaced per row by the expression
               expression: r'"Hello, " + $F{name} + "!"',
             ),
@@ -58,54 +99,188 @@ const ReportDefinition definition = ReportDefinition(
     ),
   ),
 );
+```
 
-Future<void> main() async {
-  // 2. Fill it with data.
-  final RenderedReport report = const JetReportEngine().renderDefinition(
-    definition,
-    JetInMemoryDataSource(const <Map<String, Object?>>[
-      <String, Object?>{'name': 'Ada'},
-    ]),
-  );
+Fill it with data, then export, print or preview the result:
 
-  // 3. Export — headless: you own the bytes.
-  final Uint8List pdf = await const JetReportExporter().toPdf(report);
-  final Uint8List png = await const JetReportExporter().pageToPng(report, 0);
+```dart
+/// 2. Fill it with data. Pages are laid out lazily, as they are read.
+RenderedReport renderGreetings(List<String> names) =>
+    const JetReportEngine().renderDefinition(
+      greetingsReport,
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        for (final String name in names) <String, Object?>{'name': name},
+      ]),
+    );
 
-  // 4. Or preview it in a widget: JetReportPreview(report: report)
-  // 5. Or print it: await const JetReportPrinter().printReport(report);
+/// 3a. Export it headlessly: you own the bytes.
+Future<Uint8List> exportGreetingsPdf(List<String> names) =>
+    const JetReportExporter().toPdf(renderGreetings(names));
+
+/// 3b. Or hand it to the system print dialog (false when the user cancels).
+Future<bool> printGreetings(List<String> names) =>
+    const JetReportPrinter().printReport(renderGreetings(names));
+```
+
+`JetReportPreview(report: report)` shows the result on screen, with page
+navigation, zoom, thumbnails, PDF export and print buttons.
+
+## Host the designer
+
+The designer needs a shadcn_ui theme and the library's localizations above it:
+
+```dart
+Widget build(BuildContext context) => ShadApp(
+      localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+        JetPrintLocalizations.delegate,
+      ],
+      supportedLocales: JetPrintLocalizations.supportedLocales,
+      home: const ReportDesignerPage(),
+    );
+```
+
+`JetReportWorkspace` is the whole designer. The controller holds the design and
+its undo history. `dataSchema` lists the fields users can drag onto the page,
+and `renderReport` fills the design for the Preview tab:
+
+```dart
+class _ReportDesignerPageState extends State<ReportDesignerPage> {
+  // The controller holds the design and its undo history.
+  final JetReportDesignerController _controller = JetReportDesignerController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => JetReportWorkspace(
+        controller: _controller,
+        dataSchema: customerSchema,
+        renderReport: (ReportDefinition definition) =>
+            const JetReportEngine().renderDefinition(definition, customerRows),
+      );
 }
 ```
 
-## Designer widget
+The workspace also takes `onSaveRequested`, `onOpenRequested`, `onExportPdf`
+and `onPrint` callbacks, which add the matching toolbar buttons, plus `fonts`
+for your own font families.
+
+## Save and reopen designs
+
+A design is plain, versioned JSON. Store it wherever you like:
 
 ```dart
-// Inside a ShadApp / ShadTheme shell:
-const JetReportDesigner();
+/// Saves the current design as versioned JSON.
+String saveReport(JetReportDesignerController controller) =>
+    JetReportFormat.encodeDefinitionJson(controller.definition);
+
+/// Opens a saved design in the designer.
+void openReport(JetReportDesignerController controller, String json) =>
+    controller.open(JetReportFormat.decodeDefinitionJson(json));
 ```
 
-## Platform support
+## Bind your data
 
-The core is pure Dart — the domain, data, expression, render, and export layers
-carry no `dart:ui` or platform dependency — so `jet_print` runs everywhere
-Flutter runs. CI exercises every target on each push to `main`:
+Rows can come from JSON:
 
-| Platform        | CI coverage                                               |
-| --------------- | -------------------------------------------------------- |
-| macOS desktop   | full test suite **incl. golden / WYSIWYG** + format gate |
-| Linux desktop   | full test suite (goldens excluded¹) + app build          |
-| Windows desktop | full test suite (goldens excluded¹) + app build          |
-| Web (Chrome)    | web build + Chrome test leg (goldens + VM-only excluded)  |
-| iOS             | app build (no codesign)                                  |
-| Android         | APK build                                                |
+```dart
+final JetDataSource ordersFromJson = JetJsonDataSource.parse(
+  '''
+  [
+    {"region": "North", "customer": "Ada", "amount": 120.5},
+    {"region": "North", "customer": "Grace", "amount": 80},
+    {"region": "South", "customer": "Linus", "amount": 42.25}
+  ]
+  ''',
+  fields: salesSchema.fields,
+);
+```
 
-¹ Goldens run only on the macOS runner — host text rasterization and PDF font
-subsetting differ per OS, so pixel-level fidelity is pinned on one canonical
-platform rather than asserted everywhere.
+or from your own classes, mapped to rows as the report reads them:
 
-System printing is provided by the `printing` dependency, which carries its own
-per-platform integration: a desktop print dialog on macOS/Windows/Linux, and the
-OS share sheet on iOS/Android (a user dismissal there may report as success).
+```dart
+final JetDataSource ordersFromObjects = JetObjectDataSource<Order>(
+  const <Order>[
+    Order('North', 'Ada', 120.5),
+    Order('North', 'Grace', 80),
+    Order('South', 'Linus', 42.25),
+  ],
+  fields: salesSchema.fields,
+  row: (Order o) => <String, Object?>{
+    'region': o.region,
+    'customer': o.customer,
+    'amount': o.amount,
+  },
+);
+```
+
+A group breaks whenever its key changes, so sort the rows by it. Each group
+gets a header and a footer band; `SUM` in the footer totals the group, and the
+same expression in the summary band totals the report:
+
+```dart
+GroupLevel(
+  id: 'region',
+  name: 'Region',
+  key: r'$F{region}',
+  header: Band(
+    id: 'regionHeader',
+    type: BandType.groupHeader,
+    height: 24,
+    elements: <ReportElement>[
+      TextElement(
+        id: 'regionName',
+        bounds: JetRect(x: 0, y: 0, width: 200, height: 20),
+        text: '',
+        expression: r'$F{region}',
+        style: JetTextStyle(weight: JetFontWeight.bold),
+      ),
+    ],
+  ),
+  footer: Band(
+    id: 'regionFooter',
+    type: BandType.groupFooter,
+    height: 24,
+    elements: <ReportElement>[
+      TextElement(
+        id: 'subtotal',
+        bounds: JetRect(x: 300, y: 0, width: 100, height: 20),
+        text: '',
+        expression: r'SUM($F{amount})',
+        format: '#,##0.00',
+      ),
+    ],
+  ),
+),
+```
+
+Page numbers come from `$V{PAGE_NUMBER}` and `$V{PAGE_COUNT}` in a page footer.
+`validate(definition, schema: schema)` checks every binding before you render.
+
+## Platform notes
+
+Reports look the same on every platform, but are not byte-identical: text
+rasterization (PNG pixels) and PDF font subsetting vary by operating system. Do
+not compare exported files across platforms byte for byte.
+
+Printing goes through the [`printing`](https://pub.dev/packages/printing)
+package: a print dialog on macOS, Windows and Linux, the share sheet on iOS and
+Android, and the browser's print dialog on the web. `printReport` returns
+`false` when the user cancels, but on mobile and the web that is best-effort:
+a dismissed dialog may still report success.
+
+## Learn more
+
+- [`example/`](example/): the code on this page, as complete files.
+- [The playground app](https://github.com/a-urel/jet-print/tree/main/apps/jet_print_playground):
+  a dozen full reports (invoice, labels, payroll, ledger, charts, pivot) in the
+  designer.
+- [How it works](https://github.com/a-urel/jet-print/tree/main/docs): the
+  report model, data binding, pagination, painting and the designer, one page
+  each.
 
 ## License
 

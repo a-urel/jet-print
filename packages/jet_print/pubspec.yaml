@@ -15,6 +15,19 @@ topics:
   - wysiwyg
   - designer
   - printing
+# Shown in the pub.dev gallery. Captured from the playground app at 1440x900,
+# 2x; the README links the same files from GitHub.
+screenshots:
+  - description: 'The report designer: toolbox, canvas, data fields and property inspector.'
+    path: doc/screenshots/designer.png
+  - description: 'Preview of a three-page invoice with page thumbnails.'
+    path: doc/screenshots/preview_invoice.png
+  - description: 'Bar, line and pie charts in a report preview.'
+    path: doc/screenshots/preview_chart.png
+  - description: 'Barcodes, 2D codes and QR codes on the design canvas.'
+    path: doc/screenshots/designer_barcodes.png
+  - description: 'The designer in dark mode.'
+    path: doc/screenshots/designer_dark.png
 
 # This package is a member of the jet_print workspace; resolution is performed
 # once at the workspace root, producing a single shared pubspec.lock.
