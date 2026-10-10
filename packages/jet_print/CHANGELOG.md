@@ -70,16 +70,6 @@ changes nothing a host calls or renders.
 
 ### Changed
 
-- **Breaking (API): `RenderedPage.frame` and
-  `JetReportDesignerController.activeGuides` are removed.** Both had types
-  the barrel never exported: `frame` the engine's internal display list,
-  `activeGuides` the canvas's snap guides. A consumer could reach members of
-  types it could not name, and they would have frozen at 1.0 unpublished.
-  `RenderedPage` keeps `index`, and its constructor is no longer public; a
-  report's pages still come from `RenderedReport.pageAt`. Inspect rendered
-  output through the exporters (`JetReportExporter.toPdf`, `pageToPng`).
-  ([#105](https://github.com/a-urel/jet-print/issues/105))
-
 - **Sponsor links.** `pubspec.yaml` lists GitHub Sponsors and Buy Me a Coffee
   under `funding:`, which pub.dev shows in the package sidebar, and the README
   shows both as badges and in a *Support* section.
@@ -403,16 +393,6 @@ changes nothing a host calls or renders.
   element type cannot reach one list without the other.
 
 ### Changed
-
-- **Breaking (API): `RenderedPage.frame` and
-  `JetReportDesignerController.activeGuides` are removed.** Both had types
-  the barrel never exported: `frame` the engine's internal display list,
-  `activeGuides` the canvas's snap guides. A consumer could reach members of
-  types it could not name, and they would have frozen at 1.0 unpublished.
-  `RenderedPage` keeps `index`, and its constructor is no longer public; a
-  report's pages still come from `RenderedReport.pageAt`. Inspect rendered
-  output through the exporters (`JetReportExporter.toPdf`, `pageToPng`).
-  ([#105](https://github.com/a-urel/jet-print/issues/105))
 
 - **Requires `shadcn_ui` 0.57.1** (was `^0.54.0`), the latest release. A
   host app that pins `shadcn_ui` below 0.57 must raise it. Nothing the
@@ -1153,16 +1133,6 @@ changes nothing a host calls or renders.
   unchanged (`FilledReport.params` is internal IR).
 
 ### Changed
-
-- **Breaking (API): `RenderedPage.frame` and
-  `JetReportDesignerController.activeGuides` are removed.** Both had types
-  the barrel never exported: `frame` the engine's internal display list,
-  `activeGuides` the canvas's snap guides. A consumer could reach members of
-  types it could not name, and they would have frozen at 1.0 unpublished.
-  `RenderedPage` keeps `index`, and its constructor is no longer public; a
-  report's pages still come from `RenderedReport.pageAt`. Inspect rendered
-  output through the exporters (`JetReportExporter.toPdf`, `pageToPng`).
-  ([#105](https://github.com/a-urel/jet-print/issues/105))
 
 - **Grid snap step is now 5 mm (was 8 pt)** so the
   snap grid coincides with the new visible grid and the millimetre rulers. This
