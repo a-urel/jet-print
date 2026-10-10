@@ -284,15 +284,19 @@ held.
     **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *P3,
     documentation*.
 
-19. **`onExportPdf` is a `VoidCallback` while `toPdf` is async.** The assignment
-    compiles silently because `void` is a top type, so there is no diagnostic at
-    all: no progress state to drive, nowhere for the widget to catch a failure.
-    The workspace variant at least receives the report; the preview's receives
-    nothing, so the callback must close over it.
-
-    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*,
-    [#101](https://github.com/a-urel/jet-print/issues/101). Changing the
-    callback's type changes the surface.
+19. **`onExportPdf` was a `VoidCallback` while `toPdf` is async.** *Fixed* in
+    [#101](https://github.com/a-urel/jet-print/issues/101). The assignment
+    compiled silently because `void` is a top type, so there was no diagnostic
+    at all: no progress state to drive, nowhere for the widget to catch a
+    failure. The workspace variant at least received the report; the preview's
+    received nothing, so the callback had to close over it. Both widgets now
+    take a `RenderedReportCallback`, `FutureOr<void> Function(RenderedReport)`:
+    the preview disables a button while its Future runs and routes a failure to
+    a new `JetReportPreview.onError`, which the workspace feeds from its own
+    `onError`. That is the designer's convention for host callbacks, now one
+    function, `runHostCallback`, for both.
+    *`src/designer/preview/jet_report_preview.dart` → `RenderedReportCallback`;
+    `src/designer/host_callback.dart` → `runHostCallback`.*
 
 20. **`RenderedReport.fonts` was public but its type is not exported.**
     *Fixed* in [#102](https://github.com/a-urel/jet-print/issues/102), by

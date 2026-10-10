@@ -67,8 +67,8 @@ Future<void> expectNoToolbarOverflow(
     supportedLocales: JetPrintLocalizations.supportedLocales,
     home: JetReportPreview(
       report: toolbarWidthReport(),
-      onExportPdf: () {},
-      onPrint: () {},
+      onExportPdf: (RenderedReport _) {},
+      onPrint: (RenderedReport _) {},
     ),
   ));
   await tester.pumpAndSettle();

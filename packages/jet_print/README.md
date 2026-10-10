@@ -197,7 +197,9 @@ class _ReportDesignerPageState extends State<ReportDesignerPage> {
 
 The workspace also takes `onSaveRequested`, `onOpenRequested`, `onExportPdf`
 and `onPrint` callbacks, which add the matching toolbar buttons, plus `fonts`
-for your own font families.
+for your own font families. Export and print receive the rendered report and
+may be async: the button stays disabled until the returned future completes,
+and a failure goes to `onError`.
 
 ## Save and reopen designs
 

@@ -62,14 +62,14 @@ export 'src/designer/controller/jet_report_designer_controller.dart'
         CtrlHistory;
 export 'src/designer/controller/selection.dart' show Selection;
 export 'src/designer/controller/view_fit_mode.dart' show JetViewFitMode;
+export 'src/designer/host_callback.dart' show ReportErrorCallback;
 export 'src/designer/jet_report_designer.dart'
     show
         JetReportDesigner,
         ReportSaveRequestedCallback,
         ReportOpenRequestedCallback,
         ReportPreviewRequestedCallback,
-        ReportSelectDataSourceCallback,
-        ReportErrorCallback;
+        ReportSelectDataSourceCallback;
 export 'src/designer/jet_report_workspace.dart'
     show JetReportWorkspace, ReportRenderCallback;
 // The generated localizations class carries its own `delegate` and
@@ -77,7 +77,8 @@ export 'src/designer/jet_report_workspace.dart'
 export 'src/designer/l10n/jet_print_localizations.dart'
     show JetPrintLocalizations;
 // The read-only paginated viewer over a rendered report (011).
-export 'src/designer/preview/jet_report_preview.dart' show JetReportPreview;
+export 'src/designer/preview/jet_report_preview.dart'
+    show JetReportPreview, RenderedReportCallback;
 // --- The reified section tree (024) — the public report model. The explicit,
 // id'd tree — Band / DetailScope+ScopeNode / GroupLevel / ReportDefinition
 // (PageFurniture + ReportBody) — plus author-time `validate()`, which returns
