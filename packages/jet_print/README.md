@@ -182,6 +182,11 @@ void openReport(JetReportDesignerController controller, String json) =>
     controller.open(JetReportFormat.decodeDefinitionJson(json));
 ```
 
+Each document records the schema version that wrote it, and
+`JetReportFormat.schemaVersion` is the version this build writes. Older
+documents are migrated as they load; a newer one throws
+`ReportFormatException`.
+
 ## Bind your data
 
 Rows can come from JSON:

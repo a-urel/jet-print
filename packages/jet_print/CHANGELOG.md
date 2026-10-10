@@ -400,9 +400,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   format loads forward automatically: `JetReportFormat.decodeDefinitionJson`
   migrates a v1 JSON map to a `ReportDefinition` — every v1 construct maps to a
   v2 home and master-level band/sub-scope order is preserved. The schema version
-  is now `kReportDefinitionSchemaVersion` (`2`).
+  is now `2`, public as `JetReportFormat.schemaVersion`.
 
 ### Added
+
+- **`JetReportFormat.schemaVersion`**, the report schema version this build
+  writes (`2`): the `schemaVersion` key at the head of every encoded document.
+  A host that stores reports can keep it beside each one, to find the
+  documents an upgrade will migrate, without hard-coding the number or
+  encoding a throwaway definition to read it back. It mirrors
+  `JetDataSourceFile.version` for the data-source format. It is a `const`, so
+  it can be used where a constant is required.
 
 - **README rewrite with screenshots and tested examples.** The README now
   shows the designer, previews, charts and barcodes (also listed under

@@ -170,11 +170,9 @@ void main() {
     });
 
     test('throws ReportFormatException on a version newer than the build', () {
-      final int current =
-          JetReportFormat.encodeDefinition(_fixture())['schemaVersion']! as int;
       expect(
         () => JetReportFormat.decodeDefinition(<String, Object?>{
-          'schemaVersion': current + 1,
+          'schemaVersion': JetReportFormat.schemaVersion + 1,
           'name': 'x',
           'page': PageFormat.a4Portrait.toJson(),
           'furniture': <String, Object?>{},

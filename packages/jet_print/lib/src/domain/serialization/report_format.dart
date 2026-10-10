@@ -28,6 +28,17 @@ import 'report_format_exception.dart';
 /// reordering. A legacy v1 (flat-band) document is walked forward by
 /// the 1→2 migration on [decodeDefinition].
 abstract final class JetReportFormat {
+  /// The report schema version this build writes: the value of the
+  /// `schemaVersion` key that [encodeDefinition] stamps first in every
+  /// document.
+  ///
+  /// [decodeDefinition] reads any document up to this version, migrating an
+  /// older one forward, and rejects a newer one. A host that stores reports can
+  /// keep this beside each one — a `schema_version` column, say — to find the
+  /// documents written before an upgrade without parsing them. It is the
+  /// schema's number, not the package's: that is `jetPrintVersion`.
+  static const int schemaVersion = defcodec.kReportDefinitionSchemaVersion;
+
   /// The pre-wired registry of built-in element codecs (`text`, `shape`,
   /// `image`, `barcode`, `chart`). Built once and reused; never mutated.
   static final ElementCodecRegistry _registry = _buildRegistry();
@@ -49,7 +60,7 @@ abstract final class JetReportFormat {
   // (schemaVersion 1) is walked forward by the 1→2 migration into a
   // [ReportDefinition]; a v2 document decodes the section tree directly.
 
-  /// Encodes [definition] to a JSON-safe map, stamped `schemaVersion: 2`.
+  /// Encodes [definition] to a JSON-safe map, stamped with [schemaVersion].
   static Map<String, Object?> encodeDefinition(ReportDefinition definition) =>
       defcodec.encodeDefinition(definition, _registry);
 
