@@ -262,11 +262,15 @@ Page numbers come from `$V{PAGE_NUMBER}` and `$V{PAGE_COUNT}` in a page footer.
 
 ## Platform notes
 
-Rendering and export are pure Dart and behave the same on every platform.
+Reports look the same on every platform, but are not byte-identical: text
+rasterization (PNG pixels) and PDF font subsetting vary by operating system. Do
+not compare exported files across platforms byte for byte.
+
 Printing goes through the [`printing`](https://pub.dev/packages/printing)
 package: a print dialog on macOS, Windows and Linux, the share sheet on iOS and
-Android (where a dismissed sheet may still report success), and the browser's
-print dialog on the web.
+Android, and the browser's print dialog on the web. `printReport` returns
+`false` when the user cancels, but on mobile and the web that is best-effort:
+a dismissed dialog may still report success.
 
 ## Learn more
 

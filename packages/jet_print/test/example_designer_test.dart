@@ -34,7 +34,13 @@ void main() {
     expect(target.definition, source.definition);
   });
 
-  test('the sample rows render against the designer schema', () {
+  test('the preview rows fill a design built on the designer schema', () {
     expect(validate(greetingsReport, schema: customerSchema), isEmpty);
+    // validate checks names against the schema only; the preview opens the
+    // rows themselves, so fill them too.
+    final RenderedReport preview =
+        const JetReportEngine().renderDefinition(greetingsReport, customerRows);
+    preview.pageAt(0); // pages fill lazily; diagnostics arrive with the page
+    expect(preview.diagnostics.entries, isEmpty);
   });
 }

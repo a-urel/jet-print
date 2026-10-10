@@ -25,6 +25,7 @@ class GreetingsApp extends StatelessWidget {
 
 // example/designer_example.dart
 JetDataSchema get customerSchema => _vmOnly();
+JetDataSource get customerRows => _vmOnly();
 String saveReport(JetReportDesignerController controller) => _vmOnly();
 void openReport(JetReportDesignerController controller, String json) =>
     _vmOnly();
