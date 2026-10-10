@@ -2,6 +2,8 @@
 
 [![pub package](https://img.shields.io/pub/v/jet_print.svg)](https://pub.dev/packages/jet_print)
 [![CI](https://github.com/a-urel/jet-print/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/a-urel/jet-print/actions/workflows/ci.yml)
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/a-urel)
+[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/yazemo)
 
 **`jet_print`** is a Flutter library for building WYSIWYG report designers: a
 report model, a paginating render engine, PDF/PNG export, printing, and an
@@ -105,6 +107,12 @@ is copied from `packages/jet_print/example/`, which CI compiles and runs.
 Only the symbols exported from `package:jet_print/jet_print.dart` are public;
 everything under `lib/src/` is private implementation detail (enforced by
 `encapsulation_test.dart`).
+
+## Support
+
+If jet-print saves you time, you can support its development through
+[GitHub Sponsors](https://github.com/sponsors/a-urel) or
+[Buy Me a Coffee](https://buymeacoffee.com/yazemo).
 
 ## License
 

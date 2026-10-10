@@ -9,6 +9,9 @@ version: 0.1.0
 repository: https://github.com/a-urel/jet-print
 homepage: https://github.com/a-urel/jet-print
 issue_tracker: https://github.com/a-urel/jet-print/issues
+funding:
+  - https://github.com/sponsors/a-urel
+  - https://buymeacoffee.com/yazemo
 topics:
   - report
   - pdf
