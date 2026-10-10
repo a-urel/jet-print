@@ -156,23 +156,28 @@ class JetReportPreview extends StatefulWidget {
   State<JetReportPreview> createState() => _JetReportPreviewState();
 }
 
+/// The preview's host actions, each with its own busy state.
+enum _PreviewAction { export, print }
+
 class _JetReportPreviewState extends State<JetReportPreview> {
-  /// Whether the export/print callback's Future is still running; its button
-  /// is disabled until then.
-  bool _exporting = false;
-  bool _printing = false;
+  /// The actions whose callback's Future is still running; each one's button is
+  /// disabled until it settles.
+  final Set<_PreviewAction> _busy = <_PreviewAction>{};
 
   /// Runs a host [action] on the shown report through the shared host-callback
-  /// policy, holding its button disabled (via [setBusy]) while a returned
-  /// Future runs.
-  void _runAction(
-      RenderedReportCallback action, void Function(bool busy) setBusy) {
+  /// policy, holding [kind] busy while a returned Future runs.
+  ///
+  /// The busy check here, not only the disabled button, is what stops a second
+  /// activation: the button rebuilds disabled on the next frame, and two taps
+  /// delivered before it would both reach this method.
+  void _runAction(_PreviewAction kind, RenderedReportCallback action) {
+    if (_busy.contains(kind)) return;
     final Future<void>? pending =
         runHostCallback(() => action(widget.report), widget.onError);
     if (pending == null) return;
-    setState(() => setBusy(true));
+    setState(() => _busy.add(kind));
     pending.whenComplete(() {
-      if (mounted) setState(() => setBusy(false));
+      if (mounted) setState(() => _busy.remove(kind));
     });
   }
 
@@ -393,19 +398,18 @@ class _JetReportPreviewState extends State<JetReportPreview> {
             buttonKey: const ValueKey<String>('jet_print.preview.export'),
             icon: LucideIcons.fileDown,
             label: l10n.previewExport,
-            onPressed: _exporting
+            onPressed: _busy.contains(_PreviewAction.export)
                 ? null
-                : () =>
-                    _runAction(widget.onExportPdf!, (bool b) => _exporting = b),
+                : () => _runAction(_PreviewAction.export, widget.onExportPdf!),
           ),
         if (widget.onPrint != null)
           _ToolbarButton(
             buttonKey: const ValueKey<String>('jet_print.preview.print'),
             icon: LucideIcons.printer,
             label: l10n.previewPrint,
-            onPressed: _printing
+            onPressed: _busy.contains(_PreviewAction.print)
                 ? null
-                : () => _runAction(widget.onPrint!, (bool b) => _printing = b),
+                : () => _runAction(_PreviewAction.print, widget.onPrint!),
           ),
         const _Divider(),
       ],

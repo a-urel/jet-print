@@ -740,6 +740,25 @@ void main() {
       expect(exports, 2, reason: 're-enabled once the future completes');
     });
 
+    testWidgets('two activations in one frame start one action',
+        (WidgetTester tester) async {
+      int exports = 0;
+      final Completer<void> pending = Completer<void>();
+      await _pumpPreview(tester, onExportPdf: (RenderedReport _) {
+        exports++;
+        return pending.future;
+      });
+      await tester.ensureVisible(find.byKey(_exportKey));
+      // No pump between the taps: the button has not rebuilt disabled yet, so
+      // only the action's own busy check can stop the second one.
+      await tester.tap(find.byKey(_exportKey));
+      await tester.tap(find.byKey(_exportKey));
+      await tester.pump();
+      expect(exports, 1);
+      pending.complete();
+      await tester.pumpAndSettle();
+    });
+
     testWidgets('a rejected future goes to onError and re-enables the action',
         (WidgetTester tester) async {
       final List<Object> errors = <Object>[];
