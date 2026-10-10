@@ -20,8 +20,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 > - **Interactive designer** — `JetReportDesigner` with select/move/resize/align,
 >   undo/redo, zoom, rulers, grid-snap, and clipboard, themed via shadcn_ui.
 > - **Rich elements** — fx-expression text, shapes, images, charts, 22 barcode/QR
->   symbologies (plus `auto`, which picks one from the data), and multi-column
->   label layouts; host & system fonts; en/de/tr chrome.
+>   symbologies (plus `auto`, which infers QR, Code 128, EAN-13, UPC-A, EAN-8 or
+>   ITF-14 from the data), and multi-column label layouts; host & system fonts;
+>   en/de/tr chrome.
 >
 > The detailed, spec-by-spec log below records every change since the legacy flat
 > model and is aimed at upgraders, not first-time readers.
