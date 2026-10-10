@@ -93,8 +93,10 @@ held.
    `expandAggregates`.*
 
    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *after 1.0,
-   additive*. Allowing an aggregate that validation rejects today breaks no
-   existing report.
+   **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *after 1.0,
+   additive*. Validation rejects an aggregate in a group header today, and
+   0004's output promise covers only definitions `validate` accepts, so allowing
+   it later changes no covered output.
 
 ## Wrong output rather than an error
 
@@ -129,7 +131,11 @@ held.
    `_expandInlineAggregates`.*
 
    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *P3, defect
-   fix*. It removes a false warning from `validate`; no render changes.
+   **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *P3, defect
+   fix*. It removes a false warning from `validate`; no render changes. If entry
+   11 is settled by making render validate, this has to be fixed first: the
+   warnings would then be render diagnostics, and removing them after 1.0 would
+   change output.
 
 7. **`UPPER` and `LOWER` are locale-blind, and wrong in Turkish.** They use
    Dart's `toUpperCase`/`toLowerCase`, which map `i`→`I` and `I`→`i`; Turkish
@@ -285,7 +291,10 @@ held.
     type of a field on a public class.
 
     **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*.
-    Hiding the field or exporting its type changes the surface.
+    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*.
+    The type's members are already callable through the field, so they freeze
+    with it at 1.0. Exporting the type is additive but commits to that API;
+    hiding the field afterwards would change the surface.
 
 ## Documentation
 

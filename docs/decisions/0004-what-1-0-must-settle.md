@@ -43,12 +43,15 @@ kind of fix:
 2. **A change to the output of an existing report.** The text, layout or pixels
    of a page, what a PDF or PNG shows, and the diagnostics a render reports,
    for the same definition, data, fonts and platform. Fixing output that is
-   plainly wrong is still a change to output.
+   plainly wrong is still a change to output. The promise covers definitions
+   `validate` reports no errors for: one that validation rejects has no output
+   to keep, even though render, which does not validate, still draws it.
 3. **A change to a default.** What happens when a host does not pass a
    parameter is part of the contract, because most hosts never pass it.
 
 Adding is not breaking: a new export, an optional parameter, a function, a
-variable, or accepting something validation used to reject.
+variable, or accepting something validation used to reject (rule 2's scope is
+what makes the last of these true).
 
 **So an `api-friction.md` entry whose fix would fall under any of the three is
 decided before `1.0.0`**: fixed, or accepted permanently and documented as the
@@ -63,7 +66,7 @@ behaviour. As of this record that is eight entries:
 | 12 — an unknown field renders empty unless `knownFields` is passed | a default |
 | 14 — `GroupLevel` has an `id` and a `name`, and `name` is also a key | merging or renaming them changes the surface and the schema |
 | 19 — `JetReportPreview.onExportPdf` is a `VoidCallback` | its type |
-| 20 — `RenderedReport.fonts` is public, its type `FontRegistry` is not exported | hiding or exporting it changes the surface |
+| 20 — `RenderedReport.fonts` is public, its type `FontRegistry` is not exported | the type's members are already callable through the field, so at 1.0 they freeze with it; exporting the type is additive but commits to that API, and hiding the field afterwards changes the surface |
 
 Each gets its own issue, and P3 is met when all eight are closed, by a fix or
 by a recorded acceptance. That replaces "no open question" with a list somebody
@@ -72,7 +75,10 @@ outside the project can check.
 The other open entries are triaged in `api-friction.md` itself, one verdict
 line each: **after 1.0, additive** (3, 4, 5 as a sort feature, 10, 13, 15, 16,
 17), or **P3, a documentation or defect fix** (5 as documentation, 6, 18, 21).
-Neither kind blocks the freeze.
+Neither kind blocks the freeze, with one ordering constraint: entry 6, the false
+warning `validate` gives an aggregate inside arithmetic, has to be fixed before
+entry 11 if entry 11 is settled by making render validate. Its warnings would
+then be render diagnostics, and removing them after 1.0 would change output.
 
 ## Consequences
 
@@ -97,7 +103,9 @@ not discovered later.
 Entries 3 and 4, a per-page carried subtotal and a group header carrying its
 own group's total, are *not* on the list. Both add something that cannot be
 expressed today, so neither blocks the freeze, however much an accounting
-consumer wants them.
+consumer wants them. Entry 4 is additive only because rule 2 is scoped to
+definitions `validate` accepts: an aggregate in a group header is rejected
+today, so supporting it later changes no output the contract covers.
 
 ## What this does not decide
 
