@@ -230,8 +230,8 @@ a test involves image decoding, remember it needs `runAsync`.
 
 ## CI
 
-`.github/workflows/ci.yml`, six legs — three OS entries of one matrix job, then
-three jobs of their own:
+`.github/workflows/ci.yml`, seven legs — three OS entries of one matrix job, then
+four jobs of their own:
 
 | Leg | Runs |
 |---|---|
@@ -241,6 +241,7 @@ three jobs of their own:
 | web (chrome) | build, suite minus goldens — **per package**, because the repo-root multi-package `--platform chrome` command fails on DDC workspace path resolution |
 | android (apk) | build only |
 | ios (no codesign) | build only |
+| update goldens (macos) | **manual only** (`update_goldens` dispatch): golden suite, then `--update-goldens` on each failing file; uploads the new PNGs and failure images. Every other leg skips that dispatch |
 
-Every leg builds the playground app, which is what proves the native plugin
-toolchain still links on that OS.
+Every leg but the manual one builds the playground app, which is what proves
+the native plugin toolchain still links on that OS.
