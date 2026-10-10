@@ -256,6 +256,9 @@ Take the row, not the front door.
 - [`docs/workflow.md`](docs/workflow.md) — how a change moves from idea to merge,
   and *Agent tooling*: where each coding agent's Dart/Flutter skills, rules and
   MCP wiring live.
+- [`docs/roadmap.md`](docs/roadmap.md) and [`docs/decisions/`](docs/decisions/) —
+  the plan to 1.0, and the recorded reasons behind calls that should not be
+  re-argued. Read the relevant record before undoing a decision.
 - [`README.md`](README.md) — user-facing quickstart.
 - [`packages/jet_print/README.md`](packages/jet_print/README.md) — library
   quickstart and public API tour.
