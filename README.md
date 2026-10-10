@@ -1,5 +1,7 @@
 # jet-print
 
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/a-urel)
+
 A monorepo for **`jet_print`** — a layered, theme-aware Flutter library for
 building WYSIWYG report designers — and **`jet_print_playground`**, a macOS
 desktop app that consumes the library exactly as an external consumer would.
@@ -94,6 +96,11 @@ print(jetPrintVersion);
 Only the symbols exported from `package:jet_print/jet_print.dart` are public;
 everything under `lib/src/` is private implementation detail (enforced by
 `encapsulation_test.dart`).
+
+## Support
+
+If jet-print saves you time, you can support its development through
+[GitHub Sponsors](https://github.com/sponsors/a-urel).
 
 ## License
 
