@@ -28,6 +28,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **`JetReportPreview` says that it needs a shadcn_ui theme.** The preview
+  reads the ambient `ShadTheme`, so under a `MaterialApp` alone it throws on
+  its first build, and neither its dartdoc nor the README Quickstart said so.
+  Both now do: wrap it in a `ShadApp`, or in a `ShadTheme` inside a
+  `MaterialApp`, with `JetPrintLocalizations.delegate` wired, and add
+  `shadcn_ui` to the app's own dependencies to import them. The Quickstart
+  shows the `ShadApp` from `example/jet_print_example.dart`. The dartdoc's
+  code sample, which still called the removed `JetReportEngine.render`, now
+  calls `renderDefinition`. No behaviour changed.
+
 - **Band captions no longer cover the first element of a band.** The
   designer's band captions ("Group Header", "Detail", …) were drawn in the
   page's left margin, but a caption is wider than many margins (~70px for

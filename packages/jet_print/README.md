@@ -123,7 +123,35 @@ Future<bool> printGreetings(List<String> names) =>
 ```
 
 `JetReportPreview(report: report)` shows the result on screen, with page
-navigation, zoom, thumbnails, PDF export and print buttons.
+navigation, zoom, thumbnails, PDF export and print buttons. It is built from
+[shadcn_ui](https://pub.dev/packages/shadcn_ui) widgets, so it needs a
+shadcn_ui theme above it, and the library's localizations. Add `shadcn_ui` to
+your app's dependencies and wrap the preview in a `ShadApp`, or in a
+`ShadTheme` if your app is a `MaterialApp`. Under a `MaterialApp` alone it
+throws on its first build:
+
+```dart
+/// 3c. Or preview it. JetReportPreview is built from shadcn_ui widgets, so it
+/// needs a shadcn_ui theme above it — a ShadApp, as here, or a ShadTheme inside
+/// a MaterialApp — and the library's localizations. Without them it throws on
+/// its first build.
+class GreetingsApp extends StatelessWidget {
+  /// Creates an app that previews [report].
+  const GreetingsApp({super.key, required this.report});
+
+  /// The filled report to preview.
+  final RenderedReport report;
+
+  @override
+  Widget build(BuildContext context) => ShadApp(
+        localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+          JetPrintLocalizations.delegate,
+        ],
+        supportedLocales: JetPrintLocalizations.supportedLocales,
+        home: JetReportPreview(report: report),
+      );
+}
+```
 
 ## Host the designer
 
