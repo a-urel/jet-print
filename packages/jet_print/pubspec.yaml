@@ -2,10 +2,12 @@ name: jet_print
 description: >-
   A Flutter library for building WYSIWYG report designers: a report model, a
   paginating render engine, PDF/PNG export, printing, and a themed designer.
-version: 0.1.0
+version: 0.1.1
 
-# pub.dev metadata (Epic 1 — release hygiene). Version stays 0.1.0 until the
-# 1.0 API freeze (Epic 6). Topics: lowercase, no spaces, <=5.
+# pub.dev metadata (Epic 1 — release hygiene). 0.x is a preview
+# (docs/decisions/0001); `version` moves with each pub.dev release, together
+# with lib/src/version.dart (test/version_test.dart). Topics: lowercase, no
+# spaces, <=5.
 repository: https://github.com/a-urel/jet-print
 homepage: https://github.com/a-urel/jet-print
 issue_tracker: https://github.com/a-urel/jet-print/issues
