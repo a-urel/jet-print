@@ -53,8 +53,9 @@ flutter pub get        # run from the repository root (single root lockfile)
 ## Run the playground app
 
 > The playground runs on macOS, Windows, Linux, web, and iOS/Android. CI builds
-> every target on each push; macOS, Windows, Linux and Chrome also run the test
-> suite, while Android and iOS are build-only (see [testing](docs/testing.md)).
+> every target for each pull request and each push to `main`; macOS, Windows,
+> Linux and Chrome also run the test suite, while Android and iOS are build-only
+> (see [testing](docs/testing.md)).
 > macOS is the canonical platform: it alone runs the golden/WYSIWYG surface,
 > since host rasterization differs per OS.
 
