@@ -4,6 +4,21 @@ All notable changes to the `jet_print` library are documented here. The format i
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.1.1
+
+Documentation and package metadata only. Apart from `jetPrintVersion`, which
+now reports `0.1.1`, the library's code is the same as in 0.1.0, so upgrading
+changes nothing a host calls or renders.
+
+### Changed
+
+- **Sponsor links.** `pubspec.yaml` lists GitHub Sponsors and Buy Me a Coffee
+  under `funding:`, which pub.dev shows in the package sidebar, and the README
+  shows both as badges and in a *Support* section.
+- **The 0.1.0 highlights give the right barcode count.** They said 10
+  barcode/QR symbologies; 0.1.0 shipped 22, plus `auto`, which infers one of
+  six. The 0.1.0 entry below is corrected in place.
+
 ## 0.1.0
 
 > **Highlights** — the first public shape of `jet_print`. In one sentence: design
