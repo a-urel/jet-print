@@ -8,6 +8,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **Breaking (default): an unknown field is `#ERROR` when the data source
+  declares its schema.** With `RenderOptions.knownFields` left null, the
+  engine now derives it from a source with an explicit schema:
+  `JetObjectDataSource` and `JetPagedDataSource` always, and
+  `JetInMemoryDataSource` and `JetJsonDataSource` when given `fields:`. Nested
+  collection fields are included. A binding to a field outside that schema
+  renders `RenderOptions.unresolvedFieldToken` (`#ERROR` by default) and
+  records a warning, instead of an empty cell. Sources with an inferred
+  schema, and custom `JetDataSource`s, render as before. A host's own
+  `knownFields` still replaces the derived set.
+  ([#99](https://github.com/a-urel/jet-print/issues/99))
+
 - **Breaking (API): the preview's export and print callbacks receive the
   report and may be async.** `JetReportPreview.onExportPdf` and `.onPrint`
   were `VoidCallback`s, and `JetReportWorkspace`'s were

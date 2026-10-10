@@ -63,3 +63,8 @@ class JetJsonDataSource implements JetDataSource {
   DataSet open([Map<String, Object?> params = const <String, Object?>{}]) =>
       _delegate.open(params);
 }
+
+/// The schema [source] was given explicitly through `fields:`, or null when it
+/// was inferred — INTERNAL, not exported from `jet_print.dart`.
+List<FieldDef>? declaredJsonFields(JetJsonDataSource source) =>
+    declaredInMemoryFields(source._delegate);

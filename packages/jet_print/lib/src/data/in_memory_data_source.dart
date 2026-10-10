@@ -38,10 +38,15 @@ class JetInMemoryDataSource implements JetDataSource {
           for (final Map<String, Object?> row in rows)
             Map<String, Object?>.unmodifiable(row),
         ],
-        _fields = List<FieldDef>.unmodifiable(fields ?? inferFields(rows));
+        _fields = List<FieldDef>.unmodifiable(fields ?? inferFields(rows)),
+        _declared = fields != null;
 
   final List<Map<String, Object?>> _rows;
   final List<FieldDef> _fields;
+
+  /// Whether [fields] was passed rather than inferred; read by
+  /// [declaredInMemoryFields].
+  final bool _declared;
 
   /// The source's schema (explicit or inferred), in column order.
   List<FieldDef> get fields => _fields;
@@ -54,3 +59,10 @@ class JetInMemoryDataSource implements JetDataSource {
         rowAt: (int i) => _rows[i],
       );
 }
+
+/// The schema [source] was given explicitly, or null when it was inferred from
+/// the rows — INTERNAL, not exported from `jet_print.dart`. Inference cannot
+/// tell a misspelled field from an optional key no row of this batch carries,
+/// so only a declared schema may turn an unknown binding into an error.
+List<FieldDef>? declaredInMemoryFields(JetInMemoryDataSource source) =>
+    source._declared ? source._fields : null;

@@ -211,12 +211,20 @@ held.
     source exposes the first; there is no conversion to either of the others, so
     the host writes both. The minimal consumer needed two of the three; the
     pilot needed all three at once. Without the wiring, a mistyped field name
-    renders empty instead of `#ERROR` — the silent option is the default.
+    rendered empty instead of `#ERROR` — the silent option was the default.
 
-    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*,
-    [#99](https://github.com/a-urel/jet-print/issues/99). Whether an unknown
-    field renders `#ERROR` without `knownFields` is a default. Conversions
-    between the three spellings are additive.
+    The default is *fixed* in
+    [#99](https://github.com/a-urel/jet-print/issues/99): left null,
+    `knownFields` is derived from a data source that declares an explicit
+    schema (object and paged sources always, in-memory and JSON sources when
+    given `fields:`), so the `Set<String>` spelling is no longer needed for
+    them. An inferred schema still derives nothing, since inference cannot tell
+    a typo from an optional key absent from one batch.
+    *`src/data/declared_schema.dart` → `declaredFieldNames`.*
+
+    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): the default
+    was *before 1.0* and is settled; what remains, conversions between
+    `List<FieldDef>` and `JetDataSchema`, is *after 1.0, additive*.
 
 ## Ergonomics
 
