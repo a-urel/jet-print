@@ -15,6 +15,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'support/workspace.dart';
 
+// A Windows checkout may have CRLF line endings; compare text, not bytes.
+String _read(File file) => file.readAsStringSync().replaceAll('\r\n', '\n');
+
 List<String> _codeLines(String source) => source
     .split('\n')
     .map((String line) => line.trim())
@@ -34,7 +37,7 @@ bool _containsRun(List<String> haystack, List<String> run) {
 
 void main() {
   final String package = '${findWorkspaceRoot().path}/packages/jet_print';
-  final String readme = File('$package/README.md').readAsStringSync();
+  final String readme = _read(File('$package/README.md'));
   final List<List<String>> snippets = RegExp(r'```dart\n([\s\S]*?)```')
       .allMatches(readme)
       .map((Match m) => _codeLines(m.group(1)!))
@@ -42,7 +45,7 @@ void main() {
   final Map<String, List<String>> examples = <String, List<String>>{
     for (final FileSystemEntity f in Directory('$package/example').listSync())
       if (f is File && f.path.endsWith('.dart'))
-        f.uri.pathSegments.last: _codeLines(f.readAsStringSync()),
+        f.uri.pathSegments.last: _codeLines(_read(f)),
   };
 
   test('the README shows Dart code and there are examples to check it', () {
