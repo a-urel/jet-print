@@ -84,7 +84,7 @@ JetInMemoryDataSource _dirtyRows(int n) =>
 String _summaryText(RenderedReport r) {
   for (int p = 0; p < r.pageCount; p++) {
     for (final TextRunPrimitive prim
-        in r.pageAt(p).frame.primitives.whereType<TextRunPrimitive>()) {
+        in frameOf(r.pageAt(p)).primitives.whereType<TextRunPrimitive>()) {
       if (prim.elementId == 'total') {
         return prim.lines.map((TextLine l) => l.text).join();
       }

@@ -8,6 +8,8 @@
 // inference cannot tell a typo from an optional key absent from this batch.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
+import 'package:jet_print/src/rendering/engine/rendered_report.dart'
+    show frameOf;
 import 'package:jet_print/src/rendering/frame/primitive.dart';
 import 'package:jet_print/src/rendering/text/text_measurer.dart' show TextLine;
 
@@ -46,7 +48,7 @@ ReportDefinition _flat(String expression) => ReportDefinition(
 /// The text of every `value` element in [report], in page order.
 List<String> _values(RenderedReport report) => <String>[
       for (int i = 0; i < report.pageCount; i++)
-        for (final FramePrimitive p in report.pageAt(i).frame.primitives)
+        for (final FramePrimitive p in frameOf(report.pageAt(i)).primitives)
           if (p is TextRunPrimitive && p.elementId == 'value')
             p.lines.map((TextLine l) => l.text).join(),
     ];

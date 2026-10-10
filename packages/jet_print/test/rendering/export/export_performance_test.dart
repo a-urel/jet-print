@@ -120,7 +120,7 @@ Future<({int pages, int primitives})> _exportCost(int records) async {
   final RenderedReport report = performanceReport(records: records);
   int primitives = 0;
   for (int i = 0; i < report.pageCount; i++) {
-    primitives += report.pageAt(i).frame.primitives.length;
+    primitives += frameOf(report.pageAt(i)).primitives.length;
   }
   // Export for real: the counts above describe work that actually happened,
   // not work a hypothetical export would have done.

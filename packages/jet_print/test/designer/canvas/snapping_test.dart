@@ -4,6 +4,8 @@
 // of kGridStep so they track the constant rather than a hardcoded literal.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
+import 'package:jet_print/src/designer/controller/jet_report_designer_controller.dart'
+    show activeGuidesOf;
 
 /// The 5 mm grid/snap step in points (mirrors the library's internal
 /// `kGridStep = kGridStepMm · 72/25.4`). Defined locally so this stays a
@@ -80,7 +82,7 @@ void main() {
       // width = right(7·kGridStep) − left(50).
       expect(
           c.previewBoundsFor('t1')!.width, closeTo(7 * kGridStep - 50, 1e-9));
-      expect(c.activeGuides, isNotEmpty);
+      expect(activeGuidesOf(c), isNotEmpty);
       c.dispose();
     });
 
@@ -98,7 +100,7 @@ void main() {
       // right 95 still snaps to 7·kGridStep ≈ 99.21 even though the grid is off.
       expect(
           c.previewBoundsFor('t1')!.width, closeTo(7 * kGridStep - 50, 1e-9));
-      expect(c.activeGuides, isNotEmpty);
+      expect(activeGuidesOf(c), isNotEmpty);
       c.dispose();
     });
 
@@ -138,7 +140,7 @@ void main() {
       c.updateResize(const JetOffset(112, 0), threshold: 6);
       // width = 203 - 50 = 153.
       expect(c.previewBoundsFor('t1')!.width, 153);
-      expect(c.activeGuides, isNotEmpty);
+      expect(activeGuidesOf(c), isNotEmpty);
       c.dispose();
     });
   });
@@ -152,7 +154,7 @@ void main() {
         ..setSnapEnabled(true);
       c.beginMove();
       c.updateMove(const JetOffset(5, 0), threshold: 6);
-      expect(c.activeGuides, isNotEmpty);
+      expect(activeGuidesOf(c), isNotEmpty);
       c.commitMove();
       expect(
           (c.definition.body.root.children.first as BandNode)

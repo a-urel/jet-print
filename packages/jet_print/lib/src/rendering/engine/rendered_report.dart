@@ -8,22 +8,23 @@ import '../fill/report_diagnostics.dart';
 import '../frame/page_frame.dart';
 import '../text/font_registry.dart';
 
-/// One paginated unit of a [RenderedReport]: the zero-based page [index] and
-/// the page's positioned-primitive [frame].
+/// One paginated unit of a [RenderedReport], at the zero-based page [index].
 ///
 /// A thin wrapper over the shared `PageFrame` — the identical frame type the
 /// designer paints, so previewing a page is WYSIWYG by construction and an
-/// export backend can consume it unchanged.
+/// export backend can consume it unchanged. Only the engine builds one.
 class RenderedPage {
-  /// Creates a rendered page.
-  const RenderedPage({required this.index, required this.frame});
+  const RenderedPage._(this.index, this._frame);
 
   /// The zero-based page index within the report.
   final int index;
 
   /// The page's display list: positioned, backend-agnostic primitives
   /// (including repeated page chrome with resolved `PAGE_NUMBER`/`PAGE_COUNT`).
-  final PageFrame frame;
+  /// Private, and read through [frameOf], which the barrel does not export:
+  /// the frame IR is internal, so a public field of it would publish every
+  /// primitive at 1.0 (#105).
+  final PageFrame _frame;
 }
 
 /// The result of `JetReportEngine.renderDefinition`: an exact [pageCount],
@@ -106,7 +107,7 @@ class RenderedReport {
     }
     return _cache.putIfAbsent(
       index,
-      () => RenderedPage(index: index, frame: _buildFrame(index)),
+      () => RenderedPage._(index, _buildFrame(index)),
     );
   }
 }
@@ -138,3 +139,7 @@ RenderedReport renderedReportWithFonts({
 /// `jet_print.dart`. A report built with the public constructor carries a
 /// bundled-default-only registry.
 FontRegistry fontsOf(RenderedReport report) => report._fonts;
+
+/// The display list of [page] — INTERNAL, not exported from `jet_print.dart`.
+/// The preview, the exporters and the printer paint from it (#105).
+PageFrame frameOf(RenderedPage page) => page._frame;

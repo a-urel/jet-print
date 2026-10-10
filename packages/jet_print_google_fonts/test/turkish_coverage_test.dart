@@ -58,6 +58,6 @@ void main() {
     );
     final Uint8List pdf = await const JetReportExporter().toPdf(report);
     expect(pdf, isNotEmpty);
-    expect(report.pageAt(0).frame.primitives, isNotEmpty);
+    expect(report.pageCount, 1);
   });
 }

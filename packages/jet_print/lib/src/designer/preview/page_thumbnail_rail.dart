@@ -118,7 +118,7 @@ class PageThumbnailRailState extends State<PageThumbnailRail> {
   /// extent keeps scrolling O(visible) on a many-page report and makes
   /// scroll-to-index pure arithmetic.
   double get _tileExtent {
-    final PageFormat page = widget.report.pageAt(0).frame.page;
+    final PageFormat page = frameOf(widget.report.pageAt(0)).page;
     return _thumbWidth * page.height / page.width + _captionHeight + _tileGap;
   }
 
@@ -206,7 +206,7 @@ class PageThumbnailRailState extends State<PageThumbnailRail> {
     final int generation = _reportGeneration;
     try {
       final RenderedReport report = widget.report;
-      final PageFrame frame = report.pageAt(index).frame;
+      final PageFrame frame = frameOf(report.pageAt(index));
       final ui.Picture picture = await recordPageFrame(frame, fontsOf(report));
       if (!mounted || !identical(report, widget.report)) {
         picture.dispose();
@@ -270,7 +270,7 @@ class PageThumbnailRailState extends State<PageThumbnailRail> {
             return _ThumbnailTile(
               index: index,
               pageCount: widget.report.pageCount,
-              page: widget.report.pageAt(index).frame.page,
+              page: frameOf(widget.report.pageAt(index)).page,
               picture: picture,
               selected: index == widget.currentIndex,
               onTap: () => widget.onSelect(index),

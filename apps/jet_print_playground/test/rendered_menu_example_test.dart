@@ -7,6 +7,8 @@ import 'package:intl/intl.dart';
 import 'package:jet_print/jet_print.dart';
 // Implementation import for the rendered-run proof — the same reach-in the
 // engine's own tests use (cf. rendered_payroll_example_test.dart).
+import 'package:jet_print/src/rendering/engine/rendered_report.dart'
+    show frameOf;
 import 'package:jet_print/src/rendering/frame/primitive.dart'
     show ImagePrimitive, PathPrimitive, TextRunPrimitive;
 import 'package:jet_print/src/rendering/text/text_measurer.dart' show TextLine;
@@ -83,7 +85,7 @@ Iterable<ImagePrimitive> _imagesForId(
     <ImagePrimitive>[
       for (int i = 0; i < report.pageCount; i++)
         for (final ImagePrimitive p
-            in report.pageAt(i).frame.primitives.whereType<ImagePrimitive>())
+            in frameOf(report.pageAt(i)).primitives.whereType<ImagePrimitive>())
           if (p.elementId == elementId) p,
     ];
 
@@ -92,15 +94,16 @@ Iterable<PathPrimitive> _pathsForId(RenderedReport report, String elementId) =>
     <PathPrimitive>[
       for (int i = 0; i < report.pageCount; i++)
         for (final PathPrimitive p
-            in report.pageAt(i).frame.primitives.whereType<PathPrimitive>())
+            in frameOf(report.pageAt(i)).primitives.whereType<PathPrimitive>())
           if (p.elementId == elementId) p,
     ];
 
 /// The rendered text runs of [elementId], in paint order across pages.
 List<String> _runsForId(RenderedReport report, String elementId) => <String>[
       for (int i = 0; i < report.pageCount; i++)
-        for (final TextRunPrimitive p
-            in report.pageAt(i).frame.primitives.whereType<TextRunPrimitive>())
+        for (final TextRunPrimitive p in frameOf(report.pageAt(i))
+            .primitives
+            .whereType<TextRunPrimitive>())
           if (p.elementId == elementId)
             p.lines.map((TextLine l) => l.text).join(),
     ];

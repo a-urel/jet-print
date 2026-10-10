@@ -8,6 +8,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **Breaking (API): `RenderedPage.frame` and
+  `JetReportDesignerController.activeGuides` are removed.** Both had types
+  the barrel never exported: `frame` the engine's internal display list,
+  `activeGuides` the canvas's snap guides. A consumer could reach members of
+  types it could not name, and they would have frozen at 1.0 unpublished.
+  `RenderedPage` keeps `index`, and its constructor is no longer public; a
+  report's pages still come from `RenderedReport.pageAt`. Inspect rendered
+  output through the exporters (`JetReportExporter.toPdf`, `pageToPng`).
+  ([#105](https://github.com/a-urel/jet-print/issues/105))
+
 - **Breaking (default): an unknown field is `#ERROR` when the data source
   declares its schema.** With `RenderOptions.knownFields` left null, the
   engine now derives it from a source with an explicit schema:

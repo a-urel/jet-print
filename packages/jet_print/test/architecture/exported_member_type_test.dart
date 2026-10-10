@@ -40,24 +40,7 @@ import '../support/workspace.dart';
 /// An entry is a decision that a consumer may reach the type's members through
 /// this one door without the type being exported. Make it explicitly, or hide
 /// the member, or export the type.
-const Map<String, String> _deliberatelyExposed = <String, String>{
-  // `PageFrame` is the backend-agnostic display list every painter and exporter
-  // reads, and the playground's rendered-example tests inspect
-  // `pageAt(i).frame.primitives` to check what a report printed. Whether a
-  // consumer may read it — export `PageFrame` and the primitives, or hide the
-  // field — is undecided: api-friction entry 22, before 1.0 under
-  // decisions/0004, because either way the surface changes.
-  'RenderedPage.frame':
-      'undecided: api-friction entry 22 (#105) — export the frame IR or hide '
-          'the field, before 1.0',
-  // `SnapGuide` is what the selection overlay draws while a move or resize
-  // snaps. The controller is public because hosts drive it, but the guides are
-  // the canvas's own business; whether they stay readable is the same open
-  // question as `frame`, recorded with it.
-  'JetReportDesignerController.activeGuides':
-      'undecided: api-friction entry 22 (#105) — export SnapGuide or hide the '
-          'getter, before 1.0',
-};
+const Map<String, String> _deliberatelyExposed = <String, String>{};
 
 /// An `export` directive in the barrel, up to its terminating `;`, capturing
 /// the URI and everything after it (the `show` clause, if any).

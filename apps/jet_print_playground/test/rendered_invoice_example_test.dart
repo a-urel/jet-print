@@ -7,6 +7,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
+import 'package:jet_print/src/rendering/engine/rendered_report.dart'
+    show frameOf;
 import 'package:jet_print_playground/invoice_sample.dart';
 import 'package:jet_print_playground/main.dart';
 import 'package:jet_print_playground/rendered_invoice_example.dart';
@@ -18,7 +20,7 @@ void main() {
     // The invoice group sets startNewPage, so each of the three invoices lands
     // on its own page.
     expect(report.pageCount, 3);
-    expect(report.pageAt(0).frame, isNotNull);
+    expect(frameOf(report.pageAt(0)), isNotNull);
     expect(
       report.diagnostics.entries,
       isEmpty,
@@ -73,8 +75,8 @@ void main() {
     expect(json.pageCount, inMemory.pageCount);
     expect(objects.pageCount, inMemory.pageCount);
     for (int i = 0; i < inMemory.pageCount; i++) {
-      expect(json.pageAt(i).frame, inMemory.pageAt(i).frame);
-      expect(objects.pageAt(i).frame, inMemory.pageAt(i).frame);
+      expect(frameOf(json.pageAt(i)), frameOf(inMemory.pageAt(i)));
+      expect(frameOf(objects.pageAt(i)), frameOf(inMemory.pageAt(i)));
     }
   });
 

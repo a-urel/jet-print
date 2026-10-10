@@ -93,7 +93,7 @@ Named individually, because the list is the argument:
   `DesignTimeFrameBuilder`, over a design-time layout with *unchanged* renderers;
 - the **preview** — `designer/preview/jet_report_preview.dart` — and the
   **thumbnail rail** — `designer/preview/page_thumbnail_rail.dart` — both
-  painting `pageAt(index).frame`, at different sizes;
+  painting `frameOf(pageAt(index))`, at different sizes;
 - the **PNG rasterizer** — `rendering/paint/page_rasterizer.dart` →
   `PageRasterizer`, that same recording at a chosen scale;
 - the **PDF painter** — `rendering/export/pdf_painter.dart` → `PdfPainter`, a

@@ -275,10 +275,6 @@ class JetReportDesignerController extends ChangeNotifier {
   /// mid-drag).
   JetOffset? get moveDelta => _moveDelta;
 
-  /// Guides (band-relative) currently firing during a live move/resize, for the
-  /// overlay to draw. Empty when no guide is active.
-  List<SnapGuide> get activeGuides => _guides;
-
   /// The stable id of the band whose element is being moved/resized, so the
   /// overlay can map band-relative guide positions to page coordinates. Null
   /// when idle.
@@ -537,3 +533,10 @@ class JetReportDesignerController extends ChangeNotifier {
     return true;
   }
 }
+
+/// The guides (band-relative) currently firing during a live move or resize of
+/// [controller], for the selection overlay to draw; empty when none is active.
+/// INTERNAL, not exported from `jet_print.dart`: [SnapGuide] is canvas state
+/// no host has a use for, so a public getter would publish it at 1.0 (#105).
+List<SnapGuide> activeGuidesOf(JetReportDesignerController controller) =>
+    controller._guides;

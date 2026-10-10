@@ -4,6 +4,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
+import 'package:jet_print/src/designer/controller/jet_report_designer_controller.dart'
+    show activeGuidesOf;
 
 import '../support/designer_harness.dart';
 
@@ -49,7 +51,7 @@ void main() {
     expect(after.width, greaterThan(before.width), reason: 'resized wider');
     expect(controller.previewBoundsFor(id), isNull,
         reason: 'no stuck resize preview');
-    expect(controller.activeGuides, isEmpty, reason: 'no stuck snap guide');
+    expect(activeGuidesOf(controller), isEmpty, reason: 'no stuck snap guide');
     expect(_guideBox, findsNothing, reason: 'no red guide painted at rest');
   });
 }

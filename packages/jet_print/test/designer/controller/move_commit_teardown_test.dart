@@ -11,6 +11,8 @@
 // Drives the public controller only.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
+import 'package:jet_print/src/designer/controller/jet_report_designer_controller.dart'
+    show activeGuidesOf;
 
 JetRect _boundsOf(JetReportDesignerController c, String id) =>
     c.definition.furniture.pageHeader!.elements
@@ -41,7 +43,7 @@ void main() {
     // +y is wholly absorbed by the bottom clamp, so the position is unchanged.
     c.beginMove();
     c.updateMove(const JetOffset(3, 80), threshold: 6);
-    expect(c.activeGuides, isNotEmpty,
+    expect(activeGuidesOf(c), isNotEmpty,
         reason: 'the left edge snapping to the band edge should raise a guide');
 
     int repaints = 0;
@@ -50,7 +52,7 @@ void main() {
 
     expect(repaints, greaterThan(0),
         reason: 'a clamped no-op commit must still notify so the guide clears');
-    expect(c.activeGuides, isEmpty, reason: 'the guide must be torn down');
+    expect(activeGuidesOf(c), isEmpty, reason: 'the guide must be torn down');
     expect(c.moveDelta, isNull, reason: 'the move ghost must be torn down');
     expect(_boundsOf(c, id), pinned,
         reason: 'the position is unchanged (no-op)');
