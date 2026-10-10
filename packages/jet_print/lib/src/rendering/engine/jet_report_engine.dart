@@ -89,7 +89,7 @@ class JetReportEngine {
           .layoutLazyDefinition(definition, fill.report,
               onElementPrint: options.onElementPrint),
     );
-    return RenderedReport(
+    return renderedReportWithFonts(
       title: definition.name,
       pageCount: lazy.pageCount,
       fonts: fonts,

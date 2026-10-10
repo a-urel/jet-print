@@ -328,7 +328,9 @@ or a default. P3 is met when those eight are closed, one issue each:
 [#99](https://github.com/a-urel/jet-print/issues/99),
 [#100](https://github.com/a-urel/jet-print/issues/100),
 [#101](https://github.com/a-urel/jet-print/issues/101) and
-[#102](https://github.com/a-urel/jet-print/issues/102).
+[#102](https://github.com/a-urel/jet-print/issues/102). Entry 22, found since by
+the guard #102 added, is before 1.0 by the same rule and joins them:
+[#105](https://github.com/a-urel/jet-print/issues/105).
 
 **P4 — 1.0 freeze.** E6, renamed for what it actually is. All six platforms —
 macOS, Linux, Windows, web, iOS, Android — declared in the pubspec and green in

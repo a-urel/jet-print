@@ -185,7 +185,7 @@ class _JetReportPreviewState extends State<JetReportPreview> {
   /// drawn with the same variant it was measured with. Read off the carried
   /// `RenderedReport` (022) — the registry the engine measured with, including
   /// any host fonts — never a freshly default-only build.
-  FontRegistry get _fonts => widget.report.fonts;
+  FontRegistry get _fonts => fontsOf(widget.report);
 
   late int _index;
 

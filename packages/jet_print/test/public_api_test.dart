@@ -363,6 +363,17 @@ void main() {
     );
   });
 
+  test('RenderedReport carries no consumer-reachable font registry (#102)', () {
+    // The registry the render measured with travels to the preview, exporter
+    // and printer internally. A public field of the unexported FontRegistry
+    // would let a consumer call its members without the type being public.
+    final RenderedReport report = const JetReportEngine().renderDefinition(
+      _flatTextDef(),
+      JetInMemoryDataSource(const <Map<String, Object?>>[<String, Object?>{}]),
+    );
+    expect(() => (report as dynamic).fonts, throwsNoSuchMethodError);
+  });
+
   test('the eight ShapeKind forms are public and additive (020)', () {
     expect(
         ShapeKind.values,

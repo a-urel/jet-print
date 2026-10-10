@@ -294,15 +294,18 @@ held.
     [#101](https://github.com/a-urel/jet-print/issues/101). Changing the
     callback's type changes the surface.
 
-20. **`RenderedReport.fonts` is public but its type is not exported.**
-    `FontRegistry` describes itself as internal, so a consumer cannot name the
-    type of a field on a public class.
-
-    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*,
-    [#102](https://github.com/a-urel/jet-print/issues/102). The type's members
-    are already callable through the field, so they freeze with it at 1.0.
-    Exporting the type is additive but commits to that API; hiding the field
-    afterwards would change the surface.
+20. **`RenderedReport.fonts` was public but its type is not exported.**
+    *Fixed* in [#102](https://github.com/a-urel/jet-print/issues/102), by
+    hiding it. `FontRegistry` describes itself as internal, so a consumer could
+    not name the type of a field on a public class, yet could call every member
+    of it through the field. The field is now private and the constructor no
+    longer takes a registry; the engine, preview, exporter and printer reach it
+    through `fontsOf` and `renderedReportWithFonts`, which the barrel does not
+    export. `test/public_api_test.dart` pins the field's absence, and
+    `test/architecture/exported_member_type_test.dart` stops any public member
+    of an exported type from exposing an unexported one without a written
+    reason — which is how entry 22 was found.
+    *`src/rendering/engine/rendered_report.dart` → `fontsOf`.*
 
 ## Documentation
 
@@ -317,6 +320,29 @@ held.
 
     **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *P3,
     documentation*.
+
+## Found since
+
+Entries found after the two consumers, by a test rather than by building
+against the barrel.
+
+22. **`RenderedPage.frame` and `JetReportDesignerController.activeGuides`
+    expose unexported types.** The guard added for entry 20 found both on its
+    first run. `frame` is a `PageFrame`, the display list every painter and
+    exporter reads; neither it nor its primitives are exported, yet
+    `pageAt(i).frame.primitives` is walkable today, and the playground's
+    rendered-example tests walk it, with a `src/` import for the primitive
+    types. `activeGuides` is a `List<SnapGuide>`, the snap guides the canvas
+    overlay draws mid-drag. Both are allowlisted in the guard until this is
+    decided.
+    *`src/rendering/engine/rendered_report.dart` → `RenderedPage.frame`;
+    `src/designer/controller/jet_report_designer_controller.dart` →
+    `activeGuides`.*
+
+    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*,
+    [#105](https://github.com/a-urel/jet-print/issues/105). Exporting the types
+    commits to their API, and hiding the members changes the surface, so it is
+    entry 20's question again.
 
 ## How to use this list
 

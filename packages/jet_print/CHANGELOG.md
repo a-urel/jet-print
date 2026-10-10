@@ -8,6 +8,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **Breaking (API): `RenderedReport.fonts` and the constructor's `fonts`
+  parameter are removed.** The field's type, `FontRegistry`, was never
+  exported, so a consumer could call its members without being able to name
+  it. The registry a render measured with still travels to the preview,
+  exporter and printer, internally. A `RenderedReport` built with its public
+  constructor paints with the bundled default font, as it did when `fonts` was
+  omitted. ([#102](https://github.com/a-urel/jet-print/issues/102))
+
 - **Breaking (output): `UPPER` and `LOWER` follow the render locale.** Under a
   Turkish or Azerbaijani `RenderOptions.locale`, `UPPER` maps `i` to `İ` and
   `LOWER` maps `I` to `ı` and `İ` to `i`, so `UPPER("Kısa Vadeli")` prints
