@@ -68,6 +68,7 @@ the anchor loudly, a moved line points silently at the wrong code.
 | 0001 | [Publish `0.1.0` to pub.dev as a preview](0001-publish-0-1-0-as-a-preview.md) | Accepted 2026-09-21 |
 | 0002 | [The extension seam stays closed for 1.0](0002-extension-seam-closed-for-1-0.md) | Accepted 2026-09-21 |
 | 0003 | [Full mobile support is in 1.0 scope](0003-mobile-in-1-0-scope.md) | Accepted 2026-09-21 |
+| 0004 | [What 1.0 must settle](0004-what-1-0-must-settle.md) | Accepted 2026-10-10 |
 
 The directory itself is authoritative; this table is a convenience, and a record
 that is present but unlisted is still in force.
