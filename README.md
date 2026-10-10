@@ -1,16 +1,27 @@
 # jet-print
 
+[![pub package](https://img.shields.io/pub/v/jet_print.svg)](https://pub.dev/packages/jet_print)
+[![CI](https://github.com/a-urel/jet-print/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/a-urel/jet-print/actions/workflows/ci.yml)
 [![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/a-urel)
 [![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/yazemo)
 
-A monorepo for **`jet_print`** — a layered, theme-aware Flutter library for
-building WYSIWYG report designers — and **`jet_print_playground`**, a macOS
-desktop app that consumes the library exactly as an external consumer would.
+**`jet_print`** is a Flutter library for building WYSIWYG report designers: a
+report model, a paginating render engine, PDF/PNG export, printing, and an
+embeddable, shadcn-themed visual designer. It is published on
+[pub.dev](https://pub.dev/packages/jet_print):
 
-`jet_print` provides a reified report model, a render/paginate engine, PDF/PNG
-export and system printing, and an interactive shadcn-themed designer surface.
-See [`packages/jet_print/README.md`](packages/jet_print/README.md) for the
-library quickstart and public API.
+```sh
+flutter pub add jet_print
+```
+
+To use it, start with the package README,
+[`packages/jet_print/README.md`](packages/jet_print/README.md): the quickstart,
+hosting the designer, saving designs, binding data, and what a host can extend.
+
+This repository is the library's monorepo. It also holds
+**`jet_print_playground`**, a desktop, web and mobile app that consumes the
+library exactly as an external consumer would. The rest of this page is for
+working on the repository itself.
 
 ## Layout
 
@@ -24,8 +35,8 @@ jet-print/
 │   └── lib/src/                  # PRIVATE internals (domain · expression · data
 │                                 #   · rendering · designer · print)
 └── apps/jet_print_playground/   # playground app (consumer; desktop · web · mobile)
-    └── lib/*_sample.dart        # invoice, label, barcode, menu, nested-list,
-                                  #   packing-slip, payroll samples
+    └── lib/*_sample.dart        # twelve worked samples: invoice, labels,
+                                  #   barcodes, charts, pivot, ledger, payroll, …
 ```
 
 ## Prerequisites
@@ -35,7 +46,7 @@ jet-print/
   --enable-macos-desktop`); web and mobile need no extra flag.
 - Verify your toolchain with `flutter doctor`.
 
-## Install
+## Set up the workspace
 
 ```bash
 flutter pub get        # run from the repository root (single root lockfile)
@@ -43,19 +54,20 @@ flutter pub get        # run from the repository root (single root lockfile)
 
 ## Run the playground app
 
-> The playground runs on macOS, Windows, Linux, web, and iOS/Android — CI builds
-> every target on each push, and the desktop trio also runs the full test suite
-> (see the library's [Platform support](packages/jet_print/README.md#platform-support)
-> table). macOS is the canonical platform: it alone runs the golden/WYSIWYG
-> surface, since host rasterization differs per OS.
+> The playground runs on macOS, Windows, Linux, web, and iOS/Android. CI builds
+> every target for each pull request and each push to `main`; macOS, Windows,
+> Linux and Chrome also run the test suite, while Android and iOS are build-only
+> (see [testing](docs/testing.md)).
+> macOS is the canonical platform: it alone runs the golden/WYSIWYG surface,
+> since host rasterization differs per OS.
 
 ```bash
 cd apps/jet_print_playground && flutter run -d macos    # or: -d chrome, windows, linux, …
 ```
 
-The app shows the report designer with several worked samples (invoice, labels,
-barcodes, menu, nested lists, packing slip, payroll) you can edit, preview,
-export, and print.
+The app shows the report designer with twelve worked samples (invoice, labels,
+barcodes, charts, a pivot table, a ledger, payroll, a menu, nested lists, a
+packing slip, …) you can edit, preview, export, and print.
 
 ## Test & quality gate
 
@@ -84,16 +96,14 @@ notes in [`docs/`](docs/) — [the wiki](docs/README.md),
 
 ## Consuming the library
 
+Add it with `flutter pub add jet_print` and import one library:
+
 ```dart
 import 'package:jet_print/jet_print.dart';
-
-// The interactive designer, inside a ShadApp / ShadTheme shell:
-const JetReportDesigner();
-
-// Diagnostics:
-print(jetPrintVersion);
 ```
 
+The [package README](packages/jet_print/README.md) has the quickstart; its code
+is copied from `packages/jet_print/example/`, which CI compiles and runs.
 Only the symbols exported from `package:jet_print/jet_print.dart` are public;
 everything under `lib/src/` is private implementation detail (enforced by
 `encapsulation_test.dart`).
