@@ -1,10 +1,11 @@
 // Band captions ("Page Header", "Detail", "Group Header", …) sit in a column
 // to the LEFT of the page, never on it. A caption is wider than many reports'
-// left margin (~70px for "Group Header", ~100px for the Turkish "Sütun Alt
+// left margin (~70px for "Group Header", ~100px for the Turkish "Sayfa Alt
 // Bilgisi" against an invoice's 28pt margin), so drawn on the page it covered
 // the first element of its band.
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jet_print/jet_print.dart';
 
 import '../support/designer_harness.dart';
 
@@ -44,6 +45,10 @@ void main() {
   testWidgets('the longest (Turkish) captions still fit beside the page',
       (WidgetTester tester) async {
     await pumpDesignerWith(tester, locale: const Locale('tr'));
+    // The page footer's Turkish caption is as long as any laid-out band's
+    // (17 characters, like "Rapor Alt Bilgisi"; the column bands' captions
+    // never render, as those bands are not laid out yet).
+    expect(find.text('Sayfa Alt Bilgisi'), findsOneWidget);
     _expectCaptionsBesideThePage(tester);
   });
 
@@ -53,5 +58,29 @@ void main() {
     // reserved by the fit, not just left over.
     await pumpDesignerWith(tester, size: const Size(1100, 800));
     _expectCaptionsBesideThePage(tester);
+  });
+
+  testWidgets('overlapping captions of short bands select the one on top',
+      (WidgetTester tester) async {
+    // A band shorter than a caption tab (bands go down to 8pt, and zoom
+    // shrinks them further) makes adjacent tabs overlap; the later band's tab
+    // is drawn on top, so a tap on it must select that band.
+    final JetReportDesignerController controller =
+        await pumpDesignerWith(tester);
+    controller.setBandHeight('pageHeader', 8);
+    await tester.pumpAndSettle();
+    final Rect header = tester.getRect(_caption('pageHeader'));
+    final Rect detail = tester.getRect(_caption('detail'));
+    expect(detail.top, lessThan(header.bottom),
+        reason: 'the fixture needs the two tabs to overlap');
+
+    controller.selectReport();
+    await tester.pumpAndSettle();
+    // Inside both tabs' rows, where the detail tab covers the header's.
+    await tester
+        .tapAt(Offset(detail.right - 4, (detail.top + header.bottom) / 2));
+    await tester.pumpAndSettle();
+
+    expect(controller.selection.bandId, 'detail');
   });
 }

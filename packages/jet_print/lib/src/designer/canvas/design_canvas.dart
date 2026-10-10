@@ -176,7 +176,7 @@ class _DesignCanvasState extends State<DesignCanvas> {
   /// ("Detail", "Group Header", …). Captions live beside the page rather than
   /// on it: one is wider than many reports' left margin, so on the page it
   /// covered the first element of its band. Sized for the longest caption in
-  /// any shipped language (Turkish "Sütun Alt Bilgisi"); a longer one is
+  /// any shipped language (Turkish "Sayfa Alt Bilgisi"); a longer one is
   /// ellipsized. Screen pixels, so it does not scale with zoom.
   static const double _captionColumnWidth = 112;
 

@@ -63,6 +63,17 @@ all of it assumes the canonical host `AGENTS.md`'s golden trap names.
 7. **Put step 3's sentence in the commit body**, naming each golden file you
    regenerated, as `AGENTS.md`'s golden rule requires.
 
+## Without a Mac
+
+Goldens regenerated on any other OS are wrong, so without a Mac let CI run the
+sequence above: start the CI workflow by hand on your branch with
+`update_goldens` ticked (Actions → CI → Run workflow). Its `update goldens
+(macos)` job runs the golden suite, regenerates each failing test file, and
+uploads a `golden-updates` artifact holding the new PNGs, the `failures/`
+images, the run log and the list of files it changed. It commits nothing:
+steps 2, 3, 5 and 7 are still yours. Copy in only the PNGs you can name a reason
+for, then push and let the normal macOS leg confirm them.
+
 ## Verify
 
 ```bash

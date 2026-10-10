@@ -181,7 +181,9 @@ extension _CanvasGestures on _DesignCanvasState {
         local.dx < pageLeft - _DesignCanvasState._captionColumnWidth) {
       return null;
     }
-    for (final PlacedBand band in layout.bands) {
+    // Last first: tabs of bands shorter than a tab overlap, and the later
+    // band's tab is painted on top, so it is the one under the pointer.
+    for (final PlacedBand band in layout.bands.reversed) {
       final double top = transform.pan.dy + band.rect.y * transform.scale;
       if (local.dy >= top &&
           local.dy <= top + _DesignCanvasState._captionHeight) {
