@@ -1,5 +1,6 @@
 // Built-in string functions. No Flutter UI.
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 import 'package:jet_print/src/expression/eval_context.dart';
 import 'package:jet_print/src/expression/expression.dart';
 import 'package:jet_print/src/expression/function_registry.dart';
@@ -17,6 +18,31 @@ void main() {
     expect(_eval("UPPER('aB')"), const JetString('AB'));
     expect(_eval("LOWER('aB')"), const JetString('ab'));
     expect(_eval("TRIM('  hi  ')"), const JetString('hi'));
+  });
+
+  group('UPPER / LOWER follow the current Intl locale', () {
+    JetValue evalIn(String locale, String src) =>
+        Intl.withLocale<JetValue>(locale, () => _eval(src)) as JetValue;
+
+    test('Turkish maps the dotted and dotless i', () {
+      expect(
+          evalIn('tr', "UPPER('Kısa Vadeli')"), const JetString('KISA VADELİ'));
+      expect(evalIn('tr', "UPPER('iıİI')"), const JetString('İIİI'));
+      expect(
+          evalIn('tr', "LOWER('KISA VADELİ')"), const JetString('kısa vadeli'));
+      expect(evalIn('tr', "LOWER('iıİI')"), const JetString('iıiı'));
+    });
+
+    test('a region tag and Azerbaijani case the same way', () {
+      expect(evalIn('tr_TR', "UPPER('bilgi')"), const JetString('BİLGİ'));
+      expect(evalIn('az', "UPPER('bilgi')"), const JetString('BİLGİ'));
+      expect(evalIn('az', "LOWER('BILGI')"), const JetString('bılgı'));
+    });
+
+    test('other locales keep the default mapping', () {
+      expect(evalIn('en', "UPPER('bilgi')"), const JetString('BILGI'));
+      expect(evalIn('en', "LOWER('BILGI')"), const JetString('bilgi'));
+    });
   });
 
   test('LENGTH returns a number', () {

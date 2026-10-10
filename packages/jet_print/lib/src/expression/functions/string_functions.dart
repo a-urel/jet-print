@@ -1,11 +1,18 @@
 /// Built-in string functions for the expression engine.
 library;
 
+import 'package:intl/intl.dart';
+
 import '../eval_context.dart';
 import '../function_registry.dart';
 import '../value.dart';
 
 /// Registers `UPPER`, `LOWER`, `TRIM`, `LENGTH`, `CONCAT`, `SUBSTRING`.
+///
+/// `UPPER` and `LOWER` case by `Intl.getCurrentLocale()`, which the
+/// JetReportEngine scopes to `RenderOptions.locale` for every fill/layout pass,
+/// exactly as it does for `FORMAT`. Turkish and Azerbaijani map `i`↔`İ` and
+/// `ı`↔`I`; every other locale takes Dart's default mapping.
 void registerStringFunctions(JetFunctionRegistry registry) {
   registry
     ..register('UPPER', _upper)
@@ -26,10 +33,27 @@ JetValue _stringUnary(
 }
 
 JetValue _upper(List<JetValue> a, EvalContext c) =>
-    _stringUnary(a, 'UPPER', (String s) => s.toUpperCase());
+    _stringUnary(a, 'UPPER', (String s) {
+      // Dart's mapping takes `i` to `I`; in Turkic the dotted `i` keeps its
+      // dot. `ı` already uppercases to `I`, and `İ` stays `İ`.
+      return (_isTurkic() ? s.replaceAll('i', 'İ') : s).toUpperCase();
+    });
 
 JetValue _lower(List<JetValue> a, EvalContext c) =>
-    _stringUnary(a, 'LOWER', (String s) => s.toLowerCase());
+    _stringUnary(a, 'LOWER', (String s) {
+      // Dart's mapping takes `I` to `i`, and `İ` to `i` on the VM but to `i`
+      // plus a combining dot on the web; in Turkic they are `ı` and `i`.
+      return (_isTurkic() ? s.replaceAll('İ', 'i').replaceAll('I', 'ı') : s)
+          .toLowerCase();
+    });
+
+/// Whether the current Intl locale cases the Turkic `i`: `tr` or `az`, with or
+/// without a region (`tr_TR`, `az-Latn`).
+bool _isTurkic() {
+  final String language =
+      Intl.getCurrentLocale().split(RegExp('[_-]')).first.toLowerCase();
+  return language == 'tr' || language == 'az';
+}
 
 JetValue _trim(List<JetValue> a, EvalContext c) =>
     _stringUnary(a, 'TRIM', (String s) => s.trim());
