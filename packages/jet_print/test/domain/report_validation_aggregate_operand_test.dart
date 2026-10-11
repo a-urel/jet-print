@@ -293,6 +293,26 @@ void main() {
           reason: 'Expected a not-found operand error; got: $ds');
     });
 
+    // A sink lifts an aggregate wherever it sits in the expression, so a
+    // nested operand is resolved like a top-level one (api-friction entry 6).
+    test('schema: unknown operand nested in a summary expression → error', () {
+      final def = _report(summaryExpr: r'SUM($F{typoField}) + 1');
+      final ds = validate(def, schema: _schema);
+      expect(_hasError(ds, r'operand "$typoField" was not found'), isTrue,
+          reason: 'Expected a not-found operand error; got: $ds');
+    });
+
+    test('schema: every nested operand in a footer expression is resolved', () {
+      final def = _report(
+          customerFooterExpr:
+              r'ROUND(SUM($F{lineTotal}), 2) - SUM($F{typoField})');
+      final ds = validate(def, schema: _schema);
+      expect(_hasError(ds, r'operand "$typoField" was not found'), isTrue,
+          reason: 'Expected a not-found operand error; got: $ds');
+      expect(_hasError(ds, 'lineTotal'), isFalse,
+          reason: 'A resolvable nested operand is not an error; got: $ds');
+    });
+
     // ------------------------------------------------------------------
     // Published-total exclusion: not-found but declared ScopeTotal → no error
     // ------------------------------------------------------------------

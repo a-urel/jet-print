@@ -80,7 +80,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   though the synthesizer folds them over the data rows. A summary element now
   counts only the fields it reads outside every aggregate call. In other
   record-blind bands, where aggregates are not computed, the warning stands.
-  (api-friction entry 6)
+  With a schema, a nested aggregate's operand is now resolved like a top-level
+  one, so `SUM($F{typo}) + 1` in a summary or footer reports the unknown
+  field. (api-friction entry 6)
 
 ## 0.1.1
 

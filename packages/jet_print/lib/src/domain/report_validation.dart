@@ -110,44 +110,47 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
 
   // Schema-aware I8 operand check for a single sink band.
   // [scopeFields] are the schema fields visible at the band's scope.
-  // Runs only when [schema != null].
+  // Runs only when [schema != null]. A sink lifts every inline aggregate,
+  // nested or not, so each one's operand is resolved (api-friction entry 6).
   void checkOperands(Band? band, List<FieldDef> scopeFields) {
     if (band == null || schema == null) return;
     for (final ReportElement el in band.elements) {
       if (el is! TextElement || el.expression == null) continue;
-      AggregateCall? agg;
+      final List<AggregateCall> aggs;
       try {
-        agg = topLevelAggregate(Expression.parse(el.expression!).root);
+        aggs = aggregatesIn(Expression.parse(el.expression!).root);
       } on ExpressionException {
         continue;
       }
-      if (agg == null) continue;
-      // Extract the single $F{name} field ref from the aggregate's argument.
-      final Expr arg = agg.argument;
-      if (arg is! FieldRefExpr) continue;
-      final String operand = arg.name;
-      final AggregatePath path = resolveAggregatePath(scopeFields, operand);
-      switch (path) {
-        case SameScope():
-        case DescendPath():
-          break; // valid
-        case Ambiguous():
-          out.add(Diagnostic(
-            DiagnosticSeverity.error,
-            'element "${el.id}" aggregate operand "\$$operand" is ambiguous — '
-            'the same field name appears in multiple descendant collections; '
-            'use a published total to make the intent explicit',
-            elementId: el.id,
-          ));
-        case NotFound():
-          // Published-total names are injected at fill time — not in the schema.
-          if (publishedTotalNames.contains(operand)) break;
-          out.add(Diagnostic(
-            DiagnosticSeverity.error,
-            'element "${el.id}" aggregate operand "\$$operand" was not found '
-            'in the schema',
-            elementId: el.id,
-          ));
+      for (final AggregateCall agg in aggs) {
+        // Extract the single $F{name} field ref from the aggregate's argument.
+        final Expr arg = agg.argument;
+        if (arg is! FieldRefExpr) continue;
+        final String operand = arg.name;
+        final AggregatePath path = resolveAggregatePath(scopeFields, operand);
+        switch (path) {
+          case SameScope():
+          case DescendPath():
+            break; // valid
+          case Ambiguous():
+            out.add(Diagnostic(
+              DiagnosticSeverity.error,
+              'element "${el.id}" aggregate operand "\$$operand" is ambiguous — '
+              'the same field name appears in multiple descendant collections; '
+              'use a published total to make the intent explicit',
+              elementId: el.id,
+            ));
+          case NotFound():
+            // Published-total names are injected at fill time, not in the
+            // schema.
+            if (publishedTotalNames.contains(operand)) break;
+            out.add(Diagnostic(
+              DiagnosticSeverity.error,
+              'element "${el.id}" aggregate operand "\$$operand" was not found '
+              'in the schema',
+              elementId: el.id,
+            ));
+        }
       }
     }
   }

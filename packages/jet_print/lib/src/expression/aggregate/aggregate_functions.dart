@@ -89,3 +89,38 @@ Set<String> fieldRefsOutsideAggregates(Expr expr) => switch (expr) {
           for (final Expr a in arguments) ...fieldRefsOutsideAggregates(a),
         },
     };
+
+/// Every inline aggregate call in [expr], wherever it sits (`SUM($F{debit}) -
+/// SUM($F{credit})` yields both), in source order. An aggregate's own argument
+/// is not searched further. These are the calls the synthesizer lifts from a
+/// sink band, so they are the operands validation resolves against the schema
+/// (api-friction entry 6).
+List<AggregateCall> aggregatesIn(Expr expr) {
+  final AggregateCall? call = topLevelAggregate(expr);
+  if (call != null) return <AggregateCall>[call];
+  return switch (expr) {
+    FieldRefExpr() ||
+    LiteralExpr() ||
+    ParamRefExpr() ||
+    VariableRefExpr() =>
+      const <AggregateCall>[],
+    UnaryExpr(:final Expr operand) => aggregatesIn(operand),
+    BinaryExpr(:final Expr left, :final Expr right) => <AggregateCall>[
+        ...aggregatesIn(left),
+        ...aggregatesIn(right),
+      ],
+    ConditionalExpr(
+      :final Expr condition,
+      :final Expr thenBranch,
+      :final Expr elseBranch,
+    ) =>
+      <AggregateCall>[
+        ...aggregatesIn(condition),
+        ...aggregatesIn(thenBranch),
+        ...aggregatesIn(elseBranch),
+      ],
+    CallExpr(:final List<Expr> arguments) => <AggregateCall>[
+        for (final Expr a in arguments) ...aggregatesIn(a),
+      ],
+  };
+}
