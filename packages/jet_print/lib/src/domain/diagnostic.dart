@@ -47,3 +47,11 @@ class Diagnostic with ValueEquality {
   String toString() =>
       '${severity.name.toUpperCase()}: $message${elementId == null ? '' : ' [$elementId]'}';
 }
+
+// Consumer-facing, so it is named in the package barrel's `show` list.
+/// Severity queries over any collection of [Diagnostic]s, such as `validate`'s.
+extension DiagnosticQueries on Iterable<Diagnostic> {
+  /// Whether any diagnostic is a [DiagnosticSeverity.error].
+  bool get hasErrors =>
+      any((Diagnostic d) => d.severity == DiagnosticSeverity.error);
+}

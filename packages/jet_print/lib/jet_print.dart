@@ -162,7 +162,7 @@ export 'src/rendering/engine/rendered_report.dart'
 // saving/sharing. ---
 export 'src/rendering/export/jet_report_exporter.dart' show JetReportExporter;
 export 'src/rendering/fill/report_diagnostics.dart'
-    show Diagnostic, DiagnosticSeverity, ReportDiagnostics;
+    show Diagnostic, DiagnosticQueries, DiagnosticSeverity, ReportDiagnostics;
 // --- Host fonts (022): the bytes-in value types a host uses to contribute its
 // own fonts, plus the (now-public) exception their eager validation throws.
 // `FontRegistry` stays internal — the render chain carries it. Pass the same

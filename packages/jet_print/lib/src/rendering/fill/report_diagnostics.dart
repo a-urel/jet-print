@@ -14,7 +14,8 @@ library;
 
 import '../../domain/diagnostic.dart';
 
-export '../../domain/diagnostic.dart' show Diagnostic, DiagnosticSeverity;
+export '../../domain/diagnostic.dart'
+    show Diagnostic, DiagnosticQueries, DiagnosticSeverity;
 
 /// A growable collection of [Diagnostic]s with severity helpers.
 class ReportDiagnostics {
@@ -40,6 +41,5 @@ class ReportDiagnostics {
       .add(Diagnostic(DiagnosticSeverity.error, message, elementId: elementId));
 
   /// Whether any error-severity diagnostic was recorded.
-  bool get hasErrors =>
-      _entries.any((Diagnostic d) => d.severity == DiagnosticSeverity.error);
+  bool get hasErrors => _entries.hasErrors;
 }
