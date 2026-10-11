@@ -20,7 +20,7 @@ JetString? tryJetFormat(JetValue value, String pattern) {
   try {
     return switch (value) {
       JetNumber(value: final double v) =>
-        JetString(NumberFormat(pattern).format(v)),
+        JetString(_formatNumber(NumberFormat(pattern), v)),
       JetDate(value: final DateTime v) =>
         JetString(DateFormat(pattern).format(v)),
       _ => null,
@@ -28,6 +28,20 @@ JetString? tryJetFormat(JetValue value, String pattern) {
   } on FormatException {
     return null;
   }
+}
+
+/// Formats [v] with [format], printing a value whose magnitude formats as
+/// zero as zero itself. Numbers are doubles, so a total that should foot to
+/// zero can land a hair below it, and intl signs anything below zero (`-0,00`,
+/// or the negative subpattern's `(0,00)`); zero has no sign (#95). Comparing
+/// formatted text, not digits, leaves the rounding and the locale's digits to
+/// intl.
+String _formatNumber(NumberFormat format, double v) {
+  if (v.isNegative) {
+    final String zero = format.format(0);
+    if (format.format(-v) == zero) return zero;
+  }
+  return format.format(v);
 }
 
 /// Applies the label `format` property semantics: an empty

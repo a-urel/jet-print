@@ -62,6 +62,13 @@ final class JetBool extends JetValue {
 }
 
 /// A numeric value. Always `double` (the all-double model).
+///
+/// That is the 1.0 behaviour, not a placeholder (#95): money is a binary
+/// double here, so a sum carries the usual tiny drift, and a column that
+/// should foot to zero can total `-6e-8`. Formatting hides that drift where it
+/// shows: a value that rounds to zero at the pattern's precision prints as
+/// `0,00`, never `-0,00`. Comparisons see the raw double, so test a total
+/// against zero after rounding it, e.g. `ROUND($V{balance}, 2) == 0`.
 final class JetNumber extends JetValue {
   /// Creates a numeric value.
   const JetNumber(this.value);

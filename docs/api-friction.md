@@ -38,20 +38,29 @@ held.
 
 ## Blocking for an accounting consumer
 
-1. **Money is a `double`, so a trial balance does not foot to zero.**
-   `JetNumber` wraps a `double` and every accumulator folds in double
+1. **Money is a `double`, so a trial balance did not foot to zero.** *Fixed*
+   in [#95](https://github.com/a-urel/jet-print/issues/95) where it showed,
+   and the `double` *accepted* for 1.0. `JetNumber` wraps a `double` and every
+   accumulator folds in double
    arithmetic. A balance whose columns ought to sum to exactly zero comes out
    around `-6e-8`, and `#,##0.00` renders that as `-0,00` in the grand total —
    the first cell any accountant looks at. The pilot only avoids it by holding
    every amount as a whole number of quarter-lira, because quarters are exact
    in binary; real books cannot choose their own amounts. A decimal-backed
    value, or at minimum a documented rounding policy on aggregates, removes it.
-   *`src/expression/value.dart` → `JetNumber`;
-   `src/expression/aggregate/variable_accumulator.dart`.*
 
-   **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*,
-   [#95](https://github.com/a-urel/jet-print/issues/95). Any fix changes totals,
-   so it is output. The design needs its own brainstorm.
+   The sign was the symptom, so formatting now prints a value that rounds to
+   zero at the pattern's precision as zero: `-0,00` becomes `0,00`, and a
+   negative subpattern's `(0,00)` becomes `0,00`. Every number pattern goes
+   through one formatter, so `FORMAT` and the `format` property agree. A
+   decimal type would have changed `JetNumber.value` and every function, and
+   run markedly slower on the web; compensated summation would have moved the
+   low bits of every total. Neither was worth it for a drift that the format
+   already rounds away. Comparisons still see the raw double, which the
+   `JetNumber` dartdoc says, with the `ROUND` workaround.
+   `test/rendering/engine/zero_total_sign_test.dart` foots a column to `0,00`.
+   *`src/expression/format/apply_jet_format.dart` → `_formatNumber`;
+   `src/expression/value.dart` → `JetNumber`.*
 
 2. **`PageFurniture.columnHeader` is public, exported, and draws nothing.**
    Repeating column captions on every page is the defining requirement of a
