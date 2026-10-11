@@ -185,13 +185,25 @@ held.
     additive*. Distinguishable failures can be subtypes of
     `ReportFormatException`, which existing `catch` clauses still catch.
 
-11. **`validate()` is opt-in, and the render path never calls it.** A host that
-    builds a definition in code ships a mis-slotted band silently. There is also
-    a `hasErrors` helper on the render-time diagnostics carrier and none on the
-    author-time one, so both consumers hand-rolled the same severity predicate
-    for the author-time half of an identical question.
-    *`src/rendering/fill/report_diagnostics.dart` → `ReportDiagnostics.hasErrors`;
-    `src/domain/report_validation.dart` → `validate`.*
+11. **`validate()` is opt-in, and the render path never calls it.** *Accepted*
+    in [#98](https://github.com/a-urel/jet-print/issues/98) as the 1.0
+    behaviour; the missing helper is *fixed*. A host that builds a definition
+    in code ships a mis-slotted band silently. There was also a `hasErrors`
+    helper on the render-time diagnostics carrier and none on the author-time
+    one, so both consumers hand-rolled the same severity predicate for the
+    author-time half of an identical question.
+
+    Render keeps not validating. [`0004`](decisions/0004-what-1-0-must-settle.md)
+    promises stable output only for definitions `validate` accepts, so
+    validation can gain a check after 1.0 without changing any render; merging
+    its findings into render diagnostics would make every such check a
+    breaking change. `JetReportEngine` now says so in its dartdoc. The
+    `DiagnosticQueries` extension gives any `Iterable<Diagnostic>` the same
+    `hasErrors`, so the host's check is `validate(definition).hasErrors`.
+    `test/rendering/engine/render_does_not_validate_test.dart` pins the
+    default, and `test/domain/diagnostic_test.dart` the helper.
+    *`src/rendering/engine/jet_report_engine.dart` → `JetReportEngine`;
+    `src/domain/diagnostic.dart` → `DiagnosticQueries.hasErrors`.*
 
     **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*,
     [#98](https://github.com/a-urel/jet-print/issues/98). Whether render

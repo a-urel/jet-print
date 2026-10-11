@@ -50,6 +50,13 @@ import 'rendered_report.dart';
 ///   page count up front, but builds each page's frame only when requested.
 /// * **Read-only over definitions**: rendering never mutates or
 ///   re-serializes the definition.
+/// * **Does not validate**: rendering never calls `validate`. A definition
+///   validation rejects (a band in the wrong slot, a duplicate id) still
+///   renders best effort, and [RenderedReport.diagnostics] carries only what
+///   rendering itself found. A host that builds definitions in code checks
+///   them itself, e.g. `if (validate(definition).hasErrors) ...`. Output is
+///   promised stable only for definitions `validate` accepts, so a validation
+///   check added later changes no render (decided in #98).
 class JetReportEngine {
   /// Creates the stateless render engine.
   const JetReportEngine();

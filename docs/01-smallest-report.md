@@ -191,7 +191,14 @@ And `validate` only helps where something calls it. The designer calls it live â
 built in code and handed straight to the engine is checked by nothing unless a test
 checks it. Commit `bc8cc9c` is the cost: a playground sample's heading band sat in
 a per-row slot and printed sixteen times, once per data row, while the slot rule
-naming that mistake sat unused in `report_validation.dart`. Validate what you add.
+naming that mistake sat unused in `report_validation.dart`. Validate what you add:
+`validate(definition).hasErrors` is the one-line check.
+
+That the engine does not validate is a decision, not an oversight
+([#98](https://github.com/a-urel/jet-print/issues/98)). The 1.0 output promise
+covers only definitions `validate` accepts, so validation can gain a check
+without changing any render. If render merged validation's findings into its
+own diagnostics, every new check would change a render's output.
 
 ## Next
 

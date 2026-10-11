@@ -182,11 +182,8 @@ void main() {
   test('validate() is public and returns Diagnostics for the reified model',
       () {
     // A clean definition yields no errors; a duplicate group id is flagged.
-    expect(
-      validate(_detailDef())
-          .where((Diagnostic d) => d.severity == DiagnosticSeverity.error),
-      isEmpty,
-    );
+    // `hasErrors` is exported for the author-time list too (#98).
+    expect(validate(_detailDef()).hasErrors, isFalse);
     const ReportDefinition dup = ReportDefinition(
       name: 'r',
       page: PageFormat.a4Portrait,
@@ -200,11 +197,7 @@ void main() {
         ),
       ),
     );
-    expect(
-      validate(dup)
-          .any((Diagnostic d) => d.severity == DiagnosticSeverity.error),
-      isTrue,
-    );
+    expect(validate(dup).hasErrors, isTrue);
   });
 
   test('JetReportDesignerController mutates the model and is undoable', () {

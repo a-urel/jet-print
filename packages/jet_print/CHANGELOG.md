@@ -6,6 +6,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+
+- **`hasErrors` on any collection of diagnostics.** The new exported
+  `DiagnosticQueries` extension gives the `List<Diagnostic>` that `validate`
+  returns the same `hasErrors` the render-time `ReportDiagnostics` already
+  had, so a host's check is `validate(definition).hasErrors`. Render itself
+  still does not validate; that is now the documented 1.0 behaviour on
+  `JetReportEngine`. ([#98](https://github.com/a-urel/jet-print/issues/98))
+
 ### Changed
 
 - **Breaking (behaviour): a group is keyed by its id; its name is a label.**
