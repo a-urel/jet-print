@@ -72,6 +72,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   constructor paints with the bundled default font, as it did when `fonts` was
   omitted. ([#102](https://github.com/a-urel/jet-print/issues/102))
 
+- **Breaking (output): a total that should foot to zero prints `0,00`, not
+  `-0,00`.** Numbers are doubles, so a column such as `0.3 - 0.1 - 0.2` sums
+  to about `-2.8e-17`, and a number pattern printed any value below zero with
+  its sign, or in a negative subpattern's parentheses. A value that rounds to
+  zero at the pattern's precision now prints as zero, through `FORMAT` and the
+  `format` property alike. Numbers stay doubles for 1.0; the `JetNumber`
+  dartdoc says so. ([#95](https://github.com/a-urel/jet-print/issues/95))
+
 - **Breaking (output): `UPPER` and `LOWER` follow the render locale.** Under a
   Turkish or Azerbaijani `RenderOptions.locale`, `UPPER` maps `i` to `İ` and
   `LOWER` maps `I` to `ı` and `İ` to `i`, so `UPPER("Kısa Vadeli")` prints

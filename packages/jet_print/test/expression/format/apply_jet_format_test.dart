@@ -1,6 +1,7 @@
 // Shared value formatter: the label `format` property semantics
 // number/date patterns apply; mismatch/malformed/empty leave the value as-is.
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 import 'package:jet_print/src/expression/format/apply_jet_format.dart';
 import 'package:jet_print/src/expression/value.dart';
 
@@ -58,5 +59,44 @@ void main() {
     // The coercion is scoped to the label property (applyJetFormat); the shared
     // tryJetFormat used by FORMAT(...) still returns null for a string.
     expect(tryJetFormat(const JetString('2026-05-12'), 'yyyy-MM-dd'), isNull);
+  });
+  // A double total that should foot to zero lands a hair below it, and intl
+  // prints any value below zero with its sign: `-0,00` (#95). A value whose
+  // magnitude formats as zero prints as zero.
+  group('a value that rounds to zero prints without a sign', () {
+    String fmt(double v, String pattern) =>
+        tryJetFormat(JetNumber(v), pattern)!.value;
+
+    test('a total that drifted below zero', () {
+      expect(fmt(-6e-8, '#,##0.00'), '0.00');
+      expect(Intl.withLocale('tr', () => fmt(-6e-8, '#,##0.00')), '0,00');
+    });
+
+    test('negative zero itself', () {
+      expect(fmt(-0.0, '0'), '0');
+      expect(fmt(-0.0, '#,##0.00'), '0.00');
+    });
+
+    test('any negative that rounds to zero at the pattern precision', () {
+      expect(fmt(-0.004, '#,##0.00'), '0.00');
+      expect(fmt(-0.4, '0'), '0');
+      expect(fmt(-0.00004, '0.00%'), '0.00%');
+    });
+
+    test('an explicit negative subpattern is not used for a zero', () {
+      expect(fmt(-0.001, '#,##0.00;(#,##0.00)'), '0.00');
+    });
+
+    test('a negative that does not round to zero keeps its sign', () {
+      expect(fmt(-0.006, '#,##0.00'), '-0.01');
+      expect(fmt(-1.5, '#,##0.00'), '-1.50');
+      expect(fmt(-0.001, '#,##0.000;(#,##0.000)'), '(0.001)');
+      expect(fmt(-6e-8, '0.0E0'), '-6.0E-8');
+    });
+
+    test('FORMAT shares the rule', () {
+      expect(tryJetFormat(const JetNumber(-1e-9), '0.00'),
+          const JetString('0.00'));
+    });
   });
 }
