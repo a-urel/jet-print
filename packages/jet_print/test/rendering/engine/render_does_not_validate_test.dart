@@ -41,6 +41,9 @@ void main() {
       JetInMemoryDataSource(const <Map<String, Object?>>[<String, Object?>{}]),
     );
     expect(report.pageCount, 1);
+    // Build the page too: frames are built lazily, so this covers the whole
+    // render path, not only pagination.
+    report.pageAt(0);
     expect(report.diagnostics.hasErrors, isFalse);
     expect(report.diagnostics.entries.map((Diagnostic d) => d.message),
         isNot(contains(contains('slot'))));
