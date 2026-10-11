@@ -729,7 +729,7 @@ class ReportFiller {
     // place both are seen.
     //
     // Called on BOTH the empty-source and the has-rows path (below):
-    // `planCrosstab` raises its synthetic-group-name collision error, and
+    // `planCrosstab` raises its synthetic-group-id collision error, and
     // populates `syntheticGroups`, unconditionally — before it ever looks at
     // the matrix — so those are observable even when zero rows were folded.
     // Only the *band* count happens to be zero for an empty matrix (no axis

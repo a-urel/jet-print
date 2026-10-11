@@ -371,11 +371,9 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
 
 /// I9 — validates [def]'s report variables, appending errors to [out].
 ///
-/// A group-scoped variable's `resetGroup` may name its group by id (what the
-/// designer stores) or by name (what synthesized variables carry), so it must
-/// match exactly one root group either way: none is a dangling reset, and two
-/// (one group's name is another's id) is ambiguous — the fill resolves ids
-/// first and could reset the wrong group.
+/// A group-scoped variable's `resetGroup` must be the id of a root group: the
+/// engine keys groups by id, and a group's name is a display label, never a
+/// reference (#100). Anything else is a dangling reset.
 void _validateVariables(ReportDefinition def, List<Diagnostic> out) {
   final List<GroupLevel> groups = def.body.root.groups;
   final Set<String> seen = <String>{};

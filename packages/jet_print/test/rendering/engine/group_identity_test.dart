@@ -180,4 +180,101 @@ void main() {
     ));
     expect(names, <String>{'Region', 'City'});
   });
+
+  group('pagination flags follow the id', () {
+    // A short page, so the report spans several. Region starts each instance
+    // on a new page and reprints its header on continuation pages; city keeps
+    // each instance on one page. The layouter reads all three flags through
+    // the group's id, so a lookup by name would lose or swap them.
+    const PageFormat shortPage =
+        PageFormat(width: 400, height: 140, margins: JetEdgeInsets.all(10));
+
+    ReportDefinition paged({required String region, required String city}) =>
+        ReportDefinition(
+          name: 'paged',
+          page: shortPage,
+          body: ReportBody(
+            root: DetailScope(
+              id: 'root',
+              groups: <GroupLevel>[
+                GroupLevel(
+                  id: 'region',
+                  name: region,
+                  key: r'$F{region}',
+                  startNewPage: true,
+                  reprintHeaderOnEachPage: true,
+                  header: _band('rh', BandType.groupHeader, r'$F{region}'),
+                ),
+                GroupLevel(
+                  id: 'city',
+                  name: city,
+                  key: r'$F{city}',
+                  keepTogether: true,
+                  header: _band('ch', BandType.groupHeader, r'$F{city}'),
+                  footer: _band('cf', BandType.groupFooter, r'$F{city}'),
+                ),
+              ],
+              children: <ScopeNode>[
+                BandNode(_band('d', BandType.detail, r'$F{amount}')),
+              ],
+            ),
+          ),
+        );
+
+    final JetInMemoryDataSource rows = JetInMemoryDataSource(
+      <Map<String, Object?>>[
+        for (final (String region, String city, int n)
+            in <(String, String, int)>[
+          ('North', 'Oslo', 3),
+          ('North', 'Bergen', 3),
+          ('South', 'Rome', 2),
+        ])
+          for (int i = 0; i < n; i++)
+            <String, Object?>{'region': region, 'city': city, 'amount': i},
+      ],
+    );
+
+    List<List<String>> pages(ReportDefinition def) {
+      final RenderedReport r =
+          const JetReportEngine().renderDefinition(def, rows);
+      return <List<String>>[
+        for (int i = 0; i < r.pageCount; i++)
+          <String>[
+            for (final FramePrimitive p in frameOf(r.pageAt(i)).primitives)
+              if (p is TextRunPrimitive)
+                '${p.elementId}=${p.lines.map((TextLine l) => l.text).join()}',
+          ],
+      ];
+    }
+
+    final List<List<String>> reference =
+        pages(paged(region: 'region', city: 'city'));
+
+    test('the reference exercises all three flags', () {
+      expect(reference.length, greaterThan(2));
+      // startNewPage + reprintHeaderOnEachPage: every page opens on a region
+      // header, and South's first page holds no North row.
+      for (final List<String> page in reference) {
+        expect(page.first, startsWith('rh='), reason: '$page');
+      }
+      final List<String> south =
+          reference.firstWhere((List<String> p) => p.first == 'rh=South');
+      expect(south, isNot(contains('ch=Oslo')));
+      expect(south, isNot(contains('ch=Bergen')));
+      // keepTogether: each city header lands on the page of its footer.
+      for (final String city in <String>['Oslo', 'Bergen', 'Rome']) {
+        final List<String> page =
+            reference.firstWhere((List<String> p) => p.contains('ch=$city'));
+        expect(page, contains('cf=$city'), reason: '$city split: $reference');
+      }
+    });
+
+    test('names unrelated to the ids paginate identically', () {
+      expect(pages(paged(region: 'Area', city: 'Town')), reference);
+    });
+
+    test("names that are each other's ids paginate identically", () {
+      expect(pages(paged(region: 'city', city: 'region')), reference);
+    });
+  });
 }
