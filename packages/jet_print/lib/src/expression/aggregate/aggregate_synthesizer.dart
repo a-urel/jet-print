@@ -135,9 +135,15 @@ String _expandInlineAggregates(
       final int identEnd = _identEnd(expr, i);
       final String ident = expr.substring(i, identEnd);
       final JetCalculation? calc = aggregateCalculationFor(ident);
-      if (calc != null && identEnd < expr.length && expr[identEnd] == '(') {
-        final int close = _matchParen(expr, identEnd);
-        final String inner = expr.substring(identEnd + 1, close);
+      // The parser allows whitespace before a call's `(`, so this must too:
+      // validation treats `SUM ($F{x})` as an aggregate.
+      int open = identEnd;
+      while (open < expr.length && expr[open].trim().isEmpty) {
+        open++;
+      }
+      if (calc != null && open < expr.length && expr[open] == '(') {
+        final int close = _matchParen(expr, open);
+        final String inner = expr.substring(open + 1, close);
         // Confirm a single-argument aggregate (arity enforced by
         // topLevelAggregate) before lifting; otherwise pass it through.
         if (_isSingleArgAggregate(ident, inner)) {

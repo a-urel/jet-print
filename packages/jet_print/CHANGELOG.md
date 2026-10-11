@@ -83,6 +83,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   With a schema, a nested aggregate's operand is now resolved like a top-level
   one, so `SUM($F{typo}) + 1` in a summary or footer reports the unknown
   field. (api-friction entry 6)
+- **An inline aggregate written with a space before its parenthesis is
+  computed.** `SUM ($F{amount})` parsed, and passed `validate`, but the
+  aggregate synthesizer only lifted `SUM(` with no space, so the summary or
+  footer printed an "Unknown function" error. Whitespace there is now
+  accepted, as the parser accepts it.
 
 ## 0.1.1
 

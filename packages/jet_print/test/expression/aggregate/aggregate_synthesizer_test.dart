@@ -129,6 +129,31 @@ void main() {
     expect(el.expression, '\$V{${v.name}} + 50000');
   });
 
+  // The parser accepts whitespace between a function name and its `(`, so
+  // validation sees `SUM ($F{x})` as an aggregate; the synthesizer must lift it
+  // too, or it reaches the evaluator as an unknown function.
+  test('whitespace before the parenthesis still lifts the aggregate', () {
+    final def = ReportDefinition(
+      name: 'r',
+      page: PageFormat.a4Portrait,
+      body: ReportBody(
+          summary: Band(
+              id: 's',
+              type: BandType.summary,
+              height: 16,
+              elements: <ReportElement>[
+                _agg('g', 'SUM \t(\$F{customerTotal}) + 1'),
+              ]),
+          root: const DetailScope(id: 'root')),
+    );
+    final out = expandAggregates(def);
+    final v = out.variables.single;
+    expect(v.calculation, JetCalculation.sum);
+    expect(v.expression, r'$F{customerTotal}');
+    final el = out.body.summary!.elements.single as TextElement;
+    expect(el.expression, '\$V{${v.name}} + 1');
+  });
+
   test('two aggregates in one expression lift to two variables (032 #2)', () {
     final def = ReportDefinition(
       name: 'r',
