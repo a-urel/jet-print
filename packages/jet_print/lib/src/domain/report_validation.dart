@@ -54,6 +54,8 @@ import 'scope_total.dart';
 ///   the `__` namespace the aggregate synthesizer reserves, and a group-scoped
 ///   variable resets on a group that exists, named by its id — reported as
 ///   **errors**.
+/// * I10 the reserved furniture slots (`columnHeader`, `columnFooter`,
+///   `background`) are not laid out, so a band in one is an **error**.
 ///
 /// When [schema] is provided, an additional operand check is applied to each
 /// aggregate in a sink band: same-scope or unique-descend → no diagnostic;
@@ -336,18 +338,29 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
   // Furniture (all record-blind).
   slotBand(def.furniture.pageHeader, BandType.pageHeader, isRecordBlind: true);
   slotBand(def.furniture.pageFooter, BandType.pageFooter, isRecordBlind: true);
-  slotBand(def.furniture.columnHeader, BandType.columnHeader,
-      isRecordBlind: true);
-  slotBand(def.furniture.columnFooter, BandType.columnFooter,
-      isRecordBlind: true);
-  slotBand(def.furniture.background, BandType.background, isRecordBlind: true);
+
+  // I10 — the reserved slots are not laid out, so a band in one is rejected
+  // whole (#96): one error, and none of the per-band checks above. Rejecting
+  // keeps a later implementation additive, since 0004's output promise covers
+  // only definitions validate accepts. The id still counts toward I1.
+  for (final (BandType slot, Band? band) in <(BandType, Band?)>[
+    (BandType.columnHeader, def.furniture.columnHeader),
+    (BandType.columnFooter, def.furniture.columnFooter),
+    (BandType.background, def.furniture.background),
+  ]) {
+    if (band == null) continue;
+    claim(band.id);
+    out.add(Diagnostic(
+      DiagnosticSeverity.error,
+      'band "${band.id}" is in the ${slot.name} slot, which is reserved and '
+      'not laid out yet; remove it',
+      elementId: band.id,
+    ));
+  }
 
   // Furniture is never an aggregate sink.
   aggregateBand(def.furniture.pageHeader, supported: false);
   aggregateBand(def.furniture.pageFooter, supported: false);
-  aggregateBand(def.furniture.columnHeader, supported: false);
-  aggregateBand(def.furniture.columnFooter, supported: false);
-  aggregateBand(def.furniture.background, supported: false);
 
   // Body once-bands (record-blind) + the scope tree.
   slotBand(def.body.title, BandType.title, isRecordBlind: true);

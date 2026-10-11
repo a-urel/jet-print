@@ -93,8 +93,10 @@ The watermark is the exception at the other end — `rendering/watermark_primiti
 → `buildWatermarkPrimitive` is computed once in the boundary pass (its result is
 page-independent) and added *first* on every page, behind everything. Those three
 are the furniture that repeats; the `columnHeader`, `columnFooter` and
-`background` slots are representable in the model but are not laid out, and each
-one present draws an info diagnostic.
+`background` slots are representable in the model but are not laid out. Each one
+present draws an info diagnostic at render, and `validate` rejects it as an error
+(I10), so laying them out later stays additive
+([#96](https://github.com/a-urel/jet-print/issues/96)).
 
 Furniture honors `visible` per page: `buildPage` evaluates each page header and
 footer band, and each of their elements, against the same `PageEvalContext` the

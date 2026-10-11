@@ -76,6 +76,74 @@ bool _has(List<Diagnostic> ds, DiagnosticSeverity sev, String needle) =>
 
 void main() {
   group('validate', () {
+    // #96: the three reserved furniture slots are not laid out, so a band in
+    // one is an error. 0004's output promise covers only definitions validate
+    // accepts, which keeps implementing them later additive.
+    group('reserved furniture slots', () {
+      for (final (String slot, PageFurniture furniture)
+          in <(String, PageFurniture)>[
+        (
+          'columnHeader',
+          const PageFurniture(
+              columnHeader: Band(
+                  id: 'f/reserved', type: BandType.columnHeader, height: 10))
+        ),
+        (
+          'columnFooter',
+          const PageFurniture(
+              columnFooter: Band(
+                  id: 'f/reserved', type: BandType.columnFooter, height: 10))
+        ),
+        (
+          'background',
+          const PageFurniture(
+              background:
+                  Band(id: 'f/reserved', type: BandType.background, height: 10))
+        ),
+      ]) {
+        test('a band in the $slot slot is one error naming it', () {
+          final List<Diagnostic> ds = validate(_valid(furniture: furniture));
+          expect(ds, hasLength(1), reason: '$ds');
+          expect(ds.single.severity, DiagnosticSeverity.error);
+          expect(ds.single.elementId, 'f/reserved');
+          expect(ds.single.message, contains('$slot slot'));
+          expect(ds.single.message, contains('reserved'));
+        });
+      }
+
+      test('a reserved band adds no slot-type or record-field noise', () {
+        // Wrong type and a record field: still the one reserved error.
+        final List<Diagnostic> ds = validate(_valid(
+            furniture: const PageFurniture(
+          background: Band(
+            id: 'f/bg',
+            type: BandType.detail,
+            height: 10,
+            elements: <ReportElement>[
+              TextElement(
+                id: 'f/bg/t',
+                bounds: JetRect(x: 0, y: 0, width: 10, height: 10),
+                text: 't',
+                expression: r'$F{customer}',
+              ),
+            ],
+          ),
+        )));
+        expect(ds, hasLength(1), reason: '$ds');
+      });
+
+      test('a reserved band still takes part in duplicate-id checks', () {
+        final List<Diagnostic> ds = validate(_valid(
+            furniture: const PageFurniture(
+          pageHeader: Band(id: 'f/dup', type: BandType.pageHeader, height: 10),
+          columnHeader:
+              Band(id: 'f/dup', type: BandType.columnHeader, height: 10),
+        )));
+        expect(_has(ds, DiagnosticSeverity.error, 'duplicate'), isTrue,
+            reason: '$ds');
+      });
+    });
+
     test('returns empty for a valid definition', () {
       expect(validate(_valid()), isEmpty);
     });
