@@ -39,7 +39,9 @@ import 'scope_total.dart';
 ///
 /// * I1 unique ids (a group's id among them; its name may repeat — I2 is
 ///   retired, #100) · I3 parseable group keys ·
-///   I4 record-blind furniture/title/summary/noData (no `$F{}`) ·
+///   I4 record-blind furniture/title/summary/noData (no `$F{}`; in the
+///   summary a field inside an inline aggregate call is folded, not bound,
+///   so only the fields outside every aggregate count) ·
 ///   I5 band `type` consistent with its slot · I6 root/nested `collectionField`
 ///   rule — reported as **errors/warnings**.
 /// * I7 representable-but-not-yet-rendered shapes (per-scope grouping; multiple

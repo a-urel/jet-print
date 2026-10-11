@@ -62,8 +62,8 @@ AggregateCall? topLevelAggregate(Expr expr) {
 
 /// The `$F{}` fields [expr] reads outside every inline aggregate call: what a
 /// band with no data row would have to bind directly. An aggregate's operand is
-/// folded over the data rows, so its fields are no binding, wherever the call
-/// sits in the expression (`SUM($F{debit}) - SUM($F{credit})`,
+/// folded over the data rows, so its fields are not direct bindings, wherever
+/// the call sits in the expression (`SUM($F{debit}) - SUM($F{credit})`,
 /// `ROUND(AVG($F{rate}), 2)`) — which is where the aggregate synthesizer lifts
 /// it from too (api-friction entry 6).
 Set<String> fieldRefsOutsideAggregates(Expr expr) => switch (expr) {

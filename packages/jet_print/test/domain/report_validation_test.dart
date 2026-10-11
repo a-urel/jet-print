@@ -289,7 +289,8 @@ void main() {
     });
 
     // api-friction entry 6: the synthesizer lifts an aggregate wherever it
-    // sits in a summary expression, so its operands are no binding there.
+    // sits in a summary expression, so its operands are not direct bindings
+    // there.
     group('I4 in the summary band (an aggregate sink)', () {
       List<Diagnostic> summary(String expression) => validate(_valid(
             body: ReportBody(
