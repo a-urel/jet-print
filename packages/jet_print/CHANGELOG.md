@@ -80,9 +80,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   though the synthesizer folds them over the data rows. A summary element now
   counts only the fields it reads outside every aggregate call. In other
   record-blind bands, where aggregates are not computed, the warning stands.
-  With a schema, a nested aggregate's operand is now resolved like a top-level
-  one, so `SUM($F{typo}) + 1` in a summary or footer reports the unknown
-  field. (api-friction entry 6)
+  With a schema, every field an aggregate's operand reads is now resolved,
+  whether the aggregate is nested or the operand is compound, so
+  `SUM($F{typo}) + 1` or `SUM($F{typo} * 2)` in a summary or footer reports
+  the unknown field. (api-friction entry 6)
 - **An inline aggregate written with a space before its parenthesis is
   computed.** `SUM ($F{amount})` parsed, and passed `validate`, but the
   aggregate synthesizer only lifted `SUM(` with no space, so the summary or

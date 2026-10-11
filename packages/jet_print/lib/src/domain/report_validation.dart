@@ -13,7 +13,6 @@ import '../data/binding_scope.dart';
 import '../data/data_schema.dart';
 import '../data/field_def.dart';
 import '../expression/aggregate/aggregate_functions.dart';
-import '../expression/ast.dart';
 import '../expression/expression.dart';
 import '../expression/expression_exception.dart';
 import 'band.dart';
@@ -124,11 +123,13 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
       } on ExpressionException {
         continue;
       }
-      for (final AggregateCall agg in aggs) {
-        // Extract the single $F{name} field ref from the aggregate's argument.
-        final Expr arg = agg.argument;
-        if (arg is! FieldRefExpr) continue;
-        final String operand = arg.name;
+      // Every field an operand reads is folded, so each one must resolve;
+      // `SUM($F{x} * 2)` resolves `x` just as `SUM($F{x})` does.
+      final Set<String> operands = <String>{
+        for (final AggregateCall agg in aggs)
+          ...Expression.ofRoot(agg.argument).references.fields,
+      };
+      for (final String operand in operands) {
         final AggregatePath path = resolveAggregatePath(scopeFields, operand);
         switch (path) {
           case SameScope():
