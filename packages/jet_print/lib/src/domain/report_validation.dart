@@ -37,7 +37,8 @@ import 'scope_total.dart';
 /// each violation in document order. Returns an empty list for a valid
 /// definition. **Never throws.**
 ///
-/// * I1 unique ids · I2 unique group names per scope · I3 parseable group keys ·
+/// * I1 unique ids (a group's id among them; its name may repeat — I2 is
+///   retired, #100) · I3 parseable group keys ·
 ///   I4 record-blind furniture/title/summary/noData (no `$F{}`) ·
 ///   I5 band `type` consistent with its slot · I6 root/nested `collectionField`
 ///   rule — reported as **errors/warnings**.
@@ -50,7 +51,8 @@ import 'scope_total.dart';
 ///   (`groupFooter`) and is forbidden on the root (which has no collection).
 /// * I9 report variables: each expression parses, names are unique and outside
 ///   the `__` namespace the aggregate synthesizer reserves, and a group-scoped
-///   variable resets on a group that exists — reported as **errors**.
+///   variable resets on a group that exists, named by its id — reported as
+///   **errors**.
 ///
 /// When [schema] is provided, an additional operand check is applied to each
 /// aggregate in a sink band: same-scope or unique-descend → no diagnostic;
@@ -264,14 +266,10 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
           'per-scope grouping on scope "${scope.id}" is not yet rendered'));
     }
 
-    // I2 — group names unique within this scope; I3 — keys parse.
-    final Set<String> seenNames = <String>{};
+    // I3 — group keys parse. A group is keyed by its id, claimed above like
+    // every other id; its name is a display label and may repeat (#100).
     for (final GroupLevel g in scope.groups) {
       claim(g.id);
-      if (!seenNames.add(g.name)) {
-        out.add(Diagnostic(DiagnosticSeverity.error,
-            'duplicate group name "${g.name}" in scope "${scope.id}"'));
-      }
       try {
         Expression.parse(g.key);
       } on ExpressionException catch (e) {
@@ -398,19 +396,13 @@ void _validateVariables(ReportDefinition def, List<Diagnostic> out) {
     }
     if (v.resetScope == VariableResetScope.group) {
       final String? ref = v.resetGroup;
-      final int matches = ref == null
-          ? 0
-          : groups.where((GroupLevel g) => g.id == ref || g.name == ref).length;
-      if (matches == 0) {
+      // A reset names its group by id; a group's name is not a reference
+      // (#100).
+      if (ref == null || !groups.any((GroupLevel g) => g.id == ref)) {
         out.add(Diagnostic(
             DiagnosticSeverity.error,
             'variable "${v.name}" resets on group "${ref ?? ''}", '
-            'which is not a group of the report'));
-      } else if (matches > 1) {
-        out.add(Diagnostic(
-            DiagnosticSeverity.error,
-            'variable "${v.name}" resets on group "$ref", which is ambiguous: '
-            'it is the id of one group and the name of another'));
+            'which is not a group id of the report'));
       }
     }
   }

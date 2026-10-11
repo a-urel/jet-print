@@ -241,13 +241,14 @@ bool _isIdentPart(String c) {
 }
 
 /// Maps a group's footer through [rewriteBand] (group scope,
-/// `resetGroup == g.name`), preserving the group's identity when nothing
-/// changed. Shared by the inline-aggregate and descendant-lift passes.
+/// `resetGroup == g.id`, the key the fill pass matches; #100), preserving the
+/// group's identity when nothing changed. Shared by the inline-aggregate and
+/// descendant-lift passes.
 GroupLevel _rewriteGroupFooter(
   GroupLevel g,
   Band? Function(Band?, VariableResetScope, String?) rewriteBand,
 ) {
-  final Band? footer = rewriteBand(g.footer, VariableResetScope.group, g.name);
+  final Band? footer = rewriteBand(g.footer, VariableResetScope.group, g.id);
   return identical(footer, g.footer) ? g : g.copyWith(footer: () => footer);
 }
 
@@ -285,7 +286,7 @@ class DescendantAggregate {
   /// `report` for the summary band, `group` for a root group footer.
   final VariableResetScope resetScope;
 
-  /// The owning root group's name for a group footer, else null.
+  /// The owning root group's id for a group footer, else null.
   final String? resetGroup;
 
   /// True when the operand resolved to ≥2 descend paths; the filler renders the

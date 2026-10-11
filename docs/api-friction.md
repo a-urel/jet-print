@@ -237,21 +237,21 @@ held.
     **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *after 1.0,
     additive*. A new variable or function.
 
-14. **`GroupLevel` has both an `id` and a `name`, and which one is the reference
-    depends where you stand.** The dartdoc says `name` is "display label only (no
-    longer the reference key)", but the filler keys header and footer bands by
-    name, the aggregate synthesizer writes names into the variables it
-    synthesises, and a private translation step bridges the two. It works. The
-    consequence — group names must be unique, and `name` is not decorative — is
-    nowhere in the public documentation. Both consumers set `id == name` to stay
-    out of it, which is also what the playground's own sample does. Since
-    `7b989f0`, `validate` rejects a `resetGroup` that matches one group's id and
-    another's name — the ambiguity is now caught, but still not explained.
-
-    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*,
-    [#100](https://github.com/a-urel/jet-print/issues/100). Merging or renaming
-    the fields changes the surface and the schema; the alternative is to
-    document `name` as a unique key and accept it.
+14. **`GroupLevel` had both an `id` and a `name`, and which one was the
+    reference depended where you stood.** *Fixed* in
+    [#100](https://github.com/a-urel/jet-print/issues/100), by making the id the
+    only key. The dartdoc said `name` was "display label only (no longer the
+    reference key)", but the filler keyed header and footer bands by name, the
+    aggregate synthesizer wrote names into the variables it synthesised, and a
+    private step translated a variable's `resetGroup` id back to a name. So
+    names had to be unique, `resetGroup` resolved against either field, and
+    both consumers set `id == name` to stay out of it. Now the filler, the
+    layouter, the synthesizer and the crosstab splice all key a group by id;
+    `resetGroup` must be an id; a repeated name is not an error, and renaming a
+    group changes nothing the report prints. The name is still what
+    `ElementPrintContext.bandName` and diagnostics show.
+    *`src/rendering/fill/report_filler.dart`;
+    `src/domain/report_validation.dart` → I2, retired.*
 
 15. **`text` is required even when `expression` is non-null.** Thirty of the
     pilot's thirty-six text elements carry both; every placeholder is discarded

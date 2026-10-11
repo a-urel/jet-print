@@ -28,10 +28,15 @@ class GroupLevel with ValueEquality {
     this.startNewPage = false,
   });
 
-  /// Stable identity — **the reference target for `ReportVariable.resetGroup`**.
+  /// Stable identity and the group's only key: unique across the report
+  /// (validation invariant I1), **the reference target for
+  /// `ReportVariable.resetGroup`**, and what the engine matches a group's
+  /// header, footer and breaks by.
   final String id;
 
-  /// Display label only (no longer the reference key).
+  /// Display label only: shown in the designer, in diagnostics and as
+  /// `ElementPrintContext.bandName`, never matched. It may repeat, and
+  /// renaming a group changes nothing the report prints (#100).
   final String name;
 
   /// The grouping-key expression (005a syntax); must parse.

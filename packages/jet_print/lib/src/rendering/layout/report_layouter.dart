@@ -106,6 +106,7 @@ class LazyLayout {
     required double left,
     required double top,
     required double bodyBottom,
+    required Map<String, String> groupNames,
     JetElementPrintCallback? onElementPrint,
     FramePrimitive? watermark,
   })  : _page = page,
@@ -122,6 +123,7 @@ class LazyLayout {
         _left = left,
         _top = top,
         _bodyBottom = bodyBottom,
+        _groupNames = groupNames,
         _onElementPrint = onElementPrint,
         _watermark = watermark;
 
@@ -139,6 +141,10 @@ class LazyLayout {
   final double _left;
   final double _top;
   final double _bodyBottom;
+
+  /// Each group's display name by id. A band carries its group's id, the key;
+  /// the print callback is handed the name a host sees (#100).
+  final Map<String, String> _groupNames;
   final JetElementPrintCallback? _onElementPrint;
   final FramePrimitive? _watermark;
 
@@ -354,7 +360,7 @@ class LazyLayout {
         _place(placed.band.elements, placed.x, _top, fb,
             pageNumber: index + 1,
             bandType: placed.band.source.type,
-            bandName: placed.band.source.group,
+            bandName: _groupNames[placed.band.source.group],
             fields: placed.band.source.fields,
             variables: placed.band.source.variables);
         titleShift = placed.band.height;
@@ -364,7 +370,7 @@ class LazyLayout {
       _place(placed.band.elements, placed.x, placed.y, fb,
           pageNumber: index + 1,
           bandType: placed.band.source.type,
-          bandName: placed.band.source.group,
+          bandName: _groupNames[placed.band.source.group],
           fields: placed.band.source.fields,
           variables: placed.band.source.variables);
     }
@@ -578,26 +584,26 @@ class ReportLayouter {
       }
     }
 
-    // Group lookup keyed by display name (FilledBand.group carries the name).
-    // Synthetic groups (crosstabs) are appended last, so they become the
-    // innermost levels and nest inside any open master group.
+    // Group lookup keyed by id (FilledBand.group carries the id; the name is
+    // display-only, #100). Synthetic groups (crosstabs) are appended last, so
+    // they become the innermost levels and nest inside any open master group.
     final List<GroupLevel> definitionGroups = def.body.root.groups;
     final List<GroupLevel> groups = <GroupLevel>[
       ...definitionGroups,
       ...filled.syntheticGroups,
     ];
     final Map<String, int> levelOf = <String, int>{
-      for (int i = 0; i < groups.length; i++) groups[i].name: i,
+      for (int i = 0; i < groups.length; i++) groups[i].id: i,
     };
-    final Map<String, GroupLevel> groupByName = <String, GroupLevel>{
-      for (final GroupLevel g in groups) g.name: g,
+    final Map<String, GroupLevel> groupById = <String, GroupLevel>{
+      for (final GroupLevel g in groups) g.id: g,
     };
     // Only a synthetic (crosstab) group emits several header bands per
     // instance, so only its back-to-back headers are one header run. An
     // ordinary group owns one header band: two in a row are two instances
     // (a footer-less group whose rows printed nothing) and lay out as two.
     final Set<String> multiHeaderGroups = <String>{
-      for (final GroupLevel g in filled.syntheticGroups) g.name,
+      for (final GroupLevel g in filled.syntheticGroups) g.id,
     };
 
     // Scoped to definitionGroups, not the unioned groups: its only consumer
@@ -606,13 +612,13 @@ class ReportLayouter {
     // GroupLevel.header, so it could never appear in this set anyway).
     final Set<String> groupsWithHeader = <String>{
       for (final GroupLevel g in definitionGroups)
-        if (g.header != null) g.name,
+        if (g.header != null) g.id,
     };
     // Synthetic groups carry their header bands in the stream, not in the
     // model.
     for (final GroupLevel g in definitionGroups) {
       if ((g.keepTogether || g.reprintHeaderOnEachPage) &&
-          !groupsWithHeader.contains(g.name)) {
+          !groupsWithHeader.contains(g.id)) {
         diagnostics.info(
             'group "${g.name}" sets keepTogether/reprintHeaderOnEachPage but '
             'has no group-header band; the flag has no effect');
@@ -660,7 +666,7 @@ class ReportLayouter {
       final Set<String> seenStartNewPageGroup = <String>{};
       final List<_Span> spanStack = <_Span>[];
       void finalizeSpan(_Span s, int exitIndex) {
-        if (groupByName[s.name]!.keepTogether) {
+        if (groupById[s.name]!.keepTogether) {
           keepExtent[s.openIndex] = cum[exitIndex] - cum[s.openIndex];
         }
       }
@@ -678,7 +684,7 @@ class ReportLayouter {
             (spanPrevHeader != band.group ||
                 !multiHeaderGroups.contains(band.group));
         if (newHeader) {
-          if (groupByName[band.group]!.startNewPage &&
+          if (groupById[band.group]!.startNewPage &&
               !seenStartNewPageGroup.add(band.group!)) {
             startNewPageAt.add(k);
           }
@@ -807,7 +813,7 @@ class ReportLayouter {
               name: band.group!,
               level: level,
               headers: <MeasuredBand>[mb],
-              reprint: groupByName[band.group]!.reprintHeaderOnEachPage,
+              reprint: groupById[band.group]!.reprintHeaderOnEachPage,
             ));
           }
         } else if (band.type == BandType.groupFooter && isGroupBand) {
@@ -849,6 +855,9 @@ class ReportLayouter {
       left: left,
       top: top,
       bodyBottom: bodyBottom,
+      groupNames: <String, String>{
+        for (final GroupLevel g in groups) g.id: g.name,
+      },
       onElementPrint: onElementPrint,
       watermark: watermark,
     );

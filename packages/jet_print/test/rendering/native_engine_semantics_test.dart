@@ -38,12 +38,14 @@ void main() {
           if (b.type == BandType.groupHeader || b.type == BandType.groupFooter)
             '${b.type == BandType.groupHeader ? 'H' : 'F'}:${b.group}',
       ];
+      // A group band carries its group's id, the key (#100): root/g0 is the
+      // region group, root/g1 the category group.
       expect(groupBands, <String>[
-        'H:region', 'H:category', // open West/X
-        'F:category', 'H:category', // X→Y break (region intact)
-        'F:category', 'F:region', // close Y, West …
-        'H:region', 'H:category', // … open East/Z
-        'F:category', 'F:region', // final close inner→outer
+        'H:root/g0', 'H:root/g1', // open West/X
+        'F:root/g1', 'H:root/g1', // X→Y break (region intact)
+        'F:root/g1', 'F:root/g0', // close Y, West …
+        'H:root/g0', 'H:root/g1', // … open East/Z
+        'F:root/g1', 'F:root/g0', // final close inner→outer
       ]);
     });
 

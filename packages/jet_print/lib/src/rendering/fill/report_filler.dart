@@ -102,10 +102,11 @@ class ReportFiller {
 
   /// Fills [rawDefinition] over [source] natively — the reified
   /// counterpart of [fill]. Produces a [FilledReport] **byte-identical** to
-  /// filling the equivalent legacy template: groups are keyed internally by
-  /// their display [GroupLevel.name] (so a variable's `resetGroup` *id* is
-  /// translated to that name to drive the unchanged name-keyed calculator), and
-  /// the band stream is emitted in the same title → groups → detail → footers →
+  /// filling the equivalent legacy template. Groups are keyed by their
+  /// [GroupLevel.id]: the calculator's `ReportGroup.name` slot and each group
+  /// band's `FilledBand.group` carry the id, a variable's `resetGroup` is that
+  /// id unchanged, and [GroupLevel.name] is display-only (#100). The band
+  /// stream is emitted in the same title → groups → detail → footers →
   /// summary order, walking `body.root.children` in authored order.
   FillResult fillDefinition(
     ReportDefinition rawDefinition,
@@ -202,30 +203,23 @@ class ReportFiller {
           budget: budget,
         );
 
-    // Groups are first-class here; the calculator stays name-keyed, so build its
-    // ReportGroups from the levels and translate each variable's resetGroup id
-    // back to the level's name (a model concern; the IR is unchanged).
+    // Groups are keyed by id throughout (#100): the calculator's ReportGroup
+    // keeps its legacy `name` slot, which here holds the level's id, so a
+    // variable's `resetGroup` id needs no translation. The display name is
+    // only ever shown, never matched.
     final List<GroupLevel> groups = definition.body.root.groups;
-    final Map<String, String> nameOfGroupId = <String, String>{
-      for (final GroupLevel g in groups) g.id: g.name,
-    };
     final List<ReportGroup> calcGroups = <ReportGroup>[
       for (final GroupLevel g in groups)
         ReportGroup(
-          name: g.name,
+          name: g.id,
           expression: g.key,
           keepTogether: g.keepTogether,
           reprintHeaderOnEachPage: g.reprintHeaderOnEachPage,
           startNewPage: g.startNewPage,
         ),
     ];
-    final List<ReportVariable> calcVars = <ReportVariable>[
-      for (final ReportVariable v in definition.variables)
-        _withResetGroupName(v, nameOfGroupId),
-    ];
-
     final VariableCalculator calc = VariableCalculator(
-      variables: calcVars,
+      variables: definition.variables,
       groups: calcGroups,
       functions: _functions,
       contextFactory: contextFactory,
@@ -285,23 +279,23 @@ class ReportFiller {
     }
 
     final List<String> groupOrder = <String>[
-      for (final GroupLevel g in groups) g.name,
+      for (final GroupLevel g in groups) g.id,
     ];
     List<String> brokenInOrder(Set<String> broken, {required bool reversed}) {
       final List<String> ordered = <String>[
-        for (final String name in groupOrder)
-          if (broken.contains(name)) name,
+        for (final String id in groupOrder)
+          if (broken.contains(id)) id,
       ];
       return reversed ? ordered.reversed.toList() : ordered;
     }
 
-    final Map<String, Band> headerByName = <String, Band>{
+    final Map<String, Band> headerById = <String, Band>{
       for (final GroupLevel g in groups)
-        if (g.header != null) g.name: g.header!,
+        if (g.header != null) g.id: g.header!,
     };
-    final Map<String, Band> footerByName = <String, Band>{
+    final Map<String, Band> footerById = <String, Band>{
       for (final GroupLevel g in groups)
-        if (g.footer != null) g.name: g.footer!,
+        if (g.footer != null) g.id: g.footer!,
     };
 
     final List<FilledBand> bands = <FilledBand>[];
@@ -417,7 +411,7 @@ class ReportFiller {
         };
 
     // Spec 030 (B2) — the parsed published-total fold specs depend only on the
-    // static definition, so prepare them ONCE here (mirroring how `calcVars` /
+    // static definition, so prepare them ONCE here (mirroring how
     // `calcGroups` / `expandAggregates` are hoisted above the row loop) rather
     // than re-parsing each total's expression on every master row. Keyed by the
     // owning nested scope's id — unique by validation invariant I1 — so
@@ -607,18 +601,18 @@ class ReportFiller {
       }
     }
 
-    void emitGroupHeaders(List<String> names, DataRow? row) {
-      for (final String name in names) {
-        final Band? header = headerByName[name];
-        if (header != null) addBand(header, row, calc.values, group: name);
+    void emitGroupHeaders(List<String> ids, DataRow? row) {
+      for (final String id in ids) {
+        final Band? header = headerById[id];
+        if (header != null) addBand(header, row, calc.values, group: id);
       }
     }
 
     void emitGroupFooters(
-        List<String> names, DataRow? footerRow, Map<String, JetValue> vars) {
-      for (final String name in names) {
-        final Band? footer = footerByName[name];
-        if (footer != null) addBand(footer, footerRow, vars, group: name);
+        List<String> ids, DataRow? footerRow, Map<String, JetValue> vars) {
+      for (final String id in ids) {
+        final Band? footer = footerById[id];
+        if (footer != null) addBand(footer, footerRow, vars, group: id);
       }
     }
 
@@ -745,8 +739,8 @@ class ReportFiller {
       final double availableWidth = definition.page.width -
           definition.page.margins.left -
           definition.page.margins.right;
-      final Set<String> takenGroupNames = <String>{
-        for (final GroupLevel g in definition.body.root.groups) g.name,
+      final Set<String> takenGroupIds = <String>{
+        for (final GroupLevel g in definition.body.root.groups) g.id,
       };
       int insertedSoFar = 0;
       for (final _RegisteredCrosstab rc in crosstabs) {
@@ -755,7 +749,7 @@ class ReportFiller {
           rc.crosstab,
           matrix,
           availableWidth: availableWidth,
-          takenGroupNames: takenGroupNames,
+          takenGroupIds: takenGroupIds,
         );
         for (final Diagnostic d in plan.diagnostics) {
           diagnostics.add(d);
@@ -922,21 +916,6 @@ class ReportFiller {
       budget.recordRowIssue('error:$key',
           '$errors value(s) failed to evaluate and were skipped from $target');
     }
-  }
-
-  /// A copy of [v] whose group-reset reference, if it is a [GroupLevel] id, is
-  /// rewritten to that level's display name (the calculator is name-keyed).
-  static ReportVariable _withResetGroupName(
-      ReportVariable v, Map<String, String> nameOfGroupId) {
-    final String? reset = v.resetGroup;
-    if (reset == null || !nameOfGroupId.containsKey(reset)) return v;
-    return ReportVariable(
-      name: v.name,
-      expression: v.expression,
-      calculation: v.calculation,
-      resetScope: v.resetScope,
-      resetGroup: nameOfGroupId[reset],
-    );
   }
 
   /// Every published-total name declared anywhere in [scope]'s nested-scope
