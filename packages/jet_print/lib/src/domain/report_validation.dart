@@ -13,7 +13,6 @@ import '../data/binding_scope.dart';
 import '../data/data_schema.dart';
 import '../data/field_def.dart';
 import '../expression/aggregate/aggregate_functions.dart';
-import '../expression/ast.dart';
 import '../expression/expression.dart';
 import '../expression/expression_exception.dart';
 import 'band.dart';
@@ -39,7 +38,9 @@ import 'scope_total.dart';
 ///
 /// * I1 unique ids (a group's id among them; its name may repeat — I2 is
 ///   retired, #100) · I3 parseable group keys ·
-///   I4 record-blind furniture/title/summary/noData (no `$F{}`) ·
+///   I4 record-blind furniture/title/summary/noData (no `$F{}`; in the
+///   summary a field inside an inline aggregate call is folded, not bound,
+///   so only the fields outside every aggregate count) ·
 ///   I5 band `type` consistent with its slot · I6 root/nested `collectionField`
 ///   rule — reported as **errors/warnings**.
 /// * I7 representable-but-not-yet-rendered shapes (per-scope grouping; multiple
@@ -66,9 +67,10 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
 
   void claim(String id) => idCounts[id] = (idCounts[id] ?? 0) + 1;
 
-  void recordBlind(Band band) {
+  void recordBlind(Band band, {required bool aggregateSink}) {
     for (final ReportElement el in band.elements) {
-      final Set<String> fields = _recordFieldRefs(el);
+      final Set<String> fields =
+          _recordFieldRefs(el, aggregateSink: aggregateSink);
       if (fields.isNotEmpty) {
         out.add(Diagnostic(
           DiagnosticSeverity.warning,
@@ -109,44 +111,49 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
 
   // Schema-aware I8 operand check for a single sink band.
   // [scopeFields] are the schema fields visible at the band's scope.
-  // Runs only when [schema != null].
+  // Runs only when [schema != null]. A sink lifts every inline aggregate,
+  // nested or not, so each one's operand is resolved (api-friction entry 6).
   void checkOperands(Band? band, List<FieldDef> scopeFields) {
     if (band == null || schema == null) return;
     for (final ReportElement el in band.elements) {
       if (el is! TextElement || el.expression == null) continue;
-      AggregateCall? agg;
+      final List<AggregateCall> aggs;
       try {
-        agg = topLevelAggregate(Expression.parse(el.expression!).root);
+        aggs = aggregatesIn(Expression.parse(el.expression!).root);
       } on ExpressionException {
         continue;
       }
-      if (agg == null) continue;
-      // Extract the single $F{name} field ref from the aggregate's argument.
-      final Expr arg = agg.argument;
-      if (arg is! FieldRefExpr) continue;
-      final String operand = arg.name;
-      final AggregatePath path = resolveAggregatePath(scopeFields, operand);
-      switch (path) {
-        case SameScope():
-        case DescendPath():
-          break; // valid
-        case Ambiguous():
-          out.add(Diagnostic(
-            DiagnosticSeverity.error,
-            'element "${el.id}" aggregate operand "\$$operand" is ambiguous — '
-            'the same field name appears in multiple descendant collections; '
-            'use a published total to make the intent explicit',
-            elementId: el.id,
-          ));
-        case NotFound():
-          // Published-total names are injected at fill time — not in the schema.
-          if (publishedTotalNames.contains(operand)) break;
-          out.add(Diagnostic(
-            DiagnosticSeverity.error,
-            'element "${el.id}" aggregate operand "\$$operand" was not found '
-            'in the schema',
-            elementId: el.id,
-          ));
+      // Every field an operand reads is folded, so each one must resolve;
+      // `SUM($F{x} * 2)` resolves `x` just as `SUM($F{x})` does.
+      final Set<String> operands = <String>{
+        for (final AggregateCall agg in aggs)
+          ...Expression.ofRoot(agg.argument).references.fields,
+      };
+      for (final String operand in operands) {
+        final AggregatePath path = resolveAggregatePath(scopeFields, operand);
+        switch (path) {
+          case SameScope():
+          case DescendPath():
+            break; // valid
+          case Ambiguous():
+            out.add(Diagnostic(
+              DiagnosticSeverity.error,
+              'element "${el.id}" aggregate operand "\$$operand" is ambiguous — '
+              'the same field name appears in multiple descendant collections; '
+              'use a published total to make the intent explicit',
+              elementId: el.id,
+            ));
+          case NotFound():
+            // Published-total names are injected at fill time, not in the
+            // schema.
+            if (publishedTotalNames.contains(operand)) break;
+            out.add(Diagnostic(
+              DiagnosticSeverity.error,
+              'element "${el.id}" aggregate operand "\$$operand" was not found '
+              'in the schema',
+              elementId: el.id,
+            ));
+        }
       }
     }
   }
@@ -175,7 +182,8 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
     }
   }
 
-  void slotBand(Band? band, BandType expected, {bool isRecordBlind = false}) {
+  void slotBand(Band? band, BandType expected,
+      {bool isRecordBlind = false, bool aggregateSink = false}) {
     if (band == null) return;
     claim(band.id);
     if (band.type != expected) {
@@ -186,7 +194,7 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
         elementId: band.id,
       ));
     }
-    if (isRecordBlind) recordBlind(band);
+    if (isRecordBlind) recordBlind(band, aggregateSink: aggregateSink);
   }
 
   // [chain] is the list of DetailScopes from root down to (but NOT including)
@@ -343,7 +351,8 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
 
   // Body once-bands (record-blind) + the scope tree.
   slotBand(def.body.title, BandType.title, isRecordBlind: true);
-  slotBand(def.body.summary, BandType.summary, isRecordBlind: true);
+  slotBand(def.body.summary, BandType.summary,
+      isRecordBlind: true, aggregateSink: true);
   slotBand(def.body.noData, BandType.noData, isRecordBlind: true);
   // Only the summary band is an aggregate sink among the once-bands.
   aggregateBand(def.body.title, supported: false);
@@ -550,14 +559,19 @@ void _validateCrosstab(
 /// The data fields an element binds to (record-dependent). A malformed
 /// expression yields no field reference here (its parse failure surfaces via a
 /// group key or render diagnostic, not as a phantom binding).
-Set<String> _recordFieldRefs(ReportElement el) {
+///
+/// In an [aggregateSink] band the synthesizer lifts every inline aggregate,
+/// wherever it sits in the expression, so only the fields read outside every
+/// aggregate call count (api-friction entry 6).
+Set<String> _recordFieldRefs(ReportElement el, {required bool aggregateSink}) {
   if (el is TextElement && el.expression != null) {
     try {
       final Expression expr = Expression.parse(el.expression!);
-      // A top-level inline aggregate (e.g. `SUM($F{total})`) folds its operand
-      // over the data rows — its inner field refs are aggregate operands, not a
-      // record-blind binding, so they don't count here. (Bands that aren't an
-      // aggregate sink reject the aggregate itself via the I8 check.)
+      if (aggregateSink) return fieldRefsOutsideAggregates(expr.root);
+      // Elsewhere a top-level inline aggregate (e.g. `SUM($F{total})`) is
+      // rejected as a whole by the I8 check, so its operand is not reported a
+      // second time here. A nested one is not expanded outside a sink, so its
+      // operand really does read a row that is not there.
       if (topLevelAggregate(expr.root) != null) return const <String>{};
       return expr.references.fields;
     } on ExpressionException {

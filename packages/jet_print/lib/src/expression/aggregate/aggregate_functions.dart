@@ -59,3 +59,68 @@ AggregateCall? topLevelAggregate(Expr expr) {
   if (calc == null) return null;
   return AggregateCall(calc, expr.arguments.single);
 }
+
+/// The `$F{}` fields [expr] reads outside every inline aggregate call: what a
+/// band with no data row would have to bind directly. An aggregate's operand is
+/// folded over the data rows, so its fields are not direct bindings, wherever
+/// the call sits in the expression (`SUM($F{debit}) - SUM($F{credit})`,
+/// `ROUND(AVG($F{rate}), 2)`) — which is where the aggregate synthesizer lifts
+/// it from too (api-friction entry 6).
+Set<String> fieldRefsOutsideAggregates(Expr expr) => switch (expr) {
+      FieldRefExpr(:final String name) => <String>{name},
+      LiteralExpr() || ParamRefExpr() || VariableRefExpr() => const <String>{},
+      UnaryExpr(:final Expr operand) => fieldRefsOutsideAggregates(operand),
+      BinaryExpr(:final Expr left, :final Expr right) => <String>{
+          ...fieldRefsOutsideAggregates(left),
+          ...fieldRefsOutsideAggregates(right),
+        },
+      ConditionalExpr(
+        :final Expr condition,
+        :final Expr thenBranch,
+        :final Expr elseBranch,
+      ) =>
+        <String>{
+          ...fieldRefsOutsideAggregates(condition),
+          ...fieldRefsOutsideAggregates(thenBranch),
+          ...fieldRefsOutsideAggregates(elseBranch),
+        },
+      CallExpr() when topLevelAggregate(expr) != null => const <String>{},
+      CallExpr(:final List<Expr> arguments) => <String>{
+          for (final Expr a in arguments) ...fieldRefsOutsideAggregates(a),
+        },
+    };
+
+/// Every inline aggregate call in [expr], wherever it sits (`SUM($F{debit}) -
+/// SUM($F{credit})` yields both), in source order. An aggregate's own argument
+/// is not searched further. These are the calls the synthesizer lifts from a
+/// sink band, so they are the operands validation resolves against the schema
+/// (api-friction entry 6).
+List<AggregateCall> aggregatesIn(Expr expr) {
+  final AggregateCall? call = topLevelAggregate(expr);
+  if (call != null) return <AggregateCall>[call];
+  return switch (expr) {
+    FieldRefExpr() ||
+    LiteralExpr() ||
+    ParamRefExpr() ||
+    VariableRefExpr() =>
+      const <AggregateCall>[],
+    UnaryExpr(:final Expr operand) => aggregatesIn(operand),
+    BinaryExpr(:final Expr left, :final Expr right) => <AggregateCall>[
+        ...aggregatesIn(left),
+        ...aggregatesIn(right),
+      ],
+    ConditionalExpr(
+      :final Expr condition,
+      :final Expr thenBranch,
+      :final Expr elseBranch,
+    ) =>
+      <AggregateCall>[
+        ...aggregatesIn(condition),
+        ...aggregatesIn(thenBranch),
+        ...aggregatesIn(elseBranch),
+      ],
+    CallExpr(:final List<Expr> arguments) => <AggregateCall>[
+        for (final Expr a in arguments) ...aggregatesIn(a),
+      ],
+  };
+}

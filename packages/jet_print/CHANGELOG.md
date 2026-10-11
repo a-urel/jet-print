@@ -72,6 +72,24 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   follow `Intl.getCurrentLocale()`, as `FORMAT` does.
   ([#97](https://github.com/a-urel/jet-print/issues/97))
 
+### Fixed
+
+- **`validate` no longer warns about an aggregate nested in a summary
+  expression.** `SUM($F{debit}) - SUM($F{credit})` or `ROUND(AVG($F{rate}), 2)`
+  in the summary band drew a record-blind-field warning for each operand,
+  though the synthesizer folds them over the data rows. A summary element now
+  counts only the fields it reads outside every aggregate call. In other
+  record-blind bands, where aggregates are not computed, the warning stands.
+  With a schema, every field an aggregate's operand reads is now resolved,
+  whether the aggregate is nested or the operand is compound, so
+  `SUM($F{typo}) + 1` or `SUM($F{typo} * 2)` in a summary or footer reports
+  the unknown field. (api-friction entry 6)
+- **An inline aggregate written with a space before its parenthesis is
+  computed.** `SUM ($F{amount})` parsed, and passed `validate`, but the
+  aggregate synthesizer only lifted `SUM(` with no space, so the summary or
+  footer printed an "Unknown function" error. Whitespace there is now
+  accepted, as the parser accepts it.
+
 ## 0.1.1
 
 Documentation and package metadata only. Apart from `jetPrintVersion`, which
