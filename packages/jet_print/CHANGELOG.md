@@ -72,6 +72,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   constructor paints with the bundled default font, as it did when `fonts` was
   omitted. ([#102](https://github.com/a-urel/jet-print/issues/102))
 
+- **Breaking (behaviour): `validate` rejects a band in a reserved furniture
+  slot.** `PageFurniture.columnHeader`, `columnFooter` and `background` were
+  never laid out; a band there drew nothing but an info diagnostic at render,
+  yet `validate` accepted it. Now each is an error, so the slots can be laid
+  out in a later release without changing the output of a definition
+  `validate` accepts. The API, the schema and render are unchanged.
+  ([#96](https://github.com/a-urel/jet-print/issues/96))
+
 - **Breaking (output): a total that should foot to zero prints `0,00`, not
   `-0,00`.** Numbers are doubles, so a column such as `0.3 - 0.1 - 0.2` sums
   to about `-2.8e-17`, and a number pattern printed any value below zero with

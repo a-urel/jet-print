@@ -10,7 +10,8 @@ enum BandType {
   /// Repeated at the top of every page.
   pageHeader,
 
-  /// Repeated above the detail section on each page/column.
+  /// **Reserved**: meant to repeat above the detail section on each
+  /// page/column, but not laid out yet; `validate` rejects a band in its slot.
   columnHeader,
 
   /// Printed when a group's key changes (before its details).
@@ -22,7 +23,8 @@ enum BandType {
   /// Printed when a group ends (after its details).
   groupFooter,
 
-  /// Repeated below the detail section on each page/column.
+  /// **Reserved**: meant to repeat below the detail section on each
+  /// page/column, but not laid out yet; `validate` rejects a band in its slot.
   columnFooter,
 
   /// Repeated at the bottom of every page.
@@ -31,7 +33,9 @@ enum BandType {
   /// Printed once at the very end of the report.
   summary,
 
-  /// Drawn behind every page (watermarks, frames).
+  /// **Reserved**: meant to draw behind every page (frames), but not laid out
+  /// yet; `validate` rejects a band in its slot. For a watermark use
+  /// `PageFurniture.watermark`.
   background,
 
   /// Printed instead of details when the data set is empty.

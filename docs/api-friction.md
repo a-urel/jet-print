@@ -62,22 +62,30 @@ held.
    *`src/expression/format/apply_jet_format.dart` → `_formatNumber`;
    `src/expression/value.dart` → `JetNumber`.*
 
-2. **`PageFurniture.columnHeader` is public, exported, and draws nothing.**
-   Repeating column captions on every page is the defining requirement of a
-   tabular multi-page report. The slot exists, `BandType.columnHeader` and
-   `columnFooter` exist, both are exported — and the layouter does not lay them
-   out; each one present records an *info* diagnostic.
-   [`03-pagination.md`](03-pagination.md) says so in one clause. The only
-   working route is `pageHeader`, which is record-blind, so the captions can
-   never be data-driven. A consumer discovers this at render time by going
-   looking for a diagnostic, rather than from a compile error or a dartdoc.
-   *`src/domain/report_definition.dart` → `PageFurniture.columnHeader`,
-   `.columnFooter`, `.background`; `src/rendering/layout/report_layouter.dart`.*
+2. **`PageFurniture.columnHeader` was public, exported, and drew nothing.**
+   *Settled* in [#96](https://github.com/a-urel/jet-print/issues/96) by
+   rejecting it in `validate`. Repeating column captions on every page is the
+   defining requirement of a tabular multi-page report. The slot exists,
+   `BandType.columnHeader` and `columnFooter` exist, both are exported, and the
+   layouter does not lay them out; each one present records an *info*
+   diagnostic. The only working route is `pageHeader`, which is record-blind,
+   so the captions can never be data-driven. A consumer discovered this at
+   render time by going looking for a diagnostic, rather than from a compile
+   error or a dartdoc.
 
-   **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*,
-   [#96](https://github.com/a-urel/jet-print/issues/96). Removing the slots
-   changes the surface; implementing them changes the output of reports that set
-   them.
+   The three reserved slots, `columnHeader`, `columnFooter` and `background`,
+   stay in the API and the schema, and `validate` now reports a band in any of
+   them as an error (I10). That is what keeps a later implementation additive:
+   [`0004`](decisions/0004-what-1-0-must-settle.md) promises output only for
+   definitions `validate` accepts, and accepting what it rejected is not
+   breaking. Implementing them now would have bought little, since in a
+   single-column report a column header is a second page header; its point is
+   multi-column pages, which do not exist yet. Removing them would have broken
+   the API for the same freedom. Their dartdocs and `BandType`'s now say they
+   are reserved and rejected.
+   *`src/domain/report_validation.dart` → I10;
+   `src/domain/report_definition.dart` → `PageFurniture.columnHeader`,
+   `.columnFooter`, `.background`.*
 
 3. **A per-page subtotal cannot be expressed.** A Turkish mizan running to
    several pages carries *nakli yekûn* — carried forward at the foot of each

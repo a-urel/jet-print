@@ -45,13 +45,17 @@ class PageFurniture with ValueEquality {
   /// Laid out at the bottom of every page.
   final Band? pageFooter;
 
-  /// **Reserved** — not laid out (future multi-column).
+  /// **Reserved** — not laid out (future multi-column), so `validate` reports
+  /// a band here as an error. The slot is kept so a later build can lay it
+  /// out without breaking the API.
   final Band? columnHeader;
 
-  /// **Reserved** — not laid out (future multi-column).
+  /// **Reserved** — not laid out (future multi-column), so `validate` reports
+  /// a band here as an error, as for [columnHeader].
   final Band? columnFooter;
 
-  /// **Reserved** — not laid out (future frame/border layer).
+  /// **Reserved** — not laid out (future frame/border layer), so `validate`
+  /// reports a band here as an error, as for [columnHeader].
   final Band? background;
 
   /// The page watermark (faint text/image behind content), or null. Unlike the
