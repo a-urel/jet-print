@@ -205,11 +205,6 @@ held.
     *`src/rendering/engine/jet_report_engine.dart` → `JetReportEngine`;
     `src/domain/diagnostic.dart` → `DiagnosticQueries.hasErrors`.*
 
-    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *before 1.0*,
-    [#98](https://github.com/a-urel/jet-print/issues/98). Whether render
-    validates is a default. A `hasErrors` on the author-time diagnostics is
-    additive.
-
 12. **One schema, three incompatible spellings.** A consumer needs
     `List<FieldDef>` for the in-memory data source, a `JetDataSchema` for
     `validate`, and a `Set<String>` for `RenderOptions.knownFields`. The data
