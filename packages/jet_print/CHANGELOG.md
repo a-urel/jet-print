@@ -8,6 +8,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **Breaking (behaviour): a group is keyed by its id; its name is a label.**
+  `ReportVariable.resetGroup` must name a `GroupLevel` by `id`. A reset that
+  names a group by its `name`, which resolved before when the two differed,
+  is now a validation error and resets nothing. Two groups in a scope may
+  share a name, which `validate` no longer reports. Renaming a group changes
+  nothing the report prints, except through a print callback that reads
+  `ElementPrintContext.bandName`, which still carries the name. Saved reports are unaffected: the 1→2 migration already wrote
+  `resetGroup` as an id. A crosstab's synthetic group now collides with a
+  report group only by id. ([#100](https://github.com/a-urel/jet-print/issues/100))
+
 - **Breaking (API): `RenderedPage.frame` and
   `JetReportDesignerController.activeGuides` are removed.** Both had types
   the barrel never exported: `frame` the engine's internal display list,

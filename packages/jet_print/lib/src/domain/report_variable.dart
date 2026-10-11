@@ -79,9 +79,10 @@ class ReportVariable with ValueEquality {
   /// The group whose break resets this variable (when [resetScope] is
   /// [VariableResetScope.group]); otherwise `null`.
   ///
-  /// In the legacy `ReportTemplate` model this is a `ReportGroup` **name**. In
-  /// the reified model it is a `GroupLevel` **id**; the
-  /// 1→2 migration rewrites each name to the matching group id.
+  /// It is a `GroupLevel` **id**; a group's name is not a reference, and a
+  /// reset naming no group id is a validation error (#100). Reports saved by
+  /// the legacy `ReportTemplate` model named the group, and the 1→2
+  /// migration rewrites each such name to the matching group id.
   final String? resetGroup;
 
   /// Serializes to a JSON-safe map (defaults omitted).

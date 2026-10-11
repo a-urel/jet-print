@@ -103,16 +103,17 @@ ReportDefinition _defWithNestedCrosstab() {
   );
 }
 
-// A crosstab whose synthetic group name ("ct1#ct") collides with an
-// explicitly-authored report-level group of the same name.
-ReportDefinition _defWithNameCollision() => ReportDefinition(
+// A crosstab whose synthetic group id ("ct1#ct") collides with an
+// explicitly-authored report-level group of the same id. Only the id is a key:
+// a group merely NAMED "ct1#ct" collides with nothing (#100).
+ReportDefinition _defWithIdCollision() => ReportDefinition(
       name: 'ct-collide',
       page: PageFormat.a4Portrait,
       body: ReportBody(
         root: DetailScope(
           id: 'root',
           groups: const <GroupLevel>[
-            GroupLevel(id: 'g/collide', name: 'ct1#ct', key: "'x'"),
+            GroupLevel(id: 'ct1#ct', name: 'Collides', key: "'x'"),
           ],
           children: <ScopeNode>[
             CrosstabNode(baseCrosstab),
@@ -122,9 +123,9 @@ ReportDefinition _defWithNameCollision() => ReportDefinition(
       ),
     );
 
-bool _isGroupNameCollisionDiagnostic(Diagnostic d) =>
+bool _isGroupIdCollisionDiagnostic(Diagnostic d) =>
     d.severity == DiagnosticSeverity.error &&
-    d.message.contains('needs the synthetic group name');
+    d.message.contains('needs the synthetic group id');
 
 JetInMemoryDataSource _rows4() => JetInMemoryDataSource(<Map<String, Object?>>[
       <String, Object?>{'region': 'North', 'quarter': 'Q1', 'amount': 10},
@@ -255,16 +256,32 @@ void main() {
           reason: 'ctA was registered first, so its bands open the body');
     });
 
-    test('a group-name collision routes the PLAN diagnostic to the sink', () {
-      // planCrosstab raises an error when its synthetic group name
+    test('a group-id collision routes the PLAN diagnostic to the sink', () {
+      // planCrosstab raises an error when its synthetic group id
       // ("ct1#ct") is already taken by a report-level group.
       final ReportDiagnostics diagnostics =
-          _fillResult(_defWithNameCollision(), _rows4()).diagnostics;
-      expect(diagnostics.entries.any(_isGroupNameCollisionDiagnostic), isTrue);
+          _fillResult(_defWithIdCollision(), _rows4()).diagnostics;
+      expect(diagnostics.entries.any(_isGroupIdCollisionDiagnostic), isTrue);
+    });
+
+    test('a report group merely NAMED like the synthetic id does not collide',
+        () {
+      // The name is a display label (#100); only the id is matched.
+      final ReportDefinition def = _defWithIdCollision();
+      final ReportDefinition renamed = def.copyWith(
+        body: def.body.copyWith(
+          root: def.body.root.copyWith(groups: const <GroupLevel>[
+            GroupLevel(id: 'g/other', name: 'ct1#ct', key: "'x'"),
+          ]),
+        ),
+      );
+      final ReportDiagnostics diagnostics =
+          _fillResult(renamed, _rows4()).diagnostics;
+      expect(diagnostics.entries.any(_isGroupIdCollisionDiagnostic), isFalse);
     });
 
     test(
-        'a group-name collision is reported even over an EMPTY source — '
+        'a group-id collision is reported even over an EMPTY source — '
         'planCrosstab raises it before it ever looks at the matrix', () {
       // planCrosstab's collision check (crosstab_planner.dart) runs before it
       // touches the aggregated matrix at all, so it must fire whether or not
@@ -272,9 +289,9 @@ void main() {
       // `hadRows` path would report this with 4 rows and silently drop it
       // with 0 — an observable, data-dependent difference in diagnostics for
       // the exact same authored report.
-      final ReportDiagnostics diagnostics = _fillResult(_defWithNameCollision(),
+      final ReportDiagnostics diagnostics = _fillResult(_defWithIdCollision(),
           JetInMemoryDataSource(const <Map<String, Object?>>[])).diagnostics;
-      expect(diagnostics.entries.any(_isGroupNameCollisionDiagnostic), isTrue);
+      expect(diagnostics.entries.any(_isGroupIdCollisionDiagnostic), isTrue);
     });
 
     test('a 50k+ cell matrix routes the MATRIX diagnostic to the sink', () {

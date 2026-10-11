@@ -760,12 +760,11 @@ void main() {
     expect((res.report.bands.first.elements.single as TextElement).text, 'fb');
   });
 
-  test('duplicate group names are rejected by author-time validation', () {
+  test('duplicate group names are not an error: the id is the key (#100)', () {
     // The legacy "fill throws ReportFormatException on duplicate group names"
-    // contract moved to author-time validate() in the reified model, which
-    // reports the same invariant violation as an error Diagnostic (so the
-    // designer can hold a transient duplicate mid-rename without exceptions).
-    // Intent preserved: duplicate group names are detected and rejected.
+    // contract moved to author-time validate(), and then went away: a group is
+    // keyed by its id, which I1 keeps unique, so a repeated name is a label
+    // that collides with nothing. group_identity_test renders such a report.
     final ReportDefinition def = ReportDefinition(
       name: 'demo',
       page: PageFormat.a4Portrait,
@@ -781,10 +780,9 @@ void main() {
     );
     final List<domain.Diagnostic> issues = validate(def);
     expect(
-        issues.any((domain.Diagnostic d) =>
-            d.severity == domain.DiagnosticSeverity.error &&
-            d.message.contains('duplicate group name "region"')),
-        isTrue);
+        issues.where((domain.Diagnostic d) =>
+            d.severity == domain.DiagnosticSeverity.error),
+        isEmpty);
   });
 
   test('groups declared but no group bands emit no group bands (007b parity)',

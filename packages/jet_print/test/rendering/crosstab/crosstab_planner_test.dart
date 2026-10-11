@@ -341,12 +341,12 @@ void main() {
       }
     });
 
-    test('a colliding user group name is an error diagnostic', () {
+    test('a colliding user group id is an error diagnostic', () {
       final CrosstabPlan plan = planCrosstab(ct, matrix,
-          availableWidth: 500, takenGroupNames: <String>{'ct1#ct'});
+          availableWidth: 500, takenGroupIds: <String>{'ct1#ct'});
       expect(
         plan.diagnostics.map((Diagnostic d) => d.message),
-        anyElement(contains('group name')),
+        anyElement(contains('group id')),
       );
       expect(
         plan.diagnostics.map((Diagnostic d) => d.severity),

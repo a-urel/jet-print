@@ -181,7 +181,7 @@ void main() {
 
   test('validate() is public and returns Diagnostics for the reified model',
       () {
-    // A clean definition yields no errors; a duplicate group name is flagged.
+    // A clean definition yields no errors; a duplicate group id is flagged.
     expect(
       validate(_detailDef())
           .where((Diagnostic d) => d.severity == DiagnosticSeverity.error),
@@ -194,8 +194,8 @@ void main() {
         root: DetailScope(
           id: 'root',
           groups: <GroupLevel>[
-            GroupLevel(id: 'g1', name: 'dup', key: r'$F{a}'),
-            GroupLevel(id: 'g2', name: 'dup', key: r'$F{b}'),
+            GroupLevel(id: 'dup', name: 'A', key: r'$F{a}'),
+            GroupLevel(id: 'dup', name: 'B', key: r'$F{b}'),
           ],
         ),
       ),

@@ -104,7 +104,9 @@ void main() {
           isTrue);
     });
 
-    test('I2 flags a duplicate group name within a scope', () {
+    // I2 is retired (#100): a group is keyed by its id, so a repeated name is
+    // a label that collides with nothing. A repeated id is I1's.
+    test('a duplicate group name within a scope is not an error', () {
       final ReportDefinition def = _valid(
         body: const ReportBody(
           root: DetailScope(id: 'root', groups: <GroupLevel>[
@@ -113,7 +115,23 @@ void main() {
           ]),
         ),
       );
-      expect(_has(validate(def), DiagnosticSeverity.error, 'name'), isTrue);
+      expect(
+          validate(def)
+              .where((Diagnostic d) => d.severity == DiagnosticSeverity.error),
+          isEmpty);
+    });
+
+    test('I1 flags a duplicate group id', () {
+      final ReportDefinition def = _valid(
+        body: const ReportBody(
+          root: DetailScope(id: 'root', groups: <GroupLevel>[
+            GroupLevel(id: 'g', name: 'A', key: '1'),
+            GroupLevel(id: 'g', name: 'B', key: '2'),
+          ]),
+        ),
+      );
+      expect(_has(validate(def), DiagnosticSeverity.error, 'duplicate id'),
+          isTrue);
     });
 
     test('I3 flags an unparseable group key', () {
@@ -181,10 +199,11 @@ void main() {
             isTrue);
       });
 
-      // Review on #70: a reference may be a group's id or its name, so one that
-      // is the name of one group and the id of another is ambiguous — the fill
-      // resolves it by id and could reset the wrong group.
-      test('flags a group reset that matches two groups', () {
+      // #100: a reset names its group by id. A reference that is one group's
+      // id and another's name is therefore not ambiguous (#70 flagged it when
+      // names were references too), and a reference by name alone is not one.
+      test('resolves a group reset by id even when it is another group name',
+          () {
         final ReportDefinition def = _valid(
           body: const ReportBody(
             root: DetailScope(id: 'root', groups: <GroupLevel>[
@@ -199,8 +218,25 @@ void main() {
               resetScope: VariableResetScope.group,
               resetGroup: 'region'),
         ]);
-        expect(
-            _has(validate(def), DiagnosticSeverity.error, 'ambiguous'), isTrue);
+        expect(validate(def), isEmpty);
+      });
+
+      test('flags a group reset that names a group by its name', () {
+        final ReportDefinition def = _valid(
+          body: const ReportBody(
+            root: DetailScope(id: 'root', groups: <GroupLevel>[
+              GroupLevel(id: 'g1', name: 'region', key: '1'),
+            ]),
+          ),
+        ).copyWith(variables: const <ReportVariable>[
+          ReportVariable(
+              name: 'v',
+              expression: '1',
+              resetScope: VariableResetScope.group,
+              resetGroup: 'region'),
+        ]);
+        expect(_has(validate(def), DiagnosticSeverity.error, 'not a group id'),
+            isTrue);
       });
 
       test('flags a group reset that names no group', () {

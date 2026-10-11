@@ -48,7 +48,7 @@ void main() {
       c.dispose();
     });
 
-    test('duplicate group names are flagged as an error', () {
+    test('duplicate group ids are flagged as an error', () {
       final ReportDefinition def = ReportDefinition(
         name: 'r',
         page: PageFormat.a4Portrait,
@@ -56,8 +56,8 @@ void main() {
           root: DetailScope(
             id: 'root',
             groups: const <GroupLevel>[
-              GroupLevel(id: 'g1', name: 'dup', key: r'$F{a}'),
-              GroupLevel(id: 'g2', name: 'dup', key: r'$F{b}'),
+              GroupLevel(id: 'dup', name: 'A', key: r'$F{a}'),
+              GroupLevel(id: 'dup', name: 'B', key: r'$F{b}'),
             ],
           ),
         ),

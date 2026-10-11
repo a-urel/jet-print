@@ -224,7 +224,7 @@ class CrosstabPlan {
   final List<GroupLevel> syntheticGroups;
 
   /// Pure-domain diagnostics (packing pathologies from [sliceColumns], and a
-  /// group-name collision). The rendering layer routes these into its sink.
+  /// group-id collision). The rendering layer routes these into its sink.
   final List<Diagnostic> diagnostics;
 
   @override
@@ -235,27 +235,27 @@ class CrosstabPlan {
 /// Plans [ct] over its aggregated matrix [m] into bands that fit
 /// [availableWidth].
 ///
-/// The plan carries **one** synthetic [GroupLevel] named `'<ct.id>#ct'` for
+/// The plan carries **one** synthetic [GroupLevel], id `'<ct.id>#ct'`, for
 /// the whole crosstab — not one per slice. The layouter breaks on
-/// `startNewPage` only for the *second and later* instances of a group name
-/// (`report_layouter.dart`: `!seenStartNewPageGroup.add(name)`, so the first
+/// `startNewPage` only for the *second and later* instances of a group id
+/// (`report_layouter.dart`: `!seenStartNewPageGroup.add(id)`, so the first
 /// `add` returns true and does not break), so a group per slice would have
 /// one instance each and would never break, silently killing horizontal
 /// continuation. With one group, slice 0 does not break and slices 1..N each
 /// start a fresh page. [GroupLevel.key] is a literal-string stub: the
-/// layouter keys its maps on `name` and never evaluates a synthetic group's
+/// layouter keys its maps on `id` and never evaluates a synthetic group's
 /// key.
 ///
-/// When [takenGroupNames] already holds that name, an **error**
+/// When [takenGroupIds] already holds that id, an **error**
 /// [Diagnostic] is raised. Not because the user-authored group would lose —
-/// the opposite: `report_layouter.dart` builds its name-keyed lookup as
+/// the opposite: `report_layouter.dart` builds its id-keyed lookup as
 /// `{...definitionGroups, ...syntheticGroups}`, and a Dart map literal's
 /// later entry wins a shared key, so the **synthetic** group would silently
 /// win instead, and the user-authored group's own header/footer bands would
 /// then run under the crosstab's `startNewPage`/`reprintHeaderOnEachPage`
 /// rather than their own. Planning still completes regardless — the engine
 /// renders rather than crashes — but the collision is flagged so the author
-/// renames one of the two.
+/// changes the authored group's id.
 ///
 /// The trailing zero-height `groupFooter` is required, not decorative:
 /// nothing else would close the group. An open group pops only on a
@@ -269,15 +269,15 @@ CrosstabPlan planCrosstab(
   Crosstab ct,
   CrosstabMatrix m, {
   required double availableWidth,
-  Set<String> takenGroupNames = const <String>{},
+  Set<String> takenGroupIds = const <String>{},
 }) {
   final List<Diagnostic> diagnostics = <Diagnostic>[];
   final String groupName = '${ct.id}#ct';
-  if (takenGroupNames.contains(groupName)) {
+  if (takenGroupIds.contains(groupName)) {
     diagnostics.add(Diagnostic(
       DiagnosticSeverity.error,
-      'crosstab "${ct.id}" needs the synthetic group name "$groupName", '
-      'which a report group already uses; rename that group',
+      'crosstab "${ct.id}" needs the synthetic group id "$groupName", '
+      'which a report group already uses; change that group\'s id',
     ));
   }
   final GroupLevel synthetic = GroupLevel(
