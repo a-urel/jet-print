@@ -66,9 +66,10 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
 
   void claim(String id) => idCounts[id] = (idCounts[id] ?? 0) + 1;
 
-  void recordBlind(Band band) {
+  void recordBlind(Band band, {required bool aggregateSink}) {
     for (final ReportElement el in band.elements) {
-      final Set<String> fields = _recordFieldRefs(el);
+      final Set<String> fields =
+          _recordFieldRefs(el, aggregateSink: aggregateSink);
       if (fields.isNotEmpty) {
         out.add(Diagnostic(
           DiagnosticSeverity.warning,
@@ -175,7 +176,8 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
     }
   }
 
-  void slotBand(Band? band, BandType expected, {bool isRecordBlind = false}) {
+  void slotBand(Band? band, BandType expected,
+      {bool isRecordBlind = false, bool aggregateSink = false}) {
     if (band == null) return;
     claim(band.id);
     if (band.type != expected) {
@@ -186,7 +188,7 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
         elementId: band.id,
       ));
     }
-    if (isRecordBlind) recordBlind(band);
+    if (isRecordBlind) recordBlind(band, aggregateSink: aggregateSink);
   }
 
   // [chain] is the list of DetailScopes from root down to (but NOT including)
@@ -343,7 +345,8 @@ List<Diagnostic> validate(ReportDefinition def, {JetDataSchema? schema}) {
 
   // Body once-bands (record-blind) + the scope tree.
   slotBand(def.body.title, BandType.title, isRecordBlind: true);
-  slotBand(def.body.summary, BandType.summary, isRecordBlind: true);
+  slotBand(def.body.summary, BandType.summary,
+      isRecordBlind: true, aggregateSink: true);
   slotBand(def.body.noData, BandType.noData, isRecordBlind: true);
   // Only the summary band is an aggregate sink among the once-bands.
   aggregateBand(def.body.title, supported: false);
@@ -550,14 +553,19 @@ void _validateCrosstab(
 /// The data fields an element binds to (record-dependent). A malformed
 /// expression yields no field reference here (its parse failure surfaces via a
 /// group key or render diagnostic, not as a phantom binding).
-Set<String> _recordFieldRefs(ReportElement el) {
+///
+/// In an [aggregateSink] band the synthesizer lifts every inline aggregate,
+/// wherever it sits in the expression, so only the fields read outside every
+/// aggregate call count (api-friction entry 6).
+Set<String> _recordFieldRefs(ReportElement el, {required bool aggregateSink}) {
   if (el is TextElement && el.expression != null) {
     try {
       final Expression expr = Expression.parse(el.expression!);
-      // A top-level inline aggregate (e.g. `SUM($F{total})`) folds its operand
-      // over the data rows — its inner field refs are aggregate operands, not a
-      // record-blind binding, so they don't count here. (Bands that aren't an
-      // aggregate sink reject the aggregate itself via the I8 check.)
+      if (aggregateSink) return fieldRefsOutsideAggregates(expr.root);
+      // Elsewhere a top-level inline aggregate (e.g. `SUM($F{total})`) is
+      // rejected as a whole by the I8 check, so its operand is not reported a
+      // second time here. A nested one is not expanded outside a sink, so its
+      // operand really does read a row that is not there.
       if (topLevelAggregate(expr.root) != null) return const <String>{};
       return expr.references.fields;
     } on ExpressionException {

@@ -59,3 +59,33 @@ AggregateCall? topLevelAggregate(Expr expr) {
   if (calc == null) return null;
   return AggregateCall(calc, expr.arguments.single);
 }
+
+/// The `$F{}` fields [expr] reads outside every inline aggregate call: what a
+/// band with no data row would have to bind directly. An aggregate's operand is
+/// folded over the data rows, so its fields are no binding, wherever the call
+/// sits in the expression (`SUM($F{debit}) - SUM($F{credit})`,
+/// `ROUND(AVG($F{rate}), 2)`) — which is where the aggregate synthesizer lifts
+/// it from too (api-friction entry 6).
+Set<String> fieldRefsOutsideAggregates(Expr expr) => switch (expr) {
+      FieldRefExpr(:final String name) => <String>{name},
+      LiteralExpr() || ParamRefExpr() || VariableRefExpr() => const <String>{},
+      UnaryExpr(:final Expr operand) => fieldRefsOutsideAggregates(operand),
+      BinaryExpr(:final Expr left, :final Expr right) => <String>{
+          ...fieldRefsOutsideAggregates(left),
+          ...fieldRefsOutsideAggregates(right),
+        },
+      ConditionalExpr(
+        :final Expr condition,
+        :final Expr thenBranch,
+        :final Expr elseBranch,
+      ) =>
+        <String>{
+          ...fieldRefsOutsideAggregates(condition),
+          ...fieldRefsOutsideAggregates(thenBranch),
+          ...fieldRefsOutsideAggregates(elseBranch),
+        },
+      CallExpr() when topLevelAggregate(expr) != null => const <String>{},
+      CallExpr(:final List<Expr> arguments) => <String>{
+          for (final Expr a in arguments) ...fieldRefsOutsideAggregates(a),
+        },
+    };

@@ -72,6 +72,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   follow `Intl.getCurrentLocale()`, as `FORMAT` does.
   ([#97](https://github.com/a-urel/jet-print/issues/97))
 
+### Fixed
+
+- **`validate` no longer warns about an aggregate nested in a summary
+  expression.** `SUM($F{debit}) - SUM($F{credit})` or `ROUND(AVG($F{rate}), 2)`
+  in the summary band drew a record-blind-field warning for each operand,
+  though the synthesizer folds them over the data rows. A summary element now
+  counts only the fields it reads outside every aggregate call. In other
+  record-blind bands, where aggregates are not computed, the warning stands.
+  (api-friction entry 6)
+
 ## 0.1.1
 
 Documentation and package metadata only. Apart from `jetPrintVersion`, which

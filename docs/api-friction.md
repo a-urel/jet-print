@@ -117,25 +117,18 @@ held.
    for a repeated key would change what a render reports, so if one is wanted it
    lands in P3 too.
 
-6. **`validate()` warns about the natural way to write a derived total.**
-   `SUM($F{borc}) - SUM($F{alacak})` in a summary band draws two
-   record-blind-field warnings. They are wrong: those are aggregate operands,
-   and the synthesizer folds them correctly. The exemption fires only when the
-   aggregate is the *whole* expression, while the synthesizer explicitly
-   supports an aggregate nested inside surrounding arithmetic — two parts of the
-   library disagree about the same string. The workaround is non-obvious
-   (rewrite as one aggregate over a compound operand). A host that follows
-   entry 11 and asserts on `validate()` must filter or special-case these.
-   The pilot keeps the natural form in one cell so the evidence survives.
+6. **`validate()` warned about the natural way to write a derived total.**
+   *Fixed* by counting, in the summary band, only the fields an element reads
+   outside every aggregate call. `SUM($F{borc}) - SUM($F{alacak})` in a summary
+   band drew two record-blind-field warnings, though those are aggregate
+   operands and the synthesizer folds them correctly: the exemption fired only
+   when the aggregate was the *whole* expression, while the synthesizer lifts an
+   aggregate from inside surrounding arithmetic or a scalar call. The two now
+   agree. In other record-blind bands an aggregate is not computed, so its
+   operand still warns. It was settled before entry 11, as its triage asked.
    *`src/domain/report_validation.dart` → `_recordFieldRefs`;
-   `src/expression/aggregate/aggregate_synthesizer.dart` →
-   `_expandInlineAggregates`.*
-
-   **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *P3, defect
-   fix*. It removes a false warning from `validate`; no render changes. If entry
-   11 is settled by making render validate, this has to be fixed first: the
-   warnings would then be render diagnostics, and removing them after 1.0 would
-   change output.
+   `src/expression/aggregate/aggregate_functions.dart` →
+   `fieldRefsOutsideAggregates`.*
 
 7. **`UPPER` and `LOWER` were locale-blind, and wrong in Turkish.** *Fixed*
    in [#97](https://github.com/a-urel/jet-print/issues/97), by following the

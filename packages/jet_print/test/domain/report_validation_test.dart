@@ -288,6 +288,58 @@ void main() {
       expect(_has(validate(def), DiagnosticSeverity.warning, 'field'), isTrue);
     });
 
+    // api-friction entry 6: the synthesizer lifts an aggregate wherever it
+    // sits in a summary expression, so its operands are no binding there.
+    group('I4 in the summary band (an aggregate sink)', () {
+      List<Diagnostic> summary(String expression) => validate(_valid(
+            body: ReportBody(
+              summary: Band(
+                id: 'body/summary',
+                type: BandType.summary,
+                height: 20,
+                elements: <ReportElement>[_txt('s', expression: expression)],
+              ),
+              root: const DetailScope(id: 'root'),
+            ),
+          ));
+
+      for (final String expression in <String>[
+        r'SUM($F{debit})',
+        r'SUM($F{debit}) - SUM($F{credit})',
+        r'ROUND(AVG($F{rate}), 2)',
+        r'COUNT($F{id}) > 0 ? MAX($F{amount}) : 0',
+      ]) {
+        test('an aggregate operand is not a binding: $expression', () {
+          expect(summary(expression), isEmpty);
+        });
+      }
+
+      test('a field outside every aggregate is still flagged', () {
+        final List<Diagnostic> ds = summary(r'SUM($F{debit}) - $F{credit}');
+        expect(ds, hasLength(1));
+        expect(ds.single.message, contains('field(s) credit,'));
+        expect(ds.single.message, isNot(contains('debit')));
+      });
+    });
+
+    test('I4 still flags a nested aggregate in a band that is no sink', () {
+      // Only sinks expand an aggregate; in furniture its operand reads a row
+      // that is not there, so the warning is true.
+      final ReportDefinition def = _valid(
+        furniture: PageFurniture(
+          pageHeader: Band(
+            id: 'furniture/pageHeader',
+            type: BandType.pageHeader,
+            height: 20,
+            elements: <ReportElement>[
+              _txt('f', expression: r'SUM($F{debit}) + 1'),
+            ],
+          ),
+        ),
+      );
+      expect(_has(validate(def), DiagnosticSeverity.warning, 'field'), isTrue);
+    });
+
     test('I5 flags a band whose type is inconsistent with its slot', () {
       final ReportDefinition def = _valid(
         furniture: const PageFurniture(
