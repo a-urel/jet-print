@@ -13,8 +13,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   names a group by its `name`, which resolved before when the two differed,
   is now a validation error and resets nothing. Two groups in a scope may
   share a name, which `validate` no longer reports. Renaming a group changes
-  nothing the report prints, and `ElementPrintContext.bandName` still carries
-  the name. Saved reports are unaffected: the 1→2 migration already wrote
+  nothing the report prints, except through a print callback that reads
+  `ElementPrintContext.bandName`, which still carries the name. Saved reports are unaffected: the 1→2 migration already wrote
   `resetGroup` as an id. A crosstab's synthetic group now collides with a
   report group only by id. ([#100](https://github.com/a-urel/jet-print/issues/100))
 

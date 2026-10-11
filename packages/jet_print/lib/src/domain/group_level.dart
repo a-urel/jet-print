@@ -36,7 +36,8 @@ class GroupLevel with ValueEquality {
 
   /// Display label only: shown in the designer, in diagnostics and as
   /// `ElementPrintContext.bandName`, never matched. It may repeat, and
-  /// renaming a group changes nothing the report prints (#100).
+  /// renaming a group changes nothing the report prints (#100) — unless a
+  /// host's `onElementPrint` callback prints from `bandName`.
   final String name;
 
   /// The grouping-key expression (005a syntax); must parse.

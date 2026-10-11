@@ -248,8 +248,9 @@ held.
     both consumers set `id == name` to stay out of it. Now the filler, the
     layouter, the synthesizer and the crosstab splice all key a group by id;
     `resetGroup` must be an id; a repeated name is not an error, and renaming a
-    group changes nothing the report prints. The name is still what
-    `ElementPrintContext.bandName` and diagnostics show.
+    group changes nothing the report prints unless a print callback reads the
+    name, which is still what `ElementPrintContext.bandName` and diagnostics
+    show.
     *`src/rendering/fill/report_filler.dart`;
     `src/domain/report_validation.dart` → I2, retired.*
 

@@ -223,6 +223,9 @@ class ReportFiller {
       groups: calcGroups,
       functions: _functions,
       contextFactory: contextFactory,
+      groupLabels: <String, String>{
+        for (final GroupLevel g in groups) g.id: g.name,
+      },
     )..start();
     for (final String message in calc.compileErrors) {
       diagnostics.error(message);

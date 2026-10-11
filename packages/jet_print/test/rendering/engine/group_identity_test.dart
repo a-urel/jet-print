@@ -166,6 +166,22 @@ void main() {
             contains('not a group'))));
   });
 
+  test('a malformed group key is reported by the group name', () {
+    final ReportDefinition def = _grouped();
+    final ReportDefinition broken = def.copyWith(
+      body: def.body.copyWith(
+        root: def.body.root.copyWith(groups: <GroupLevel>[
+          def.body.root.groups.first,
+          def.body.root.groups.last.copyWith(key: r'$F{city'),
+        ]),
+      ),
+    );
+    final List<String> messages = <String>[
+      for (final Diagnostic d in _render(broken).diagnostics.entries) d.message,
+    ];
+    expect(messages, contains(startsWith('group "City" key')));
+  });
+
   test('the print callback sees the group name, not its id', () {
     final Set<String?> names = <String?>{};
     // Pages are built lazily, and the callback fires as each one is built.

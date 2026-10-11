@@ -37,12 +37,15 @@ class VariableCalculator {
   /// not parse evaluates to a `JetError` on every row, whatever its
   /// calculation (so it prints `!ERR`, never a plausible-looking total); a
   /// group key that does not parse is a constant, so that group never breaks.
-  /// Each failure is listed once in [compileErrors] for the caller to report.
+  /// Each failure is listed once in [compileErrors] for the caller to report,
+  /// naming a group by its [groupLabels] entry when it has one: a group's
+  /// `name` here is its key, which need not be what the author sees (#100).
   VariableCalculator({
     required List<ReportVariable> variables,
     required List<ReportGroup> groups,
     required JetFunctionRegistry functions,
     EvalContextFactory? contextFactory,
+    Map<String, String> groupLabels = const <String, String>{},
   })  : _variables = List<ReportVariable>.unmodifiable(variables),
         _groups = List<ReportGroup>.unmodifiable(groups),
         _functions = functions,
@@ -55,7 +58,8 @@ class VariableCalculator {
       _varExprs.add(_compile(v.expression, 'variable "${v.name}"'));
     }
     for (final ReportGroup g in groups) {
-      _groupExprs.add(_compile(g.expression, 'group "${g.name}" key'));
+      final String label = groupLabels[g.name] ?? g.name;
+      _groupExprs.add(_compile(g.expression, 'group "$label" key'));
     }
   }
 
