@@ -116,6 +116,20 @@ byte-pinned artifact is `invoice.pdf`, compared as bytes in
 `test/rendering/export/pdf_determinism_test.dart`, and it is the only place a
 byte claim is earned.
 
+**"macOS" means CI's macOS, not any Mac.** The macOS leg runs on
+`macos-latest`; the *Runner Image* line at the top of its log names the image
+that actually ran. A Mac on a different macOS version anti-aliases glyph edges
+differently, so every text edge picks up a one-pixel fringe of difference. The
+tolerance absorbs that for most goldens, but not for the densest text: in
+October 2026 a macOS 27 host failed `pivot_light.png` at 0.53–0.56% against a
+`macos-26-arm64` runner — under both Flutter 3.44.0 and 3.47.6, with layout
+identical and the diff confined to glyph edges — while CI passed the same
+commit. A golden that fails locally and passes on the macOS leg at the same
+commit is a host mismatch. Regenerating it would turn CI red; read the leg
+instead. When `macos-latest` itself moves to a new macOS version, expect the
+reverse: the leg goes red on the dense-text goldens, and that *is* the time to
+regenerate them, through the CI job in `docs/recipes/update-goldens.md`.
+
 **And a pin fails only if the comparator throws a `TestFailure`.**
 `matchesGoldenFile` compares inside `TestWidgetsFlutterBinding.runAsync`, which
 turns any other exception into a reported `FlutterError` and completes with
