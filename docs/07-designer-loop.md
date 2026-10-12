@@ -10,8 +10,8 @@ one immutable snapshot, and one private method that swaps it.
 ## One mutation point
 
 [`designer/controller/jet_report_designer_controller.dart`](../packages/jet_print/lib/src/designer/controller/jet_report_designer_controller.dart)
-→ `JetReportDesignerController` is a `ChangeNotifier` over three fields: the current
-`DesignerDocument`, an `EditHistory`, and an `ElementIdFactory`. Its public surface is dozens of
+→ `JetReportDesignerController` is a `ChangeNotifier` whose model state is three fields:
+the current `DesignerDocument`, an `EditHistory`, and an `ElementIdFactory`. Its public surface is dozens of
 mutators spread across thirteen `part` files under `controller/api/` as twelve named extensions
 (`AGENTS.md`'s *Four god-files are split with `part` + `extension`* states what that costs).
 Every mutator that changes the model ends at one private method — `_commit`, whole:
@@ -147,8 +147,8 @@ flutter test packages/jet_print/test/designer/controller/
 ```
 
 Nearly every file there is black-box by necessity: the command classes are not exported, and
-`test/encapsulation_test.dart`'s allowlist admits only the tree-walker and binding-resolution
-tests here. A test does what the designer does — call the mutator.
+`test/encapsulation_test.dart`'s allowlist admits only a handful of white-box tests here —
+the tree walker, binding resolution, rename, clamp semantics and move teardown. A test does what the designer does — call the mutator.
 
 `controller_history_test.dart` states the core contract: `open` seeds the id factory past the
 largest existing numeric suffix; undo and redo restore **both** definition and selection
@@ -160,22 +160,21 @@ states the no-op rule beside the case proving it is about values, not appearance
 
 ## Trap
 
-**A field-by-field rebuild of a `Band` silently drops the next field added to `Band`.**
-`AGENTS.md` carries the rule as *Rebuilders drop fields silently*; the mechanism is that
-`domain/band.dart` → `Band.copyWith` is the old `value ?? this.value` form on every parameter,
-including the nullable `columnLayout` and `name`. That form cannot tell "leave it" from "clear
-it", so a command that must *clear* one of them cannot use `copyWith` at all — and two must,
-`commands/rename_band_command.dart` → `RenameBandCommand` and
-`commands/remove_column_layout_command.dart` → `RemoveColumnLayoutCommand`, both calling
-`Band(...)` directly and enumerating every other field by hand. Add a field to `Band`: those two
-calls still compile, still pass their own tests, and quietly reset it to its default on every
-rename and layout removal.
+**A command that rebuilds a node by naming its fields drops the next field added to
+it.** `AGENTS.md` carries the rule as *Rebuilders drop fields silently*. Every command
+here now goes through `copyWith`, whose `domain/copy_support.dart` thunks make clearing
+a nullable field expressible: `commands/rename_band_command.dart` →
+`RenameBandCommand` passes `name: () => name`, and
+`commands/remove_column_layout_command.dart` → `RemoveColumnLayoutCommand` passes
+`columnLayout: () => null`. Both used to call `Band(...)` directly, enumerating every
+other field by hand, because `Band.copyWith` could not clear — and that is the shape to
+recognize. `band_walker.dart` → `mapBands` says in a comment why it never rebuilds by
+hand. A new command that writes `Band(id: b.id, ...)` still compiles, still passes its
+own tests, and quietly resets whatever it did not list on every edit.
 
-`domain/copy_support.dart` is the fix the rest of the model already took: a `T Function()?`
-thunk parameter makes `field: () => null` expressible, so clearing needs no rebuild.
-`DetailScope`, `GroupLevel`, `ReportDefinition` and every element type import it; `Band` does
-not. One more grep target: `commands/scope_commands.dart` → `SetScopeCollectionCommand` rebuilds
-a `DetailScope` directly, on a justification that expired when `DetailScope` took the thunk.
+`test/designer/controller/rename_preservation_test.dart` is the pattern that catches
+it: set the field, run each command, assert the field survived. Add a case for the
+field you add.
 
 ## Next
 

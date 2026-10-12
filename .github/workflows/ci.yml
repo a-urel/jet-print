@@ -1,10 +1,12 @@
 name: CI
 
 # Mirrors the local quality gate (README "Test & quality gate") across the
-# three desktop platforms (E3). macOS is canonical: it alone runs the full
-# suite (including goldens) and the dart format gate; Ubuntu and Windows run
-# the suite with the golden surface excluded. Every leg builds the playground
-# app to prove the native plugin toolchain links per-OS.
+# three desktop platforms (E3), then web, Android and iOS in jobs of their own
+# (docs/testing.md, "CI"). macOS is canonical: it alone runs the full suite
+# (including goldens) and the dart format gate; Ubuntu, Windows and Chrome run
+# the suite with the golden surface excluded, and Android and iOS only build.
+# Every leg but the manual update-goldens one builds the playground app, to
+# prove the native plugin toolchain links per platform.
 on:
   push:
     branches: [main]
@@ -74,7 +76,11 @@ jobs:
         # `flutter test` at a workspace root does not fan out to members, so the
         # member packages are listed explicitly. Off-canonical jobs exclude the
         # golden surface (host rasterization / PDF subsetting differs per OS).
-        run: flutter test ${{ matrix.test_filter }} packages/jet_print apps/jet_print_playground
+        # The font add-on reads its assets through dart:io, so it runs here and
+        # not on the Chrome leg.
+        run: >-
+          flutter test ${{ matrix.test_filter }} packages/jet_print
+          packages/jet_print_google_fonts apps/jet_print_playground
 
   web:
     name: web (chrome)

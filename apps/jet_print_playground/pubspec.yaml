@@ -1,9 +1,9 @@
 name: jet_print_playground
 description: >-
-  macOS playground app for the jet_print library. Consumes jet_print exactly as an
-  external consumer would (via workspace resolution, public entry point only)
-  and renders the placeholder inside a shadcn_ui themed shell with a light/dark
-  toggle.
+  Playground app for the jet_print library, on desktop, web and mobile.
+  Consumes jet_print exactly as an external consumer would (via workspace
+  resolution, public entry point only) and shows the report designer with
+  worked samples inside a shadcn_ui themed shell with a light/dark toggle.
 publish_to: 'none' # This is a sample/playground app, never published.
 
 # Member of the jet_print workspace; resolved once at the workspace root.

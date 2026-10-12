@@ -35,6 +35,7 @@ void _commit() {
     return;
   }
   widget.onCommit(parsed);
+  // ... then, after the next frame, re-reads `widget.value` into the text
 }
 ```
 
@@ -45,11 +46,13 @@ reads the element's current bounds, substitutes the one named axis, applies `cla
 a `ResizeCommand` to `_commit`, which banks the prior document and notifies. One keystroke, one
 history entry — **unless the clamp absorbs the edit entirely**, because `setGeometry` returns on
 `if (clamped == b)` before reaching `_commit`: typing `-20` into the X of an element already at 0
-records nothing, notifies nothing, and leaves the field showing `-20` (page 07's value-equal no-op,
-one step earlier). Otherwise the editor learns the clamped value the way every observer does, since
-`designer/designer_scope.dart` → `DesignerScope` is an `InheritedNotifier` and the rebuild hands
-the field a new `value` — which `didUpdateWidget` copies into the text controller **only while the
-field is unfocused**, so typing is never overwritten but an undo or a canvas drag lands at once.
+records nothing and notifies nothing (page 07's value-equal no-op, one step earlier). That is why
+the commit ends by re-reading the model a frame later, focused or not: the field then shows `0`,
+what the model took, rather than the `-20` typed. Otherwise the editor learns a new value the way
+every observer does, since `designer/designer_scope.dart` → `DesignerScope` is an
+`InheritedNotifier` and the rebuild hands the field a new `value` — which `didUpdateWidget` copies
+into the text controller **only while the field is unfocused**, so typing is never overwritten but
+an undo or a canvas drag lands at once.
 
 Every other editor is that shape with a different payload: `_ValueField` in
 `properties/fields/value_field.dart` is given a `ValueDisplay` and returns raw token text for

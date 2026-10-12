@@ -34,6 +34,7 @@ jet-print/
 │   ├── lib/jet_print.dart       # the single PUBLIC entry point (exports only)
 │   └── lib/src/                  # PRIVATE internals (domain · expression · data
 │                                 #   · rendering · designer · print)
+├── packages/jet_print_google_fonts/  # optional offline font catalog (unpublished)
 └── apps/jet_print_playground/   # playground app (consumer; desktop · web · mobile)
     └── lib/*_sample.dart        # twelve worked samples: invoice, labels,
                                   #   barcodes, charts, pivot, ledger, payroll, …
@@ -76,7 +77,7 @@ Run from the repository root. These three commands mirror CI exactly:
 ```bash
 dart format --output=none --set-exit-if-changed .                 # formatting is clean
 flutter analyze                                                    # zero analyzer warnings
-flutter test packages/jet_print apps/jet_print_playground          # all tests pass
+flutter test packages/jet_print packages/jet_print_google_fonts apps/jet_print_playground  # all tests pass
 ```
 
 > **Why the explicit paths?** `flutter analyze` fans out across all workspace

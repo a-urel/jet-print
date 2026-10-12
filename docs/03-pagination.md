@@ -2,10 +2,10 @@
 
 How a filled band stream becomes pages, and why only the ones you look at exist.
 
-Page 02 ended with a `FilledReport`: a flat, ordered list of `FilledBand`s whose
-values are already resolved. Layout's whole job is deciding where the breaks
-fall, and it answers that completely before drawing anything — the page count is
-exact the moment `renderDefinition` returns.
+Page 02's fill pass ends with a `FilledReport`: a flat, ordered list of
+`FilledBand`s whose values are already resolved. Layout's whole job is deciding
+where the breaks fall, and it answers that completely before drawing anything —
+the page count is exact the moment `renderDefinition` returns.
 
 ## Two passes over one seam
 
@@ -138,7 +138,8 @@ first-page condition is written as string equality, `$V{PAGE_NUMBER} == "1"`.
 A body band cannot reach either name — the hand-off page 02 set up from its side.
 `rendering/fill/fill_eval_context.dart` → `FillEvalContext.resolveVariable`
 returns `JetNull` for anything in `kPageScopedVariables` and records the name;
-`rendering/fill/visibility.dart` turns that record into a rejection.
+`ElementResolver` (text), `rendering/fill/visibility.dart` (visibility) and
+`ReportFiller`'s `scanPageScoped` (variables, group keys) reject it.
 
 ## Why it is like this, and the alternative rejected
 
@@ -178,9 +179,8 @@ counts every `emit`: the boundary pass over three bands reports zero, and
 `buildPage(0)` over the same input reports two — one per element on page 0, the
 third band's frame unbuilt. A second case lays the same report both ways and
 asserts `lazy.buildPage(i) == eager.pages[i]` for every page, chrome included.
-The second command is the break rules themselves: group reprints, `keepTogether`
-against repeated outer headers, chrome anchoring, and the title ordering on page
-one.
+The second is the break rules themselves: group reprints, `keepTogether` against
+repeated outer headers, chrome anchoring, and the title ordering on page one.
 
 ## Trap
 
@@ -191,10 +191,10 @@ callbacks that throw or return the wrong type. `RenderedReport.diagnostics`
 merges its sources live, so asserting on it without touching `pageAt` shows only
 what the passes *before* page-building found. The corollary bites harder: the
 build path is re-entered per page, so anything recorded there multiplies by the
-page count unless it joins a dedupe set. Chrome
-errors join two — `chromeFlagged`, so a reference already diagnosed statically is
-not re-reported at runtime, and `_runtimeDiagnosed`, keyed by element id and
-message so the count cannot depend on which pages were built. Several cases in
+page count unless it joins a dedupe set. Chrome errors join two —
+`chromeFlagged`, so a reference already diagnosed statically is not re-reported
+at runtime, and `_runtimeDiagnosed`, keyed by element id and message so the
+count cannot depend on which pages were built. Several cases in
 `test/rendering/layout/report_layouter_test.dart` assert a diagnostic appears
 exactly **once** across a multi-page report; a new one added inside `buildPage`
 without that protection turns one authoring mistake into one warning per page.

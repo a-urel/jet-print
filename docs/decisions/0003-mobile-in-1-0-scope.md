@@ -1,6 +1,6 @@
 # 0003 — Full mobile support, including the designer, is in 1.0 scope
 
-**Status:** Accepted — 2026-09-21
+**Status:** Superseded by 0005 — accepted 2026-09-21
 
 ## Context
 

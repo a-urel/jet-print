@@ -2,8 +2,8 @@
 
 The order to wire a new drawable report object in, and the steps whose absence nothing reports.
 
-The rules this touches live in [`../../AGENTS.md`](../../AGENTS.md) and what a
-renderer may emit is [page 04](../04-the-frame.md). This page is only the sequence.
+The rules live in [`../../AGENTS.md`](../../AGENTS.md), what a renderer may emit
+in [page 04](../04-the-frame.md); this is the sequence.
 
 ## The sequence
 
@@ -20,9 +20,8 @@ Copy the shape of `test/rendering/elements/persisted_extension_test.dart` first;
 2. **Codec** — `lib/src/domain/serialization/<name>_element_codec.dart`,
    extending `ElementCodec<X>` with `fromJson` / `toJson`. Omit defaults rather
    than writing them, so an unset property stays absent from the JSON.
-3. **Register the codec** — one `register('<key>', const XElementCodec())` line
-   in `registerBuiltInElementCodecs`
-   (`domain/serialization/built_in_element_codecs.dart`).
+3. **Register the codec** — one `register('<key>', const XElementCodec())` line in
+   `registerBuiltInElementCodecs` (`domain/serialization/built_in_element_codecs.dart`).
 4. **Renderer** — `rendering/elements/renderers/<name>_element_renderer.dart`,
    extending `ElementRenderer<X>`: `measure` returns a size, `emit` appends
    primitives to the `FrameBuilder`. A third-party encoder falls under
@@ -46,18 +45,19 @@ whose failure names the half you missed.
    one the element renders its authored value on every row and reports nothing.
 7. **Designer** — a `DesignerToolType` variant *and* its `kDefaultElementSize`
    entry in `designer/canvas/design_tunables.dart`; a `_ToolboxEntry` in
-   `designer/layout/designer_toolbox.dart`; the two arms the compiler will
-   demand, `buildDefaultElement`
+   `designer/layout/designer_toolbox.dart`; the two arms the compiler will demand,
+   `buildDefaultElement`
    (`designer/controller/commands/create_element_command.dart`) and `_typeKeyFor`
    (`designer/controller/api/statics.dart`), the second assigning the id prefix;
-   `elementGlyph` in `designer/element_glyph.dart`, whose icon the toolbox
-   repeats with nothing linking the two lists; `elementTypeLabel` in
-   `designer/l10n/element_type_label.dart`, plus its `elementType…` key in all
-   three ARB files ([recipe](add-localized-string.md)) — skip that and the type
-   reads as the generic fallback wherever a label appears. Last, an inspector arm
-   in `designer/layout/panels/properties/inspectors/element_inspector.dart` for
-   whatever the type adds beyond position and size.
-8. **Export** the class from `lib/jet_print.dart` and add a `CHANGELOG.md` entry.
+   `elementGlyph` in `designer/element_glyph.dart`, whose icon the toolbox repeats
+   with nothing linking the two lists; `elementTypeLabel` in
+   `designer/l10n/element_type_label.dart` with its `elementType…` key (without
+   it every label reads as the generic fallback) and the toolbox's
+   `toolbox…Entry`, both in all three [ARB files](add-localized-string.md). Last,
+   an arm in `designer/layout/panels/properties/inspectors/element_inspector.dart`
+   for whatever the type adds beyond position and size.
+8. **Export** the class, and any type its public members expose, from
+   `lib/jet_print.dart` (`exported_member_type_test.dart`); add a `CHANGELOG.md` entry.
 
 Then sweep. If the type carries an enum, `AGENTS.md`'s trap on exhaustive
 switches applies unchanged — run the grep it prescribes. And `kDefaultElementSize`

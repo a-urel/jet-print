@@ -36,7 +36,7 @@ checkout must pass all three:
 ```bash
 dart format --output=none --set-exit-if-changed .
 flutter analyze
-flutter test packages/jet_print apps/jet_print_playground
+flutter test packages/jet_print packages/jet_print_google_fonts apps/jet_print_playground
 ```
 
 The member packages are listed explicitly on purpose: `flutter analyze` fans out
@@ -59,10 +59,12 @@ test is the thing to argue with — change it deliberately and say so.
   The library's *own* tests are a documented exception. White-box seam tests may
   import `src/` — whole directories (`test/domain`, `data`, `expression`,
   `rendering`, `print`, `web`, `designer/template`) plus individually named
-  designer tests. Everything else is default-deny. If you add a test that needs
-  an unexported helper, add it to the allowlist in `encapsulation_test.dart`
-  **with a comment saying why**; that list is the record of what is deliberately
-  white-box, and it only stays meaningful if each entry is justified.
+  files — mostly designer tests, also the two registration guards in
+  `test/architecture` and `example_data_test.dart`. Everything else is
+  default-deny. If you add a test that needs an unexported helper, add it to
+  the allowlist in `encapsulation_test.dart` **with a comment saying why**; that
+  list is the record of what is deliberately white-box, and it only stays
+  meaningful if each entry is justified.
 
 - **Dependencies point inward, toward the domain.** Nothing under `lib/src/domain`
   (nor `data`, nor `expression`) may import the rendering or designer seams, or
@@ -132,7 +134,7 @@ name — and the list is the point, so a new guard belongs in it:
 
 | Guard | Invariant |
 |---|---|
-| `layer_boundaries_test.dart` | dependencies point inward; only three rendering files touch `dart:ui` |
+| `layer_boundaries_test.dart` | dependencies point inward; only four rendering files touch `dart:ui` |
 | `barcode_dependency_isolation_test.dart` | `package:barcode` is reachable from one adapter |
 | `built_in_element_registration_test.dart` | the two built-in element lists cannot drift apart |
 | `canvas_painter_single_construction_test.dart` | one place builds a `CanvasPainter`, so one place releases it |
@@ -146,8 +148,11 @@ name — and the list is the point, so a new guard belongs in it:
 | `agent_rule_copies_test.dart` | the Flutter agent rules exist once, and every per-agent copy matches |
 | `platform_claim_test.dart` | the pubspec declares the six platforms 1.0 claims, and each has a CI leg that builds it |
 
-And two tests sit at the `test/` root rather than in a seam, because they police
-the whole package: `encapsulation_test.dart` and `public_api_test.dart`.
+And two of the tests at the `test/` root sit there rather than in a seam because
+they police the whole package: `encapsulation_test.dart` and
+`public_api_test.dart`. The others beside them check the shipped surface rather
+than a seam — `example/` runs, README snippets compile, the version agrees with
+the pubspec.
 
 Shared helpers live in `test/support/` — `report_builders.dart` builds fixtures,
 `workspace.dart` locates the repo root, `test_fonts.dart` loads deterministic

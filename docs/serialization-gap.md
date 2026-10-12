@@ -16,9 +16,11 @@ per tenant, written months ago by a build since superseded, and read back by
 whichever build that tenant happens to be running during a staged rollout. It
 must answer *which version wrote this*, *is this row from the future or is it
 corrupt*, and *which rows still need upgrading* — the three questions the
-public surface does not answer. This page is an input to the P4 freeze review
+public surface does not answer. This page was an input to the P4 freeze review
 named in [`roadmap.md`](roadmap.md), beside
-[`api-friction.md`](api-friction.md).
+[`api-friction.md`](api-friction.md), which recorded what is still open as a
+known cost whose fix is additive: distinguishable failures, for one, can arrive
+as subtypes of `ReportFormatException` without breaking a `catch` (entry 10).
 
 ## The exported surface, name by name
 
@@ -215,6 +217,7 @@ reason stated plainly rather than assumed: every document already carries
 column can recover the number from the JSON itself at any time. The
 irreversible form of this problem — data written without the information needed
 to interpret it — does not arise, because the format was designed not to allow
-it. What remains is a cost paid in other people's code, which argues for
+it. What remains is a cost paid in other people's code, which argued for
 closing it in P3 beside the friction list rather than after the semver promise,
-and does not argue for holding the freeze.
+and did not argue for holding the freeze. P3 closed without it, and `1.0.0`
+shipped with it open.

@@ -77,8 +77,8 @@ print is spelled with those five:
 - A **watermark** is a rotated text run — or a rotated image, when it carries one
   instead — faded by its opacity: `rendering/watermark_primitive.dart` →
   `buildWatermarkPrimitive`.
-- A **shape**, block arrows and rounded rectangles included, is a path from
-  `rendering/elements/shape_path.dart` → `shapePath`.
+- A **shape** is a rect or a line primitive for those two kinds, and otherwise,
+  block arrows included, a path: `rendering/elements/shape_path.dart` → `shapePath`.
 
 The consequence is the whole point: **adding a chart type, a barcode symbology or
 a shape never touches a painter.** A new element type lands entirely on the emit
@@ -105,6 +105,7 @@ owns that sequence for them, the exporter calling `paintFrame` itself once per p
 
 ```dart
 for (final FramePrimitive primitive in frame.primitives) {
+  // ... a rotated primitive pushes a transform, popped after the switch
   switch (primitive) {
     case TextRunPrimitive():
       painter.drawTextRun(primitive);
@@ -169,6 +170,7 @@ flutter test packages/jet_print/test/rendering/frame/
 // ... rect is a const RectPrimitive
 final FrameBuilder b = FrameBuilder(PageFormat.a4Portrait)..add(rect);
 final PageFrame frame = b.build();
+expect(frame.page, PageFormat.a4Portrait);
 expect(frame.primitives, <Object>[rect]);
 expect(() => frame.primitives.add(rect), throwsUnsupportedError);
 ```
@@ -176,9 +178,8 @@ expect(() => frame.primitives.add(rect), throwsUnsupportedError);
 Passing proves the three properties the rest of the pipeline leans on: the
 builder accumulates in paint order, `build` freezes the result so mutation
 throws, and two frames built the same way are equal. `primitive_test.dart` proves
-the same value semantics for each of the five primitives, including that
-`rotation` participates in equality — a rotated watermark is not equal to an
-unrotated one.
+the same value semantics for each of the five primitives, `rotation` included:
+a rotated watermark is not equal to an unrotated one.
 
 ## Trap
 
@@ -195,6 +196,5 @@ failed. `test/rendering/frame/primitive_test.dart` asserts that each new field
 
 Page 05, [painting](05-painting.md), picks the frame up from here: how
 `CanvasPainter` turns primitives into `dart:ui` calls, how `PdfPainter` writes
-the same primitives as PDF operators with embedded fonts and selectable text, and
-why the rendering seam's `dart:ui` imports are a short allowlist, held and named by
-`test/architecture/layer_boundaries_test.dart`.
+them as PDF operators with embedded fonts and selectable text, and why the
+seam's `dart:ui` imports are a short allowlist, held by `layer_boundaries_test`.

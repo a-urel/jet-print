@@ -1,8 +1,9 @@
 name: jet_print_workspace
 description: >-
   Workspace root for jet-print: a publishable Flutter widget library
-  (packages/jet_print) and a macOS playground app (apps/jet_print_playground) that
-  consumes it exactly as an external consumer would. Resolution happens once
+  (packages/jet_print), its optional font catalog (packages/jet_print_google_fonts)
+  and a playground app (apps/jet_print_playground) that consumes it exactly as an
+  external consumer would. Resolution happens once
   here, producing a single shared pubspec.lock.
 publish_to: none
 

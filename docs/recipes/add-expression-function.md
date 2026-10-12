@@ -21,8 +21,8 @@ inside `packages/jet_print`, not for a host.
    **return a `JetError` rather than throwing** — [page 02](../02-binding-data.md)
    draws that line. You never have to check for an error argument; the evaluator
    propagates one before it calls you.
-3. **Register it** in that family's `register…Functions`, as
-   `registry.register('NAME', _name)`. Built-in names are uppercase by
+3. **Register it** in that family's `register…Functions`, beside its
+   neighbours' `register('NAME', _name)` calls. Built-in names are uppercase by
    convention and lookup is case-sensitive, so `Name` and `NAME` are two
    different functions and only one of them exists.
 4. **Test it** in `test/expression/functions/<family>_functions_test.dart`,
@@ -40,29 +40,33 @@ inside `packages/jet_print`, not for a host.
 
 ## Where the two halves come apart
 
-Steps 3 and 5 are independent, and each is silent when the other is missing.
-Register without cataloguing and the function works for anyone who types it but
-is not discoverable. Catalogue without registering and it is offered, inserted,
-and evaluates to `Unknown function "NAME"` at render time.
+Steps 3 and 5 are independent edits, and neither reads the other. Register
+without cataloguing and the function works for anyone who types it but is not
+discoverable. Catalogue without registering and it is offered, inserted, and
+evaluates to `Unknown function "NAME"` at render time.
 
-The second direction survives the suite. `expression_function_catalog_test.dart`
-asserts that every offered name *compiles as a call* — and the parser has no
-knowledge of the registry, so any well-formed identifier passes that check. Its
-list of named built-ins is hand-written and would not mention yours. So confirm
-the pairing yourself: the name you put in the catalog must be the string you
-passed to `registry.register`, character for character.
+Neither direction survives the suite.
+`test/architecture/expression_function_catalog_registration_test.dart` builds
+both and asserts the scalar catalog names *equal* the registered ones, so a
+name missing on either side fails it, and so does one spelled differently.
+`expression_function_catalog_test.dart` cannot catch this on its own: it checks
+that every offered name compiles as a call, and the parser knows nothing of the
+registry. A function that should be registered but never offered goes in that
+guard's `_deliberatelyUnpaletted`, with a comment saying why.
 
 ## Verify
 
 ```bash
 flutter test packages/jet_print/test/expression/ \
-  packages/jet_print/test/designer/template/expression_function_catalog_test.dart
+  packages/jet_print/test/designer/template/expression_function_catalog_test.dart \
+  packages/jet_print/test/architecture/expression_function_catalog_registration_test.dart
 ```
 
 The first path covers the lexer, parser, evaluator and every function family;
-the second covers the catalog. Then the full gate from the repository root, as
-`AGENTS.md` specifies it. Nothing here should move a golden — a golden that
-moves means a fixture used your function's name already.
+the second covers the catalog, and the third that the two agree. Then the full
+gate from the repository root, as `AGENTS.md` specifies it. Nothing here should
+move a golden — a golden that moves means a fixture used your function's name
+already.
 
 ## Next
 
