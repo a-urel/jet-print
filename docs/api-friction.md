@@ -15,8 +15,8 @@ change anything.
 ## Where these came from
 
 Two consumers, both written on 2026-09-21 inside this repository against the
-barrel alone, and neither merged — both survive at commit `ca73f81`, on no
-branch since `docs/p0-decisions` was deleted:
+barrel alone, and neither merged — both survive at `ca73f81`, the head of the
+deleted branch `docs/p0-decisions`, kept by the tag `archive/p0-decisions`:
 
 - a minimal example app over five lines of literal data. `main` has since
   gained its own, different `example/` in `e901735`;

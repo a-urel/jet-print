@@ -323,8 +323,8 @@ it needs now exists — P1 is met — so a consumer can take a hosted dependency
 rather than a path one. On 2026-09-21 a stand-in was written
 instead — a Turkish trial balance over a synthetic chart of accounts, consuming
 `jet_print` by path through the barrel alone. It was never compiled and never
-merged; it survives at commit `ca73f81`, on no branch since
-`docs/p0-decisions` was deleted, and what it found is in
+merged; it survives at `ca73f81`, the head of the deleted branch
+`docs/p0-decisions`, kept by the tag `archive/p0-decisions`, and what it found is in
 [`api-friction.md`](api-friction.md). Whether a stand-in may satisfy
 this phase is not decided, and should be decided in a record rather than by
 amending the criterion above: a path dependency proves nothing about the
