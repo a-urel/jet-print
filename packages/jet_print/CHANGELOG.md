@@ -8,11 +8,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 The first stable release. From here a `1.x` upgrade changes no public API,
 no default, and nothing a report prints for a definition `validate` accepts;
-anything that would waits for `2.0`, as
+anything that would break these promises waits for `2.0`, as
 [decision 0004](https://github.com/a-urel/jet-print/blob/main/docs/decisions/0004-what-1-0-must-settle.md)
-defines. The pubspec declares all six Flutter platforms, each built in CI,
-and the designer is verified for touch authoring at phone width
-([`docs/touch-authoring.md`](https://github.com/a-urel/jet-print/blob/main/docs/touch-authoring.md)).
+defines. The pubspec declares all six Flutter platforms, each built in CI.
+Touch authoring in the designer is covered by widget tests at phone width
+([`docs/touch-authoring.md`](https://github.com/a-urel/jet-print/blob/main/docs/touch-authoring.md));
+`1.0.0` is published only once the real-device pass on iOS and Android that
+[decision 0003](https://github.com/a-urel/jet-print/blob/main/docs/decisions/0003-mobile-in-1-0-scope.md)
+requires is recorded there.
 The report schema is unchanged since `0.2.0`, so saved reports need no
 migration.
 
