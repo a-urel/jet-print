@@ -144,6 +144,7 @@ name — and the list is the point, so a new guard belongs in it:
 | `documented_claims_test.dart` | the structural claims `docs/` states, each naming the page to update |
 | `guard_table_completeness_test.dart` | this table names every guard in `test/architecture`, and only those |
 | `agent_rule_copies_test.dart` | the Flutter agent rules exist once, and every per-agent copy matches |
+| `platform_claim_test.dart` | the pubspec declares the six platforms 1.0 claims, and each has a CI leg that builds it |
 
 And two tests sit at the `test/` root rather than in a seam, because they police
 the whole package: `encapsulation_test.dart` and `public_api_test.dart`.

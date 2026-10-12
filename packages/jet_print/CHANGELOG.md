@@ -8,6 +8,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **The pubspec declares all six platforms.** A `platforms:` block lists
+  Android, iOS, Linux, macOS, web and Windows, so pub.dev shows what this
+  package claims instead of inferring it from the plugin dependencies. Each
+  platform is built by a CI leg, and a test keeps the declaration and CI in
+  step.
+
 - **Multi-select by touch.** Once a finger has pressed the designer canvas, a
   toggle appears in its bottom-left corner. While it is on, a tap adds an
   element to the selection or removes it, as shift-click does, so align and
