@@ -66,10 +66,9 @@ class DesignTimeFrameBuilder {
   /// Emits every element's primitives at its page-absolute rect from [layout],
   /// walking the bands in the layout's visual document order.
   PageFrame build(ReportDefinition definition, DesignTimeLayout layout) {
-    final PageFormat page = PageFormat(
+    final PageFormat page = definition.page.copyWith(
       width: layout.size.width,
       height: layout.size.height,
-      margins: definition.page.margins,
     );
     final FrameBuilder out = FrameBuilder(page);
     for (final PlacedBand placed in layout.bands) {

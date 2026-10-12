@@ -541,6 +541,17 @@
   "@orientationLandscape": {
     "description": "Page orientation: wider than tall."
   },
+  "paperRoll": "Roll {width} mm",
+  "@paperRoll": {
+    "description": "Paper-size picker entry for thermal roll paper of the given width in millimetres, e.g. 'Roll 80 mm'. The page grows to fit its content.",
+    "placeholders": {
+      "width": { "type": "int" }
+    }
+  },
+  "pageContinuous": "Continuous (roll) page",
+  "@pageContinuous": {
+    "description": "Properties panel switch: lay the report out on roll paper, each page as long as its content instead of a fixed sheet height."
+  },
   "marginPresetNormal": "Normal",
   "@marginPresetNormal": {
     "description": "Margin preset name: the ~1 cm default on all four sides."

@@ -121,6 +121,7 @@ void main() {
             .label,
         contains('Kağıt boyutu seçin'));
     expect(find.text('PAGE'), findsNothing);
+    expect(find.text('Sürekli (rulo) sayfa'), findsOneWidget);
 
     // (3) Band inspector — the height row is now label-less (its glyph stands
     // in for the dropped label). Under the reified model the band

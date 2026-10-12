@@ -60,6 +60,16 @@ typedef _OpenGroup = ({
   bool reprint,
 });
 
+/// The tallest page, in points, a [PageFormat.continuous] report should
+/// produce. PDF readers commonly refuse a page side past 14,400 units — the
+/// implementation limit ISO 32000-1 (Annex C) records for Acrobat — so a taller
+/// roll page renders, but with a warning.
+const double _kMaxContinuousPageExtent = 14400;
+
+/// A [PageFormat.continuous] page as the boundary pass fitted it: the [page]
+/// grown to its content and the [bodyBottom] its footer hangs from.
+typedef _FittedPage = ({PageFormat page, double bodyBottom});
+
 /// One open group span during the extent pre-pass: its [name], nesting [level]
 /// (outermost = 0), and the stream index [openIndex] of its opening header
 /// (008b §6.1).
@@ -107,8 +117,10 @@ class LazyLayout {
     required double top,
     required double bodyBottom,
     required Map<String, String> groupNames,
+    required TextMeasurer measurer,
+    List<_FittedPage>? fitted,
     JetElementPrintCallback? onElementPrint,
-    FramePrimitive? watermark,
+    Watermark? watermark,
   })  : _page = page,
         _plans = plans,
         _renderers = renderers,
@@ -124,6 +136,8 @@ class LazyLayout {
         _top = top,
         _bodyBottom = bodyBottom,
         _groupNames = groupNames,
+        _measurer = measurer,
+        _fitted = fitted,
         _onElementPrint = onElementPrint,
         _watermark = watermark;
 
@@ -141,12 +155,22 @@ class LazyLayout {
   final double _left;
   final double _top;
   final double _bodyBottom;
+  final TextMeasurer _measurer;
+
+  /// Per page, the page and footer anchor a continuous report was fitted to;
+  /// null for a sheet, whose every page is [_page] with [_bodyBottom].
+  final List<_FittedPage>? _fitted;
 
   /// Each group's display name by id. A band carries its group's id, the key;
   /// the print callback is handed the name a host sees (#100).
   final Map<String, String> _groupNames;
   final JetElementPrintCallback? _onElementPrint;
-  final FramePrimitive? _watermark;
+  final Watermark? _watermark;
+
+  /// The watermark primitive per page height. It is centred on the page, so a
+  /// sheet report builds it once; a continuous one once per distinct height.
+  final Map<double, FramePrimitive?> _watermarkByHeight =
+      <double, FramePrimitive?>{};
 
   /// Chrome expressions already diagnosed at runtime, deduped across every
   /// page build regardless of build order.
@@ -341,9 +365,15 @@ class LazyLayout {
     if (index < 0 || index >= pageCount) {
       throw RangeError.range(index, 0, pageCount - 1, 'index');
     }
-    final FrameBuilder fb = FrameBuilder(_page);
+    final _FittedPage? fitted = _fitted?[index];
+    final PageFormat page = fitted?.page ?? _page;
+    final FrameBuilder fb = FrameBuilder(page);
 
-    final FramePrimitive? wm = _watermark;
+    final Watermark? wmDef = _watermark;
+    final FramePrimitive? wm = wmDef == null
+        ? null
+        : _watermarkByHeight.putIfAbsent(
+            page.height, () => buildWatermarkPrimitive(wmDef, page, _measurer));
     if (wm != null) fb.add(wm); // bottom of z-order: painted behind content
 
     // On page 0, detect the title band so the page-header chrome can be
@@ -399,7 +429,7 @@ class LazyLayout {
           variables: const <String, JetValue>{});
       y += h.height;
     }
-    y = _bodyBottom;
+    y = fitted?.bodyBottom ?? _bodyBottom;
     for (final Band f in _footers) {
       if (!_furnitureVisible(f.visible, f.id, pageNumber)) {
         y += f.height;
@@ -484,6 +514,8 @@ class ReportLayouter {
     final BandMeasurer bandMeasurer = BandMeasurer(_renderers, ctx);
 
     final PageFormat page = def.page;
+    // Roll paper: nothing is ever full, so no break below is a capacity break.
+    final bool continuous = page.continuous;
     if (filled.page != page) {
       diagnostics.warning(
           'filled.page differs from template.page; using template.page');
@@ -514,7 +546,7 @@ class ReportLayouter {
     final double bodyBottom = bottom - footerHeight;
     final double bodyCapacity = bodyBottom - bodyTop;
 
-    if (bodyCapacity <= 0) {
+    if (bodyCapacity <= 0 && !continuous) {
       diagnostics.warning(
           'page chrome (header $headerHeight + footer $footerHeight) leaves no '
           'room for body on a $contentHeight-pt printable height; chrome '
@@ -631,6 +663,9 @@ class ReportLayouter {
 
     final ColumnLayout? columns = def.soleDetailBand?.columnLayout;
     final List<List<_PlacedBand>> plans;
+    // Where each page's body content ends — what a continuous page is fitted
+    // to. A sheet ignores it.
+    final List<double> bodyEnds = <double>[];
 
     if (columns != null && measured.isNotEmpty) {
       // Spec 034 — uniform label grid, horizontal print order. Cells are fixed
@@ -643,7 +678,9 @@ class ReportLayouter {
           ? 1
           : ((bodyCapacity + columns.rowSpacing) / pitch).floor();
       if (rowsPerPage < 1) rowsPerPage = 1;
-      final int cellsPerPage = rowsPerPage * cols;
+      // A roll holds every label on one page.
+      final int cellsPerPage =
+          continuous ? measured.length : rowsPerPage * cols;
 
       plans = <List<_PlacedBand>>[<_PlacedBand>[]];
       for (int i = 0; i < measured.length; i++) {
@@ -655,6 +692,12 @@ class ReportLayouter {
             left + col * (columns.columnWidth + columns.columnSpacing);
         final double y = bodyTop + row * pitch;
         plans.last.add((band: measured[i], x: x, y: y));
+        // Cells are the designed height, so a row ends at y + labelHeight.
+        if (k == 0) {
+          bodyEnds.add(y + labelHeight);
+        } else {
+          bodyEnds.last = y + labelHeight;
+        }
       }
     } else {
       final List<double> cum = <double>[0];
@@ -729,6 +772,7 @@ class ReportLayouter {
       }
 
       void breakPage() {
+        bodyEnds.add(cursorY);
         linearPlans.add(<_PlacedBand>[]);
         cursorY = bodyTop;
         reEmitHeaders();
@@ -777,7 +821,7 @@ class ReportLayouter {
         }
 
         bool broke = false;
-        if (keepExtent.containsKey(i)) {
+        if (!continuous && keepExtent.containsKey(i)) {
           final double extent = keepExtent[i]!;
           double repeatedOuter = 0;
           for (final _OpenGroup g in openStack) {
@@ -794,10 +838,13 @@ class ReportLayouter {
             broke = true;
           }
         }
-        if (!broke && cursorY + mb.height > bodyBottom && cursorY > bodyTop) {
+        if (!continuous &&
+            !broke &&
+            cursorY + mb.height > bodyBottom &&
+            cursorY > bodyTop) {
           breakPage();
         }
-        if (bodyCapacity > 0 && mb.height > bodyCapacity) {
+        if (!continuous && bodyCapacity > 0 && mb.height > bodyCapacity) {
           diagnostics.warning('band height ${mb.height} exceeds body capacity '
               '$bodyCapacity; content overflows');
         }
@@ -831,13 +878,34 @@ class ReportLayouter {
             : null;
       }
 
+      bodyEnds.add(cursorY);
       plans = linearPlans;
     }
 
-    final Watermark? wmDef = def.furniture.watermark;
-    final FramePrimitive? watermark = wmDef == null
-        ? null
-        : buildWatermarkPrimitive(wmDef, def.page, _measurer);
+    // A continuous page is as tall as its content plus the footer and bottom
+    // margin, and never shorter than the authored height; its footer then
+    // hangs from the end of the content rather than from a fixed bottom.
+    List<_FittedPage>? fitted;
+    if (continuous) {
+      fitted = <_FittedPage>[];
+      bool warnedTooTall = false;
+      for (int p = 0; p < plans.length; p++) {
+        final double contentEnd = p < bodyEnds.length ? bodyEnds[p] : bodyTop;
+        final double fit = contentEnd + footerHeight + page.margins.bottom;
+        final double height = fit > page.height ? fit : page.height;
+        if (height > _kMaxContinuousPageExtent && !warnedTooTall) {
+          warnedTooTall = true;
+          diagnostics
+              .warning('continuous page ${p + 1} is ${height.round()}pt tall, '
+                  'past the ${_kMaxContinuousPageExtent.toInt()}pt many PDF '
+                  'readers accept; start a new page per group to split it');
+        }
+        fitted.add((
+          page: height == page.height ? page : page.copyWith(height: height),
+          bodyBottom: height - page.margins.bottom - footerHeight,
+        ));
+      }
+    }
 
     return LazyLayout._(
       page: page,
@@ -858,8 +926,10 @@ class ReportLayouter {
       groupNames: <String, String>{
         for (final GroupLevel g in groups) g.id: g.name,
       },
+      measurer: _measurer,
+      fitted: fitted,
       onElementPrint: onElementPrint,
-      watermark: watermark,
+      watermark: def.furniture.watermark,
     );
   }
 }

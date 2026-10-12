@@ -4,6 +4,51 @@ All notable changes to the `jet_print` library are documented here. The format i
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+Additive, so it follows the `1.0.0` freeze as a minor release. The report
+schema version is unchanged; one optional key is new (below).
+
+### Added
+
+- **Roll paper: pages that fit their content.** `PageFormat.continuous` lays a
+  report out for a receipt or kitchen-ticket printer. A continuous page never
+  breaks because it is full: each rendered page is as tall as its header,
+  body, footer and margins, and `height` becomes the shortest a page may be.
+  The page footer follows the content instead of sitting at a fixed bottom.
+  A group that starts a new page still does, so one report grouped by station
+  prints one ticket per station, each cut to its own length. `keepTogether`
+  has nothing to do on a roll, and a label grid lays every label on one page.
+  The preview, PDF, PNG and print all take each page's height from the same
+  frame, so a 203 dpi PNG for an ESC/POS printer is
+  `pageToPng(report, i, scale: 203 / 72)`. A page taller than 14,400 pt, the
+  size many PDF readers refuse, still renders, with a warning.
+
+- **The designer offers roll paper.** The page section has a *Continuous
+  (roll) page* switch, and the paper picker lists *Roll 58 mm* and *Roll
+  80 mm* after the sheet sizes, with a 50 mm minimum height. Picking a roll
+  turns the switch on, and picking a sheet size turns it off. A roll has no
+  landscape, so the orientation toggle is hidden on one. English, German and
+  Turkish strings are included.
+
+### Changed
+
+- **The preview's thumbnail rail fits a taller page into its tile.** Tiles
+  still take their height from page 0. A later page that is taller, as a
+  continuous report's longer ticket can be, is scaled down to fit its tile,
+  keeping its proportions, instead of overflowing it. Reports whose pages
+  are all one size look exactly as before.
+
+### Compatibility
+
+- A continuous page writes `"continuous": true` in the page JSON. A sheet
+  page does not write the key, so its JSON is byte-for-byte unchanged. A
+  build older than this one reads a continuous report as a sheet `height`
+  tall, and drops the key if it saves the report. This is the same cost a
+  new optional field has always had, as `TextElement.format` did; bumping the
+  schema version instead would have stopped older builds opening any report
+  this build writes.
+
 ## 1.0.0
 
 The first stable release. From here a `1.x` upgrade changes no public API,
