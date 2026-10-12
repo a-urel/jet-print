@@ -346,6 +346,17 @@ Reports look the same on every platform, but are not byte-identical: text
 rasterization (PNG pixels) and PDF font subsetting vary by operating system. Do
 not compare exported files across platforms byte for byte.
 
+A report is built in memory. Rendering fills every row and works out the
+page breaks for the whole report up front, which is how the page count is
+known; each page's drawing is then built the first time it is asked for, and
+kept. PDF export asks for every page and assembles the whole document before
+returning its bytes. Memory therefore grows with the size of the report. As a rough guide, measured on a
+simple tabular report, laying it out costs about 1.5 MB per 1,000 rows, and
+exporting it to PDF about 0.3 MB more per page; 50,000 rows (about 1,000
+pages) took some 370 MB to render and export. That is comfortable on a
+desktop. On a phone, keep a single report to tens of thousands of rows, and
+split a larger one, by period or by account for instance, into several.
+
 Printing goes through the [`printing`](https://pub.dev/packages/printing)
 package: a print dialog on macOS, Windows and Linux, the share sheet on iOS and
 Android, and the browser's print dialog on the web. `printReport` returns

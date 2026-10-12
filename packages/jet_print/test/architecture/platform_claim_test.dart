@@ -54,8 +54,12 @@ void main() {
   final Directory root = findWorkspaceRoot();
   final String pubspec =
       File('${root.path}/packages/jet_print/pubspec.yaml').readAsStringSync();
-  final String ci =
-      File('${root.path}/.github/workflows/ci.yml').readAsStringSync();
+  // Comment lines dropped: commenting a step out is the usual way to disable
+  // it, and a disabled build must not count as a leg.
+  final String ci = File('${root.path}/.github/workflows/ci.yml')
+      .readAsLinesSync()
+      .where((String line) => !line.trimLeft().startsWith('#'))
+      .join('\n');
 
   test('the pubspec declares the six platforms 1.0 claims', () {
     expect(_declaredPlatforms(pubspec), _ciBuildFor.keys.toSet(),

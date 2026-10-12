@@ -89,6 +89,31 @@ users author — tens of thousands of rows stay comfortable — but the conditio
 the deferral was written against is no longer hypothetical, and P4 should
 re-read that table before the 1.0 platform claim is final.
 
+**Re-read in P4, on 2026-10-12.** The same flat report was measured again
+with the engine as it stood, on a Linux container. Each row had two text
+fields, and the report had a summary total. Memory is the growth in process
+RSS:
+
+| Rows | Pages | What | Time | RSS growth |
+|---:|---:|---|---:|---:|
+| 10,000 | 209 | render | 0.7 s | 27 MB |
+| 100,000 | 2,084 | render | 2.2 s | 153 MB |
+| 500,000 | 10,417 | render | 10.2 s | 735 MB |
+| 500,000 | 10,417 | render, every row a new group key | 11.2 s | 734 MB |
+| 10,000 | 209 | render and PDF export | 0.8 s | 90 MB |
+| 50,000 | 1,042 | render and PDF export | 3.6 s | 367 MB |
+
+Rendering still grows linearly, at about 1.5 MB per thousand rows. The
+group-key tracking that the new unsorted-source warning needs costs nothing
+measurable, even with a distinct key on every row. PDF export is the larger
+cost on a phone, at about 0.28 MB a page on top of rendering. **E2b stays
+deferred for 1.0.** The cost is stated instead, in the package README's
+*Platform notes*, with the advice to keep one report on a phone to tens of
+thousands of rows. Streaming fill or export, if it is ever wanted, changes no
+output and would arrive as new API, so it is additive under
+[`decisions/0004`](decisions/0004-what-1-0-must-settle.md) and does not block
+the freeze.
+
 The two standing proportionality guards are described in
 [`testing.md`](testing.md); note that they count rather than time, and are not
 the stress test.
@@ -356,8 +381,10 @@ a real Android device, is recorded on that page and has not been run. The
 is fixed, accepted, or a known cost whose fix is additive. The pubspec
 declares all six platforms in a `platforms:` block, and
 `test/architecture/platform_claim_test.dart` fails if a declared platform
-loses the CI leg that builds it. Still open: re-reading the E2b memory
-figures against the mobile claim, and the `1.0.0` release itself.
+loses the CI leg that builds it. The E2b memory figures were re-read against
+the mobile claim (see E2 above): E2b stays deferred, and the package README
+states the cost. Still open: the device pass, and the `1.0.0` release
+itself.
 
 **P5 — Designer-as-product.** E7, deferred rather than scheduled. It is a
 second product, not the completion of this one, and nothing yet shows the
