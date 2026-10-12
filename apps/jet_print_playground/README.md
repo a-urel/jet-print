@@ -7,6 +7,5 @@ inside a shadcn-themed shell with a light/dark toggle.
 
 Runs on macOS, Windows, Linux, web, and iOS/Android — CI builds every target on
 each push. See the [workspace README](../../README.md) for install, run, and
-test instructions, and the library's
-[Platform support](../../packages/jet_print/README.md#platform-support) table for
-per-platform CI coverage.
+test instructions, and the [CI table](../../docs/testing.md#ci) for what each
+platform's leg runs.

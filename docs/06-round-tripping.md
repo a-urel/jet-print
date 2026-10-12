@@ -12,7 +12,7 @@ the machinery under it, and where it is narrower than the sentence sounds.
 
 [`domain/serialization/report_format.dart`](../packages/jet_print/lib/src/domain/serialization/report_format.dart)
 → `JetReportFormat` is the whole public surface: `encodeDefinition` /
-`decodeDefinition` plus their JSON-text conveniences. It touches no files — a host
+`decodeDefinition`, their JSON-text conveniences, and the `schemaVersion` constant. It touches no files — a host
 owns save and open — and pre-wires the built-in element codecs and the migration list.
 
 The version is `domain/serialization/report_definition_codec.dart` →
@@ -38,7 +38,7 @@ registration for the same key replaces an earlier one — last write wins, the s
 ```dart
 // domain/serialization/element_codec.dart → ElementCodecRegistry.decode
 // ... cut above: the `_codecs` field, `register` (the one-line map assignment),
-// and `encode`, whose unknown-element arm is quoted in the next section.
+// `typeKeys`, and `encode`, whose unknown-element arm is quoted in the next section.
 ReportElement decode(Map<String, Object?> json) {
   final Object? typeKey = json['type'];
   if (typeKey is! String) {
@@ -89,12 +89,13 @@ UnknownScopeNode(rawJson: final Map<String, Object?> raw) =>
 ```
 
 [`domain/unknown_element.dart`](../packages/jet_print/lib/src/domain/unknown_element.dart)
-→ `UnknownElement` deep-copies in *and* out, so a caller mutating the map it decoded
-from cannot reach the preserved copy. It reads `id`, `bounds` and `name` best-effort,
-falling back to `''` and `JetRect.zero`, only so the thing can be drawn as
+→ `UnknownElement` keeps the map, and `ElementCodecRegistry` deep-copies it on
+decode *and* on encode, so a caller mutating the map it decoded from cannot reach the
+preserved copy. It reads `id`, `bounds` and `name` best-effort, falling back to `''`,
+`JetRect.zero` and `null`, only so the thing can be drawn as
 `rendering/elements/renderers/unknown_element_renderer.dart`'s placeholder.
 
-The four edits the rule names are inert, and inert the same way: `withBounds`,
+The three edits the rule names are inert, and inert the same way: `withBounds`,
 `withName` and `withVisible` — the polymorphic move/resize, rename and hide
 primitives every designer command goes through — are each `=> this`. No path writes a
 new position into the preserved map, because no path writes anything into it.
@@ -135,9 +136,10 @@ maps are carried into their new band positions undecoded, and the output is stam
 name, rebuilding each band from `height` and `elements` alone, so a v1 document with
 two page headers loses one. An upgrade, not a round-trip.
 
-Adding a schema version means writing the `N → N+1` migration, adding it to
-`JetReportFormat`'s list, and recording it in `packages/jet_print/CHANGELOG.md` — the
-rule names all three.
+Adding a schema version means bumping `kReportDefinitionSchemaVersion` — the bound
+`decodeDefinition` migrates to, so without it the new step never runs — writing the `N → N+1` migration,
+adding it to `JetReportFormat`'s `_definitionMigrations`, and recording it in
+`packages/jet_print/CHANGELOG.md`. The rule names the migration and the entry.
 
 ## Why it is like this, and the alternative rejected
 

@@ -37,8 +37,8 @@ footers upward from the bottom, the sheet growing if the content outgrows the pa
 element's page rect is `(bandLeft + bounds.x, bandTop + bounds.y)` — the band-relative
 mapping page 03's layouter also uses. That layout doubles as the canvas's index:
 `elementRect`, `bandRect`, `bandOfElement`, `toBandLocal`, keyed by the stable ids page 01
-describes. (Its dartdoc calls this the *only* design-specific part; there is a second, below.
-What is genuinely absent is a designer-specific painter.)
+describes. (There is a second design-specific part, below; what is genuinely absent is a
+designer-specific painter.)
 
 `recordFrame` hands the frame to page 05's `recordPageFrame`, and
 `designer/canvas/frame_custom_painter.dart` → `FrameCustomPainter` blits the resulting
@@ -63,13 +63,14 @@ already emitting the placeholder glyph for a source-less image.
 
 ## What a pointer resolves to
 
-`designer/canvas/hit_testing.dart` → `hitTestElement` is the authority, and it is geometry
-over the layout rather than Flutter hit-testing — the per-element widgets the canvas builds
-carry semantics and test keys and deliberately do not capture pointers. It walks
-`layout.bands.reversed`, each band's elements in reverse: paint order is band order then
-element order, so the last drawn is on top and the first reverse hit wins. Containment is a
-rect test widened by `slop`, passed at every call site as `kHandleHitSize / 2 / transform.scale`
-— half a handle's hit box in screen pixels at any zoom, so a thin element stays grabbable.
+`designer/canvas/hit_testing.dart` → `hitTestElement` is the authority, and it is geometry over
+the layout rather than Flutter hit-testing — the per-element widgets the canvas builds carry
+semantics and test keys and deliberately do not capture pointers. It walks
+`layout.bands.reversed`, each band's elements in reverse: paint order is band order then element
+order, so the last drawn is on top and the first reverse hit wins. Containment is a rect test
+widened by `slop`, passed at every call site as `kHandleHitSize / 2 / transform.scale` — half a
+handle's hit box in screen pixels at any zoom, so a thin element stays grabbable. A drag is
+tested where the pointer went down (`DragStartBehavior.down`), not ~18 finger pixels later.
 
 A miss is not resolved on the spot: the page point is parked and classified on tap-up, because a
 press that becomes a drag — a marquee, a band-divider resize — fires `onTapCancel` and must
@@ -81,14 +82,15 @@ any in-progress move or resize.
 
 ## Chrome over the picture, never into it
 
-`designer/canvas/selection_overlay.dart` → `DesignerSelectionOverlay` is `Positioned` widgets
-at `page-point × scale`, above the `CustomPaint`, so clicking something changes a widget
-layer and never the recording. What it draws follows what `Selection` holds (page 07): an
-outline per selected element, plus — on a *single* element — the eight handles of
-`designer/canvas/resize_handle.dart` → `ResizeHandle`, added edges first and corners last so
-an overlapping edge hit box never masks a corner; for a band, an outline and one divider on
-the growth-facing edge, bottom for a flow band, top for a bottom-anchored footer, which grows
-upward; for the report or a crosstab, an outline alone, neither resizable by hand.
+`designer/canvas/selection_overlay.dart` → `DesignerSelectionOverlay` is `Positioned` widgets at
+`page-point × scale + origin`, in a layer laid over the page and reaching `kHandleHitSizeTouch`
+past it, so clicking something changes a widget layer and never the recording. What it draws
+follows what `Selection` holds (page 07): an outline per selected element, plus — on a *single*
+element — the eight handles of `designer/canvas/resize_handle.dart` → `ResizeHandle`, added
+edges first and corners last so an overlapping edge hit box never masks a corner; for a band, an
+outline and one divider on the growth-facing edge, bottom for a flow band, top for a
+bottom-anchored footer, which grows upward; for the report or a crosstab, an outline alone,
+neither resizable by hand.
 
 Handles are drawn at `kHandleVisualSize` and hit at `kHandleHitSize`, both in *screen* pixels, so
 they neither shrink nor grow with the zoom. Their geometry comes from the display layout, which
@@ -96,15 +98,12 @@ each kind of drag has already clamped — a resize by `designer/canvas/resize_ha
 `clampResizeToBand`, pinning only the dragged edge, a move by the rigid-group intersection in
 `designer/controller/jet_report_designer_controller.dart` → `_clampedMoveTargets`. Neither is
 `designer/controller/element_bounds.dart` → `clampToBand`: that one is move-style, for the
-committed and numeric paths. Three comments used to name `clampToBand` where a different clamp
-was the authority — `element_bounds.dart`'s library dartdoc, `selection_overlay.dart`'s, and,
-in the very file that defines `clampResizeToBand`, `resize_handle.dart`'s. All three are
-corrected, and `clamp_semantics_test.dart` pins that pair, `clampToBand` against
-`clampResizeToBand`: given one overflowing rect, the move-style clamp keeps its size and slides
-it, the edge-style one pins only the dragged edge. `_clampedMoveTargets` is in neither list: no
-comment ever misdescribed it, and no test pins it. So the chrome tracks the clamped element and
-cannot leave its band, and live snap guides join it in the same overlay, in a layer always present
-so that a guide appearing mid-drag never unmounts the keyed, gesture-owning handles beside it.
+committed and numeric paths. Three comments once named `clampToBand` where another clamp was the
+authority, so `clamp_semantics_test.dart` pins the pair: given one overflowing rect, the
+move-style clamp keeps its size and slides it, the edge-style one pins only the dragged edge.
+No test pins `_clampedMoveTargets`. So the chrome tracks the clamped element and cannot leave its
+band, and live snap guides join it in the same overlay, in a layer always present so that a
+guide appearing mid-drag never unmounts the keyed, gesture-owning handles beside it.
 
 ## Grid and rulers are arithmetic
 
@@ -114,25 +113,28 @@ arrives as an argument from `designer/canvas/design_tunables.dart`, so the densi
 unit-testable without a widget.
 
 Grid lines are exact multiples of the snap step — `kGridStep`, the point value of `kGridStepMm`
-— and `designer/controller/snapping.dart` reads that same constant, so every drawn line *is* a
-snap candidate. Density adapts: the step coarsens by `f = ⌈minGapPx / (step·scale)⌉`, and past
-`kGridMaxCoarsenFactor` the function returns nothing, hiding the grid rather than smearing the
-page into a fill. `RulerScale` likewise picks the smallest entry on a nice-number millimetre
-ladder whose spacing clears the label gap, and computes each major from its integer millimetre
-value rather than accumulating, which keeps alignment float-exact. Millimetres are display-only,
-and only for the ticks: `kPointsPerMm` in `designer/canvas/ruler_metrics.dart` feeds the tick
-layout, while the span `selectionExtent` in that same file hands the rulers to highlight is page
-points, scaled like the page.
+— and the controller's move and resize hand that same constant to
+`designer/controller/snapping.dart`, so every drawn line *is* a snap candidate. Density adapts:
+the step coarsens by `f = ⌈minGapPx / (step·scale)⌉`, and past `kGridMaxCoarsenFactor` the
+function returns nothing, hiding the grid rather than smearing the page into a fill.
+`RulerScale` likewise picks the smallest entry on a nice-number millimetre ladder whose spacing
+clears the label gap, and computes each major from its integer millimetre value rather than
+accumulating, which keeps alignment float-exact. Millimetres are display-only, and only for the
+ticks: `kPointsPerMm` in `designer/canvas/ruler_metrics.dart` feeds the tick layout, while the
+span `selectionExtent` in that same file hands the rulers to highlight is page points, scaled
+like the page.
 
 ## Interaction adapts to the pointer, not the platform
 
 The canvas tracks the device kind of the most recent pointer-down over it rather than checking
 the host platform, so a mouse on a touchscreen laptop keeps pixel precision while a finger on
-the same machine gets fat targets. Touch changes three things: handle hit boxes become
-`kHandleHitSizeTouch` while the *drawn* square stays `kHandleVisualSize` (goldens never simulate
-touch, so none of them move); the scrollbars thicken; and a drag beginning on empty canvas pans
-the viewport instead of starting a marquee, there being no wheel and no grabbing a thin bar with
-a finger. `touch_targets_test.dart` pins the first.
+the same machine gets fat targets. Under touch, handle hit boxes become `kHandleHitSizeTouch`,
+leaning out of the element, while the *drawn* square stays `kHandleVisualSize` (goldens never
+simulate touch, so none of them move), and any element's body beats every handle target
+(`selection_overlay.dart` → `_BodiesFirst`), so a small selected element still moves. The
+scrollbars thicken; a drag on empty canvas pans instead of starting a marquee, there being no
+wheel and no grabbing a thin bar with a finger; and a multi-select toggle stands in for shift.
+[`touch-authoring.md`](touch-authoring.md) lists the criteria `phone_touch_authoring_test.dart` pins.
 
 Long-press is the touch right-click. `ShadContextMenuRegion` is configured `longPressEnabled:
 true`, so the gesture exists on desktop too, and `tapEnabled: false`, because its mobile default
@@ -179,12 +181,10 @@ what lets an empty spot on the paper select the report. Swapped, neither failure
 bug — clicks in the margin start selecting whichever band is nearest, or a drop into the gap
 silently does nothing.
 
-The confusion was live in the tree twice — the comment above the `bandIdAt` call in
-`designer/canvas/design_canvas/gestures.dart` → `_selectEmptyTarget`, and the dartdoc on
-`design_time_layout.dart` → `crosstabIdAt`, both claiming `bandIdAt` snaps, which its own body
-never did. Both are corrected, and the pair is now pinned behaviourally rather than described:
-`band_page_select_test.dart` covers the click side, and `band_lookup_semantics_test.dart`
-covers both lookups over one layout.
+The confusion was live twice — a comment in `gestures.dart` → `_selectEmptyTarget` and the
+`crosstabIdAt` dartdoc both claimed `bandIdAt` snaps — so the pair is now pinned behaviourally:
+`band_page_select_test.dart` covers the click side, `band_lookup_semantics_test.dart` both
+lookups over one layout.
 
 That test also records a **second** difference, which is not about snapping and is easy to miss:
 the two bounds are not the same shape. `bandIdAt` tests `dy <= bottom` and `bandIdNear` tests

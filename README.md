@@ -34,6 +34,7 @@ jet-print/
 │   ├── lib/jet_print.dart       # the single PUBLIC entry point (exports only)
 │   └── lib/src/                  # PRIVATE internals (domain · expression · data
 │                                 #   · rendering · designer · print)
+├── packages/jet_print_google_fonts/  # optional offline font catalog (unpublished)
 └── apps/jet_print_playground/   # playground app (consumer; desktop · web · mobile)
     └── lib/*_sample.dart        # twelve worked samples: invoice, labels,
                                   #   barcodes, charts, pivot, ledger, payroll, …

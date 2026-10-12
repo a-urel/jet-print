@@ -66,9 +66,9 @@ flutter test apps/jet_print_playground
 flutter test packages/jet_print/test/encapsulation_test.dart
 ```
 
-Then the full gate from the repository root. A new demo adds no golden of its
-own, but registering one changes the nav list — if a designer golden moves, that
-is why, and [`update-goldens.md`](update-goldens.md) is the procedure.
+Then the full gate from the repository root. A new demo adds no golden, and no
+golden renders the playground, so a golden that moves means the change reached
+the library; [`update-goldens.md`](update-goldens.md) is the procedure.
 
 ## Next
 

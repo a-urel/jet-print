@@ -138,8 +138,9 @@ package-private, so an extension written only to be reachable from a sibling lib
 correctly absent from the barrel. Omit the name of one a consumer needs and the package still analyzes,
 the class still exports, and its methods silently vanish from the public surface. What catches that is
 a consumer-shaped test — `public_api_test.dart` imports only the entry point and calls `setShapeKind`,
-`setTextStyle` and `setBarcodeColor`, all extension members — and nothing catches it for an extension
-no such test exercises.
+`setTextStyle` and `setBarcodeColor`, all extension members — and, for an extension no such test
+exercises, `test/architecture/public_extension_export_test.dart` makes the omission an allowlist
+entry with a reason: a regex ratchet, not a proof.
 
 The stakes are that high because the entry point is singular, and exactly so:
 **`packages/jet_print/lib/` holds exactly one library file at its root, `jet_print.dart`, and every

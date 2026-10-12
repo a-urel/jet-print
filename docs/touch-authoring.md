@@ -5,9 +5,11 @@ phone. That claim is nine criteria, written below as what a finger does and what
 must result. Each is a widget test in
 `packages/jet_print/test/designer/canvas/phone_touch_authoring_test.dart`, which
 CI runs on every pull request and every push to `main`. The real-device record
-at the end of this page holds each device's result for all nine. [`decisions/0003`](decisions/0003-mobile-in-1-0-scope.md) requires
-all three, criteria, tests and a device pass, before `1.0.0` claims the
-designer on iOS and Android.
+at the end of this page holds each device's result for all nine.
+[`decisions/0003`](decisions/0003-mobile-in-1-0-scope.md) requires all three,
+criteria, tests and a device pass, before `1.0.0` claims the designer on iOS
+and Android. `1.0.0` was published on 2026-10-12 with the first two in place;
+the device pass is still owed.
 
 ## The viewport the criteria assume
 
@@ -120,5 +122,5 @@ flutter test packages/jet_print/test/designer/canvas/phone_touch_authoring_test.
 ## Next
 
 [`08-the-canvas.md`](08-the-canvas.md) for how the canvas hit-tests a press, and
-[`roadmap.md`](roadmap.md), P4, for what else stands between this page and
-`1.0.0`.
+[`roadmap.md`](roadmap.md), P4, for where the device pass stands against the
+published `1.0.0`.

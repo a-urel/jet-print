@@ -4,6 +4,9 @@
 
 - Initial release: curated offline catalog of open-source font families,
   exposed as `loadGoogleFonts()` producing `List<JetFontFamily>` for jet_print.
-- `GoogleFontEntry`, `googleFontCatalog`, and `loadGoogleFonts({only, bundle})`.
-- Seed catalog (Noto Sans, Noto Serif, JetBrains Mono — Latin+Ext subsets,
-  Turkish-covering); `tool/fetch_google_fonts.dart` grows it from Google Fonts.
+- `GoogleFontEntry`, `FontFaceSlot`, `googleFontCatalog`, and
+  `loadGoogleFonts({only, bundle})`.
+- A catalog of 33 families, from Arvo to Work Sans, among them Inter, Roboto,
+  Noto Sans, Noto Serif and JetBrains Mono — Latin + Latin-Extended subsets,
+  Turkish-covering; `tool/fetch_google_fonts.dart` regenerates it from
+  Google Fonts (`tool/curated_families.dart` lists the families).
