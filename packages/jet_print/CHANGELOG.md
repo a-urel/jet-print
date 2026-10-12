@@ -4,7 +4,13 @@ All notable changes to the `jet_print` library are documented here. The format i
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.2.0
+
+Settles the API questions that [decision 0004](https://github.com/a-urel/jet-print/blob/main/docs/decisions/0004-what-1-0-must-settle.md)
+says 1.0 cannot leave open: each one is fixed or recorded as the 1.0
+behaviour. Several are breaking, as a pre-1.0 minor release allows; the
+**Breaking** entries under *Changed* describe what a host sees differently.
+The report schema is unchanged, so saved reports need no migration.
 
 ### Added
 

@@ -32,8 +32,8 @@ import 'report_element.dart';
 import 'report_variable.dart';
 import 'scope_total.dart';
 
-/// Validates [def]'s semantic invariants (I1–I9), returning a [Diagnostic] for
-/// each violation in document order. Returns an empty list for a valid
+/// Validates [def]'s semantic invariants (I1–I10), returning a [Diagnostic]
+/// for each violation in document order. Returns an empty list for a valid
 /// definition. **Never throws.**
 ///
 /// * I1 unique ids (a group's id among them; its name may repeat — I2 is
