@@ -8,6 +8,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **The README states what a large report costs.** *Platform notes* now
+  gives measured memory figures: about 1.5 MB per 1,000 rows to lay a report
+  out, and about 0.3 MB more per page to export it to PDF. It also advises
+  keeping one report on a phone to tens of thousands of rows.
+
 - **The pubspec declares all six platforms.** A `platforms:` block lists
   Android, iOS, Linux, macOS, web and Windows, so pub.dev shows what this
   package claims instead of inferring it from the plugin dependencies. Each
