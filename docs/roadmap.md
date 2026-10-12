@@ -345,6 +345,18 @@ macOS, Linux, Windows, web, iOS, Android — declared in the pubspec and green i
 CI, because a platform claim that CI does not exercise is the same class of
 false signal E1 existed to remove.
 
+**In progress.** Of [`decisions/0003`](decisions/0003-mobile-in-1-0-scope.md)'s
+three mobile deliverables, two exist: the touch acceptance criteria in
+[`touch-authoring.md`](touch-authoring.md) and the phone-width tests that
+check them, merged with
+[#118](https://github.com/a-urel/jet-print/pull/118), which also fixed four
+touch defects the criteria found. The third, a pass on a real iOS device and
+a real Android device, is recorded on that page and has not been run. The
+[`api-friction.md`](api-friction.md) freeze review has been held: every entry
+is fixed, accepted, or a known cost whose fix is additive. Still open: the
+`platforms:` declaration, re-reading the E2b memory figures against the mobile
+claim, and the `1.0.0` release itself.
+
 **P5 — Designer-as-product.** E7, deferred rather than scheduled. It is a
 second product, not the completion of this one, and nothing yet shows the
 demand that would justify it. It starts when somebody asks for it and not

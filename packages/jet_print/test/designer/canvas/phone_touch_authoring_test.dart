@@ -347,6 +347,24 @@ void main() {
   });
 
   testWidgets(
+      'T8 multi-select: dragging an unselected element joins it and moves all',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c = await _pumpPhone(tester);
+    await _fingerTap(tester, tester.getCenter(_element('a')));
+    await _fingerTap(tester, tester.getCenter(find.byKey(_multiSelectKey)));
+    final JetRect a0 = _bounds(c, 'a');
+    final JetRect b0 = _bounds(c, 'b');
+    final double s = c.viewScale;
+
+    await _fingerDrag(
+        tester, tester.getCenter(_element('b')), const Offset(10, 40));
+
+    expect(c.selection.ids.toSet(), <String>{'a', 'b'});
+    expect(_bounds(c, 'a').y, closeTo(a0.y + 40 / s, 1));
+    expect(_bounds(c, 'b').y, closeTo(b0.y + 40 / s, 1));
+  });
+
+  testWidgets(
       'T9 align: two elements selected by finger align left from Arrange',
       (WidgetTester tester) async {
     final JetReportDesignerController c = await _pumpPhone(tester);

@@ -218,15 +218,17 @@ class ReportFiller {
           startNewPage: g.startNewPage,
         ),
     ];
+    final Map<String, String> groupLabels = <String, String>{
+      for (final GroupLevel g in groups) g.id: g.name,
+    };
     final VariableCalculator calc = VariableCalculator(
       variables: definition.variables,
       groups: calcGroups,
       functions: _functions,
       contextFactory: contextFactory,
-      groupLabels: <String, String>{
-        for (final GroupLevel g in groups) g.id: g.name,
-      },
+      groupLabels: groupLabels,
     )..start();
+    final Set<String> warnedUnsortedGroups = <String>{};
     for (final String message in calc.compileErrors) {
       diagnostics.error(message);
     }
@@ -686,6 +688,16 @@ class ReportFiller {
             rc.aggregation.fold(childRow);
           }
         }
+      }
+      // A key that comes back means the source is not ordered by it, and the
+      // group prints twice (api-friction entry 5). Warn once per group level:
+      // the cause is the same on every later repeat.
+      final String? repeated = calc.reappearedGroup;
+      if (repeated != null && warnedUnsortedGroups.add(repeated)) {
+        diagnostics.warning('group "${groupLabels[repeated] ?? repeated}" '
+            'saw key "${jetStringify(calc.reappearedKey!)}" again '
+            'after a different key: the data source is not sorted by this '
+            "group's key, so the group prints more than once");
       }
       final Set<String> broken = calc.brokenGroups;
       if (!hadRows) {

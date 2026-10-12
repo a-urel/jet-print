@@ -295,6 +295,26 @@ GroupLevel(
 ),
 ```
 
+An aggregate (`SUM`, `AVG`, `COUNT`, `MIN`, `MAX`) totals the rows of the band
+it sits in. Three bands compute one:
+
+- the **summary band**, over every row of the report;
+- the **footer of a group** in the report's top-level scope, over that group's
+  rows;
+- the **footer of a nested scope**, such as an order's lines, over that scope's
+  rows.
+
+In all three, an aggregate's argument can be an expression over several
+fields of one row, as in `SUM($F{qty} * $F{unitPrice})`. In the summary band
+and a top-level group footer, the aggregate can also sit inside arithmetic or
+another function, as in `SUM($F{debit}) - SUM($F{credit})` or
+`ROUND(AVG($F{amount}), 2)`. In a nested scope's footer it must be the
+element's whole expression. Anywhere else, such as a group header, a
+detail band or a page header or footer, no aggregate is computed, and
+`validate` reports an element whose whole expression is one as an error. If
+the rows are not sorted by a group's key, render warns that the group prints
+more than once.
+
 Page numbers come from `$V{PAGE_NUMBER}` and `$V{PAGE_COUNT}` in a page footer.
 `validate(definition, schema: schema)` checks every binding before you render.
 

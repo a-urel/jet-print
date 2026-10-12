@@ -91,6 +91,13 @@ class VariableCalculator {
   List<JetValue>? _prevKeys;
   Set<String> _brokenGroups = const <String>{};
 
+  /// Per group level, the key values seen since its parent group last broke
+  /// (the whole run, for the outermost level): a key found here again means
+  /// the source is not ordered by that level's key (api-friction entry 5).
+  final List<Set<JetValue>> _seenKeys = <Set<JetValue>>[];
+  String? _reappearedGroup;
+  JetValue? _reappearedKey;
+
   /// (Re)initializes all accumulators and clears group state.
   void start() {
     for (final VariableAccumulator a in _accumulators) {
@@ -102,6 +109,11 @@ class VariableCalculator {
     }
     _prevKeys = null;
     _brokenGroups = const <String>{};
+    _seenKeys
+      ..clear()
+      ..addAll(<Set<JetValue>>[for (final _ in _groups) <JetValue>{}]);
+    _reappearedGroup = null;
+    _reappearedKey = null;
   }
 
   /// Processes one [row] (with optional [params]), updating all variable values.
@@ -127,14 +139,29 @@ class VariableCalculator {
     // 2. Detect the outermost broken group; all inner groups break too.
     _brokenGroups = <String>{};
     final List<JetValue>? prev = _prevKeys;
+    int outermostBroken = prev == null ? 0 : _groups.length;
     if (prev != null) {
       for (int i = 0; i < _groups.length; i++) {
         if (keys[i] != prev[i]) {
+          outermostBroken = i;
           for (int j = i; j < _groups.length; j++) {
             _brokenGroups.add(_groups[j].name);
           }
           break;
         }
+      }
+    }
+
+    // 2b. Track keys per level within the current parent instance. Only the
+    // outermost broken level can see a repeat: every level inside it has a
+    // parent that just broke, so its seen keys start over.
+    _reappearedGroup = null;
+    _reappearedKey = null;
+    for (int j = outermostBroken; j < _groups.length; j++) {
+      if (j > outermostBroken) _seenKeys[j].clear();
+      if (!_seenKeys[j].add(keys[j]) && j == outermostBroken) {
+        _reappearedGroup = _groups[j].name;
+        _reappearedKey = keys[j];
       }
     }
 
@@ -181,6 +208,16 @@ class VariableCalculator {
   /// Returned as an unmodifiable view (the internal set is replaced each
   /// [advance]), mirroring [values]' defensive copy.
   Set<String> get brokenGroups => Set<String>.unmodifiable(_brokenGroups);
+
+  /// The group whose key, on the most recent [advance], took a value it
+  /// already had earlier within the same instance of its parent group (or
+  /// within the whole run, for the outermost group), or null. That happens
+  /// only when the source is not ordered by the key, and it prints the group
+  /// a second time. At most one group per row: see [reappearedKey].
+  String? get reappearedGroup => _reappearedGroup;
+
+  /// The key value [reappearedGroup] took again, or null.
+  JetValue? get reappearedKey => _reappearedKey;
 
   /// The lifetime total of wrong-type inputs dropped across all of this
   /// calculator's aggregates (spec E2). Monotonic — group-break resets do not

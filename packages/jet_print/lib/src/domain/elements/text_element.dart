@@ -37,6 +37,13 @@ class TextElement extends ReportElement with ValueEquality {
 
   /// Optional display format (013) — an ICU number/date pattern applied to the
   /// resolved value at render time. Null/empty means the value is shown as-is.
+  ///
+  /// The pattern's symbols are placeholders, not literal characters: `,` is
+  /// "the grouping separator" and `.` is "the decimal separator", and which
+  /// characters those are comes from `RenderOptions.locale`. So `#,##0.00`
+  /// prints `1,234.50` under `en` and `1.234,50` under `tr` or `de`. Month
+  /// and day names in a date pattern follow the same locale, and the `FORMAT`
+  /// expression function reads it too.
   final String? format;
 
   @override
