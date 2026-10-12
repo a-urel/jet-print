@@ -10,8 +10,12 @@ themselves.
 
 ![The jet_print designer: toolbox, canvas, data fields and property inspector](https://raw.githubusercontent.com/a-urel/jet-print/main/packages/jet_print/doc/screenshots/designer.png)
 
-> **Status: 0.x.** The API may still change between minor versions until 1.0.
-> Breaking changes are listed in the [changelog](CHANGELOG.md).
+> **Status: 1.0, stable.** Within `1.x` an upgrade changes no public API, no
+> default, and nothing a report prints for a definition `validate` accepts;
+> anything that would break these promises waits for `2.0`. What counts as
+> breaking is set out in
+> [decision 0004](https://github.com/a-urel/jet-print/blob/main/docs/decisions/0004-what-1-0-must-settle.md),
+> and every change is listed in the [changelog](CHANGELOG.md).
 
 ## Features
 
