@@ -695,6 +695,31 @@ void main() {
           findsNothing);
     });
 
+    testWidgets('picking a sheet size after a roll gives a portrait sheet',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      c.selectReport();
+      await tester.pumpAndSettle();
+
+      await tester.tap(_field('paper'));
+      await tester.pumpAndSettle();
+      await tester.tap(_paperOption('80mm'));
+      await tester.pumpAndSettle();
+      // A roll is wider than its minimum height, which is not landscape.
+      expect(c.definition.page.width, greaterThan(c.definition.page.height));
+
+      await tester.tap(_field('paper'));
+      await tester.pumpAndSettle();
+      await tester.tap(_paperOption('A4'));
+      await tester.pumpAndSettle();
+
+      expect(c.definition.page.continuous, isFalse);
+      expect(c.definition.page.width, closeTo(595.28, 1e-6),
+          reason: 'a roll has no orientation to carry over');
+      expect(c.definition.page.height, closeTo(841.89, 1e-6));
+    });
+
     testWidgets('the Continuous switch toggles roll paper in one undo step',
         (WidgetTester tester) async {
       final JetReportDesignerController c = await pumpDesignerWith(tester);

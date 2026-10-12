@@ -717,7 +717,9 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     final PageFormat page = controller.definition.page;
     final PaperMatch paper = recognizePaper(page);
     final MarginMatch margin = recognizeMargin(page.margins);
-    final bool landscape = page.width > page.height;
+    // A roll has no orientation: it is wider than its minimum height, which is
+    // not landscape, so a sheet picked after it starts portrait.
+    final bool landscape = !page.continuous && page.width > page.height;
     // The page is edited as Custom when it matches no preset, or when the user
     // explicitly chose Custom from the picker (revealing the W/H fields).
     final bool customMode = paper.isCustom || _customPaper;
