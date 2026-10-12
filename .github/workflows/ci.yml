@@ -76,7 +76,11 @@ jobs:
         # `flutter test` at a workspace root does not fan out to members, so the
         # member packages are listed explicitly. Off-canonical jobs exclude the
         # golden surface (host rasterization / PDF subsetting differs per OS).
-        run: flutter test ${{ matrix.test_filter }} packages/jet_print apps/jet_print_playground
+        # The font add-on reads its assets through dart:io, so it runs here and
+        # not on the Chrome leg.
+        run: >-
+          flutter test ${{ matrix.test_filter }} packages/jet_print
+          packages/jet_print_google_fonts apps/jet_print_playground
 
   web:
     name: web (chrome)

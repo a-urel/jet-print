@@ -59,7 +59,7 @@ or passing:
 ```bash
 dart format --output=none --set-exit-if-changed .
 flutter analyze
-flutter test packages/jet_print apps/jet_print_playground
+flutter test packages/jet_print packages/jet_print_google_fonts apps/jet_print_playground
 ```
 
 Evidence before assertions. "Tests pass" is a claim about output you have

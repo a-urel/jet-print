@@ -36,7 +36,7 @@ checkout must pass all three:
 ```bash
 dart format --output=none --set-exit-if-changed .
 flutter analyze
-flutter test packages/jet_print apps/jet_print_playground
+flutter test packages/jet_print packages/jet_print_google_fonts apps/jet_print_playground
 ```
 
 The member packages are listed explicitly on purpose: `flutter analyze` fans out

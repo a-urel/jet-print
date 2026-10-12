@@ -77,7 +77,7 @@ Run from the repository root. These three commands mirror CI exactly:
 ```bash
 dart format --output=none --set-exit-if-changed .                 # formatting is clean
 flutter analyze                                                    # zero analyzer warnings
-flutter test packages/jet_print apps/jet_print_playground          # all tests pass
+flutter test packages/jet_print packages/jet_print_google_fonts apps/jet_print_playground  # all tests pass
 ```
 
 > **Why the explicit paths?** `flutter analyze` fans out across all workspace

@@ -7,19 +7,19 @@ aspirational.
 ## Running them
 
 ```bash
-flutter test packages/jet_print apps/jet_print_playground     # everything
+flutter test packages/jet_print packages/jet_print_google_fonts apps/jet_print_playground  # everything
 flutter test packages/jet_print/test/rendering                # one seam
 flutter test packages/jet_print/test/goldens/rendered_invoice_test.dart
-flutter test --exclude-tags golden packages/jet_print apps/jet_print_playground  # what Ubuntu and Windows CI run
+flutter test --exclude-tags golden packages/jet_print packages/jet_print_google_fonts apps/jet_print_playground  # Ubuntu, Windows
 ```
 
 Name the member packages. `flutter test` at a workspace root only looks at the
 root package, so the bare command passes while testing nothing.
 
-The third member, `packages/jet_print_google_fonts`, has tests of its own —
-catalog consistency, Turkish coverage, an asset-size budget, render parity —
-that neither the gate nor CI runs. Run `flutter test
-packages/jet_print_google_fonts` yourself when you touch it.
+The font add-on, `packages/jet_print_google_fonts`, carries its own tests —
+catalog consistency, Turkish coverage, an asset-size budget, render parity. They
+read the bundled fonts through `dart:io`, so they run on the three desktop legs
+and not on Chrome.
 
 ## The taxonomy
 
@@ -246,7 +246,7 @@ four jobs of their own:
 | macOS (**canonical**) | format check, analyze, build, **full suite including goldens** |
 | Ubuntu | analyze, build, suite minus goldens |
 | Windows | analyze, build, suite minus goldens |
-| web (chrome) | build, suite minus goldens — **per package**, because the repo-root multi-package `--platform chrome` command fails on DDC workspace path resolution |
+| web (chrome) | build, suite minus goldens — **per package**, the library and the playground, because the repo-root multi-package `--platform chrome` command fails on DDC workspace path resolution |
 | android (apk) | build only |
 | ios (no codesign) | build only |
 | update goldens (macos) | **manual only** (`update_goldens` dispatch): golden suite, then `--update-goldens` on each failing file; uploads the new PNGs and failure images. Every other leg skips that dispatch |
