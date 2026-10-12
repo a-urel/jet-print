@@ -2,6 +2,34 @@
 part of '../design_canvas.dart';
 
 extension _CanvasBuild on _DesignCanvasState {
+  /// Selection chrome (outline + handles), over the page and reaching
+  /// [kHandleHitSizeTouch] past it on every side. It sits beside the page
+  /// rather than inside it because the page's box clips hit-testing at the
+  /// paper's edge, and a touch handle on an element near that edge reaches
+  /// past it. Fed the DISPLAY layout so the outline + handles ride the same
+  /// clamped geometry as the element picture during a live move/resize.
+  Widget _selectionOverlay(
+    DesignTimeLayout displayLayout,
+    double scale,
+    JetOffset pageOffset,
+    double pageW,
+    double pageH,
+  ) {
+    const double reach = kHandleHitSizeTouch;
+    return Positioned(
+      left: pageOffset.dx - reach,
+      top: pageOffset.dy - reach,
+      width: pageW + 2 * reach,
+      height: pageH + 2 * reach,
+      child: DesignerSelectionOverlay(
+        layout: displayLayout,
+        scale: scale,
+        touchTargets: _isTouch,
+        origin: reach,
+      ),
+    );
+  }
+
   Widget _buildPage(
     JetReportDesignerController controller,
     DesignTimeLayout layout,
@@ -107,15 +135,8 @@ extension _CanvasBuild on _DesignCanvasState {
                   // layout so the hit regions ride along with the live picture.
                   ..._elementRegions(controller, displayLayout, scale,
                       JetPrintLocalizations.of(context)),
-                  // Selection chrome (outline + handles), on top. Fed the DISPLAY
-                  // layout so the outline + handles ride the same clamped geometry
-                  // as the element picture during a live move/resize.
-                  Positioned.fill(
-                    child: DesignerSelectionOverlay(
-                        layout: displayLayout,
-                        scale: scale,
-                        touchTargets: _isTouch),
-                  ),
+                  // Selection chrome is not here but over the page, in the
+                  // canvas content: see `_selectionOverlay`.
                   // Marquee rubber-band, while dragging on empty canvas.
                   if (_marqueeRect case final JetRect m)
                     Positioned(

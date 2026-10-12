@@ -38,14 +38,26 @@ extension _CanvasGestures on _DesignCanvasState {
           _captionBandYAt(localPosition, transform, layout);
       final JetOffset target =
           captionBandY == null ? page : JetOffset(0, captionBandY);
-      _emptyTapPage = _shiftPressed ? null : target;
-      _emptyTapWasDouble = near && !_shiftPressed;
+      _emptyTapPage = _extending ? null : target;
+      _emptyTapWasDouble = near && !_extending;
       _trackTap(localPosition, near: near);
       return;
     }
 
     _emptyTapPage = null;
     _emptyTapWasDouble = false;
+    if (_multiSelect) {
+      // An unselected element joins at once, so a long press's menu and a drag
+      // both act on it; removing a selected one waits for tap-up (see
+      // [_pendingToggle]). Never a double-tap.
+      if (controller.selection.contains(hit)) {
+        _pendingToggle = hit;
+      } else {
+        controller.toggleSelection(hit);
+      }
+      _trackTap(localPosition, near: false);
+      return;
+    }
     if (_shiftPressed) {
       controller.toggleSelection(hit); // extend/contract multi-selection
     } else {
@@ -103,10 +115,12 @@ extension _CanvasGestures on _DesignCanvasState {
     }
   }
 
-  /// Drops a pending empty-area tap (its press became a drag, or was cancelled).
+  /// Drops a pending empty-area tap (its press became a drag, or was cancelled),
+  /// and a pending multi-select toggle with it.
   void _cancelEmptyTap() {
     _emptyTapPage = null;
     _emptyTapWasDouble = false;
+    _pendingToggle = null;
   }
 
   /// Tap-up: complete an empty-area tap as a band/report/clear selection. A press
@@ -114,6 +128,12 @@ extension _CanvasGestures on _DesignCanvasState {
   /// this only runs for a genuine tap on no element.
   void _handleTap(
       JetReportDesignerController controller, DesignTimeLayout layout) {
+    final String? toggle = _pendingToggle;
+    _pendingToggle = null;
+    if (toggle != null) {
+      controller.toggleSelection(toggle);
+      return;
+    }
     final JetOffset? page = _emptyTapPage;
     final bool wasDouble = _emptyTapWasDouble;
     _emptyTapPage = null;
@@ -194,6 +214,10 @@ extension _CanvasGestures on _DesignCanvasState {
     return null;
   }
 
+  /// Whether a tap extends the selection rather than replacing it: shift held,
+  /// or the touch multi-select toggle on.
+  bool get _extending => _shiftPressed || _multiSelect;
+
   bool get _shiftPressed =>
       HardwareKeyboard.instance.logicalKeysPressed
           .contains(LogicalKeyboardKey.shiftLeft) ||
@@ -266,7 +290,11 @@ extension _CanvasGestures on _DesignCanvasState {
           _marqueeRect = JetRect(x: page.dx, y: page.dy, width: 0, height: 0));
       return;
     }
-    if (!controller.selection.contains(hit)) controller.select(hit);
+    if (!controller.selection.contains(hit)) {
+      // Under multi-select, dragging an unselected element joins it to the
+      // selection, so the drag moves everything chosen so far.
+      _multiSelect ? controller.toggleSelection(hit) : controller.select(hit);
+    }
     _panStartPage = page;
     _movingSelection = true;
     controller.beginMove();

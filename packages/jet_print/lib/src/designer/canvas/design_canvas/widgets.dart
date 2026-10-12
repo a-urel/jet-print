@@ -167,3 +167,52 @@ class _EmptyHint extends StatelessWidget {
     );
   }
 }
+
+/// The touch-only multi-select toggle floating in a corner of the canvas
+/// viewport: a finger-sized (44px) button, filled while [active]. Announced as
+/// a toggle under [label], which doubles as its tooltip.
+class _MultiSelectToggle extends StatelessWidget {
+  const _MultiSelectToggle({
+    required this.active,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final bool active;
+  final String label;
+  final VoidCallback onPressed;
+
+  static const Key _key =
+      ValueKey<String>('jet_print.designer.canvas.multiSelect');
+
+  @override
+  Widget build(BuildContext context) {
+    const Widget glyph = Icon(LucideIcons.copyCheck, size: 20);
+    return MergeSemantics(
+      child: Semantics(
+        label: label,
+        toggled: active,
+        child: ShadTooltip(
+          builder: (BuildContext context) => Text(label),
+          child: active
+              ? ShadIconButton(
+                  key: _key,
+                  icon: glyph,
+                  width: kHandleHitSizeTouch,
+                  height: kHandleHitSizeTouch,
+                  padding: EdgeInsets.zero,
+                  onPressed: onPressed,
+                )
+              : ShadIconButton.outline(
+                  key: _key,
+                  icon: glyph,
+                  width: kHandleHitSizeTouch,
+                  height: kHandleHitSizeTouch,
+                  padding: EdgeInsets.zero,
+                  onPressed: onPressed,
+                ),
+        ),
+      ),
+    );
+  }
+}

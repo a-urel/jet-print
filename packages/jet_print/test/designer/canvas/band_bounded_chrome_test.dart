@@ -112,8 +112,12 @@ void main() {
       await tester.pump();
     }
 
+    // The DRAWN square, not the handle's hit box: under touch (this gesture's
+    // kind) the hit box leans out of the element, keeping the square on the
+    // corner.
     final Rect elem = tester.getRect(_elementFinder(id));
-    final Rect br = tester.getRect(_bottomRightHandle);
+    final Rect br = tester.getRect(find.descendant(
+        of: _bottomRightHandle, matching: find.byType(DecoratedBox)));
     expect(br.center.dx, closeTo(elem.right, 1.0),
         reason: 'handle hugs the clamped right edge during resize');
     expect(br.center.dy, closeTo(elem.bottom, 1.0),

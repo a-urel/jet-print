@@ -500,6 +500,9 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get resizeBandHandle => 'Bant yüksekliğini değiştir';
 
   @override
+  String get canvasMultiSelect => 'Çoklu seçim';
+
+  @override
   String get previewBack => 'Geri';
 
   @override

@@ -7,6 +7,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/gestures.dart'
     show
+        DragStartBehavior,
         GestureBinding,
         PointerDeviceKind,
         PointerDownEvent,
@@ -220,9 +221,23 @@ class _DesignCanvasState extends State<DesignCanvas> {
 
   bool get _isTouch => _pointerKind == PointerDeviceKind.touch;
 
+  /// Whether the touch multi-select toggle is on: a tap then adds an element to
+  /// the selection or removes it, as shift-tap does, and an empty tap keeps the
+  /// selection. The toggle shows only under touch, so it switches off when
+  /// another kind of pointer takes over rather than lingering unseen.
+  bool _multiSelect = false;
+
+  /// The already-selected element a multi-select tap pressed, removed on
+  /// tap-up rather than on press: a press that becomes a drag must move the
+  /// selection, not first take the pressed element out of it.
+  String? _pendingToggle;
+
   void _updatePointerKind(PointerDeviceKind kind) {
     if (kind == _pointerKind) return;
-    setState(() => _pointerKind = kind);
+    setState(() {
+      _pointerKind = kind;
+      if (kind != PointerDeviceKind.touch) _multiSelect = false;
+    });
   }
 
   /// A stable per-element key on each element's hit region, so a selection from
@@ -551,6 +566,12 @@ class _DesignCanvasState extends State<DesignCanvas> {
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   supportedDevices: _interactionDevices,
+                  // A drag is hit-tested where the pointer went DOWN, not where
+                  // it cleared the slop (the default, `start`). A mouse's slop
+                  // is a pixel or two, a finger's is ~18: with `start`, a finger
+                  // drag on an element ~15px tall at phone zoom was tested off
+                  // the element and panned the page instead of moving it.
+                  dragStartBehavior: DragStartBehavior.down,
                   onTapDown: (TapDownDetails d) => _handleTapDown(
                       d.localPosition, controller, transform, layout),
                   onTap: () => _handleTap(controller, layout),
@@ -578,6 +599,9 @@ class _DesignCanvasState extends State<DesignCanvas> {
                           ),
                           // Band captions, in the column left of the page.
                           ..._bandBadges(displayLayout, scale, pageOffset),
+                          // Topmost, as it was inside the page.
+                          _selectionOverlay(
+                              displayLayout, scale, pageOffset, pageW, pageH),
                         ],
                       ),
                     ),
@@ -596,48 +620,74 @@ class _DesignCanvasState extends State<DesignCanvas> {
             // The scroll viewport + its scrollbar overlays, as one unit so the
             // rulers can inset it without disturbing the scrollbar geometry.
             final double barThickness = _isTouch ? 20 : 8;
-            final Widget viewportStack = Stack(
-              children: <Widget>[
-                ScrollConfiguration(
-                  behavior: const _CanvasScrollBehavior(),
-                  child: SingleChildScrollView(
-                    controller: _vScroll,
+            // The pointer kind is read at the whole viewport, not only on the
+            // canvas content, so a mouse pressing the touch toggle or a
+            // scrollbar also switches touch mode off.
+            final Widget viewportStack = Listener(
+              behavior: HitTestBehavior.translucent,
+              onPointerDown: (PointerDownEvent e) => _updatePointerKind(e.kind),
+              child: Stack(
+                children: <Widget>[
+                  ScrollConfiguration(
+                    behavior: const _CanvasScrollBehavior(),
                     child: SingleChildScrollView(
-                      controller: _hScroll,
-                      scrollDirection: Axis.horizontal,
-                      child: content,
-                    ),
-                  ),
-                ),
-                if (vScrollable)
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    bottom: hScrollable ? barThickness : 0,
-                    width: barThickness,
-                    child: _CanvasScrollbar(
-                      key: const ValueKey<String>(
-                          'jet_print.designer.scrollbar.vertical'),
                       controller: _vScroll,
-                      axis: Axis.vertical,
-                      color: thumbColor,
+                      child: SingleChildScrollView(
+                        controller: _hScroll,
+                        scrollDirection: Axis.horizontal,
+                        child: content,
+                      ),
                     ),
                   ),
-                if (hScrollable)
-                  Positioned(
-                    left: 0,
-                    right: vScrollable ? barThickness : 0,
-                    bottom: 0,
-                    height: barThickness,
-                    child: _CanvasScrollbar(
-                      key: const ValueKey<String>(
-                          'jet_print.designer.scrollbar.horizontal'),
-                      controller: _hScroll,
-                      axis: Axis.horizontal,
-                      color: thumbColor,
+                  if (vScrollable)
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      bottom: hScrollable ? barThickness : 0,
+                      width: barThickness,
+                      child: _CanvasScrollbar(
+                        key: const ValueKey<String>(
+                            'jet_print.designer.scrollbar.vertical'),
+                        controller: _vScroll,
+                        axis: Axis.vertical,
+                        color: thumbColor,
+                      ),
                     ),
-                  ),
-              ],
+                  if (hScrollable)
+                    Positioned(
+                      left: 0,
+                      right: vScrollable ? barThickness : 0,
+                      bottom: 0,
+                      height: barThickness,
+                      child: _CanvasScrollbar(
+                        key: const ValueKey<String>(
+                            'jet_print.designer.scrollbar.horizontal'),
+                        controller: _hScroll,
+                        axis: Axis.horizontal,
+                        color: thumbColor,
+                      ),
+                    ),
+                  // Touch only: a finger has no shift key and its empty-canvas
+                  // drag pans, so this toggle is how it selects several elements.
+                  if (_isTouch)
+                    Positioned(
+                      left: 8,
+                      bottom: (hScrollable ? barThickness : 0) + 8,
+                      child: _MultiSelectToggle(
+                        active: _multiSelect,
+                        label: l10n.canvasMultiSelect,
+                        // A mouse press already switched touch mode, and
+                        // this toggle, off at pointer-down; its tap-up must
+                        // not switch multi-select back on unseen.
+                        onPressed: () {
+                          if (_isTouch) {
+                            setState(() => _multiSelect = !_multiSelect);
+                          }
+                        },
+                      ),
+                    ),
+                ],
+              ),
             );
 
             // The viewport always sits inside one stable Stack > Positioned, so
