@@ -7,20 +7,25 @@ aspirational.
 ## Running them
 
 ```bash
-flutter test packages/jet_print apps/jet_print_playground     # everything
+flutter test packages/jet_print packages/jet_print_google_fonts apps/jet_print_playground  # everything
 flutter test packages/jet_print/test/rendering                # one seam
 flutter test packages/jet_print/test/goldens/rendered_invoice_test.dart
-flutter test --exclude-tags golden packages/jet_print         # what non-macOS CI runs
+flutter test --exclude-tags golden packages/jet_print packages/jet_print_google_fonts apps/jet_print_playground  # Ubuntu, Windows
 ```
 
 Name the member packages. `flutter test` at a workspace root only looks at the
 root package, so the bare command passes while testing nothing.
 
+The font add-on, `packages/jet_print_google_fonts`, carries its own tests —
+catalog consistency, Turkish coverage, an asset-size budget, render parity. They
+read the bundled fonts through `dart:io`, so they run on the three desktop legs
+and not on Chrome.
+
 ## The taxonomy
 
 | Directory | Files | What it proves |
 |---|---:|---|
-| `test/architecture/` | 9 | Whole-repo invariants, each named in [`../AGENTS.md`](../AGENTS.md)'s guard table, where the list is the point. Mostly by scanning source text; the registration guard compares registries at runtime. |
+| `test/architecture/` | 13 | Whole-repo invariants, each named in [`../AGENTS.md`](../AGENTS.md)'s guard table, where the list is the point. Mostly by scanning source text; the two registration guards compare registries at runtime. |
 | `test/domain/` | ~55 | The model, `validate()`, and serialization round-trips including lossless unknown types. |
 | `test/expression/` | ~30 | Lexer, parser, evaluator, functions, aggregates, formatting. |
 | `test/data/` | ~15 | Data sources, schemas, cursors, nested collections. |
@@ -29,11 +34,11 @@ root package, so the bare command passes while testing nothing.
 | `test/print/` | 2 | The printer seam. |
 | `test/goldens/` | 4 | The cross-cutting visual and byte-pinned goldens. |
 | `test/web/` | 2 | Behavior that differs under CanvasKit. |
-| `test/` (root) | 2 | `encapsulation_test.dart` and `public_api_test.dart`. |
+| `test/` (root) | 7 | `encapsulation_test.dart` and `public_api_test.dart`, below; the three `example*_test.dart` files run `example/`, `readme_snippets_test.dart` keeps the package README's code identical to it, and `version_test.dart` pins `jetPrintVersion` to the pubspec. |
 
 ### The two import-scanning architecture tests
 
-`AGENTS.md`'s table names all seven. These two are worth reading side by side,
+`AGENTS.md`'s table names every one. These two are worth reading side by side,
 because they scan for the same kind of violation by different means, and the
 difference decides what each will let through.
 
@@ -44,9 +49,10 @@ directory *has* files, so an empty scan cannot produce a false green. It has lon
 since grown past those three directories. It also pins two pure designer geometry
 helpers; the sub-seam rules inside `rendering/` (`fill/`, `layout/`, `elements/`,
 `export/` and the `engine/` facade, each with its own allowed dependencies);
-`dart:ui` to `paint/canvas_painter.dart`, `paint/page_rasterizer.dart` and
-`engine/render_options.dart` — note the test's *name* says only the two painters,
-while its body carries an explicit third branch for `RenderOptions`' `Locale`;
+`dart:ui` to `paint/canvas_painter.dart`, `paint/page_rasterizer.dart`,
+`paint/record_page_frame.dart` and `engine/render_options.dart` — the test's
+*name* covers the paint backends and the record seam, while its body carries a
+separate branch for `RenderOptions`' `Locale`;
 `package:printing` to `lib/src/print/`, which no library file but the barrel may
 reach; what the public entry point exports, `show` combinators included; and that
 `schemaVersion` is still 2.
@@ -81,8 +87,10 @@ The allowlist matters, because it is not a short one. White-box seam tests
 legitimately exercise unexported types in isolation, so these are permitted
 wholesale — `test/domain`, `test/data`, `test/expression`, `test/rendering`,
 `test/print`, `test/web`, `test/designer/template` — plus a long list of
-individually named designer tests, each with a comment explaining why that
-particular helper is unexported and unit-tested directly. Everything else is
+individually named files, each with a comment explaining why that particular
+helper is unexported and unit-tested directly. Most are designer tests; the two
+registration guards in `test/architecture/` and `example_data_test.dart` are the
+others. Everything else is
 default-deny, and **the playground app is never exempt**.
 
 So the rule is not "tests are black-box". It is: the inner seams are tested
@@ -238,7 +246,7 @@ four jobs of their own:
 | macOS (**canonical**) | format check, analyze, build, **full suite including goldens** |
 | Ubuntu | analyze, build, suite minus goldens |
 | Windows | analyze, build, suite minus goldens |
-| web (chrome) | build, suite minus goldens — **per package**, because the repo-root multi-package `--platform chrome` command fails on DDC workspace path resolution |
+| web (chrome) | build, suite minus goldens — **per package**, the library and the playground, because the repo-root multi-package `--platform chrome` command fails on DDC workspace path resolution |
 | android (apk) | build only |
 | ios (no codesign) | build only |
 | update goldens (macos) | **manual only** (`update_goldens` dispatch): golden suite, then `--update-goldens` on each failing file; uploads the new PNGs and failure images. Every other leg skips that dispatch |

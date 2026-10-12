@@ -61,7 +61,9 @@ flutter pub add jet_print
 ```
 
 Requires Flutter 3.44 or later. Runs on Android, iOS, web, macOS, Windows and
-Linux.
+Linux. The visual designer is supported on desktop and the web; on Android and
+iOS it runs, but is not yet verified on a device (see
+[Platform notes](#platform-notes)).
 
 ## Quickstart
 
@@ -345,6 +347,13 @@ the saved-JSON format limited to types this library defines, which is how a
 report saved by one version still opens in another.
 
 ## Platform notes
+
+On Android and iOS, rendering, PDF/PNG export, printing and
+`JetReportPreview` are supported. `JetReportDesigner` and `JetReportWorkspace`
+run there and work by touch, which is covered by tests at phone width, but they
+are not yet supported on phones and tablets: that waits for a pass on real
+devices, recorded in
+[`docs/touch-authoring.md`](https://github.com/a-urel/jet-print/blob/main/docs/touch-authoring.md).
 
 Reports look the same on every platform, but are not byte-identical: text
 rasterization (PNG pixels) and PDF font subsetting vary by operating system. Do

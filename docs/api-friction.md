@@ -15,8 +15,8 @@ change anything.
 ## Where these came from
 
 Two consumers, both written on 2026-09-21 inside this repository against the
-barrel alone, and neither merged — both survive on the branch
-`docs/p0-decisions` at `ca73f81`:
+barrel alone, and neither merged — both survive at `ca73f81`, the head of the
+deleted branch `docs/p0-decisions`, kept by the tag `archive/p0-decisions`:
 
 - a minimal example app over five lines of literal data. `main` has since
   gained its own, different `example/` in `e901735`;
@@ -199,7 +199,8 @@ held.
     substring-matching a sentence. (Malformed documents raising `TypeError` or
     `FormatException` instead of that type was a third gap; `7535890` closed it,
     for #60.) [`serialization-gap.md`](serialization-gap.md) has the full
-    analysis and judges it a P3 item rather than a freeze blocker.
+    analysis, which recommended P3 rather than holding the freeze; the P4
+    freeze review recorded it as a known cost instead.
 
     **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *after 1.0,
     additive*. Distinguishable failures can be subtypes of

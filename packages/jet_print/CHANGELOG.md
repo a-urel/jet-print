@@ -33,6 +33,16 @@ schema version is unchanged; one optional key is new (below).
 
 ### Changed
 
+- **The designer is no longer claimed on Android and iOS.** The README now
+  says that, on a phone or tablet, rendering, export, printing and
+  `JetReportPreview` are supported, while `JetReportDesigner` and
+  `JetReportWorkspace` run and are tested at phone width but are not yet
+  verified on a real device. Nothing in the code changes. The `1.0.0` entry
+  below says that version would be published only once that device pass was
+  recorded; it was published without it, and
+  [decision 0005](https://github.com/a-urel/jet-print/blob/main/docs/decisions/0005-mobile-designer-claim-narrowed.md)
+  narrows the claim accordingly.
+
 - **The preview's thumbnail rail fits a taller page into its tile.** Tiles
   still take their height from page 0. A later page that is taller, as a
   continuous report's longer ticket can be, is scaled down to fit its tile,

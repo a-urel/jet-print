@@ -59,7 +59,7 @@ or passing:
 ```bash
 dart format --output=none --set-exit-if-changed .
 flutter analyze
-flutter test packages/jet_print apps/jet_print_playground
+flutter test packages/jet_print packages/jet_print_google_fonts apps/jet_print_playground
 ```
 
 Evidence before assertions. "Tests pass" is a claim about output you have
@@ -117,7 +117,7 @@ configuration; none of it changes what the quality gate checks.
 | Agent | Skills | Rules | MCP server |
 |---|---|---|---|
 | Claude Code | `dart-flutter@dart-flutter` plugin (per machine) | `CLAUDE.md` `@`-imports `.agent/rules/` | the plugin |
-| Codex | the same plugin, via `codex plugin add dart-flutter@dart-flutter` | `.agent/rules/*.md` | the plugin |
+| Codex | the same plugin, via `codex plugin add dart-flutter@dart-flutter` | `.agent/rules/*.md` | the plugin, or `.codex/config.toml` |
 | Cursor | the plugin, via `/add-plugin dart-flutter` | `.cursor/rules/*.mdc` | the plugin |
 | GitHub Copilot | `.agents/skills/` | `.github/copilot-instructions.md` | `.vscode/mcp.json` |
 | Antigravity CLI, others | `.agents/skills/` | — | `.agents/mcp_config.json` |

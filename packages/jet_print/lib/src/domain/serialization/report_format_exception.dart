@@ -1,11 +1,10 @@
 /// Thrown when a report definition is structurally invalid.
 library;
 
-/// A structural fault in a report definition — either while decoding (missing
-/// `schemaVersion`, a too-new schema, a malformed shape, …) or during fill
-/// validation (e.g. duplicate group names). Distinct from the
-/// engine's non-fatal diagnostics: this is a fail-fast condition because the
-/// definition cannot be interpreted at all.
+/// A structural fault found while decoding a report definition (missing
+/// `schemaVersion`, a too-new schema, a malformed shape, an unknown enum name,
+/// …). Distinct from the engine's non-fatal diagnostics: this is a fail-fast
+/// condition because the definition cannot be interpreted at all.
 class ReportFormatException implements Exception {
   /// Creates the exception with a human-readable [message].
   const ReportFormatException(this.message);

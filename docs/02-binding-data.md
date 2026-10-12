@@ -56,14 +56,16 @@ reached only via `VariableCalculator`'s optional factory.
 an unregistered name — returns a `JetError` value propagating up like any other.
 `rendering/fill/element_resolver.dart` → `ElementResolver` catches the one and
 records the other, rendering `!ERR` either way: a bad expression costs a cell,
-not the document.
+not the document. Under a declared schema an unknown *field* is caught before
+evaluation, against `knownFields`, and renders `#ERROR`
+(`RenderOptions.unresolvedFieldToken`); an inferred one leaves it blank.
 
 Recording is bounded, because a dirty dataset repeats its faults per row:
 `rendering/fill/diagnostic_budget.dart` → `DiagnosticBudget` dedupes by a caller
 key within one master row, prefixes each message with the row's position, and caps
 the fill at `kMaxPerRowDataDiagnostics` — 100 — counting the rest in one info line
-at `finish`. The missing-field warning above is one of its clients, whatever the
-budget's dartdoc says: `FillEvalContext.resolveField` records `field:<name>` on
+at `finish`. The missing-field warning above is one of its clients:
+`FillEvalContext.resolveField` records `field:<name>` on
 the budget whenever it holds one, and the filler supplies one wherever a row is
 resolved. Only a context built without one dedupes forever, via `warnedFields`.
 
@@ -105,7 +107,10 @@ Four routes, by where the aggregate is *authored* and where its operand *lives*.
 1. **A declared `ReportVariable`** folds in
    `expression/aggregate/variable_calculator.dart` → `VariableCalculator`, whose
    `advance` the filler calls once per **master** row and nowhere else. Two
-   reset scopes, `report` and `group`; nested-scope child rows never reach it.
+   reset scopes, `report` and `group`, whose `resetGroup` is the group's `id`;
+   nested-scope child rows never reach it. A group resets whenever its key
+   changes, so rows must arrive sorted by it: render warns once per level when a
+   key comes back (`test/rendering/engine/unsorted_group_key_test.dart`).
 2. **An inline aggregate in the summary or a root group footer, over a master
    field.** `expression/aggregate/aggregate_synthesizer.dart` →
    `expandAggregates` rewrites the call to `$V{__agg<n>}` plus a hidden
@@ -156,7 +161,8 @@ change with reading order.
 The costs are real. **Fill is eager over rows** even when the source is not: the
 `while (ds.moveNext())` loop runs to completion and materializes every band
 before layout begins, so `JetPagedDataSource` streams into a fill that does not.
-**The sinks are a closed set**, and **the `__agg` prefix is reserved**.
+**The sinks are a closed set**, and **the `__` variable prefix is reserved**
+(`validate` rule I9) for the generated `__agg`, `__dagg` and `__nagg`.
 
 ## Run it
 
