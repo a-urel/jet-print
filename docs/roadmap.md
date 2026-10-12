@@ -28,7 +28,7 @@ exercised.
 
 ## Epic status
 
-Status as of 2026-10-10. The size and tier columns are the original sizings,
+Status as of 2026-10-12. The size and tier columns are the original sizings,
 not re-estimates.
 
 | Epic | Tier | Size | Status | Evidence |
@@ -38,7 +38,7 @@ not re-estimates.
 | E3 Desktop matrix | 1 | M | Done | `.github/workflows/ci.yml` matrix: macOS, Ubuntu, Windows |
 | E4 Web support | 1/2 | L | Done | `web (chrome)` CI job; one real `double.toString` divergence found and fixed |
 | E5 Mobile / touch | 1/2 | XL | Done | `android (apk)` and `ios (no codesign)` CI jobs; touch handles, long-press menu, phone-width layout |
-| E6 1.0 API freeze + pub.dev | 2 | M | In progress | `0.1.0` and `0.1.1` on [pub.dev](https://pub.dev/packages/jet_print), tagged `jet_print-v0.1.0` and `jet_print-v0.1.1`; the `1.0.0` freeze remains |
+| E6 1.0 API freeze + pub.dev | 2 | M | In progress | `0.1.0`, `0.1.1` and `0.2.0` on [pub.dev](https://pub.dev/packages/jet_print), tagged `jet_print-v0.1.0`, `jet_print-v0.1.1` and `jet_print-v0.2.0`; the `1.0.0` freeze remains |
 | E7 Designer-as-product | 3 | L | Not started | no data-connection UI, no packaging or signing; file I/O exists only as playground host code |
 | E8 Spec 033 multi-level aggregates | pre-1.0 | M | Done | PR #22, merged 2026-06-18 |
 
@@ -151,7 +151,10 @@ waiting on a `shadcn_ui` upgrade that `1a2b5da` (PR #81) then made. PR #82
 rewrote the package README around screenshots and examples that
 `test/readme_snippets_test.dart` keeps compiling. `0.1.0` was published to
 pub.dev on 2026-10-10 from `2cbb3c0` (PR #86), and `0.1.1`, metadata and
-documentation only, the same day from `f139a08` (PR #92). What E6 still owes is
+documentation only, the same day from `f139a08` (PR #92). `0.2.0`, which
+settles what [`decisions/0004`](decisions/0004-what-1-0-must-settle.md) says
+1.0 cannot leave open (see P3 below), followed on 2026-10-12 from `a3d1037`
+(PR #116). What E6 still owes is
 the `1.0.0` freeze itself, which is P4. The detailed requirements — what
 pub.dev rejects a publish for, what its score panel rewards — were worked out
 on 2026-06-23 and are folded into P1 and P4 below.
@@ -254,7 +257,7 @@ checkable by somebody who does not work on the project.
 | P0 Decisions | 3 days | the blocking decisions recorded under `decisions/` — **met** |
 | P1 Publish 0.1.0 | 1 week | `flutter pub add jet_print` works for a stranger — **met** |
 | P2 Consumer pilot | 2 weeks, parallel with P1 | one real report rendered and exported from the published package, plus a written friction list — see below |
-| P3 Extensibility boundary and defect closure | 3 weeks | no open question that would force a breaking change after 1.0 |
+| P3 Extensibility boundary and defect closure | 3 weeks | no open question that would force a breaking change after 1.0 — **met** |
 | P4 1.0 freeze | 3 weeks | `1.0.0` on pub.dev with all six platforms declared and green |
 | P5 Designer-as-product | deferred | starts only on demonstrated demand |
 
@@ -330,7 +333,12 @@ or a default. P3 is met when those eight are closed, one issue each:
 [#101](https://github.com/a-urel/jet-print/issues/101) and
 [#102](https://github.com/a-urel/jet-print/issues/102). Entry 22, found since by
 the guard #102 added, is before 1.0 by the same rule and joins them:
-[#105](https://github.com/a-urel/jet-print/issues/105).
+[#105](https://github.com/a-urel/jet-print/issues/105). **Met on
+2026-10-11**, when the last of the nine closed. Each was closed by one merged
+PR: #95 by #114, #96 by #115, #97 by #104, #98 by #113, #99 by #109, #100 by
+#111, #101 by #108, #102 by #106 and #105 by #110. Entry 6, which #98's
+triage said had to be settled first, closed with #112. All of it shipped in
+`0.2.0`.
 
 **P4 — 1.0 freeze.** E6, renamed for what it actually is. All six platforms —
 macOS, Linux, Windows, web, iOS, Android — declared in the pubspec and green in
