@@ -14,6 +14,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   distribute can be reached without a keyboard. A mouse never sees it. The
   phone-width criteria it completes are in
   [`docs/touch-authoring.md`](https://github.com/a-urel/jet-print/blob/main/docs/touch-authoring.md).
+- **Render warns when the rows are not sorted by a group's key.** A group
+  breaks whenever its key changes, so a key value that comes back after a
+  different one prints its group a second time. Render now reports that as a
+  warning, once per group level, naming the group and the key. The report
+  itself is unchanged. `GroupLevel.key`'s dartdoc states the rule, and the
+  README's *Bind your data* now says which bands compute an aggregate.
+  `TextElement.format`'s dartdoc now says that the pattern's separators come
+  from `RenderOptions.locale`.
 
 ### Fixed
 

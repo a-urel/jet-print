@@ -3,9 +3,9 @@
 A finger can select, move, resize and align report elements in the designer on a
 phone. That claim is nine criteria, written below as what a finger does and what
 must result. Each is a widget test in
-`packages/jet_print/test/designer/canvas/phone_touch_authoring_test.dart` that
-runs on every push. Each is also a line in the real-device record at the end of
-this page. [`decisions/0003`](decisions/0003-mobile-in-1-0-scope.md) requires
+`packages/jet_print/test/designer/canvas/phone_touch_authoring_test.dart`, which
+CI runs on every pull request and every push to `main`. The real-device record
+at the end of this page holds each device's result for all nine. [`decisions/0003`](decisions/0003-mobile-in-1-0-scope.md) requires
 all three, criteria, tests and a device pass, before `1.0.0` claims the
 designer on iOS and Android.
 

@@ -41,6 +41,13 @@ class GroupLevel with ValueEquality {
   final String name;
 
   /// The grouping-key expression (005a syntax); must parse.
+  ///
+  /// The group breaks whenever the key differs from the previous row's, and
+  /// nothing sorts the rows: **the data source must already be ordered by
+  /// this key** (within its parent group's key, for an inner level). Unsorted,
+  /// the group prints once per run of equal keys, so a key that comes back
+  /// prints its group again. Render reports that case as a warning, once per
+  /// group level, naming the key; it does not reorder anything.
   final String key;
 
   /// The band printed when the group opens, or null.

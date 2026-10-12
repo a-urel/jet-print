@@ -118,21 +118,23 @@ held.
 
 ## Wrong output rather than an error
 
-5. **There is no sort, and an unsorted source fails silently.** A group level
-   breaks when its key differs from the previous row's, so a ledger not already
-   ordered by account code prints the same class heading five times, with no
-   diagnostic anywhere. Nothing in `ReportDefinition` can express an ordering.
+5. **There is no sort, and an unsorted source failed silently.** *Fixed* in
+   the P4 freeze review, by documentation and a warning. A group level breaks
+   when its key differs from the previous row's, so a ledger not already
+   ordered by account code prints the same class heading five times, and
+   nothing said so. Nothing in `ReportDefinition` can express an ordering.
    "Group by X implies already sorted by X" is a defensible design for a report
-   engine; it is undocumented in the public dartdoc, and its failure mode is a
-   plausible-looking wrong report.
-   *`src/domain/group_level.dart` → `GroupLevel.key`;
-   `src/rendering/fill/report_filler.dart`.*
+   engine, and it stays the design; what was wrong was that it was
+   undocumented and its failure mode was a plausible-looking wrong report.
 
-   **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *P3,
-   documentation*: the `GroupLevel` dartdoc should say that the source must
-   already be ordered by the key. A sort is *after 1.0, additive*. A diagnostic
-   for a repeated key would change what a render reports, so if one is wanted it
-   lands in P3 too.
+   `GroupLevel.key`'s dartdoc now states the rule, and render warns, once per
+   group level, the first time a key value comes back within one instance of
+   its parent group, naming the group and the key. It had to be settled before
+   1.0, because adding that warning later would have changed what a render
+   reports. A sort remains *after 1.0, additive*.
+   `test/rendering/engine/unsorted_group_key_test.dart` pins it.
+   *`src/domain/group_level.dart` → `GroupLevel.key`;
+   `src/expression/aggregate/variable_calculator.dart` → `reappearedGroup`.*
 
 6. **`validate()` warned about the natural way to write a derived total.**
    *Fixed* by counting, in the summary band, only the fields an element reads
@@ -183,8 +185,9 @@ held.
    `example/jet_print_example.dart` and says that a `ShadTheme` inside a
    `MaterialApp` also works. `test/designer/preview/jet_report_preview_test.dart`,
    *host requirements*, pins both halves of that claim. The requirement itself
-   stands: a host still depends on `shadcn_ui` to show the preview. Whether to
-   lift it with a theme wrapper is a question for P4.
+   stands: a host still depends on `shadcn_ui` to show the preview. The P4
+   freeze review accepted that for 1.0. A theme wrapper that lifted it would
+   be a new export, so it remains a known cost.
 
 10. **A stored report cannot be operated over a database, though it can be
     saved and loaded.** `JetReportFormat` is exported and does the round trip;
@@ -300,15 +303,16 @@ held.
     additive*. Constants and a page-footer helper are new exports; the band rule
     stays as it is.
 
-18. **A format pattern and the locale that interprets it live in different
-    files, with no cross-reference.** `TextElement.format` says "an ICU
-    number/date pattern" and does not say the grouping and decimal symbols come
-    from `RenderOptions.locale`. `#,##0.00` reads as comma-thousands and renders
-    as dot-thousands under `tr` — correct, and surprising. No exported money
-    pattern, so the string is repeated as a private constant in every consumer.
-
-    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *P3,
-    documentation*.
+18. **A format pattern and the locale that interprets it lived in different
+    files, with no cross-reference.** *Fixed* in the P4 freeze review, by
+    documentation. `TextElement.format` said "an ICU number/date pattern" and
+    did not say the grouping and decimal symbols come from
+    `RenderOptions.locale`. `#,##0.00` reads as comma-thousands and renders as
+    dot-thousands under `tr`: correct, and surprising. The dartdoc now says the
+    symbols are placeholders the locale fills, with that example, and that
+    `FORMAT` reads the same locale. An exported money pattern, so the string is
+    not repeated in every consumer, is *after 1.0, additive*.
+    *`src/domain/elements/text_element.dart` → `TextElement.format`.*
 
 19. **`onExportPdf` was a `VoidCallback` while `toPdf` is async.** *Fixed* in
     [#101](https://github.com/a-urel/jet-print/issues/101). The assignment
@@ -339,17 +343,19 @@ held.
 
 ## Documentation
 
-21. **Nothing public says where an aggregate may go.** The five recipes in
+21. **Nothing public said where an aggregate may go.** *Fixed* in the P4
+    freeze review, in the package README. The five recipes in
     [`README.md`](README.md) cover neither grouping nor subtotals nor
-    aggregates; the only guidance is one section of
+    aggregates; the only guidance was one section of
     [`02-binding-data.md`](02-binding-data.md), written from inside the engine
-    and naming private files. The two facts the pilot actually needed — that an
-    aggregate nested inside arithmetic still lifts, and that an aggregate over a
-    compound operand is a legal single-argument aggregate — are stated nowhere a
-    consumer can reach. Both had to be read out of the synthesizer.
-
-    **Triage** ([`0004`](decisions/0004-what-1-0-must-settle.md)): *P3,
-    documentation*.
+    and naming private files. The two facts the pilot actually needed were
+    stated nowhere a consumer can reach, and both had to be read out of the
+    synthesizer: that an aggregate nested inside arithmetic still lifts, and
+    that an aggregate over a compound operand is a legal single-argument
+    aggregate. The package README's *Bind your data* now names the three
+    bands that compute an aggregate, says both facts with examples, and says
+    what `validate` does with one anywhere else.
+    *`packages/jet_print/README.md` → Bind your data.*
 
 ## Found since
 
@@ -377,12 +383,51 @@ against the barrel.
     `src/designer/controller/jet_report_designer_controller.dart` →
     `activeGuidesOf`.*
 
+## The freeze review
+
+Done on 2026-10-12, in P4. Every entry has one of three verdicts:
+
+- **Fixed:** the friction is gone.
+- **Accepted:** the behaviour stays for 1.0 and is documented as the
+  behaviour.
+- **Known cost:** the fix is additive under
+  [`0004`](decisions/0004-what-1-0-must-settle.md), so it can land in any
+  `1.x` minor release without breaking a host. No release is promised for it.
+
+No entry is left without a verdict.
+
+| Entry | Verdict | Settled by |
+|---|---|---|
+| 1 — money is a `double` | Fixed where it showed (the `-0,00` sign); the `double` accepted | [#95](https://github.com/a-urel/jet-print/issues/95) |
+| 2 — reserved furniture slots drew nothing | Accepted as reserved; `validate` rejects them | [#96](https://github.com/a-urel/jet-print/issues/96) |
+| 3 — no per-page carried subtotal | Known cost | — |
+| 4 — no total in a group header | Known cost | — |
+| 5 — unsorted source failed silently | Fixed: documented, and render warns | this review |
+| 6 — false warning on an aggregate in arithmetic | Fixed | entry 6 above |
+| 7 — `UPPER`/`LOWER` locale-blind | Fixed | [#97](https://github.com/a-urel/jet-print/issues/97) |
+| 8 — README Quickstart did not compile | Fixed | `e901735` |
+| 9 — the preview needs a `shadcn_ui` ancestor | Accepted and documented; a theme wrapper would be a known cost | `158eefa` |
+| 10 — decode failures indistinguishable | Known cost (exception subtypes) | — |
+| 11 — render does not validate | Accepted; `hasErrors` added | [#98](https://github.com/a-urel/jet-print/issues/98) |
+| 12 — three spellings of one schema | Default fixed; conversions a known cost | [#99](https://github.com/a-urel/jet-print/issues/99) |
+| 13 — no group label in expressions | Known cost | — |
+| 14 — `GroupLevel` id against name | Fixed | [#100](https://github.com/a-urel/jet-print/issues/100) |
+| 15 — `text` required beside `expression` | Known cost | — |
+| 16 — five constructors for the smallest report | Known cost (a public builder) | — |
+| 17 — page variables are magic strings | Known cost (constants, a footer helper) | — |
+| 18 — format pattern and locale apart | Fixed by documentation; a money pattern a known cost | this review |
+| 19 — `onExportPdf` was a `VoidCallback` | Fixed | [#101](https://github.com/a-urel/jet-print/issues/101) |
+| 20 — `RenderedReport.fonts` exposed an unexported type | Fixed | [#102](https://github.com/a-urel/jet-print/issues/102) |
+| 21 — nothing public on where an aggregate goes | Fixed by documentation | this review |
+| 22 — `frame` and `activeGuides` exposed unexported types | Fixed | [#105](https://github.com/a-urel/jet-print/issues/105) |
+
 ## How to use this list
 
-Bring it to P4. For each entry the freeze review decides one of three things:
-fix it before 1.0, accept it and document it, or record it as a known cost with
-the version that would address it. An entry that is neither fixed nor
-deliberately accepted is the thing 1.0 is supposed to stop happening.
+The freeze review above has been held, so this section now says how the list
+is kept rather than how to review it. A new entry needs a verdict before the
+release that would freeze it: fixed, accepted and documented, or a known cost
+whose fix is additive. An entry that is neither fixed nor deliberately accepted
+is the thing 1.0 is supposed to stop happening.
 
 Entries 1 to 4 deserve deciding earlier than that. They are not ergonomics —
 they are an accounting library that cannot foot a column to zero, two public
