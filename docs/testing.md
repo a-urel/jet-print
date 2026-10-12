@@ -245,3 +245,12 @@ four jobs of their own:
 
 Every leg but the manual one builds the playground app, which is what proves
 the native plugin toolchain still links on that OS.
+
+No phone runs a test. What CI checks of the mobile designer runs on the desktop
+legs instead: `test/designer/canvas/phone_touch_authoring_test.dart` drives
+[`touch-authoring.md`](touch-authoring.md)'s criteria at a 390 × 844 viewport
+with touch pointers, on the Ubuntu, Windows and macOS legs (it is VM-only, so
+not on Chrome). A real device is the one thing those tests cannot stand in for,
+which is why that page keeps a record of a manual pass. And
+`test/architecture/platform_claim_test.dart` fails if the pubspec's
+`platforms:` block names a platform no leg above builds.
