@@ -115,6 +115,9 @@ class PdfInspector {
   /// Every parsed indirect object, by serial.
   Map<int, PdfRawObject> get objects => _objects;
 
+  /// Every `/ToUnicode` CMap, as a dense CID -> rune list (-1 for a gap).
+  List<List<int>> get toUnicodeMaps => _cmaps;
+
   /// The number of pages in the `/Kids` tree, in document order.
   int get pageCount => _pageSerials.length;
 

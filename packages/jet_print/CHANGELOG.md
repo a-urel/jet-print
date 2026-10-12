@@ -4,6 +4,19 @@ All notable changes to the `jet_print` library are documented here. The format i
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Fixed
+
+- **PDF export no longer fails on a character the font cannot draw.** A text
+  whose last new character had no glyph in its font, such as `∑` or `₺` in
+  the bundled default font, made `JetReportExporter.toPdf` throw
+  `Bad state: No element`. When the character came earlier in the text the
+  export succeeded but was garbled, with later characters drawn with another
+  character's shape. Such a character now exports as the font's missing-glyph
+  box (`.notdef`), at the width the layout gave it, and the rest of the text
+  is drawn correctly. Copying the box's text out of the PDF yields U+0000.
+
 ## 1.0.0
 
 The first stable release. From here a `1.x` upgrade changes no public API,
