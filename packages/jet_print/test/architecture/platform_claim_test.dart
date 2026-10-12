@@ -4,9 +4,9 @@
 // supported. P4's exit criterion (docs/roadmap.md) is all six Flutter
 // platforms declared there AND green in CI, because a platform claim CI does
 // not exercise is the false signal E1 existed to remove. So each declared
-// platform must name a CI leg that builds it, and the declaration must be the
-// six decisions/0003 promises: dropping one is a decision to record, not an
-// edit to slip in.
+// platform must have a CI leg that runs its build command, and the declaration
+// must be the six decisions/0003 promises: dropping one is a decision to
+// record, not an edit to slip in.
 @TestOn('vm')
 library;
 
@@ -16,15 +16,20 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../support/workspace.dart';
 
+/// The shared build step of the desktop matrix; each desktop row only names
+/// its `build_target`, so both must be present for that row to build.
+const String _matrixBuild = r'flutter build ${{ matrix.build_target }}';
+
 /// Each platform 1.0 claims, and the text in `.github/workflows/ci.yml` that
-/// proves a leg builds it.
-const Map<String, String> _ciLegFor = <String, String>{
-  'android': 'flutter build apk',
-  'ios': 'flutter build ios',
-  'linux': 'os: ubuntu-latest',
-  'macos': 'os: macos-latest',
-  'web': '--platform chrome',
-  'windows': 'os: windows-latest',
+/// proves a leg builds it: the build command itself, not merely a runner or a
+/// test step on that OS.
+const Map<String, List<String>> _ciBuildFor = <String, List<String>>{
+  'android': <String>['flutter build apk'],
+  'ios': <String>['flutter build ios'],
+  'linux': <String>['build_target: linux', _matrixBuild],
+  'macos': <String>['build_target: macos', _matrixBuild],
+  'web': <String>['flutter build web'],
+  'windows': <String>['build_target: windows', _matrixBuild],
 };
 
 /// The keys of the top-level `platforms:` block, read without a YAML parser
@@ -53,17 +58,20 @@ void main() {
       File('${root.path}/.github/workflows/ci.yml').readAsStringSync();
 
   test('the pubspec declares the six platforms 1.0 claims', () {
-    expect(_declaredPlatforms(pubspec), _ciLegFor.keys.toSet(),
+    expect(_declaredPlatforms(pubspec), _ciBuildFor.keys.toSet(),
         reason: 'decisions/0003 claims all six for 1.0; changing the set is '
             'a decision to record there, not a pubspec edit');
   });
 
   test('every declared platform has a CI leg that builds it', () {
     for (final String platform in _declaredPlatforms(pubspec)) {
-      final String? leg = _ciLegFor[platform];
-      expect(leg, isNotNull, reason: 'no known CI leg for $platform');
-      expect(ci, contains(leg),
-          reason: '$platform is declared but ci.yml has no "$leg" leg');
+      final List<String>? markers = _ciBuildFor[platform];
+      expect(markers, isNotNull, reason: 'no known CI build for $platform');
+      for (final String marker in markers!) {
+        expect(ci, contains(marker),
+            reason: '$platform is declared but ci.yml lacks "$marker", '
+                'so no leg builds it');
+      }
     }
   });
 }
