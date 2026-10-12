@@ -4,6 +4,20 @@ All notable changes to the `jet_print` library are documented here. The format i
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed
+
+- **The designer is no longer claimed on Android and iOS.** The README now
+  says that, on a phone or tablet, rendering, export, printing and
+  `JetReportPreview` are supported, while `JetReportDesigner` and
+  `JetReportWorkspace` run and are tested at phone width but are not yet
+  verified on a real device. Nothing in the code changes. The `1.0.0` entry
+  below says that version would be published only once that device pass was
+  recorded; it was published without it, and
+  [decision 0005](https://github.com/a-urel/jet-print/blob/main/docs/decisions/0005-mobile-designer-claim-narrowed.md)
+  narrows the claim accordingly.
+
 ## 1.0.0
 
 The first stable release. From here a `1.x` upgrade changes no public API,

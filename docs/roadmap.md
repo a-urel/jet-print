@@ -38,7 +38,7 @@ not re-estimates.
 | E3 Desktop matrix | 1 | M | Done | `.github/workflows/ci.yml` matrix: macOS, Ubuntu, Windows |
 | E4 Web support | 1/2 | L | Done | `web (chrome)` CI job; one real `double.toString` divergence found and fixed |
 | E5 Mobile / touch | 1/2 | XL | Done | `android (apk)` and `ios (no codesign)` CI jobs; touch handles, long-press menu, phone-width layout |
-| E6 1.0 API freeze + pub.dev | 2 | M | Done | `0.1.0`, `0.1.1`, `0.2.0` and `1.0.0` on [pub.dev](https://pub.dev/packages/jet_print), tagged `jet_print-v0.1.0` to `jet_print-v1.0.0`; the real-device pass of decision 0003 is not yet recorded (see P4) |
+| E6 1.0 API freeze + pub.dev | 2 | M | Done | `0.1.0`, `0.1.1`, `0.2.0` and `1.0.0` on [pub.dev](https://pub.dev/packages/jet_print), tagged `jet_print-v0.1.0` to `jet_print-v1.0.0`; the designer is not claimed on iOS and Android ([0005](decisions/0005-mobile-designer-claim-narrowed.md)) |
 | E7 Designer-as-product | 3 | L | Not started | no data-connection UI, no packaging or signing; file I/O exists only as playground host code |
 | E8 Spec 033 multi-level aggregates | pre-1.0 | M | Done | PR #22, merged 2026-06-18 |
 
@@ -158,7 +158,8 @@ in the 1.0.
 thicker scroll bar, a long press takes the place of the right-click menu, and
 the layout collapses to a phone width. CI builds an Android APK and an
 unsigned iOS binary. Mobile is therefore in scope for the 1.0 platform
-declaration rather than a question hanging over it.
+declaration rather than a question hanging over it — for viewing and export;
+the designer's half of that claim waits on a device pass (see P4).
 
 ### E6 — pub.dev 1.0 release — Tier 2 — M — Low risk (capstone)
 
@@ -230,7 +231,9 @@ E8 (spec 033) ──────────┴─▶ E6 (1.0 freeze) ─▶ E7
   is in the 1.0 scope at all.
 
 The gating held. The one judgement the outcome revised is the last: E5 landed
-without reshaping the scope, so mobile is in the 1.0 platform declaration.
+without reshaping the scope, so mobile is in the 1.0 platform declaration,
+though without a device pass the designer's half was narrowed by
+[`decisions/0005`](decisions/0005-mobile-designer-claim-narrowed.md).
 
 ## Work delivered outside the roadmap
 
@@ -284,7 +287,7 @@ checkable by somebody who does not work on the project.
 | P1 Publish 0.1.0 | 1 week | `flutter pub add jet_print` works for a stranger — **met** |
 | P2 Consumer pilot | 2 weeks, parallel with P1 | one real report rendered and exported from the published package, plus a written friction list — see below |
 | P3 Extensibility boundary and defect closure | 3 weeks | no open question that would force a breaking change after 1.0 — **met** |
-| P4 1.0 freeze | 3 weeks | `1.0.0` on pub.dev with all six platforms declared and green — **met**, the device pass still owed |
+| P4 1.0 freeze | 3 weeks | `1.0.0` on pub.dev with all six platforms declared and green — **met** |
 | P5 Designer-as-product | deferred | starts only on demonstrated demand |
 
 **P0 — Decisions.** The three questions that everything downstream depends on:
@@ -372,15 +375,15 @@ macOS, Linux, Windows, web, iOS, Android — declared in the pubspec and green i
 CI, because a platform claim that CI does not exercise is the same class of
 false signal E1 existed to remove.
 
-**Met on 2026-10-12, with one deliverable still owed.** Of
+**Met on 2026-10-12, on a narrower mobile claim.** Of
 [`decisions/0003`](decisions/0003-mobile-in-1-0-scope.md)'s three mobile
 deliverables, two exist: the touch acceptance criteria in
 [`touch-authoring.md`](touch-authoring.md) and the phone-width tests that
 check them, merged with
 [#118](https://github.com/a-urel/jet-print/pull/118), which also fixed three
 touch defects the criteria found and closed one gap, multi-select by touch.
-The third, a pass on a real iOS device and a real Android device, is recorded
-on that page and has not been run. The
+The third, a pass on a real iOS device and a real Android device, was not
+run. The
 [`api-friction.md`](api-friction.md) freeze review has been held: every entry
 is fixed, accepted, or a known cost whose fix is additive. The pubspec
 declares all six platforms in a `platforms:` block, and
@@ -390,12 +393,12 @@ the mobile claim (see E2 above): E2b stays deferred, and the package README
 states the cost. `1.0.0` was published to pub.dev on 2026-10-12 from
 `da4befd` (PR #122), with CI green on that commit, which meets the exit
 criterion as written. The publish did not wait for the device pass, although
-the changelog's `1.0.0` section says it would: the two rows on
-[`touch-authoring.md`](touch-authoring.md) still read *not yet run*.
-[`decisions/0003`](decisions/0003-mobile-in-1-0-scope.md) requires that pass
-before the designer is claimed on iOS and Android, so it is still owed — run
-and recorded there, or, if it fails, the claim narrowed by a record that
-supersedes 0003, as 0003 itself prescribes.
+the changelog's `1.0.0` section says it would. So, as 0003 itself prescribes,
+[`decisions/0005`](decisions/0005-mobile-designer-claim-narrowed.md)
+supersedes it: on iOS and Android, 1.x claims the engine, export, printing and
+the preview, and the designer runs there unclaimed until a passing device pass
+is recorded on [`touch-authoring.md`](touch-authoring.md). The package README
+says so now; pub.dev shows it with the next release.
 
 **P5 — Designer-as-product.** E7, deferred rather than scheduled. It is a
 second product, not the completion of this one, and nothing yet shows the

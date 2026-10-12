@@ -6,10 +6,12 @@ must result. Each is a widget test in
 `packages/jet_print/test/designer/canvas/phone_touch_authoring_test.dart`, which
 CI runs on every pull request and every push to `main`. The real-device record
 at the end of this page holds each device's result for all nine.
-[`decisions/0003`](decisions/0003-mobile-in-1-0-scope.md) requires all three,
-criteria, tests and a device pass, before `1.0.0` claims the designer on iOS
-and Android. `1.0.0` was published on 2026-10-12 with the first two in place;
-the device pass is still owed.
+[`decisions/0003`](decisions/0003-mobile-in-1-0-scope.md) required all three,
+criteria, tests and a device pass, before `1.0.0` claimed the designer on iOS
+and Android. `1.0.0` was published with the first two and no device pass, so
+[`decisions/0005`](decisions/0005-mobile-designer-claim-narrowed.md) narrowed
+the claim: on a phone, 1.x claims viewing and export, and the designer is
+claimed there only once this page records a passing row for each platform.
 
 ## The viewport the criteria assume
 
@@ -74,8 +76,8 @@ mouse's drag slop is a pixel or two and a finger's is about 18, and a mouse's
   `design_canvas/build_helpers.dart` → `_selectionOverlay`.
 
 **What is not a criterion.** Pinch-to-zoom: the canvas does not handle it, and
-zoom is reached from the top bar. Decision 0003 names select, move, resize and
-align, so pinch is not part of the 1.0 claim. Adding it later is additive.
+zoom is reached from the top bar. Decision 0003 named select, move, resize and
+align, so pinch is not one of the criteria. Adding it later is additive.
 
 ## What the tests cannot see
 
@@ -110,8 +112,8 @@ what happened.
 | — | real iOS device | — | — | not yet run | — | — |
 | — | real Android device | — | — | not yet run | — | — |
 
-Decision 0003 accepts no simulator or emulator in this table. Those already ran
-in June 2026 and are what it calls a memory rather than a gate.
+Decisions 0003 and 0005 accept no simulator or emulator in this table. Those
+already ran in June 2026 and are what 0003 calls a memory rather than a gate.
 
 ## Run it
 
@@ -122,5 +124,5 @@ flutter test packages/jet_print/test/designer/canvas/phone_touch_authoring_test.
 ## Next
 
 [`08-the-canvas.md`](08-the-canvas.md) for how the canvas hit-tests a press, and
-[`roadmap.md`](roadmap.md), P4, for where the device pass stands against the
-published `1.0.0`.
+[`decisions/0005`](decisions/0005-mobile-designer-claim-narrowed.md) for what a
+recorded pass would widen.
