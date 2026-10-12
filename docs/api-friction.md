@@ -310,7 +310,7 @@ held.
     `RenderOptions.locale`. `#,##0.00` reads as comma-thousands and renders as
     dot-thousands under `tr`: correct, and surprising. The dartdoc now says the
     symbols are placeholders the locale fills, with that example, and that
-    `FORMAT` reads the same locale. An exported money pattern, so the string is
+    the `FORMAT` function reads the same locale. An exported money pattern, so the string is
     not repeated in every consumer, is *after 1.0, additive*.
     *`src/domain/elements/text_element.dart` → `TextElement.format`.*
 
@@ -406,7 +406,7 @@ No entry is left without a verdict.
 | 6 — false warning on an aggregate in arithmetic | Fixed | entry 6 above |
 | 7 — `UPPER`/`LOWER` locale-blind | Fixed | [#97](https://github.com/a-urel/jet-print/issues/97) |
 | 8 — README Quickstart did not compile | Fixed | `e901735` |
-| 9 — the preview needs a `shadcn_ui` ancestor | Accepted and documented; a theme wrapper would be a known cost | `158eefa` |
+| 9 — the preview needs a `shadcn_ui` ancestor | Accepted and documented; a theme wrapper would be a known cost | documented in `158eefa`, accepted in this review |
 | 10 — decode failures indistinguishable | Known cost (exception subtypes) | — |
 | 11 — render does not validate | Accepted; `hasErrors` added | [#98](https://github.com/a-urel/jet-print/issues/98) |
 | 12 — three spellings of one schema | Default fixed; conversions a known cost | [#99](https://github.com/a-urel/jet-print/issues/99) |

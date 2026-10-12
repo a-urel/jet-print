@@ -42,8 +42,8 @@ class TextElement extends ReportElement with ValueEquality {
   /// "the grouping separator" and `.` is "the decimal separator", and which
   /// characters those are comes from `RenderOptions.locale`. So `#,##0.00`
   /// prints `1,234.50` under `en` and `1.234,50` under `tr` or `de`. Month
-  /// and day names in a date pattern follow the same locale. The `FORMAT`
-  /// expression function reads the same locale, so the two always agree.
+  /// and day names in a date pattern follow the same locale, and the `FORMAT`
+  /// expression function reads it too.
   final String? format;
 
   @override
