@@ -383,8 +383,11 @@ declares all six platforms in a `platforms:` block, and
 `test/architecture/platform_claim_test.dart` fails if a declared platform
 loses the CI leg that builds it. The E2b memory figures were re-read against
 the mobile claim (see E2 above): E2b stays deferred, and the package README
-states the cost. Still open: the device pass, and the `1.0.0` release
-itself.
+states the cost. `1.0.0` is prepared: the version, the changelog section and
+the README's status line. Still open: the device pass, which
+[`decisions/0003`](decisions/0003-mobile-in-1-0-scope.md) requires before the
+designer is claimed on iOS and Android, and so the publish, which waits for
+it.
 
 **P5 — Designer-as-product.** E7, deferred rather than scheduled. It is a
 second product, not the completion of this one, and nothing yet shows the
