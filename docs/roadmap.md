@@ -353,9 +353,11 @@ check them, merged with
 touch defects the criteria found. The third, a pass on a real iOS device and
 a real Android device, is recorded on that page and has not been run. The
 [`api-friction.md`](api-friction.md) freeze review has been held: every entry
-is fixed, accepted, or a known cost whose fix is additive. Still open: the
-`platforms:` declaration, re-reading the E2b memory figures against the mobile
-claim, and the `1.0.0` release itself.
+is fixed, accepted, or a known cost whose fix is additive. The pubspec
+declares all six platforms in a `platforms:` block, and
+`test/architecture/platform_claim_test.dart` fails if a declared platform
+loses the CI leg that builds it. Still open: re-reading the E2b memory
+figures against the mobile claim, and the `1.0.0` release itself.
 
 **P5 — Designer-as-product.** E7, deferred rather than scheduled. It is a
 second product, not the completion of this one, and nothing yet shows the

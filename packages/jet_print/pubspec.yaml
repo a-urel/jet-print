@@ -20,6 +20,17 @@ topics:
   - wysiwyg
   - designer
   - printing
+# The platforms 1.0 claims (docs/decisions/0003), each built by a CI leg;
+# test/architecture/platform_claim_test.dart keeps the two in step. Declared
+# rather than left to pub.dev's inference from the plugin dependencies, so
+# the claim is this file's to make.
+platforms:
+  android:
+  ios:
+  linux:
+  macos:
+  web:
+  windows:
 # Shown in the pub.dev gallery. Captured from the playground app at 1440x900,
 # 2x; the README links the same files from GitHub.
 screenshots:
