@@ -22,12 +22,12 @@ purpose: a criterion that holds there holds at any zoom a user picks.
 | # | A finger… | …and the result must be |
 |---|---|---|
 | T1 | taps an element | that element alone is selected; a tap on another replaces it. A tap on empty band space selects the band |
-| T2 | drags an element, selected or not | the element moves with the finger, measured from where the finger went down, as one undo step. A drag on the body of a selected element moves it and never grabs a handle |
+| T2 | drags an element, selected or not | the element moves with the finger, measured from where the finger went down, as one undo step. A drag on an element's body moves that element and never grabs a handle, neither its own nor a selected neighbour's |
 | T3 | drags empty canvas | the page scrolls with the finger. Nothing is selected and the report is unchanged: under touch there is no marquee |
-| T4 | drags a resize handle | the element resizes by the full distance the finger moved, anchored at the opposite corner |
-| T5 | aims at a resize handle | the target is at least 44 × 44 pixels, although the drawn square stays 8 |
-| T6 | long-presses | on an element: it is selected and its context menu opens. On empty canvas: the menu opens and the selection is kept |
-| T7 | presses the canvas at all | a multi-select toggle, 44 pixels square, appears in the canvas's bottom-left corner. It is absent until the first finger press, and goes away when a mouse takes over |
+| T4 | drags a resize handle, an element's or a band's | the element or band resizes by the full distance the finger moved, anchored at the opposite edge |
+| T5 | aims at a resize handle | the target is 44 × 44 pixels, although the drawn square stays 8. It leans out of the element and reaches past the paper's edge, where it still grabs; only element bodies take precedence over it |
+| T6 | long-presses | on an element: it is selected, or with multi-select on, added, and the context menu opens for the selection. On empty canvas: the menu opens and the selection is kept |
+| T7 | presses the canvas at all | a multi-select toggle, 44 pixels square, appears in the canvas's bottom-left corner. It is absent until the first finger press, and goes away, switched off, when a mouse presses anywhere on the canvas, the toggle included |
 | T8 | taps elements with the toggle on | each tap adds or removes that element, as shift-click does. An empty tap keeps the selection, and a drag on a selected element moves all of them |
 | T9 | selects two elements that way, then picks **Arrange → Align left** | both share the leftmost x, and nothing else moves. At phone width the top bar scrolls sideways to reach Arrange |
 
@@ -50,7 +50,8 @@ shows only under touch. A mouse already has shift-click and marquee, and the
 designer goldens, which never simulate touch, stay as they were.
 
 **Two bugs the criteria found.** Both were invisible on a desktop, because a
-mouse's drag slop is a pixel or two and a finger's is about 18:
+mouse's drag slop is a pixel or two and a finger's is about 18, and a mouse's
+16-pixel handle targets leave a body free:
 
 - **Drag start.** The canvas and handle detectors reported a drag from where it
   cleared the slop, not from where the finger went down
@@ -59,9 +60,16 @@ mouse's drag slop is a pixel or two and a finger's is about 18:
   finger by about 36 pixels. Both detectors now use `DragStartBehavior.down`.
 - **Handle targets.** Centred on a small element, the 44-pixel touch targets
   covered its whole body, so once an element was selected, a finger could
-  resize it but not move it. Under touch each target now leans out of the
-  element, keeping only the drawn square inside
-  (`selection_overlay.dart` → `_handle`).
+  resize it but not move it. Under touch the rule is now that **bodies come
+  first**: a press on any element's body misses every handle and reaches the
+  canvas, which selects or moves that element. A handle's target takes the
+  gaps around bodies, plus its own drawn square. Each target leans out of its
+  element, into those gaps, and the selection chrome is laid over the page,
+  reaching 44 pixels past it, rather than inside it. A page box clips hit
+  tests at its edge, and an element flush with the margin, the first column
+  of most tables, would otherwise keep a corner target of about 13 pixels.
+  See `selection_overlay.dart` → `_handle`, `_BodiesFirst`, and
+  `design_canvas/build_helpers.dart` → `_selectionOverlay`.
 
 **What is not a criterion.** Pinch-to-zoom: the canvas does not handle it, and
 zoom is reached from the top bar. Decision 0003 names select, move, resize and

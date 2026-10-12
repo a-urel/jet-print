@@ -227,9 +227,9 @@ class _DesignCanvasState extends State<DesignCanvas> {
   /// another kind of pointer takes over rather than lingering unseen.
   bool _multiSelect = false;
 
-  /// The element a multi-select tap pressed, toggled on tap-up rather than on
-  /// press: a press that becomes a drag must move the selection, not first
-  /// toggle the pressed element out of it.
+  /// The already-selected element a multi-select tap pressed, removed on
+  /// tap-up rather than on press: a press that becomes a drag must move the
+  /// selection, not first take the pressed element out of it.
   String? _pendingToggle;
 
   void _updatePointerKind(PointerDeviceKind kind) {
@@ -599,6 +599,9 @@ class _DesignCanvasState extends State<DesignCanvas> {
                           ),
                           // Band captions, in the column left of the page.
                           ..._bandBadges(displayLayout, scale, pageOffset),
+                          // Topmost, as it was inside the page.
+                          _selectionOverlay(
+                              displayLayout, scale, pageOffset, pageW, pageH),
                         ],
                       ),
                     ),
@@ -617,61 +620,74 @@ class _DesignCanvasState extends State<DesignCanvas> {
             // The scroll viewport + its scrollbar overlays, as one unit so the
             // rulers can inset it without disturbing the scrollbar geometry.
             final double barThickness = _isTouch ? 20 : 8;
-            final Widget viewportStack = Stack(
-              children: <Widget>[
-                ScrollConfiguration(
-                  behavior: const _CanvasScrollBehavior(),
-                  child: SingleChildScrollView(
-                    controller: _vScroll,
+            // The pointer kind is read at the whole viewport, not only on the
+            // canvas content, so a mouse pressing the touch toggle or a
+            // scrollbar also switches touch mode off.
+            final Widget viewportStack = Listener(
+              behavior: HitTestBehavior.translucent,
+              onPointerDown: (PointerDownEvent e) => _updatePointerKind(e.kind),
+              child: Stack(
+                children: <Widget>[
+                  ScrollConfiguration(
+                    behavior: const _CanvasScrollBehavior(),
                     child: SingleChildScrollView(
-                      controller: _hScroll,
-                      scrollDirection: Axis.horizontal,
-                      child: content,
-                    ),
-                  ),
-                ),
-                if (vScrollable)
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    bottom: hScrollable ? barThickness : 0,
-                    width: barThickness,
-                    child: _CanvasScrollbar(
-                      key: const ValueKey<String>(
-                          'jet_print.designer.scrollbar.vertical'),
                       controller: _vScroll,
-                      axis: Axis.vertical,
-                      color: thumbColor,
+                      child: SingleChildScrollView(
+                        controller: _hScroll,
+                        scrollDirection: Axis.horizontal,
+                        child: content,
+                      ),
                     ),
                   ),
-                if (hScrollable)
-                  Positioned(
-                    left: 0,
-                    right: vScrollable ? barThickness : 0,
-                    bottom: 0,
-                    height: barThickness,
-                    child: _CanvasScrollbar(
-                      key: const ValueKey<String>(
-                          'jet_print.designer.scrollbar.horizontal'),
-                      controller: _hScroll,
-                      axis: Axis.horizontal,
-                      color: thumbColor,
+                  if (vScrollable)
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      bottom: hScrollable ? barThickness : 0,
+                      width: barThickness,
+                      child: _CanvasScrollbar(
+                        key: const ValueKey<String>(
+                            'jet_print.designer.scrollbar.vertical'),
+                        controller: _vScroll,
+                        axis: Axis.vertical,
+                        color: thumbColor,
+                      ),
                     ),
-                  ),
-                // Touch only: a finger has no shift key and its empty-canvas
-                // drag pans, so this toggle is how it selects several elements.
-                if (_isTouch)
-                  Positioned(
-                    left: 8,
-                    bottom: (hScrollable ? barThickness : 0) + 8,
-                    child: _MultiSelectToggle(
-                      active: _multiSelect,
-                      label: l10n.canvasMultiSelect,
-                      onPressed: () =>
-                          setState(() => _multiSelect = !_multiSelect),
+                  if (hScrollable)
+                    Positioned(
+                      left: 0,
+                      right: vScrollable ? barThickness : 0,
+                      bottom: 0,
+                      height: barThickness,
+                      child: _CanvasScrollbar(
+                        key: const ValueKey<String>(
+                            'jet_print.designer.scrollbar.horizontal'),
+                        controller: _hScroll,
+                        axis: Axis.horizontal,
+                        color: thumbColor,
+                      ),
                     ),
-                  ),
-              ],
+                  // Touch only: a finger has no shift key and its empty-canvas
+                  // drag pans, so this toggle is how it selects several elements.
+                  if (_isTouch)
+                    Positioned(
+                      left: 8,
+                      bottom: (hScrollable ? barThickness : 0) + 8,
+                      child: _MultiSelectToggle(
+                        active: _multiSelect,
+                        label: l10n.canvasMultiSelect,
+                        // A mouse press already switched touch mode, and
+                        // this toggle, off at pointer-down; its tap-up must
+                        // not switch multi-select back on unseen.
+                        onPressed: () {
+                          if (_isTouch) {
+                            setState(() => _multiSelect = !_multiSelect);
+                          }
+                        },
+                      ),
+                    ),
+                ],
+              ),
             );
 
             // The viewport always sits inside one stable Stack > Positioned, so

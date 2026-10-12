@@ -47,8 +47,14 @@ extension _CanvasGestures on _DesignCanvasState {
     _emptyTapPage = null;
     _emptyTapWasDouble = false;
     if (_multiSelect) {
-      // Toggled on tap-up (see [_pendingToggle]); never a double-tap.
-      _pendingToggle = hit;
+      // An unselected element joins at once, so a long press's menu and a drag
+      // both act on it; removing a selected one waits for tap-up (see
+      // [_pendingToggle]). Never a double-tap.
+      if (controller.selection.contains(hit)) {
+        _pendingToggle = hit;
+      } else {
+        controller.toggleSelection(hit);
+      }
       _trackTap(localPosition, near: false);
       return;
     }

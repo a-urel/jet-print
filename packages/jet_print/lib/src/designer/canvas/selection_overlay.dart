@@ -3,12 +3,14 @@
 library;
 
 import 'package:flutter/gestures.dart' show DragStartBehavior;
+import 'package:flutter/rendering.dart' show BoxHitTestResult, RenderProxyBox;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../domain/band.dart';
 import '../../domain/geometry.dart';
+import '../../domain/report_element.dart';
 import '../controller/band_walker.dart';
 import '../controller/jet_report_designer_controller.dart';
 import '../controller/selection.dart';
@@ -30,7 +32,9 @@ const Color _accent = Color(0xFF2563EB);
 /// around the single selected element, the live resize preview, and any active
 /// snap guides.
 ///
-/// Positioned inside the page widget (local coords = `page-points × scale`).
+/// Laid over the page, inset by [origin] on every side (local coords =
+/// `page-points × scale + origin`), so a handle near the paper's edge can be
+/// hit beyond it: a page box would clip its hit test at the edge.
 /// Handles are interactive: dragging one drives the controller's resize
 /// interaction. They are drawn at a fixed screen size so they stay
 /// grabbable at any zoom.
@@ -40,6 +44,7 @@ class DesignerSelectionOverlay extends StatefulWidget {
       {required this.layout,
       required this.scale,
       this.touchTargets = false,
+      this.origin = 0,
       super.key});
 
   /// The current design-time layout (element → page rect).
@@ -51,6 +56,10 @@ class DesignerSelectionOverlay extends StatefulWidget {
   /// When true, resize handles + the band divider present a finger-sized hit
   /// area ([kHandleHitSizeTouch]); the drawn handle is unchanged.
   final bool touchTargets;
+
+  /// How far, in screen pixels, the overlay extends past the page on each
+  /// side; the page's top-left sits at (`origin`, `origin`).
+  final double origin;
 
   @override
   State<DesignerSelectionOverlay> createState() =>
@@ -172,13 +181,26 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
     final String? single = selection.singleOrNull;
     if (single != null) {
       final JetRect? r = rectFor(single);
+      // Every element's body on screen, for [_BodiesFirst] under touch.
+      final List<Rect> bodies = <Rect>[
+        if (widget.touchTargets)
+          for (final PlacedBand placed in widget.layout.bands)
+            for (final ReportElement element in placed.band.elements)
+              if (widget.layout.elementRect(element.id) case final JetRect b)
+                Rect.fromLTWH(
+                    b.x * widget.scale + widget.origin,
+                    b.y * widget.scale + widget.origin,
+                    b.width * widget.scale,
+                    b.height * widget.scale),
+      ];
       if (r != null) {
         // Edges first, corners last. The 16px hit areas overlap when the element
         // is small/zoomed out, and the frontmost (last-added) MouseRegion/handle
         // wins the cursor and the drag — so corners must sit on top of edges to
         // keep their diagonal cursor (and a diagonal resize) at the corner.
         for (final ResizeHandle position in _handlePaintOrder) {
-          children.add(_handle(controller, single, position, r, colors, l10n));
+          children.add(
+              _handle(controller, single, position, r, bodies, colors, l10n));
         }
       }
     }
@@ -244,8 +266,8 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
         widget.touchTargets ? kHandleHitSizeTouch : kHandleHitSize;
     const double barWidth = 28;
     return Positioned(
-      left: centerX * widget.scale - barWidth / 2,
-      top: edgeY * widget.scale - hit / 2,
+      left: centerX * widget.scale + widget.origin - barWidth / 2,
+      top: edgeY * widget.scale + widget.origin - hit / 2,
       width: barWidth,
       height: hit,
       // One merged semantics node: a named, button-role handle.
@@ -328,16 +350,16 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
       for (final SnapGuide g in guides)
         if (g.axis == SnapAxis.vertical)
           Positioned(
-            left: (bandRect.x + g.position) * scale,
-            top: bandRect.y * scale,
+            left: (bandRect.x + g.position) * scale + widget.origin,
+            top: bandRect.y * scale + widget.origin,
             width: 1,
             height: bandRect.height * scale,
             child: const ColoredBox(color: Color(0xFFEF4444)),
           )
         else
           Positioned(
-            left: bandRect.x * scale,
-            top: (bandRect.y + g.position) * scale,
+            left: bandRect.x * scale + widget.origin,
+            top: (bandRect.y + g.position) * scale + widget.origin,
             width: bandRect.width * scale,
             height: 1,
             child: const ColoredBox(color: Color(0xFFEF4444)),
@@ -347,8 +369,8 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
 
   Widget _outline(JetRect pageRect) {
     return Positioned(
-      left: pageRect.x * widget.scale,
-      top: pageRect.y * widget.scale,
+      left: pageRect.x * widget.scale + widget.origin,
+      top: pageRect.y * widget.scale + widget.origin,
       width: pageRect.width * widget.scale,
       height: pageRect.height * widget.scale,
       child: const IgnorePointer(
@@ -367,6 +389,7 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
     String id,
     ResizeHandle position,
     JetRect pageRect,
+    List<Rect> bodies,
     ShadColorScheme colors,
     JetPrintLocalizations l10n,
   ) {
@@ -387,57 +410,74 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
     // selection BOX itself stays in-band (the element is clamped), only the grab
     // square overflows, matching the convention in mainstream design tools
     // (2026-06-20 clarification).
+    final double cx = center.x * widget.scale + widget.origin;
+    final double cy = center.y * widget.scale + widget.origin;
+    final double left = cx - hit / 2 + dx * lean;
+    final double top = cy - hit / 2 + dy * lean;
+    // Where the drawn square sits inside the target.
+    final Rect square = Rect.fromLTWH(cx - left - kHandleVisualSize / 2,
+        cy - top - kHandleVisualSize / 2, kHandleVisualSize, kHandleVisualSize);
     return Positioned(
-      left: center.x * widget.scale - hit / 2 + dx * lean,
-      top: center.y * widget.scale - hit / 2 + dy * lean,
+      left: left,
+      top: top,
       width: hit,
       height: hit,
-      // One merged semantics node: a directional, button-role handle.
-      child: MergeSemantics(
-        child: Semantics(
-          label: _handleLabel(position, l10n),
-          button: true,
-          child: MouseRegion(
-            cursor: resizeCursorForHandle(position),
-            // On macOS the diagonal system cursor renders as a plain arrow, so
-            // overpaint the native diagonal NSCursor for corners (a no-op for
-            // edges / non-macOS). onEnter covers a static enter; onHover re-asserts
-            // it after Flutter activates the system cursor on entry. The tracked
-            // cursor stays a real SystemMouseCursor, so edges never desync.
-            onEnter: (_) => applyNativeCornerCursor(position),
-            onHover: (_) => applyNativeCornerCursor(position),
-            child: GestureDetector(
-              key: handleKey(position),
-              behavior: HitTestBehavior.opaque,
-              // Report the drag from where the finger went down. With the
-              // default (`start`) the movement before the slop cleared is
-              // dropped, so a finger resize trailed the finger by ~36px.
-              dragStartBehavior: DragStartBehavior.down,
-              onPanStart: (_) => _onHandleStart(controller, id, position),
-              onPanUpdate: (DragUpdateDetails d) =>
-                  _onHandleUpdate(controller, d),
-              onPanEnd: (_) => controller.commitResize(),
-              onPanCancel: controller.cancelResize,
-              // Long-press-drag resizes too (touch: a hold on the small handle
-              // would otherwise lose the arena to the canvas menu's long-press).
-              onLongPressStart: (_) => _onHandleStart(controller, id, position),
-              onLongPressMoveUpdate: (LongPressMoveUpdateDetails d) =>
-                  _onHandleLongPressMove(controller, d),
-              onLongPressEnd: (_) => controller.commitResize(),
-              onLongPressCancel: controller.cancelResize,
-              // The drawn square stays on the edge or corner, wherever the
-              // target leans: at the target's inner side, or centered.
-              child: Align(
-                alignment: lean == 0 ? Alignment.center : Alignment(-dx, -dy),
-                child: SizedBox(
-                  width: kHandleVisualSize,
-                  height: kHandleVisualSize,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: colors.background,
-                      border: Border.all(color: _accent, width: 1.5),
+      // Under touch an element's body wins over the target, this element's and
+      // any neighbour's alike, so a finger on a body moves or selects it; the
+      // target takes the gaps around bodies and the drawn square itself.
+      child: _BodiesFirst(
+        bodies: <Rect>[
+          if (widget.touchTargets)
+            for (final Rect body in bodies) body.shift(Offset(-left, -top)),
+        ],
+        square: square,
+        child: MergeSemantics(
+          child: Semantics(
+            label: _handleLabel(position, l10n),
+            button: true,
+            child: MouseRegion(
+              cursor: resizeCursorForHandle(position),
+              // On macOS the diagonal system cursor renders as a plain arrow, so
+              // overpaint the native diagonal NSCursor for corners (a no-op for
+              // edges / non-macOS). onEnter covers a static enter; onHover re-asserts
+              // it after Flutter activates the system cursor on entry. The tracked
+              // cursor stays a real SystemMouseCursor, so edges never desync.
+              onEnter: (_) => applyNativeCornerCursor(position),
+              onHover: (_) => applyNativeCornerCursor(position),
+              child: GestureDetector(
+                key: handleKey(position),
+                behavior: HitTestBehavior.opaque,
+                // Report the drag from where the finger went down. With the
+                // default (`start`) the movement before the slop cleared is
+                // dropped, so a finger resize trailed the finger by ~36px.
+                dragStartBehavior: DragStartBehavior.down,
+                onPanStart: (_) => _onHandleStart(controller, id, position),
+                onPanUpdate: (DragUpdateDetails d) =>
+                    _onHandleUpdate(controller, d),
+                onPanEnd: (_) => controller.commitResize(),
+                onPanCancel: controller.cancelResize,
+                // Long-press-drag resizes too (touch: a hold on the small handle
+                // would otherwise lose the arena to the canvas menu's long-press).
+                onLongPressStart: (_) =>
+                    _onHandleStart(controller, id, position),
+                onLongPressMoveUpdate: (LongPressMoveUpdateDetails d) =>
+                    _onHandleLongPressMove(controller, d),
+                onLongPressEnd: (_) => controller.commitResize(),
+                onLongPressCancel: controller.cancelResize,
+                // The drawn square stays centred on the edge or corner, wherever
+                // the target leans; centred in it on a desktop.
+                child: Stack(
+                  children: <Widget>[
+                    Positioned.fromRect(
+                      rect: square,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: colors.background,
+                          border: Border.all(color: _accent, width: 1.5),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
@@ -486,5 +526,49 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
       ResizeHandle.bottomLeft => (x: left, y: bottom),
       ResizeHandle.left => (x: left, y: cy),
     };
+  }
+}
+
+/// Makes a resize handle's touch target give way to element bodies: a point
+/// inside any of [bodies] (in this widget's coordinates) misses the handle, and
+/// falls through to the canvas, which selects or moves that element. The drawn
+/// [square] always hits, so a handle overlapping a body stays grabbable on the
+/// square itself. With no [bodies], as under a mouse, it changes nothing.
+class _BodiesFirst extends SingleChildRenderObjectWidget {
+  const _BodiesFirst({
+    required this.bodies,
+    required this.square,
+    required super.child,
+  });
+
+  final List<Rect> bodies;
+  final Rect square;
+
+  @override
+  _RenderBodiesFirst createRenderObject(BuildContext context) =>
+      _RenderBodiesFirst(bodies, square);
+
+  @override
+  void updateRenderObject(
+      BuildContext context, _RenderBodiesFirst renderObject) {
+    renderObject
+      ..bodies = bodies
+      ..square = square;
+  }
+}
+
+class _RenderBodiesFirst extends RenderProxyBox {
+  _RenderBodiesFirst(this.bodies, this.square);
+
+  List<Rect> bodies;
+  Rect square;
+
+  @override
+  bool hitTest(BoxHitTestResult result, {required Offset position}) {
+    if (!square.contains(position) &&
+        bodies.any((Rect body) => body.contains(position))) {
+      return false;
+    }
+    return super.hitTest(result, position: position);
   }
 }

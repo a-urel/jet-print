@@ -31,13 +31,32 @@ const Key _alignLeftKey =
     ValueKey<String>('jet_print.designer.arrange.alignLeft');
 const Key _bottomRightKey =
     ValueKey<String>('jet_print.designer.handle.bottomRight');
+const Key _topLeftKey = ValueKey<String>('jet_print.designer.handle.topLeft');
+const Key _bandHandleKey = ValueKey<String>('jet_print.designer.bandHandle');
 
 Finder _element(String id) =>
     find.byKey(ValueKey<String>('jet_print.designer.element.$id'));
 
 /// Two text elements, far enough apart that a finger on one is not on the other
 /// at phone zoom, and offset horizontally so align-left has work to do.
-ReportDefinition _fixture() => const ReportDefinition(
+const List<ReportElement> _twoElements = <ReportElement>[
+  TextElement(
+    id: 'a',
+    bounds: JetRect(x: 40, y: 40, width: 200, height: 60),
+    text: 'A',
+  ),
+  TextElement(
+    id: 'b',
+    bounds: JetRect(x: 180, y: 220, width: 200, height: 60),
+    text: 'B',
+  ),
+];
+
+ReportDefinition _fixture({
+  double bandHeight = 600,
+  List<ReportElement> elements = _twoElements,
+}) =>
+    ReportDefinition(
       name: 'PhoneTouch',
       page: PageFormat.a4Portrait,
       body: ReportBody(
@@ -48,19 +67,8 @@ ReportDefinition _fixture() => const ReportDefinition(
               Band(
                 id: 'detail',
                 type: BandType.detail,
-                height: 600,
-                elements: <ReportElement>[
-                  TextElement(
-                    id: 'a',
-                    bounds: JetRect(x: 40, y: 40, width: 200, height: 60),
-                    text: 'A',
-                  ),
-                  TextElement(
-                    id: 'b',
-                    bounds: JetRect(x: 180, y: 220, width: 200, height: 60),
-                    text: 'B',
-                  ),
-                ],
+                height: bandHeight,
+                elements: elements,
               ),
             ),
           ],
@@ -68,12 +76,16 @@ ReportDefinition _fixture() => const ReportDefinition(
       ),
     );
 
-Future<JetReportDesignerController> _pumpPhone(WidgetTester tester) async {
+Future<JetReportDesignerController> _pumpPhone(WidgetTester tester,
+    [ReportDefinition? definition]) async {
   final JetReportDesignerController c = JetReportDesignerController()
-    ..open(_fixture());
+    ..open(definition ?? _fixture());
   await pumpDesignerWith(tester, controller: c, size: _phone);
   return c;
 }
+
+Band _band(JetReportDesignerController c) =>
+    (c.definition.body.root.children.single as BandNode).band;
 
 JetRect _bounds(JetReportDesignerController c, String id) =>
     (c.definition.body.root.children.single as BandNode)
@@ -161,6 +173,25 @@ void main() {
 
     c.undo();
     expect(_bounds(c, 'a'), moved, reason: 'each drag is one undo step');
+  });
+
+  testWidgets(
+      'T2 move: a drag on a neighbour moves it, not the selected element',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c = await _pumpPhone(tester);
+    await _fingerTap(tester, tester.getCenter(_element('a')));
+    final JetRect a0 = _bounds(c, 'a');
+    final JetRect b0 = _bounds(c, 'b');
+    final double s = c.viewScale;
+
+    // At this zoom b's centre lies inside a's bottom-right touch target, which
+    // leans out of a. The body under the finger wins.
+    await _fingerDrag(
+        tester, tester.getCenter(_element('b')), const Offset(10, 40));
+
+    expect(_bounds(c, 'a'), a0, reason: 'the selected element is untouched');
+    expect(_bounds(c, 'b').y, closeTo(b0.y + 40 / s, 1));
+    expect(c.selection.ids, <String>['b']);
   });
 
   testWidgets('T3 pan: a finger drag on empty canvas scrolls and edits nothing',
@@ -333,5 +364,91 @@ void main() {
     expect(_bounds(c, 'a').x, 40);
     expect(_bounds(c, 'b').x, 40, reason: 'aligned to the leftmost edge');
     expect(_bounds(c, 'b').y, 220, reason: 'align-left moves only x');
+  });
+
+  testWidgets(
+      'T4 resize: a finger drag on the band handle resizes by the full distance',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c =
+        await _pumpPhone(tester, _fixture(bandHeight: 300));
+    final Offset page = tester.getTopLeft(find.byKey(kDesignPageKey));
+    final double s = c.viewScale;
+    // Clear of both elements and their 32pt hit slop at this zoom.
+    await _fingerTap(tester, page + Offset(350 * s, 200 * s));
+    expect(c.selection.bandId, 'detail');
+
+    await _fingerDrag(tester, tester.getCenter(find.byKey(_bandHandleKey)),
+        const Offset(0, 40));
+
+    expect(_band(c).height, closeTo(300 + 40 / s, 1),
+        reason: 'the slop a finger travels before the drag registers counts');
+  });
+
+  testWidgets(
+      'T5 handle target: at the paper edge the target reaches past it, and '
+      'grabs there', (WidgetTester tester) async {
+    // Flush with the band's top-left, which sits one page margin (36pt, 9px at
+    // this zoom) inside the paper: most of the corner's target lies off the
+    // paper, and must still be hit there.
+    final JetReportDesignerController c = await _pumpPhone(
+        tester,
+        _fixture(elements: const <ReportElement>[
+          TextElement(
+            id: 'a',
+            bounds: JetRect(x: 0, y: 0, width: 200, height: 60),
+            text: 'A',
+          ),
+        ]));
+    await _fingerTap(tester, tester.getCenter(_element('a')));
+    final Rect page = tester.getRect(find.byKey(kDesignPageKey));
+    final Rect target = tester.getRect(find.byKey(_topLeftKey));
+    expect(target.left, lessThan(page.left),
+        reason: 'the target leans out of the element, past the paper');
+    expect(target.width, greaterThanOrEqualTo(44));
+
+    // Grab the target at its outer corner, away from the drawn square.
+    final JetRect before = _bounds(c, 'a');
+    final double s = c.viewScale;
+    await _fingerDrag(
+        tester, target.topLeft + const Offset(3, 3), const Offset(40, 40));
+    final JetRect after = _bounds(c, 'a');
+    expect(after.x, closeTo(before.x + 40 / s, 1));
+    expect(after.x + after.width, closeTo(before.x + before.width, 0.01),
+        reason: 'the far corner is the anchor');
+  });
+
+  testWidgets(
+      'T6 long press in multi-select adds the pressed element before the menu',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c = await _pumpPhone(tester);
+    await _fingerTap(tester, tester.getCenter(_element('a')));
+    await _fingerTap(tester, tester.getCenter(find.byKey(_multiSelectKey)));
+
+    await tester.longPressAt(tester.getCenter(_element('b')),
+        kind: PointerDeviceKind.touch);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(_menuCutKey), findsOneWidget);
+    expect(c.selection.ids.toSet(), <String>{'a', 'b'},
+        reason: 'the menu must act on the element under the finger too');
+  });
+
+  testWidgets('T7 a mouse press on the toggle itself takes it away',
+      (WidgetTester tester) async {
+    final JetReportDesignerController c = await _pumpPhone(tester);
+    await _fingerTap(tester, tester.getCenter(_element('a')));
+    await _fingerTap(tester, tester.getCenter(find.byKey(_multiSelectKey)));
+
+    await tester.tapAt(tester.getCenter(find.byKey(_multiSelectKey)),
+        kind: PointerDeviceKind.mouse);
+    await tester.pumpAndSettle();
+    expect(find.byKey(_multiSelectKey), findsNothing);
+
+    // And multi-select went with it: a mouse click replaces the selection.
+    await tester.tapAt(tester.getCenter(_element('b')),
+        kind: PointerDeviceKind.mouse);
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    expect(c.selection.ids, <String>['b']);
   });
 }

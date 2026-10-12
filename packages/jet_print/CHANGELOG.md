@@ -21,12 +21,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   a drag from where it cleared the touch slop, about 18 pixels, rather than
   where the finger went down. At phone zoom, a drag that started on an element
   15 pixels tall was hit-tested beside it and scrolled the page.
-- **A finger resize keeps up with the finger.** For the same reason, a resize
-  handle dropped the first ~36 pixels of a touch drag.
+- **A finger resize keeps up with the finger.** For the same reason, an
+  element's or a band's resize handle dropped the first ~36 pixels of a touch
+  drag.
 - **A selected element can be moved by touch.** Its 44-pixel touch handles,
   centred on the edges, covered the whole body of a small element, so a drag
-  on it grabbed a handle. Under touch the handle targets now lean out of the
-  element, and the drawn squares stay where they were.
+  on it grabbed a handle. Under touch an element's body now takes precedence
+  over every handle target, this element's or a neighbour's, and the targets
+  lean out of the element into the gaps. They also reach past the paper's
+  edge, where they used to be cut off, so an element flush with the page
+  margin keeps a full-sized corner target. The drawn squares stay where they
+  were.
 
 ## 0.2.0
 
