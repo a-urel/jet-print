@@ -499,6 +499,9 @@ class JetPrintLocalizationsEn extends JetPrintLocalizations {
   String get resizeBandHandle => 'Resize band height';
 
   @override
+  String get canvasMultiSelect => 'Select multiple';
+
+  @override
   String get previewBack => 'Back';
 
   @override

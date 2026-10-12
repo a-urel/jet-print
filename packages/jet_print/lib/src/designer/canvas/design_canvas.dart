@@ -7,6 +7,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/gestures.dart'
     show
+        DragStartBehavior,
         GestureBinding,
         PointerDeviceKind,
         PointerDownEvent,
@@ -220,9 +221,23 @@ class _DesignCanvasState extends State<DesignCanvas> {
 
   bool get _isTouch => _pointerKind == PointerDeviceKind.touch;
 
+  /// Whether the touch multi-select toggle is on: a tap then adds an element to
+  /// the selection or removes it, as shift-tap does, and an empty tap keeps the
+  /// selection. The toggle shows only under touch, so it switches off when
+  /// another kind of pointer takes over rather than lingering unseen.
+  bool _multiSelect = false;
+
+  /// The element a multi-select tap pressed, toggled on tap-up rather than on
+  /// press: a press that becomes a drag must move the selection, not first
+  /// toggle the pressed element out of it.
+  String? _pendingToggle;
+
   void _updatePointerKind(PointerDeviceKind kind) {
     if (kind == _pointerKind) return;
-    setState(() => _pointerKind = kind);
+    setState(() {
+      _pointerKind = kind;
+      if (kind != PointerDeviceKind.touch) _multiSelect = false;
+    });
   }
 
   /// A stable per-element key on each element's hit region, so a selection from
@@ -551,6 +566,12 @@ class _DesignCanvasState extends State<DesignCanvas> {
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   supportedDevices: _interactionDevices,
+                  // A drag is hit-tested where the pointer went DOWN, not where
+                  // it cleared the slop (the default, `start`). A mouse's slop
+                  // is a pixel or two, a finger's is ~18: with `start`, a finger
+                  // drag on an element ~15px tall at phone zoom was tested off
+                  // the element and panned the page instead of moving it.
+                  dragStartBehavior: DragStartBehavior.down,
                   onTapDown: (TapDownDetails d) => _handleTapDown(
                       d.localPosition, controller, transform, layout),
                   onTap: () => _handleTap(controller, layout),
@@ -635,6 +656,19 @@ class _DesignCanvasState extends State<DesignCanvas> {
                       controller: _hScroll,
                       axis: Axis.horizontal,
                       color: thumbColor,
+                    ),
+                  ),
+                // Touch only: a finger has no shift key and its empty-canvas
+                // drag pans, so this toggle is how it selects several elements.
+                if (_isTouch)
+                  Positioned(
+                    left: 8,
+                    bottom: (hScrollable ? barThickness : 0) + 8,
+                    child: _MultiSelectToggle(
+                      active: _multiSelect,
+                      label: l10n.canvasMultiSelect,
+                      onPressed: () =>
+                          setState(() => _multiSelect = !_multiSelect),
                     ),
                   ),
               ],

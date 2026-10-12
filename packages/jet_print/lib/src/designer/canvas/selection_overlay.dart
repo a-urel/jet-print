@@ -2,6 +2,7 @@
 /// live snap guides.
 library;
 
+import 'package:flutter/gestures.dart' show DragStartBehavior;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
@@ -257,6 +258,8 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
             child: GestureDetector(
               key: const ValueKey<String>('jet_print.designer.bandHandle'),
               behavior: HitTestBehavior.opaque,
+              // Count the slop, as the element handles below do.
+              dragStartBehavior: DragStartBehavior.down,
               onPanStart: (_) {
                 _bandResizeDelta = Offset.zero;
                 controller.beginBandResize(bandId);
@@ -370,6 +373,13 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
     final ({double x, double y}) center = _handleCenter(position, pageRect);
     final double hit =
         widget.touchTargets ? kHandleHitSizeTouch : kHandleHitSize;
+    // Under touch the target leans OUT of the element, keeping only the drawn
+    // square inside it: centered, the 44px targets of a small element at phone
+    // zoom covered its whole body, so a finger could no longer move it. A
+    // direction of -1, 0 or 1 per axis; 0 (an edge's midpoint) stays centered.
+    final double dx = position.movesLeft ? -1 : (position.movesRight ? 1 : 0);
+    final double dy = position.movesTop ? -1 : (position.movesBottom ? 1 : 0);
+    final double lean = widget.touchTargets ? (hit - kHandleVisualSize) / 2 : 0;
     // The handle is centered on its element edge/corner and rides the same
     // (clamped) display geometry as the outline, so it stays visually attached to
     // the selection box everywhere. It is a screen-space grab affordance: at a
@@ -378,8 +388,8 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
     // square overflows, matching the convention in mainstream design tools
     // (2026-06-20 clarification).
     return Positioned(
-      left: center.x * widget.scale - hit / 2,
-      top: center.y * widget.scale - hit / 2,
+      left: center.x * widget.scale - hit / 2 + dx * lean,
+      top: center.y * widget.scale - hit / 2 + dy * lean,
       width: hit,
       height: hit,
       // One merged semantics node: a directional, button-role handle.
@@ -399,6 +409,10 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
             child: GestureDetector(
               key: handleKey(position),
               behavior: HitTestBehavior.opaque,
+              // Report the drag from where the finger went down. With the
+              // default (`start`) the movement before the slop cleared is
+              // dropped, so a finger resize trailed the finger by ~36px.
+              dragStartBehavior: DragStartBehavior.down,
               onPanStart: (_) => _onHandleStart(controller, id, position),
               onPanUpdate: (DragUpdateDetails d) =>
                   _onHandleUpdate(controller, d),
@@ -411,7 +425,10 @@ class _DesignerSelectionOverlayState extends State<DesignerSelectionOverlay> {
                   _onHandleLongPressMove(controller, d),
               onLongPressEnd: (_) => controller.commitResize(),
               onLongPressCancel: controller.cancelResize,
-              child: Center(
+              // The drawn square stays on the edge or corner, wherever the
+              // target leans: at the target's inner side, or centered.
+              child: Align(
+                alignment: lean == 0 ? Alignment.center : Alignment(-dx, -dy),
                 child: SizedBox(
                   width: kHandleVisualSize,
                   height: kHandleVisualSize,

@@ -4,6 +4,30 @@ All notable changes to the `jet_print` library are documented here. The format i
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- **Multi-select by touch.** Once a finger has pressed the designer canvas, a
+  toggle appears in its bottom-left corner. While it is on, a tap adds an
+  element to the selection or removes it, as shift-click does, so align and
+  distribute can be reached without a keyboard. A mouse never sees it. The
+  phone-width criteria it completes are in
+  [`docs/touch-authoring.md`](https://github.com/a-urel/jet-print/blob/main/docs/touch-authoring.md).
+
+### Fixed
+
+- **A finger drag on a small element moved it.** The designer canvas reported
+  a drag from where it cleared the touch slop, about 18 pixels, rather than
+  where the finger went down. At phone zoom, a drag that started on an element
+  15 pixels tall was hit-tested beside it and scrolled the page.
+- **A finger resize keeps up with the finger.** For the same reason, a resize
+  handle dropped the first ~36 pixels of a touch drag.
+- **A selected element can be moved by touch.** Its 44-pixel touch handles,
+  centred on the edges, covered the whole body of a small element, so a drag
+  on it grabbed a handle. Under touch the handle targets now lean out of the
+  element, and the drawn squares stay where they were.
+
 ## 0.2.0
 
 Settles the API questions that [decision 0004](https://github.com/a-urel/jet-print/blob/main/docs/decisions/0004-what-1-0-must-settle.md)

@@ -501,6 +501,9 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   String get resizeBandHandle => 'Bandhöhe ändern';
 
   @override
+  String get canvasMultiSelect => 'Mehrfachauswahl';
+
+  @override
   String get previewBack => 'Zurück';
 
   @override

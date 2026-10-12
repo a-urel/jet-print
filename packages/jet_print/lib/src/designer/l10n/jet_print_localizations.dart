@@ -1061,6 +1061,12 @@ abstract class JetPrintLocalizations {
   /// **'Resize band height'**
   String get resizeBandHandle;
 
+  /// Accessible name and tooltip of the touch-only canvas toggle: while it is on, a tap adds an element to the selection or removes it.
+  ///
+  /// In en, this message translates to:
+  /// **'Select multiple'**
+  String get canvasMultiSelect;
+
   /// Tooltip + accessible name of the report preview's back button, which returns to wherever the preview was opened from (the designer).
   ///
   /// In en, this message translates to:

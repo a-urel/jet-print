@@ -84,6 +84,9 @@ table and traps are the whole of the written guidance.
   review.
 - [`serialization-gap.md`](serialization-gap.md) — whether a consumer can store
   a report definition in a database and read it back, and what is missing.
+- [`touch-authoring.md`](touch-authoring.md) — what a finger must be able to do
+  in the designer on a phone, the test that checks each criterion, and the
+  record of the real-device pass that 1.0 waits on.
 
 ## Writing a page
 

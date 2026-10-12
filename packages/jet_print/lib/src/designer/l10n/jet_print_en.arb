@@ -666,6 +666,10 @@
   "@resizeBandHandle": {
     "description": "Accessible name for the band height resize handle."
   },
+  "canvasMultiSelect": "Select multiple",
+  "@canvasMultiSelect": {
+    "description": "Accessible name and tooltip of the touch-only canvas toggle: while it is on, a tap adds an element to the selection or removes it."
+  },
 
   "previewBack": "Back",
   "@previewBack": {
