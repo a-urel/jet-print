@@ -32,7 +32,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 
 - **PDF export no longer fails on a character the font cannot draw.** A text
-  whose last new character had no glyph in its font, such as `∑` or `₺` in
+  whose last new character had no glyph in its font, such as `∑` or `✓` in
   the bundled default font, made `JetReportExporter.toPdf` throw
   `Bad state: No element`. When the character came earlier in the text the
   export succeeded but was garbled, with later characters drawn with another
