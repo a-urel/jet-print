@@ -151,14 +151,19 @@ Adding a schema version means bumping `kReportDefinitionSchemaVersion` — the n
 version `decodeDefinition` accepts — and recording it in
 `packages/jet_print/CHANGELOG.md`. A version that only adds an optional key, as `3`
 did, needs no migration: `schemaVersionFor` stamps it on the documents that use the
-key. A version that changes the shape needs the `N → N+1` migration, added to
+key, which `test/domain/serialization/continuous_schema_version_test.dart` pins for
+`3`. A version that changes the shape needs the `N → N+1` migration, added to
 `JetReportFormat`'s `_definitionMigrations`, *and* raising
 `kReportDefinitionBaselineSchemaVersion` to the new shape: the decoder migrates only
 documents below the baseline, and migrates them *to* it, so with the baseline left
-where it was the new step never runs. `runMigrations` then walks every step from the
-document's version, so the `2 → 3` step that roll paper never needed must exist too, as
-an identity, and `schemaVersionFor` must stamp the new version on every document. The
-rule names the migration and the entry.
+where it was the new step never runs. No standing test catches a forgotten baseline;
+the new migration's own decode test does, written the way
+`test/domain/serialization/migration_v1_to_v2_test.dart` decodes each v1 fixture
+through `JetReportFormat`, not through the migration alone. `runMigrations` then walks
+every step from the document's version, so the `2 → 3` step that roll paper never
+needed must exist too, as an identity — a missing step throws, as
+`test/domain/serialization/migration_test.dart` pins — and `schemaVersionFor` must
+stamp the new version on every document. The rule names the migration and the entry.
 
 ## Why it is like this, and the alternative rejected
 
