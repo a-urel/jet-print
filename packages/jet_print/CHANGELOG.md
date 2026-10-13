@@ -4,13 +4,15 @@ All notable changes to the `jet_print` library are documented here. The format i
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 1.1.0
 
-A minor release under the `1.0.0` freeze: everything is additive except the
-one output change under *Fixed*, accepted by decision 0006. One optional
-page key is new, and only a report that sets it is written at schema version
-3; every other report is written at version 2, as before (see
-*Compatibility*).
+Roll paper for receipt and kitchen-ticket printers, the Turkish lira sign in
+the bundled font, a currency symbol for `¤`, and a PDF export fix for
+characters a font lacks. A minor release under the `1.0.0` freeze: everything
+is additive except the one output change under *Fixed*, accepted by decision
+0006. One optional page key is new, and only a report that sets it is written
+at schema version 3; every other report is written at version 2, as before
+(see *Compatibility*).
 
 ### Added
 
