@@ -4,7 +4,7 @@
 // Why: the design-surface goldens (`test/designer/goldens/*.png`) are rasterized
 // once on a developer's macOS host and committed. CI runs the SAME Flutter
 // version (3.44.0, pinned in `.github/workflows/ci.yml`) but on GitHub's
-// `macos-latest` runner, whose CoreText glyph rasterization differs by a sub-
+// pinned `macos-26` runner, whose CoreText glyph rasterization differs by a sub-
 // pixel amount on text edges. The default exact-match comparator rejects any
 // non-zero delta, so the text-heavy surface goldens fail CI with "0.00%, 1px
 // diff" even though nothing about the render changed.

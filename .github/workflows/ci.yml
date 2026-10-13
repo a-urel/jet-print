@@ -29,7 +29,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-latest
+          # Pinned, not macos-latest: this leg is the golden reference, and
+          # glyph anti-aliasing differs between macOS versions. Moving the pin
+          # moves the reference, so update-goldens below must move with it.
+          - os: macos-26
             build_target: macos
             test_filter: ""
             canonical: true
@@ -164,7 +167,9 @@ jobs:
     # someone looks at the images, names what moved, and commits them.
     name: update goldens (macos)
     if: ${{ inputs.update_goldens }}
-    runs-on: macos-latest
+    # Must match the canonical leg's pin above: goldens regenerated on another
+    # macOS version would fail the leg that compares them.
+    runs-on: macos-26
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
