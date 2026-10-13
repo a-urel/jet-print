@@ -29,6 +29,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   [decision 0005](https://github.com/a-urel/jet-print/blob/main/docs/decisions/0005-mobile-designer-claim-narrowed.md)
   narrows the claim accordingly.
 
+### Fixed
+
+- **PDF export no longer fails on a character the font cannot draw.** A text
+  whose last new character had no glyph in its font, such as `∑` or `₺` in
+  the bundled default font, made `JetReportExporter.toPdf` throw
+  `Bad state: No element`. When the character came earlier in the text the
+  export succeeded but was garbled, with later characters drawn with another
+  character's shape. Such a character now exports as the font's missing-glyph
+  box (`.notdef`), at the width the layout gave it, and the rest of the text
+  is drawn correctly. Copying the box's text out of the PDF yields U+0000.
+  A tab is drawn as the space the layout measured it as. In a font that draws
+  several characters with one shape, such as a space and a no-break space,
+  copied text gives the lowest of them for each, whichever came first.
+
 ## 1.0.0
 
 The first stable release. From here a `1.x` upgrade changes no public API,
