@@ -30,6 +30,7 @@ import '../paint/image_fit.dart';
 import '../paint/report_painter.dart';
 import '../text/font_registry.dart';
 import '../text/underline_metrics.dart';
+import 'pdf_cmap_runes.dart';
 
 /// Paints [PageFrame]s into one PDF document; call [save] after the last page.
 ///
@@ -51,11 +52,6 @@ class PdfPainter implements ReportPainter {
   /// [FontRegistry.bytesFor] returns the same instance for every variant that
   /// resolves to the same entry, so fallback variants share one embed.
   final Map<Uint8List, PdfTtfFont> _embeddedFonts = <Uint8List, PdfTtfFont>{};
-
-  /// Per embedded font (same key as [_embeddedFonts]), the one character each
-  /// glyph is handed to dart_pdf as; see [_pdfText].
-  final Map<Uint8List, Map<int, int>> _runeForGlyph =
-      <Uint8List, Map<int, int>>{};
 
   /// Images already embedded, keyed by the primitive's byte instance.
   final Map<Uint8List, PdfImage> _embeddedImages = <Uint8List, PdfImage>{};
@@ -148,7 +144,7 @@ class PdfPainter implements ReportPainter {
     );
     final PdfTtfFont font = _embeddedFonts.putIfAbsent(
       bytes,
-      () => PdfTtfFont(
+      () => _OneRunePerGlyphTtfFont(
         _document,
         bytes.buffer.asByteData(bytes.offsetInBytes, bytes.lengthInBytes),
       ),
@@ -179,7 +175,7 @@ class PdfPainter implements ReportPainter {
         g.drawString(
           font,
           p.style.fontSize,
-          _pdfText(line.text, bytes, font),
+          line.text,
           dx,
           _mapY(p.bounds.y + line.baseline),
         );
@@ -196,46 +192,6 @@ class PdfPainter implements ReportPainter {
         }
       }
     });
-  }
-
-  /// [text] with each character replaced by the one character dart_pdf is
-  /// given for its glyph in [font], embedded from [bytes].
-  ///
-  /// dart_pdf gives every distinct character its own CID and a glyph slot of
-  /// its own in the embedded subset, with CID 0, U+0000, holding .notdef. A
-  /// second character resolving to an already-placed glyph breaks its
-  /// subsetter: it takes "the first remaining glyph" instead, which draws a
-  /// glyph belonging to another character, or throws `Bad state: No element`
-  /// once none remain. That is every character the font has no glyph for (all
-  /// .notdef), and any two characters a font maps to one glyph (often the
-  /// no-break space and the space).
-  ///
-  /// So the first character seen for a glyph speaks for it, and a character the
-  /// font lacks becomes U+0000. The PDF then draws the glyph the engine
-  /// measured — .notdef for a missing character, the box the layout already
-  /// made room for. What text extraction reads for such a character is the
-  /// character standing in for it (U+0000 for a missing one).
-  ///
-  /// Glyphs are looked up in dart_pdf's own cmap, not the engine's: the
-  /// duplicates are in its terms, and it reads cmap subtables the engine's
-  /// reader does not (format 12, the supplementary planes), so a glyph it can
-  /// embed is never turned into .notdef here. A tab is first made a space, as
-  /// `MetricsTextMeasurer` measures it, so it prints as the gap the layout
-  /// left rather than as a box.
-  String _pdfText(String text, Uint8List bytes, PdfTtfFont font) {
-    final Map<int, int> runeForGlyph =
-        _runeForGlyph.putIfAbsent(bytes, () => <int, int>{0: 0});
-    final Map<int, int> cmap = font.font.charToGlyphIndexMap;
-    bool changed = false;
-    final List<int> runes = <int>[];
-    for (final int original in text.runes) {
-      final int rune = original == 0x09 ? 0x20 : original; // tab -> space
-      final int canonical =
-          runeForGlyph.putIfAbsent(cmap[rune] ?? 0, () => rune);
-      changed = changed || canonical != original;
-      runes.add(canonical);
-    }
-    return changed ? String.fromCharCodes(runes) : text;
   }
 
   @override
@@ -466,4 +422,63 @@ class _FixedIdPdfDocument extends PdfDocument {
 
   @override
   Uint8List get documentID => _fixedId;
+}
+
+/// A [PdfTtfFont] that never lets two runes share a glyph in its CMap, and
+/// gives a rune the font has no glyph for the advance the engine measured.
+///
+/// dart_pdf's subsetter (`TtfWriter.withChars`, pdf 3.12.0) lays out one
+/// subset glyph per CMap entry — `/CIDToGIDMap` is `/Identity` — and assumes
+/// no two entries resolve to the same glyph. A second claimant is handed
+/// whichever glyph is still unplaced: another rune's outline, so every later
+/// rune draws its neighbour's, or `Bad state: No element` when none is left.
+/// CID 0 is always U+0000, which resolves to glyph 0 (.notdef), and so does
+/// every rune the font cannot draw; a text that ends in such a rune therefore
+/// crashed the export, and one that merely contains it exported garbled.
+///
+/// [putText] rewrites each rune to the one rune its glyph's CMap entry
+/// carries ([cmapRuneByGlyph]), so an unmapped rune is emitted as CID 0 and
+/// draws .notdef — the glyph the engine measured it as. Outlines are
+/// unchanged; only text extraction differs, since one CID carries one
+/// ToUnicode entry: an unmapped rune extracts as U+0000, and runes that share
+/// a glyph extract as the lowest code point among them.
+class _OneRunePerGlyphTtfFont extends PdfTtfFont {
+  _OneRunePerGlyphTtfFont(super.pdfDocument, super.bytes) {
+    // CID 0 is U+0000 and the subset puts its glyph at GID 0, which OpenType
+    // reserves for .notdef — so U+0000 must resolve to .notdef, as every
+    // unmapped rune does, even in a font that maps it to a glyph of its own
+    // (classically `.null`). That font's U+0000 then draws .notdef rather
+    // than the glyph the measurer advanced it by; no report text holds one.
+    font.charToGlyphIndexMap.remove(0);
+  }
+
+  /// Glyph index -> the rune emitted for every rune that resolves to it.
+  late final Map<int, int> _runeForGlyph =
+      cmapRuneByGlyph(font.charToGlyphIndexMap);
+
+  int _cmapRune(int rune) {
+    // As MetricsTextMeasurer does: a tab is laid out as a space.
+    final int r = rune == 0x09 ? 0x20 : rune;
+    return _runeForGlyph[font.charToGlyphIndexMap[r] ?? 0]!;
+  }
+
+  // `stream` is dart_pdf's PdfStream, which `package:pdf/pdf.dart` does not
+  // export; its type is inherited from the overridden member.
+  @override
+  void putText(stream, String text) {
+    super.putText(
+      stream,
+      font.unicode ? String.fromCharCodes(text.runes.map(_cmapRune)) : text,
+    );
+  }
+
+  /// dart_pdf gives an unmapped rune a zero advance; the engine's measurer
+  /// (`MetricsTextMeasurer`) gives it glyph 0's. Without this the .notdef
+  /// would overprint the next glyph and pull the rest of the line left of
+  /// where it was laid out.
+  @override
+  PdfFontMetrics glyphMetrics(int charCode) =>
+      font.charToGlyphIndexMap.containsKey(charCode)
+          ? super.glyphMetrics(charCode)
+          : font.glyphInfoMap[0] ?? PdfFontMetrics.zero;
 }

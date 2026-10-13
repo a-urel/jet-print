@@ -29,17 +29,26 @@ Which of the two happens depends on the order dart_pdf meets the characters in
 the whole document, not on the text element. So the same report can crash or
 export after an unrelated edit elsewhere in it.
 
-The fix, in [#128](https://github.com/a-urel/jet-print/pull/128)
-(`rendering/export/pdf_painter.dart` → `PdfPainter._pdfText`), maps each
-character to one canonical character per glyph before it reaches dart_pdf, and
-a missing one to U+0000. The PDF then draws `.notdef`, the box the engine
-measured and laid out. A PDF that contains no such character is byte-for-byte
-unchanged, and `test/goldens/invoice.pdf` passes. A PDF that contained one
+The fix, in [#125](https://github.com/a-urel/jet-print/pull/125)
+(`rendering/export/pdf_painter.dart` → `_OneRunePerGlyphTtfFont`, with
+`pdf_cmap_runes.dart`), rewrites each character before it reaches dart_pdf to
+the one character its glyph's CMap entry carries: the lowest code point the
+font maps to that glyph, and U+0000 for a character the font lacks. It also
+gives `.notdef` the advance the engine measured instead of dart_pdf's zero. The
+PDF then draws `.notdef`, the box the engine measured and laid out.
+([#128](https://github.com/a-urel/jet-print/pull/128) carried an equivalent
+fix; #125 landed first, and this record is what #128 kept.)
+
+A PDF that contains no such character draws the same glyphs in the same places.
+Its bytes change in one value: the width its fonts list for CID 0, `.notdef`,
+which such a PDF never draws. That is the whole of the difference between the
+old and the regenerated `test/goldens/invoice.pdf`. A PDF that contained one
 changes in two ways: where it crashed, it now exports, and where it drew a
 borrowed glyph, it now draws `.notdef`.
 
-The first change is outside 0004's promise: a crash is not output. The second is
-inside it, and is what this record is about.
+The first change is outside 0004's promise: a crash is not output, and neither
+is the width of a glyph nothing draws. The second is inside it, and is what
+this record is about.
 
 ## Decision
 
@@ -60,8 +69,9 @@ The test it passes, which a later exception must pass too:
    already made room for exactly the box the PDF now draws. This is a claim
    about the PDF only: the canvas and preview draw through Flutter, which may
    fall back to a platform font (see *What this does not decide*).
-4. **Output that was correct does not move.** A PDF without such a character is
-   byte-for-byte identical, which a golden pins.
+4. **Output that was correct does not move.** A PDF without such a character
+   draws exactly what it drew before. Its only byte change is a value no
+   viewer uses to draw it, which the regenerated `invoice.pdf` golden shows.
 
 An opt-in was rejected. Its default would have to keep both behaviours, the
 crash and the borrowed glyph, and a host would have to discover a flag in order
@@ -76,13 +86,15 @@ affected: those containing a character their font lacks, or two characters
 their font draws alike.
 
 **Text extraction changes for those characters.** The character handed to
-dart_pdf is now U+0000 for a missing character, or the canonical character for
-a shared glyph, such as a space for a no-break space; dart_pdf writes its
-ToUnicode entry from that character. So a PDF reader copying the text should
-get those characters where it used to get the original one, drawn with the
-wrong glyph. The tests pin the CID emitted for a missing character, not what a
-reader extracts from it, and no test uses a font with a shared glyph: the
-shared-glyph case follows from the same mapping, unexercised.
+dart_pdf is now U+0000 for a missing character, or the lowest code point among
+those sharing a glyph, such as a space for a no-break space; dart_pdf writes
+its ToUnicode entry from that character. So a PDF reader copying the text gets
+those characters where it used to get the original one, drawn with the wrong
+glyph. The choice depends on the font alone, not on the order the document
+draws characters in. It is pinned on synthetic cmaps, and the one font fixture
+with a shared glyph shares it with U+0000. A font that maps U+0000 to a glyph
+of its own now draws `.notdef` for U+0000, since CID 0 must be `.notdef`; no
+report text is expected to hold U+0000.
 
 **0004 now has a recorded exception, and with it a precedent.** That is the
 cost. Its rule is weaker for having one, and the four-part test above exists so

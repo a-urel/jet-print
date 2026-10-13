@@ -6,24 +6,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
-### Fixed
-
-- **PDF export no longer breaks on a character the font has no glyph for.**
-  Such a character, `∑` or `✓` in the bundled font for instance, made
-  `toPdf` and printing throw `Bad state: No element` when it was the last one
-  placed, and otherwise made the PDF draw a glyph belonging to another
-  character in its place. It now exports as the font's `.notdef` box, the
-  width the layout already gave it. The same applies to two characters a
-  font draws with one glyph, often the no-break space and the space. The
-  first character seen speaks for the glyph. A tab now prints as the space
-  the layout measured it as, not as a box. A PDF with no such character is
-  byte-for-byte unchanged. A PDF that rendered one before now draws `.notdef`
-  where it drew another character's glyph. That is a change in output under
-  [decision 0004](https://github.com/a-urel/jet-print/blob/main/docs/decisions/0004-what-1-0-must-settle.md),
-  accepted as an exception by
-  [decision 0006](https://github.com/a-urel/jet-print/blob/main/docs/decisions/0006-unmapped-glyph-pdf-fix-is-an-exception.md):
-  the old output was never the character asked for, and was not even stable.
-
 ### Changed
 
 - **The designer is no longer claimed on Android and iOS.** The README now
@@ -35,6 +17,28 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   recorded; it was published without it, and
   [decision 0005](https://github.com/a-urel/jet-print/blob/main/docs/decisions/0005-mobile-designer-claim-narrowed.md)
   narrows the claim accordingly.
+
+### Fixed
+
+- **PDF export no longer fails on a character the font cannot draw.** A text
+  whose last new character had no glyph in its font, such as `∑` or `₺` in
+  the bundled default font, made `JetReportExporter.toPdf` throw
+  `Bad state: No element`. When the character came earlier in the text the
+  export succeeded but was garbled, with later characters drawn with another
+  character's shape. Such a character now exports as the font's missing-glyph
+  box (`.notdef`), at the width the layout gave it, and the rest of the text
+  is drawn correctly. Copying the box's text out of the PDF yields U+0000.
+  A tab is drawn as the space the layout measured it as. In a font that draws
+  several characters with one shape, such as a space and a no-break space,
+  copied text gives the lowest of them for each, whichever came first.
+  A PDF with none of these characters draws exactly as before; its bytes
+  change only in the width its fonts list for `.notdef`, which such a PDF
+  never draws. A PDF that drew a borrowed glyph now draws `.notdef` in its
+  place. That is a change in output under
+  [decision 0004](https://github.com/a-urel/jet-print/blob/main/docs/decisions/0004-what-1-0-must-settle.md),
+  accepted as an exception by
+  [decision 0006](https://github.com/a-urel/jet-print/blob/main/docs/decisions/0006-unmapped-glyph-pdf-fix-is-an-exception.md):
+  the old output was never the character asked for, and was not even stable.
 
 ## 1.0.0
 
