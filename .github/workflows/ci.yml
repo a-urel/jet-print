@@ -5,6 +5,8 @@ name: CI
 # (docs/testing.md, "CI"). macOS is canonical: it alone runs the full suite
 # (including goldens) and the dart format gate; Ubuntu, Windows and Chrome run
 # the suite with the golden surface excluded, and Android and iOS only build.
+# A floor job repeats the Ubuntu leg under the oldest Flutter the pubspecs
+# accept.
 # Every leg but the manual update-goldens one builds the playground app, to
 # prove the native plugin toolchain links per platform.
 on:
@@ -59,7 +61,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 3.44.0
+          flutter-version: 3.47.7
           channel: stable
           cache: true
 
@@ -98,7 +100,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 3.44.0
+          flutter-version: 3.47.7
           channel: stable
           cache: true
 
@@ -132,7 +134,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 3.44.0
+          flutter-version: 3.47.7
           channel: stable
           cache: true
       - name: Resolve workspace dependencies
@@ -154,7 +156,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 3.44.0
+          flutter-version: 3.47.7
           channel: stable
           cache: true
       - name: Resolve workspace dependencies
@@ -162,6 +164,46 @@ jobs:
       - name: Build the playground for iOS
         working-directory: apps/jet_print_playground
         run: flutter build ios --debug --no-codesign
+
+  floor:
+    # The other legs run the Flutter the lockfile is resolved with; this one
+    # runs the oldest Flutter the pubspecs accept (`flutter: ">=3.44.0"`), so
+    # that floor is tested rather than claimed. Each SDK pins its own versions
+    # of packages such as intl and meta, so the committed lockfile cannot be
+    # enforced here: `pub get` re-resolves to this SDK's pins instead.
+    name: flutter floor (3.44.0)
+    if: ${{ !inputs.update_goldens }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Install Linux desktop build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libcups2-dev
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.0
+          channel: stable
+          cache: true
+
+      - name: Resolve workspace dependencies for this SDK
+        run: flutter pub get
+
+      - name: Analyze (zero warnings)
+        run: flutter analyze
+
+      - name: Build the playground app
+        working-directory: apps/jet_print_playground
+        run: flutter build linux --debug
+
+      - name: Run tests
+        run: >-
+          flutter test --exclude-tags golden packages/jet_print
+          packages/jet_print_google_fonts apps/jet_print_playground
 
   update-goldens:
     # Manual only (Run workflow -> update_goldens). Goldens are canonical on
@@ -182,7 +224,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 3.44.0
+          flutter-version: 3.47.7
           channel: stable
           cache: true
 

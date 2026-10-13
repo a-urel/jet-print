@@ -53,9 +53,10 @@ resolution: workspace
 
 environment:
   sdk: ^3.6.0
-  # Tracks the version CI pins (.github/workflows/ci.yml, every job) and
-  # that AGENTS.md documents. It was ">=3.6.0", which the package has never
-  # been built against — 38 minor versions below anything tested — so it
+  # Tested by the `floor` job in .github/workflows/ci.yml, which runs this
+  # exact version (the other jobs run the newer one the lockfile is resolved
+  # with), and documented in AGENTS.md. It was ">=3.6.0", which the package
+  # has never been built against — 38 minor versions below anything tested — so it
   # claimed support nobody had verified.
   #
   # The `sdk:` line above is DELIBERATELY not raised to match, so don't
