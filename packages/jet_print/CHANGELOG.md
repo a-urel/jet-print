@@ -28,6 +28,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   character's shape. Such a character now exports as the font's missing-glyph
   box (`.notdef`), at the width the layout gave it, and the rest of the text
   is drawn correctly. Copying the box's text out of the PDF yields U+0000.
+  A tab is drawn as the space the layout measured it as. In a font that draws
+  several characters with one shape, such as a space and a no-break space,
+  copied text gives the lowest of them for each, whichever came first.
 
 ## 1.0.0
 

@@ -95,6 +95,16 @@ void main() {
     expect(extracted, 'Toplam 125,50 \u{FFFD}');
   });
 
+  test('a tab is drawn as the space the engine measured it as', () async {
+    // MetricsTextMeasurer lays U+0009 out as U+0020. The font has no glyph
+    // for a tab, so drawing it as itself would put a .notdef box, at .notdef
+    // width, where the layout left a space.
+    final PdfInspector pdf = await _export('A\tA');
+    final List<int> cids = _drawnCids(pdf);
+    expect(cids, hasLength(3));
+    expect(pdf.toUnicodeMaps.single[cids[1]], 0x20);
+  });
+
   test('the .notdef advances by the width the engine measured', () async {
     final PdfInspector pdf = await _export('∑ab');
     // `/W [0 N 0 R]`: object N lists each CID's advance in 1/1000 em. The

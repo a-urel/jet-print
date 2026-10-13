@@ -30,6 +30,7 @@ import '../paint/image_fit.dart';
 import '../paint/report_painter.dart';
 import '../text/font_registry.dart';
 import '../text/underline_metrics.dart';
+import 'pdf_cmap_runes.dart';
 
 /// Paints [PageFrame]s into one PDF document; call [save] after the last page.
 ///
@@ -435,23 +436,29 @@ class _FixedIdPdfDocument extends PdfDocument {
 /// every rune the font cannot draw; a text that ends in such a rune therefore
 /// crashed the export, and one that merely contains it exported garbled.
 ///
-/// [putText] rewrites each rune to the FIRST rune that claimed its glyph, so
-/// an unmapped rune is emitted as CID 0 and draws .notdef — the glyph the
-/// engine measured it as. The outline is unchanged; only text extraction
-/// differs, yielding U+0000 for it, since one CID carries one ToUnicode entry.
+/// [putText] rewrites each rune to the one rune its glyph's CMap entry
+/// carries ([cmapRuneByGlyph]), so an unmapped rune is emitted as CID 0 and
+/// draws .notdef — the glyph the engine measured it as. Outlines are
+/// unchanged; only text extraction differs, since one CID carries one
+/// ToUnicode entry: an unmapped rune extracts as U+0000, and runes that share
+/// a glyph extract as the lowest code point among them.
 class _OneRunePerGlyphTtfFont extends PdfTtfFont {
-  _OneRunePerGlyphTtfFont(super.pdfDocument, super.bytes) {
-    // dart_pdf seeds the CMap with U+0000 as CID 0 before anything is drawn.
-    _claim(0);
-  }
+  _OneRunePerGlyphTtfFont(super.pdfDocument, super.bytes);
 
   /// Glyph index -> the rune emitted for every rune that resolves to it.
-  final Map<int, int> _runeForGlyph = <int, int>{};
+  late final Map<int, int> _runeForGlyph =
+      cmapRuneByGlyph(font.charToGlyphIndexMap);
 
-  int _claim(int rune) => _runeForGlyph.putIfAbsent(
-        font.charToGlyphIndexMap[rune] ?? 0,
-        () => rune,
-      );
+  int _cmapRune(int rune) {
+    // As MetricsTextMeasurer does: a tab is laid out as a space.
+    final int r = rune == 0x09 ? 0x20 : rune;
+    // Absent only for glyph 0 in a font that maps U+0000 to another glyph:
+    // the first unmapped rune drawn then names .notdef.
+    return _runeForGlyph.putIfAbsent(
+      font.charToGlyphIndexMap[r] ?? 0,
+      () => r,
+    );
+  }
 
   // `stream` is dart_pdf's PdfStream, which `package:pdf/pdf.dart` does not
   // export; its type is inherited from the overridden member.
@@ -459,7 +466,7 @@ class _OneRunePerGlyphTtfFont extends PdfTtfFont {
   void putText(stream, String text) {
     super.putText(
       stream,
-      font.unicode ? String.fromCharCodes(text.runes.map(_claim)) : text,
+      font.unicode ? String.fromCharCodes(text.runes.map(_cmapRune)) : text,
     );
   }
 
