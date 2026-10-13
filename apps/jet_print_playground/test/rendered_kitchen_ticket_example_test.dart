@@ -21,12 +21,15 @@ List<String> _texts(RenderedReport r, int i) => <String>[
 void main() {
   final RenderedReport report = renderKitchenTicketDefinition();
 
-  test('renders with no error diagnostics', () {
-    expect(
-      report.diagnostics.entries
-          .where((Diagnostic d) => d.severity == DiagnosticSeverity.error),
-      isEmpty,
-    );
+  test('renders with no diagnostics at all', () {
+    // Pages are built lazily, and building one can add diagnostics (a page
+    // header or footer expression is evaluated then), so build them all first.
+    for (int i = 0; i < report.pageCount; i++) {
+      report.pageAt(i);
+    }
+    // Not even a warning: a binding to a field the source does not declare
+    // renders a token and warns.
+    expect(report.diagnostics.entries, isEmpty);
   });
 
   test('prints one ticket per station, in order', () {

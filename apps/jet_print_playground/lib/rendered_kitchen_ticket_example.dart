@@ -18,7 +18,8 @@ JetDataSource kitchenTicketDataSource() =>
 /// the native [JetReportEngine.renderDefinition] path — the same single call
 /// the designer tab's preview uses. [definition] defaults to the bundled
 /// sample so the designer can pass its LIVE edits; [source] defaults to the
-/// sample data.
+/// sample data. The known fields are left to the source, which declares its
+/// own schema, so an alternate source's fields resolve too.
 RenderedReport renderKitchenTicketDefinition({
   ReportDefinition? definition,
   JetDataSource? source,
@@ -29,9 +30,6 @@ RenderedReport renderKitchenTicketDefinition({
       source ?? kitchenTicketDataSource(),
       options: RenderOptions(
         locale: const Locale('tr'),
-        knownFields: <String>{
-          for (final FieldDef f in kitchenTicketSchema.fields) f.name,
-        },
         fonts: fonts,
       ),
     );
