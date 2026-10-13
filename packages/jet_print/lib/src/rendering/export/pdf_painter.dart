@@ -28,7 +28,6 @@ import '../frame/page_frame.dart';
 import '../frame/primitive.dart';
 import '../paint/image_fit.dart';
 import '../paint/report_painter.dart';
-import '../text/font_metrics.dart';
 import '../text/font_registry.dart';
 import '../text/underline_metrics.dart';
 
@@ -154,11 +153,6 @@ class PdfPainter implements ReportPainter {
         bytes.buffer.asByteData(bytes.offsetInBytes, bytes.lengthInBytes),
       ),
     );
-    final FontMetrics metrics = _fonts.metricsFor(
-      p.fontFamily,
-      weight: p.style.weight,
-      italic: p.style.italic,
-    );
     _withAlpha(g, p.style.color, () {
       g.setFillColor(_pdfColor(p.style.color));
       for (final line in p.lines) {
@@ -185,7 +179,7 @@ class PdfPainter implements ReportPainter {
         g.drawString(
           font,
           p.style.fontSize,
-          _pdfText(line.text, bytes, metrics),
+          _pdfText(line.text, bytes, font),
           dx,
           _mapY(p.bounds.y + line.baseline),
         );
@@ -205,7 +199,7 @@ class PdfPainter implements ReportPainter {
   }
 
   /// [text] with each character replaced by the one character dart_pdf is
-  /// given for its glyph in the font [bytes] / [metrics].
+  /// given for its glyph in [font], embedded from [bytes].
   ///
   /// dart_pdf gives every distinct character its own CID and a glyph slot of
   /// its own in the embedded subset, with CID 0, U+0000, holding .notdef. A
@@ -221,15 +215,24 @@ class PdfPainter implements ReportPainter {
   /// measured — .notdef for a missing character, the box the layout already
   /// made room for. What text extraction reads for such a character is the
   /// character standing in for it (U+0000 for a missing one).
-  String _pdfText(String text, Uint8List bytes, FontMetrics metrics) {
+  ///
+  /// Glyphs are looked up in dart_pdf's own cmap, not the engine's: the
+  /// duplicates are in its terms, and it reads cmap subtables the engine's
+  /// reader does not (format 12, the supplementary planes), so a glyph it can
+  /// embed is never turned into .notdef here. A tab is first made a space, as
+  /// `MetricsTextMeasurer` measures it, so it prints as the gap the layout
+  /// left rather than as a box.
+  String _pdfText(String text, Uint8List bytes, PdfTtfFont font) {
     final Map<int, int> runeForGlyph =
         _runeForGlyph.putIfAbsent(bytes, () => <int, int>{0: 0});
+    final Map<int, int> cmap = font.font.charToGlyphIndexMap;
     bool changed = false;
     final List<int> runes = <int>[];
-    for (final int rune in text.runes) {
+    for (final int original in text.runes) {
+      final int rune = original == 0x09 ? 0x20 : original; // tab -> space
       final int canonical =
-          runeForGlyph.putIfAbsent(metrics.glyphForCodepoint(rune), () => rune);
-      changed = changed || canonical != rune;
+          runeForGlyph.putIfAbsent(cmap[rune] ?? 0, () => rune);
+      changed = changed || canonical != original;
       runes.add(canonical);
     }
     return changed ? String.fromCharCodes(runes) : text;

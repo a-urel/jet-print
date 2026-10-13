@@ -15,7 +15,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   character in its place. It now exports as the font's `.notdef` box, the
   width the layout already gave it. The same applies to two characters a
   font draws with one glyph, often the no-break space and the space. The
-  first character seen speaks for the glyph. A PDF with no such character is
+  first character seen speaks for the glyph. A tab now prints as the space
+  the layout measured it as, not as a box. A PDF with no such character is
   byte-for-byte unchanged. A PDF that rendered one before now draws `.notdef`
   where it drew another character's glyph. That is a change in output under
   [decision 0004](https://github.com/a-urel/jet-print/blob/main/docs/decisions/0004-what-1-0-must-settle.md),

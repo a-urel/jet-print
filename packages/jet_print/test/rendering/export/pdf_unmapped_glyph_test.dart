@@ -15,11 +15,17 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jet_print/jet_print.dart';
 
+import '../../support/supplementary_font_data.dart';
 import 'support/pdf_inspector.dart';
 
 /// One text element per entry of [texts], in the bundled default font, which
-/// has no glyph for ∑ (U+2211) or ✓ (U+2713).
-Future<PdfInspector> _export(List<String> texts) async {
+/// has no glyph for ∑ (U+2211) or ✓ (U+2713) — or in [fontFamily], registered
+/// from [fonts].
+Future<PdfInspector> _export(
+  List<String> texts, {
+  String? fontFamily,
+  List<JetFontFamily> fonts = const <JetFontFamily>[],
+}) async {
   final RenderedReport report = const JetReportEngine().renderDefinition(
     ReportDefinition(
       name: 'unmapped',
@@ -39,6 +45,7 @@ Future<PdfInspector> _export(List<String> texts) async {
                     id: 't$i',
                     bounds: JetRect(x: 0, y: 20.0 * i, width: 280, height: 16),
                     text: texts[i],
+                    style: JetTextStyle(fontFamily: fontFamily),
                   ),
               ],
             )),
@@ -47,6 +54,7 @@ Future<PdfInspector> _export(List<String> texts) async {
       ),
     ),
     JetInMemoryDataSource(const <Map<String, Object?>>[<String, Object?>{}]),
+    options: RenderOptions(fonts: fonts),
   );
   final Uint8List bytes = await const JetReportExporter().toPdf(report);
   return PdfInspector(bytes);
@@ -97,5 +105,35 @@ void main() {
     expect(<String>[...shown[0]]..removeAt(7), shown[1]);
     expect(pdf.textOnPage(0), contains('Toplam  125,50'),
         reason: 'a line without unmapped characters still extracts');
+  });
+
+  test('a tab is drawn as the space the layout measured it as', () async {
+    final PdfInspector pdf = await _export(<String>['a\tb', 'a b']);
+    final List<List<String>> shown = _shownCids(pdf);
+    expect(shown, hasLength(2));
+    expect(shown[0], shown[1],
+        reason: 'the measurer treats U+0009 as U+0020; the PDF must too');
+  });
+
+  test('a glyph reachable only through a format-12 cmap is kept', () async {
+    // U+1F600 maps to the glyph of 'A' in this font, and only through its
+    // supplementary-plane cmap subtable. dart_pdf embeds that glyph; it must
+    // not be rewritten to .notdef because the engine's own cmap reader does
+    // not see past the BMP.
+    final PdfInspector pdf = await _export(
+      <String>['\u{1F600}x'],
+      fontFamily: 'Supplementary',
+      fonts: <JetFontFamily>[
+        JetFontFamily(
+          name: 'Supplementary',
+          faces: <JetFontFace>[
+            JetFontFace(bytes: kSupplementaryFixtureFontBytes),
+          ],
+        ),
+      ],
+    );
+    final List<String> cids = _shownCids(pdf).single;
+    expect(cids, hasLength(2));
+    expect(cids[0], isNot('0000'));
   });
 }
