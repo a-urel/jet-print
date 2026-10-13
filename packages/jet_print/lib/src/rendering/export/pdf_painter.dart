@@ -28,6 +28,7 @@ import '../frame/page_frame.dart';
 import '../frame/primitive.dart';
 import '../paint/image_fit.dart';
 import '../paint/report_painter.dart';
+import '../text/font_metrics.dart';
 import '../text/font_registry.dart';
 import '../text/underline_metrics.dart';
 
@@ -51,6 +52,11 @@ class PdfPainter implements ReportPainter {
   /// [FontRegistry.bytesFor] returns the same instance for every variant that
   /// resolves to the same entry, so fallback variants share one embed.
   final Map<Uint8List, PdfTtfFont> _embeddedFonts = <Uint8List, PdfTtfFont>{};
+
+  /// Per embedded font (same key as [_embeddedFonts]), the one character each
+  /// glyph is handed to dart_pdf as; see [_pdfText].
+  final Map<Uint8List, Map<int, int>> _runeForGlyph =
+      <Uint8List, Map<int, int>>{};
 
   /// Images already embedded, keyed by the primitive's byte instance.
   final Map<Uint8List, PdfImage> _embeddedImages = <Uint8List, PdfImage>{};
@@ -148,6 +154,11 @@ class PdfPainter implements ReportPainter {
         bytes.buffer.asByteData(bytes.offsetInBytes, bytes.lengthInBytes),
       ),
     );
+    final FontMetrics metrics = _fonts.metricsFor(
+      p.fontFamily,
+      weight: p.style.weight,
+      italic: p.style.italic,
+    );
     _withAlpha(g, p.style.color, () {
       g.setFillColor(_pdfColor(p.style.color));
       for (final line in p.lines) {
@@ -174,7 +185,7 @@ class PdfPainter implements ReportPainter {
         g.drawString(
           font,
           p.style.fontSize,
-          line.text,
+          _pdfText(line.text, bytes, metrics),
           dx,
           _mapY(p.bounds.y + line.baseline),
         );
@@ -191,6 +202,37 @@ class PdfPainter implements ReportPainter {
         }
       }
     });
+  }
+
+  /// [text] with each character replaced by the one character dart_pdf is
+  /// given for its glyph in the font [bytes] / [metrics].
+  ///
+  /// dart_pdf gives every distinct character its own CID and a glyph slot of
+  /// its own in the embedded subset, with CID 0, U+0000, holding .notdef. A
+  /// second character resolving to an already-placed glyph breaks its
+  /// subsetter: it takes "the first remaining glyph" instead, which draws a
+  /// glyph belonging to another character, or throws `Bad state: No element`
+  /// once none remain. That is every character the font has no glyph for (all
+  /// .notdef), and any two characters a font maps to one glyph (often the
+  /// no-break space and the space).
+  ///
+  /// So the first character seen for a glyph speaks for it, and a character the
+  /// font lacks becomes U+0000. The PDF then draws the glyph the engine
+  /// measured — .notdef for a missing character, the box the layout already
+  /// made room for. What text extraction reads for such a character is the
+  /// character standing in for it (U+0000 for a missing one).
+  String _pdfText(String text, Uint8List bytes, FontMetrics metrics) {
+    final Map<int, int> runeForGlyph =
+        _runeForGlyph.putIfAbsent(bytes, () => <int, int>{0: 0});
+    bool changed = false;
+    final List<int> runes = <int>[];
+    for (final int rune in text.runes) {
+      final int canonical =
+          runeForGlyph.putIfAbsent(metrics.glyphForCodepoint(rune), () => rune);
+      changed = changed || canonical != rune;
+      runes.add(canonical);
+    }
+    return changed ? String.fromCharCodes(runes) : text;
   }
 
   @override
