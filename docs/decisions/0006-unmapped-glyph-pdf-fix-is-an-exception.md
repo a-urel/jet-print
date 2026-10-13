@@ -55,9 +55,11 @@ The test it passes, which a later exception must pass too:
 2. **The old output was not stable.** The same character in the same element
    crashed or drew a borrowed glyph depending on the rest of the document, so
    no host could have relied on it.
-3. **The new output is what every other surface already shows for it.** The
-   engine measures an unmapped character at the `.notdef` advance, so the
-   layout already made room for exactly the box the PDF now draws.
+3. **The new output is what the engine already measured.** The engine
+   measures an unmapped character at the `.notdef` advance, so the layout
+   already made room for exactly the box the PDF now draws. This is a claim
+   about the PDF only: the canvas and preview draw through Flutter, which may
+   fall back to a platform font (see *What this does not decide*).
 4. **Output that was correct does not move.** A PDF without such a character is
    byte-for-byte identical, which a golden pins.
 
@@ -73,11 +75,14 @@ a fix by a host that compared bytes. The changelog says which reports are
 affected: those containing a character their font lacks, or two characters
 their font draws alike.
 
-**Text extraction changes for those characters.** A PDF reader copying the text
-now gets U+0000 for a missing character, or the canonical character for a
-shared glyph, such as a space for a no-break space. Before, it got the original
-character, drawn with the wrong glyph. What is extracted now matches what is
-drawn.
+**Text extraction changes for those characters.** The character handed to
+dart_pdf is now U+0000 for a missing character, or the canonical character for
+a shared glyph, such as a space for a no-break space; dart_pdf writes its
+ToUnicode entry from that character. So a PDF reader copying the text should
+get those characters where it used to get the original one, drawn with the
+wrong glyph. The tests pin the CID emitted for a missing character, not what a
+reader extracts from it, and no test uses a font with a shared glyph: the
+shared-glyph case follows from the same mapping, unexercised.
 
 **0004 now has a recorded exception, and with it a precedent.** That is the
 cost. Its rule is weaker for having one, and the four-part test above exists so
