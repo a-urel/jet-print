@@ -40,9 +40,12 @@ final Object _currencySymbolKey = Object();
 /// [symbol] is null, with `¤` printing the locale's ISO 4217 code as it always
 /// has. Scoped like `Intl.withLocale`, which the engine wraps it beside, so a
 /// page built after the render returns is re-entered with the same symbol.
-T runWithCurrencySymbol<T>(String? symbol, T Function() body) => symbol == null
-    ? body()
-    : runZoned(body, zoneValues: <Object, Object>{_currencySymbolKey: symbol});
+///
+/// Null is bound too, not skipped: a zone inherits what it does not set, so a
+/// default render started inside another render (from its `onElementPrint`
+/// callback, say) would otherwise print the outer render's symbol.
+T runWithCurrencySymbol<T>(String? symbol, T Function() body) =>
+    runZoned(body, zoneValues: <Object?, Object?>{_currencySymbolKey: symbol});
 
 /// The [NumberFormat] for [pattern], printing the scoped currency symbol for
 /// `¤` when one is bound.

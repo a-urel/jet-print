@@ -109,4 +109,16 @@ void main() {
     expect(runWithCurrencySymbol(null, fmt), 'TRY5,00');
     expect(fmt(), 'TRY5,00', reason: 'the scope does not leak');
   });
+
+  test('a null scope inside a symbol scope prints the ISO code again', () {
+    // A default render started while another render is running (from its
+    // onElementPrint callback, say) must not inherit that render's symbol.
+    String fmt() => Intl.withLocale(
+            'tr', () => tryJetFormat(const JetNumber(5), '¤#,##0.00')!.value)
+        as String;
+    expect(runWithCurrencySymbol('₺', () => runWithCurrencySymbol(null, fmt)),
+        'TRY5,00');
+    expect(runWithCurrencySymbol('₺', () => runWithCurrencySymbol('€', fmt)),
+        '€5,00');
+  });
 }
