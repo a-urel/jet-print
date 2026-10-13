@@ -5,8 +5,11 @@
 /// Locale: grouping/decimal symbols and date names follow
 /// `Intl.getCurrentLocale()`, exactly as `FORMAT` does. At render time the
 /// engine scopes the pass with the explicit per-render locale, keeping output
-/// deterministic.
+/// deterministic. What `¤` prints is scoped the same way, by
+/// [runWithCurrencySymbol].
 library;
+
+import 'dart:async';
 
 import 'package:intl/intl.dart';
 
@@ -20,7 +23,7 @@ JetString? tryJetFormat(JetValue value, String pattern) {
   try {
     return switch (value) {
       JetNumber(value: final double v) =>
-        JetString(_formatNumber(NumberFormat(pattern), v)),
+        JetString(_formatNumber(_numberFormat(pattern), v)),
       JetDate(value: final DateTime v) =>
         JetString(DateFormat(pattern).format(v)),
       _ => null,
@@ -28,6 +31,36 @@ JetString? tryJetFormat(JetValue value, String pattern) {
   } on FormatException {
     return null;
   }
+}
+
+/// The zone key [runWithCurrencySymbol] binds; private, so only it can.
+final Object _currencySymbolKey = Object();
+
+/// Runs [body] with [symbol] as what `¤` prints in number patterns, or, when
+/// [symbol] is null, with `¤` printing the locale's ISO 4217 code as it always
+/// has. Scoped like `Intl.withLocale`, which the engine wraps it beside, so a
+/// page built after the render returns is re-entered with the same symbol.
+///
+/// Null is bound too, not skipped: a zone inherits what it does not set, so a
+/// default render started inside another render (from its `onElementPrint`
+/// callback, say) would otherwise print the outer render's symbol.
+T runWithCurrencySymbol<T>(String? symbol, T Function() body) =>
+    runZoned(body, zoneValues: <Object?, Object?>{_currencySymbolKey: symbol});
+
+/// The [NumberFormat] for [pattern], printing the scoped currency symbol for
+/// `¤` when one is bound.
+///
+/// intl's currency constructor also replaces the pattern's fraction digits
+/// with the currency's own (two for the lira), so a `#,##0 ¤` would print
+/// `1.234,50 ₺`. The pattern's digits are put back from a plain parse of the
+/// same pattern: only the sign may change.
+NumberFormat _numberFormat(String pattern) {
+  final NumberFormat plain = NumberFormat(pattern);
+  final Object? symbol = Zone.current[_currencySymbolKey];
+  if (symbol is! String || !pattern.contains('¤')) return plain;
+  return NumberFormat.currency(symbol: symbol, customPattern: pattern)
+    ..minimumFractionDigits = plain.minimumFractionDigits
+    ..maximumFractionDigits = plain.maximumFractionDigits;
 }
 
 /// Formats [v] with [format], printing a value whose magnitude formats as

@@ -165,7 +165,10 @@ Real ones, each of which has cost time before.
 - **`flutter test` at the root tests nothing.** Always name the member packages.
 - **Goldens are macOS-only.** They carry the `golden` tag (see `dart_test.yaml`);
   other CI legs run `--exclude-tags golden`. Host font rasterization and PDF font
-  subsetting differ per OS, so a golden regenerated elsewhere is wrong. That leg
+  subsetting differ per OS, so a golden regenerated elsewhere is wrong — and
+  *elsewhere* includes a Mac on another macOS version than CI's runner. A golden
+  that fails locally but passes on the macOS leg at the same commit is a host
+  mismatch, not a reason to regenerate (`docs/testing.md`, *Goldens*). That leg
   is one job — format, analyze, build, test, in order — so an earlier step
   failing takes the job red before the goldens run at all. **A red macOS leg is
   not evidence about the goldens**: they may never have executed. Fix the earlier
@@ -230,7 +233,11 @@ Real ones, each of which has cost time before.
   versions of packages such as `intl` and `meta`, so a lockfile written by a
   newer Flutter cannot be satisfied by CI's. CI runs
   `flutter pub get --enforce-lockfile`, which fails on that drift rather than
-  silently resolving something other than what is committed.
+  silently resolving something other than what is committed. Locally it is the
+  other way round: under a newer SDK, any `flutter` command that resolves
+  packages rewrites the lockfile to that SDK's pins without asking. That is
+  `flutter pub get`, and also `flutter test`, `analyze` and `run`, which run an
+  implicit `pub get` unless given `--no-pub`. Don't commit that diff.
 - **Run `git` from the repo root.** `flutter` commands leave the shell inside a
   package directory.
 

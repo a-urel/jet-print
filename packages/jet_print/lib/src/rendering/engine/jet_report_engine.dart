@@ -10,6 +10,7 @@ import '../../data/declared_schema.dart';
 import '../../data/jet_data_source.dart';
 import '../../domain/report_definition.dart';
 import '../../domain/report_parameter.dart';
+import '../../expression/format/apply_jet_format.dart';
 import '../fill/report_diagnostics.dart';
 import '../fill/report_filler.dart';
 import '../layout/report_layouter.dart';
@@ -81,8 +82,11 @@ class JetReportEngine {
     final ReportDiagnostics paramDiagnostics = ReportDiagnostics();
     final Map<String, Object?> params =
         _effectiveParameters(definition, options, paramDiagnostics);
-    final FillResult fill = _withLocale(
-      localeTag,
+    // Locale and currency symbol scope every pass that formats, including the
+    // page builds that run after this returns.
+    T scoped<T>(T Function() body) => _withLocale(
+        localeTag, () => runWithCurrencySymbol(options.currencySymbol, body));
+    final FillResult fill = scoped(
       () => ReportFiller().fillDefinition(
         definition,
         source,
@@ -91,8 +95,7 @@ class JetReportEngine {
         unresolvedFieldToken: options.unresolvedFieldToken,
       ),
     );
-    final LazyLayout lazy = _withLocale(
-      localeTag,
+    final LazyLayout lazy = scoped(
       () => ReportLayouter(measurer: MetricsTextMeasurer(fonts))
           .layoutLazyDefinition(definition, fill.report,
               onElementPrint: options.onElementPrint),
@@ -102,9 +105,9 @@ class JetReportEngine {
       pageCount: lazy.pageCount,
       fonts: fonts,
       // Lazy builds run later, outside render()'s scope — re-enter the render
-      // locale per build so formatting in page chrome stays deterministic.
-      buildFrame: (int index) =>
-          _withLocale(localeTag, () => lazy.buildPage(index)),
+      // locale and currency symbol per build so formatting in page chrome
+      // stays deterministic.
+      buildFrame: (int index) => scoped(() => lazy.buildPage(index)),
       diagnosticsSources: <ReportDiagnostics>[
         paramDiagnostics,
         fill.diagnostics,

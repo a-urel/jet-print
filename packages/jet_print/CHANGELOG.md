@@ -23,6 +23,16 @@ page key is new, and only a report that sets it is written at schema version
   render exactly as before. `tool/fonts/add_glyphs.py` adds a codepoint the
   same way. The package grows by about 0.5 KB.
 
+- **`RenderOptions.currencySymbol` sets what `¤` prints.** By default `¤`
+  in a number pattern prints the ISO code of the render locale's currency,
+  so the designer's *Currency* preset `¤#,##0.00` shows `TRY1.234,50` under
+  `Locale('tr')`. That stays the default, because changing it would change
+  what existing reports print. Pass `currencySymbol: '₺'` to print
+  `₺1.234,50` instead, in the format property and in `FORMAT(...)` alike,
+  page headers and footers included. Only the sign changes: the pattern still
+  sets the decimal digits (`#,##0 ¤` is `1.235 ₺`), and the locale still sets
+  the separators.
+
 - **Roll paper: pages that fit their content.** `PageFormat.continuous` lays a
   report out for a receipt or kitchen-ticket printer. A continuous page never
   breaks because it is full: each rendered page is as tall as its header,
