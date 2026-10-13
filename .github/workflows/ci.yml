@@ -142,7 +142,9 @@ jobs:
   ios:
     name: ios (no codesign)
     if: ${{ !inputs.update_goldens }}
-    runs-on: macos-latest
+    # Same pin as the macOS leg, so the image and its Xcode only change when
+    # someone moves them, not when GitHub moves macos-latest.
+    runs-on: macos-26
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
