@@ -57,9 +57,10 @@ class PageFormat with ValueEquality {
   /// follows the content rather than sitting at a fixed bottom, and a label
   /// grid lays every label on a single page.
   ///
-  /// Serialized only when `true`, so a sheet page's JSON is unchanged. A build
-  /// older than this field reads such a page as a sheet [height] tall and
-  /// drops the key when it saves.
+  /// Serialized only when `true`, so a sheet page's JSON is unchanged. A report
+  /// whose page sets it is written at report schema version 3, which a build
+  /// older than this field refuses rather than reading it as a sheet [height]
+  /// tall and dropping the key when it saves; every other report stays at 2.
   final bool continuous;
 
   /// Returns a copy with the given fields replaced and the rest preserved.

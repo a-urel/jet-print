@@ -51,13 +51,16 @@ schema version is unchanged; one optional key is new (below).
 
 ### Compatibility
 
-- A continuous page writes `"continuous": true` in the page JSON. A sheet
-  page does not write the key, so its JSON is byte-for-byte unchanged. A
-  build older than this one reads a continuous report as a sheet `height`
-  tall, and drops the key if it saves the report. This is the same cost a
-  new optional field has always had, as `TextElement.format` did; bumping the
-  schema version instead would have stopped older builds opening any report
-  this build writes.
+- **A roll-paper report is written at schema version 3; every other report
+  is still written at version 2.** A continuous page writes
+  `"continuous": true` in the page JSON and stamps the document
+  `"schemaVersion": 3`. A sheet report writes neither, so its JSON is
+  byte-for-byte unchanged and `1.0.0` keeps opening it. `1.0.0` refuses a
+  roll report with a `ReportFormatException` (its version is newer), rather
+  than opening it as a sheet and dropping the roll when it saves.
+  `JetReportFormat.schemaVersion` is now `3`: the newest version this build
+  reads and writes, not one every document carries. A host that stores the
+  stamped version should read it from each document.
 
 ## 1.0.0
 

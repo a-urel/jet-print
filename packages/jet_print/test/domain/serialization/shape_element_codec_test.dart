@@ -96,7 +96,9 @@ void main() {
     });
 
     test('the report schema version is not bumped by this feature', () {
-      expect(kReportDefinitionSchemaVersion, 2);
+      // Shapes need nothing past the baseline: a report using them is still
+      // written at version 2 (only roll paper needs 3).
+      expect(kReportDefinitionBaselineSchemaVersion, 2);
     });
   });
 

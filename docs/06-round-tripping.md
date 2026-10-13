@@ -16,16 +16,27 @@ the machinery under it, and where it is narrower than the sentence sounds.
 owns save and open — and pre-wires the built-in element codecs and the migration list.
 
 The version is `domain/serialization/report_definition_codec.dart` →
-`kReportDefinitionSchemaVersion`, currently `2`, stamped as the first key of every
-document written. `decodeDefinition` reads it before anything else, and the three
-branches are not symmetric. Not an `int` — missing, a string, a double — is a
+`kReportDefinitionSchemaVersion`, currently `3`: the newest this build reads and writes.
+It is stamped as the first key of every document, but each document carries the
+*lowest* version that holds it, from `schemaVersionFor`. Version 3 is version 2 plus
+roll paper (`PageFormat.continuous`), so only a roll report is stamped `3`. Every other
+report is stamped `kReportDefinitionBaselineSchemaVersion`, `2`, byte-for-byte as a
+build before roll paper wrote it, and such a build still opens it. A roll report, which
+that build could only open as a sheet and flatten on save, is refused there instead.
+`decodeDefinition` reads the version before anything else, and the three branches are
+not symmetric. Not an `int` — missing, a string, a double — is a
 `ReportFormatException`; greater than this build's is a `ReportFormatException` naming
-both numbers, nothing else attempted; only *less than* reaches `runMigrations`.
+both numbers, nothing else attempted; only *less than the baseline* reaches
+`runMigrations`, since versions 2 and 3 share one shape.
 
 An older file opens; a newer-versioned one does not. Which is how to read the rule: the
 promise about a newer build's work surviving is not about a bumped `schemaVersion` at
 all. It covers what a newer build adds *without* bumping it — a new element type, a new
-scope-node kind — which still writes `schemaVersion: 2` and lands in this decoder.
+scope-node kind — which still writes `schemaVersion: 2` and lands in this decoder. A
+new *field* on a known object is the case that promise does not cover: an older build
+has nowhere to keep a key it does not know, and drops it on save. When losing it would
+silently change what prints, as losing `continuous` would, stamp the documents that use
+it with a new version, as `schemaVersionFor` does, rather than every document.
 
 ## The registry that decides what a type means
 

@@ -1,5 +1,5 @@
 /// Versioned JSON (de)serialization for [ReportDefinition] — the reified report
-/// model (schema v2).
+/// model (schema v2, and v3 for a report on roll paper).
 ///
 /// Mirrors the legacy [encodeTemplate]/[decodeTemplate] codec but walks the
 /// section tree (furniture + body + scopes) and routes every band's elements
@@ -27,17 +27,34 @@ import 'element_codec.dart';
 import 'migration.dart';
 import 'report_format_exception.dart';
 
-/// The reified-report schema version this build writes.
-const int kReportDefinitionSchemaVersion = 2;
+/// The newest reified-report schema version this build reads and writes.
+///
+/// Version 3 is version 2 plus roll paper (`PageFormat.continuous`). A
+/// document is stamped with the lowest version that holds it
+/// ([schemaVersionFor]), so a report that does not use roll paper is still
+/// written at [kReportDefinitionBaselineSchemaVersion] and opens unchanged in
+/// builds that read only version 2, while one that does is refused there
+/// instead of being opened as a sheet and losing the roll on save.
+const int kReportDefinitionSchemaVersion = 3;
 
-/// Encodes [def] to a JSON-safe map, stamping [kReportDefinitionSchemaVersion]
-/// and routing each element through [registry].
+/// The version a report that uses nothing newer is written at: the reified
+/// tree format every build since its introduction reads.
+const int kReportDefinitionBaselineSchemaVersion = 2;
+
+/// The lowest schema version that holds [def]: 3 when its page is
+/// continuous, otherwise [kReportDefinitionBaselineSchemaVersion].
+int schemaVersionFor(ReportDefinition def) => def.page.continuous
+    ? kReportDefinitionSchemaVersion
+    : kReportDefinitionBaselineSchemaVersion;
+
+/// Encodes [def] to a JSON-safe map, stamping [schemaVersionFor] it and
+/// routing each element through [registry].
 Map<String, Object?> encodeDefinition(
   ReportDefinition def,
   ElementCodecRegistry registry,
 ) {
   return <String, Object?>{
-    'schemaVersion': kReportDefinitionSchemaVersion,
+    'schemaVersion': schemaVersionFor(def),
     'name': def.name,
     'page': def.page.toJson(),
     if (def.parameters.isNotEmpty)
@@ -174,12 +191,14 @@ ReportDefinition decodeDefinition(
         'Report schemaVersion $rawVersion is newer than this build supports '
         '($kReportDefinitionSchemaVersion).');
   }
+  // Versions 2 and 3 share one shape (3 only adds an optional page key), so
+  // only a document older than the baseline needs migrating.
   final Map<String, Object?> upgraded =
-      rawVersion < kReportDefinitionSchemaVersion
+      rawVersion < kReportDefinitionBaselineSchemaVersion
           ? runMigrations(
               json,
               from: rawVersion,
-              to: kReportDefinitionSchemaVersion,
+              to: kReportDefinitionBaselineSchemaVersion,
               migrations: migrations,
             )
           : json;
