@@ -229,7 +229,9 @@ Real ones, each of which has cost time before.
   `findWorkspaceRoot()` from `test/support/workspace.dart`). Golden paths are
   exempt: `matchesGoldenFile` resolves relative to the test file.
 - **Per-package lockfiles are not committed** — only the root `pubspec.lock`.
-  Resolve it with the Flutter version CI pins (3.44.0): each SDK pins its own
+  Resolve it with the Flutter version CI pins (3.47.7, newer than the 3.44.0
+  floor the pubspecs declare, and kept on the maintainers' own minor so the
+  lockfile they write is the one CI accepts): each SDK pins its own
   versions of packages such as `intl` and `meta`, so a lockfile written by a
   newer Flutter cannot be satisfied by CI's. CI runs
   `flutter pub get --enforce-lockfile`, which fails on that drift rather than
