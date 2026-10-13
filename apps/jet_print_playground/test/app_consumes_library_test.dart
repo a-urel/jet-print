@@ -70,6 +70,7 @@ void main() {
         'List',
         'Ledger',
         'Menu',
+        'Kitchen ticket',
         'Custom',
         'Sales Pivot',
       ]) {
@@ -89,7 +90,7 @@ void main() {
     (WidgetTester tester) async {
       // Wide enough that the sidebar is visible and all nav entries are
       // reachable without opening a drawer.
-      await tester.binding.setSurfaceSize(const Size(1850, 700));
+      await tester.binding.setSurfaceSize(const Size(1850, 800));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(const JetPrintPlaygroundApp());
       await tester.pumpAndSettle();
@@ -146,6 +147,7 @@ void main() {
         'List',
         'Ledger',
         'Menu',
+        'Kitchen ticket',
         'Custom',
         'Sales Pivot',
         'Empty',
@@ -164,7 +166,7 @@ void main() {
   testWidgets(
     'only the Empty demo wires the Save/Open callbacks',
     (WidgetTester tester) async {
-      await tester.binding.setSurfaceSize(const Size(1850, 700));
+      await tester.binding.setSurfaceSize(const Size(1850, 800));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(const JetPrintPlaygroundApp());
       await tester.pumpAndSettle();
@@ -190,7 +192,7 @@ void main() {
   testWidgets(
     'Open/Save show only on the Empty demo (gated host file I/O)',
     (WidgetTester tester) async {
-      await tester.binding.setSurfaceSize(const Size(1850, 700));
+      await tester.binding.setSurfaceSize(const Size(1850, 800));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(const JetPrintPlaygroundApp());
       await tester.pumpAndSettle();
@@ -213,7 +215,7 @@ void main() {
     (WidgetTester tester) async {
       // Wide enough for the sidebar to be on-screen so both 'Invoice' and
       // 'Empty' taps actually hit their targets.
-      await tester.binding.setSurfaceSize(const Size(1850, 700));
+      await tester.binding.setSurfaceSize(const Size(1850, 800));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       await tester.pumpWidget(const JetPrintPlaygroundApp());
@@ -245,7 +247,7 @@ void main() {
   testWidgets(
     'a designer survives the wide<->narrow layout swap (no remount)',
     (WidgetTester tester) async {
-      await tester.binding.setSurfaceSize(const Size(1850, 700));
+      await tester.binding.setSurfaceSize(const Size(1850, 800));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(const JetPrintPlaygroundApp());
       await tester.pumpAndSettle();

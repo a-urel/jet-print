@@ -17,6 +17,7 @@ import 'barcode_sample.dart';
 import 'custom_onprint_sample.dart';
 import 'demo_nav_list.dart';
 import 'invoice_sample.dart';
+import 'kitchen_ticket_sample.dart';
 import 'l10n/app_localizations.dart';
 import 'label_sample.dart';
 import 'ledger_sample.dart';
@@ -28,6 +29,7 @@ import 'pivot_sample.dart';
 import 'rendered_barcode_example.dart';
 import 'rendered_barcode_gallery_example.dart';
 import 'rendered_invoice_example.dart';
+import 'rendered_kitchen_ticket_example.dart';
 import 'rendered_label_example.dart';
 import 'rendered_ledger_example.dart';
 import 'rendered_menu_example.dart';
@@ -270,6 +272,15 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
             (d) => renderMenuDefinition(definition: d, fonts: widget.fonts)),
       ),
       (
+        value: 'mutfak-fisi',
+        icon: LucideIcons.chefHat,
+        body: tab(
+            kitchenTicketDefinition(),
+            kitchenTicketSchema,
+            (d) => renderKitchenTicketDefinition(
+                definition: d, fonts: widget.fonts)),
+      ),
+      (
         value: 'custom',
         icon: LucideIcons.trendingUp,
         body: tab(
@@ -319,6 +330,7 @@ class _PlaygroundHomeState extends State<_PlaygroundHome> {
       l10n.tabList,
       l10n.tabLedger,
       l10n.tabMenu,
+      l10n.tabKitchenTicket,
       'Custom',
       'Sales Chart',
       'Sales Pivot',
