@@ -443,7 +443,14 @@ class _FixedIdPdfDocument extends PdfDocument {
 /// ToUnicode entry: an unmapped rune extracts as U+0000, and runes that share
 /// a glyph extract as the lowest code point among them.
 class _OneRunePerGlyphTtfFont extends PdfTtfFont {
-  _OneRunePerGlyphTtfFont(super.pdfDocument, super.bytes);
+  _OneRunePerGlyphTtfFont(super.pdfDocument, super.bytes) {
+    // CID 0 is U+0000 and the subset puts its glyph at GID 0, which OpenType
+    // reserves for .notdef — so U+0000 must resolve to .notdef, as every
+    // unmapped rune does, even in a font that maps it to a glyph of its own
+    // (classically `.null`). That font's U+0000 then draws .notdef rather
+    // than the glyph the measurer advanced it by; no report text holds one.
+    font.charToGlyphIndexMap.remove(0);
+  }
 
   /// Glyph index -> the rune emitted for every rune that resolves to it.
   late final Map<int, int> _runeForGlyph =
@@ -452,12 +459,7 @@ class _OneRunePerGlyphTtfFont extends PdfTtfFont {
   int _cmapRune(int rune) {
     // As MetricsTextMeasurer does: a tab is laid out as a space.
     final int r = rune == 0x09 ? 0x20 : rune;
-    // Absent only for glyph 0 in a font that maps U+0000 to another glyph:
-    // the first unmapped rune drawn then names .notdef.
-    return _runeForGlyph.putIfAbsent(
-      font.charToGlyphIndexMap[r] ?? 0,
-      () => r,
-    );
+    return _runeForGlyph[font.charToGlyphIndexMap[r] ?? 0]!;
   }
 
   // `stream` is dart_pdf's PdfStream, which `package:pdf/pdf.dart` does not

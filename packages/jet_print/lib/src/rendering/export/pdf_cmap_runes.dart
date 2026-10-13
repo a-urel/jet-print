@@ -12,15 +12,15 @@ library;
 /// Maps each glyph in [charToGlyph] to the rune its CMap entry carries: the
 /// lowest code point the font maps to it.
 ///
-/// U+0000 is the exception. dart_pdf makes it CID 0 before anything is drawn,
-/// so it keeps whichever glyph it resolves to — glyph 0 (.notdef) when the
-/// font does not map it, which is also where every unmapped rune resolves —
-/// and no other rune may name that glyph.
+/// Glyph 0 (.notdef) is the exception: it always carries U+0000, which
+/// dart_pdf makes CID 0 before anything is drawn and which every unmapped
+/// rune resolves alongside. U+0000's own entry in [charToGlyph], if the font
+/// has one, is ignored — the caller must make the subsetter agree, by taking
+/// that entry out of the font it embeds.
 Map<int, int> cmapRuneByGlyph(Map<int, int> charToGlyph) {
-  final int nullGlyph = charToGlyph[0] ?? 0;
-  final Map<int, int> byGlyph = <int, int>{nullGlyph: 0};
+  final Map<int, int> byGlyph = <int, int>{0: 0};
   charToGlyph.forEach((int rune, int glyph) {
-    if (glyph == nullGlyph) return;
+    if (rune == 0 || glyph == 0) return;
     final int? current = byGlyph[glyph];
     if (current == null || rune < current) byGlyph[glyph] = rune;
   });

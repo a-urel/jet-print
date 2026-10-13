@@ -26,11 +26,13 @@ void main() {
     expect(cmapRuneByGlyph(<int, int>{0x41: 4})[0], 0);
   });
 
-  test('U+0000 keeps the glyph the font maps it to', () {
-    // dart_pdf makes U+0000 CID 0 before anything is drawn, so whatever
-    // glyph it resolves to is taken; nothing else may name that glyph.
-    final Map<int, int> byGlyph =
-        cmapRuneByGlyph(<int, int>{0x00: 1, 0x0D: 1, 0x41: 2});
-    expect(byGlyph, <int, int>{1: 0, 2: 0x41});
+  test("U+0000 owns glyph 0 even when the font maps it elsewhere", () {
+    // dart_pdf makes U+0000 CID 0, and the subset puts CID 0's glyph at
+    // GID 0, which must stay .notdef. U+0000's own mapping is ignored (the
+    // PDF font removes it), so its old glyph goes to the next rune using it.
+    expect(
+      cmapRuneByGlyph(<int, int>{0x00: 1, 0x0D: 1, 0x41: 2}),
+      <int, int>{0: 0, 1: 0x0D, 2: 0x41},
+    );
   });
 }

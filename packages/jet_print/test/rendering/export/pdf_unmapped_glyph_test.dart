@@ -11,6 +11,7 @@
 @TestOn('vm')
 library;
 
+import 'dart:io' show File;
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -19,21 +20,42 @@ import 'package:jet_print/src/rendering/text/fonts/default_font_data.dart';
 import 'package:pdf/pdf.dart' show TtfParser;
 
 import '../../support/report_builders.dart';
+import '../../support/workspace.dart';
 import 'support/pdf_inspector.dart';
 
-RenderedReport _render(String text) => const JetReportEngine().renderDefinition(
+RenderedReport _render(String text, {JetFontFamily? family}) =>
+    const JetReportEngine().renderDefinition(
       oneBandReport(elements: <ReportElement>[
         TextElement(
           id: 't',
           bounds: const JetRect(x: 0, y: 0, width: 400, height: 20),
           text: text,
+          style: JetTextStyle(fontFamily: family?.name),
         ),
       ]),
       JetInMemoryDataSource(const <Map<String, Object?>>[<String, Object?>{}]),
+      options: RenderOptions(
+        fonts: <JetFontFamily>[if (family != null) family],
+      ),
     );
 
-Future<PdfInspector> _export(String text) async =>
-    PdfInspector(await const JetReportExporter().toPdf(_render(text)));
+Future<PdfInspector> _export(String text, {JetFontFamily? family}) async =>
+    PdfInspector(
+        await const JetReportExporter().toPdf(_render(text, family: family)));
+
+/// The bundled default's source subset (`tool/fonts/NotoSans-subset.ttf`)
+/// with one cmap entry added: U+0000 -> the glyph of `A`. Fonts often map
+/// U+0000 to a glyph of their own (classically glyph 1, `.null`); pointing it
+/// at a VISIBLE glyph that another rune also uses makes both ways that can go
+/// wrong observable. Regenerate with fontTools:
+///
+///     f = TTFont('tool/fonts/NotoSans-subset.ttf')
+///     for t in f['cmap'].tables:
+///         if t.isUnicode(): t.cmap[0] = f.getBestCmap()[0x41]
+///     f.save('test/rendering/export/support/null_mapped_font.ttf')
+Uint8List _nullMappedFontBytes() => File('${findWorkspaceRoot().path}'
+        '/packages/jet_print/test/rendering/export/support/null_mapped_font.ttf')
+    .readAsBytesSync();
 
 /// The one embedded font program (the subset `TtfWriter` wrote).
 TtfParser _subsetFont(PdfInspector pdf) {
@@ -149,4 +171,39 @@ void main() {
       }
     });
   }
+
+  group('a font that maps U+0000 to a glyph of its own', () {
+    final Uint8List bytes = _nullMappedFontBytes();
+    final TtfParser nullMapped =
+        TtfParser(bytes.buffer.asByteData(bytes.offsetInBytes, bytes.length));
+    final JetFontFamily family = JetFontFamily(
+      name: 'Null Mapped',
+      faces: <JetFontFace>[JetFontFace(bytes: bytes)],
+    );
+    final int glyphA = nullMapped.charToGlyphIndexMap[0x41]!;
+
+    test('fixture sanity: U+0000 and A share a visible glyph', () {
+      expect(nullMapped.charToGlyphIndexMap[0], glyphA);
+      expect(glyphA, isNot(0));
+      expect(_outline(nullMapped, glyphA), isNot(_outline(nullMapped, 0)));
+    });
+
+    test('.notdef stays glyph 0 of the subset, and draws the unmapped rune',
+        () async {
+      final PdfInspector pdf = await _export('A∑', family: family);
+      final TtfParser subset = _subsetFont(pdf);
+      // CID 0 is U+0000; the subset puts CID 0's glyph at GID 0, which
+      // OpenType reserves for .notdef.
+      expect(_outline(subset, 0), _outline(nullMapped, 0));
+      expect(_drawnCids(pdf).last, 0, reason: '∑ is drawn as .notdef');
+    });
+
+    test('A keeps its own CMap entry, outline and extracted text', () async {
+      final PdfInspector pdf = await _export('A∑', family: family);
+      final int cidA = _drawnCids(pdf).first;
+      expect(cidA, isNot(0), reason: 'A must not share CID 0 with U+0000');
+      expect(pdf.toUnicodeMaps.single[cidA], 0x41);
+      expect(_outline(_subsetFont(pdf), cidA), _outline(nullMapped, glyphA));
+    });
+  });
 }
