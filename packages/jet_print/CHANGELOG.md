@@ -8,6 +8,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **The default font draws the Turkish lira sign.** `₺` (U+20BA) is now in
+  all four faces of the bundled font, so a price such as `125,50 ₺` prints
+  on the canvas, in the preview and in PDF and PNG exports, rather than as a
+  tofu box. Before, a text element ending in `₺` made PDF export throw. The
+  glyph was appended to the existing Noto Sans 2.015 subsets, and every glyph
+  that was already there is byte-for-byte unchanged, so existing reports
+  render exactly as before. `tool/fonts/add_glyphs.py` adds a codepoint the
+  same way. The package grows by about 0.5 KB.
+
 - **`RenderOptions.currencySymbol` sets what `¤` prints.** By default `¤`
   in a number pattern prints the ISO code of the render locale's currency,
   so the designer's *Currency* preset `¤#,##0.00` shows `TRY1.234,50` under
@@ -29,6 +38,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   recorded; it was published without it, and
   [decision 0005](https://github.com/a-urel/jet-print/blob/main/docs/decisions/0005-mobile-designer-claim-narrowed.md)
   narrows the claim accordingly.
+
+### Fixed
+
+- **PDF export no longer fails on a character the font cannot draw.** A text
+  whose last new character had no glyph in its font, such as `∑` or `✓` in
+  the bundled default font, made `JetReportExporter.toPdf` throw
+  `Bad state: No element`. When the character came earlier in the text the
+  export succeeded but was garbled, with later characters drawn with another
+  character's shape. Such a character now exports as the font's missing-glyph
+  box (`.notdef`), at the width the layout gave it, and the rest of the text
+  is drawn correctly. Copying the box's text out of the PDF yields U+0000.
+  A tab is drawn as the space the layout measured it as. In a font that draws
+  several characters with one shape, such as a space and a no-break space,
+  copied text gives the lowest of them for each, whichever came first.
 
 ## 1.0.0
 
