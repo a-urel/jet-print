@@ -154,6 +154,12 @@ abstract class AppLocalizations {
   /// **'Menu'**
   String get tabMenu;
 
+  /// Tab label for the kitchen-ticket demo: one order on an 80 mm thermal roll, one ticket per station.
+  ///
+  /// In en, this message translates to:
+  /// **'Kitchen ticket'**
+  String get tabKitchenTicket;
+
   /// Placeholder note shown on a report demo tab that isn't built yet.
   ///
   /// In en, this message translates to:

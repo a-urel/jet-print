@@ -36,5 +36,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get tabMenu => 'Menü';
 
   @override
+  String get tabKitchenTicket => 'Mutfak fişi';
+
+  @override
   String get comingSoon => 'Yakında';
 }

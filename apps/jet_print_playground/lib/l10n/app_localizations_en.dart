@@ -36,5 +36,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabMenu => 'Menu';
 
   @override
+  String get tabKitchenTicket => 'Kitchen ticket';
+
+  @override
   String get comingSoon => 'Coming soon';
 }
