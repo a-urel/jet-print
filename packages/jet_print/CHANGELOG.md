@@ -6,6 +6,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+
+- **The default font draws the Turkish lira sign.** `₺` (U+20BA) is now in
+  all four faces of the bundled font, so a price such as `125,50 ₺` prints
+  on the canvas, in the preview and in PDF and PNG exports, rather than as a
+  tofu box. Before, a text element ending in `₺` made PDF export throw. The
+  glyph was appended to the existing Noto Sans 2.015 subsets, and every glyph
+  that was already there is byte-for-byte unchanged, so existing reports
+  render exactly as before. `tool/fonts/add_glyphs.py` adds a codepoint the
+  same way. The package grows by about 0.5 KB.
+
 ### Changed
 
 - **The designer is no longer claimed on Android and iOS.** The README now
@@ -21,7 +32,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 
 - **PDF export no longer fails on a character the font cannot draw.** A text
-  whose last new character had no glyph in its font, such as `∑` or `₺` in
+  whose last new character had no glyph in its font, such as `∑` or `✓` in
   the bundled default font, made `JetReportExporter.toPdf` throw
   `Bad state: No element`. When the character came earlier in the text the
   export succeeded but was garbled, with later characters drawn with another

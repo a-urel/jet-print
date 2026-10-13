@@ -6,9 +6,13 @@
 // The source fonts under `tool/fonts/` are Latin subsets, all under the SIL
 // Open Font License 1.1 (see `lib/src/rendering/text/fonts/OFL.txt`) and all
 // covering the identical codepoint set (U+0020-007E, U+00A0-017F,
-// U+2010-2014, U+2018-2022, U+2026, U+20AC, U+2122):
+// U+2010-2014, U+2018-2022, U+2026, U+20AC, U+20BA, U+2122):
 //
 //   * Default — Noto Sans (Regular / Bold / Italic / Bold Italic)
+//
+// They are cut from Noto Sans 2.015. A codepoint is added by appending its
+// glyph with `tool/fonts/add_glyphs.py`, never by re-cutting the subsets —
+// that script's header says why and how.
 //
 // They are embedded as base64 so the headless TextMeasurer and every paint
 // backend resolve the same font bytes from one source, with no
@@ -34,8 +38,9 @@ void main() {
 //
 // Embedded bytes of the bundled default font — "Default" (a Noto Sans subset),
 // in Regular, Bold, Italic, and Bold Italic faces — as a Latin subset (Basic
-// Latin, Latin-1 Supplement, Latin Extended-A, and common typographic
-// punctuation), licensed under the SIL Open Font License 1.1 — see OFL.txt.
+// Latin, Latin-1 Supplement, Latin Extended-A, common typographic
+// punctuation, and the euro and Turkish lira signs), licensed under the SIL
+// Open Font License 1.1 — see OFL.txt.
 // Embedding keeps every face available to the headless TextMeasurer and to
 // paint backends from one source, with no asset/rootBundle dependency — so a
 // Bold/Italic edit renders identically on canvas, preview, and export.
