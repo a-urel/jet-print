@@ -6,6 +6,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+
+- **`RenderOptions.currencySymbol` sets what `¤` prints.** By default `¤`
+  in a number pattern prints the ISO code of the render locale's currency,
+  so the designer's *Currency* preset `¤#,##0.00` shows `TRY1.234,50` under
+  `Locale('tr')`. That stays the default, because changing it would change
+  what existing reports print. Pass `currencySymbol: '₺'` to print
+  `₺1.234,50` instead, in the format property and in `FORMAT(...)` alike,
+  page headers and footers included. Only the sign changes: the pattern still
+  sets the decimal digits (`#,##0 ¤` is `1.235 ₺`), and the locale still sets
+  the separators.
+
 ### Changed
 
 - **The designer is no longer claimed on Android and iOS.** The README now

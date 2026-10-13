@@ -99,4 +99,14 @@ void main() {
           const JetString('0.00'));
     });
   });
+
+  test('runWithCurrencySymbol scopes what ¤ prints, and only inside', () {
+    String fmt() => Intl.withLocale(
+            'tr', () => tryJetFormat(const JetNumber(5), '¤#,##0.00')!.value)
+        as String;
+    expect(fmt(), 'TRY5,00');
+    expect(runWithCurrencySymbol('₺', fmt), '₺5,00');
+    expect(runWithCurrencySymbol(null, fmt), 'TRY5,00');
+    expect(fmt(), 'TRY5,00', reason: 'the scope does not leak');
+  });
 }
