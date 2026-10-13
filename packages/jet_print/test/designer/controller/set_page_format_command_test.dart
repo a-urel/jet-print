@@ -121,6 +121,36 @@ void main() {
     });
   });
 
+  group('setPageFormat — continuous (roll paper)', () {
+    test('switching continuous on commits and undoes in one step', () {
+      final JetReportDesignerController c =
+          JetReportDesignerController(definition: _report());
+      c.setPageFormat(c.definition.page.copyWith(continuous: true));
+      expect(c.definition.page.continuous, isTrue);
+      c.undo();
+      expect(c.definition.page.continuous, isFalse);
+      c.dispose();
+    });
+
+    test('a clamped edit keeps the page continuous', () {
+      final JetReportDesignerController c = JetReportDesignerController(
+        definition: _report(
+          page: PageFormat.a4Portrait.copyWith(width: 164, continuous: true),
+        ),
+      );
+      // Margins wider than the page force the clamp to rebuild the page.
+      c.setPageFormat(c.definition.page.copyWith(
+          margins:
+              const JetEdgeInsets(left: 120, top: 5, right: 120, bottom: 5)));
+      expect(c.definition.page.margins.left + c.definition.page.margins.right,
+          lessThan(164),
+          reason: 'the clamp did run');
+      expect(c.definition.page.continuous, isTrue,
+          reason: 'clamping must not drop the roll-paper flag');
+      c.dispose();
+    });
+  });
+
   group('setPageFormat — undo/redo & no-op', () {
     test('a page change undoes in one step to the exact prior page', () {
       final JetReportDesignerController c =

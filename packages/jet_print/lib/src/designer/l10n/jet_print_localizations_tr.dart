@@ -408,6 +408,14 @@ class JetPrintLocalizationsTr extends JetPrintLocalizations {
   String get orientationLandscape => 'Yatay';
 
   @override
+  String paperRoll(int width) {
+    return 'Rulo $width mm';
+  }
+
+  @override
+  String get pageContinuous => 'Sürekli (rulo) sayfa';
+
+  @override
   String get marginPresetNormal => 'Normal';
 
   @override

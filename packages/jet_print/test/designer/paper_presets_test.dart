@@ -76,4 +76,61 @@ void main() {
       expect(page.margins, margins);
     });
   });
+  group('roll paper', () {
+    PageFormat roll(double w, double h) => PageFormat(
+        width: w,
+        height: h,
+        margins: const JetEdgeInsets.all(5),
+        continuous: true);
+
+    test('offers 58 mm and 80 mm rolls, kept apart from the sheet sizes', () {
+      expect(kRollPresets.map((PaperPreset p) => p.name),
+          <String>['58mm', '80mm']);
+      expect(kRollPresets[0].portraitWidth, closeTo(58 * 72 / 25.4, 1e-9));
+      expect(kRollPresets[1].portraitWidth, closeTo(80 * 72 / 25.4, 1e-9));
+      for (final PaperPreset p in kRollPresets) {
+        expect(p.continuous, isTrue);
+      }
+      for (final PaperPreset p in kPaperPresets) {
+        expect(p.continuous, isFalse);
+      }
+    });
+
+    test('a continuous page is named by its roll width, whatever its height',
+        () {
+      expect(recognizePaper(roll(226.77, 141.73)).name, '80mm');
+      expect(recognizePaper(roll(226.77, 600)).name, '80mm');
+      expect(recognizePaper(roll(164.41, 50)).name, '58mm');
+      expect(recognizePaper(roll(226.77, 600)).preset, kRollPresets[1]);
+    });
+
+    test('a roll width is only a roll on a continuous page', () {
+      final PageFormat sheet = roll(226.77, 600).copyWith(continuous: false);
+      expect(recognizePaper(sheet).isCustom, isTrue);
+    });
+
+    test('a continuous page of a sheet size is Custom, not the sheet', () {
+      expect(
+          recognizePaper(PageFormat.a4Portrait.copyWith(continuous: true))
+              .isCustom,
+          isTrue);
+    });
+
+    test('applying a roll makes the page continuous at the roll width', () {
+      const JetEdgeInsets margins = JetEdgeInsets.all(4);
+      final PageFormat page =
+          applyPaper(kRollPresets[1], landscape: true, margins: margins);
+      expect(page.continuous, isTrue);
+      expect(page.width, kRollPresets[1].portraitWidth,
+          reason: 'a roll has no landscape');
+      expect(page.height, kRollPresets[1].portraitHeight);
+      expect(page.margins, margins);
+    });
+
+    test('applying a sheet size makes the page a sheet again', () {
+      final PageFormat page = applyPaper(kPaperPresets.first,
+          landscape: false, margins: const JetEdgeInsets.all(4));
+      expect(page.continuous, isFalse);
+    });
+  });
 }

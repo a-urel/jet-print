@@ -48,5 +48,41 @@ void main() {
       );
       expect(PageFormat.fromJson(edited.toJson()), edited);
     });
+
+    group('continuous (roll paper)', () {
+      test('is off by default, and an existing page serializes unchanged', () {
+        expect(PageFormat.a4Portrait.continuous, isFalse);
+        expect(
+            PageFormat.a4Portrait.toJson().containsKey('continuous'), isFalse);
+      });
+
+      test('a continuous page writes the key and round-trips', () {
+        final PageFormat roll =
+            PageFormat.a4Portrait.copyWith(width: 226.77, continuous: true);
+        expect(roll.toJson()['continuous'], isTrue);
+        expect(PageFormat.fromJson(roll.toJson()), roll);
+      });
+
+      test('a JSON page without the key reads as not continuous', () {
+        final PageFormat page = PageFormat.fromJson(<String, Object?>{
+          'width': 100.0,
+          'height': 200.0,
+          'margins': const JetEdgeInsets.all(5).toJson(),
+        });
+        expect(page.continuous, isFalse);
+      });
+
+      test('takes part in equality', () {
+        expect(PageFormat.a4Portrait.copyWith(continuous: true),
+            isNot(PageFormat.a4Portrait));
+      });
+
+      test('copyWith preserves it unless named', () {
+        final PageFormat roll =
+            PageFormat.a4Portrait.copyWith(continuous: true);
+        expect(roll.copyWith(height: 100).continuous, isTrue);
+        expect(roll.copyWith(continuous: false).continuous, isFalse);
+      });
+    });
   });
 }

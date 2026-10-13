@@ -717,10 +717,17 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     final PageFormat page = controller.definition.page;
     final PaperMatch paper = recognizePaper(page);
     final MarginMatch margin = recognizeMargin(page.margins);
-    final bool landscape = page.width > page.height;
+    // A roll has no orientation: it is wider than its minimum height, which is
+    // not landscape, so a sheet picked after it starts portrait.
+    final bool landscape = !page.continuous && page.width > page.height;
     // The page is edited as Custom when it matches no preset, or when the user
     // explicitly chose Custom from the picker (revealing the W/H fields).
     final bool customMode = paper.isCustom || _customPaper;
+    // A roll's label is localized ("Roll 80 mm"); a sheet's is its universal
+    // name and size ("A4 (210 × 297 mm)").
+    String paperLabel(PaperPreset preset) => preset.continuous
+        ? l10n.paperRoll(paperPresetWidthMm(preset))
+        : paperPresetLabel(preset);
     return <Widget>[
       _Header(
           icon: LucideIcons.fileText, title: l10n.reportLabel, theme: theme),
@@ -741,14 +748,17 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
       // margins. Label-less — the picker's value and tooltip name it.
       _PresetDropdown(
         fieldKey: const ValueKey<String>('$_p.field.paper'),
-        label: customMode ? l10n.propertiesCustom : paper.label!,
+        label: customMode ? l10n.propertiesCustom : paperLabel(paper.preset!),
         tooltip: l10n.paperPickerTooltip,
         options: <_DropdownOption>[
-          for (final PaperPreset preset in kPaperPresets)
+          for (final PaperPreset preset in <PaperPreset>[
+            ...kPaperPresets,
+            ...kRollPresets,
+          ])
             _DropdownOption(
               optionKey:
                   ValueKey<String>('$_p.field.paper.option.${preset.name}'),
-              label: paperPresetLabel(preset),
+              label: paperLabel(preset),
               selected: !customMode && paper.name == preset.name,
               onPick: () {
                 setState(() => _customPaper = false);
@@ -767,17 +777,30 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
         ],
       ),
       const SizedBox(height: 12),
-      // Orientation: derived from width vs height; toggling swaps them.
-      _OrientationToggle(
-        landscape: landscape,
-        portraitLabel: l10n.orientationPortrait,
-        landscapeLabel: l10n.orientationLandscape,
-        onChanged: (bool wantLandscape) {
-          if (wantLandscape == landscape) return;
-          controller.setPageFormat(
-              page.copyWith(width: page.height, height: page.width));
-        },
+      // Roll paper: each rendered page grows to fit its content, and the
+      // height is only a minimum. A roll preset turns this on by itself.
+      ShadSwitch(
+        key: const ValueKey<String>('$_p.field.pageContinuous'),
+        value: page.continuous,
+        onChanged: (bool on) => controller
+            .setPageFormat(controller.definition.page.copyWith(continuous: on)),
+        label: Text(l10n.pageContinuous),
       ),
+      // Orientation: derived from width vs height; toggling swaps them. A roll
+      // has only the one orientation, so it is hidden there.
+      if (!page.continuous) ...<Widget>[
+        const SizedBox(height: 12),
+        _OrientationToggle(
+          landscape: landscape,
+          portraitLabel: l10n.orientationPortrait,
+          landscapeLabel: l10n.orientationLandscape,
+          onChanged: (bool wantLandscape) {
+            if (wantLandscape == landscape) return;
+            controller.setPageFormat(
+                page.copyWith(width: page.height, height: page.width));
+          },
+        ),
+      ],
       const SizedBox(height: 12),
       _PagePreview(page: page),
       // Custom width/height: shown only in Custom mode. The controller

@@ -474,4 +474,55 @@ void main() {
       expect(state.debugCachedCount, lessThanOrEqualTo(24));
     }
   });
+  testWidgets(
+      'a continuous page taller than page 0 fits its tile, shrunk to keep '
+      'its proportions', (WidgetTester tester) async {
+    // Roll paper, one ticket per group: the first ticket is one row (the
+    // 100pt minimum), the second twenty rows — far taller than the first.
+    const ReportDefinition def = ReportDefinition(
+      name: 'Tickets',
+      page: PageFormat(
+        width: 200,
+        height: 100,
+        margins: JetEdgeInsets.all(10),
+        continuous: true,
+      ),
+      body: ReportBody(
+        root: DetailScope(
+          id: 'root',
+          groups: <GroupLevel>[
+            GroupLevel(
+              id: 'g',
+              name: 'station',
+              key: r'$F{station}',
+              startNewPage: true,
+              header: Band(id: 'gh', type: BandType.groupHeader, height: 10),
+            ),
+          ],
+          children: <ScopeNode>[
+            BandNode(Band(id: 'd', type: BandType.detail, height: 30)),
+          ],
+        ),
+      ),
+    );
+    final RenderedReport report = const JetReportEngine().renderDefinition(
+      def,
+      JetInMemoryDataSource(<Map<String, Object?>>[
+        <String, Object?>{'station': 'bar'},
+        for (int i = 0; i < 20; i++) <String, Object?>{'station': 'kitchen'},
+      ]),
+    );
+    expect(report.pageCount, 2);
+    await _pumpRail(tester, report: report);
+
+    expect(tester.takeException(), isNull, reason: 'no tile overflows');
+    final Size first = tester.getSize(find.byKey(_tileKey(0)));
+    final Size second = tester.getSize(find.byKey(_tileKey(1)));
+    expect(second.height, lessThanOrEqualTo(first.height),
+        reason: 'every sheet fits the fixed tile extent page 0 sets');
+    expect(second.width, lessThan(first.width),
+        reason: 'the taller page is scaled down, not cropped or stretched');
+    // 20 rows of 30pt + a 10pt header + two 10pt margins.
+    expect(second.width / second.height, closeTo(200 / 630, 1e-3));
+  });
 }

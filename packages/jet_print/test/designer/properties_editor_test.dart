@@ -662,6 +662,84 @@ void main() {
     });
   });
 
+  group('properties — page (roll paper)', () {
+    Finder continuousSwitch() =>
+        find.byKey(const ValueKey<String>('$_p.field.pageContinuous'));
+
+    testWidgets('picking an 80 mm roll makes the page continuous',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      c.selectReport();
+      await tester.pumpAndSettle();
+
+      await tester.tap(_field('paper'));
+      await tester.pumpAndSettle();
+      expect(
+          find.descendant(
+              of: _paperOption('80mm'), matching: find.text('Roll 80 mm')),
+          findsOneWidget);
+      await tester.tap(_paperOption('80mm'));
+      await tester.pumpAndSettle();
+
+      expect(c.definition.page.continuous, isTrue);
+      expect(c.definition.page.width, closeTo(226.77, 0.01));
+      expect(
+          find.descendant(
+              of: _field('paper'), matching: find.text('Roll 80 mm')),
+          findsOneWidget);
+      expect(tester.widget<ShadSwitch>(continuousSwitch()).value, isTrue);
+      // A roll has no landscape.
+      expect(
+          find.byKey(const ValueKey<String>('$_p.field.orientation.landscape')),
+          findsNothing);
+    });
+
+    testWidgets('picking a sheet size after a roll gives a portrait sheet',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      c.selectReport();
+      await tester.pumpAndSettle();
+
+      await tester.tap(_field('paper'));
+      await tester.pumpAndSettle();
+      await tester.tap(_paperOption('80mm'));
+      await tester.pumpAndSettle();
+      // A roll is wider than its minimum height, which is not landscape.
+      expect(c.definition.page.width, greaterThan(c.definition.page.height));
+
+      await tester.tap(_field('paper'));
+      await tester.pumpAndSettle();
+      await tester.tap(_paperOption('A4'));
+      await tester.pumpAndSettle();
+
+      expect(c.definition.page.continuous, isFalse);
+      expect(c.definition.page.width, closeTo(595.28, 1e-6),
+          reason: 'a roll has no orientation to carry over');
+      expect(c.definition.page.height, closeTo(841.89, 1e-6));
+    });
+
+    testWidgets('the Continuous switch toggles roll paper in one undo step',
+        (WidgetTester tester) async {
+      final JetReportDesignerController c = await pumpDesignerWith(tester);
+      await _openProperties(tester);
+      c.selectReport();
+      await tester.pumpAndSettle();
+      expect(tester.widget<ShadSwitch>(continuousSwitch()).value, isFalse);
+
+      await tester.tap(continuousSwitch());
+      await tester.pumpAndSettle();
+      expect(c.definition.page.continuous, isTrue);
+      expect(c.definition.page.width, closeTo(595.28, 1e-6),
+          reason: 'the switch changes only the flag');
+
+      c.undo();
+      await tester.pumpAndSettle();
+      expect(c.definition.page.continuous, isFalse);
+    });
+  });
+
   group('properties — page (margins)', () {
     testWidgets('choosing Narrow sets all four sides and updates fields',
         (WidgetTester tester) async {

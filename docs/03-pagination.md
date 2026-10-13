@@ -84,6 +84,31 @@ group too tall even for a fresh page is not moved, only split. One shape skips
 the loop entirely: when `domain/report_definition.dart` → `soleDetailBand`
 carries a `ColumnLayout`, the layouter lays a uniform label grid at a fixed pitch.
 
+## Roll paper: a page that fits its content
+
+A receipt or kitchen-ticket printer feeds a roll, not sheets, and a page there
+should end where its content does. `domain/page_format.dart` →
+`PageFormat.continuous` asks for that, and the break loop above needs only two
+changes to honour it. The capacity test and the `keepTogether` fit test are
+both skipped: on a roll nothing is ever full. `startNewPage` still breaks,
+because that break is the report asking for a new page, so a report grouped by
+station still prints one ticket per station.
+
+The fit happens once, at the end of the boundary pass. Every page's body end is
+recorded as the cursor leaves it, and `layoutLazyDefinition` turns each into a
+fitted `PageFormat`: the content end plus the footer height plus the bottom
+margin, floored at the authored `height`, which on a roll is a minimum. That
+page and its own `bodyBottom` go to `LazyLayout`, so `buildPage` hangs the page
+footer from the end of the content, and the frame carries the fitted page
+outward. Nothing downstream learns that rolls exist: the preview, PNG and PDF
+already size each page from its own frame, which is page 04's whole point. A
+label grid on a roll lays every label on one page.
+
+A page past 14,400 pt, the size many PDF readers refuse, still renders, with
+one warning. `test/rendering/layout/continuous_page_layout_test.dart` pins the
+rules, and `test/rendering/export/continuous_export_test.dart` follows two
+tickets out through PDF, PNG and the print seam.
+
 ## Furniture, and what page one does differently
 
 `buildPage` emits the body placements first, then the page header at the top

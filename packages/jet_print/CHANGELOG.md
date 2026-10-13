@@ -6,6 +6,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+A minor release under the `1.0.0` freeze: everything is additive except the
+one output change under *Fixed*, accepted by decision 0006. One optional
+page key is new, and only a report that sets it is written at schema version
+3; every other report is written at version 2, as before (see
+*Compatibility*).
+
 ### Added
 
 - **The default font draws the Turkish lira sign.** `₺` (U+20BA) is now in
@@ -27,6 +33,26 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   sets the decimal digits (`#,##0 ¤` is `1.235 ₺`), and the locale still sets
   the separators.
 
+- **Roll paper: pages that fit their content.** `PageFormat.continuous` lays a
+  report out for a receipt or kitchen-ticket printer. A continuous page never
+  breaks because it is full: each rendered page is as tall as its header,
+  body, footer and margins, and `height` becomes the shortest a page may be.
+  The page footer follows the content instead of sitting at a fixed bottom.
+  A group that starts a new page still does, so one report grouped by station
+  prints one ticket per station, each cut to its own length. `keepTogether`
+  has nothing to do on a roll, and a label grid lays every label on one page.
+  The preview, PDF, PNG and print all take each page's height from the same
+  frame, so a 203 dpi PNG for an ESC/POS printer is
+  `pageToPng(report, i, scale: 203 / 72)`. A page taller than 14,400 pt, the
+  size many PDF readers refuse, still renders, with a warning.
+
+- **The designer offers roll paper.** The page section has a *Continuous
+  (roll) page* switch, and the paper picker lists *Roll 58 mm* and *Roll
+  80 mm* after the sheet sizes, with a 50 mm minimum height. Picking a roll
+  turns the switch on, and picking a sheet size turns it off. A roll has no
+  landscape, so the orientation toggle is hidden on one. English, German and
+  Turkish strings are included.
+
 ### Changed
 
 - **The designer is no longer claimed on Android and iOS.** The README now
@@ -38,6 +64,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   recorded; it was published without it, and
   [decision 0005](https://github.com/a-urel/jet-print/blob/main/docs/decisions/0005-mobile-designer-claim-narrowed.md)
   narrows the claim accordingly.
+
+- **The preview's thumbnail rail fits a taller page into its tile.** Tiles
+  still take their height from page 0. A later page that is taller, as a
+  continuous report's longer ticket can be, is scaled down to fit its tile,
+  keeping its proportions, instead of overflowing it. Reports whose pages
+  are all one size look exactly as before.
 
 ### Fixed
 
@@ -60,6 +92,19 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   accepted as an exception by
   [decision 0006](https://github.com/a-urel/jet-print/blob/main/docs/decisions/0006-unmapped-glyph-pdf-fix-is-an-exception.md):
   the old output was never the character asked for, and was not even stable.
+
+### Compatibility
+
+- **A roll-paper report is written at schema version 3; every other report
+  is still written at version 2.** A continuous page writes
+  `"continuous": true` in the page JSON and stamps the document
+  `"schemaVersion": 3`. A sheet report writes neither, so its JSON is
+  byte-for-byte unchanged and `1.0.0` keeps opening it. `1.0.0` refuses a
+  roll report with a `ReportFormatException` (its version is newer), rather
+  than opening it as a sheet and dropping the roll when it saves.
+  `JetReportFormat.schemaVersion` is now `3`: the newest version this build
+  reads and writes, not one every document carries. A host that stores the
+  stamped version should read it from each document.
 
 ## 1.0.0
 

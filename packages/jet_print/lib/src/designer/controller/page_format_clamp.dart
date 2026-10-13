@@ -33,7 +33,9 @@ PageFormat clampPageFormat(PageFormat format) {
       _fitPair(m.left, m.right, width - kMinContentExtent);
   final ({double near, double far}) v =
       _fitPair(m.top, m.bottom, height - kMinContentExtent);
-  final PageFormat clamped = PageFormat(
+  // copyWith, not a fresh PageFormat: a field the clamp does not condition
+  // (`continuous`) must ride through unchanged.
+  final PageFormat clamped = format.copyWith(
     width: width,
     height: height,
     margins:

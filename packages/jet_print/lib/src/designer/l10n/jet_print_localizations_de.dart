@@ -409,6 +409,14 @@ class JetPrintLocalizationsDe extends JetPrintLocalizations {
   String get orientationLandscape => 'Querformat';
 
   @override
+  String paperRoll(int width) {
+    return 'Rolle $width mm';
+  }
+
+  @override
+  String get pageContinuous => 'Endlosseite (Rolle)';
+
+  @override
   String get marginPresetNormal => 'Normal';
 
   @override

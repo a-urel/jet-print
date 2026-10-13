@@ -9,9 +9,21 @@ import '../domain/page_format.dart';
 
 /// A named standard paper size, stored **portrait** (width ≤ height). The
 /// landscape variant is derived by swapping the two dimensions.
+///
+/// A [continuous] preset is a roll: [portraitWidth] is the roll's width and
+/// [portraitHeight] the page's minimum height, and it has no landscape.
 class PaperPreset {
-  /// Creates a preset named [name] with the given portrait dimensions (points).
-  const PaperPreset(this.name, this.portraitWidth, this.portraitHeight);
+  /// Creates a sheet preset named [name] with the given portrait dimensions
+  /// (points).
+  const PaperPreset(this.name, this.portraitWidth, this.portraitHeight)
+      : continuous = false;
+
+  /// Creates a roll preset named [name], [width] wide with pages at least
+  /// [minHeight] tall (points).
+  const PaperPreset.roll(this.name, double width, double minHeight)
+      : portraitWidth = width,
+        portraitHeight = minHeight,
+        continuous = true;
 
   /// The universal size name (e.g. `'A4'`, `'Letter'`) — **not** localized: it
   /// is an international standard, like a unit symbol.
@@ -20,8 +32,11 @@ class PaperPreset {
   /// Portrait width, in points (the shorter side).
   final double portraitWidth;
 
-  /// Portrait height, in points (the longer side).
+  /// Portrait height, in points (the longer side); a roll's minimum height.
   final double portraitHeight;
+
+  /// Whether this is roll paper, applied as a [PageFormat.continuous] page.
+  final bool continuous;
 }
 
 /// The standard sizes offered by the paper-type picker, in display order, stored
@@ -34,6 +49,21 @@ const List<PaperPreset> kPaperPresets = <PaperPreset>[
   PaperPreset('Letter', 612.0, 792.0),
   PaperPreset('Legal', 612.0, 1008.0),
 ];
+
+/// The roll widths offered after the sheet sizes: the two thermal receipt
+/// widths, 58 mm and 80 mm. Their names are the picker's option keys; the
+/// panel shows them through a localized label. The 50 mm minimum height is
+/// short enough that a real receipt is never padded, and gives the canvas a
+/// sheet to start from — the design surface grows with the bands anyway.
+const List<PaperPreset> kRollPresets = <PaperPreset>[
+  PaperPreset.roll('58mm', 58 * 72 / 25.4, _kRollMinHeight),
+  PaperPreset.roll('80mm', 80 * 72 / 25.4, _kRollMinHeight),
+];
+
+const double _kRollMinHeight = 50 * 72 / 25.4;
+
+/// A preset's width in whole millimetres, e.g. `80` for the 80 mm roll.
+int paperPresetWidthMm(PaperPreset p) => _ptToMm(p.portraitWidth);
 
 /// A preset's display label: its universal name plus its size in whole
 /// millimetres, e.g. `A4 (210 × 297 mm)`. Points convert at 25.4/72 mm/pt and
@@ -53,6 +83,9 @@ class PaperMatch {
   const PaperMatch.custom() : _preset = null;
 
   final PaperPreset? _preset;
+
+  /// The matched preset, or null when [isCustom].
+  PaperPreset? get preset => _preset;
 
   /// The matched standard size's name, or null when [isCustom].
   String? get name => _preset?.name;
@@ -77,7 +110,19 @@ const double _kPaperTolerance = 0.5;
 /// reports [PaperMatch.isCustom] when none does. Pure and display-only — it
 /// never alters [page]. The page's two sides are sorted to {short,
 /// long} before comparing, so portrait and landscape of the same size match.
+///
+/// A [PageFormat.continuous] page is a roll: it matches a roll preset by width
+/// alone, since its height is only a minimum, and never a sheet size. A sheet
+/// page never matches a roll.
 PaperMatch recognizePaper(PageFormat page) {
+  if (page.continuous) {
+    for (final PaperPreset preset in kRollPresets) {
+      if ((page.width - preset.portraitWidth).abs() <= _kPaperTolerance) {
+        return PaperMatch.preset(preset);
+      }
+    }
+    return const PaperMatch.custom();
+  }
   final double shortSide = page.width <= page.height ? page.width : page.height;
   final double longSide = page.width <= page.height ? page.height : page.width;
   for (final PaperPreset preset in kPaperPresets) {
@@ -93,13 +138,20 @@ PaperMatch recognizePaper(PageFormat page) {
 /// [landscape] is true — carrying the supplied [margins] unchanged, so applying
 /// a paper size never disturbs the current margins. The controller
 /// clamps the result before committing.
+///
+/// The page is [PageFormat.continuous] exactly when [preset] is a roll: picking
+/// a roll makes roll paper, picking a sheet size makes a sheet again. A roll
+/// ignores [landscape]; it has only the one orientation.
 PageFormat applyPaper(
   PaperPreset preset, {
   required bool landscape,
   required JetEdgeInsets margins,
-}) =>
-    PageFormat(
-      width: landscape ? preset.portraitHeight : preset.portraitWidth,
-      height: landscape ? preset.portraitWidth : preset.portraitHeight,
-      margins: margins,
-    );
+}) {
+  final bool swap = landscape && !preset.continuous;
+  return PageFormat(
+    width: swap ? preset.portraitHeight : preset.portraitWidth,
+    height: swap ? preset.portraitWidth : preset.portraitHeight,
+    margins: margins,
+    continuous: preset.continuous,
+  );
+}

@@ -87,7 +87,9 @@ escaping.
 before 0.1.0 was published: `JetReportFormat.schemaVersion` is a public `const`
 equal to `kReportDefinitionSchemaVersion`, the barrel-only test named below
 reads it instead of reconstructing it, and `test/public_api_test.dart` pins it
-against the key the encoder stamps. The rest of this point records the gap as
+against the key the encoder stamps. Since roll paper it names the newest version
+this build writes rather than one every document carries: a document is stamped
+with the lowest version that holds it, so a host reads each row's own key. The rest of this point records the gap as
 it stood.
 `report_definition_codec.dart` → `kReportDefinitionSchemaVersion` is `2` and is
 stamped as the first key of every document, but it is a top-level constant in

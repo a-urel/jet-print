@@ -16,7 +16,13 @@ ReportDefinition _everything() {
   const JetRect r = JetRect(x: 0, y: 0, width: 80, height: 16);
   return ReportDefinition(
     name: 'Everything',
-    page: PageFormat.a4Portrait,
+    // Continuous, so the sweep below also reaches the optional `continuous` key.
+    page: const PageFormat(
+      width: 595.28,
+      height: 841.89,
+      margins: JetEdgeInsets.all(28.35),
+      continuous: true,
+    ),
     parameters: const <ReportParameter>[
       ReportParameter(name: 'asOf', type: JetFieldType.dateTime),
     ],

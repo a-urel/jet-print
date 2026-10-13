@@ -114,13 +114,17 @@ class PageThumbnailRailState extends State<PageThumbnailRail> {
   @visibleForTesting
   int get debugInFlightCount => _inFlight.length;
 
+  /// The sheet height every tile reserves: page 0 at the rail's width.
+  double get _sheetHeight {
+    final PageFormat page = frameOf(widget.report.pageAt(0)).page;
+    return _thumbWidth * page.height / page.width;
+  }
+
   /// The fixed per-tile extent, derived from page 0's aspect ratio. A fixed
   /// extent keeps scrolling O(visible) on a many-page report and makes
-  /// scroll-to-index pure arithmetic.
-  double get _tileExtent {
-    final PageFormat page = frameOf(widget.report.pageAt(0)).page;
-    return _thumbWidth * page.height / page.width + _captionHeight + _tileGap;
-  }
+  /// scroll-to-index pure arithmetic. A continuous report's later pages may be
+  /// taller than page 0; their tiles shrink to fit rather than grow.
+  double get _tileExtent => _sheetHeight + _captionHeight + _tileGap;
 
   @override
   void initState() {
@@ -271,6 +275,7 @@ class PageThumbnailRailState extends State<PageThumbnailRail> {
               index: index,
               pageCount: widget.report.pageCount,
               page: frameOf(widget.report.pageAt(index)).page,
+              maxSheetHeight: _sheetHeight,
               picture: picture,
               selected: index == widget.currentIndex,
               onTap: () => widget.onSelect(index),
@@ -289,6 +294,7 @@ class _ThumbnailTile extends StatelessWidget {
     required this.index,
     required this.pageCount,
     required this.page,
+    required this.maxSheetHeight,
     required this.picture,
     required this.selected,
     required this.onTap,
@@ -297,6 +303,10 @@ class _ThumbnailTile extends StatelessWidget {
   final int index;
   final int pageCount;
   final PageFormat page;
+
+  /// The tallest the sheet may be drawn: the height the rail's fixed tile
+  /// extent reserves for it.
+  final double maxSheetHeight;
   final ui.Picture? picture;
   final bool selected;
   final VoidCallback onTap;
@@ -306,7 +316,13 @@ class _ThumbnailTile extends StatelessWidget {
     final ShadThemeData theme = ShadTheme.of(context);
     final ShadColorScheme colors = theme.colorScheme;
     final JetPrintLocalizations l10n = JetPrintLocalizations.of(context);
-    final double scale = _thumbWidth / page.width;
+    // Rail width first; a page taller than the tile's reserved height (a
+    // continuous report's longer ticket) is scaled down to fit it instead, so
+    // it keeps its proportions rather than overflowing the fixed extent.
+    final double widthScale = _thumbWidth / page.width;
+    final double scale = page.height * widthScale > maxSheetHeight
+        ? maxSheetHeight / page.height
+        : widthScale;
 
     return Semantics(
       // A boundary of its own: each tile is a self-contained interactive
@@ -330,7 +346,7 @@ class _ThumbnailTile extends StatelessWidget {
           children: <Widget>[
             Container(
               key: ValueKey<String>('jet_print.preview.thumbnail.$index'),
-              width: _thumbWidth,
+              width: page.width * scale,
               height: page.height * scale,
               decoration: BoxDecoration(
                 color: previewSheetColor(theme.brightness),

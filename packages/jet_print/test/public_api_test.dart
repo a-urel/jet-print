@@ -287,15 +287,20 @@ void main() {
     controller.dispose();
   });
 
-  test('JetReportFormat.schemaVersion names the version every document carries',
+  test('JetReportFormat.schemaVersion is the newest version a document carries',
       () {
     // A const, so a host can use it where a constant is required — a column
     // default, a switch case — without encoding a throwaway definition.
     const int version = JetReportFormat.schemaVersion;
+    // A document is stamped with the lowest version that holds it: never
+    // newer than the constant, and the constant itself for roll paper.
     expect(
-      JetReportFormat.encodeDefinition(_detailDef())['schemaVersion'],
-      version,
+      JetReportFormat.encodeDefinition(_detailDef())['schemaVersion']! as int,
+      lessThanOrEqualTo(version),
     );
+    final ReportDefinition roll = _detailDef()
+        .copyWith(page: PageFormat.a4Portrait.copyWith(continuous: true));
+    expect(JetReportFormat.encodeDefinition(roll)['schemaVersion'], version);
   });
 
   test('JetReportDesignerController.rename is the additive 017 mutator', () {

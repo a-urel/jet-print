@@ -887,6 +887,18 @@ abstract class JetPrintLocalizations {
   /// **'Landscape'**
   String get orientationLandscape;
 
+  /// Paper-size picker entry for thermal roll paper of the given width in millimetres, e.g. 'Roll 80 mm'. The page grows to fit its content.
+  ///
+  /// In en, this message translates to:
+  /// **'Roll {width} mm'**
+  String paperRoll(int width);
+
+  /// Properties panel switch: lay the report out on roll paper, each page as long as its content instead of a fixed sheet height.
+  ///
+  /// In en, this message translates to:
+  /// **'Continuous (roll) page'**
+  String get pageContinuous;
+
   /// Margin preset name: the ~1 cm default on all four sides.
   ///
   /// In en, this message translates to:

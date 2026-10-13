@@ -145,6 +145,8 @@
   "paperPickerTooltip": "Papierformat wählen",
   "orientationPortrait": "Hochformat",
   "orientationLandscape": "Querformat",
+  "paperRoll": "Rolle {width} mm",
+  "pageContinuous": "Endlosseite (Rolle)",
   "marginPresetNormal": "Normal",
   "marginPresetNarrow": "Schmal",
   "marginPresetWide": "Breit",

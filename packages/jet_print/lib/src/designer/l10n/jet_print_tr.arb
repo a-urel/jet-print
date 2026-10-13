@@ -145,6 +145,8 @@
   "paperPickerTooltip": "Kağıt boyutu seçin",
   "orientationPortrait": "Dikey",
   "orientationLandscape": "Yatay",
+  "paperRoll": "Rulo {width} mm",
+  "pageContinuous": "Sürekli (rulo) sayfa",
   "marginPresetNormal": "Normal",
   "marginPresetNarrow": "Dar",
   "marginPresetWide": "Geniş",
