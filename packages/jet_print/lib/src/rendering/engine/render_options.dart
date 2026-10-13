@@ -31,6 +31,7 @@ class RenderOptions {
     this.unresolvedFieldToken = '#ERROR',
     this.fonts = const <JetFontFamily>[],
     this.onElementPrint,
+    this.currencySymbol,
   });
 
   /// Host-supplied parameter values keyed by parameter name, resolved by
@@ -99,4 +100,19 @@ class RenderOptions {
   /// alike. Null (default) means no hook and byte-identical
   /// output to today. See [JetElementPrintCallback] for the contract.
   final JetElementPrintCallback? onElementPrint;
+
+  /// What `¤` prints in a number pattern during this render — the format
+  /// property and `FORMAT(...)` alike — such as `'₺'`.
+  ///
+  /// Null (the default) prints the ISO 4217 code of the [locale]'s currency,
+  /// as `¤` always has: `¤#,##0.00` is `TRY1.234,50` under `Locale('tr')`.
+  /// Set, it prints this text instead (`₺1.234,50`). Only the sign changes: the
+  /// pattern still decides the decimal digits, the grouping and where the sign
+  /// goes, and [locale] still decides the separators.
+  ///
+  /// The symbol is the host's to choose, because it names the currency the
+  /// amounts are in, which the locale does not: a German report may total in
+  /// lira. A pattern can also carry the sign as plain text (`#,##0.00 ₺`), but
+  /// then every report repeats it.
+  final String? currencySymbol;
 }
