@@ -117,20 +117,24 @@ byte-pinned artifact is `invoice.pdf`, compared as bytes in
 byte claim is earned.
 
 **"macOS" means CI's macOS, not any Mac.** The macOS leg and the `update goldens
-(macos)` job run on a pinned `macos-26` runner, not `macos-latest`, so the
-reference only moves when someone moves it; the *Runner Image* line at the top
-of the log names the image that actually ran. A Mac on a different macOS version
-anti-aliases glyph edges differently, so every text edge picks up a one-pixel
-fringe of difference. The tolerance absorbs that for most goldens, but not for
-the densest text: in October 2026 a macOS 27 host failed `pivot_light.png` at
-0.53–0.56% against a `macos-26-arm64` runner — under both Flutter 3.44.0 and
-3.47.6, with layout identical and the diff confined to glyph edges — while CI
-passed the same commit. A golden that fails locally and passes on the macOS leg
-at the same commit is a host mismatch. Regenerating it would turn CI red; read
-the leg instead. Moving the pin to a newer macOS is the one time to regenerate
-for this reason: change both pins in `ci.yml` together (the matrix `os:` and the
-update job's `runs-on:`), expect the leg to go red on the dense-text goldens,
-and regenerate them through the CI job in `docs/recipes/update-goldens.md`.
+(macos)` job run on `macos-26`, not `macos-latest`. That pins the macOS major
+version, not the image: GitHub still updates the image behind the label, so the
+*Runner Image* line at the top of the log, with its version, names the image
+that actually ran. A Mac on a different macOS version anti-aliases glyph edges
+differently, so every text edge picks up a one-pixel fringe of difference. The
+tolerance absorbs that for most goldens, but not for the densest text: in
+October 2026 a macOS 27 host failed `pivot_light.png` at 0.53–0.56% against a
+`macos-26-arm64` runner — under both Flutter 3.44.0 and 3.47.6, with layout
+identical and the diff confined to glyph edges — while CI passed the same
+commit. A golden that fails locally and passes on the macOS leg at the same
+commit is a host mismatch. Regenerating it would turn CI red; read the leg
+instead. An image update within macOS 26 can shift glyph edges too; it shows as
+the leg going red with no code change, and comparing the *Runner Image* version
+with the last green run's names it. Moving the pin to a newer major is the
+planned form of the same event: change both pins in `ci.yml` together (the
+matrix `os:` and the update job's `runs-on:`), expect the leg to go red on the
+dense-text goldens, and regenerate them through the CI job in
+`docs/recipes/update-goldens.md`.
 
 **And a pin fails only if the comparator throws a `TestFailure`.**
 `matchesGoldenFile` compares inside `TestWidgetsFlutterBinding.runAsync`, which
