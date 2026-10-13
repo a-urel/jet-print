@@ -6,8 +6,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
-Additive, so it follows the `1.0.0` freeze as a minor release. The report
-schema version is unchanged; one optional key is new (below).
+Additive, so it follows the `1.0.0` freeze as a minor release. One optional
+page key is new, and only a report that sets it is written at schema version
+3; every other report is written at version 2, as before (see
+*Compatibility*).
 
 ### Added
 
