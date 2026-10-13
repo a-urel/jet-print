@@ -234,9 +234,10 @@ Real ones, each of which has cost time before.
   newer Flutter cannot be satisfied by CI's. CI runs
   `flutter pub get --enforce-lockfile`, which fails on that drift rather than
   silently resolving something other than what is committed. Locally it is the
-  other way round: any `flutter` command under a newer SDK, `flutter test`
-  included, rewrites the lockfile to that SDK's pins without asking. Don't
-  commit that diff.
+  other way round: under a newer SDK, any `flutter` command that resolves
+  packages rewrites the lockfile to that SDK's pins without asking. That is
+  `flutter pub get`, and also `flutter test`, `analyze` and `run`, which run an
+  implicit `pub get` unless given `--no-pub`. Don't commit that diff.
 - **Run `git` from the repo root.** `flutter` commands leave the shell inside a
   package directory.
 
