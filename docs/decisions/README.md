@@ -70,6 +70,7 @@ the anchor loudly, a moved line points silently at the wrong code.
 | 0003 | [Full mobile support, including the designer, is in 1.0 scope](0003-mobile-in-1-0-scope.md) | Superseded by 0005 |
 | 0004 | [What 1.0 must settle](0004-what-1-0-must-settle.md) | Accepted 2026-10-10 |
 | 0005 | [On iOS and Android, 1.x claims viewing and export; the designer waits for a device pass](0005-mobile-designer-claim-narrowed.md) | Accepted 2026-10-13 |
+| 0006 | [Exporting an unmapped character as .notdef is an accepted output change in 1.x](0006-unmapped-glyph-pdf-fix-is-an-exception.md) | Accepted 2026-10-13 |
 
 The directory itself is authoritative; this table is a convenience, and a record
 that is present but unlisted is still in force.
