@@ -19,7 +19,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   byte-for-byte unchanged. A PDF that rendered one before now draws `.notdef`
   where it drew another character's glyph. That is a change in output under
   [decision 0004](https://github.com/a-urel/jet-print/blob/main/docs/decisions/0004-what-1-0-must-settle.md),
-  made because the old output was never the character asked for.
+  accepted as an exception by
+  [decision 0006](https://github.com/a-urel/jet-print/blob/main/docs/decisions/0006-unmapped-glyph-pdf-fix-is-an-exception.md):
+  the old output was never the character asked for, and was not even stable.
 
 ### Changed
 
