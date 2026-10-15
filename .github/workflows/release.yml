@@ -1,0 +1,83 @@
+name: Release
+
+# Creates the GitHub Release for a pushed `jet_print-vX.Y.Z` tag, with notes
+# written from that version's CHANGELOG section by
+# packages/jet_print/tool/release_notes.dart (docs/workflow.md, "Releasing").
+# Releases used to be written by hand, and 0.2.0, 1.0.0 and 1.1.0 reached
+# pub.dev without one: nothing failed when a tag got no release. A tag that
+# already has one is left alone, so re-pushing a tag, or one released by hand,
+# changes nothing. The job fails, and creates no release, when the CHANGELOG
+# has no section for the version or pubspec.yaml declares another one.
+on:
+  push:
+    tags:
+      - "jet_print-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: GitHub Release
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ github.ref_name }}
+    steps:
+      - name: Check for an existing release
+        id: existing
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::notice::$TAG already has a GitHub Release; leaving it as it is."
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Warn on a lightweight tag
+        if: steps.existing.outputs.exists == 'false'
+        # Read from the API rather than the checkout, which can rewrite an
+        # annotated tag as it fetches.
+        run: |
+          type=$(gh api "repos/$GH_REPO/git/ref/tags/$TAG" --jq .object.type)
+          if [ "$type" != "tag" ]; then
+            echo "::warning::$TAG is a lightweight tag. Release tags are annotated: git tag -a $TAG -m \"jet_print ${TAG#jet_print-v}\"."
+          fi
+
+      - name: Check out the repository
+        if: steps.existing.outputs.exists == 'false'
+        uses: actions/checkout@v4
+        with:
+          # Every tag, to find the one this release compares with.
+          fetch-depth: 0
+
+      - name: Set up Flutter
+        if: steps.existing.outputs.exists == 'false'
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.7
+          channel: stable
+          cache: true
+
+      - name: Resolve workspace dependencies
+        if: steps.existing.outputs.exists == 'false'
+        run: flutter pub get --enforce-lockfile
+
+      - name: Write the release notes
+        id: notes
+        if: steps.existing.outputs.exists == 'false'
+        working-directory: packages/jet_print
+        run: dart run tool/release_notes.dart "$TAG" "$RUNNER_TEMP/notes.md" >> "$GITHUB_OUTPUT"
+
+      - name: Create the release
+        if: steps.existing.outputs.exists == 'false'
+        env:
+          TITLE: ${{ steps.notes.outputs.title }}
+          LATEST: ${{ steps.notes.outputs.latest }}
+          PRERELEASE: ${{ steps.notes.outputs.prerelease }}
+        run: |
+          flags=()
+          if [ "$PRERELEASE" = "true" ]; then flags+=(--prerelease); fi
+          gh release create "$TAG" --verify-tag --title "$TITLE" \
+            --notes-file "$RUNNER_TEMP/notes.md" --latest="$LATEST" "${flags[@]}"
