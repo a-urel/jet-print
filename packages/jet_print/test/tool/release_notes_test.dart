@@ -3,6 +3,10 @@
 // 1.1.0 pin compares its output with `release_notes_1.1.0.md`, which is the
 // body of the 1.1.0 release as it was published by hand, so the generated
 // notes keep the house format the earlier releases set.
+//
+// VM only: the browser test runner serves just `test/`, so it cannot load the
+// script from `tool/`; the conditional import below keeps the Chrome bundle
+// compiling.
 @TestOn('vm')
 library;
 
@@ -10,7 +14,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../tool/release_notes.dart';
+import '../support/release_notes_web.dart'
+    if (dart.library.io) '../support/release_notes_io.dart';
 import '../support/workspace.dart';
 
 const List<String> _tags = <String>[
@@ -190,6 +195,36 @@ void main() {
       expect(first.body, isNot(contains('Full changelog')));
     });
 
+    test('keeps a heading inside the intro\'s fenced code in the intro', () {
+      const String fenced = '## 1.1.1\n'
+          '\n'
+          'Run:\n'
+          '\n'
+          '```sh\n'
+          '### Example\n'
+          'flutter pub get\n'
+          '```\n'
+          '\n'
+          '### Fixed\n'
+          '\n'
+          '- A fix.\n';
+      final String body = buildReleaseNotes(
+        tag: 'jet_print-v1.1.1',
+        changelog: fenced,
+        pubspec: _pubspec('1.1.1'),
+        tags: _tags,
+      ).body;
+
+      expect(
+        body,
+        startsWith(
+          'Run:\n\n```sh\n### Example\nflutter pub get\n```\n\n```sh\n'
+          'flutter pub upgrade jet_print\n```\n',
+        ),
+      );
+      expect(body, contains('\n## Fixed\n'));
+    });
+
     test('fails when the CHANGELOG has no section for the version', () {
       expect(
         () => build('1.2.0', _tags),
@@ -223,6 +258,33 @@ void main() {
         ),
         throwsA(isA<ReleaseNotesException>()),
       );
+    });
+  });
+
+  group('changelogSection', () {
+    test('skips a version heading inside fenced code', () {
+      const String changelog = '## 1.2.0\n'
+          '\n'
+          '```md\n'
+          '## 1.1.1\n'
+          'An example.\n'
+          '```\n'
+          '\n'
+          '## 1.1.1\n'
+          '\n'
+          'The real entry.\n';
+
+      expect(changelogSection(changelog, '1.1.1'), 'The real entry.');
+      expect(
+        changelogSection(changelog, '1.2.0'),
+        '```md\n## 1.1.1\nAn example.\n```',
+      );
+    });
+
+    test('finds no section for a version that is only in fenced code', () {
+      const String changelog = '## 1.2.0\n\n```md\n## 1.1.1\n```\n';
+
+      expect(changelogSection(changelog, '1.1.1'), isNull);
     });
   });
 }

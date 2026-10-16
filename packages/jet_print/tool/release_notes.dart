@@ -127,7 +127,7 @@ ReleaseNotes buildReleaseNotes({
       );
 
   final List<String> lines = const LineSplitter().convert(section);
-  final int firstSubheading = lines.indexWhere(_heading.hasMatch);
+  final int firstSubheading = _indexOutsideFences(lines, _heading.hasMatch);
   final List<String> intro =
       firstSubheading < 0 ? lines : lines.sublist(0, firstSubheading);
   final List<String> sections =
@@ -160,7 +160,7 @@ String? changelogSection(String changelog, String version) {
     '^## \\[?${RegExp.escape(version)}\\]?(?:\\s|\$)',
   );
   final List<String> lines = const LineSplitter().convert(changelog);
-  final int heading = lines.indexWhere(start.hasMatch);
+  final int heading = _indexOutsideFences(lines, start.hasMatch);
   if (heading < 0) return null;
 
   final List<String> body = <String>[];
@@ -292,6 +292,18 @@ String? _fenceAfter(String line, String? open) {
   final bool closes =
       RegExp('^\\s{0,3}$char{${open.length},}\\s*\$').hasMatch(line);
   return closes ? null : open;
+}
+
+/// The index of the first line of [lines] outside fenced code that passes
+/// [test], or -1: a heading in a code example is not a heading.
+int _indexOutsideFences(List<String> lines, bool Function(String) test) {
+  String? fence;
+  for (int i = 0; i < lines.length; i++) {
+    final bool inFence = fence != null;
+    fence = _fenceAfter(lines[i], fence);
+    if (!inFence && fence == null && test(lines[i])) return i;
+  }
+  return -1;
 }
 
 /// Raises every heading below `##` one level, outside fenced code: a
