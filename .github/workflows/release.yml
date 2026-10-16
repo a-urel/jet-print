@@ -103,8 +103,8 @@ jobs:
         run: |
           highest() {
             gh release list --limit 1000 --exclude-drafts --exclude-pre-releases \
-              --json tagName --jq '.[].tagName' |
-              grep -E '^jet_print-v[0-9]+\.[0-9]+\.[0-9]+(\+[0-9A-Za-z.-]+)?$' |
+              --json tagName --jq '.[].tagName |
+                select(test("^jet_print-v[0-9]+\\.[0-9]+\\.[0-9]+(\\+[0-9A-Za-z.-]+)?$"))' |
               sort -V | tail -n 1
           }
           target=$(highest)
