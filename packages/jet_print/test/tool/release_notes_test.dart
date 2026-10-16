@@ -67,7 +67,6 @@ void main() {
 
     expect(notes.title, 'jet_print 1.1.0');
     expect(notes.body, published);
-    expect(notes.latest, isTrue);
     expect(notes.previousTag, 'jet_print-v1.0.0');
   });
 
@@ -177,15 +176,14 @@ void main() {
           'flutter pub add jet_print:^0.1.0');
     });
 
-    test('is Latest only for the highest version', () {
+    test('compares a backport with the tag below it, not the highest', () {
       final ReleaseNotes backport = build('1.0.1', <String>[
         ..._tags,
         'jet_print-v1.0.1',
       ]);
 
-      expect(backport.latest, isFalse);
       expect(backport.previousTag, 'jet_print-v1.0.0');
-      expect(build('2.0.0', _tags).latest, isTrue);
+      expect(build('2.0.0', _tags).previousTag, 'jet_print-v1.1.0');
     });
 
     test('omits the comparison for the first release', () {

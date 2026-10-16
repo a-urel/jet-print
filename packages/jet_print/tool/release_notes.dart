@@ -5,8 +5,8 @@
 //
 //   dart run tool/release_notes.dart jet_print-v1.1.0 notes.md
 //
-// It writes the notes to the file and prints `title=`, `latest=` and
-// `prerelease=` lines, which the workflow appends to `$GITHUB_OUTPUT`. It
+// It writes the notes to the file and prints `title=` and `prerelease=`
+// lines, which the workflow appends to `$GITHUB_OUTPUT`. It
 // fails, and the release is not created, when the CHANGELOG has no section for
 // the tag's version or `pubspec.yaml` declares a different version.
 //
@@ -42,7 +42,6 @@ class ReleaseNotes {
   const ReleaseNotes({
     required this.title,
     required this.body,
-    required this.latest,
     required this.prerelease,
     required this.previousTag,
   });
@@ -52,9 +51,6 @@ class ReleaseNotes {
 
   /// The release body, in Markdown.
   final String body;
-
-  /// Whether this is the highest released version, and so GitHub's Latest.
-  final bool latest;
 
   /// Whether the version carries a pre-release suffix such as `-dev.1`.
   final bool prerelease;
@@ -120,11 +116,6 @@ ReleaseNotes buildReleaseNotes({
       previous = other;
     }
   }
-  final bool latest = !current.isPrerelease &&
-      others.every(
-        ((_Version, String) o) =>
-            o.$1.isPrerelease || o.$1.compareTo(current) < 0,
-      );
 
   final List<String> lines = const LineSplitter().convert(section);
   final int firstSubheading = _indexOutsideFences(lines, _heading.hasMatch);
@@ -147,7 +138,6 @@ ReleaseNotes buildReleaseNotes({
   return ReleaseNotes(
     title: 'jet_print $version',
     body: '${parts.where((String p) => p.isNotEmpty).join('\n\n')}\n',
-    latest: latest,
     prerelease: current.isPrerelease,
     previousTag: previous?.$2,
   );
@@ -415,7 +405,6 @@ void main(List<String> args) {
     File(args[1]).writeAsStringSync(notes.body);
     stdout
       ..writeln('title=${notes.title}')
-      ..writeln('latest=${notes.latest}')
       ..writeln('prerelease=${notes.prerelease}');
   } on ReleaseNotesException catch (e) {
     stderr.writeln('error: ${e.message}');

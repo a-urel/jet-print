@@ -89,24 +89,30 @@ jobs:
             --notes-file "$RUNNER_TEMP/notes.md" --latest=false "${flags[@]}"
 
       - name: Mark the highest release Latest
-        # Only when this tag is the highest one, so a backport never touches
-        # Latest. The highest release is read back from GitHub, not taken from
-        # this run's tags: two tags pushed together run side by side, and the
-        # older one's run may finish last. Each run re-reads after it writes,
-        # so whichever finishes last leaves Latest on the highest release.
-        # (A concurrency group would serialize them instead, but it keeps at
-        # most one run waiting and cancels the rest, dropping their releases.)
-        if: steps.existing.outputs.exists == 'false' && steps.notes.outputs.latest == 'true'
+        # Latest is the highest stable release GitHub holds, read back from
+        # it rather than taken from this run's tags: a higher tag may have no
+        # release yet, and two tags pushed together run side by side, the
+        # older one's run perhaps finishing last. Each run re-reads after it
+        # writes, so whichever finishes last leaves Latest on the highest
+        # release; a backport re-marks the release that already is. (A
+        # concurrency group would serialize the runs instead, but it keeps at
+        # most one waiting and cancels the rest, dropping their releases.)
+        if: steps.existing.outputs.exists == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           highest() {
             gh release list --limit 1000 --exclude-drafts --exclude-pre-releases \
               --json tagName --jq '.[].tagName' |
-              grep -E '^jet_print-v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1
+              grep -E '^jet_print-v[0-9]+\.[0-9]+\.[0-9]+(\+[0-9A-Za-z.-]+)?$' |
+              sort -V | tail -n 1
           }
           target=$(highest)
-          while true; do
+          if [ -z "$target" ]; then
+            echo "No stable release yet; Latest is unchanged."
+            exit 0
+          fi
+          while [ -n "$target" ]; do
             gh release edit "$target" --latest
             now=$(highest)
             if [ "$now" = "$target" ]; then break; fi

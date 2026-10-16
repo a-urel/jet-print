@@ -15,14 +15,12 @@ class ReleaseNotes {
   const ReleaseNotes({
     required this.title,
     required this.body,
-    required this.latest,
     required this.prerelease,
     required this.previousTag,
   });
 
   final String title;
   final String body;
-  final bool latest;
   final bool prerelease;
   final String? previousTag;
 }
