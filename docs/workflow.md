@@ -84,6 +84,34 @@ Receiving review feedback is a technical exercise, not a social one. Verify a
 suggestion before implementing it; disagree with reasons when it is wrong. Neither
 blind agreement nor reflexive defense.
 
+## Releasing
+
+A `jet_print` release is five steps, in this order:
+
+1. Bump `version:` in `packages/jet_print/pubspec.yaml` and
+   `lib/src/version.dart` together (`test/version_test.dart` pins them), and
+   give `CHANGELOG.md` a `## X.Y.Z` section.
+2. Merge that change to `main`.
+3. Tag the merge commit with an **annotated** tag. A lightweight tag works,
+   but the release job warns about it.
+4. Push the tag.
+5. Publish from `packages/jet_print` with `dart pub publish`.
+
+```bash
+git tag -a jet_print-vX.Y.Z -m "jet_print X.Y.Z"
+git push origin jet_print-vX.Y.Z
+```
+
+Pushing the tag runs `.github/workflows/release.yml`, which creates the GitHub
+Release. Its notes are the CHANGELOG section, with the install command and
+links around it, written by `packages/jet_print/tool/release_notes.dart`; run
+`dart run tool/release_notes.dart jet_print-vX.Y.Z notes.md` in
+`packages/jet_print` to read them before tagging. The job fails, and creates
+nothing, when the CHANGELOG has no section for the tag's version or the
+pubspec declares another one. It leaves a tag that already has a release
+alone, and marks only the highest version Latest, so a backport tagged on an
+older line leaves Latest where it was.
+
 ## Plans and specs
 
 Working documents — designs, implementation plans, task notes — belong in

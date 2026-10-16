@@ -4,3 +4,6 @@
 *.dart text eol=lf
 *.png  binary
 *.pdf  binary
+# Byte-pinned text fixtures compared as strings: a CRLF checkout would fail
+# them on Windows.
+packages/jet_print/test/tool/*.md text eol=lf
