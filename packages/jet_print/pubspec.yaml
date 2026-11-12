@@ -101,6 +101,9 @@ dependencies:
   # vector_math is a direct transitive dep of `pdf`; declared here because
   # pdf_painter.dart imports it directly for Matrix4 PDF transforms (Task 8).
   vector_math: ^2.2.0
+  # SPIKE JP0 ONLY: local path, never publishable.
+  jet_charts_core:
+    path: /Users/ahmeturel/Projects/oss/jet-office/packages/jet_charts_core
 
 dev_dependencies:
   flutter_test:

@@ -17,3 +17,8 @@ workspace:
   - packages/jet_print
   - packages/jet_print_google_fonts
   - apps/jet_print_playground
+
+# SPIKE JP0 ONLY.
+dependency_overrides:
+  jet_core:
+    path: /Users/ahmeturel/Projects/oss/jet-office/packages/jet_core
