@@ -1,8 +1,8 @@
 /// JP0 spike: converts a jet_charts_core layout into frame primitives, so the
 /// canvas, preview, PNG and PDF keep drawing one recorded picture.
 ///
-/// Not wired into any renderer. What the frame cannot express yet is counted in
-/// [ChartConversionGaps] rather than hidden.
+/// Not wired into any renderer yet. Dashes, clips, fill opacity and arcs are
+/// carried by the frame itself (`dashPattern`, `clip`, colour alpha, `ArcTo`).
 library;
 
 import 'dart:math' as math;
@@ -39,38 +39,16 @@ JetTextStyle _jetStyle(core.ChartTextStyle s) => JetTextStyle(
       color: _color(s.color),
     );
 
-JetColor _color(core.ChartColor c) => JetColor(0xFF000000 | c.rgb);
+JetColor _color(core.ChartColor c, {double opacity = 1}) =>
+    JetColor(((opacity * 255).round().clamp(0, 255) << 24) | c.rgb);
 
-/// What the converter could not express in the frame. Counts, per conversion.
-class ChartConversionGaps {
-  /// Arcs turned into polylines.
-  int arcsFlattened = 0;
-
-  /// Clip regions whose children were drawn unclipped.
-  int clipsDropped = 0;
-
-  /// Dashed paths drawn solid.
-  int dashesDropped = 0;
-
-  /// Translucent fills pre-blended with white.
-  int opacityBlended = 0;
-
-  @override
-  String toString() => 'gaps(arcsFlattened: $arcsFlattened, '
-      'clips: $clipsDropped, dashes: $dashesDropped, '
-      'opacityBlended: $opacityBlended)';
-}
-
-/// The frame primitives of one chart and what was lost converting it.
+/// The frame primitives of one chart.
 class ChartFrameResult {
   /// Creates a result.
-  const ChartFrameResult(this.primitives, this.gaps, this.layout);
+  const ChartFrameResult(this.primitives, this.layout);
 
   /// In paint order, in page coordinates.
   final List<FramePrimitive> primitives;
-
-  /// What the frame could not express.
-  final ChartConversionGaps gaps;
 
   /// The core layout, kept for inspection.
   final core.ChartLayout layout;
@@ -112,83 +90,87 @@ ChartFrameResult chartToFrame(
     size: core.ChartSize(bounds.width, bounds.height),
     measurer: ChartEngineMeasurer(measurer),
   );
-  final ChartConversionGaps gaps = ChartConversionGaps();
+  return ChartFrameResult(
+      convertChartPrimitives(layout.primitives,
+          bounds: bounds, measurer: measurer, elementId: elementId),
+      layout);
+}
+
+/// Converts core [primitives] (chart-local coordinates) into frame primitives
+/// placed at [bounds]. Separate from [chartToFrame] so the mapping can be
+/// pinned on hand-built primitives, not only on whatever a layout emits.
+List<FramePrimitive> convertChartPrimitives(
+  List<core.ChartPrimitive> primitives, {
+  required JetRect bounds,
+  required TextMeasurer measurer,
+  String? elementId,
+}) {
   final List<FramePrimitive> out = <FramePrimitive>[];
-  void walk(core.ChartPrimitive p) {
+  JetRect page(core.ChartRect r) => JetRect(
+      x: bounds.x + r.left,
+      y: bounds.y + r.top,
+      width: r.width,
+      height: r.height);
+  JetOffset at(core.ChartPoint q) => JetOffset(bounds.x + q.x, bounds.y + q.y);
+
+  void walk(core.ChartPrimitive p, JetRect? clip) {
     switch (p) {
       case core.RectPrimitive():
         out.add(RectPrimitive(
-          bounds: JetRect(
-              x: bounds.x + p.rect.left,
-              y: bounds.y + p.rect.top,
-              width: p.rect.width,
-              height: p.rect.height),
+          bounds: page(p.rect),
           fill: p.fill == null ? null : _color(p.fill!),
           stroke: p.stroke == null ? null : _color(p.stroke!),
           strokeWidth: p.strokeWidth,
           elementId: elementId,
+          clip: clip,
         ));
       case core.PathPrimitive():
         if (p.points.isEmpty) return;
-        if (p.dash != null) gaps.dashesDropped++;
-        JetColor? fill = p.fill == null ? null : _color(p.fill!);
-        if (fill != null && p.fillOpacity < 1) {
-          gaps.opacityBlended++;
-          fill = _blendOnWhite(fill, p.fillOpacity);
-        }
-        out.add(_polyline(
-          p.points
-              .map((core.ChartPoint q) =>
-                  JetOffset(bounds.x + q.x, bounds.y + q.y))
-              .toList(),
-          closed: p.closed,
-          fill: fill,
+        final List<JetOffset> pts = p.points.map(at).toList();
+        out.add(PathPrimitive(
+          bounds: _boundsOf(pts),
+          commands: <PathCommand>[
+            MoveTo(pts.first),
+            for (final JetOffset q in pts.skip(1)) LineTo(q),
+            if (p.closed) const ClosePath(),
+          ],
+          fill: p.fill == null ? null : _color(p.fill!, opacity: p.fillOpacity),
           stroke: p.stroke == null ? null : _color(p.stroke!),
           strokeWidth: p.strokeWidth,
+          dashPattern: p.dash,
           elementId: elementId,
+          clip: clip,
         ));
       case core.ArcPrimitive():
-        gaps.arcsFlattened++;
-        out.add(_arc(p, bounds, elementId));
+        out.add(_arc(p, at(p.center), elementId, clip));
       case core.TextPrimitive():
         final JetTextStyle st = _jetStyle(p.style);
         final MeasuredText m = measurer.measure(p.text, st);
         out.add(TextRunPrimitive(
-          bounds: JetRect(
-              x: bounds.x + p.rect.left,
-              y: bounds.y + p.rect.top,
-              width: p.rect.width,
-              height: p.rect.height),
+          bounds: page(p.rect),
           lines: m.lines,
           style: st,
           fontFamily: m.fontFamily,
           rotation: p.rotationDegrees * math.pi / 180,
           elementId: elementId,
+          clip: clip,
         ));
       case core.ClipPrimitive():
-        gaps.clipsDropped++;
-        p.children.forEach(walk);
+        // Nested clips intersect in core's model; the converter has only the
+        // innermost, which core never nests (see ChartLayout docs).
+        for (final core.ChartPrimitive c in p.children) {
+          walk(c, page(p.rect));
+        }
     }
   }
 
-  layout.primitives.forEach(walk);
-  return ChartFrameResult(out, gaps, layout);
+  for (final core.ChartPrimitive p in primitives) {
+    walk(p, null);
+  }
+  return out;
 }
 
-JetColor _blendOnWhite(JetColor c, double opacity) {
-  int ch(int v) => (v * opacity + 255 * (1 - opacity)).round().clamp(0, 255);
-  return JetColor.fromARGB(255, ch((c.argb >> 16) & 0xFF),
-      ch((c.argb >> 8) & 0xFF), ch(c.argb & 0xFF));
-}
-
-PathPrimitive _polyline(
-  List<JetOffset> pts, {
-  required bool closed,
-  JetColor? fill,
-  JetColor? stroke,
-  required double strokeWidth,
-  String? elementId,
-}) {
+JetRect _boundsOf(List<JetOffset> pts) {
   double minX = pts.first.dx, maxX = minX, minY = pts.first.dy, maxY = minY;
   for (final JetOffset p in pts) {
     minX = math.min(minX, p.dx);
@@ -196,48 +178,43 @@ PathPrimitive _polyline(
     minY = math.min(minY, p.dy);
     maxY = math.max(maxY, p.dy);
   }
-  return PathPrimitive(
-    bounds: JetRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY),
-    commands: <PathCommand>[
-      MoveTo(pts.first),
-      for (final JetOffset p in pts.skip(1)) LineTo(p),
-      if (closed) const ClosePath(),
-    ],
-    fill: fill,
-    stroke: stroke,
-    strokeWidth: strokeWidth,
-    elementId: elementId,
-  );
+  return JetRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY);
 }
 
-PathPrimitive _arc(core.ArcPrimitive a, JetRect bounds, String? elementId) {
-  final double sweep = a.sweepAngle;
-  // One vertex per 3 degrees at least, so a pie edge stays smooth in a PDF.
-  final int steps = math.max(2, (sweep.abs() / 3).ceil());
-  JetOffset at(double r, double deg) {
-    final double rad = deg * math.pi / 180;
-    return JetOffset(bounds.x + a.center.x + r * math.cos(rad),
-        bounds.y + a.center.y + r * math.sin(rad));
-  }
-
-  final List<JetOffset> pts = <JetOffset>[];
-  if (a.innerRadius <= 0) {
-    pts.add(JetOffset(bounds.x + a.center.x, bounds.y + a.center.y));
-  }
-  for (int i = 0; i <= steps; i++) {
-    pts.add(at(a.radius, a.startAngle + sweep * i / steps));
-  }
-  if (a.innerRadius > 0) {
-    for (int i = steps; i >= 0; i--) {
-      pts.add(at(a.innerRadius, a.startAngle + sweep * i / steps));
-    }
-  }
-  return _polyline(
-    pts,
-    closed: true,
+/// A pie slice or donut segment as real arcs: centre -> outer arc -> close, or
+/// outer arc -> inner arc back -> close for a ring. Core's angles are degrees.
+PathPrimitive _arc(
+    core.ArcPrimitive a, JetOffset c, String? elementId, JetRect? clip) {
+  double rad(double deg) => deg * math.pi / 180;
+  final double start = rad(a.startAngle);
+  final double sweep = rad(a.sweepAngle);
+  JetOffset on(double r, double t) =>
+      JetOffset(c.dx + r * math.cos(t), c.dy + r * math.sin(t));
+  final List<PathCommand> cmds = a.innerRadius > 0
+      ? <PathCommand>[
+          MoveTo(on(a.radius, start)),
+          ArcTo(c, a.radius, start, sweep),
+          LineTo(on(a.innerRadius, start + sweep)),
+          ArcTo(c, a.innerRadius, start + sweep, -sweep),
+          const ClosePath(),
+        ]
+      : <PathCommand>[
+          MoveTo(c),
+          ArcTo(c, a.radius, start, sweep),
+          const ClosePath(),
+        ];
+  return PathPrimitive(
+    // The full circle's square: a safe over-estimate of the slice.
+    bounds: JetRect(
+        x: c.dx - a.radius,
+        y: c.dy - a.radius,
+        width: a.radius * 2,
+        height: a.radius * 2),
+    commands: cmds,
     fill: a.fill == null ? null : _color(a.fill!),
     stroke: a.stroke == null ? null : _color(a.stroke!),
     strokeWidth: a.strokeWidth,
     elementId: elementId,
+    clip: clip,
   );
 }

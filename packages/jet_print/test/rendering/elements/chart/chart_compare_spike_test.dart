@@ -81,7 +81,7 @@ void main() {
         res.primitives.forEach(fb.add);
         report
             .writeln('$name: old ${_count(fb) - before - res.primitives.length}'
-                ' prims, new ${res.primitives.length} prims, ${res.gaps}, '
+                ' prims, new ${res.primitives.length} prims, '
                 'hidden labels ${res.layout.hidden.length}');
         expect(res.primitives, isNotEmpty);
         y += 145;

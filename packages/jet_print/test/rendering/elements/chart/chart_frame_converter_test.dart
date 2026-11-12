@@ -55,28 +55,92 @@ void main() {
     }
   });
 
-  test('pie arcs are flattened to closed paths, none dropped', () {
+  test('pie slices are real arcs, one closed path per slice', () {
     final ChartFrameResult r = chartToFrame(
       _chart(core.ChartKind.pie),
       bounds: bounds,
       measurer: measurer,
     );
-    expect(r.gaps.arcsFlattened, greaterThan(0));
-    final Iterable<PathPrimitive> paths =
-        r.primitives.whereType<PathPrimitive>();
-    expect(paths.length, greaterThanOrEqualTo(r.gaps.arcsFlattened));
-    for (final PathPrimitive p in paths) {
+    final List<PathPrimitive> slices = r.primitives
+        .whereType<PathPrimitive>()
+        .where((PathPrimitive p) => p.commands.any((c) => c is ArcTo))
+        .toList();
+    expect(slices, hasLength(4));
+    for (final PathPrimitive p in slices) {
       expect(p.commands.first, isA<MoveTo>());
+      expect(p.commands.last, isA<ClosePath>());
     }
   });
 
-  test('line chart counts what the frame cannot express, not hides it', () {
+  test('line chart children carry the plot clip, inside the element', () {
     final ChartFrameResult r = chartToFrame(
       _chart(core.ChartKind.line),
       bounds: bounds,
       measurer: measurer,
     );
-    expect(r.gaps.clipsDropped, greaterThan(0));
-    expect(r.gaps.arcsFlattened, greaterThan(0)); // the point markers
+    final Iterable<FramePrimitive> clipped =
+        r.primitives.where((FramePrimitive p) => p.clip != null);
+    expect(clipped, isNotEmpty);
+    for (final FramePrimitive p in clipped) {
+      final JetRect c = p.clip!;
+      expect(c.x, greaterThanOrEqualTo(bounds.x));
+      expect(c.x + c.width, lessThanOrEqualTo(bounds.x + bounds.width + 0.001));
+    }
+  });
+
+  test('fillOpacity becomes colour alpha; the stroke stays opaque', () {
+    final List<FramePrimitive> out = convertChartPrimitives(
+      <core.ChartPrimitive>[
+        core.PathPrimitive(
+          'p',
+          <core.ChartPoint>[
+            core.ChartPoint(0, 0),
+            core.ChartPoint(10, 0),
+            core.ChartPoint(10, 10),
+          ],
+          closed: true,
+          fill: core.ChartColor.rgb(0x112233),
+          stroke: core.ChartColor.rgb(0x445566),
+          fillOpacity: 0.5,
+        ),
+      ],
+      bounds: bounds,
+      measurer: measurer,
+    );
+    final PathPrimitive p = out.single as PathPrimitive;
+    expect(p.fill!.argb, 0x80112233);
+    expect(p.stroke!.argb, 0xFF445566);
+  });
+
+  test('a core dash pattern becomes the frame dashPattern', () {
+    final List<FramePrimitive> out = convertChartPrimitives(
+      <core.ChartPrimitive>[
+        core.PathPrimitive(
+          'p',
+          <core.ChartPoint>[core.ChartPoint(0, 0), core.ChartPoint(10, 0)],
+          stroke: core.ChartColor.rgb(0),
+          dash: <double>[4, 2],
+        ),
+      ],
+      bounds: bounds,
+      measurer: measurer,
+    );
+    expect((out.single as PathPrimitive).dashPattern, <double>[4, 2]);
+  });
+
+  test('a donut segment is outer arc, inner arc back, closed', () {
+    final List<FramePrimitive> out = convertChartPrimitives(
+      <core.ChartPrimitive>[
+        core.ArcPrimitive('a', core.ChartPoint(50, 50), 40, 20, 0, 90,
+            fill: core.ChartColor.rgb(0xFF0000)),
+      ],
+      bounds: bounds,
+      measurer: measurer,
+    );
+    final List<PathCommand> c = (out.single as PathPrimitive).commands;
+    expect(c.whereType<ArcTo>(), hasLength(2));
+    expect(c.whereType<ArcTo>().last.sweepAngle,
+        closeTo(-c.whereType<ArcTo>().first.sweepAngle, 1e-9),
+        reason: 'the inner arc returns the way the outer one went');
   });
 }
