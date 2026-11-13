@@ -198,11 +198,19 @@ PathPrimitive _arc(
           ArcTo(c, a.innerRadius, start + sweep, -sweep),
           const ClosePath(),
         ]
-      : <PathCommand>[
-          MoveTo(c),
-          ArcTo(c, a.radius, start, sweep),
-          const ClosePath(),
-        ];
+      : sweep.abs() >= 2 * math.pi - 1e-9
+          // A whole disc (a point marker): start on the rim. Starting at the
+          // centre would leave a radial spoke when the path closes.
+          ? <PathCommand>[
+              MoveTo(on(a.radius, start)),
+              ArcTo(c, a.radius, start, sweep),
+              const ClosePath(),
+            ]
+          : <PathCommand>[
+              MoveTo(c),
+              ArcTo(c, a.radius, start, sweep),
+              const ClosePath(),
+            ];
   return PathPrimitive(
     // The full circle's square: a safe over-estimate of the slice.
     bounds: JetRect(

@@ -143,4 +143,20 @@ void main() {
         closeTo(-c.whereType<ArcTo>().first.sweepAngle, 1e-9),
         reason: 'the inner arc returns the way the outer one went');
   });
+
+  test('a full-circle disc (point marker) has no spoke to its centre', () {
+    final List<FramePrimitive> out = convertChartPrimitives(
+      <core.ChartPrimitive>[
+        core.ArcPrimitive('m', core.ChartPoint(50, 50), 2.5, 0, 0, 360,
+            fill: core.ChartColor.rgb(0xFF0000)),
+      ],
+      bounds: bounds,
+      measurer: measurer,
+    );
+    final List<PathCommand> c = (out.single as PathPrimitive).commands;
+    expect(c.whereType<LineTo>(), isEmpty);
+    final MoveTo start = c.first as MoveTo;
+    expect(start.to.dx, closeTo(bounds.x + 50 + 2.5, 1e-9),
+        reason: 'starts on the rim, not at the centre');
+  });
 }
