@@ -171,6 +171,12 @@ class _ShapeThumbPainter extends CustomPainter {
           path.moveTo(to.dx, to.dy);
         case LineTo(:final JetOffset to):
           path.lineTo(to.dx, to.dy);
+        case final ArcTo arc:
+          final Rect oval = Rect.fromCircle(
+              center: Offset(arc.center.dx, arc.center.dy), radius: arc.radius);
+          for (final ({double start, double sweep}) part in arc.halfTurnParts) {
+            path.arcTo(oval, part.start, part.sweep, false);
+          }
         case ClosePath():
           path.close();
       }

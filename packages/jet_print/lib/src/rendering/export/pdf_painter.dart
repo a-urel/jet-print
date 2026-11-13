@@ -14,6 +14,7 @@
 /// anywhere in this file.
 library;
 
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:image/image.dart' as img;
@@ -118,6 +119,17 @@ class PdfPainter implements ReportPainter {
 
   @override
   void popTransform() => _g.restoreContext();
+
+  @override
+  void pushClip(JetRect rect) {
+    final PdfGraphics g = _g;
+    g.saveContext();
+    g.drawRect(rect.x, _mapY(rect.y + rect.height), rect.width, rect.height);
+    g.clipPath();
+  }
+
+  @override
+  void popClip() => _g.restoreContext();
 
   @override
   void beginPage(PageFormat format) {
@@ -244,13 +256,15 @@ class PdfPainter implements ReportPainter {
     _withAlpha(g, p.color, () {
       g.setStrokeColor(_pdfColor(p.color));
       g.setLineWidth(p.strokeWidth);
-      g.drawLine(
-        p.start.dx,
-        _mapY(p.start.dy),
-        p.end.dx,
-        _mapY(p.end.dy),
-      );
-      g.strokePath();
+      _withDash(g, p.dashPattern, () {
+        g.drawLine(
+          p.start.dx,
+          _mapY(p.start.dy),
+          p.end.dx,
+          _mapY(p.end.dy),
+        );
+        g.strokePath();
+      });
     });
   }
 
@@ -289,6 +303,8 @@ class PdfPainter implements ReportPainter {
             g.moveTo(c.to.dx, _mapY(c.to.dy));
           case LineTo():
             g.lineTo(c.to.dx, _mapY(c.to.dy));
+          case ArcTo():
+            _arc(g, c);
           case ClosePath():
             g.closePath();
         }
@@ -310,9 +326,52 @@ class PdfPainter implements ReportPainter {
       _withAlpha(g, stroke, () {
         g.setStrokeColor(_pdfColor(stroke));
         g.setLineWidth(p.strokeWidth);
-        replay();
-        g.strokePath();
+        _withDash(g, p.dashPattern, () {
+          replay();
+          g.strokePath();
+        });
       });
+    }
+  }
+
+  /// Runs [draw] with [pattern] installed as the dash array. Scoped by its own
+  /// save/restore because the dash is graphics state: an opaque stroke gets no
+  /// [_withAlpha] scope, and an unscoped dash would leak into every later
+  /// primitive.
+  static void _withDash(
+      PdfGraphics g, List<double>? pattern, void Function() draw) {
+    if (pattern == null || pattern.isEmpty) {
+      draw();
+      return;
+    }
+    g.saveContext();
+    g.setLineDashPattern(pattern, 0);
+    draw();
+    g.restoreContext();
+  }
+
+  /// Replays [a] as cubic Béziers of at most a quarter turn each, after a line
+  /// to the arc's start (Flutter's `arcTo` joins the same way).
+  void _arc(PdfGraphics g, ArcTo a) {
+    final int n = (a.sweepAngle.abs() / (math.pi / 2)).ceil().clamp(1, 1000);
+    final double step = a.sweepAngle / n;
+    final double k = 4 / 3 * math.tan(step / 4);
+    double theta = a.startAngle;
+    double px(double t) => a.center.dx + a.radius * math.cos(t);
+    double py(double t) => a.center.dy + a.radius * math.sin(t);
+    g.lineTo(px(theta), _mapY(py(theta)));
+    for (int i = 0; i < n; i++) {
+      final double t0 = theta;
+      final double t1 = theta + step;
+      g.curveTo(
+        px(t0) - k * a.radius * math.sin(t0),
+        _mapY(py(t0) + k * a.radius * math.cos(t0)),
+        px(t1) + k * a.radius * math.sin(t1),
+        _mapY(py(t1) - k * a.radius * math.cos(t1)),
+        px(t1),
+        _mapY(py(t1)),
+      );
+      theta = t1;
     }
   }
 

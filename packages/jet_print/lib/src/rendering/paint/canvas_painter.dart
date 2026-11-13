@@ -184,6 +184,15 @@ class CanvasPainter implements ReportPainter {
   void popTransform() => _canvas.restore();
 
   @override
+  void pushClip(JetRect rect) {
+    _canvas.save();
+    _canvas.clipRect(ui.Rect.fromLTWH(rect.x, rect.y, rect.width, rect.height));
+  }
+
+  @override
+  void popClip() => _canvas.restore();
+
+  @override
   void drawTextRun(TextRunPrimitive p) {
     final String uiFamily =
         uiFontFamily(p.fontFamily, p.style.weight, p.style.italic);
@@ -253,13 +262,25 @@ class CanvasPainter implements ReportPainter {
 
   @override
   void drawLine(LinePrimitive p) {
+    final ui.Paint paint = ui.Paint()
+      ..color = ui.Color(p.color.argb)
+      ..strokeWidth = p.strokeWidth
+      ..style = ui.PaintingStyle.stroke;
+    final List<double>? dash = p.dashPattern;
+    if (dash != null && dash.isNotEmpty) {
+      _canvas.drawPath(
+          _dashed(
+              ui.Path()
+                ..moveTo(p.start.dx, p.start.dy)
+                ..lineTo(p.end.dx, p.end.dy),
+              dash),
+          paint);
+      return;
+    }
     _canvas.drawLine(
       ui.Offset(p.start.dx, p.start.dy),
       ui.Offset(p.end.dx, p.end.dy),
-      ui.Paint()
-        ..color = ui.Color(p.color.argb)
-        ..strokeWidth = p.strokeWidth
-        ..style = ui.PaintingStyle.stroke,
+      paint,
     );
   }
 
@@ -291,6 +312,12 @@ class CanvasPainter implements ReportPainter {
           path.moveTo(c.to.dx, c.to.dy);
         case LineTo():
           path.lineTo(c.to.dx, c.to.dy);
+        case ArcTo():
+          final ui.Rect oval = ui.Rect.fromCircle(
+              center: ui.Offset(c.center.dx, c.center.dy), radius: c.radius);
+          for (final ({double start, double sweep}) part in c.halfTurnParts) {
+            path.arcTo(oval, part.start, part.sweep, false);
+          }
         case ClosePath():
           path.close();
       }
@@ -301,13 +328,38 @@ class CanvasPainter implements ReportPainter {
     }
     final JetColor? stroke = p.stroke;
     if (stroke != null) {
+      final List<double>? dash = p.dashPattern;
       _canvas.drawPath(
-          path,
+          dash != null && dash.isNotEmpty ? _dashed(path, dash) : path,
           ui.Paint()
             ..color = ui.Color(stroke.argb)
             ..strokeWidth = p.strokeWidth
             ..style = ui.PaintingStyle.stroke);
     }
+  }
+
+  /// [source] cut into dashes: [pattern] alternates dash and gap lengths and
+  /// restarts on every contour. An odd-length pattern repeats itself.
+  static ui.Path _dashed(ui.Path source, List<double> pattern) {
+    final ui.Path out = ui.Path();
+    if (pattern.every((double d) => d <= 0)) return source;
+    for (final ui.PathMetric metric in source.computeMetrics()) {
+      double at = 0;
+      int i = 0;
+      bool draw = true;
+      while (at < metric.length) {
+        final double len = pattern[i % pattern.length];
+        final double end = at + (len <= 0 ? 0.01 : len);
+        if (draw) {
+          out.addPath(metric.extractPath(at, end.clamp(0, metric.length)),
+              ui.Offset.zero);
+        }
+        at = end;
+        draw = !draw;
+        i++;
+      }
+    }
+    return out;
   }
 
   /// The images decoded in [prepare]; exposed for tests to assert disposal.
