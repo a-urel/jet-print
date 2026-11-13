@@ -313,13 +313,11 @@ class CanvasPainter implements ReportPainter {
         case LineTo():
           path.lineTo(c.to.dx, c.to.dy);
         case ArcTo():
-          path.arcTo(
-              ui.Rect.fromCircle(
-                  center: ui.Offset(c.center.dx, c.center.dy),
-                  radius: c.radius),
-              c.startAngle,
-              c.sweepAngle,
-              false);
+          final ui.Rect oval = ui.Rect.fromCircle(
+              center: ui.Offset(c.center.dx, c.center.dy), radius: c.radius);
+          for (final ({double start, double sweep}) part in c.halfTurnParts) {
+            path.arcTo(oval, part.start, part.sweep, false);
+          }
         case ClosePath():
           path.close();
       }

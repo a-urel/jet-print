@@ -9,6 +9,7 @@
 /// element produced a given primitive; keep emitting it.
 library;
 
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import '../../domain/elements/image_source.dart';
@@ -270,6 +271,20 @@ final class ArcTo extends PathCommand {
 
   /// Signed sweep, in radians.
   final double sweepAngle;
+
+  /// The arc cut into sub-arcs of at most half a turn each, in order, with the
+  /// same total sweep and direction.
+  ///
+  /// Backends that replay an arc through `Path.arcTo` use this rather than the
+  /// whole sweep: `arcTo` draws nothing for a sweep that is a full turn, which
+  /// would make a disc vanish on screen while the PDF still drew it.
+  List<({double start, double sweep})> get halfTurnParts {
+    final int n = (sweepAngle.abs() / math.pi).ceil().clamp(1, 1000);
+    final double step = sweepAngle / n;
+    return <({double start, double sweep})>[
+      for (int i = 0; i < n; i++) (start: startAngle + step * i, sweep: step),
+    ];
+  }
 
   @override
   List<Object?> get props => <Object?>[center, radius, startAngle, sweepAngle];

@@ -100,6 +100,19 @@ void main() {
       expect(solid, isNot(dashed));
     });
 
+    test('halfTurnParts keeps the total sweep, direction and a π cap', () {
+      for (final double sweep in <double>[0.5, 3.0, 6.283185307179586, -4.0]) {
+        final parts = ArcTo(const JetOffset(0, 0), 1, 1.0, sweep).halfTurnParts;
+        expect(
+            parts.fold<double>(0, (a, p) => a + p.sweep), closeTo(sweep, 1e-9));
+        expect(parts.first.start, 1.0);
+        for (final p in parts) {
+          expect(p.sweep.abs(), lessThanOrEqualTo(3.14159266));
+          expect(p.sweep.sign, sweep.sign);
+        }
+      }
+    });
+
     test('ArcTo compares by value', () {
       expect(const ArcTo(JetOffset(5, 5), 4, 0, 1),
           const ArcTo(JetOffset(5, 5), 4, 0, 1));
@@ -230,6 +243,22 @@ void main() {
       ];
       expect(await _alphaAt(prims, 50, 30), 255, reason: 'inside upper half');
       expect(await _alphaAt(prims, 50, 70), 0, reason: 'lower half empty');
+      expect(await _alphaAt(prims, 15, 15), 0, reason: 'outside the circle');
+    });
+
+    test('a full-turn ArcTo fills a disc (Path.arcTo alone draws nothing)',
+        () async {
+      const List<FramePrimitive> prims = <FramePrimitive>[
+        PathPrimitive(
+            bounds: JetRect(x: 10, y: 10, width: 80, height: 80),
+            commands: <PathCommand>[
+              MoveTo(JetOffset(90, 50)),
+              ArcTo(JetOffset(50, 50), 40, 0, 6.283185307179586),
+              ClosePath(),
+            ],
+            fill: _red),
+      ];
+      expect(await _alphaAt(prims, 50, 50), 255, reason: 'inside the disc');
       expect(await _alphaAt(prims, 15, 15), 0, reason: 'outside the circle');
     });
   });
