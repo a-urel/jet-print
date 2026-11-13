@@ -1,6 +1,7 @@
-/// Renders a [ChartElement] by replaying pure [chart_geometry] into frame
-/// primitives (rects/paths/lines/text) — no widget chart library, so canvas,
-/// preview, and export agree by construction.
+/// Renders a [ChartElement]: jet_charts_core lays the chart out and
+/// `chart_frame_converter.dart` spells the result in frame primitives, so
+/// canvas, preview, and export agree by construction. With no data it draws a
+/// chart-glyph placeholder instead.
 library;
 
 import 'package:jet_charts_core/jet_charts_core.dart' as core;
@@ -29,16 +30,7 @@ const double kChartTitleGutter = 14;
 /// Bottom gutter (points) reserved for the legend row.
 const double kChartLegendGutter = 16;
 
-/// Width and height of each legend color swatch.
-const double kChartLegendSwatchSize = 8;
-
-/// Horizontal gap between swatch and its label.
-const double kChartLegendSwatchLabelGap = 3;
-
-/// Horizontal gap between legend entries.
-const double kChartLegendEntryGap = 12;
-
-/// The slice palette for pie charts (bar/line use the element's seriesColor).
+/// The palette for pie slices (bar/line use the element's seriesColor).
 const List<JetColor> kChartPalette = <JetColor>[
   JetColor(0xFF4F8DF7),
   JetColor(0xFFF7894F),
