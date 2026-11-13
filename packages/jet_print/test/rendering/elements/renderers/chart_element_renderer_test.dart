@@ -44,8 +44,12 @@ void main() {
     final Iterable<RectPrimitive> rects =
         prims.whereType<RectPrimitive>().where((r) => r.elementId == 'c1');
     expect(rects.length, greaterThanOrEqualTo(3));
-    // value axis gridlines are present
-    expect(prims.whereType<LinePrimitive>(), isNotEmpty);
+    // value axis gridlines are present (core draws them as stroked paths)
+    expect(
+        prims
+            .whereType<PathPrimitive>()
+            .where((p) => p.stroke != null && p.fill == null),
+        isNotEmpty);
   });
 
   test('line: emits a PathPrimitive polyline', () {
