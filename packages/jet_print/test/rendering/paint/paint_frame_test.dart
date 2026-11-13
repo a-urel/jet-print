@@ -19,6 +19,10 @@ class _Recorder implements ReportPainter {
   @override
   void popTransform() => calls.add('pop');
   @override
+  void pushClip(JetRect rect) {}
+  @override
+  void popClip() {}
+  @override
   void drawTextRun(TextRunPrimitive p) => calls.add('text');
   @override
   void drawImage(ImagePrimitive p) => calls.add('image');

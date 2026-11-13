@@ -185,6 +185,10 @@ class _DisposeSpy implements ReportPainter {
   @override
   void popTransform() {}
   @override
+  void pushClip(JetRect rect) {}
+  @override
+  void popClip() {}
+  @override
   void drawRect(RectPrimitive p) {}
   @override
   void drawTextRun(TextRunPrimitive p) {}

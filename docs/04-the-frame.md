@@ -52,9 +52,10 @@ matters more than it sounds; see *Run it*.
 
 `FramePrimitive` in
 [`rendering/frame/primitive.dart`](../packages/jet_print/lib/src/rendering/frame/primitive.dart)
-is a sealed base carrying the three fields every drawn thing has: `bounds` in
-page points, an optional `elementId` naming the element that produced it, and a
-`rotation` the paint layer applies about the bounds' center.
+is a sealed base carrying the four fields every drawn thing has: `bounds` in
+page points, an optional `elementId` naming the element that produced it, a
+`rotation` the paint layer applies about the bounds' center, and an optional
+`clip` rectangle the paint layer applies outside that rotation.
 
 Five subclasses extend it, and there are no others:
 
@@ -62,9 +63,9 @@ Five subclasses extend it, and there are no others:
 |---|---|
 | `TextRunPrimitive` | pre-broken lines from the measurer — the painter never re-wraps |
 | `ImagePrimitive` | encoded bytes, a fit mode, an opacity |
-| `LinePrimitive` | one stroked segment |
+| `LinePrimitive` | one stroked segment, optionally dashed |
 | `RectPrimitive` | an optional fill and an optional stroke |
-| `PathPrimitive` | move/line/close commands, optional fill and stroke |
+| `PathPrimitive` | move/line/arc/close commands, optional fill and stroke, optional dash pattern |
 
 That is the entire alphabet a page is written in. Everything this library can
 print is spelled with those five:

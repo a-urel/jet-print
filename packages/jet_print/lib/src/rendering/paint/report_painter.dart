@@ -23,6 +23,13 @@ abstract class ReportPainter {
   /// Restores the state saved by the matching [pushTransform].
   void popTransform();
 
+  /// Intersects the clip with [rect] (page points) until the matching
+  /// [popClip]. Backends save/restore their own graphics state.
+  void pushClip(JetRect rect);
+
+  /// Restores the state saved by the matching [pushClip].
+  void popClip();
+
   /// Draws a text run.
   void drawTextRun(TextRunPrimitive primitive);
 
@@ -60,6 +67,8 @@ Future<void> paintFrame(PageFrame frame, ReportPainter painter) async {
   await painter.prepare(frame);
   painter.beginPage(frame.page);
   for (final FramePrimitive primitive in frame.primitives) {
+    final JetRect? clip = primitive.clip;
+    if (clip != null) painter.pushClip(clip);
     final bool rotated = primitive.rotation != 0;
     if (rotated) {
       final JetRect b = primitive.bounds;
@@ -79,6 +88,7 @@ Future<void> paintFrame(PageFrame frame, ReportPainter painter) async {
         painter.drawPath(primitive);
     }
     if (rotated) painter.popTransform();
+    if (clip != null) painter.popClip();
   }
   painter.endPage();
 }
