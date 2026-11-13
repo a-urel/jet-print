@@ -4,6 +4,22 @@ All notable changes to the `jet_print` library are documented here. The format i
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed
+
+- **Charts are laid out by `jet_charts_core`.** Bar, line and pie charts now
+  come from a shared, pure-Dart layout engine instead of a hand-rolled one. The chart model is unchanged — `ChartElement` and its saved
+  JSON read and write exactly as before — but what a chart *looks like*
+  changes: value-axis ticks follow a "nice" 1/2/5 scale, labels are measured
+  with the font the PDF embeds, pie slices are real arcs with a white
+  separator, and the legend sits centred under the plot. Bar value labels and pie percentages keep
+  their meaning. A chart with no data still draws the placeholder glyph.
+  Page goldens that contain a chart move; nothing else does.
+
+- **A new dependency: `jet_charts_core`.** Pure Dart, no Flutter. It is the
+  only addition to the package's dependencies.
+
 ## 1.1.0
 
 Roll paper for receipt and kitchen-ticket printers, the Turkish lira sign in
