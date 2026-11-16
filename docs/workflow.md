@@ -135,6 +135,37 @@ A rule written only in prose decays silently. Where you can, land it as a test
 and let `AGENTS.md` point at the test — then the rule fails loudly when it stops
 being true.
 
+## Independent review
+
+A spec, plan or page under `docs/` can be reviewed by up to three outside models
+before it is acted on. `scripts/ai_review.sh <doc.md>` sends one prompt
+(`scripts/ai_review/prompt.md`) to the Codex, GitHub Copilot and Claude CLIs in
+parallel, each read-only, in a scrubbed environment and without this repository's
+agent configuration, and archives the prompt, each answer and a `summary.txt`
+under `docs/reviews/<date>-<slug>/`. That directory is tracked, unlike
+`docs/superpowers/`: it is the record that a review happened, and its answers are
+untrusted reviewer output, never edited. A provider that is missing, logged out or
+out of quota is recorded and skipped; the run succeeds if one answers. What is
+specific to this repository — the archive directories, the protected branch, the
+files a reviewer reads first — is the config block at the top of the script; the
+rest of it is shared with other repositories and is not edited here.
+
+A git-ignored document — a working spec or plan in `docs/superpowers/` — is
+private, and so is its review: the script archives it in the ignored
+`docs/superpowers/reviews/` instead, and refuses an `--out` that git would
+track. Such an archive is never committed, and its findings are folded back into
+the ignored document only.
+
+The judgement is the `/spec-review` skill in Claude Code
+(`.claude/skills/spec-review/SKILL.md`): it refuses to run on `main` or a
+detached HEAD, screens a tracked archive for anything that is not this
+repository's, merges duplicate findings, re-verifies each one against the
+repository, gives every finding a disposition, and folds the accepted ones back
+into the document. Other agents follow the same steps by reading that file. The
+script's self-test needs no network and calls no real CLI; it is not part of the
+quality gate or CI, so run it by hand after changing the script:
+`scripts/ai_review/selftest.sh`.
+
 ## Agent tooling
 
 The repo carries the official Dart and Flutter agent support from
@@ -144,7 +175,7 @@ configuration; none of it changes what the quality gate checks.
 
 | Agent | Skills | Rules | MCP server |
 |---|---|---|---|
-| Claude Code | `dart-flutter@dart-flutter` plugin (per machine) | `CLAUDE.md` `@`-imports `.agent/rules/` | the plugin |
+| Claude Code | `dart-flutter@dart-flutter` plugin (per machine), plus this repo's own `.claude/skills/spec-review/` | `CLAUDE.md` `@`-imports `.agent/rules/` | the plugin |
 | Codex | the same plugin, via `codex plugin add dart-flutter@dart-flutter` | `.agent/rules/*.md` | the plugin, or `.codex/config.toml` |
 | Cursor | the plugin, via `/add-plugin dart-flutter` | `.cursor/rules/*.mdc` | the plugin |
 | GitHub Copilot | `.agents/skills/` | `.github/copilot-instructions.md` | `.vscode/mcp.json` |

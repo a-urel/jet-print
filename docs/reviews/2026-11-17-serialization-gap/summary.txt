@@ -1,0 +1,10 @@
+document: docs/serialization-gap.md
+document-blob: de67cd22adda7002f05b56855defc71a3cc4d2d9
+commit: 074dc65834f2bf6cf1592d788918aa6233d0cbdf
+date: 2026-11-17
+archive: docs/reviews/2026-11-17-serialization-gap
+models: codex=gpt-6.1-sol claude=fable
+timeout-per-call: 600s
+codex    ok                     4 findings  VERDICT: revise — The database example stores incorrect version metadata, and migration guidance misclassifies valid sheet reports.
+claude   ok                     8 findings  VERDICT: revise — the schema-version facts predate roll paper; constant, stamping, migration trigger and the save sample are now wrong.
+findings: 12 total

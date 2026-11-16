@@ -79,6 +79,9 @@ table and traps are the whole of the written guidance.
   status, and the five phases that now govern the run to 1.0.
 - [`decisions/`](decisions/) — why a call was made and what was rejected, one
   record per decision, never edited after acceptance.
+- [`reviews/`](reviews/) — the archives of independent multi-model reviews of
+  these pages, one directory per run; how one is run is `workflow.md`,
+  *Independent review*.
 - [`api-friction.md`](api-friction.md) — where the public surface made a
   consumer's job harder than it needed to be; the input to the 1.0 freeze
   review.

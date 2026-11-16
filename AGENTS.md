@@ -244,6 +244,17 @@ Real ones, each of which has cost time before.
 - **Run `git` from the repo root.** `flutter` commands leave the shell inside a
   package directory.
 
+## Outside review of a document
+
+`/spec-review <doc>` (`.claude/skills/spec-review/SKILL.md`) runs an independent,
+read-only review of a spec, plan or doc page by up to three CLIs (Codex, Copilot,
+Claude) through `scripts/ai_review.sh`, then merges, re-verifies and folds the
+findings back into the document. Each run is archived, never overwritten, in
+`docs/reviews/<date>-<slug>/`; git-ignored documents are archived in
+`docs/superpowers/reviews/` and never committed. The repository-specific settings
+are the config block at the top of the script. The script's self-test needs no
+network and no real CLI: `scripts/ai_review/selftest.sh`.
+
 ## Where to read it
 
 `docs/` carries the mechanism behind these rules, `docs/recipes/` the procedure.
