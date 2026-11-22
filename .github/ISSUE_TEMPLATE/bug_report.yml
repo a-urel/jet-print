@@ -1,0 +1,86 @@
+name: Bug report
+description: Something in jet_print renders, exports, prints or edits wrongly, or throws.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. The more of the fields below
+        you fill in, the faster it can be reproduced.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you saw, and what you expected to see instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: >-
+        The smallest code or report that shows the problem. A report saved as
+        JSON (`JetReportFormat.encodeDefinitionJson`) plus a few rows of data
+        is ideal.
+      render: dart
+    validations:
+      required: true
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where does it go wrong?
+      multiple: true
+      options:
+        - Designer (canvas, panels, inspectors, undo/redo)
+        - Preview
+        - PDF export
+        - PNG export
+        - System printing
+        - Expressions / data binding
+        - Report JSON (save / load / migration)
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      multiple: true
+      options:
+        - macOS
+        - Windows
+        - Linux
+        - Web
+        - Android
+        - iOS
+    validations:
+      required: true
+
+  - type: input
+    id: jet-print-version
+    attributes:
+      label: jet_print version
+      placeholder: "1.1.0"
+    validations:
+      required: true
+
+  - type: textarea
+    id: flutter-version
+    attributes:
+      label: Flutter version
+      description: The output of `flutter --version`.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else
+      description: >-
+        Screenshots, the exported PDF, a stack trace, the printer model for a
+        printing problem.

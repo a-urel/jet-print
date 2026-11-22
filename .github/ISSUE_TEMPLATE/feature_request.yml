@@ -1,0 +1,25 @@
+name: Feature request
+description: Something jet_print cannot do yet, or does in a way that gets in your way.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: >-
+        What you are trying to build, and where jet_print stops you. Describe
+        the report or the host app, not only the API you have in mind.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like
+      description: How you imagine it working, if you have an idea.
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: What you do today
+      description: Any workaround you use now, and what it costs you.
