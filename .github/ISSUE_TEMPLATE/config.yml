@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or idea
+    url: https://github.com/a-urel/jet-print/discussions
+    about: Ask how to do something, or float an idea before it becomes a request.
+  - name: Security vulnerability
+    url: https://github.com/a-urel/jet-print/security/advisories/new
+    about: Report it privately, not in a public issue. See SECURITY.md.
