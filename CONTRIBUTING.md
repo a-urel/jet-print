@@ -1,7 +1,8 @@
 # Contributing to jet-print
 
 Thanks for your interest. Bug reports, questions and pull requests are all
-welcome.
+welcome. Everyone taking part is expected to follow the
+[Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Before you start
 
